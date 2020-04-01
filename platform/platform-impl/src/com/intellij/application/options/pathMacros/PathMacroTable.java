@@ -69,7 +69,7 @@ public final class PathMacroTable extends JBTable {
     if (macroEditor.showAndGet()) {
       final String name = macroEditor.getName();
       myMacros.add(Couple.of(name, macroEditor.getValue()));
-      Collections.sort(myMacros, MACRO_COMPARATOR);
+      myMacros.sort(MACRO_COMPARATOR);
       final int index = indexOfMacroWithName(name);
       LOG.assertTrue(index >= 0);
       myTableModel.fireTableDataChanged();
@@ -156,7 +156,7 @@ public final class PathMacroTable extends JBTable {
         macros.add(Couple.of(undefinedMacroName, ""));
       }
     }
-    Collections.sort(macros, MACRO_COMPARATOR);
+    macros.sort(MACRO_COMPARATOR);
   }
 
   public void editMacro() {
@@ -171,7 +171,7 @@ public final class PathMacroTable extends JBTable {
     if (macroEditor.showAndGet()) {
       myMacros.remove(selectedRow);
       myMacros.add(Couple.of(macroEditor.getName(), macroEditor.getValue()));
-      Collections.sort(myMacros, MACRO_COMPARATOR);
+      myMacros.sort(MACRO_COMPARATOR);
       myTableModel.fireTableDataChanged();
     }
   }

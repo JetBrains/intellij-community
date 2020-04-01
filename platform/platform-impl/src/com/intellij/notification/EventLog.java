@@ -5,6 +5,7 @@ package com.intellij.notification;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -67,22 +68,26 @@ public final class EventLog {
     getApplicationService().myModel.removeNotification(notification);
     for (Project p : ProjectUtil.getOpenProjects()) {
       if (!p.isDisposed()) {
-        getProjectComponent(p).myProjectModel.removeNotification(notification);
+        getProjectService(p).myProjectModel.removeNotification(notification);
       }
     }
   }
 
   public static void showNotification(@NotNull Project project, @NotNull String groupId, @NotNull List<String> ids) {
-    getProjectComponent(project).showNotification(groupId, ids);
+    getProjectService(project).showNotification(groupId, ids);
   }
 
   private static EventLog getApplicationService() {
     return ApplicationManager.getApplication().getService(EventLog.class);
   }
 
-  @NotNull
-  public static LogModel getLogModel(@Nullable Project project) {
-    return project != null ? getProjectComponent(project).myProjectModel : getApplicationService().myModel;
+  public static @NotNull LogModel getLogModel(@Nullable Project project) {
+    return project != null ? getProjectService(project).myProjectModel : getApplicationService().myModel;
+  }
+
+  public static @NotNull List<Notification> getNotifications(@NotNull Project project) {
+    ProjectTracker service = project.getServiceIfCreated(ProjectTracker.class);
+    return service == null ? Collections.emptyList() : service.myProjectModel.getNotifications();
   }
 
   public static void markAllAsRead(@Nullable Project project) {
@@ -100,7 +105,7 @@ public final class EventLog {
   }
 
   public static void clearNMore(@NotNull Project project, @NotNull Collection<String> groups) {
-    getProjectComponent(project).clearNMore(groups);
+    getProjectService(project).clearNMore(groups);
   }
 
   @Nullable
@@ -149,7 +154,10 @@ public final class EventLog {
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
           Object source = event.getSource();
           DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
-          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())), context);
+          AnAction action = notification.getActions().get(Integer.parseInt(event.getDescription()));
+          NotificationCollector.getInstance()
+            .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
+          Notification.fire(notification, action, context);
         }
       });
       if (title.length() > 0 || content.length() > 0) {
@@ -310,12 +318,7 @@ public final class EventLog {
       }
       content = content.substring(tagMatcher.end());
     }
-    for (Iterator<RangeMarker> iterator = lineSeparators.iterator(); iterator.hasNext(); ) {
-      RangeMarker next = iterator.next();
-      if (next.getEndOffset() == document.getTextLength()) {
-        iterator.remove();
-      }
-    }
+    lineSeparators.removeIf(next -> next.getEndOffset() == document.getTextLength());
     return hasHtml;
   }
 
@@ -411,8 +414,7 @@ public final class EventLog {
     }
   }
 
-  @Nullable
-  public static ToolWindow getEventLog(Project project) {
+  public static @Nullable ToolWindow getEventLog(@Nullable Project project) {
     return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
   }
 
@@ -442,7 +444,6 @@ public final class EventLog {
     }, true);
   }
 
-  @Service
   static final class ProjectTracker implements Disposable {
     private final Map<String, EventLogConsole> myCategoryMap = ContainerUtil.newConcurrentMap();
     private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -506,6 +507,7 @@ public final class EventLog {
 
       myProjectModel.addNotification(notification);
 
+      NotificationCollector.getInstance().logNotificationLoggedInEventLog(myProject, notification);
       EventLogConsole console = getConsole(notification);
       if (console == null) {
         myInitial.add(notification);
@@ -578,8 +580,7 @@ public final class EventLog {
     return DEFAULT_CATEGORY;
   }
 
-  @NotNull
-  static ProjectTracker getProjectComponent(@NotNull Project project) {
+  static @NotNull ProjectTracker getProjectService(@NotNull Project project) {
     return project.getService(ProjectTracker.class);
   }
 
@@ -596,7 +597,7 @@ public final class EventLog {
     public void navigate(Project project) {
       NotificationListener listener = myNotification.getListener();
       if (listener != null) {
-        EventLogConsole console = Objects.requireNonNull(getProjectComponent(project).getConsole(myNotification));
+        EventLogConsole console = Objects.requireNonNull(getProjectService(project).getConsole(myNotification));
         JComponent component = console.getConsoleEditor().getContentComponent();
         listener.hyperlinkUpdate(myNotification, IJSwingUtilities.createHyperlinkEvent(myHref, component));
       }
@@ -623,7 +624,7 @@ public final class EventLog {
         hideBalloon(notification);
       }
 
-      EventLogConsole console = Objects.requireNonNull(getProjectComponent(project).getConsole(myNotification));
+      EventLogConsole console = Objects.requireNonNull(getProjectService(project).getConsole(myNotification));
       if (myRangeHighlighter == null || !myRangeHighlighter.isValid()) {
         return;
       }
@@ -634,6 +635,7 @@ public final class EventLog {
         Balloon balloon =
           NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, BalloonLayoutData.fullContent(), project);
         balloon.show(target, Balloon.Position.above);
+        NotificationCollector.getInstance().logBalloonShownFromEventLog(myNotification);
       }
     }
 
@@ -656,7 +658,7 @@ public final class EventLog {
       else {
         for (Project p : openProjects) {
           if (!p.isDisposed()) {
-            getProjectComponent(p).printNotification(notification);
+            getProjectService(p).printNotification(notification);
           }
         }
       }

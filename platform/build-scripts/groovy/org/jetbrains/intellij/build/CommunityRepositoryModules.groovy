@@ -58,6 +58,7 @@ class CommunityRepositoryModules {
     "intellij.platform.editor.ex",
     "intellij.platform.indexing.impl",
     "intellij.platform.execution.impl",
+    "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.core",
     "intellij.platform.workspaceModel.ide",
@@ -103,8 +104,6 @@ class CommunityRepositoryModules {
     plugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
-      withModule("intellij.platform.remoteServers.git")
-      withModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
     },
     plugin("intellij.vcs.cvs") {
       directoryName = "cvsIntegration"
@@ -291,6 +290,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
+      withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar")
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
       withModule("intellij.android.transportDatabase", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
@@ -321,7 +321,7 @@ class CommunityRepositoryModules {
 
       // from AOSP's plugin("intellij.android.layoutlib"). Force layoutlib-standard. //
       withModuleLibrary("precompiled-layoutlib-api", "android.sdktools.layoutlib-api", "")
-      withModuleLibrary("layoutlib-jre11-26.6.0.1.jar", "intellij.android.layoutlib", "")
+      withModuleLibrary("layoutlib-jre11-26.6.0.2.jar", "intellij.android.layoutlib", "")
       //////////////////////////////////////////////////////
 
       withModuleLibrary("precompiled-manifest-merger", "android.sdktools.manifest-merger", "")
@@ -355,9 +355,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
-      withResourceFromModule("intellij.android.core", "lib/asm-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android.core", "lib/asm-analysis-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android.core", "lib/asm-tree-5.0.3.jar", "lib")
+      withProjectLibrary("asm-tools")
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/javawriter-2.2.1.jar", "lib")
 

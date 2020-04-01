@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
@@ -38,14 +38,10 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
       requestLoadMore(indicator, update).handleOnEdt { list, error ->
         if (indicator.isCanceled) return@handleOnEdt
         loading = false
-        when {
-          error != null && !GithubAsyncUtil.isCancellation(error) -> {
-            this.error = error
-          }
-          list != null -> {
-            handleResult(list)
-          }
+        if (error != null) {
+          if (!GithubAsyncUtil.isCancellation(error)) this.error = error
         }
+        else handleResult(list)
       }
     }
   }

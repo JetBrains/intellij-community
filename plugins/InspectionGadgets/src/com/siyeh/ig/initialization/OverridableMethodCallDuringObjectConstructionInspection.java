@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class OverridableMethodCallDuringObjectConstructionInspection extends
-                                                                     BaseInspection {
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
+public class OverridableMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
@@ -49,8 +43,10 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
     final List<InspectionGadgetsFix> fixes = new SmartList<>();
-    fixes.add(new MakeClassFinalFix(callClass));
-    if (!(method instanceof PsiCompiledElement)) {
+    if (!callClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      fixes.add(new MakeClassFinalFix(callClass));
+    }
+    if (!(method instanceof PsiCompiledElement) && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       fixes.add(new MakeMethodFinalFix(method.getName()));
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);

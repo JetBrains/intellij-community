@@ -10,6 +10,11 @@ internal interface ChildEntity : TypedEntity {
   val dataClass: DataClass?
 }
 
+internal interface NoDataChildEntity : TypedEntity {
+  val parent: ParentEntity
+  val childProperty: String
+}
+
 internal interface ChildChildEntity : TypedEntity {
   val parent1: ParentEntity
   val parent2: ChildEntity
@@ -21,6 +26,10 @@ internal interface ParentEntity : ReferableTypedEntity {
   @JvmDefault
   val children
     get() = referrers(ChildEntity::parent)
+
+  @JvmDefault
+  val noDataChildren
+    get() = referrers(NoDataChildEntity::parent)
 
   @JvmDefault
   val optionalChildren
@@ -38,6 +47,11 @@ private interface ModifiableChildEntity : ChildEntity, ModifiableTypedEntity<Chi
   override var parent: ParentEntity
   override var childProperty: String
   override var dataClass: DataClass?
+}
+
+private interface ModifiableNoDataChildEntity : NoDataChildEntity, ModifiableTypedEntity<NoDataChildEntity> {
+  override var parent: ParentEntity
+  override var childProperty: String
 }
 
 private interface ModifiableChildChildEntity : ChildChildEntity, ModifiableTypedEntity<ChildChildEntity> {
@@ -69,6 +83,14 @@ internal fun TypedEntityStorageBuilder.addChildEntity(parentEntity: ParentEntity
     this.parent = parentEntity
     this.childProperty = childProperty
     this.dataClass = dataClass
+  }
+
+internal fun TypedEntityStorageBuilder.addNoDataChildEntity(parentEntity: ParentEntity = addParentEntity(),
+                                                      childProperty: String = "child",
+                                                      source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiableNoDataChildEntity::class.java, source) {
+    this.parent = parentEntity
+    this.childProperty = childProperty
   }
 
 private fun TypedEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity, parent2: ChildEntity) =

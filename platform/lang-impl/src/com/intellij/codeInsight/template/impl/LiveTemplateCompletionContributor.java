@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -9,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +37,7 @@ import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filter
 /**
  * @author peter
  */
-public class LiveTemplateCompletionContributor extends CompletionContributor {
+public class LiveTemplateCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
 
   @TestOnly
@@ -59,6 +61,13 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         ProgressManager.checkCanceled();
         final PsiFile file = parameters.getPosition().getContainingFile();
         if (file instanceof PsiPlainTextFile && parameters.getEditor().getComponent().getParent() instanceof EditorTextField) {
+          return;
+        }
+
+        PrefixMatcher matcher = result.getPrefixMatcher();
+        if (matcher instanceof CamelHumpMatcher && ((CamelHumpMatcher)matcher).isTypoTolerant()) {
+          // template matching uses editor content, not the supplied matcher
+          // so if the first typo-intolerant invocation didn't produce results, this one won't, too
           return;
         }
 
@@ -93,7 +102,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         if (!customTemplateAvailableAndHasCompletionItem(null, editor, file, offset)) {
           TemplateImpl template = findFullMatchedApplicableTemplate(editor, offset, availableTemplates);
           if (template != null) {
-            result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(template.getKey()))
+            result.withPrefixMatcher(template.getKey())
               .addElement(new LiveTemplateLookupElementImpl(template, true));
           }
         }
@@ -102,7 +111,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
           ProgressManager.checkCanceled();
           String templateKey = possible.getKey().getKey();
           String currentPrefix = possible.getValue();
-          result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(currentPrefix))
+          result.withPrefixMatcher(currentPrefix)
             .restartCompletionOnPrefixChange(templateKey);
         }
       }

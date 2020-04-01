@@ -22,5 +22,5 @@ internal class GHPRRebaseMergeAction(busyStateModel: SingleValueModel<Boolean>,
   }
 
   override fun submitMergeTask(mergeability: GHPRMergeabilityState): CompletableFuture<Unit>? =
-    stateService.rebaseMerge(EmptyProgressIndicator(), mergeability.number, mergeability.headRefOid)
+    stateService.rebaseMerge(EmptyProgressIndicator(), mergeability, mergeability.headRefOid)
 }

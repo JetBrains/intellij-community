@@ -69,7 +69,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 /**
  * @author Konstantin Bulenkov
  */
-public class AboutPopup {
+public final class AboutPopup {
   private static JBPopup ourPopup;
   private static final Logger LOG = Logger.getInstance(AboutPopup.class);
   /**
@@ -253,9 +253,9 @@ public class AboutPopup {
           }
         }
 
-        final static double maxAlpha = 1.0;
-        final static double fadeStep = 0.05;
-        final static int animationDelay = 15;
+        static final double maxAlpha = 1.0;
+        static final double fadeStep = 0.05;
+        static final int animationDelay = 15;
 
         @Override
         public void mouseEntered(MouseEvent e) {
@@ -322,8 +322,7 @@ public class AboutPopup {
       });
     }
 
-    @Nullable
-    private static String loadThirdPartyLibraries() {
+    private static @Nullable String loadThirdPartyLibraries() {
       final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
       if (thirdPartyLibrariesFile.isFile()) {
         try {
@@ -376,9 +375,9 @@ public class AboutPopup {
       }
 
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      Rectangle aboutLogoRect = appInfo.getAboutLogoRect();
+      int[] aboutLogoRect = appInfo.getAboutLogoRect();
       if (aboutLogoRect != null) {
-        myLinks.add(new Link(new JBRectangle(aboutLogoRect), appInfo.getCompanyURL()));
+        myLinks.add(new Link(new JBRectangle(aboutLogoRect[0], aboutLogoRect[1], aboutLogoRect[2], aboutLogoRect[3]), appInfo.getCompanyURL()));
       }
 
       if (appInfo instanceof ApplicationInfoImpl) {
@@ -414,8 +413,7 @@ public class AboutPopup {
       }
     }
 
-    @NotNull
-    protected String getCopyrightText() {
+    protected @NotNull String getCopyrightText() {
       ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
       return "Copyright \u00A9 " +
              ((ApplicationInfoImpl)applicationInfo).getCopyrightStart() +
@@ -425,8 +423,7 @@ public class AboutPopup {
              applicationInfo.getCompanyName();
     }
 
-    @NotNull
-    private TextRenderer createTextRenderer(Graphics2D g) {
+    private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
       Rectangle r = getTextRendererRect();
       return new TextRenderer(r.x, r.y, r.width, r.height, g);
     }
@@ -646,8 +643,7 @@ public class AboutPopup {
     }
   }
 
-  @NotNull
-  private static String getExtraInfo() {
+  private static @NotNull String getExtraInfo() {
     String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
 
     extraInfo += "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
@@ -784,8 +780,7 @@ public class AboutPopup {
         return new Action[]{getOKAction()};
       }
 
-      @NotNull
-      private String getScaledHtmlText() {
+      private @NotNull String getScaledHtmlText() {
         final Pattern pattern = Pattern.compile("(\\d+)px");
         final Matcher matcher = pattern.matcher(htmlText);
 

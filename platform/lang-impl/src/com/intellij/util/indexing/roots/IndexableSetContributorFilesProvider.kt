@@ -10,6 +10,8 @@ import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
 
 internal class IndexableSetContributorFilesProvider(private val indexableSetContributor: IndexableSetContributor) : IndexableFilesProvider {
+  override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }?.let { "IndexableSetContributor '$it'" }
+                                ?: indexableSetContributor.toString()
 
   override fun getIndexingProgressText(): String {
     val name = getName()
@@ -22,7 +24,7 @@ internal class IndexableSetContributorFilesProvider(private val indexableSetCont
   override fun getRootsScanningProgressText(): String {
     val name = getName()
     if (!name.isNullOrEmpty()) {
-      return name
+      return IndexingBundle.message("indexable.files.provider.scanning.files.contributor", name)
     }
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }

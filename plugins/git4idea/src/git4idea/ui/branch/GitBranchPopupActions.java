@@ -2,6 +2,7 @@
 package git4idea.ui.branch;
 
 import com.intellij.CommonBundle;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.*;
@@ -63,10 +64,10 @@ public class GitBranchPopupActions {
   }
 
   ActionGroup createActions() {
-    return createActions(null, "", false);
+    return createActions(null, null, false);
   }
 
-  ActionGroup createActions(@Nullable LightActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
+  ActionGroup createActions(@Nullable LightActionGroup toInsert, @Nullable GitRepository specificRepository, boolean firstLevelGroup) {
     LightActionGroup popupGroup = new LightActionGroup(false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
@@ -85,7 +86,9 @@ public class GitBranchPopupActions {
       popupGroup.addAll(toInsert);
     }
 
-    popupGroup.addSeparator(GitBundle.message("branches.local.branches", repoInfo));
+    popupGroup.addSeparator(specificRepository == null ?
+                            GitBundle.message("branches.local.branches") :
+                            GitBundle.message("branches.local.branches.in.repo", DvcsUtil.getShortRepositoryName(specificRepository)));
     GitLocalBranch currentBranch = myRepository.getCurrentBranch();
     GitBranchesCollection branchesCollection = myRepository.getBranches();
 
@@ -108,7 +111,9 @@ public class GitBranchPopupActions {
                                topShownBranches, firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
                                firstLevelGroup);
 
-    popupGroup.addSeparator(GitBundle.message("branches.remote.branches", repoInfo));
+    popupGroup.addSeparator(specificRepository == null ?
+                            GitBundle.message("branches.remote.branches") :
+                            GitBundle.message("branches.remote.branches.in.repo", specificRepository));
     List<RemoteBranchActions> remoteBranchActions = of(branchesCollection.getRemoteBranches())
       .map(GitBranch::getName)
       .sorted(StringUtil::naturalCompare)
@@ -265,7 +270,7 @@ public class GitBranchPopupActions {
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new CompareAction(myProject, myRepositories, myBranchName),
+        new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
@@ -475,7 +480,7 @@ public class GitBranchPopupActions {
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new Separator(),
-        new CompareAction(myProject, myRepositories, myBranchName),
+        new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
@@ -614,12 +619,17 @@ public class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
+    private final GitRepository mySelectedRepository;
 
-    CompareAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+    CompareAction(@NotNull Project project,
+                  @NotNull List<? extends GitRepository> repositories,
+                  @NotNull String branchName,
+                  @NotNull GitRepository selectedRepository) {
       super(GitBundle.messagePointer("branches.compare.with.current"));
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+      mySelectedRepository = selectedRepository;
     }
 
     @Override
@@ -627,7 +637,7 @@ public class GitBranchPopupActions {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       GitBrancher brancher = GitBrancher.getInstance(myProject);
-      brancher.compare(myBranchName, myRepositories);
+      brancher.compare(myBranchName, myRepositories, mySelectedRepository);
     }
 
     @Override

@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.LoadingDetails
@@ -75,11 +77,19 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 
   private fun getActionText(commitMetadata: VcsCommitMetadata): String {
-    var text = commitMetadata.id.toShortString()
     if (commitMetadata !is LoadingDetails) {
-      text += " " + CommitPresentationUtil.getShortSummary(commitMetadata, false, 40)
+      val time: Long = commitMetadata.authorTime
+      val commitMessage = "\"" + StringUtil.shortenTextWithEllipsis(commitMetadata.subject,
+                                                                    40, 0,
+                                                                    "...") + "\""
+      return VcsLogBundle.message("action.go.to.select.hash.subject.author.date.time",
+                                  commitMetadata.id.toShortString(),
+                                  commitMessage,
+                                  CommitPresentationUtil.getAuthorPresentation(commitMetadata),
+                                  DateFormatUtil.formatDate(time),
+                                  DateFormatUtil.formatTime(time))
     }
-    return text
+    return commitMetadata.id.toShortString()
   }
 
   private fun getRowsToJump(ui: VcsLogUiEx): List<Int> {

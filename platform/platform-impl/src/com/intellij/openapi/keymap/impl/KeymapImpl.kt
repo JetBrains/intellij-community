@@ -702,6 +702,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun equals(other: Any?): Boolean {
     if (other !is KeymapImpl) return false
+    if (other === this) return true
     if (name != other.name) return false
     if (canModify != other.canModify) return false
     if (parent != other.parent) return false
@@ -741,6 +742,8 @@ private val resharperKeymap = "com.intellij.plugins.resharperkeymap"
 private val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
 private val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
 private val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
+private val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
+private val riderKeymap = "com.intellij.plugins.riderkeymap"
 
 internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
@@ -765,8 +768,13 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
             "ReSharper OSX" -> resharperKeymap
             "Sublime Text",
             "Sublime Text (Mac OS X)" -> sublimeKeymap
-            "Visual Studio" -> visualStudioKeymap
+            "Visual Studio",
+            "Visual Studio OSX" -> visualStudioKeymap
+            "Visual Assist",
+            "Visual Assist OSX" -> visualAssistKeymap
             "Xcode" -> xcodeKeymap
+            "Rider",
+            "Rider OSX"-> riderKeymap
             else -> null
           }
           val action: AnAction? = when (pluginId) {

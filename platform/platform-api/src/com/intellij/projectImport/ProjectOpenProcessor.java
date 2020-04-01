@@ -10,11 +10,13 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
@@ -96,6 +98,13 @@ public abstract class ProjectOpenProcessor {
   @Nullable
   public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
     return EXTENSION_POINT_NAME.findFirstSafe(provider -> {
+      return provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file));
+    });
+  }
+
+  @NotNull
+  public static List<ProjectOpenProcessor> getOpenProcessors(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
+    return ContainerUtil.filter(EXTENSION_POINT_NAME.getExtensionList(), provider -> {
       return provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file));
     });
   }

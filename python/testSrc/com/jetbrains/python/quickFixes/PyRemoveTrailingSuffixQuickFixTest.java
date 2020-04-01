@@ -3,6 +3,7 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -26,6 +27,6 @@ public class PyRemoveTrailingSuffixQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testFixl() {
-    doQuickFixTest(PyBundle.message("INTN.remove.trailing.suffix"), LanguageLevel.getLatest());
+    doQuickFixTest(PyPsiBundle.message("QFIX.remove.trailing.suffix"), LanguageLevel.getLatest());
   }
 }

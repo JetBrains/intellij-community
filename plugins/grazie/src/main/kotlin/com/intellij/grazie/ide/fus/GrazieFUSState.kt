@@ -3,7 +3,6 @@ package com.intellij.grazie.ide.fus
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.addIfDiffers
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
@@ -16,13 +15,10 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     val metrics = HashSet<MetricEvent>()
 
     val state = GrazieConfig.get()
-    val default = GrazieConfig.State()
 
     for (lang in state.enabledLanguages) {
       metrics.add(newMetric("enabled.language", lang.iso))
     }
-
-    addIfDiffers(metrics, state, default, { s -> s.nativeLanguage.iso }, "native.language")
 
     for (id in state.userEnabledRules) {
       metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("enabled", true)))

@@ -59,9 +59,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     VcsLogFilterUiEx filterUi = createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this);
     myMainFrame = createMainFrame(logData, uiProperties, filterUi);
 
-    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
-      getTable().addHighlighter(factory.createHighlighter(logData, this));
-    }
+    VcsLogUiUtil.installHighlighters(myProject, this, f -> true);
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener);
@@ -113,7 +111,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link")) {
       @Override
       public void run() {
-        getFilterUi().setFilter(null);
+        getFilterUi().clearFilters();
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false),
                        pack -> pack.getFilters().isEmpty());
       }

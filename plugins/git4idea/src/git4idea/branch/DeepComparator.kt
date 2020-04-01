@@ -39,6 +39,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.NonNls
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,
@@ -67,11 +68,12 @@ class DeepComparator(private val project: Project,
       return
     }
 
-    val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.filters, dataPack.refs)
+    val singleFilteredBranch = getComparedBranchFromFilters(dataPack.filters, dataPack.refs)
     if (comparedBranch != singleFilteredBranch) {
-      LOG.debug("Branch filter changed. Compared branch: $comparedBranch, filtered branch: $singleFilteredBranch")
+      val oldComparedBranch = comparedBranch
+      LOG.debug("Branch filter changed. Compared branch: $oldComparedBranch, filtered branch: $singleFilteredBranch")
       stopTaskAndUnhighlight()
-      notifyUnhighlight()
+      notifyUnhighlight(oldComparedBranch)
       return
     }
 
@@ -151,9 +153,9 @@ class DeepComparator(private val project: Project,
     }.associateWith { it.currentBranch!! }
   }
 
-  private fun notifyUnhighlight() {
+  private fun notifyUnhighlight(branch: String?) {
     if (ui is VcsLogUiEx) {
-      val message = GitBundle.message("git.log.cherry.picked.highlighter.cancelled.message")
+      val message = GitBundle.message("git.log.cherry.picked.highlighter.cancelled.message", branch)
       val balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, null,
                                                                               MessageType.INFO.popupBackground, null)
         .setFadeoutTime(5000)
@@ -301,7 +303,7 @@ class DeepComparator(private val project: Project,
     }
 
     override fun toString(): String {
-      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches"
+      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches" //NON-NLS
     }
   }
 
@@ -312,7 +314,7 @@ class DeepComparator(private val project: Project,
     }
 
     override fun getId(): String {
-      return "CHERRY_PICKED_COMMITS"
+      return "CHERRY_PICKED_COMMITS" //NON-NLS
     }
 
     override fun getTitle(): String {
@@ -332,9 +334,18 @@ class DeepComparator(private val project: Project,
     fun getInstance(project: Project, dataProvider: VcsLogData, logUi: VcsLogUi): DeepComparator {
       return ServiceManager.getService(project, DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
     }
+
+    @JvmStatic
+    fun getComparedBranchFromFilters(filters: VcsLogFilterCollection, refs: VcsLogRefs): String? {
+      val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(filters, refs)
+      if (singleFilteredBranch != null) return singleFilteredBranch
+
+      val rangeFilter = filters.get(VcsLogFilterCollection.RANGE_FILTER) ?: return null
+      return rangeFilter.ranges.singleOrNull()?.inclusiveRef
+    }
   }
 
-  private inline fun <R> measureTimeMillis(root: VirtualFile, actionName: String, block: () -> R): R {
+  private inline fun <R> measureTimeMillis(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
     val start = System.currentTimeMillis()
     val result = block()
     if (result != null) {

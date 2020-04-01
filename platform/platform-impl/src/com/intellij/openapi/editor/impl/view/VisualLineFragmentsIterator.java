@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -171,10 +172,11 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     int startOffset = myCurrentInlayIndex > 0 ? myInlays.get(myCurrentInlayIndex - 1).getOffset() : mySegmentStartOffset;
     int endOffset = myCurrentInlayIndex < myInlays.size() ? myInlays.get(myCurrentInlayIndex).getOffset() : mySegmentEndOffset;
     int lineStartOffset = myDocument.getLineStartOffset(myCurrentEndLogicalLine);
-    myFragmentIterator = myView.getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine).
-      getFragmentsInVisualOrder(myView, myCurrentEndLogicalLine, myCurrentX, myCurrentVisualColumn,
-                                startOffset - lineStartOffset, endOffset - lineStartOffset,
-                                myQuickEvaluationListener);
+    myFragmentIterator = myCurrentEndLogicalLine < myDocument.getLineCount() // handle empty document case
+                         ? myView.getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine)
+                           .getFragmentsInVisualOrder(myView, myCurrentEndLogicalLine, myCurrentX, myCurrentVisualColumn,
+                                                      startOffset - lineStartOffset, endOffset - lineStartOffset, myQuickEvaluationListener)
+                         : Collections.emptyIterator();
   }
 
   private int getCurrentFoldRegionStartOffset() {

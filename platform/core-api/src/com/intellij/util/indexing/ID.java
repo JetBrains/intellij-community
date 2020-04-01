@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing;
 
@@ -20,26 +6,18 @@ import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,39 +25,14 @@ import java.util.Map;
 public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
   private static final IntObjectMap<ID<?, ?>> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
-  private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
+
+  private static final SimpleStringPersistentEnumerator ourNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
 
   private static final Map<ID<?, ?>, PluginId> ourIdToPluginId = Collections.synchronizedMap(new THashMap<>());
   private static final Map<ID<?, ?>, Throwable> ourIdToRegistrationStackTrace = Collections.synchronizedMap(new THashMap<>());
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final short myUniqueId;
-
-  static {
-    Path indices = getEnumFile();
-    try {
-      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
-      List<String> lines = Files.readAllLines(indices, Charset.defaultCharset());
-      for (int i = 0; i < lines.size(); i++) {
-        String name = lines.get(i);
-        nameToIdRegistry.put(name, i + 1);
-      }
-
-      synchronized (ourNameToIdRegistry) {
-        ourNameToIdRegistry.ensureCapacity(nameToIdRegistry.size());
-        nameToIdRegistry.forEachEntry((name, index) -> {
-          ourNameToIdRegistry.put(name, index);
-          return true;
-        });
-      }
-    }
-    catch (IOException e) {
-      synchronized (ourNameToIdRegistry) {
-        ourNameToIdRegistry.clear();
-        writeEnumFile();
-      }
-    }
-  }
 
   @NotNull
   private static Path getEnumFile() {
@@ -101,41 +54,11 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   private static short stringToId(@NotNull String name) {
-    synchronized (ourNameToIdRegistry) {
-      if (ourNameToIdRegistry.containsKey(name)) {
-        return (short)ourNameToIdRegistry.get(name);
-      }
-
-      int n = ourNameToIdRegistry.size() + 1;
-      assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded: "+n;
-
-      ourNameToIdRegistry.put(name, n);
-      writeEnumFile();
-      return (short)n;
-    }
+    return ourNameToIdRegistry.enumerate(name);
   }
 
   static void reinitializeDiskStorage() {
-    synchronized (ourNameToIdRegistry) {
-      writeEnumFile();
-    }
-  }
-
-  private static void writeEnumFile() {
-    try {
-      final String[] names = new String[ourNameToIdRegistry.size()];
-      ourNameToIdRegistry.forEachEntry((key, value) -> {
-        names[value - 1] = key;
-        return true;
-      });
-
-      Path file = getEnumFile();
-      Files.createDirectories(file.getParent());
-      Files.write(file, Arrays.asList(names), Charset.defaultCharset());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    ourNameToIdRegistry.forceDiskSync();
   }
 
   @NotNull
@@ -162,7 +85,7 @@ public class ID<K, V> extends IndexId<K,V> {
       String actualPluginIdStr = actualPluginId == null ? null : actualPluginId.getIdString();
       String requiredPluginIdStr = requiredPluginId == null ? null : requiredPluginId.getIdString();
 
-      if (!Comparing.equal(actualPluginIdStr, requiredPluginIdStr)) {
+      if (!Objects.equals(actualPluginIdStr, requiredPluginIdStr)) {
         Throwable registrationStackTrace = ourIdToRegistrationStackTrace.get(id);
         String message = "ID with name '" + name +
                          "' requested for plugin " + requiredPluginIdStr +
@@ -175,6 +98,12 @@ public class ID<K, V> extends IndexId<K,V> {
       }
     }
     return id;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public Throwable getRegistrationTrace() {
+    return ourIdToRegistrationStackTrace.get(this);
   }
 
   @Override

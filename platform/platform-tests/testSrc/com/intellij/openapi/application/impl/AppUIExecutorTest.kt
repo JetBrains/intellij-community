@@ -23,8 +23,6 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 class AppUIExecutorTest : LightPlatformTestCase() {
-  override fun runInDispatchThread() = false
-
   override fun invokeTestRunnable(runnable: Runnable) {
     SwingUtilities.invokeLater(runnable)
     UIUtil.dispatchAllInvocationEvents()

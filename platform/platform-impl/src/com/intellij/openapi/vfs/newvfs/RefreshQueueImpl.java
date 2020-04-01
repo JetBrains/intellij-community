@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -95,7 +96,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
           }
         });
     }
-    catch (RejectedExecutionException e) {
+    catch (RejectedExecutionException | AlreadyDisposedException e) {
       LOG.debug(e);
     }
   }

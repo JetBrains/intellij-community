@@ -25,16 +25,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 public final class LightEditorManagerImpl implements LightEditorManager, Disposable {
   private static final Logger LOG = Logger.getInstance(LightEditorManagerImpl.class);
 
-  private final List<LightEditorInfo>                myEditors         = new ArrayList<>();
+  private final List<LightEditorInfo>                myEditors         = new CopyOnWriteArrayList<>();
   private final EventDispatcher<LightEditorListener> myEventDispatcher =
     EventDispatcher.create(LightEditorListener.class);
 

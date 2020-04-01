@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
@@ -70,7 +70,7 @@ open class GHOpenInBrowserActionGroup
 
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
     val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST) ?: return null
-    val context = dataContext.getData(GHPRActionKeys.ACTION_DATA_CONTEXT) ?: return null
+    val context = dataContext.getData(GHPRActionKeys.DATA_CONTEXT) ?: return null
 
     return setOf(context.repositoryCoordinates) to Data.URL(project, pullRequest.url)
   }

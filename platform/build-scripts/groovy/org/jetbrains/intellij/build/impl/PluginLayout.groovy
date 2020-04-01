@@ -34,6 +34,10 @@ class PluginLayout extends BaseLayout {
    * {@code body} parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
    * specify the plugin module in {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundledPluginModules/pluginModulesToPublish} list.
    *
+   * <p>Note that project-level libraries on which the plugin modules depend, are automatically put to 'IDE_HOME/lib' directory for all IDEs
+   * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
+   * a library is used aren't bundled with IDEs so we don't want to increase size of the distribution, you may invoke {@link PluginLayoutSpec#withProjectLibrary}
+   * to include such a library to the plugin distribution.</p>
    * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
    */
   static PluginLayout plugin(String mainModuleName, @DelegatesTo(PluginLayoutSpec) Closure body = {}) {

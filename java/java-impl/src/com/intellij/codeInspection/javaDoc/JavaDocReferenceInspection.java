@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -320,7 +320,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       PsiJavaCodeReferenceElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element != null) {
-        Collections.sort(originalClasses, new PsiProximityComparator(element.getElement()));
+        originalClasses.sort(new PsiProximityComparator(element.getElement()));
         DataManager.getInstance()
                    .getDataContextFromFocusAsync()
                    .onSuccess(dataContext ->

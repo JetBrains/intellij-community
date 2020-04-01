@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -153,10 +153,9 @@ public class PathUtilRt {
 
   private static final String WINDOWS_CHARS = "<>:\"|?*";
   private static final Set<String> WINDOWS_NAMES = new HashSet<String>(Arrays.asList(
-    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
-    "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",
-    "LPT3",
-    "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"));
+    "CON", "PRN", "AUX", "NUL",
+    "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"));
 
   private static final Charset FS_CHARSET = fsCharset();
   private static Charset fsCharset() {

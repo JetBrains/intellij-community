@@ -270,7 +270,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     }
 
     @Override
-    public RunConfiguration getPeer() {
+    public @NotNull RunConfiguration getPeer() {
       return myConfiguration;
     }
 

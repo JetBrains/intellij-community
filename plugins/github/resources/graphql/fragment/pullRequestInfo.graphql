@@ -20,10 +20,19 @@ fragment pullRequestInfo on PullRequest {
 
   baseRefName
   baseRefOid
+  baseRepository {
+    owner {
+      login
+    }
+    isFork
+  }
 
   headRefName
   headRefOid
   headRepository {
-    nameWithOwner
+    owner {
+      login
+    }
+    isFork
   }
 }

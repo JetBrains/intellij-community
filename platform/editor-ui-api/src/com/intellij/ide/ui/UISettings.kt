@@ -53,15 +53,13 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.allowMergeButtons = value
     }
 
-  val alwaysShowWindowsButton: Boolean
-    get() = state.alwaysShowWindowsButton
-
   var animateWindows: Boolean
     get() = state.animateWindows
     set(value) {
       state.animateWindows = value
     }
 
+  @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean
     get() = state.showMemoryIndicator
     set(value) {

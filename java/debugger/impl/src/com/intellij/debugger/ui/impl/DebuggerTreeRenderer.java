@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -156,11 +156,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private static boolean isParameter(ValueDescriptorImpl valueDescriptor) {
     if (valueDescriptor instanceof LocalVariableDescriptorImpl) {
-      try {
-        return ((LocalVariableDescriptorImpl)valueDescriptor).getLocalVariable().getVariable().isArgument();
-      }
-      catch (EvaluateException ignored) {
-      }
+      return ((LocalVariableDescriptorImpl)valueDescriptor).isParameter();
     }
     else if (valueDescriptor instanceof ArgumentValueDescriptorImpl) {
       return ((ArgumentValueDescriptorImpl)valueDescriptor).isParameter();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -115,6 +115,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     myProject.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
     myProject.registerService(PsiManager.class, myPsiManager);
+    myProject.registerService(TreeAspect.class, new TreeAspect());
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
     myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
@@ -131,9 +132,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
 
     // That's for reparse routines
-    PomModelImpl pomModel = new PomModelImpl(myProject);
-    myProject.registerService(PomModel.class, pomModel);
-    new TreeAspect(pomModel);
+    myProject.registerService(PomModel.class, new PomModelImpl(myProject));
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {

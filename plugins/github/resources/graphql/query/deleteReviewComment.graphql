@@ -1,5 +1,7 @@
 mutation ($id: ID!) {
     deletePullRequestReviewComment(input: {id: $id}) {
-        __typename
+        pullRequestReview {
+            ...pullRequestPendingReview
+        }
     }
 }

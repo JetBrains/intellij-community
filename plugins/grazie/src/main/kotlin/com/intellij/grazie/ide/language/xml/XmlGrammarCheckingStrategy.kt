@@ -47,4 +47,6 @@ class XmlGrammarCheckingStrategy : GrammarCheckingStrategy {
   }
 
   override fun getStealthyRanges(root: PsiElement, text: CharSequence) = StrategyUtils.indentIndexes(text, setOf(' ', '\t'))
+
+  override fun getName() = "XML & HTML"
 }

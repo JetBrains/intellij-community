@@ -19,14 +19,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.regexp.psi.impl.RegExpCharImpl;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+
+import static org.intellij.lang.regexp.RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF;
 
 public class RegExpParser implements PsiParser, LightPsiParser {
   private static final TokenSet PROPERTY_TOKENS = TokenSet.create(RegExpTT.NUMBER, RegExpTT.COMMA, RegExpTT.NAME, RegExpTT.RBRACE);
@@ -61,7 +63,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   /**
    * PATTERN ::= BRANCH "|" PATTERN | BRANCH
    */
-  private void parsePattern(PsiBuilder builder) {
+  protected void parsePattern(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
     parseBranch(builder);
@@ -405,7 +407,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       parseGroupEnd(builder);
       marker.done(RegExpElementTypes.GROUP);
     }
-    else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
+    else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF || type == PCRE_RECURSIVE_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
     else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
@@ -414,14 +416,9 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF || type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.QUOTE);
     }
-    else if (type == RegExpTT.PYTHON_COND_REF) {
+    else if (type == RegExpTT.PYTHON_COND_REF || type == RegExpTT.PCRE_COND_REF) {
       builder.advanceLexer();
-      if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
-        builder.advanceLexer();
-      }
-      else {
-        builder.error(RegExpBundle.message("parse.error.group.name.or.number.expected"));
-      }
+      parseCondRefName(builder, type);
       checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
       parseBranch(builder);
       if (builder.getTokenType() == RegExpTT.UNION) {
@@ -429,7 +426,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         parseBranch(builder);
       }
       checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.conditional"));
-      marker.done(RegExpElementTypes.PY_COND_REF);
+      marker.done(RegExpElementTypes.CONDITIONAL);
     }
     else if (type == RegExpTT.PROPERTY) {
       marker.drop();
@@ -448,6 +445,15 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       return null;
     }
     return marker;
+  }
+
+  protected void parseCondRefName(PsiBuilder builder, IElementType condRefType) {
+    if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
+      builder.advanceLexer();
+    }
+    else {
+      builder.error(RegExpBundle.message("parse.error.group.name.or.number.expected"));
+    }
   }
 
   private void parseGroupEnd(PsiBuilder builder) {
@@ -565,7 +571,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     builder.advanceLexer();
   }
 
-  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull @Nls String message) {
+  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull @NlsContexts.ParserError String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
       return true;

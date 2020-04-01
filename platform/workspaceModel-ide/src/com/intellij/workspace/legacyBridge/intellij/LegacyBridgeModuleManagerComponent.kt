@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
@@ -37,8 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 @Suppress("ComponentNotRegistered")
 class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), Disposable {
@@ -47,13 +46,14 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   private val LOG = Logger.getInstance(javaClass)
 
-  private val idToModule: ConcurrentMap<ModuleId, LegacyBridgeModule> = ConcurrentHashMap()
+  private val idToModule = Collections.synchronizedMap(LinkedHashMap<ModuleId, LegacyBridgeModule>())
   internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
-  private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
+  private val uncommittedModules = mutableMapOf<String, LegacyBridgeModule>()
 
   override fun dispose() {
     val modules = idToModule.values.toList()
     idToModule.clear()
+    uncommittedModules.clear()
 
     for (module in modules) {
       Disposer.dispose(module)
@@ -155,7 +155,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
                 is EntityChange.Added -> {
                   val moduleId = change.entity.persistentId()
-                  val alreadyCreatedModule = newModuleInstances.remove(moduleId)
+                  val alreadyCreatedModule = uncommittedModules.remove(moduleId.name)
                   val module = if (alreadyCreatedModule != null) {
                     unloadedModulesSet.remove(change.entity.name)
                     unloadedModules.remove(change.entity.name)
@@ -239,27 +239,13 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                   newModuleLibraries.clear()
                 }
               }
-
-              if (newModuleInstances.isNotEmpty()) {
-                LOG.error("Not all module instances were handled in change event. Leftovers:\n" +
-                          newModuleInstances.keys.joinToString(separator = "\n"))
-                newModuleInstances.clear()
-              }
-
               incModificationCount()
             }
           }
         }
       })
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, LegacyBridgeProjectRootsChangeListener(project))
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, FacetEntityChangeListener(project))
-    }
-  }
-
-  @ApiStatus.Internal
-  internal fun setNewModuleInstances(addedInstances: List<LegacyBridgeModule>) {
-    if (newModuleInstances.isNotEmpty()) error("newModuleInstances are not empty")
-    for (instance in addedInstances) {
-      newModuleInstances[instance.moduleEntityId] = instance
     }
   }
 
@@ -453,6 +439,19 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   override fun findModuleByName(name: String): Module? = idToModule[ModuleId(name)]
 
+  @ApiStatus.Internal
+  internal fun findUncommittedModuleByName(name: String): Module? = uncommittedModules[name]
+
+  @ApiStatus.Internal
+  internal fun addUncommittedModule(module: LegacyBridgeModule) {
+    uncommittedModules[module.name] = module
+  }
+
+  @ApiStatus.Internal
+  internal fun removeUncommittedModule(name: String) {
+    uncommittedModules.remove(name)
+  }
+
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
     val modifiableModel = modifiableModel
     modifiableModel.disposeModule(module)
@@ -548,9 +547,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                            entityStore: TypedEntityStore,
                            diff: TypedEntityStorageDiffBuilder?,
                            isNew: Boolean): LegacyBridgeModule {
-
     val modulePath = getModuleFilePath(moduleEntity)
-
     val module = LegacyBridgeModuleImpl(
       name = moduleEntity.name,
       project = project,
@@ -563,7 +560,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
-        moduleStore.setPath(modulePath, isNew)
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
+        moduleStore.setPath(modulePath, null, isNew)
         moduleStore.storageManager.addMacro("MODULE_FILE", modulePath)
       }
       catch (t: Throwable) {

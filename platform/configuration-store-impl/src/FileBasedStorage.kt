@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notification
@@ -7,6 +7,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
@@ -37,7 +38,8 @@ open class FileBasedStorage(file: Path,
                             provider: StreamProvider? = null) :
   XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
 
-  @Volatile private var cachedVirtualFile: VirtualFile? = null
+  @Volatile
+  private var cachedVirtualFile: VirtualFile? = null
 
   protected var lineSeparator: LineSeparator? = null
   protected var isBlockSavingTheContent = false
@@ -99,7 +101,7 @@ open class FileBasedStorage(file: Path,
       }
 
       val isUseVfs = storage.configuration.isUseVfsForWrite
-      val virtualFile = if (isUseVfs) storage.virtualFile else null
+      val virtualFile = if (isUseVfs) storage.getVirtualFile(StateStorageOperation.WRITE) else null
       when {
         dataWriter == null -> {
           if (isUseVfs && virtualFile == null) {
@@ -122,22 +124,21 @@ open class FileBasedStorage(file: Path,
             throw e
           }
           catch (e: Throwable) {
-            throw RuntimeException("Cannot write ${file}", e)
+            throw RuntimeException("Cannot write $file", e)
           }
         }
       }
     }
   }
 
-  val virtualFile: VirtualFile?
-    get() {
-      var result = cachedVirtualFile
-      if (result == null) {
-        result = configuration.resolveVirtualFile(file.systemIndependentPath)
-        cachedVirtualFile = result
-      }
-      return result
+  fun getVirtualFile(reasonOperation: StateStorageOperation): VirtualFile? {
+    var result = cachedVirtualFile
+    if (result == null) {
+      result = configuration.resolveVirtualFile(file.systemIndependentPath, reasonOperation)
+      cachedVirtualFile = result
     }
+    return result
+  }
 
   private inline fun <T> runAndHandleExceptions(task: () -> T): T? {
     try {
@@ -205,22 +206,23 @@ open class FileBasedStorage(file: Path,
   }
 
   private fun loadUsingVfs(): Element? {
-    val virtualFile = virtualFile
+    val virtualFile = getVirtualFile(StateStorageOperation.READ)
     if (virtualFile == null || !virtualFile.exists()) {
       // only on first load
       handleVirtualFileNotFound()
       return null
     }
 
-    if (virtualFile.length == 0L) {
-      processReadException(null)
-    }
-    else {
-      runAndHandleExceptions {
-        val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
-        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.load(charBuffer)
+    runAndHandleExceptions {
+      val byteArray = virtualFile.contentsToByteArray()
+      if (byteArray.isEmpty()) {
+        processReadException(null)
+        return null
       }
+
+      val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(byteArray))
+      lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+      return JDOMUtil.load(charBuffer)
     }
     return null
   }

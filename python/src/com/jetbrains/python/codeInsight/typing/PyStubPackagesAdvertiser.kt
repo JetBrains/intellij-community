@@ -7,10 +7,7 @@ import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl
 import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.execution.ExecutionException
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationListener
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -157,38 +154,47 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
         project.putUserData(BALLOON_SHOWING, true)
 
+        val problemDescriptor = ProblemDescriptorImpl(
+          file,
+          file,
+          "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed",
+          LocalQuickFix.EMPTY_ARRAY,
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+          true,
+          null,
+          true
+        )
+
         BALLOON_NOTIFICATIONS
           .createNotification(
             title = PyBundle.message("code.insight.type.hints.are.not.installed"),
-            content = PyBundle.message("code.insight.install.type.hints", reqs.size, reqsToString),
-            listener = NotificationListener { notification, event ->
-              try {
-                val problemDescriptor = ProblemDescriptorImpl(
-                  file,
-                  file,
-                  "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed",
-                  LocalQuickFix.EMPTY_ARRAY,
-                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                  true,
-                  null,
-                  true
-                )
+            content = PyBundle.message("code.insight.install.type.hints.content")
+          )
+          .apply {
+            addAction(
+              NotificationAction.createSimpleExpiring(
+                if (plural) PyBundle.message("code.insight.install.type.hints.action")
+                else "${PyBundle.message("python.packaging.install")} $reqsToString"
+              ) { createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor) }
+            )
 
-                when (event.description) {
-                  "#yes" -> {
-                    createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor)
-                  }
-                  "#no" -> createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor)
-                  "#settings" -> {
-                    val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-                    EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
-                  }
-                }
+            addAction(
+              NotificationAction.createSimpleExpiring(
+                PyBundle.message("code.insight.ignore.type.hints")
+              ) { createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor) }
+            )
+
+            addAction(
+              NotificationAction.createSimpleExpiring(
+                InspectionsBundle.message("inspection.action.edit.settings")
+              ) {
+                val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+                EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
               }
-              finally {
-                notification.expire()
-              }
-            })
+            )
+
+            collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
+          }
           .whenExpired { project.putUserData(BALLOON_SHOWING, false) }
           .notify(project)
       }

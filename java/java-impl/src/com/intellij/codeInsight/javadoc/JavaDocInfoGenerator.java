@@ -738,9 +738,11 @@ public class JavaDocInfoGenerator {
   }
 
   public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
-    buffer.append(DocumentationMarkup.CONTENT_START);
-    generateDescription(buffer, docComment);
-    buffer.append(DocumentationMarkup.CONTENT_END);
+    if (!isEmptyDescription(docComment)) {
+      buffer.append(DocumentationMarkup.CONTENT_START);
+      generateDescription(buffer, docComment);
+      buffer.append(DocumentationMarkup.CONTENT_END);
+    }
 
     buffer.append(DocumentationMarkup.SECTIONS_START).append("<p>");
     generateApiSection(buffer, docComment);
@@ -755,10 +757,9 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateApiSection(StringBuilder buffer, PsiDocComment comment) {
-    String[] tagNames = {"apiNote", "implSpec", "implNote"};
-    for (String tagName : tagNames) {
-      generateSingleTagSection(buffer, comment, tagName, () -> tagName + ':');
-    }
+    generateSingleTagSection(buffer, comment, "apiNote", JavaBundle.messagePointer("javadoc.apiNote"));
+    generateSingleTagSection(buffer, comment, "implSpec", JavaBundle.messagePointer("javadoc.implSpec"));
+    generateSingleTagSection(buffer, comment, "implNote", JavaBundle.messagePointer("javadoc.implNote"));
   }
 
   private void generatePackageHtmlJavaDoc(StringBuilder buffer, PsiFile packageHtmlFile, boolean generatePrologue) {
@@ -880,6 +881,17 @@ public class JavaDocInfoGenerator {
     return modifiers.length();
   }
 
+  private static void generateTypeAnnotations(StringBuilder buffer, PsiAnnotationOwner owner, PsiElement context, boolean leadingSpace) {
+    List<AnnotationDocGenerator> generators = AnnotationDocGenerator.getAnnotationsToShow(owner, context);
+    if (leadingSpace && !generators.isEmpty()) {
+      buffer.append(NBSP);
+    }
+    for (AnnotationDocGenerator anno : generators) {
+      anno.generateAnnotation(buffer, AnnotationFormat.JavaDocShort);
+      buffer.append(NBSP);
+    }
+  }
+  
   private static void generateAnnotations(StringBuilder buffer,
                                           PsiModifierListOwner owner,
                                           SignaturePlace place,
@@ -997,16 +1009,16 @@ public class JavaDocInfoGenerator {
           return method.getContainingClass();
         }
       });
-      buffer.append("<p>");
+      if (!rendered) buffer.append("<p>");
       buffer.append(DocumentationMarkup.CONTENT_END);
       buffer.append(DocumentationMarkup.SECTIONS_START);
-      buffer.append("<p>");
+      if (!rendered) buffer.append("<p>");
     }
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
-      buffer.append("<p>");
 
       if (!rendered) {
+        buffer.append("<p>");
         Pair<PsiElement[], InheritDocProvider<PsiElement[]>> pair = findInheritDocTag(method, descriptionLocator);
         if (pair != null) {
           PsiElement[] elements = pair.first;
@@ -1819,14 +1831,10 @@ public class JavaDocInfoGenerator {
    * @return Length of the generated label.
    */
   public static int generateType(StringBuilder buffer, PsiType type, PsiElement context, boolean generateLink, boolean useShortNames) {
-    if (type instanceof PsiPrimitiveType) {
-      String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
-      buffer.append(text);
-      return text.length();
-    }
-
     if (type instanceof PsiArrayType) {
       int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context, generateLink, useShortNames);
+
+      generateTypeAnnotations(buffer, type, context, true);
       if (type instanceof PsiEllipsisType) {
         buffer.append("...");
         return rest + 3;
@@ -1835,6 +1843,14 @@ public class JavaDocInfoGenerator {
         buffer.append("[]");
         return rest + 2;
       }
+    }
+
+    generateTypeAnnotations(buffer, type, context, false);
+    
+    if (type instanceof PsiPrimitiveType) {
+      String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
+      buffer.append(text);
+      return text.length();
     }
 
     if (type instanceof PsiCapturedWildcardType) {
@@ -1981,6 +1997,8 @@ public class JavaDocInfoGenerator {
 
       for (int i = 0; i < parameters.length; i++) {
         PsiTypeParameter p = parameters[i];
+        
+        generateTypeAnnotations(buffer, p, p, false);
 
         buffer.append(p.getName());
 

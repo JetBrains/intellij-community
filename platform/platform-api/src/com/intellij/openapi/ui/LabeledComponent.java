@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PanelWithAnchor;
@@ -30,12 +31,14 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   }
 
   @NotNull
-  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull String text) {
+  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull @NlsContexts.Label String text) {
     return create(component, text, BorderLayout.NORTH);
   }
 
   @NotNull
-  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull String text, String labelConstraint) {
+  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component,
+                                                                        @NotNull @NlsContexts.Label String text,
+                                                                        String labelConstraint) {
     LabeledComponent<Comp> labeledComponent = new LabeledComponent<>();
     labeledComponent.setComponent(component);
     labeledComponent.setText(text);
@@ -49,7 +52,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     setAnchor(myLabel);
   }
 
-  public void setText(String text) {
+  public void setText(@NlsContexts.Label String text) {
     if (!StringUtil.isEmpty(text) && !StringUtil.endsWithChar(text, ':')) {
       text += ':';
     }

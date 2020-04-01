@@ -25,7 +25,6 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.*
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
-import git4idea.rebase.interactive.dialog.GitRebaseEntryWithEditedMessage
 import git4idea.repo.GitRepository
 
 private val LOG = logger("Git.Interactive.Rebase.Using.Log")
@@ -108,10 +107,10 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
 
     override fun onSuccess() {
       generatedEntries?.let { entries ->
-        val dialog = GitInteractiveRebaseDialog(project, root, entries.map { it.entryWithDetails })
+        val dialog = GitInteractiveRebaseDialog(project, root, entries)
         dialog.show()
         if (dialog.isOK) {
-          startInteractiveRebase(repository, commit, GitInteractiveRebaseUsingLogEditorHandler(repository, entries, dialog.getEntries()))
+          startInteractiveRebase(repository, commit, GitInteractiveRebaseUsingLogEditorHandler(repository, entries, dialog.getModel()))
         }
       } ?: startInteractiveRebase(repository, commit)
     }
@@ -134,7 +133,7 @@ internal fun startInteractiveRebase(
 private class GitInteractiveRebaseUsingLogEditorHandler(
   repository: GitRepository,
   private val entriesGeneratedUsingLog: List<GitRebaseEntryGeneratedUsingLog>,
-  private val newEntries: List<GitRebaseEntryWithEditedMessage>
+  private val rebaseTodoModel: GitRebaseTodoModel<GitRebaseEntryGeneratedUsingLog>
 ) : GitInteractiveRebaseEditorHandler(repository.project, repository.root) {
   private var rebaseFailed = false
 
@@ -155,8 +154,8 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
         throw VcsException("Couldn't start Rebase using Log")
       }
     }
-    processNewEntries(newEntries)
-    return newEntries.map { it.entry }
+    processModel(rebaseTodoModel)
+    return rebaseTodoModel.convertToEntries()
   }
 }
 
@@ -173,9 +172,7 @@ internal class CantRebaseUsingLogException(val reason: Reason) : Exception(reaso
 
 @VisibleForTesting
 internal class GitRebaseEntryGeneratedUsingLog(details: VcsCommitMetadata) :
-  GitRebaseEntry(Action.PICK, details.id.asString(), details.subject) {
-
-  val entryWithDetails = GitRebaseEntryWithDetails(this, details)
+  GitRebaseEntryWithDetails(GitRebaseEntry(Action.PICK, details.id.asString(), details.subject), details) {
 
   fun equalsWithReal(realEntry: GitRebaseEntry) =
     action == realEntry.action &&

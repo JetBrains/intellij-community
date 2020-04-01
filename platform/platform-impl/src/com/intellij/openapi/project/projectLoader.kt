@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 // Code maybe located in a ProjectImpl, but it is not possible due to non-technical reasons to convert ProjectImpl into modern language.
 // Wrap into class as it is not possible to use internal modifier for top-level functions from Java (but we have to reduce scope).
 @ApiStatus.Internal
-internal class ProjectLoadHelper {
+class ProjectLoadHelper {
   companion object {
     @JvmStatic
     fun registerComponents(project: ProjectImpl) {

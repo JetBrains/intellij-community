@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
@@ -27,8 +27,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
 
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
   private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
@@ -230,7 +232,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     }
     updateErrorMessage(updateErrorMessage, fileIndex, selection);
-    Collections.sort(items, (o1, o2) -> {
+    items.sort((o1, o2) -> {
       if (o1 == NULL_WRAPPER) return -1;
       if (o2 == NULL_WRAPPER) return 1;
       return o1.getRelativeToProjectPath().compareToIgnoreCase(o2.getRelativeToProjectPath());

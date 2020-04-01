@@ -4,6 +4,7 @@ class Foo {
 
   {
     foo(<warning descr="Hardcoded string literal: \"text\"">"text"</warning>);
+    foo("text"); //NON-NLS
     bar("text");
   }
 }

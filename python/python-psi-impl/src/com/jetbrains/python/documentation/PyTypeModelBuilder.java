@@ -3,14 +3,17 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,6 +207,21 @@ public class PyTypeModelBuilder {
     }
   }
 
+  private static class OneOfLiterals extends TypeModel {
+
+    @NotNull
+    private final List<PyLiteralType> literals;
+
+    private OneOfLiterals(@NotNull List<PyLiteralType> literals) {
+      this.literals = literals;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.oneOfLiterals(this);
+    }
+  }
+
   /**
    * Builds tree-like type model for PyType
    *
@@ -270,8 +288,20 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyUnionType && allowUnions) {
       final PyUnionType unionType = (PyUnionType)type;
       final Collection<PyType> unionMembers = unionType.getMembers();
+      final Pair<List<PyLiteralType>, List<PyType>> literalsAndOthers = extractLiterals(unionType);
       final Ref<PyType> optionalType = getOptionalType(unionType);
-      if (optionalType != null) {
+      if (literalsAndOthers != null) {
+        final OneOfLiterals oneOfLiterals = new OneOfLiterals(literalsAndOthers.first);
+
+        if (!literalsAndOthers.second.isEmpty()) {
+          final List<TypeModel> otherTypeModels = ContainerUtil.map(literalsAndOthers.second, t -> build(t, false));
+          result = new OneOf(ContainerUtil.prepend(otherTypeModels, oneOfLiterals));
+        }
+        else {
+          result = oneOfLiterals;
+        }
+      }
+      else if (optionalType != null) {
         result = new OptionalType(build(optionalType.get(), true));
       }
       else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false, myContext)) {
@@ -322,6 +352,17 @@ public class PyTypeModelBuilder {
     return null;
   }
 
+  private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
+    final Collection<PyType> members = type.getMembers();
+
+    final List<PyLiteralType> literalTypes = ContainerUtil.filterIsInstance(members, PyLiteralType.class);
+    if (literalTypes.size() < 2) return null;
+
+    final List<PyType> otherTypes = ContainerUtil.filter(members, m -> !(m instanceof PyLiteralType));
+
+    return Pair.create(literalTypes, otherTypes);
+  }
+
   private TypeModel buildCallable(@NotNull PyCallableType type) {
     List<TypeModel> parameterModels = null;
     final List<PyCallableParameter> parameters = type.getParameters(myContext);
@@ -356,6 +397,8 @@ public class PyTypeModelBuilder {
     void classObject(ClassObjectType type);
 
     void genericType(GenericType type);
+
+    void oneOfLiterals(OneOfLiterals literals);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -617,6 +660,17 @@ public class PyTypeModelBuilder {
     @Override
     public void genericType(GenericType type) {
       add(type.name);
+    }
+
+    @Override
+    public void oneOfLiterals(OneOfLiterals literals) {
+      add(
+        StreamEx
+          .of(literals.literals)
+          .map(PyLiteralType::getExpression)
+          .map(PyExpression::getText)
+          .joining(", ", "Literal[", "]")
+      );
     }
   }
 }

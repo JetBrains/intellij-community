@@ -10,7 +10,6 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.run.findActivateScript
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
@@ -36,10 +35,6 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
           //TODO: fix conda for fish
 
           findActivateScript(path, shellPath)?.let { activate ->
-            val pathEnv = EnvironmentUtil.getEnvironmentMap().get("PATH")
-            if (pathEnv != null) {
-              envs.put("PATH", pathEnv)
-            }
             envs.put("JEDITERM_SOURCE",  activate.first)
             envs.put("JEDITERM_SOURCE_ARGS", activate.second?:"")
           }

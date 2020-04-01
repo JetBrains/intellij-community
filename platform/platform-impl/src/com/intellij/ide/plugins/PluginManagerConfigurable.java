@@ -223,8 +223,8 @@ public class PluginManagerConfigurable
 
     myTabHeaderComponent.setListener();
 
-    int selectionTab = getStoredSelectionTab();
-    myTabHeaderComponent.setSelection(selectInstalledTab ? INSTALLED_TAB : selectionTab);
+    int selectionTab = selectInstalledTab ? INSTALLED_TAB : getStoredSelectionTab();
+    myTabHeaderComponent.setSelection(selectionTab);
     myCardPanel.select(selectionTab, true);
 
     if (selectInstalledTab) {
@@ -783,7 +783,7 @@ public class PluginManagerConfigurable
         Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
         int downloadedEnabled = 0;
-        boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
+        boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
         String otherCategoryTitle = IdeBundle.message("plugins.configurable.other.bundled");
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
@@ -811,7 +811,7 @@ public class PluginManagerConfigurable
         if (!downloaded.descriptors.isEmpty()) {
           myUpdateAll.setListener(new LinkListener<Object>() {
             @Override
-            public void linkSelected(LinkLabel aSource, Object aLinkData) {
+            public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
               myUpdateAll.setEnabled(false);
 
               for (UIPluginGroup group : myInstalledPanel.getGroups()) {

@@ -10,19 +10,36 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
+import org.jetbrains.annotations.Nls
 import java.io.File
 import java.io.IOException
 import java.util.*
 import kotlin.math.absoluteValue
 
-data class JdkInstallRequest(
-  val item: JdkItem,
-  val targetDir: File
-)
+interface JdkInstallRequest {
+  val item: JdkItem
+
+  /**
+   * The path where JDK is installed.
+   * On macOS it is likely (depending on the JDK package)
+   * to contain Contents/Home folders
+   */
+  val installDir: File
+
+  /**
+   * The path on the disk where the installed JDK
+   * would have the bin/java and bin/javac files.
+   *
+   * On macOs this path may differ from the [installDir]
+   * if the JDK package follows the macOS Bundle layout
+   */
+  val javaHome: File
+}
 
 private val JDK_INSTALL_LISTENER_EP_NAME = ExtensionPointName.create<JdkInstallerListener>("com.intellij.jdkDownloader.jdkInstallerListener")
 
@@ -74,34 +91,36 @@ class JdkInstaller {
     return uniqueDir.absoluteFile
   }
 
-
-  fun validateInstallDir(selectedPath: String): Pair<File?, String?> {
-    if (selectedPath.isBlank()) return null to "Target path is empty"
+  fun validateInstallDir(selectedPath: String): Pair<File?, @Nls String?> {
+    if (selectedPath.isBlank()) return null to ProjectBundle.message("dialog.message.error.target.path.empty")
 
     val targetDir = runCatching { File(FileUtil.expandUserHome(selectedPath)) }.getOrElse { t ->
       LOG.warn("Failed to resolve user path: $selectedPath. ${t.message}", t)
-      return null to (t.message ?: "Failed to resolve path")
+      return null to ProjectBundle.message("dialog.message.error.resolving.path")
     }
 
-    if (targetDir.isFile) return null to "Target path is an existing file"
+    if (targetDir.isFile) return null to ProjectBundle.message("dialog.message.error.target.path.exists.file")
     if (targetDir.isDirectory && targetDir.listFiles()?.isNotEmpty() == true) {
-      return null to "Target path is an existing non-empty directory: $targetDir"
+      return null to ProjectBundle.message("dialog.message.error.target.path.exists.nonEmpty.dir")
     }
 
     return targetDir to null
   }
 
+  /**
+   * @see [JdkInstallRequest.javaHome] for the actual java home, it may not match the [JdkInstallRequest.installDir]
+   */
   fun installJdk(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
     JDK_INSTALL_LISTENER_EP_NAME.extensions.forEach { it.onJdkDownloadStarted(request, project) }
 
     val item = request.item
-    indicator?.text = "Installing ${item.fullPresentationText}..."
+    indicator?.text = ProjectBundle.message("progress.text.installing.jdk.1", item.fullPresentationText)
 
-    val targetDir = request.targetDir
+    val targetDir = request.installDir
     val url = Urls.parse(item.url, false) ?: error("Cannot parse download URL: ${item.url}")
     if (!url.scheme.equals("https", ignoreCase = true)) error("URL must use https:// protocol, but was: $url")
 
-    indicator?.text2 = "Downloading"
+    indicator?.text2 = ProjectBundle.message("progress.text2.downloading.jdk")
     val downloadFile = File(PathManager.getTempPath(), "jdk-${item.archiveFileName}")
     try {
       try {
@@ -114,32 +133,30 @@ class JdkInstaller {
         throw RuntimeException("Failed to download ${item.fullPresentationText} from $url. ${t.message}", t)
       }
 
-      val invalidFileMessage = "Check your internet connection and try again later"
-
       val sizeDiff = downloadFile.length() - item.archiveSize
       if (sizeDiff != 0L) {
         throw RuntimeException("The downloaded ${item.fullPresentationText} has incorrect file size,\n" +
                                "the difference is ${sizeDiff.absoluteValue} bytes.\n" +
-                               invalidFileMessage)
+                               "Check your internet connection and try again later")
       }
 
       val actualHashCode = Files.asByteSource(downloadFile).hash(Hashing.sha256()).toString()
       if (!actualHashCode.equals(item.sha256, ignoreCase = true)) {
-        throw RuntimeException("Failed to verify SHA-256 checksum for ${item.fullPresentationText}n\n" +
+        throw RuntimeException("Failed to verify SHA-256 checksum for ${item.fullPresentationText}\n\n" +
                                "The actual value is $actualHashCode,\n" +
                                "but expected ${item.sha256} was expected\n" +
-                               invalidFileMessage)
+                               "Check your internet connection and try again later")
       }
 
       indicator?.isIndeterminate = true
-      indicator?.text2 = "Unpacking"
+      indicator?.text2 = ProjectBundle.message("progress.text2.unpacking.jdk")
 
       try {
         val decompressor = item.packageType.openDecompressor(downloadFile)
         //handle cancellation via postProcessor (instead of inheritance)
         decompressor.postprocessor { indicator?.checkCanceled() }
 
-        val fullMatchPath = item.unpackPrefixFilter.trim('/')
+        val fullMatchPath = item.packageRootPrefix.trim('/')
         if (!fullMatchPath.isBlank()) {
           decompressor.removePrefixPath(fullMatchPath)
         }
@@ -154,7 +171,6 @@ class JdkInstaller {
     catch (t: Throwable) {
       //if we were cancelled in the middle or failed, let's clean up
       FileUtil.delete(targetDir)
-      if (t is ControlFlowException) throw t
       throw t
     }
     finally {
@@ -175,13 +191,27 @@ class JdkInstaller {
       throw IOException("Failed to create home directory: $home")
     }
 
-    val request = JdkInstallRequest(jdkItem, home)
+    val javaHome = when {
+      jdkItem.packageToBinJavaPrefix.isBlank() -> targetPath
+      else -> File(targetPath, jdkItem.packageToBinJavaPrefix).absoluteFile
+    }
+
+    FileUtil.createDirectory(javaHome)
+    if (!javaHome.isDirectory) {
+      throw IOException("Failed to create home directory: $javaHome")
+    }
+
+    val request = object: JdkInstallRequest {
+      override val item = jdkItem
+      override val installDir = targetPath
+      override val javaHome = javaHome
+    }
     writeMarkerFile(request)
     return request
   }
 
   private fun writeMarkerFile(request: JdkInstallRequest) {
-    val markerFile = request.targetDir / "intellij-downloader-info.txt"
+    val markerFile = File(request.installDir.path + "-intellij-downloader-info.txt")
     markerFile.writeText("Download started on ${Date()}\n${request.item}")
   }
 }

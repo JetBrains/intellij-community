@@ -18,12 +18,12 @@ import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.PathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -38,17 +38,19 @@ import java.util.List;
 import java.util.Map;
 
 public class ProgramParametersConfigurator {
-  private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME= ExtensionPointName
-    .create("com.intellij.module.workingDirectoryProvider");
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME =
+    ExtensionPointName.create("com.intellij.module.workingDirectoryProvider");
+
+  /** @deprecated use {@link PathMacroUtil#MODULE_WORKING_DIR} instead */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
 
-  public void configureConfiguration(SimpleProgramParameters parameters, CommonProgramRunConfigurationParameters configuration) {
+  public void configureConfiguration(@NotNull SimpleProgramParameters parameters, @NotNull CommonProgramRunConfigurationParameters configuration) {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    final String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
+    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
     parameters.getProgramParametersList().addParametersString(parametersString);
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
@@ -64,13 +66,14 @@ public class ProgramParametersConfigurator {
   }
 
   @Contract("!null, _, _ -> !null")
-  public @Nullable String expandPathAndMacros(String s, Module module, Project project) {
-    final String path = expandPath(s, module, project);
-    if (path == null) return null;
-    return expandMacros(path, projectContext(project, module), false);
+  public @Nullable String expandPathAndMacros(String s, @Nullable Module module, @NotNull Project project) {
+    String path = s;
+    if (path != null) path = expandPath(path, module, project);
+    if (path != null) path = expandMacros(path, projectContext(project, module), false);
+    return path;
   }
 
-  private static @NotNull DataContext projectContext(Project project, Module module) {
+  private static DataContext projectContext(Project project, Module module) {
     return dataId -> {
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
       if (LangDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
@@ -86,21 +89,18 @@ public class ProgramParametersConfigurator {
    * @see #expandPathAndMacros For paths: working directory, input file, etc.
    */
   public static String expandMacros(@Nullable String path) {
-    if (StringUtil.isEmpty(path)) {
-      return path;
-    }
-    return expandMacros(path, DataContext.EMPTY_CONTEXT, false);
+    return !StringUtil.isEmpty(path) ? expandMacros(path, DataContext.EMPTY_CONTEXT, false) : path;
   }
 
   public static @NotNull List<String> expandMacrosAndParseParameters(@Nullable String parametersStringWithMacros) {
     if (StringUtil.isEmpty(parametersStringWithMacros)) {
       return Collections.emptyList();
     }
-    final String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
+    String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
     return ParametersListUtil.parse(expandedParametersString);
   }
 
-  private static @NotNull String expandMacros(@NotNull String path, @NotNull DataContext dataContext, boolean applyParameterEscaping) {
+  private static String expandMacros(String path, DataContext dataContext, boolean applyParameterEscaping) {
     if (!Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
@@ -122,89 +122,80 @@ public class ProgramParametersConfigurator {
     return path;
   }
 
-  private static @Nullable String previewOrExpandMacro(@NotNull Macro macro,
-                                                       @NotNull DataContext dataContext) {
+  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext) {
     try {
-      return macro instanceof PromptingMacro
-             ? ((PromptingMacro)macro).expand(dataContext)
-             : macro.preview();
+      return macro instanceof PromptingMacro ? ((PromptingMacro)macro).expand(dataContext) : macro.preview();
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;
     }
   }
 
-  @Nullable
-  public String getWorkingDir(CommonProgramRunConfigurationParameters configuration, Project project, Module module) {
+  public @Nullable String getWorkingDir(@NotNull CommonProgramRunConfigurationParameters configuration,
+                                        @NotNull Project project,
+                                        @Nullable Module module) {
     String workingDirectory = configuration.getWorkingDirectory();
-    String defaultWorkingDir = getDefaultWorkingDir(project);
+
+    String projectDirectory = getDefaultWorkingDir(project);
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
-      workingDirectory = defaultWorkingDir;
-      if (workingDirectory == null) {
-        return null;
-      }
+      workingDirectory = projectDirectory;
+      if (workingDirectory == null) return null;
     }
+
     workingDirectory = expandPathAndMacros(workingDirectory, module, project);
-    if (!FileUtil.isAbsolutePlatformIndependent(workingDirectory) && defaultWorkingDir != null) {
-      if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
-        return defaultWorkingDir;
-      }
 
-      //noinspection deprecation
-      if (MODULE_WORKING_DIR.equals(workingDirectory)) {
-        workingDirectory = PathMacroUtil.MODULE_WORKING_DIR;
-      }
-
-      if (PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory)) {
-        if (module == null) {
-          return defaultWorkingDir;
-        }
-        else {
-          String workingDir = getDefaultWorkingDir(module);
-          if (workingDir != null) {
-            return workingDir;
-          }
-        }
-      }
-      workingDirectory = defaultWorkingDir + "/" + workingDirectory;
+    if (MODULE_WORKING_DIR.equals(workingDirectory) || PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
+      workingDirectory = PathMacroUtil.MODULE_WORKING_DIR;
     }
+    if (PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory)) {
+      if (module != null) {
+        String moduleDirectory = getDefaultWorkingDir(module);
+        if (moduleDirectory != null) return moduleDirectory;
+      }
+      if (projectDirectory != null) return projectDirectory;
+    }
+
+    if (projectDirectory != null && !PathUtil.isAbsolute(workingDirectory)) {
+      workingDirectory = projectDirectory + '/' + workingDirectory;
+    }
+
     return workingDirectory;
   }
 
-  @Nullable
-  protected String getDefaultWorkingDir(@NotNull Project project) {
-    return PathUtil.getLocalPath(project.getBaseDir());
+  protected @Nullable String getDefaultWorkingDir(@NotNull Project project) {
+    String path = project.getBasePath();
+    return path != null && LocalFileSystem.getInstance().findFileByPath(path) != null ? path : null;
   }
 
-  @Nullable
-  protected String getDefaultWorkingDir(@NotNull Module module) {
+  protected @Nullable String getDefaultWorkingDir(@NotNull Module module) {
     for (WorkingDirectoryProvider provider : WORKING_DIRECTORY_PROVIDER_EP_NAME.getExtensions()) {
       @SystemIndependent String path = provider.getWorkingDirectoryPath(module);
       if (path != null) return path;
     }
     VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
     if (roots.length > 0) {
-      return PathUtil.getLocalPath(roots[0]);
+      return roots[0].getPath();
     }
     return null;
   }
 
-  public void checkWorkingDirectoryExist(CommonProgramRunConfigurationParameters configuration, Project project, Module module)
-    throws RuntimeConfigurationWarning {
-    final String workingDir = getWorkingDir(configuration, project, module);
+  public void checkWorkingDirectoryExist(@NotNull CommonProgramRunConfigurationParameters configuration,
+                                         @NotNull Project project,
+                                         @Nullable Module module) throws RuntimeConfigurationWarning {
+    String workingDir = getWorkingDir(configuration, project, module);
     if (workingDir == null) {
-      throw new RuntimeConfigurationWarning("Working directory is null for "+
-                                            "project '" + project.getName() + "' ("+project.getBasePath()+")"
-                                            + ", module " + (module == null? "null" : "'" + module.getName() + "' (" + module.getModuleFilePath() + ")"));
+      throw new RuntimeConfigurationWarning("Working directory is null for project '" + project.getName() + "' (" + project.getBasePath() + ")," +
+                                            " module " + (module == null ? "null" : "'" + module.getName() + "' (" + module.getModuleFilePath() + ")"));
     }
     if (!new File(workingDir).exists()) {
       throw new RuntimeConfigurationWarning("Working directory '" + workingDir + "' doesn't exist");
     }
   }
 
-  protected String expandPath(@Nullable String path, Module module, Project project) {
+  protected String expandPath(@Nullable String path, @Nullable Module module, @NotNull Project project) {
     // https://youtrack.jetbrains.com/issue/IDEA-190100
-    // if old macro is used (because stored in the default project and applied for a new imported project) and module file stored under .idea, use new module macro instead
+    // if an old macro is used (because stored in the default project and applied for a new imported project)
+    // and module file stored under .idea, use the new module macro instead
     if (module != null && PathMacroUtil.DEPRECATED_MODULE_DIR.equals(path) &&
         module.getModuleFilePath().contains("/" + Project.DIRECTORY_STORE_FOLDER + "/") &&
         ExternalProjectSystemRegistry.getInstance().getExternalSource(module) != null /* not really required but to reduce possible impact */) {
@@ -218,11 +209,7 @@ public class ProgramParametersConfigurator {
     return path;
   }
 
-  @Nullable
-  protected Module getModule(CommonProgramRunConfigurationParameters configuration) {
-    if (configuration instanceof ModuleBasedConfiguration) {
-      return ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
-    }
-    return null;
+  protected @Nullable Module getModule(CommonProgramRunConfigurationParameters cp) {
+    return cp instanceof ModuleBasedConfiguration ? ((ModuleBasedConfiguration<?, ?>)cp).getConfigurationModule().getModule() : null;
   }
 }

@@ -37,10 +37,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +115,8 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
-    myTable.setPreferredScrollableViewportSize(new Dimension(200, myTable.getRowHeight() * getPreferredRowsCount()));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(200, -1));
+    myTable.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn column = columnModel.getColumn(FilterTableModel.CHECK_MARK);
@@ -130,9 +128,6 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
 
     getEmptyText().setText(JavaBundle.message("no.patterns"));
-  }
-  protected int getPreferredRowsCount() {
-    return JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS;
   }
 
   @NotNull

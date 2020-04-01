@@ -1,24 +1,26 @@
-import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
+import org.hamcrest.number.OrderingComparison;
 import org.junit.Assert;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.number.OrderingComparison.*;
 
 public class TestCase {
   void m() {
     Assert.assertThat(2, not(is(3)));
     Assert.assertThat(2, is(3));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.greaterThan(3));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.lessThan(3));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo(3));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.lessThanOrEqualTo(3));
+    Assert.assertThat(2, OrderingComparison.greaterThan(3));
+    Assert.assertThat(2, OrderingComparison.lessThan(3));
+    Assert.assertThat(2, OrderingComparison.greaterThanOrEqualTo(3));
+    Assert.assertThat(2, OrderingComparison.lessThanOrEqualTo(3));
 
     Assert.assertThat(2 != 3, is(false));
     Assert.assertThat(2 == 3, is(false));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.lessThanOrEqualTo(3));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo(3));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.lessThan(3));
-    Assert.assertThat(2, org.hamcrest.number.OrderingComparison.greaterThan(3));
+    Assert.assertThat(2, OrderingComparison.lessThanOrEqualTo(3));
+    Assert.assertThat(2, OrderingComparison.greaterThanOrEqualTo(3));
+    Assert.assertThat(2, OrderingComparison.lessThan(3));
+    Assert.assertThat(2, OrderingComparison.greaterThan(3));
   }
 
   void m2() {

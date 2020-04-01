@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -18,6 +18,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.GitUtil
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
@@ -200,15 +201,19 @@ internal object BranchesDashboardActions {
         e.presentation.isEnabled = false
         e.presentation.description = message("action.Git.Update.Selected.description.select.non.current")
       }
+      else if (GitBranchUtil.getCurrentRepository(project) == null) {
+        e.presentation.isEnabled = false
+      }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       val branches = e.getData(GIT_BRANCHES)!!
       val project = e.project!!
       val gitBrancher = GitBrancher.getInstance(project)
+      val currentRepository = GitBranchUtil.getCurrentRepository(project)!!
 
       for (branch in branches.filterNot(BranchInfo::isCurrent)) {
-        gitBrancher.compare(branch.branchName, branch.repositories)
+        gitBrancher.compare(branch.branchName, branch.repositories, currentRepository)
       }
     }
   }

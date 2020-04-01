@@ -32,20 +32,24 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.event.AdjustmentListener
@@ -54,35 +58,31 @@ import javax.swing.JComponent
 
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    if (file !is GHPRVirtualFile) return false
-    val context = file.context
-    return context.pullRequest != null && context.pullRequestDataProvider != null && context.pullRequestDetails != null
+    return file is GHPRVirtualFile
   }
 
   override fun createEditor(project: Project, file: VirtualFile): GHPRFileEditor {
     file as GHPRVirtualFile
-    val context = file.context
 
     return GHPRFileEditor(file.presentableName) {
-      createEditorContentComponentContainer(project, context)
+      createEditorContentComponentContainer(project, file.dataContext, file.pullRequest)
     }
   }
 
-  private fun createEditorContentComponentContainer(project: Project, context: GHPRActionDataContext): ComponentContainer {
+  private fun createEditorContentComponentContainer(project: Project, dataContext: GHPRDataContext,
+                                                    pullRequest: GHPullRequestShort): ComponentContainer {
     val disposable = Disposer.newDisposable()
 
-    val dataProvider = context.pullRequestDataProvider!!
+    val dataProvider = dataContext.dataLoader.getDataProvider(pullRequest, disposable)
 
-    val detailsModel = SingleValueModel(context.pullRequestDetails!!)
-    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider, disposable)
+    val detailsModel = SingleValueModel(pullRequest)
+    val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)
 
     val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
 
     fun handleDetails() {
       dataProvider.detailsRequest.handleOnEdt(disposable) { pr, _ ->
-        if (pr != null) {
-          detailsModel.value = pr
-        }
+        detailsModel.value = pr
       }
     }
     dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {
@@ -90,21 +90,26 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     })
     handleDetails()
 
+    val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(),
+                                                                              GithubImageResizer.getInstance(),
+                                                                              dataContext.requestExecutor)
+
     val mainPanel = Wrapper().also {
       DataManager.registerDataProvider(it, DataProvider { dataId ->
         if (GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId))
-          GHPRFixedActionDataContext(context, dataProvider, context.pullRequestDetails)
+          GHPRFixedActionDataContext(dataContext, dataProvider, avatarIconsProviderFactory) {
+            detailsModel.value
+          }
         else null
       })
     }
 
-    val avatarIconsProvider = context.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
+    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
-    val reviewService = dataProvider.let { GHPRReviewServiceAdapter.create(context.reviewService, it) }
     val timeline = GHPRTimelineComponent(loader.listModel,
-                                         createItemComponentFactory(project, reviewService, reviewThreadsModelsProvider,
-                                                                    avatarIconsProvider, context.currentUser)).apply {
+                                         createItemComponentFactory(project, dataProvider.reviewData, reviewThreadsModelsProvider,
+                                                                    avatarIconsProvider, dataContext.securityService.currentUser)).apply {
       border = JBUI.Borders.empty(16, 0)
     }
     val loadingIcon = AsyncProcessIcon("Loading").apply {
@@ -131,10 +136,10 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         add(timeline, CC().growX().minWidth(""))
         add(loadingIcon, CC().hideMode(2).alignX("center"))
 
-        with(context.commentService) {
+        with(dataContext.commentService) {
           if (canComment()) {
             val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
-            add(createCommentField(commentServiceAdapter, avatarIconsProvider, context.currentUser), CC().growX())
+            add(createCommentField(commentServiceAdapter, avatarIconsProvider, dataContext.securityService.currentUser), CC().growX())
           }
         }
       }
@@ -146,7 +151,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, timelinePanel, true) {
       init {
-        errorHandler = GHLoadingErrorHandlerImpl(project, context.account) {
+        errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
           loader.reset()
         }
       }
@@ -169,7 +174,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     Disposer.register(loaderPanel, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
-    val statePanel = GHPRStatePanel(project, dataProvider, context.securityService, context.stateService, detailsModel, disposable)
+    val statePanel = GHPRStatePanel(project, dataProvider, dataContext.securityService, dataContext.stateService, detailsModel, disposable)
 
     val contentPanel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
 
@@ -193,6 +198,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
     PopupHandler.installPopupHandler(timelinePanel, actionGroup, ActionPlaces.UNKNOWN, actionManager)
 
+    loader.loadMore()
+
     return object : ComponentContainer {
       override fun getComponent() = mainPanel
       override fun getPreferredFocusableComponent() = contentPanel
@@ -210,7 +217,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   }
 
   private fun createItemComponentFactory(project: Project,
-                                         reviewService: GHPRReviewServiceAdapter,
+                                         reviewDataProvider: GHPRReviewDataProvider,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          currentUser: GHUser)
@@ -218,7 +225,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(reviewService, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
+    return GHPRTimelineItemComponentFactory(reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
                                             currentUser)
   }

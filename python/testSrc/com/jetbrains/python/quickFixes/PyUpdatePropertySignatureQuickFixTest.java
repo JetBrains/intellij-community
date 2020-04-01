@@ -16,7 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyPropertyDefinitionInspection;
 
@@ -24,19 +24,19 @@ import com.jetbrains.python.inspections.PyPropertyDefinitionInspection;
 public class PyUpdatePropertySignatureQuickFixTest extends PyQuickFixTestCase {
 
   public void testGetter() {
-    doQuickFixTest(PyPropertyDefinitionInspection.class, PyBundle.message("QFIX.NAME.update.parameters"));
+    doQuickFixTest(PyPropertyDefinitionInspection.class, PyPsiBundle.message("QFIX.NAME.update.parameters"));
   }
 
   public void testGetterNoPararm() {
-    doQuickFixTest(PyPropertyDefinitionInspection.class, PyBundle.message("QFIX.NAME.update.parameters"));
+    doQuickFixTest(PyPropertyDefinitionInspection.class, PyPsiBundle.message("QFIX.NAME.update.parameters"));
   }
 
   public void testSetter() {
-    doQuickFixTest(PyPropertyDefinitionInspection.class, PyBundle.message("QFIX.NAME.update.parameters"));
+    doQuickFixTest(PyPropertyDefinitionInspection.class, PyPsiBundle.message("QFIX.NAME.update.parameters"));
   }
 
   public void testSetterLessParam() {
-    doQuickFixTest(PyPropertyDefinitionInspection.class, PyBundle.message("QFIX.NAME.update.parameters"));
+    doQuickFixTest(PyPropertyDefinitionInspection.class, PyPsiBundle.message("QFIX.NAME.update.parameters"));
   }
 
 }

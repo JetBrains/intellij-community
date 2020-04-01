@@ -14,6 +14,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.SpellcheckerCorrectionsFilter;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -21,6 +22,7 @@ import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.text.EditDistance;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +43,15 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
   private final List<Pair<Loader, Consumer<? super Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
+  private final SLRUCache<String, Boolean> myRecentQueries = SLRUCache.create(1000, 1000, this::calcIsCorrect);
 
-  BaseSpellChecker(@NotNull Project project) {
+  BaseSpellChecker(@NotNull Project project, @NotNull SpellCheckerManager spellCheckerManager) {
     myProject = project;
+    spellCheckerManager.addUserDictionaryChangedListener(__ -> clearCache(), project);
+  }
+
+  private void clearCache() {
+    myRecentQueries.clear();
   }
 
   @Override
@@ -113,11 +121,13 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   @Override
   public void addModifiableDictionary(@NotNull EditableDictionary dictionary) {
     dictionaries.add(dictionary);
+    clearCache();
   }
 
   @Override
   public void addDictionary(@NotNull Dictionary dictionary) {
     bundledDictionaries.add(dictionary);
+    clearCache();
   }
 
   @Override
@@ -150,9 +160,18 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     if (myLoadingDictionaries.get() || transformed == null) {
       return true;
     }
+
+    synchronized (myRecentQueries) {
+      return myRecentQueries.get(transformed);
+    }
+  }
+
+  private boolean calcIsCorrect(String transformed) {
     int bundled = isCorrect(transformed, bundledDictionaries);
+    if (bundled == 0) return true;
+
     int user = isCorrect(transformed, dictionaries);
-    return bundled == 0 || user == 0 || bundled > 0 && user > 0;
+    return user == 0 || bundled > 0 && user > 0;
   }
 
   @Override
@@ -190,6 +209,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public void reset() {
     bundledDictionaries.clear();
     dictionaries.clear();
+    clearCache();
   }
 
   @Override
@@ -202,6 +222,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     final Dictionary dictionaryByName = getBundledDictionaryByName(name);
     if (dictionaryByName != null) {
       bundledDictionaries.remove(dictionaryByName);
+      clearCache();
     }
   }
 
@@ -211,6 +232,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       .filter(bundledDictionaries, dict -> FileUtil.isAncestor(directory, dict.getName(), false) && isDictionaryLoad(dict.getName()));
 
     bundledDictionaries.removeAll(toRemove);
+    clearCache();
   }
 
   @Nullable

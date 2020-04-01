@@ -5,6 +5,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
@@ -57,7 +58,7 @@ public class UnixProcessManager {
 
   public static int getProcessId(@NotNull Process process) {
     try {
-      if (SystemInfo.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
+      if (SystemInfoRt.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
         //noinspection JavaReflectionMemberAccess
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }

@@ -12,7 +12,8 @@ import com.intellij.psi.search.PsiElementProcessor
 import java.util.*
 import kotlin.collections.ArrayList
 
-class GraziePsiElementProcessor<T : PsiElement>(private val root: PsiElement, private val strategy: GrammarCheckingStrategy) : PsiElementProcessor<T> {
+class GraziePsiElementProcessor<T : PsiElement>(private val root: PsiElement,
+                                                private val strategy: GrammarCheckingStrategy) : PsiElementProcessor<T> {
   companion object {
     data class Result(val tokens: Collection<TokenInfo>, val shifts: List<ElementShift>, val text: StringBuilder)
 
@@ -34,7 +35,8 @@ class GraziePsiElementProcessor<T : PsiElement>(private val root: PsiElement, pr
                 behavior: GrammarCheckingStrategy.ElementBehavior,
                 ignoredGroup: RuleGroup,
                 ignoredCategories: Set<Typo.Category>) :
-      this(IntRange(element.textOffset - root.textOffset, element.textOffset - root.textOffset + element.textLength - 1), behavior, ignoredGroup, ignoredCategories)
+      this(IntRange(element.textOffset - root.textOffset, element.textOffset - root.textOffset + element.textLength - 1), behavior,
+           ignoredGroup, ignoredCategories)
   }
 
   private val tokens = Collections.synchronizedCollection(ArrayList<TokenInfo>())

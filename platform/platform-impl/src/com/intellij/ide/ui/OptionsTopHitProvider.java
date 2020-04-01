@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
@@ -30,7 +29,6 @@ import java.util.function.Consumer;
 
 public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvider, SearchTopHitProvider {
   // project level here means not that EP itself in project area, but that extensions applicable for project only
-  @VisibleForTesting
   public static final ExtensionPointName<OptionsSearchTopHitProvider.ProjectLevelProvider>
     PROJECT_LEVEL_EP = new ExtensionPointName<>("com.intellij.search.projectOptionsTopHitProvider");
 

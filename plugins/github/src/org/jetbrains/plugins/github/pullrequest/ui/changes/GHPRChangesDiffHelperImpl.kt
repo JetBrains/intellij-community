@@ -17,12 +17,9 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapp
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangeDiffData
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
-class GHPRChangesDiffHelperImpl(private val reviewService: GHPRReviewService,
-                                private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+class GHPRChangesDiffHelperImpl(private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
   private var dataProvider: GHPRDataProvider? = null
@@ -39,13 +36,13 @@ class GHPRChangesDiffHelperImpl(private val reviewService: GHPRReviewService,
   }
 
   override fun getReviewSupport(change: Change): GHPRDiffReviewSupport? {
-    val reviewService = dataProvider?.let { GHPRReviewServiceAdapter.create(reviewService, it) } ?: return null
+    val reviewDataProvider = dataProvider?.reviewData ?: return null
 
     return changesProvider?.let { provider ->
       val diffData = provider.findChangeDiffData(change) ?: return null
       val createReviewCommentHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
 
-      return GHPRDiffReviewSupportImpl(reviewService, diffData.diffRanges,
+      return GHPRDiffReviewSupportImpl(reviewDataProvider, diffData.diffRanges,
                                        { mapThread(diffData, it) },
                                        createReviewCommentHelper,
                                        avatarIconsProviderFactory, currentUser)

@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.Disposable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,5 +159,10 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
 
   @Override
   public void setEnabled(boolean enabled) {
+  }
+
+  @Override
+  public Disposable getPluginDisposable() {
+    return null;
   }
 }

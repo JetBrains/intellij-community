@@ -3570,18 +3570,18 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-35235
   public void testUnionOfTypingLiterals() {
-    doTest("Union[Literal[-1], Literal[0], Literal[1]]",
+    doTest("Literal[-1, 0, 1]",
            "from typing_extensions import Literal\n" +
            "expr = undefined  # type: Literal[-1, 0, 1]");
 
-    doTest("Union[Literal[42], Literal[\"foo\"], Literal[True]]",
+    doTest("Literal[42, \"foo\", True]",
            "from typing_extensions import Literal\n" +
            "expr = undefined  # type: Literal[42, \"foo\", True]");
   }
 
   // PY-35235
   public void testTypingLiteralOfTypingLiterals() {
-    doTest("Union[Literal[1], Literal[2], Literal[3], Literal[4], Literal[5]]",
+    doTest("Literal[1, 2, 3, 4, 5]",
            "from typing_extensions import Literal\n" +
            "a = Literal[1]\n" +
            "b = Literal[2, 3]\n" +
@@ -3589,9 +3589,36 @@ public class PyTypeTest extends PyTestCase {
            "d = Literal[b, c]\n" +
            "expr = undefined  # type: Literal[a, d]");
 
-    doTest("Union[Literal[1], Literal[2], Literal[\"foo\"], Literal[5], None]",
+    doTest("Union[Literal[1, 2, \"foo\", 5], None]",
            "from typing_extensions import Literal\n" +
            "expr = undefined  # type: Literal[Literal[Literal[1, 2], \"foo\"], 5, None]");
+  }
+
+  // PY-40838
+  public void testUnionOfManyTypesInclLiterals() {
+    doTest("Union[Literal[\"1\", 2], bool, None]",
+           "from typing import overload, Literal\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> Literal[\"1\"]:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> Literal[2]:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> bool:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> None:\n" +
+           "    pass\n" +
+           "\n" +
+           "def foo1()\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = foo1()");
   }
 
   // PY-35235

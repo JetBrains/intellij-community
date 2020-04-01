@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.lightEdit.actions.LightEditExitAction;
 import com.intellij.ide.lightEdit.actions.LightEditNewFileAction;
+import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction;
 import com.intellij.ide.lightEdit.actions.LightEditSaveAsAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -15,6 +16,8 @@ public final class LightEditMenuBar extends IdeMenuBar {
   public @NotNull ActionGroup getMainMenuActionGroup() {
     return new DefaultActionGroup(
       createActionGroup("&File",
+                        new LightEditOpenFileInProjectAction(),
+                        Separator.create(),
                         new LightEditNewFileAction(),
                         Separator.create(),
                         standardAction("OpenFile"),

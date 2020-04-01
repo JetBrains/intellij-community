@@ -1,12 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.persistence;
 
-import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +18,9 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     Logger.getInstance(EventLogWhitelistPersistence.class);
   @NotNull
   private final String myRecorderId;
-  @NotNull
-  private final EventLogUploadSettingsService mySettingsService;
 
   public EventLogWhitelistPersistence(@NotNull String recorderId) {
     myRecorderId = recorderId;
-    mySettingsService = StatisticsUploadAssistant.createExternalSettings(recorderId, false);
   }
 
   @Override
@@ -56,32 +49,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     }
   }
 
-  public void updateWhiteListIfNeeded() {
-    WhitelistPathSettings settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId);
-    if (settings != null && settings.isUseCustomPath()) {
-      return;
-    }
-
-    final long lastModified = FUStatisticsWhiteListGroupsService.lastModifiedWhitelist(mySettingsService);
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-        "Loading whitelist, last modified cached=" + getLastModified() +
-        ", last modified on the server=" + lastModified
-      );
-    }
-
-    if (lastModified <= 0 || lastModified > getLastModified()) {
-      final String content = FUStatisticsWhiteListGroupsService.loadWhiteListFromServer(mySettingsService);
-      if (StringUtil.isNotEmpty(content)) {
-        cacheWhiteList(content, lastModified);
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("Update local whitelist, last modified cached=" + getLastModified());
-        }
-      }
-    }
-  }
-
-  private void cacheWhiteList(@NotNull String gsonWhiteListContent, long lastModified) {
+  public void cacheWhiteList(@NotNull String gsonWhiteListContent, long lastModified) {
     try {
       final File file = getDefaultFile();
       FileUtil.writeToFile(file, gsonWhiteListContent);
@@ -106,7 +74,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     return "resources/" + FUS_WHITELIST_PATH + "/" + myRecorderId + "/" + WHITE_LIST_DATA_FILE;
   }
 
-  private long getLastModified() {
+  public long getLastModified() {
     return EventLogWhitelistSettingsPersistence.getInstance().getLastModified(myRecorderId);
   }
 

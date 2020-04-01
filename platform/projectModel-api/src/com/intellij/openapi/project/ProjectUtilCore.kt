@@ -26,7 +26,10 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
     }
   }
 
-  decorateWithLibraryName(file, project, result)?.let { return it }
+  val urlWithLibraryName = decorateWithLibraryName(file, project, result)
+  if (urlWithLibraryName != null) {
+    return urlWithLibraryName
+  }
 
   // see PredefinedSearchScopeProviderImpl.getPredefinedScopes for the other place to fix.
   if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {

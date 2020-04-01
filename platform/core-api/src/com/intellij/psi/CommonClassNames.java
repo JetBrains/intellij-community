@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author peter
  */
@@ -117,4 +119,5 @@ public interface CommonClassNames {
 
   String CLASS_FILE_EXTENSION = ".class";
 
+  @NonNls String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
 }

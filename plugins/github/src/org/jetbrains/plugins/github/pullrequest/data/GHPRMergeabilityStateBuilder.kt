@@ -109,7 +109,7 @@ class GHPRMergeabilityStateBuilder(private val details: GHPullRequest,
         requiredApprovingReviewsCount
       else 0
 
-    return GHPRMergeabilityState(details.number, details.headRefOid, details.url,
+    return GHPRMergeabilityState(details.id, details.number, details.headRefOid, details.url,
                                  hasConflicts,
                                  failedChecks, pendingChecks, successfulChecks,
                                  checksState,

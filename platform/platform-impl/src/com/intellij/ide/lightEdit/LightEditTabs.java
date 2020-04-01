@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -34,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
+final class LightEditTabs extends JBEditorTabs implements LightEditorListener, CloseAction.CloseTarget {
   private final LightEditorManagerImpl myEditorManager;
   private final ExecutorService myTabUpdateExecutor;
 
@@ -74,6 +75,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     select(tabInfo, true);
     asyncUpdateTab(tabInfo);
     myEditorManager.fireEditorSelected(editorInfo);
+  }
+
+  @Override
+  public void close() {
+    ObjectUtils.consumeIfNotNull(getSelectedInfo(), tabInfo -> closeTab(tabInfo));
   }
 
   private static Icon getFileTypeIcon(@NotNull LightEditorInfo editorInfo) {
@@ -243,6 +249,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
       else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         final VirtualFile selectedFile = getSelectedFile();
         return selectedFile != null ? new VirtualFile[] {selectedFile} : VirtualFile.EMPTY_ARRAY;
+      }
+      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
+        return LightEditTabs.this;
       }
       return null;
     }

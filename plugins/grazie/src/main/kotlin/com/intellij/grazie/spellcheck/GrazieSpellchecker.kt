@@ -2,6 +2,7 @@
 package com.intellij.grazie.spellcheck
 
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.detector.heuristics.rule.RuleFilter
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
@@ -10,7 +11,6 @@ import com.intellij.grazie.utils.toLinkedSet
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import org.slf4j.LoggerFactory
-import tanvd.grazie.langdetect.heuristics.rule.RuleFilter
 
 object GrazieSpellchecker : GrazieStateLifecycle {
   private const val MAX_SUGGESTIONS_COUNT = 3

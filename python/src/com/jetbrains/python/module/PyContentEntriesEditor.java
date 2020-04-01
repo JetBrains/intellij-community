@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.module;
 
 import com.intellij.facet.impl.ui.FacetErrorPanel;
@@ -9,7 +9,15 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.*;
+import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
+import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeCellRenderer;
+import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
+import com.intellij.openapi.roots.ui.configuration.ContentFolderRef;
+import com.intellij.openapi.roots.ui.configuration.ContentRootPanel;
+import com.intellij.openapi.roots.ui.configuration.ExternalContentFolderRef;
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -18,17 +26,21 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
-import java.util.Collection;
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final List<PyRootTypeProvider> myRootTypeProviders;
@@ -179,7 +191,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
 
     public VirtualFilePointer getRoot(PyRootTypeProvider provider, @NotNull final String url) {
       for (VirtualFilePointer filePointer : provider.getRoots().get(getContentEntry())) {
-        if (Comparing.equal(filePointer.getUrl(), url)) {
+        if (Objects.equals(filePointer.getUrl(), url)) {
           return filePointer;
         }
       }
@@ -211,7 +223,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
           Collection<VirtualFilePointer> pointers = roots.get(getContentEntry());
           if (!pointers.isEmpty()) {
             List<ExternalContentFolderRef> folderRefs = ContainerUtil.map(pointers, ExternalContentFolderRef::new);
-            final JComponent sourcesComponent = createFolderGroupComponent(provider.getName() + " Folders",
+            final JComponent sourcesComponent = createFolderGroupComponent(provider.getDescription(),
                                                                            folderRefs,
                                                                            provider.getColor(), null);
             this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH,

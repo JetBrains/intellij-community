@@ -208,7 +208,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         performEnterAction(false);
         return true;
       }

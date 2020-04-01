@@ -297,7 +297,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return false;
   }
 
-  private static class MyListCellRenderer implements ListCellRenderer {
+  private static class MyListCellRenderer implements ListCellRenderer<XmlElementDescriptor> {
     private final JPanel myPanel;
     private final JLabel myNameLabel;
     private final JLabel myNSLabel;
@@ -319,16 +319,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-
-      XmlElementDescriptor descriptor = (XmlElementDescriptor)value;
+    public Component getListCellRendererComponent(JList<? extends XmlElementDescriptor> list,
+                                                  XmlElementDescriptor value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
       Color backgroundColor = isSelected ? list.getSelectionBackground() : list.getBackground();
 
-      myNameLabel.setText(descriptor.getName());
+      myNameLabel.setText(value.getName());
       myNameLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
       myPanel.setBackground(backgroundColor);
 
-      myNSLabel.setText(getNamespace(descriptor));
+      myNSLabel.setText(getNamespace(value));
       myNSLabel.setForeground(LookupCellRenderer.getGrayedForeground(isSelected));
       myNSLabel.setBackground(backgroundColor);
 

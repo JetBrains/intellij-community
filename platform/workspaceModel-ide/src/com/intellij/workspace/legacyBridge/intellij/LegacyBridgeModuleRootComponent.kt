@@ -1,8 +1,8 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleLibraryTable
@@ -102,7 +102,7 @@ class LegacyBridgeModuleRootComponent(
   override fun getExternalSource(): ProjectModelExternalSource? =
     ExternalProjectSystemRegistry.getInstance().getExternalSource(module)
 
-  override fun getFileIndex(): ModuleFileIndex = ModuleServiceManager.getService(currentModule, ModuleFileIndex::class.java)!!
+  override fun getFileIndex(): ModuleFileIndex = currentModule.getService(ModuleFileIndex::class.java)!!
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor())
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(

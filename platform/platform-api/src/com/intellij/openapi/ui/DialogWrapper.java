@@ -39,6 +39,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -308,6 +309,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
+  @NlsContexts.Checkbox
   protected String getDoNotShowMessage() {
     return UIBundle.message("dialog.options.do.not.show");
   }
@@ -1511,7 +1513,7 @@ public abstract class DialogWrapper {
   @Deprecated
   protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
-  protected final void setCancelButtonText(@Nls @NotNull String text) {
+  protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
 
@@ -1540,7 +1542,7 @@ public abstract class DialogWrapper {
    *             {@link AbstractButton#setText(String)}
    *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
    */
-  protected final void setOKButtonText(@Nls @NotNull String text) {
+  protected final void setOKButtonText(@NlsContexts.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
   }
 
@@ -1605,7 +1607,7 @@ public abstract class DialogWrapper {
    * @param title title
    * @see JDialog#setTitle
    */
-  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     myPeer.setTitle(title);
   }
 
@@ -2233,7 +2235,7 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     @NotNull
-    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NlsContexts.Checkbox
     String getDoNotShowMessage();
   }
 

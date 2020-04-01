@@ -24,14 +24,14 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -1542,7 +1542,7 @@ public class JBTabsImpl extends JComponent
       result.add(getIndexInVisibleArray(each), each);
     }
     if (isAlphabeticalMode()) {
-      Collections.sort(result, ABC_COMPARATOR);
+      result.sort(ABC_COMPARATOR);
     }
 
     myAllTabs = result;
@@ -1862,7 +1862,7 @@ public class JBTabsImpl extends JComponent
       return myVisibleInfos;
     } else {
       List<TabInfo> sortedCopy = new ArrayList<>(myVisibleInfos);
-      Collections.sort(sortedCopy, ABC_COMPARATOR);
+      sortedCopy.sort(ABC_COMPARATOR);
       return sortedCopy;
     }
   }
@@ -2660,7 +2660,7 @@ public class JBTabsImpl extends JComponent
     relayout(true, false);
   }
 
-  private static void adjust(final TabInfo each) {
+  protected void adjust(final TabInfo each) {
     if (myAdjustBorders) {
       UIUtil.removeScrollBorder(each.getComponent());
     }
@@ -2668,7 +2668,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void sortTabs(Comparator<? super TabInfo> comparator) {
-    Collections.sort(myVisibleInfos, comparator);
+    myVisibleInfos.sort(comparator);
 
     relayout(true, false);
   }

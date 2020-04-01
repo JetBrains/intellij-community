@@ -29,6 +29,10 @@ public class MutabilityJdk9 {
     map.<warning descr="Immutable object is modified">put</warning>("foo", 6);
   }
 
+  void testMapClear() {
+    Map.of("a", 1).<warning descr="Immutable object is modified">clear</warning>();
+  }
+
   void testMapOfEntries() {
     Map<String, Integer> map = Map.ofEntries(Map.entry("x", 1), Map.entry("y", 2));
     if(<warning descr="Condition 'map.size() == 2' is always 'true'">map.size() == 2</warning>) {

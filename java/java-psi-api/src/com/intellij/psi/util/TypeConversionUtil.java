@@ -1111,6 +1111,8 @@ public class TypeConversionUtil {
    */
   @NotNull
   public static PsiType binaryNumericPromotion(PsiType type1, PsiType type2) {
+    type1 = uncapture(type1);
+    type2 = uncapture(type2);
     if (isDoubleType(type1)) return unbox(type1);
     if (isDoubleType(type2)) return unbox(type2);
     if (isFloatType(type1)) return unbox(type1);

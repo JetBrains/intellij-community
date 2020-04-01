@@ -181,7 +181,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       return;
     }
 
-    PluginId id1 = getExtensionPoint(pointName).getDescriptor().getPluginId();
+    PluginId id1 = getExtensionPoint(pointName).getPluginDescriptor().getPluginId();
     PluginId id2 = pluginDescriptor.getPluginId();
     String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
@@ -192,7 +192,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private void registerExtensionPoint(@NotNull ExtensionPointImpl<?> point) {
     String name = point.getName();
-    checkThatPointNotDuplicated(name, point.getDescriptor());
+    checkThatPointNotDuplicated(name, point.getPluginDescriptor());
     myExtensionPoints.put(name, point);
     if (DEBUG_REGISTRATION) {
       myEPTraces.put(name, new Throwable("Original registration for " + name));
@@ -214,8 +214,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       ExtensionPointImpl<?> old = map.put(point.getName(), point);
       if (old != null) {
         map.put(point.getName(), old);
-        throw myComponentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getDescriptor() +
-                                             ", second in " + point.getDescriptor(), point.getDescriptor().getPluginId());
+        throw myComponentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getPluginDescriptor() +
+                                             ", second in " + point.getPluginDescriptor(), point.getPluginDescriptor().getPluginId());
       }
     }
   }

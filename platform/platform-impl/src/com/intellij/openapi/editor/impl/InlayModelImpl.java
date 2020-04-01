@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -205,7 +206,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       if (predicate.test(inlay)) result.add(inlay);
       return true;
     });
-    Collections.sort(result, comparator);
+    result.sort(comparator);
     return result;
   }
 
@@ -225,7 +226,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       return true;
     });
     if (above) Collections.reverse(result); // matters for inlays with equal priority
-    Collections.sort(result, BLOCK_ELEMENTS_COMPARATOR);
+    result.sort(BLOCK_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)result;
   }
@@ -276,7 +277,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
 
   @Override
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
-    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    int offset = myEditor.visualPositionToOffset(visualPosition);
     int inlayCount = getInlineElementsInRange(offset, offset).size();
     if (inlayCount == 0) return false;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
@@ -287,7 +288,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
-    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    int offset = myEditor.visualPositionToOffset(visualPosition);
     List<Inlay> inlays = getInlineElementsInRange(offset, offset);
     if (inlays.isEmpty()) return null;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
@@ -318,13 +319,13 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
         int yDiff = baseY - point.y;
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
-          int height = inlay.getHeightInPixels();
-          if (yDiff <= height) {
+          yDiff -= inlay.getHeightInPixels();
+          if (yDiff <= 0) {
             return relX < inlay.getWidthInPixels() ? inlay : null;
           }
-          yDiff -= height;
         }
-        LOG.error("Inconsistent state");
+        LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
+                  new Attachment("editorState.txt", myEditor.dumpState()));
         return null;
       }
       else {
@@ -333,36 +334,38 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
           List<Inlay> inlays = getBlockElementsForVisualLine(visualLine, false);
           int yDiff = point.y - lineBottom;
           for (Inlay inlay : inlays) {
-            int height = inlay.getHeightInPixels();
-            if (yDiff < height) {
+            yDiff -= inlay.getHeightInPixels();
+            if (yDiff < 0) {
               return relX < inlay.getWidthInPixels() ? inlay : null;
             }
-            yDiff -= height;
           }
-          LOG.error("Inconsistent state");
+          LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
+                    new Attachment("editorState.txt", myEditor.dumpState()));
           return null;
         }
       }
     }
     int offset = -1;
     if (hasInlineElements) {
-      offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+      offset = myEditor.visualPositionToOffset(visualPosition);
       List<Inlay> inlays = getInlineElementsInRange(offset, offset);
       if (!inlays.isEmpty()) {
         VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
-        int x = myEditor.visualPositionToXY(startVisualPosition).x;
-        Inlay inlay = findInlay(inlays, point.x, x);
+        Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+        if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+        Inlay inlay = findInlay(inlays, point.x, inlayPoint.x);
         if (inlay != null) return inlay;
       }
     }
     if (hasAfterLineEndElements) {
-      if (offset < 0) offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+      if (offset < 0) offset = myEditor.visualPositionToOffset(visualPosition);
       int logicalLine = myEditor.getDocument().getLineNumber(offset);
       if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && !myEditor.getFoldingModel().isOffsetCollapsed(offset)) {
         List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
         if (!inlays.isEmpty()) {
           Rectangle bounds = inlays.get(0).getBounds();
           assert bounds != null;
+          if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
           Inlay inlay = findInlay(inlays, point.x, bounds.x);
           if (inlay != null) return inlay;
         }

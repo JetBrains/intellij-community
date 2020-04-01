@@ -818,7 +818,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       processMethodParams(changeInfo, baseMethod, factory, substitutor, list, method.getBody());
     }
     if (isRecordCanonicalConstructor) {
-      processRecordHeader(factory, Objects.requireNonNull(aClass.getRecordHeader()), changeInfo);
+      PsiRecordHeader header = aClass.getRecordHeader();
+      if (header == null) {
+        header = factory.createRecordHeaderFromText("", aClass);
+        header = (PsiRecordHeader)aClass.addAfter(header, aClass.getTypeParameterList());
+      }
+      processRecordHeader(factory, Objects.requireNonNull(header), changeInfo);
       if (method instanceof SyntheticElement) {
         method = Objects.requireNonNull(JavaPsiRecordUtil.findCanonicalConstructor(aClass));
       }

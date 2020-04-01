@@ -2,7 +2,7 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,7 @@ public class GeneratedLocation implements Location {
     myVirtualMachine = debugProcess.getVirtualMachineProxy().getVirtualMachine();
     myLineNumber = lineNumber;
     myReferenceType = type;
-    myMethod = ContainerUtil.getFirstItem(myReferenceType.methodsByName(methodName));
+    myMethod = DebuggerUtils.findMethod(myReferenceType, methodName, null);
   }
 
   @Override

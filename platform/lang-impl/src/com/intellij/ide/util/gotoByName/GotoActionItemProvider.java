@@ -171,8 +171,8 @@ public final class GotoActionItemProvider implements ChooseByNameItemProvider {
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
           AnAction action = converter.provide(description);
           if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext, myModel));
-          options.add(description);
         }
+        options.add(description);
       }
     }
     return processItems(pattern, JBIterable.from(options), consumer);
@@ -224,7 +224,7 @@ public final class GotoActionItemProvider implements ChooseByNameItemProvider {
   private static boolean processItems(String pattern, JBIterable<?> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     try {
-      Collections.sort(matched, (o1, o2) -> o1.compareWeights(o2));
+      matched.sort((o1, o2) -> o1.compareWeights(o2));
     }
     catch (IllegalArgumentException e) {
       LOG.error("Comparison method violates its general contract with pattern '" + pattern + "'", e);

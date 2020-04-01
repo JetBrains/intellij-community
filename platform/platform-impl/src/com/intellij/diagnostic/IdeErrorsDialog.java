@@ -6,6 +6,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
@@ -478,7 +479,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
-    if (submitter == null && plugin != null && !PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && plugin != null && !PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String vendorUrl = plugin.getVendorUrl();
@@ -613,7 +614,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
       message.setSubmitted(reportInfo);
-      UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
+      UIUtil.invokeLaterIfNeeded(this::updateOnSubmit);
     });
     if (!accepted) {
       message.setSubmitting(false);
@@ -704,7 +705,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /* UI components */
 
-  private class BackAction extends AnAction implements DumbAware {
+  private class BackAction extends AnAction implements DumbAware, LightEditCompatible {
     BackAction() {
       super(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
@@ -725,7 +726,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ForwardAction extends AnAction implements DumbAware {
+  private class ForwardAction extends AnAction implements DumbAware, LightEditCompatible {
     ForwardAction() {
       super(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
@@ -928,7 +929,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
-    if (plugin == null || PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (plugin == null || PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
         if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {

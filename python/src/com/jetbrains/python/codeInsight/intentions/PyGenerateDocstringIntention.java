@@ -16,6 +16,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,16 +91,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
     if (!ensureNotPlainDocstringFormat(docStringOwner)) {
       return;
     }
-    final PyDocstringGenerator docstringGenerator = PyDocstringGenerator
-      .forDocStringOwner(docStringOwner)
-      .withInferredParameters(false)
-      .addFirstEmptyLine();
-    final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
-    if (updated != null && editor != null) {
-      final int offset = updated.getTextOffset();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
-    }
+    DocstringQuickFix.doGenerateDocstring(docStringOwner, editor);
   }
 
   /**

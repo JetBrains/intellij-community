@@ -4,7 +4,7 @@ package com.jetbrains.python.console;
 import com.jetbrains.python.PyBundle;
 
 public class PyConsoleType {
-  public static PyConsoleType PYTHON = new PyConsoleType("py", PyBundle.message("python.console"));
+  public static final PyConsoleType PYTHON = new PyConsoleType("py", PyBundle.message("python.console"));
 
   private final String myTypeId;
   private final String myTitle;

@@ -15,11 +15,13 @@
     <action internal="true" id="OpenLocalWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenLocalWhitelistFileAction"/>
     <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"/>
     <action internal="true" id="OpenWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenWhitelistFileAction"/>
+    <action internal="true" id="ReportSettingsToFUS" class="com.intellij.internal.statistic.actions.ReportSettingsToFUSAction"/>
     <group internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.groups.OpenEventLogFileActionGroup"/>
     <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.groups.CleanupEventLogByIdActionGroup"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="Statistics Event Log" factoryClass="com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindowFactory"
                 anchor="bottom" canCloseContents="true"/>
+    <notificationWhitelist groupIds="FeatureUsageStatistics"/>
   </extensions>
 </idea-plugin>

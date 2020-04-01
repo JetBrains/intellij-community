@@ -34,4 +34,9 @@ public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, F
   }
 
   protected abstract @Nullable V computeValue(@NotNull FileContent inputData);
+
+  @ApiStatus.Internal
+  public boolean isAcceptNullValues() {
+    return myAcceptNullValues;
+  }
 }

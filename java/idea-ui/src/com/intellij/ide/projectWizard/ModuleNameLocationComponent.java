@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
   private final WizardContext myWizardContext;
@@ -70,10 +72,10 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     AbstractModuleBuilder moduleBuilder = getModuleBuilder();
     if (moduleBuilder == null) return;
 
-    final String moduleName = getModuleName();
+    String moduleName = getModuleName();
+    Path moduleFile = Paths.get(myModuleFileLocation.getText(), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     moduleBuilder.setName(moduleName);
-    moduleBuilder.setModuleFilePath(
-      FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    moduleBuilder.setModuleFilePath(FileUtil.toSystemIndependentName(moduleFile.toString()));
     moduleBuilder.setContentEntryPath(FileUtil.toSystemIndependentName(getModuleContentRoot()));
   }
 

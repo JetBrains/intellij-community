@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -139,7 +140,8 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     int start = item.getHighlightStartOffset();
     int end = item.getHighlightEndOffset();
     if (end < start || end > entireLength) {
-      LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + entireLength + "; filter=" + filter);
+      String message = "Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + entireLength + "; filter=" + filter;
+      PluginException.logPluginError(LOG, message, null, filter.getClass());
       return false;
     }
     return true;

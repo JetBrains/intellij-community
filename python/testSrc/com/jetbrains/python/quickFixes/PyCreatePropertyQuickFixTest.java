@@ -16,22 +16,22 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyPropertyAccessInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyCreatePropertyQuickFixTest")
 public class PyCreatePropertyQuickFixTest extends PyQuickFixTestCase {
   public void testSetter() {
-    doQuickFixTest(PyPropertyAccessInspection.class, PyBundle.message("QFIX.create.property"));
+    doQuickFixTest(PyPropertyAccessInspection.class, PyPsiBundle.message("QFIX.create.property"));
   }
 
   public void testDeleter() {
-    doQuickFixTest(PyPropertyAccessInspection.class, PyBundle.message("QFIX.create.property"));
+    doQuickFixTest(PyPropertyAccessInspection.class, PyPsiBundle.message("QFIX.create.property"));
   }
 
   public void testGetter() {
-    doQuickFixTest(PyPropertyAccessInspection.class, PyBundle.message("QFIX.create.property"));
+    doQuickFixTest(PyPropertyAccessInspection.class, PyPsiBundle.message("QFIX.create.property"));
   }
 
 }

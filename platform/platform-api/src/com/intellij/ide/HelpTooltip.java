@@ -28,6 +28,7 @@ import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -286,6 +287,8 @@ public class HelpTooltip {
 
   private void initPopupBuilder() {
     JComponent tipPanel = createTipPanel();
+    tipPanel.addMouseListener(createIsOverTipMouseListener());
+
     myPopupSize = tipPanel.getPreferredSize();
     myPopupBuilder = JBPopupFactory.getInstance().
         createComponentPopupBuilder(tipPanel, null).
@@ -299,21 +302,27 @@ public class HelpTooltip {
     myPopupBuilder = instance.myPopupBuilder;
   }
 
-  private JPanel createTipPanel() {
-    JPanel tipPanel = new JPanel();
-    tipPanel.addMouseListener(new MouseAdapter() {
-      @Override public void mouseEntered(MouseEvent e) {
+  @NotNull
+  private MouseListener createIsOverTipMouseListener() {
+    return new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
         isOverPopup = true;
       }
 
-      @Override public void mouseExited(MouseEvent e) {
+      @Override
+      public void mouseExited(MouseEvent e) {
         if (link == null || !link.getBounds().contains(e.getPoint())) {
           isOverPopup = false;
           hidePopup(false);
         }
       }
-    });
+    };
+  }
 
+  @NotNull
+  protected final JPanel createTipPanel() {
+    JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(VGAP.get()));
     tipPanel.setBackground(BACKGROUND_COLOR);
 

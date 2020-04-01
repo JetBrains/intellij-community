@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,15 +107,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     TypeExpression expression = new TypeExpression(project, expectedTypes);
 
     if (isInline) {
-      final PsiExpression expr = ((PsiExpressionStatement)anchor).getExpression();
-      final PsiElement semicolon = expr.getNextSibling();
-      if (semicolon != null) {
-        final PsiElement nextSibling = semicolon.getNextSibling();
-        if (nextSibling != null) {
-          decl.addRange(nextSibling, anchor.getLastChild());
-        }
-      }
-      decl = (PsiDeclarationStatement)anchor.replace(decl);
+      decl = (PsiDeclarationStatement)new CommentTracker().replaceAndRestoreComments(anchor, decl);
     }
     else {
       decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);

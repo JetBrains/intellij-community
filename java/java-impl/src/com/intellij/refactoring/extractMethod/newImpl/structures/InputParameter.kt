@@ -4,4 +4,8 @@ package com.intellij.refactoring.extractMethod.newImpl.structures
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiType
 
-data class InputParameter(val references: List<PsiExpression>, val name: String, val type: PsiType)
+data class InputParameter(val references: List<PsiExpression>, val name: String, val type: PsiType) {
+  init {
+    require(references.isNotEmpty())
+  }
+}

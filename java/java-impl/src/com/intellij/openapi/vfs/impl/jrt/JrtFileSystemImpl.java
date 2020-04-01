@@ -38,6 +38,13 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     return myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
+  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(super::list);
+
+  @Override
+  public String @NotNull [] list(@NotNull VirtualFile file) {
+    return myChildrenGetter.accessDiskWithCheckCanceled(file);
+  }
+
   @NotNull
   @Override
   public String getProtocol() {

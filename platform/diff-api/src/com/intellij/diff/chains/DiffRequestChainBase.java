@@ -35,7 +35,7 @@ public abstract class DiffRequestChainBase extends UserDataHolderBase implements
 
   @Override
   public void setIndex(int index) {
-    assert index >= 0 && index < getRequests().size();
+    assert index == 0 || index > 0 && index < getRequests().size();
     myIndex = index;
   }
 }

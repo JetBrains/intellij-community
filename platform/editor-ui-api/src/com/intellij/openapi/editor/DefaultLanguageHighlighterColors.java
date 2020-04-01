@@ -47,7 +47,8 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey DOC_COMMENT_MARKUP = TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_MARKUP");
   public static final TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT_TAG");
   public static final TextAttributesKey DOC_COMMENT_TAG_VALUE = TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT_TAG_VALUE");
-  public static final ColorKey DOC_COMMENT_GUIDE = ColorKey.createColorKey("DEFAULT_DOC_COMMENT_GUIDE");
+  public static final ColorKey DOC_COMMENT_GUIDE = ColorKey.createColorKey("DOC_COMMENT_GUIDE");
+  public static final ColorKey DOC_COMMENT_LINK = ColorKey.createColorKey("DOC_COMMENT_LINK");
   public static final TextAttributesKey VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("DEFAULT_VALID_STRING_ESCAPE");
   public static final TextAttributesKey INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("DEFAULT_INVALID_STRING_ESCAPE");
 

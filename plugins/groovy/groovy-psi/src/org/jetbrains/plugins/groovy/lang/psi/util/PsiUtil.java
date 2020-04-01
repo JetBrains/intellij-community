@@ -64,7 +64,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -789,17 +792,6 @@ public class PsiUtil {
     return false;
   }
 
-  public static GroovyResolveResult @NotNull [] getConstructorCandidates(@NotNull PsiElement place,
-                                                                         @NotNull GroovyResolveResult classCandidate,
-                                                                         PsiType @Nullable [] argTypes) {
-    final PsiElement element = classCandidate.getElement();
-    if (!(element instanceof PsiClass)) return GroovyResolveResult.EMPTY_ARRAY;
-
-    PsiClass clazz = (PsiClass)element;
-    PsiSubstitutor substitutor = classCandidate.getSubstitutor();
-    return ResolveUtil.getAllClassConstructors(clazz, substitutor, argTypes, place);
-  }
-
   public static boolean isAccessedForReading(GrExpression expr) {
     return !isLValue(expr);
   }
@@ -846,20 +838,6 @@ public class PsiUtil {
         refExpr.replace(newRefExpr);
       }
     }
-  }
-
-  public static GroovyResolveResult[] getConstructorCandidates(PsiClassType classType, PsiType[] argTypes, GroovyPsiElement context) {
-    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-    final PsiClass psiClass = resolveResult.getElement();
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    if (psiClass == null) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
-                                         ? (GroovyResolveResult)resolveResult
-                                         : new GroovyResolveResultImpl(psiClass, context, null, substitutor, true, true);
-    return getConstructorCandidates(context, grResult, argTypes);
   }
 
   @Nullable

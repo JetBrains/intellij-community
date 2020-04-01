@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vcs.FileStatus;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
   private static final Logger LOG = Logger.getInstance(MethodGroupingRule.class);
@@ -106,7 +106,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
         return false;
       }
       MethodUsageGroup group = (MethodUsageGroup) object;
-      return Comparing.equal(myName, ((MethodUsageGroup)object).myName)
+      return Objects.equals(myName, ((MethodUsageGroup)object).myName)
              && SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, group.myMethodPointer);
     }
 
@@ -127,6 +127,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
 
     @Override
     public FileStatus getFileStatus() {
+      if (myMethodPointer.getProject().isDisposed()) return null;
       PsiFile file = myMethodPointer.getContainingFile();
       return file == null ? null : NavigationItemFileStatus.get(file);
     }

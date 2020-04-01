@@ -40,7 +40,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     } else {
       final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
       this.importStatements = new ArrayList<>(Arrays.asList(importStatements));
-      Collections.sort(this.importStatements, ImportStatementComparator.getInstance());
+      this.importStatements.sort(ImportStatementComparator.getInstance());
     }
   }
 

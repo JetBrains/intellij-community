@@ -32,5 +32,8 @@
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
     <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
+    <statistics.counterUsagesCollector groupId="spellchecker.fixes" version="1"/>
+    <notificationWhitelist groupIds="Spell Checker Dictionary;Spellchecker"/>
   </extensions>
 </idea-plugin>

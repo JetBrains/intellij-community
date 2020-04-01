@@ -18,7 +18,7 @@
     <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.SphinxDirectiveCompletionContributor"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.RestBundle">
     <action id="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction"
             class="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction">
       <add-to-group group-id="ToolsMenu" anchor="last"/>

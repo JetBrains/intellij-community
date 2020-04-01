@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.make;
 import com.intellij.DynamicBundle;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,7 +26,6 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.SupportCode;
@@ -819,7 +819,7 @@ public final class FormSourceCodeGenerator {
     if (component instanceof LwContainer) {
       final LwContainer container = (LwContainer)component;
 
-      generateBorder(container, variable);
+      generateBorder(container, variable, globalSearchScope);
 
       for (int i = 0; i < container.getComponentCount(); i++) {
         generateSetupCodeForComponent((LwComponent)container.getComponent(i), component2TempVariable, class2variableIndex, id2component,
@@ -874,7 +874,9 @@ public final class FormSourceCodeGenerator {
     endMethod();
   }
 
-  private void generateBorder(final LwContainer container, final String variable) {
+  private void generateBorder(final LwContainer container,
+                              final String variable,
+                              final GlobalSearchScope scope) {
     final BorderType borderType = container.getBorderType();
     final StringDescriptor borderTitle = container.getBorderTitle();
     final Insets borderSize = container.getBorderSize();
@@ -884,7 +886,7 @@ public final class FormSourceCodeGenerator {
     if (!borderNone || borderTitle != null) {
       startMethodCall(variable, "setBorder");
 
-      String borderFactoryName = borderFactoryClassName(container, borderTitle);
+      String borderFactoryName = borderFactoryClassName(container, borderTitle, scope);
 
       startStaticMethodCall(borderFactoryName, "createTitledBorder");
 
@@ -892,7 +894,7 @@ public final class FormSourceCodeGenerator {
         pushBorderFactoryMethod(container, borderType, borderSize, borderFactoryMethodName);
       }
       else {
-        push("null");
+        push((String) null);
       }
       pushBorderProperties(container, variable, borderTitle);
 
@@ -902,7 +904,7 @@ public final class FormSourceCodeGenerator {
   }
 
   @NotNull
-  private String borderFactoryClassName(LwContainer container, StringDescriptor borderTitle) {
+  private String borderFactoryClassName(LwContainer container, StringDescriptor borderTitle, GlobalSearchScope scope) {
     StringDescriptor titledBorderFactoryDescriptor =
       (StringDescriptor)container.getDelegeeClientProperties().get(AsmCodeGenerator.ourBorderFactoryClientProperty);
 
@@ -910,7 +912,7 @@ public final class FormSourceCodeGenerator {
       borderTitle != null && Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue();
 
     if (titledBorderFactoryDescriptor == null && useIdeBorderFactory) {
-      titledBorderFactoryDescriptor  = StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      titledBorderFactoryDescriptor  = findIdeBorderFactoryClass(scope);
       container.getDelegeeClientProperties().put(AsmCodeGenerator.ourBorderFactoryClientProperty, titledBorderFactoryDescriptor);
     }
     boolean isCustomFactory = titledBorderFactoryDescriptor != null && !titledBorderFactoryDescriptor.getValue().isEmpty();
@@ -918,6 +920,15 @@ public final class FormSourceCodeGenerator {
     return isCustomFactory ?
            titledBorderFactoryDescriptor.getValue().replace('$', '.') :
            BorderFactory.class.getName();
+  }
+
+  private @Nullable StringDescriptor findIdeBorderFactoryClass(GlobalSearchScope scope) {
+    String ideBorderFactoryName = "com.intellij.ui.IdeBorderFactory";
+    PsiClass ideBorderFactoryClass = JavaPsiFacade.getInstance(myProject).findClass(ideBorderFactoryName, scope);
+    if (ideBorderFactoryClass != null || ApplicationManager.getApplication().isUnitTestMode()) {
+      return StringDescriptor.create(ideBorderFactoryName + "$PlainSmallWithIndent");
+    }
+    return null;
   }
 
   private void pushBorderProperties(LwContainer container, String variable, StringDescriptor borderTitle) {

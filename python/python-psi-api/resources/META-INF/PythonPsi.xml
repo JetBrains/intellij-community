@@ -21,6 +21,7 @@
     <fileType name="Python"
               language="Python"
               extensions="py;pyw;"
+              hashBangs="python"
               implementationClass="com.jetbrains.python.PythonFileType"
               fieldName="INSTANCE"/>
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"

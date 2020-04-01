@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
@@ -46,9 +46,8 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
           .getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     do {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
-      if (containingClass == null || ((PsiClass)containingClass).getQualifiedName() != null) break;
     }
-    while (true);
+    while (containingClass != null && ((PsiClass)containingClass).getQualifiedName() == null);
 
     if (containingClass == null) {
       // check whether the element is in the import list
@@ -89,7 +88,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
   }
 
   private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
-    private final SmartPsiElementPointer myClassPointer;
+    private final SmartPsiElementPointer<PsiClass> myClassPointer;
     private final String myText;
     private final String myQName;
     private final Icon myIcon;
@@ -132,7 +131,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
     }
 
     private PsiClass getPsiClass() {
-      return (PsiClass)myClassPointer.getElement();
+      return myClassPointer.getElement();
     }
 
     @Override

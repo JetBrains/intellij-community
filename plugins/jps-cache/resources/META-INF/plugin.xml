@@ -9,9 +9,11 @@
 ]]></description>
 
   <depends>Git4Idea</depends>
+  <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
+    <notificationWhitelist groupIds="Compile Output Loader;Compile Output Loader Status"/>
   </extensions>
 
   <projectListeners>

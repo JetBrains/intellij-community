@@ -19,7 +19,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +32,6 @@ import java.util.function.Supplier;
  * @author yole
  */
 public abstract class AbstractCreateFormAction extends CreateElementActionBase implements DumbAware {
-  public AbstractCreateFormAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                                  @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                                  Icon icon) {
-    super(text, description, icon);
-  }
-
   public AbstractCreateFormAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }

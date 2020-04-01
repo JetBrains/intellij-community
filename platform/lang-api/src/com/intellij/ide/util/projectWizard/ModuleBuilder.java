@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -348,7 +349,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return getModuleType().getNodeIcon(false);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsContexts.Text
   public String getDescription() {
     return getModuleType().getDescription();
   }

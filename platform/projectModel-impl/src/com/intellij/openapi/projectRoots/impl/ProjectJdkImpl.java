@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @NonNls private static final String ELEMENT_VERSION = "version";
   @NonNls private static final String ELEMENT_ROOTS = "roots";
   @NonNls private static final String ELEMENT_HOMEPATH = "homePath";
-  @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
+  @NonNls public static final String ELEMENT_ADDITIONAL = "additional";
   private final MyRootProvider myRootProvider = new MyRootProvider();
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType) {
@@ -264,6 +265,13 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     dest.setSdkAdditionalData(getSdkAdditionalData());
     dest.myRoots.copyRootsFrom(myRoots);
     dest.myRootProvider.rootsChanged();
+  }
+
+  @ApiStatus.Internal
+  public void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    mySdkType = newType;
+    myAdditionalData = additionalDataElement != null ? mySdkType.loadAdditionalData(this, additionalDataElement) : null;
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {

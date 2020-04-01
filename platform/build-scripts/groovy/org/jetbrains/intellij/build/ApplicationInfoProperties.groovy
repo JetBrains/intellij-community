@@ -21,6 +21,7 @@ class ApplicationInfoProperties {
   final String shortProductName
   String productCode
   final String productName
+  final String majorReleaseDate
   final String edition
   final String motto
   final String companyName
@@ -50,6 +51,7 @@ class ApplicationInfoProperties {
     if (productCodeSeparator != -1) {
       productCode = buildNumber.substring(0, productCodeSeparator)
     }
+    majorReleaseDate = root.build.first().@majorReleaseDate
     productName = namesTag.@fullname ?: shortProductName
     edition = namesTag.@edition
     motto = namesTag.@motto

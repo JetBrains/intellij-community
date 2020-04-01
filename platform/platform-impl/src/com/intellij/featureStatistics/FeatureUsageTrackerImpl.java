@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getPluginType;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
 @State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
@@ -185,7 +185,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     descriptor.triggerUsed();
 
     Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
-    String id = provider == null || getPluginType(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
+    String id = provider == null || getPluginInfo(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
     String group = descriptor.getGroupId();
     FeatureUsageData data = new FeatureUsageData().addData("id", id).addData("group", StringUtil.notNullize(group, "unknown"));
     FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);
@@ -221,7 +221,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
           if (StringUtil.equals(group, "unknown") || StringUtil.equals(group, actualGroup)) {
             final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
             final PluginInfo info =
-              provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : PluginInfoDetectorKt.getPluginInfo(provider);
+              provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : getPluginInfo(provider);
             context.setPluginInfo(info);
             return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
           }

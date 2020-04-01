@@ -11,6 +11,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.fixtures.kotlin.KotlinTester
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
@@ -33,7 +34,7 @@ class MissingRecentApiInspectionTest : PluginModuleTestCase() {
         .classesRoot(testDataPath)
         .externalAnnotationsRoot("$testDataPath/since-2.0")
         .addTo(model)
-      PsiTestUtil.addProjectLibrary(model, "kotlin-stdlib", listOf(PathUtil.getJarPathForClass(Function::class.java)))
+      KotlinTester.configureKotlinStdLib(model)
     }
 
     override fun getModuleTypeId() = PluginModuleType.ID

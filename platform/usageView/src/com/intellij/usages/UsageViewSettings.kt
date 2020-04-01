@@ -16,7 +16,8 @@ open class UsageViewSettings(
   isGroupByModule: Boolean = true,
   isGroupByPackage: Boolean = true,
   isGroupByUsageType: Boolean = true,
-  isGroupByScope: Boolean = false
+  isGroupByScope: Boolean = false,
+  isGroupByDirectoryStructure: Boolean = false
 ) : BaseState(), PersistentStateComponent<UsageViewSettings> {
   companion object {
     @JvmStatic
@@ -24,31 +25,26 @@ open class UsageViewSettings(
       get() = ServiceManager.getService(UsageViewSettings::class.java)
   }
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByModule")
   var GROUP_BY_MODULE = isGroupByModule
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByUsageType")
   var GROUP_BY_USAGE_TYPE = isGroupByUsageType
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByFileStructure")
   var GROUP_BY_FILE_STRUCTURE = isGroupByFileStructure
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByScope")
   var GROUP_BY_SCOPE = isGroupByScope
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByPackage")
@@ -96,6 +92,9 @@ open class UsageViewSettings(
 
   @get:OptionTag("GROUP_BY_FILE_STRUCTURE")
   var isGroupByFileStructure by property(isGroupByFileStructure)
+
+  @get:OptionTag("GROUP_BY_DIRECTORY_STRUCTURE")
+  var isGroupByDirectoryStructure: Boolean by property(isGroupByDirectoryStructure)
 
   @get:OptionTag("GROUP_BY_SCOPE")
   var isGroupByScope by property(isGroupByScope)

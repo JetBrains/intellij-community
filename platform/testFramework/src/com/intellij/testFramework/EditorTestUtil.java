@@ -447,29 +447,15 @@ public final class EditorTestUtil {
   }
 
   public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, int widthInPixels) {
-    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) { return widthInPixels; }
-
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {}
-    });
+    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EmptyInlayRenderer(widthInPixels));
   }
 
-  public static Inlay addBlockInlay(@NotNull Editor editor, int offset, boolean showAbove, int width) {
-    return editor.getInlayModel().addBlockElement(offset, false, showAbove, 0, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) { return width;}
+  public static Inlay addBlockInlay(@NotNull Editor editor, int offset, boolean showAbove, int widthInPixels) {
+    return editor.getInlayModel().addBlockElement(offset, false, showAbove, 0, new EmptyInlayRenderer(widthInPixels));
+  }
 
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {}
-    });
+  public static Inlay addAfterLineEndInlay(@NotNull Editor editor, int offset, int widthInPixels) {
+    return editor.getInlayModel().addAfterLineEndElement(offset, false, new EmptyInlayRenderer(widthInPixels));
   }
 
   public static void waitForLoading(Editor editor) {
@@ -581,6 +567,21 @@ public final class EditorTestUtil {
     public int getCaretOffset(Document document) {
       return position == null ? -1 : document.getLineStartOffset(position.line) + position.column;
     }
+  }
+
+  private static class EmptyInlayRenderer implements EditorCustomElementRenderer {
+    private final int width;
+
+    private EmptyInlayRenderer(int width) {this.width = width;}
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return width;}
+
+    @Override
+    public void paint(@NotNull Inlay inlay,
+                      @NotNull Graphics g,
+                      @NotNull Rectangle targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
   }
 }
 

@@ -51,6 +51,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
 
   private static final String CORE_MATCHERS_CLASS_NAME = "org.hamcrest.CoreMatchers";
   private static final String MATCHERS_CLASS_NAME = "org.hamcrest.Matchers";
+  private static final String ORDERING_COMPARISON_NAME = "org.hamcrest.number.OrderingComparison";
 
   public boolean myStaticallyImportMatchers = true;
 
@@ -86,6 +87,14 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
           return;
         }
 
+        if (isBooleanAssert(assertMethod.getName())) {
+          PsiExpression[] args = expression.getArgumentList().getExpressions();
+          if (args[args.length - 1] instanceof PsiBinaryExpression &&
+              javaPsiFacade.findClass(ORDERING_COMPARISON_NAME, expression.getResolveScope()) == null) {
+            return;
+          }
+        }
+
         holder
           .registerProblem(expression.getMethodExpression(),
                            TypeMigrationBundle.message("inspection.migrate.assert.to.matcher.description", "assertThat"),
@@ -95,7 +104,6 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
   }
 
   public class MyQuickFix implements LocalQuickFix {
-    private static final String ORDERING_COMPARISON_NAME = "org.hamcrest.number.OrderingComparison";
     private final String myMatchersClassName;
 
     public MyQuickFix(String name) {myMatchersClassName = name;}
@@ -118,7 +126,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
       }
       final String methodName = method.getName();
       Pair<String, String> templatePair = null;
-      if ("assertFalse".equals(methodName) || "assertTrue".equals(methodName)) {
+      if (isBooleanAssert(methodName)) {
         final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
         final PsiExpression conditionExpression = expressions[expressions.length - 1];
         final boolean negate = methodName.contains("False");
@@ -224,6 +232,10 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
       replaceTemplate = ORDERING_COMPARISON_NAME + "." + replaceTemplate;
       return Pair.create(fromTemplate, "$left$, " + replaceTemplate);
     }
+  }
+
+  private static boolean isBooleanAssert(String methodName) {
+    return "assertFalse".equals(methodName) || "assertTrue".equals(methodName);
   }
 
   private static IElementType negate(IElementType tokenType) {

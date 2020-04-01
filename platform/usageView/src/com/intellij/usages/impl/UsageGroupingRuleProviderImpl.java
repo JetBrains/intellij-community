@@ -10,7 +10,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.usages.impl.rules.*;
+import com.intellij.usages.impl.rules.ActiveRules;
+import com.intellij.usages.impl.rules.DirectoryGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +21,6 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.List;
 
 public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider {
   protected boolean supportsNonCodeRule() {
@@ -42,32 +42,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   @Override
   public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
-    List<UsageGroupingRule> rules = new ArrayList<>();
-    if (supportsNonCodeRule()) {
-      rules.add(new NonCodeUsageGroupingRule(project));
-    }
-    if (supportsScopesRule() && usageViewSettings.isGroupByScope()) {
-      rules.add(new UsageScopeGroupingRule());
-    }
-    if (usageViewSettings.isGroupByUsageType()) {
-      rules.add(new UsageTypeGroupingRule());
-    }
-    if (supportsModuleRule() && usageViewSettings.isGroupByModule()) {
-      rules.add(new ModuleGroupingRule(project, usageViewSettings.isFlattenModules()));
-    }
-    if (usageViewSettings.isGroupByPackage()) {
-      rules.add(DirectoryGroupingRule.getInstance(project));
-    }
-    if (usageViewSettings.isGroupByFileStructure()) {
-      for (FileStructureGroupRuleProvider ruleProvider : FileStructureGroupRuleProvider.EP_NAME.getExtensionList()) {
-        ContainerUtil.addIfNotNull(rules, ruleProvider.getUsageGroupingRule(project, usageViewSettings));
-      }
-    }
-    else {
-      rules.add(new FileGroupingRule(project));
-    }
-
-    return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
+    return ActiveRules.getActiveRules(project, usageViewSettings, supportsNonCodeRule(), supportsScopesRule(), supportsModuleRule());
   }
 
   @Override
@@ -83,7 +58,8 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
     }
 
-    GroupByFileStructureAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
+    RuleAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
+    RuleAction groupByDirectoryStructureAction = createGroupByDirectoryStructureAction(impl);
 
     GroupByScopeAction groupByScopeAction = supportsScopesRule() ? new GroupByScopeAction(impl) : null;
 
@@ -114,26 +90,36 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
         result.add(flattenModulesAction);
       }
       ContainerUtil.addIfNotNull(result, groupByPackageAction);
+      ContainerUtil.addIfNotNull(result, groupByDirectoryStructureAction);
       ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
     }
     else {
       ContainerUtil.addIfNotNull(result, groupByScopeAction);
       ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);
       ContainerUtil.addIfNotNull(result, groupByPackageAction);
-      ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
+      ContainerUtil.addIfNotNull(result, groupByDirectoryStructureAction);
     }
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {
-    final JComponent component = impl.getComponent();
-    final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
+  public static @NotNull GroupByFileStructureAction createGroupByFileStructureAction(@NotNull UsageViewImpl impl) {
+    JComponent component = impl.getComponent();
+    GroupByFileStructureAction action = new GroupByFileStructureAction(impl);
     KeyStroke stroke = SystemInfo.isMac
                        ? KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK)
                        : KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
-    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
+    action.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
+    return action;
+  }
 
-    return groupByFileStructureAction;
+  private static @NotNull RuleAction createGroupByDirectoryStructureAction(@NotNull UsageViewImpl impl) {
+    JComponent component = impl.getComponent();
+    RuleAction action = new GroupByDirectoryStructureAction(impl);
+    KeyStroke stroke = SystemInfo.isMac
+                       ? KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)
+                       : KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+    action.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
+    return action;
   }
 
   private static class GroupByUsageTypeAction extends RuleAction {
@@ -213,11 +199,14 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     @Override
     protected void setOptionValue(boolean value) {
       myView.getUsageViewSettings().setGroupByPackage(value);
+      if (value) {
+        myView.getUsageViewSettings().setGroupByDirectoryStructure(false); // mutually exclusive
+      }
     }
   }
 
   private static class GroupByFileStructureAction extends RuleAction {
-    private GroupByFileStructureAction(UsageViewImpl view) {
+    private GroupByFileStructureAction(@NotNull UsageView view) {
       super(view, UsageViewBundle.messagePointer("action.group.by.file.structure"), AllIcons.Actions.GroupByMethod);
     }
     @Override
@@ -227,6 +216,22 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     @Override
     protected void setOptionValue(boolean value) {
       myView.getUsageViewSettings().setGroupByFileStructure(value);
+    }
+  }
+  private static class GroupByDirectoryStructureAction extends RuleAction {
+    private GroupByDirectoryStructureAction(@NotNull UsageView view) {
+      super(view, UsageViewBundle.messagePointer("action.group.by.directory.structure"), AllIcons.Actions.GroupByFile);
+    }
+    @Override
+    protected boolean getOptionValue() {
+      return myView.getUsageViewSettings().isGroupByDirectoryStructure();
+    }
+    @Override
+    protected void setOptionValue(boolean value) {
+      myView.getUsageViewSettings().setGroupByDirectoryStructure(value);
+      if (value) {
+        myView.getUsageViewSettings().setGroupByPackage(false); // mutually exclusive
+      }
     }
   }
 }

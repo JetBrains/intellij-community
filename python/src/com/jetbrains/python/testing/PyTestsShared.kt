@@ -92,17 +92,17 @@ val RunnersThatRequireTestCaseClass: Set<String> = setOf<String>(PythonTestConfi
 
 /**
  * Checks if element could be test target
- * @param testCaseClassRequired see [PythonUnitTestUtil] docs
+ * @param testCaseClassRequired see [PythonUnitTestDetectorsBasedOnSettings] docs
  */
 fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext): Boolean = when (element) {
-  is PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, typeEvalContext)
+  is PyFile -> PythonUnitTestDetectorsBasedOnSettings.isTestFile(element, testCaseClassRequired, typeEvalContext)
   is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
-    it is PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, typeEvalContext)
+    it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
   }
-  is PyFunction -> PythonUnitTestUtil.isTestFunction(element,
-                                                     testCaseClassRequired, typeEvalContext)
+  is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
+                                                                                                                         testCaseClassRequired, typeEvalContext)
   is com.jetbrains.python.psi.PyClass -> {
-    PythonUnitTestUtil.isTestClass(element, testCaseClassRequired, typeEvalContext)
+    PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
   }
   else -> false
 }
@@ -626,7 +626,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    return isTestElement(element, isTestClassRequired(), context)
+    return isTestElement(element, context)
   }
 
   /**

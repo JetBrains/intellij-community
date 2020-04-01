@@ -55,10 +55,6 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("a<weak_warning descr=\"Fixed repetition range\">{3,3}</weak_warning>");
   }
 
-  public void testDuplicateCharacterClass() {
-    doTest("[\\w-<warning descr=\"Duplicate predefined character class '\\w' inside character class\">\\w</warning>]");
-  }
-
   public void testNotDuplicateControlCharacter() {
     doTest("[\\ca\\cb]");
   }
@@ -141,7 +137,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testQuoted() {
-    doTest("[\\Qabc?*+.)<warning descr=\"Duplicate character ')' inside character class\">)</warning>]<warning descr=\"Duplicate character ']' inside character class\">]</warning>[<warning descr=\"Duplicate character ']' inside character class\">]</warning>\\E]");
+    doTest("[\\Qabc?*+.))]][]</warning>\\E]");
   }
 
   public void testValidDanglingMetacharacters() {
@@ -186,7 +182,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testPosixCharacterClass() {
     // posix character classes are not available in java regex patterns
-    doTest("[:xdig<warning descr=\"Duplicate character 'i' inside character class\">i</warning>t<warning descr=\"Duplicate character ':' inside character class\">:</warning>]+");
+    doTest("[:xdigit:]+");
   }
 
   public void testNestedBackReference() {

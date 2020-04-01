@@ -23,7 +23,12 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -37,6 +42,9 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -154,6 +162,22 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
         return null;
       }
     }
+    if (isReplacementAmbiguous(call, argument)) return null;
     return argument;
+  }
+
+  private static boolean isReplacementAmbiguous(PsiMethodCallExpression call, PsiExpression argument) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(argument)) return false;
+    PsiExpressionList exprList = ObjectUtils.tryCast(ParenthesesUtils.getParentSkipParentheses(call), PsiExpressionList.class);
+    if (exprList == null) return false;
+    PsiCallExpression parentCall = ObjectUtils.tryCast(exprList.getParent(), PsiCallExpression.class);
+    if (parentCall == null) return false;
+    PsiCallExpression copy = (PsiCallExpression)parentCall.copy();
+    int argIndex = ContainerUtil.indexOf(Arrays.asList(exprList.getExpressions()), expr -> PsiUtil.skipParenthesizedExprDown(expr) == call);
+    assert argIndex >= -1;
+    PsiExpression argCopy = Objects.requireNonNull(copy.getArgumentList()).getExpressions()[argIndex];
+    argCopy.replace(argument);
+    JavaResolveResult result = copy.resolveMethodGenerics();
+    return !result.isValidResult();
   }
 }

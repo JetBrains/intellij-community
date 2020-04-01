@@ -23,6 +23,7 @@
   <xi:include href="/META-INF/Indexing.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/EditorEx.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Inspect.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
@@ -98,6 +99,8 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
+    <notificationWhitelist groupIds="Code style settings migration;Find Problems;Missing SDKs;Automatic indent detection;Indexing;
+    Framework Detection;Power Save Mode;Show control flow group"/>
   </extensions>
 
   <applicationListeners>

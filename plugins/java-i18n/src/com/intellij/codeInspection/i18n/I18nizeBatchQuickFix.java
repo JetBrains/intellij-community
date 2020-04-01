@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PartiallyKnownString;
+import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ObjectUtils;
@@ -165,29 +166,13 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
   }
 
   private static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
-    PsiElement sourceRootPsi = cf.getRootUExpression().getSourcePsi();
-    // `I18nizeConcatenationQuickFix.getValueString` inside uses a very complicated logic.
-    // Though the generic UAST code of this method should handle Java code properly,
-    // as long as there is no tests I still fallback to old Java code here for safety.
-    // But probably there is no real need for this `if`
-    if (sourceRootPsi instanceof PsiPolyadicExpression) {
-      List<PsiExpression> args = new ArrayList<>();
-      String result = I18nizeConcatenationQuickFix.getValueString((PsiPolyadicExpression)sourceRootPsi, args);
-      for (PsiExpression psiExpression : args) {
-        UExpression expression = UastContextKt.toUElement(psiExpression, UExpression.class);
-        ContainerUtil.addIfNotNull(formatParameters, expression);
-      }
-      return result;
-    }
-
-    // Generic UAST version
     StringBuilder result = new StringBuilder();
     int elIndex = 0;
     for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
       if (expression instanceof ULiteralExpression) {
         Object value = ((ULiteralExpression)expression).getValue();
         if (value != null) {
-          result.append(value.toString());
+          result.append(PsiConcatenationUtil.formatString(value.toString(), false));
         }
       }
       else {
@@ -195,7 +180,6 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         formatParameters.add(expression);
       }
     }
-
     return result.toString();
   }
 

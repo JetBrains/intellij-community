@@ -2,7 +2,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,29 +9,36 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.util.ui.EDT.assertIsEdt;
 
 @ApiStatus.Experimental
 public interface EventWatcher {
 
-  @NotNull
-  NotNullLazyValue<Boolean> IS_ENABLED = NotNullLazyValue.createValue(
-    () -> Boolean.getBoolean("idea.event.queue.dispatch.listen")
-  );
+  final class InstanceHolder {
+    private @Nullable EventWatcher myInstance = null;
+    private final boolean myIsEnabled = Boolean.getBoolean("idea.event.queue.dispatch.listen");
+
+    private InstanceHolder() {}
+  }
+
+  @NotNull InstanceHolder HOLDER = new InstanceHolder();
 
   static boolean isEnabled() {
-    return IS_ENABLED.getValue();
+    return HOLDER.myIsEnabled;
   }
 
   @Nullable
   static EventWatcher getInstance() {
     if (!isEnabled()) return null;
 
-    Application application = getApplication();
-    if (application.isDisposed()) return null;
+    EventWatcher result = HOLDER.myInstance;
+    if (result != null) return result;
 
-    assertIsEdt();
-    return application.getService(EventWatcher.class);
+    Application application = getApplication();
+    if (application == null || application.isDisposed()) return null;
+
+    HOLDER.myInstance = result = application.getService(EventWatcher.class);
+
+    return result;
   }
 
   void runnableStarted(@NotNull Runnable runnable, long startedAt);
@@ -42,6 +48,8 @@ public interface EventWatcher {
   void edtEventStarted(@NotNull AWTEvent event);
 
   void edtEventFinished(@NotNull AWTEvent event, long startedAt);
+
+  void lockAcquired(@NotNull String invokedClassFqn, @NotNull LockKind lockKind);
 
   void logTimeMillis(@NotNull String processId, long startedAt,
                      @NotNull Class<? extends Runnable> runnableClass);

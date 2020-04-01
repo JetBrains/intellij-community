@@ -82,10 +82,12 @@ class InlineIconButton(val icon: Icon,
         }
       }
       HelpTooltip.dispose(c)
-      HelpTooltip()
-        .setTitle(c.tooltip)
-        .setShortcut(c.shortcut?.let { KeymapUtil.getFirstKeyboardShortcutText(it) })
-        .installOn(c)
+      if (c.tooltip != null) {
+        HelpTooltip()
+          .setTitle(c.tooltip)
+          .setShortcut(c.shortcut?.let { KeymapUtil.getFirstKeyboardShortcutText(it) })
+          .installOn(c)
+      }
 
       c.isOpaque = false
       c.isFocusable = true

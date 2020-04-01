@@ -17,6 +17,7 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyExceptionInheritInspection;
 
@@ -24,11 +25,11 @@ import com.jetbrains.python.inspections.PyExceptionInheritInspection;
 public class PyAddExceptionSuperClassQuickFixTest extends PyQuickFixTestCase {
 
   public void testEmptySuperList() {
-    doQuickFixTest(PyExceptionInheritInspection.class, PyBundle.message("QFIX.NAME.add.exception.base"));
+    doQuickFixTest(PyExceptionInheritInspection.class, PyPsiBundle.message("QFIX.NAME.add.exception.base"));
   }
 
   public void testNonEmptySuperList() {
-    doQuickFixTest(PyExceptionInheritInspection.class, PyBundle.message("QFIX.NAME.add.exception.base"));
+    doQuickFixTest(PyExceptionInheritInspection.class, PyPsiBundle.message("QFIX.NAME.add.exception.base"));
   }
 
 }

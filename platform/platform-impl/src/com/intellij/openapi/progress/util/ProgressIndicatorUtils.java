@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -18,10 +18,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -101,47 +104,68 @@ public class ProgressIndicatorUtils {
     if (application.isDispatchThread()) {
       throw new IllegalStateException("Must not call from EDT");
     }
+    Runnable cancellation = indicatorCancellation(progressIndicator);
     if (isWriting(application)) {
-      cancelProcess(progressIndicator);
+      cancellation.run();
+      return false;
+    }
+    return ProgressManager.getInstance().runProcess(() -> {
+      try {
+        // add listener inside runProcess to avoid cancelling indicator before even starting the progress
+        return runActionAndCancelBeforeWrite(application, cancellation, action);
+      }
+      catch (ProcessCanceledException ignore) {
+        return false;
+      }
+    }, progressIndicator);
+  }
+
+  private static final List<Runnable> ourWACancellations = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  static {
+    Application app = ApplicationManager.getApplication();
+    app.addApplicationListener(new ApplicationListener() {
+      @Override
+      public void beforeWriteActionStart(@NotNull Object action) {
+        for (Runnable cancellation : ourWACancellations) {
+          cancellation.run();
+        }
+      }
+    }, app);
+  }
+
+  @ApiStatus.Internal
+  public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
+                                                      @NotNull Runnable cancellation,
+                                                      @NotNull Runnable action) {
+    if (isWriting(application)) {
+      cancellation.run();
       return false;
     }
 
-    Disposable listenerDisposable = Disposer.newDisposable();
-    ApplicationListener listener = new ApplicationListener() {
-      @Override
-      public void beforeWriteActionStart(@NotNull Object action) {
-        cancelProcess(progressIndicator);
+    ourWACancellations.add(cancellation);
+    try {
+      if (isWriting(application)) {
+        // the listener might not be notified if write action was requested concurrently with listener addition
+        cancellation.run();
+        return false;
       }
-    };
-
-    Ref<Boolean> wasCancelled = new Ref<>();
-    ProgressManager.getInstance().runProcess(() -> {
-      // add listener inside runProcess to avoid cancelling indicator before even starting the progress
-      application.addApplicationListener(listener, listenerDisposable);
-      try {
-        if (isWriting(application)) {
-          // the listener might not be notified if write action was requested concurrently with listener addition
-          cancelProcess(progressIndicator);
-          wasCancelled.set(Boolean.TRUE);
-          return;
-        }
-
+      else {
         action.run();
+        return true;
       }
-      catch (ProcessCanceledException ignore) {
-        wasCancelled.set(Boolean.TRUE);
-      }
-      finally {
-        Disposer.dispose(listenerDisposable);
-      }
-    }, progressIndicator);
-    return wasCancelled.get() != Boolean.TRUE;
+    }
+    finally {
+      ourWACancellations.remove(cancellation);
+    }
   }
 
-  private static void cancelProcess(ProgressIndicator progressIndicator) {
-    if (!progressIndicator.isCanceled()) {
-      progressIndicator.cancel();
-    }
+  private static @NotNull Runnable indicatorCancellation(@NotNull ProgressIndicator progressIndicator) {
+    return () -> {
+      if (!progressIndicator.isCanceled()) {
+        progressIndicator.cancel();
+      }
+    };
   }
 
   private static boolean isWriting(ApplicationEx application) {
@@ -330,8 +354,7 @@ public class ProgressIndicatorUtils {
         if (cause instanceof CancellationException) {
           throw new ProcessCanceledException(cause);
         }
-        ExceptionUtil.rethrowUnchecked(e);
-        throw new RuntimeException(e);
+        ExceptionUtil.rethrow(e);
       }
     }
   }
@@ -340,7 +363,7 @@ public class ProgressIndicatorUtils {
     awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
   }
 
-  private static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
+  public static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     boolean success = false;
     while (!success) {

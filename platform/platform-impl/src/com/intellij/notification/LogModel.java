@@ -11,6 +11,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -19,7 +20,7 @@ import java.util.*;
  * @author peter
  */
 public final class LogModel  {
-  public static final Topic<Runnable> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", Runnable.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<EventLogListener> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", EventLogListener.class, Topic.BroadcastDirection.NONE);
 
   private final List<Notification> myNotifications = new ArrayList<>();
   @SuppressWarnings("unchecked") private final Map<Notification, String> myStatuses = ContainerUtil.createConcurrentWeakMap(TObjectHashingStrategy.IDENTITY);
@@ -45,7 +46,7 @@ public final class LogModel  {
   }
 
   private static void fireModelChanged() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(LOG_MODEL_CHANGED).run();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LOG_MODEL_CHANGED).modelChanged();
   }
 
   List<Notification> takeNotifications() {
@@ -54,7 +55,9 @@ public final class LogModel  {
       result = getNotifications();
       myNotifications.clear();
     }
-    fireModelChanged();
+    if (!result.isEmpty()) {
+      fireModelChanged();
+    }
     return result;
   }
 
@@ -85,7 +88,7 @@ public final class LogModel  {
     setStatusToImportant();
   }
 
-  public ArrayList<Notification> getNotifications() {
+  public @NotNull ArrayList<Notification> getNotifications() {
     synchronized (myNotifications) {
       return new ArrayList<>(myNotifications);
     }
@@ -110,7 +113,7 @@ public final class LogModel  {
   private void setStatusToImportant() {
     ArrayList<Notification> notifications = getNotifications();
     Collections.reverse(notifications);
-    Notification message = ContainerUtil.find(notifications, notification -> notification.isImportant());
+    Notification message = ContainerUtil.find(notifications, Notification::isImportant);
     if (message == null) {
       setStatusMessage(null, 0);
     }

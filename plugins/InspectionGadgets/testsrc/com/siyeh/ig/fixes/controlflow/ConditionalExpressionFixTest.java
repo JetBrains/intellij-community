@@ -22,7 +22,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
 
   public void testThisCall() { assertQuickfixNotAvailable(); }
   public void testBrokenCode() { assertQuickfixNotAvailable(); }
-  public void testField() { assertQuickfixNotAvailable(); }
+  public void testField() { doTest(); }
   public void testNonDenotableVar() { assertQuickfixNotAvailable(); }
 
   public void testArrayInitializer() { doTest(); }
@@ -46,7 +46,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
     javaSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     doTest();
   }
-  public void testNestedConditionalChangesSemantics() { doTest(InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")); }
+  public void testNestedConditionalOuter() { doTest(); }
 
   public void testSimpleOption() {
     final ConditionalExpressionInspection inspection = new ConditionalExpressionInspection();

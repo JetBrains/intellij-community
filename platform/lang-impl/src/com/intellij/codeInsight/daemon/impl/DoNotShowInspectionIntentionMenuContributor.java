@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,8 @@ public class DoNotShowInspectionIntentionMenuContributor implements IntentionMen
           intentionOffset = offset - 1;
         }
       }
-      if (intentionElement != null && intentionElement.getManager().isInProject(intentionElement)) {
+      if (intentionElement != null &&
+          (intentionElement.getManager().isInProject(intentionElement) || ScratchUtil.isScratch(hostFile.getVirtualFile()))) {
         collectIntentionsFromDoNotShowLeveledInspections(project, hostFile, intentionElement, intentionOffset, intentions);
       }
     }
@@ -83,7 +85,7 @@ public class DoNotShowInspectionIntentionMenuContributor implements IntentionMen
       return;
     }
 
-    final List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
+    List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final InspectionToolWrapper[] tools = profile.getInspectionTools(hostFile);
     for (InspectionToolWrapper toolWrapper : tools) {
@@ -112,6 +114,8 @@ public class DoNotShowInspectionIntentionMenuContributor implements IntentionMen
     }
 
     final Set<String> dialectIds = InspectionEngine.calcElementDialectIds(elements);
+    intentionTools = InspectionEngine.filterToolsApplicableByLanguage(intentionTools, dialectIds);
+
     final LocalInspectionToolSession session = new LocalInspectionToolSession(hostFile, 0, hostFile.getTextLength());
     final Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
       final LocalInspectionTool localInspectionTool = toolWrapper.getTool();
@@ -140,8 +144,7 @@ public class DoNotShowInspectionIntentionMenuContributor implements IntentionMen
           }
         }
       };
-      InspectionEngine.createVisitorAndAcceptElements(localInspectionTool, holder, true, session, elements,
-                                                      dialectIds, InspectionEngine.getDialectIdsSpecifiedForTool(toolWrapper));
+      InspectionEngine.createVisitorAndAcceptElements(localInspectionTool, holder, true, session, elements);
       localInspectionTool.inspectionFinished(session, holder);
       return true;
     };

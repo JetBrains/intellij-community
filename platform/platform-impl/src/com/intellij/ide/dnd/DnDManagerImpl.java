@@ -13,7 +13,6 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.MultiResolutionImageProvider;
-import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +22,9 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
+
+import static com.intellij.util.ui.TimerUtil.createNamedTimer;
 
 public final class DnDManagerImpl extends DnDManager {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
@@ -54,12 +53,7 @@ public final class DnDManagerImpl extends DnDManager {
   private static final Image EMPTY_IMAGE = ImageUtil.createImage(1, 1, Transparency.TRANSLUCENT);
 
   private final Timer myTooltipTimer =
-    TimerUtil.createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        onTimer();
-      }
-    });
+    createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), e -> onTimer());
   private Runnable myHighlighterShowRequest;
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
@@ -604,9 +598,10 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  private class MyDropTargetListener extends DropTargetAdapter {
+  private class MyDropTargetListener implements DropTargetListener {
     @Override
     public void drop(final DropTargetDropEvent dtde) {
+      SmoothAutoScroller.getSharedListener().drop(dtde);
       try {
         final Component component = dtde.getDropTargetContext().getComponent();
 
@@ -645,7 +640,7 @@ public final class DnDManagerImpl extends DnDManager {
       else {
         DnDTarget target = getTarget(component);
         if (target instanceof DnDDropHandler.WithResult) {
-          success = ((DnDDropHandler.WithResult)target).possiblyDrop(currentEvent);
+          success = ((DnDDropHandler.WithResult)target).tryDrop(currentEvent);
         }
         else {
           target.drop(currentEvent);
@@ -660,7 +655,13 @@ public final class DnDManagerImpl extends DnDManager {
     }
 
     @Override
+    public void dragEnter(DropTargetDragEvent dtde) {
+      SmoothAutoScroller.getSharedListener().dragEnter(dtde);
+    }
+
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
+      SmoothAutoScroller.getSharedListener().dragOver(dtde);
       final DnDEventImpl event = updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(),
                                                     dtde.getCurrentDataFlavors(), dtde.getTransferable());
       if (myCurrentEvent == null) {
@@ -675,6 +676,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dragExit(DropTargetEvent dte) {
+      SmoothAutoScroller.getSharedListener().dragExit(dte);
       onDragExit();
 
       cleanTargetComponent(dte.getDropTargetContext().getComponent());
@@ -689,6 +691,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
+      SmoothAutoScroller.getSharedListener().dropActionChanged(dtde);
       updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(), dtde.getCurrentDataFlavors(), dtde.getTransferable());
     }
   }

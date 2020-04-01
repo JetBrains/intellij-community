@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
@@ -69,9 +70,13 @@ public final class ConfigImportHelper {
   private static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
+  // constant is used instead of util method to ensure that ConfigImportHelper class is not loaded by StartupUtil
+  public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
+
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(boolean veryFirstStartOnThisComputer, @NotNull Path newConfigDir, @NotNull Logger log) {
+    log.info("Importing configs to " + newConfigDir);
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = null;
@@ -85,73 +90,161 @@ public final class ConfigImportHelper {
     catch (Exception ignored) { }
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
+    CustomConfigMigrationOption customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile();
+    File tempBackup = null;
+    boolean vmOptionFileChanged = false;
 
-    Pair<Path, Path> oldConfigDirAndOldIdePath = null;
-    if (shouldAskForConfig(log)) {
-      oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
-    }
-    else if (guessedOldConfigDirs.isEmpty()) {
-      boolean importedFromCloud = false;
-      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
-      if (configProvider != null) {
-        importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
+    try {
+      Pair<Path, Path> oldConfigDirAndOldIdePath = null;
+      if (customMigrationOption != null) {
+        log.info("Custom migration option: " + customMigrationOption);
+        vmOptionFileChanged = doesVmOptionFileExist(newConfigDir);
+        try {
+          tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log);
+
+          if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace) {
+            Path location = ((CustomConfigMigrationOption.MigrateFromCustomPlace)customMigrationOption).getLocation();
+            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(location);
+          }
+        }
+        catch (IOException e) {
+          log.error("Couldn't backup current config or delete current config directory", e);
+        }
       }
-      if (!importedFromCloud && !veryFirstStartOnThisComputer) {
+      else if (shouldAskForConfig()) {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
       }
-    }
-    else {
-      Path bestConfigGuess = guessedOldConfigDirs.get(0);
-      oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
-    }
-
-    if (oldConfigDirAndOldIdePath != null) {
-      doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log);
-
-      if (settings != null) {
-        settings.importFinished(newConfigDir);
-      }
-
-      if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
-        if (Restarter.isSupported()) {
-          try {
-            Restarter.scheduleRestart(false);
-          }
-          catch (IOException e) {
-            Main.showMessage("Restart failed", e);
-          }
-          System.exit(0);
+      else if (guessedOldConfigDirs.isEmpty()) {
+        boolean importedFromCloud = false;
+        CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+        if (configProvider != null) {
+          importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
         }
-        else {
-          String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
-          String message = ApplicationBundle.message("restart.import.settings");
-          String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
-          if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
-            System.exit(0);
-          }
+        if (!importedFromCloud && !veryFirstStartOnThisComputer) {
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
         }
       }
+      else {
+        Path bestConfigGuess = guessedOldConfigDirs.get(0);
+        oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+      }
 
-      System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+      if (oldConfigDirAndOldIdePath != null) {
+        doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log);
+
+        if (settings != null) {
+          settings.importFinished(newConfigDir);
+        }
+
+        System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+      }
+      else {
+        log.info("No configs imported, starting with clean configs at " + newConfigDir);
+      }
+
+      vmOptionFileChanged |= doesVmOptionFileExist(newConfigDir);
     }
-    else {
-      log.info("No configs imported, starting with clean configs at " + newConfigDir);
+    finally {
+      if (tempBackup != null) {
+        try {
+          moveTempBackupToStandardBackup(tempBackup, log);
+        }
+        catch (IOException e) {
+          log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir [%s]",
+                                 tempBackup, getBackupPath()), e);
+        }
+      }
+    }
+
+    if (vmOptionFileChanged) {
+      log.info("The vmoptions file has changed, restarting...");
+      restart();
     }
   }
 
-  private static boolean shouldAskForConfig(@NotNull Logger log) {
-    try {
-      return Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+  private static boolean doesVmOptionFileExist(@NotNull Path configDir) {
+    return Files.isRegularFile(configDir.resolve(VMOptions.getCustomVMOptionsFileName()));
+  }
+
+  private static void restart() {
+    if (Restarter.isSupported()) {
+      try {
+        Restarter.scheduleRestart(false);
+      }
+      catch (IOException e) {
+        Main.showMessage("Restart failed", e);
+      }
+      System.exit(0);
     }
-    catch (Throwable t) {
-      log.error(t);
+    else {
+      String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
+      String message = ApplicationBundle.message("restart.import.settings");
+      String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
+      if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
+        System.exit(0);
+      }
+    }
+  }
+
+  static @NotNull Path getCustomConfigMarkerFilePath() {
+    return PathManager.getConfigDir().resolve(CUSTOM_MARKER_FILE_NAME);
+  }
+
+  @NotNull
+  private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log) throws IOException {
+    File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
+    log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
+    FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir);
+    FileUtil.delete(currentConfig);
+
+    File pluginsDir = new File(PathManager.getPluginsPath());
+    if (pluginsDir.exists() && !FileUtil.isAncestor(currentConfig.toFile(), pluginsDir, false)) {
+      File pluginsBackup = new File(tempBackupDir, PLUGINS);
+      log.info("Backup plugins dir separately from " + pluginsDir + " to " + pluginsBackup);
+      if (pluginsBackup.mkdir()) {
+        FileUtil.copyDir(pluginsDir, pluginsBackup);
+        FileUtil.delete(pluginsDir);
+      }
+      else {
+        log.warn("Couldn't backup plugins directory to " + pluginsBackup);
+      }
+    }
+
+    return tempBackupDir;
+  }
+
+  private static void moveTempBackupToStandardBackup(@NotNull File backupToMove,
+                                                     @NotNull Logger log) throws IOException {
+    Path backupPath = getBackupPath();
+    log.info("Move backup from " + backupToMove + " to " + backupPath);
+    FileUtil.delete(backupPath);
+    FileUtil.copyDir(backupToMove, backupPath.toFile());
+  }
+
+  @NotNull
+  public static Path getBackupPath() {
+    Path configDir = PathManager.getConfigDir();
+    return configDir.resolveSibling(getConfigDirName() + "-backup");
+  }
+
+  @NotNull
+  private static String getConfigDirName() {
+    return PathManager.getConfigDir().getFileName().toString();
+  }
+
+  private static boolean shouldAskForConfig() {
+    String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+    if ("force-not".equals(showImportDialog)) {
       return false;
     }
+    return PluginManagerCore.isRunningFromSources() ||
+           System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
+           "true".equals(showImportDialog);
   }
 
   @Nullable
   private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<Path> guessedOldConfigDirs) {
-    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
+    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
 
@@ -188,7 +281,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  static boolean isConfigDirectory(@NotNull Path candidate) {
+  public static boolean isConfigDirectory(@NotNull Path candidate) {
     return Arrays.stream(OPTIONS).anyMatch(name -> Files.exists(candidate.resolve(name)));
   }
 

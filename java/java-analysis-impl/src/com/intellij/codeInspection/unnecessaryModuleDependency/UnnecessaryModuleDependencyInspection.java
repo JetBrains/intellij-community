@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,16 +11,12 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
   @Override
@@ -144,7 +141,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       for (OrderEntry entry : model.getOrderEntries()) {
         if (entry instanceof ModuleOrderEntry) {
           final String mDependency = ((ModuleOrderEntry)entry).getModuleName();
-          if (Comparing.equal(mDependency, myDependency)) {
+          if (Objects.equals(mDependency, myDependency)) {
             model.removeOrderEntry(entry);
             break;
           }

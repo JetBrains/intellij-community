@@ -1,13 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
+import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,24 +24,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.util.*;
-
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
-import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
 public class GeneralCommandLineTest {
   public static final String[] ARGUMENTS = {
@@ -153,7 +161,7 @@ public class GeneralCommandLineTest {
     // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
     String uni = IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Objects.equals(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     String mark = String.valueOf(new Random().nextInt());
     String command = SystemInfo.isWindows ? "@echo " + mark + '\n' : "#!/bin/sh\necho " + mark + '\n';
@@ -173,7 +181,7 @@ public class GeneralCommandLineTest {
     // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
     String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Objects.equals(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     File dir = tempDir.newFolder("spaces 'and quotes' and " + uni);
     Pair<GeneralCommandLine, File> command = makeHelperCommand(dir, CommandTestHelper.ARG, "test");
@@ -284,7 +292,7 @@ public class GeneralCommandLineTest {
     // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
     String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Objects.equals(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     String[] args = {"some", uni, "parameters"};
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, args);

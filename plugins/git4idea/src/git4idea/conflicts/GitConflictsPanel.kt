@@ -26,8 +26,8 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import git4idea.GitUtil
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
@@ -107,7 +107,7 @@ class GitConflictsPanel(
   }
 
   private fun updateConflicts() {
-    updateQueue.queue(Update.create("update") {
+    updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
       val description = mergeHandler.loadMergeDescription()
 
       val newConflicts = ArrayList<GitConflict>()
@@ -134,7 +134,7 @@ class GitConflictsPanel(
           TreeUtil.promiseSelectFirstLeaf(conflictsTree)
         }
       }
-    })
+    }))
   }
 
   fun canShowMergeWindowForSelection(): Boolean {

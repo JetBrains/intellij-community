@@ -5,15 +5,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents remapping of inputIds from {@link ValueContainerImpl} to a file ids.
+ * Represents remapping of {@code inputId}-s stored in {@link ValueContainerImpl} to fileIds.
  *
- * <p>Usually it is just an identity mapping and inputId == fileId. But sometimes it can be hashIs -> many fileIds.
+ * <p>Usually it is just an identity mapping and {@code inputId == fileId}.
+ * But sometimes it can be {@code hashId -> many fileId-s},
+ * when multiple files have the same content hash.
  */
 @ApiStatus.Internal
 @FunctionalInterface
 public interface ValueContainerInputRemapping {
   ValueContainerInputRemapping IDENTITY = inputId -> new int[]{inputId};
 
-  @NotNull
-  int[] remap(int inputId);
+  int @NotNull[] remap(int inputId);
 }

@@ -1,13 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.DefaultXmlSuppressionProvider;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -570,7 +574,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
   @Override
   public LocalQuickFix @Nullable [] getQuickFixes() {
-    return new LocalQuickFix[] {new LocalQuickFixBase(MavenDomBundle.message("fix.ignore.unresolved.maven.property")) {
+    return new LocalQuickFix[]{new LocalQuickFix() {
+      @Override
+      public @NlsContexts.ListItem @NotNull String getFamilyName() {
+        return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
+      }
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

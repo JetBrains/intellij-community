@@ -4,6 +4,9 @@ package com.intellij.sh.run;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -17,6 +20,8 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +65,8 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
       throw new RuntimeConfigurationError("Working directory not found");
     }
     if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
+      // WSL can be used as an interpreter
+      if (myInterpreterPath.endsWith("sh") && getWSLDistributionIfNeeded() != null) return;
       if (!FileUtil.exists(myInterpreterPath)) throw new RuntimeConfigurationError("Interpreter not found");
       if (!new File(myInterpreterPath).canExecute()) throw new RuntimeConfigurationError("Interpreter should be executable file");
     }
@@ -175,5 +182,25 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
 
   public void setInterpreterOptions(@NotNull String interpreterOptions) {
     myInterpreterOptions = interpreterOptions.trim();
+  }
+
+  private static WSLDistribution getWSLDistributionIfNeeded() {
+    return getWSLDistributionIfNeeded(null, null);
+  }
+
+  public static WSLDistribution getWSLDistributionIfNeeded(@Nullable String interpreterPath, @Nullable String scriptPath) {
+    if (!Experiments.getInstance().isFeatureEnabled("com.intellij.sh.run.with.wsl")) {
+      return null;
+    }
+
+    if (interpreterPath != null && new File(interpreterPath).canExecute()
+        || scriptPath != null && (scriptPath.endsWith("cmd") || scriptPath.endsWith("bat"))) {
+      return null;
+    }
+    if (EnvironmentUtil.getValue("SHELL") != null) {
+      return null;
+    }
+
+    return ContainerUtil.getFirstItem(WSLUtil.getAvailableDistributions());
   }
 }

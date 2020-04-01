@@ -7,5 +7,7 @@ class Foo {
 
         v3 = <warning descr="Hardcoded string literal: \"text\"">"text"</warning>;
         v4 = "text";
+        String v5 = "java.lang.String";
+        v5 = "java/lang/String";
     }
 }

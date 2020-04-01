@@ -77,7 +77,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       createTitlePanelToolbar(myKey);
     }
-    setSpeedSearchAlwaysShown(true);
+    setSpeedSearchAlwaysShown();
     myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
   }
 
@@ -150,7 +150,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     popupWindow.addComponentListener(windowListener);
-    addPopupListener(new JBPopupListener() {
+    addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         popupWindow.removeComponentListener(windowListener);

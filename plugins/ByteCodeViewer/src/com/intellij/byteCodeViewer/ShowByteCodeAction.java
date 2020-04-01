@@ -62,7 +62,8 @@ final class ShowByteCodeAction extends AnAction {
     if (psiElement == null) return;
 
     if (ByteCodeViewerManager.getContainingClass(psiElement) == null) {
-      Messages.showWarningDialog(project, "The selection should contain a class", "Unable to Find Class to Show Bytecode");
+      Messages.showWarningDialog(project, JavaByteCodeViewerBundle.message("bytecode.class.in.selection.message"),
+                                 JavaByteCodeViewerBundle.message("bytecode.not.found.message"));
       return;
     }
 
@@ -74,7 +75,7 @@ final class ShowByteCodeAction extends AnAction {
     final RelativePoint bestPopupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Looking for Bytecode...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaByteCodeViewerBundle.message("looking.for.bytecode.progress")) {
       private String myByteCode;
       private String myErrorMessage;
       private String myErrorTitle;
@@ -101,7 +102,8 @@ final class ShowByteCodeAction extends AnAction {
         }
         else {
           if (myByteCode == null) {
-            Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Bytecode not Found");
+            Messages.showErrorDialog(project, JavaByteCodeViewerBundle.message("bytecode.parser.failure.message", psiElementTitle),
+                                     JavaByteCodeViewerBundle.message("bytecode.not.found.title"));
             return;
           }
 

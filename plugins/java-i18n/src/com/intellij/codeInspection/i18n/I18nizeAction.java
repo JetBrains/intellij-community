@@ -25,6 +25,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collection;
 
@@ -61,11 +63,19 @@ public class I18nizeAction extends AnAction {
     final PsiLiteralExpression literalExpression = getEnclosingStringLiteral(psiFile, editor);
     PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (element == null) return null;
+    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(literalExpression, UExpression.class);
+    NlsInfo.Localized localized = NlsInfo.localized();
+    if (uExpression != null) {
+      NlsInfo info = NlsInfo.forExpression(uExpression);
+      if (info instanceof NlsInfo.Localized) {
+        localized = (NlsInfo.Localized)info;
+      }
+    }
     if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(element) != null) {
-      return new I18nizeConcatenationQuickFix();
+      return new I18nizeConcatenationQuickFix(localized);
     }
     else if (literalExpression != null && literalExpression.getTextRange().contains(range)) {
-      return new I18nizeQuickFix();
+      return new I18nizeQuickFix(localized);
     }
 
     for (I18nizeHandlerProvider handlerProvider : I18nizeHandlerProvider.EP_NAME.getExtensions()) {

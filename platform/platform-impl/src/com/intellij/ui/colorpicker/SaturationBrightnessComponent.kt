@@ -29,17 +29,16 @@ import java.awt.image.MemoryImageSource
 import javax.swing.JComponent
 
 private val KNOB_COLOR = Color.WHITE
-private const val KNOB_OUTER_RADIUS = 4
-private const val KNOB_INNER_RADIUS = 3
+private const val KNOB_RADIUS = 4
 
-public class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener {
+class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener {
   var brightness = 1f
     private set
   var hue = 1f
     private set
   var saturation = 0f
     private set
-  var alpha: Int = 0
+  var alpha: Int = 255
     private set
 
   init {
@@ -100,14 +99,10 @@ public class SaturationBrightnessComponent(private val myModel: ColorPickerModel
       g.color = KNOB_COLOR
     }
     val config = GraphicsUtil.setupAAPainting(g)
-    g.drawOval(knobX - JBUI.scale(KNOB_OUTER_RADIUS),
-               knobY - JBUI.scale(KNOB_OUTER_RADIUS),
-               JBUI.scale(KNOB_OUTER_RADIUS * 2),
-               JBUI.scale(KNOB_OUTER_RADIUS * 2))
-    g.drawOval(knobX - JBUI.scale(KNOB_INNER_RADIUS),
-               knobY - JBUI.scale(KNOB_INNER_RADIUS),
-               JBUI.scale(KNOB_INNER_RADIUS * 2),
-               JBUI.scale(KNOB_INNER_RADIUS * 2))
+    g.drawOval(knobX - JBUI.scale(KNOB_RADIUS),
+               knobY - JBUI.scale(KNOB_RADIUS),
+               JBUI.scale(KNOB_RADIUS * 2),
+               JBUI.scale(KNOB_RADIUS * 2))
     config.restore()
   }
 

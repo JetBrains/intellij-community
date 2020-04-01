@@ -160,17 +160,18 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       }
     }
 
-    if (isMatchingElement(current, _s)) {
+    if (current != null && isMatchingElement(current, _s)) {
       selectElement(current, searchQuery);
       return true;
-    }else {
+    }
+    else {
       return false;
     }
   }
 
   @Nullable
   @Override
-  protected Object findElement(String s) {
+  protected Object findElement(@NotNull String s) {
     if (!myCanExpand) return super.findElement(s);
 
     int selectedIndex = getSelectedIndex();

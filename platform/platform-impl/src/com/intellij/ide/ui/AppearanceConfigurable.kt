@@ -9,6 +9,7 @@ import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -37,8 +38,10 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.Window
-import java.util.*
-import javax.swing.*
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
 
 // @formatter:off
 private val settings get() = UISettings.instance
@@ -48,7 +51,6 @@ private val lafManager get() = LafManager.getInstance()
 private val cdAnimateWindows                          get() = CheckboxDescriptor(message("checkbox.animate.windows"), settings::animateWindows, groupName = windowOptionGroupName)
 private val cdShowToolWindowBars                      get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"), PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }), groupName = windowOptionGroupName)
 private val cdShowToolWindowNumbers                   get() = CheckboxDescriptor(message("checkbox.show.tool.window.numbers"), settings::showToolWindowsNumbers, groupName = windowOptionGroupName)
-private val cdShowMemoryIndicator                     get() = CheckboxDescriptor(message("checkbox.show.memory.indicator"), settings::showMemoryIndicator, groupName = windowOptionGroupName)
 private val cdDisableMenuMnemonics                    get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.menu.check.box"), settings::disableMnemonics, groupName = windowOptionGroupName)
 private val cdDisableControlsMnemonics                get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.controls.check.box"), settings::disableMnemonicsInControls, groupName = windowOptionGroupName)
 private val cdAllowMergingButtons                     get() = CheckboxDescriptor(message("allow.merging.dialog.buttons"), settings::allowMergeButtons, groupName = windowOptionGroupName)
@@ -75,7 +77,6 @@ internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
   cdAnimateWindows,
   cdShowToolWindowBars,
   cdShowToolWindowNumbers,
-  cdShowMemoryIndicator,
   cdDisableMenuMnemonics,
   cdDisableControlsMnemonics,
   cdAllowMergingButtons,
@@ -94,7 +95,7 @@ internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
   cdFullPathsInTitleBar
 ).map(CheckboxDescriptor::asOptionDescriptor)
 
-class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
+internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
   private var shouldUpdateLaF = false
 
   override fun createPanel(): DialogPanel {
@@ -137,6 +138,9 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
                    comment = if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
                    else null)
             .enabled(!isOverridden)
+
+          commentNoWrap(message("support.screen.readers.comment"))
+            .withLargeLeftGap()
         }
         fullRow { checkBox(cdUseContrastToolbars) }
 
@@ -144,13 +148,17 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
         if (supportedValues.isNotEmpty()) {
           val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
           val onApply = {
-            DefaultColorSchemesManager.getInstance().reload()
-            (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+            // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
+            ApplicationManager.getApplication().invokeLater(Runnable {
+              DefaultColorSchemesManager.getInstance().reload()
+              (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+            })
           }
 
           fullRow {
             if (supportedValues.size == 1) {
               component(JBCheckBox(UIBundle.message("color.blindness.checkbox.text")))
+                .comment(UIBundle.message("color.blindness.checkbox.comment"))
                 .withBinding({ if (it.isSelected) supportedValues.first() else null },
                              { it, value -> it.isSelected = value != null },
                              modelBinding)
@@ -162,6 +170,7 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
               component(ComboBox(supportedValues.toTypedArray()))
                 .enableIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { PlatformEditorBundle.message(it.key) } }
+                .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                              { it, value -> it.selectedItem = value ?: supportedValues.first() },
                              modelBinding)
@@ -247,31 +256,28 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
           { checkBox(cdShowToolWindowBars) }
         )
         twoColumnRow(
-          { checkBox(cdShowMemoryIndicator) },
-          { checkBox(cdShowToolWindowNumbers) }
+          { checkBox(cdShowToolWindowNumbers) },
+          { checkBox(cdDisableMenuMnemonics) }
         )
         twoColumnRow(
-          { checkBox(cdDisableMenuMnemonics) },
-          { checkBox(cdAllowMergingButtons) }
+          { checkBox(cdAllowMergingButtons) },
+          { checkBox(cdDisableControlsMnemonics) }
         )
         twoColumnRow(
-          { checkBox(cdDisableControlsMnemonics) },
           {
             checkBox(cdSmoothScrolling)
             ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
-          }
-        )
-        twoColumnRow(
-          { checkBox(cdShowMenuIcons) },
-          { checkBox(cdWidescreenToolWindowLayout) }
+          },
+          { checkBox(cdShowMenuIcons) }
         )
         twoColumnRow(
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
-        fullRow {
-          checkBox(cdFullPathsInTitleBar)
-        }
+        twoColumnRow(
+          { checkBox(cdWidescreenToolWindowLayout) },
+          { checkBox(cdFullPathsInTitleBar) }
+        )
       }
       titledRow(message("group.presentation.mode")) {
         fullRow {

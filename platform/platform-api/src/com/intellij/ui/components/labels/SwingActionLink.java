@@ -20,7 +20,7 @@ public class SwingActionLink extends LinkLabel<Action> implements LinkListener<A
   }
 
   @Override
-  public void linkSelected(LinkLabel link, Action action) {
+  public void linkSelected(LinkLabel<Action> link, Action action) {
     action.actionPerformed(myEvent);
   }
 }

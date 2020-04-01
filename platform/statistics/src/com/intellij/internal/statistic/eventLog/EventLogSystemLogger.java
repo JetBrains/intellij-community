@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
+import com.intellij.internal.statistic.service.fus.EventLogWhitelistUpdateError;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,26 @@ public class EventLogSystemLogger {
   public static void logWhitelistUpdated(@NotNull String recorderId, @Nullable String version) {
     final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);
     logEvent(recorderId, "whitelist.updated", data);
+  }
+
+  public static void logWhitelistErrorOnLoad(@NotNull String recorderId, @NotNull EventLogWhitelistUpdateError error) {
+    logWhitelistError(recorderId, "whitelist.load.failed", error);
+  }
+
+  public static void logWhitelistErrorOnUpdate(@NotNull String recorderId, @NotNull EventLogWhitelistUpdateError error) {
+    logWhitelistError(recorderId, "whitelist.update.failed", error);
+  }
+
+  private static void logWhitelistError(@NotNull String recorderId, @NotNull String eventId, @NotNull EventLogWhitelistUpdateError error) {
+    final FeatureUsageData data = new FeatureUsageData().
+      addData("stage", error.getUpdateStage().name()).
+      addData("error", error.getErrorType());
+
+    int code = error.getErrorCode();
+    if (code != -1) {
+      data.addData("code", code);
+    }
+    logEvent(recorderId, eventId, data);
   }
 
   public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed, boolean external) {
@@ -53,6 +74,14 @@ public class EventLogSystemLogger {
       data.addData("error", errorType.name());
     }
     logEvent(recorderId, "external.send.command.creation.finished", data);
+  }
+
+  public static void logSystemError(@NotNull String recorderId, @NotNull String eventId, @NotNull String errorClass, long time) {
+    FeatureUsageData data = new FeatureUsageData().addData("error", errorClass);
+    if (time != -1) {
+      data.addData("error_ts", time);
+    }
+    logEvent(recorderId, eventId, data);
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {

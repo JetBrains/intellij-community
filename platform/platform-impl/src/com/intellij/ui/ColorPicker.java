@@ -30,6 +30,7 @@ import com.intellij.ui.picker.MacColorPipette;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -399,6 +400,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location) {
+    showColorPickerPopup(project, currentColor, listener, location, false);
+  }
+
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
     Ref<LightCalloutPopup> ref = Ref.create();
 
     ColorListener colorListener = new ColorListener() {
@@ -410,7 +415,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       }
     };
 
-    LightCalloutPopup popup = new ColorPickerBuilder()
+    LightCalloutPopup popup = new ColorPickerBuilder(showAlpha)
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
       .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
@@ -1021,8 +1026,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private final boolean myEnableOpacity;
     private final boolean myOpacityInPercent;
 
-    ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
-                      List<? extends ColorPickerListener> listeners, boolean opacityInPercent) {
+    ColorPickerDialog(@NotNull Component parent,
+                      @NlsContexts.DialogTitle String caption,
+                      @Nullable Color preselectedColor,
+                      boolean enableOpacity,
+                      List<? extends ColorPickerListener> listeners,
+                      boolean opacityInPercent) {
       super(parent, true);
       myListeners = listeners;
       myPreselectedColor = preselectedColor;

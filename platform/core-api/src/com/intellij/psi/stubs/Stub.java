@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
+@Debug.Renderer(hasChildren = "!getChildrenStubs().isEmpty()", childrenArray="getChildrenStubs().toArray()")
 public interface Stub {
   Stub getParentStub();
   @NotNull

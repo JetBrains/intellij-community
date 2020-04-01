@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.uploader.events;
 
 import com.intellij.internal.statistic.connect.StatisticsResult;
+import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static com.intellij.internal.statistic.uploader.ExternalDataCollectorLogger.findDirectory;
 
-public class ExternalEventsLogger {
+public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
   @NonNls private final Logger myLogger;
 
   public ExternalEventsLogger() {
@@ -63,18 +64,23 @@ public class ExternalEventsLogger {
     logEvent(new ExternalUploadSendEvent(System.currentTimeMillis(), succeed, failed, total));
   }
 
-  private void logEvent(@NotNull ExternalUploadEvent event) {
-    myLogger.info(ExternalUploadEventSerializer.serialize(event));
+  @Override
+  public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+    logEvent(new ExternalSystemErrorEvent(System.currentTimeMillis(), eventId, exception));
+  }
+
+  private void logEvent(@NotNull ExternalSystemEvent event) {
+    myLogger.info(ExternalSystemEventSerializer.serialize(event));
   }
 
   @NotNull
-  public static List<ExternalUploadEvent> parseEvents(@NotNull File directory) throws IOException {
+  public static List<ExternalSystemEvent> parseEvents(@NotNull File directory) throws IOException {
     File file = getEventLogFile(directory.getAbsolutePath());
     List<String> lines = file.exists() ? Files.readAllLines(file.toPath()) : Collections.emptyList();
     if (!lines.isEmpty()) {
-      List<ExternalUploadEvent> events = new ArrayList<>();
+      List<ExternalSystemEvent> events = new ArrayList<>();
       for (String line : lines) {
-        ExternalUploadEvent event = ExternalUploadEventSerializer.deserialize(line);
+        ExternalSystemEvent event = ExternalSystemEventSerializer.deserialize(line);
         if (event != null) {
           events.add(event);
         }

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,9 @@ public class CertificateWarningDialog extends DialogWrapper {
   private JTextPane myMessagePane;
   private final X509Certificate myCertificate;
 
-  public CertificateWarningDialog(@NotNull X509Certificate certificate, @NotNull String title, @NotNull String message) {
+  public CertificateWarningDialog(@NotNull X509Certificate certificate,
+                                  @NotNull @NlsContexts.DialogTitle String title,
+                                  @NotNull @NlsContexts.Text String message) {
     super((Project)null, false);
 
     myRootPanel.setPreferredSize(new JBDimension(550, 650));

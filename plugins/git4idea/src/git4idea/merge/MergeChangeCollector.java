@@ -16,6 +16,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +35,20 @@ public class MergeChangeCollector {
   @NotNull private final GitRevisionNumber myStart; // Revision number before update (used for diff)
   @NotNull private final GitRepository myRepository;
 
-  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
+  public MergeChangeCollector(@NotNull Project project, @NotNull GitRepository repository, @NotNull GitRevisionNumber start) {
     myStart = start;
     myProject = project;
-    myRoot = root;
-    myRepository = Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
+    myRoot = repository.getRoot();
+    myRepository = repository;
+  }
+
+  /**
+   * @deprecated use constructor with GitRepository to avoid deleting repository mapping problem
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
+    this(project, Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)), start);
   }
 
   /**
@@ -55,7 +65,7 @@ public class MergeChangeCollector {
     TreeSet<String> removed = new TreeSet<>();
 
     String revisionsForDiff = getRevisionsForDiff();
-    if (revisionsForDiff ==  null) {
+    if (revisionsForDiff == null) {
       return;
     }
     getChangedFilesExceptUnmerged(updated, created, removed, revisionsForDiff);
@@ -71,7 +81,8 @@ public class MergeChangeCollector {
   public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
     try {
       collect(updatedFiles);
-    } catch (VcsException e) {
+    }
+    catch (VcsException e) {
       exceptions.add(e);
     }
   }
@@ -99,7 +110,7 @@ public class MergeChangeCollector {
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
 
     Set<String> paths = new HashSet<>();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
+    for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
         continue;
@@ -132,7 +143,7 @@ public class MergeChangeCollector {
       try {
         if (mergeHeadsFile.exists()) {
           String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, CharsetToolkit.UTF8));
-          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
+          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData(); ) {
             String head = s.line();
             if (head.length() == 0) {
               continue;
@@ -141,10 +152,12 @@ public class MergeChangeCollector {
             return myStart.getRev() + "..." + head;
           }
         }
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         throw new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e);
       }
-    } else {
+    }
+    else {
       // Otherwise this is a merge that did created a commit. And because of this the incoming changes
       // are diffs between old head and new head. The commit could have been multihead commit,
       // and the expression below considers it as well.
@@ -158,15 +171,15 @@ public class MergeChangeCollector {
    * where revisions is the range of revisions to check.
    */
   private void getChangedFilesExceptUnmerged(@NotNull Collection<? super String> updated,
-                                               @NotNull Collection<? super String> created,
-                                               @NotNull Collection<? super String> removed,
-                                               @NotNull String revisions) throws VcsException {
+                                             @NotNull Collection<? super String> created,
+                                             @NotNull Collection<? super String> removed,
+                                             @NotNull String revisions) throws VcsException {
     String root = myRoot.getPath();
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.DIFF);
     h.setSilent(true);
     // note that moves are not detected here
     h.addParameters("--name-status", "--diff-filter=ADMRUX", "--no-renames", revisions);
-    for (StringScanner s = new StringScanner(Git.getInstance().runCommand(h).getOutputOrThrow()); s.hasMoreData();) {
+    for (StringScanner s = new StringScanner(Git.getInstance().runCommand(h).getOutputOrThrow()); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
         continue;

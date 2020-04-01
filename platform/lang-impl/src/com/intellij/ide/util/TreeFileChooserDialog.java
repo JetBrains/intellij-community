@@ -40,6 +40,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private boolean mySelectSearchByNameTab = false;
 
   public TreeFileChooserDialog(@NotNull Project project,
-                               String title,
+                               @NlsContexts.DialogTitle String title,
                                @Nullable final PsiFile initialFile,
                                @Nullable FileType fileType,
                                @Nullable PsiFileFilter filter,
@@ -156,7 +157,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         if (path != null && myTree.isPathSelected(path)) {
           doOKAction();

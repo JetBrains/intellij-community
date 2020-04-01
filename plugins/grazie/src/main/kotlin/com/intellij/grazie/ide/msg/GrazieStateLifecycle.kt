@@ -13,6 +13,7 @@ import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 
 private val topic = Topic(GrazieStateLifecycle::class.java)
@@ -39,8 +40,15 @@ internal class GrazieInitializerManager {
     connection.subscribe(topic, GrazieInspection)
     connection.subscribe(topic, LanguageDetectionInspection)
   }
+
+  fun register(subscriber: GrazieStateLifecycle): MessageBusConnection {
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(topic, subscriber)
+    return connection
+  }
 }
 
+// Needed only for warming up
 private class GrazieIDEInit : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
     service<GrazieInitializerManager>().publisher.init(GrazieConfig.get())

@@ -71,9 +71,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    getLanguageLevelExtension().commit();
-  }
+  public void apply() throws ConfigurationException {}
 
   @Override
   public void reset() {

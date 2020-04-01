@@ -24,7 +24,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
 
   @Override
   public String getText() {
-    return myType.getPresentableText();
+    return myType.getPresentableText(true);
   }
 
   @Override

@@ -37,8 +37,6 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableComparator;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.VariableImpl;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExpression> implements Debugger.StyleFrame {
@@ -81,7 +79,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       value = it.materialize();
     }
     if (it.next() == null) {
-      return new SingleValue(value, itemType);        
+      return new SingleValue(value, itemType);
     }
     return new SequenceValue(value, it, itemType);
   }
@@ -97,7 +95,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       Saxon9TraceListener.MUTED = false;
     }
 
-    Collections.sort(variables, VariableComparator.INSTANCE);
+    variables.sort(VariableComparator.INSTANCE);
 
     return variables;
   }

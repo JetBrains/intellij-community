@@ -53,14 +53,14 @@
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module-library">
-      <library name="tanvd.grazi:grazi-language-detector:0.1.11" type="repository">
-        <properties include-transitive-deps="false" maven-id="tanvd.grazi:grazi-language-detector:0.1.11" />
+      <library name="tanvd.grazi:grazi-language-detector:0.1.12" type="repository">
+        <properties include-transitive-deps="false" maven-id="tanvd.grazi:grazi-language-detector:0.1.12" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/grazi-language-detector/0.1.11/grazi-language-detector-0.1.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/grazi-language-detector/0.1.12/grazi-language-detector-0.1.12.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/grazi-language-detector/0.1.11/grazi-language-detector-0.1.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tanvd/grazi/grazi-language-detector/0.1.12/grazi-language-detector-0.1.12-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

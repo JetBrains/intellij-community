@@ -1,25 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.editor.Document;
+import static java.util.Arrays.asList;
+
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.util.List;
-
-import static java.util.Arrays.asList;
+import java.util.Objects;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.ScrollPaneConstants;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> {
   public ExpandableEditorSupport(@NotNull EditorTextField field) {
@@ -108,9 +108,12 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
 
   @NotNull
   protected EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
-    Document document = Comparing.equal(text, field.getDocument().getText()) ? field.getDocument() :
-                        EditorFactory.getInstance().createDocument(text);
-    return new EditorTextField(document, field.getProject(), field.getFileType());
+    if (Objects.equals(text, field.getText())) {
+      return new EditorTextField(field.getDocument(), field.getProject(), field.getFileType());
+    }
+    else {
+      return new EditorTextField(text, field.getProject(), field.getFileType());
+    }
   }
 
   private static void copyCaretPosition(@NotNull Editor destination, Editor source) {

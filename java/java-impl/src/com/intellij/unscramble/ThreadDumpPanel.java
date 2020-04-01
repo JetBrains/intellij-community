@@ -42,7 +42,6 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -316,8 +315,8 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Collections.sort(myThreadDump, COMPARATOR);
-      Collections.sort(myMergedThreadDump, COMPARATOR);
+      myThreadDump.sort(COMPARATOR);
+      myMergedThreadDump.sort(COMPARATOR);
       updateThreadList();
       COMPARATOR = COMPARATOR == BY_TYPE ? BY_NAME : BY_TYPE;
       update(e);

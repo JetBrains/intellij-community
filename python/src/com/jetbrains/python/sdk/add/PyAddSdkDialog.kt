@@ -39,8 +39,8 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.PySdkTypeComparator.Companion.sortBySdkTypes
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import icons.PythonIcons
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
@@ -89,13 +89,15 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   private fun createPanels(sdks: List<Sdk>): List<PyAddSdkView> {
-    return mutableListOf(
-      PySdkTypeComparator.PySdkType.VirtualEnv to createVirtualEnvPanel(project, module, sdks),
-      PySdkTypeComparator.PySdkType.CondaEnv to createAnacondaPanel(project, module),
-      PySdkTypeComparator.PySdkType.SystemWide to PyAddSystemWideInterpreterPanel(module, existingSdks, context)
-    )
-      .sortBySdkTypes { it.first }
-      .map { it.second }
+    val venvPanel = createVirtualEnvPanel(project, module, sdks)
+    val condaPanel = createAnacondaPanel(project, module)
+    val systemWidePanel = PyAddSystemWideInterpreterPanel(module, existingSdks, context)
+    return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
+      listOf(condaPanel, venvPanel, systemWidePanel)
+    }
+    else {
+      listOf(venvPanel, condaPanel, systemWidePanel)
+    }
   }
 
   private fun <T> T.registerIfDisposable(): T = apply { (this as? Disposable)?.let { Disposer.register(disposable, it) } }
@@ -246,8 +248,9 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val panels = listOf(newCondaEnvPanel,
                         PyAddExistingCondaEnvPanel(project, module, existingSdks, null, context))
       .filterNotNull()
+    val defaultPanel = if (PyCondaSdkCustomizer.instance.preferExistingEnvironments) panels[1] else panels[0]
     return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.conda.environment"),
-                              PythonIcons.Python.Anaconda, panels, panels[0])
+                              PythonIcons.Python.Anaconda, panels, defaultPanel)
   }
 
   /**

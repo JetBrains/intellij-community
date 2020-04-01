@@ -16,13 +16,14 @@
 package com.intellij.spellchecker.engine;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.spellchecker.SpellCheckerManager;
 
 public final class SpellCheckerFactory {
   private SpellCheckerFactory() {
   }
 
-  public static SpellCheckerEngine create(final Project project) {
-    return new BaseSpellChecker(project);
+  public static SpellCheckerEngine create(Project project, SpellCheckerManager spellCheckerManager) {
+    return new BaseSpellChecker(project, spellCheckerManager);
   }
 
  

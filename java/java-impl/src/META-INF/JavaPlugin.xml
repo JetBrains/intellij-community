@@ -63,10 +63,6 @@
       <interface-class>com.intellij.compiler.CompilerReferenceService</interface-class>
       <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
-      <headless-implementation-class/>
-    </component>
   </project-components>
 
   <projectListeners>
@@ -282,6 +278,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.jps.use.build.tool.window" defaultValue="false" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.SetupJavaProjectFromSourcesActivity" />
@@ -452,6 +449,7 @@
 
     <changesGroupingPolicy key="module" id="module"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
+    <vcs.changeListDecorator implementation="com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"
@@ -461,6 +459,7 @@
     <projectService serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
     <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
+    <pathMacroFilter implementation="com.intellij.compiler.impl.KotlinCompilerArgumentsMacroFilter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager"
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryPresentationManagerImpl"/>
@@ -533,7 +532,7 @@
 
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
-    <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.ProblemAnalyzer$MyStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListener$MyStartupActivity"/>
 
     <bundledKeymap file="Visual Studio.xml"/>
     <bundledKeymap file="Eclipse.xml"/>
@@ -601,7 +600,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.compiler.inspection.FrequentlyUsedInheritorInspection"
-                     displayName="Class may extend a commonly used base class"/>
+                     key="inspection.frequently.used.inheritor.inspection.display.name" bundle="messages.JavaBundle"/>
 
     <codeInsight.linkHandler prefix="#javaClass/" handlerClass="com.intellij.codeInsight.daemon.impl.JavaClassTooltipLinkHandler"/>
 
@@ -826,11 +825,7 @@
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"
                     overrides="true"/>
-    <projectService serviceInterface="com.intellij.codeInsight.daemon.problems.ui.ProjectProblemsView"
-                    serviceImplementation="com.intellij.codeInsight.daemon.problems.ui.ProjectProblemsViewImpl"/>
-
-    <toolWindow id="Project Problems" anchor="bottom" icon="AllIcons.Toolwindows.Problems"
-                factoryClass="com.intellij.codeInsight.daemon.problems.ui.ProjectProblemsToolWindowFactory"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.problems.FileStateCache"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
@@ -935,11 +930,7 @@
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
-    <defaultLiveTemplates file="/liveTemplates/iterations"/>
-    <defaultLiveTemplates file="/liveTemplates/other"/>
-    <defaultLiveTemplates file="/liveTemplates/output"/>
-    <defaultLiveTemplates file="/liveTemplates/plain"/>
-    <defaultLiveTemplates file="/liveTemplates/surround"/>
+    <defaultLiveTemplates file="liveTemplates/Java"/>
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
     <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowFromPanel$Provider"/>
@@ -962,6 +953,7 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticParametersRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory"/>
+    <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticGetterSetterRenamerFactory"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.PsiPackageRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
@@ -1051,6 +1043,7 @@
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>
+    <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$ConsumerFunction"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Expression"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Declaration"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
@@ -1184,6 +1177,7 @@
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.MethodChainsInlayProvider"/>
+    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.ImplicitTypeInlayProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.AnnotationInlayProvider"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
@@ -1261,7 +1255,7 @@
     <completion.plainTextSymbol language="JAVA" implementationClass="com.intellij.codeInsight.completion.JvmPlainTextSymbolCompletionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider" id="excludeFromCompletion" order="last"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
-    <fileType extensions="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
+    <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
     <fileType extensions="class" name="CLASS" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaClassFileType"/>
     <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
@@ -1289,20 +1283,20 @@
     <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
                      enabledByDefault="true" level="WARNING"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
-                     displayName="Highlight problem line in test"
-                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"/>
+                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"
+                     key="inspection.test.failed.line.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
-                     displayName="Field assignment can be moved to initializer"
-                     implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"/>
+                     implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"
+                     key="inspection.move.field.assignment.to.initializer.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="ConditionCoveredByFurtherCondition" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     displayName="Condition is covered by further condition"
-                     implementationClass="com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection"/>
+                     implementationClass="com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection"
+                     key="inspection.condition.covered.by.further.condition.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="ExcessiveRangeCheck" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     displayName="Excessive range check"
-                     implementationClass="com.siyeh.ig.controlflow.ExcessiveRangeCheckInspection"/>
+                     implementationClass="com.siyeh.ig.controlflow.ExcessiveRangeCheckInspection"
+                     key="inspection.excessive.range.check.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="IdempotentLoopBody" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      bundle="messages.JavaBundle" key="inspection.idempotent.loop.body"
@@ -1335,12 +1329,12 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalAssignedToNullInspection"
-                     displayName="Null value for Optional type"/>
+                     key="inspection.optional.assigned.to.null.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConditionalCanBeOptional"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.ConditionalCanBeOptionalInspection"
-                     displayName="Conditional can be replaced with Optional"/>
+                     key="inspection.conditional.can.be.optional.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ReplaceNullCheck"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
@@ -1351,12 +1345,12 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
-                     displayName="Optional.isPresent() can be replaced with functional-style expression"/>
+                     key="inspection.optional.is.present.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalGetWithoutIsPresent"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.OptionalGetWithoutIsPresentInspection"
-                     displayName="Optional.get() is called without isPresent() check"/>
+                     key="inspection.optional.get.without.is.present.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantExplicitClose"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -1378,53 +1372,53 @@
     <localInspection groupPath="Java" language="JAVA" shortName="WrapperTypeMayBePrimitive"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
-                     displayName="Wrapper type may be primitive"
-                     implementationClass="com.intellij.codeInspection.WrapperTypeMayBePrimitiveInspection"/>
+                     implementationClass="com.intellij.codeInspection.WrapperTypeMayBePrimitiveInspection"
+                     key="inspection.wrapper.type.may.be.primitive.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantLambdaParameterType"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection"
-                     displayName="Redundant lambda parameter types"/>
+                     key="inspection.redundant.lambda.parameter.type.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReplaceInefficientStreamCount"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReplaceInefficientStreamCountInspection"
-                     displayName="Inefficient Stream API call chains ending with count()"/>
+                     key="inspection.replace.inefficient.stream.count.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ComparatorCombinators"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ComparatorCombinatorsInspection"
-                     displayName="Comparator combinator can be used"/>
+                     key="inspection.comparator.combinators.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UseBulkOperation"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection"
-                     displayName="Bulk operation can be used instead of iteration"/>
+                     key="inspection.use.bulk.operation.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyCollector"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyCollectorInspection"
-                     displayName="Collector can be simplified"/>
+                     key="inspection.simplify.collector.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyOptionalCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyOptionalCallChainsInspection"
-                     displayName="Optional call chain can be simplified"/>
+                     key="inspection.simplify.optional.call.chains.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
-                     displayName="Stream API call chain can be simplified"/>
+                     key="inspection.simplify.stream.api.call.chains.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObviousNullCheck"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ObviousNullCheckInspection"
-                     displayName="Null-check method is called with obviously non-null argument"/>
+                     key="inspection.obvious.null.check.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantStreamOptionalCall"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantStreamOptionalCallInspection"
-                     displayName="Redundant step in Stream or Optional call chain"/>
+                     key="inspection.redundant.stream.optional.call.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantRecordConstructor" enabledByDefault="true" level="WARNING"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
                      bundle="messages.JavaBundle" key="inspection.redundant.record.constructor.description"
@@ -1438,27 +1432,27 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.lambdaToExplicit.ExcessiveLambdaUsageInspection"
-                     displayName="Excessive lambda usage"/>
+                     key="inspection.excessive.lambda.usage.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArgumentCanBeLambda"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.lambdaToExplicit.ExplicitArgumentCanBeLambdaInspection"
-                     displayName="Explicit argument can be lambda"/>
+                     key="inspection.explicit.argument.can.be.lambda.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java9CollectionFactory"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java19api.Java9CollectionFactoryInspection"
-                     displayName="Immutable collection creation can be replaced with collection factory call"/>
+                     key="inspection.java.9.collection.factory.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ReadWriteStringCanBeUsed"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReadWriteStringCanBeUsedInspection"
-                     displayName="'Files.readString()' or 'Files.writeString()' can be used"/>
+                     key="inspection.read.write.string.can.be.used.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="StringRepeatCanBeUsed"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.StringRepeatCanBeUsedInspection"
-                     displayName="String.repeat() can be used"/>
+                     key="inspection.string.repeat.can.be.used.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
@@ -1468,27 +1462,27 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapApiInspection"
-                     displayName="Single Map method can be used"/>
+                     key="inspection.java.8.map.api.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8CollectionRemoveIf"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
-                     displayName="Loop can be replaced with Collection.removeIf()"/>
+                     key="inspection.java.8.collection.remove.if.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArrayFilling"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitArrayFillingInspection"
-                     displayName="Explicit array filling"/>
+                     key="inspection.explicit.array.filling.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ManualMinMaxCalculation"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ManualMinMaxCalculationInspection"
-                     displayName="Manual min/max calculation"/>
+                     key="inspection.manual.min.max.calculation.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
-                     displayName="Redundant 'Collection.addAll()' call"/>
+                     key="inspection.collection.add.all.can.be.replaced.with.constructor.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CapturingCleaner"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
@@ -1499,42 +1493,50 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OverwrittenKeyInspection"
-                     displayName="Overwritten Map key or Set element"/>
+                     key="inspection.overwritten.key.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="StaticPseudoFunctionalStyleMethod"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18StreamApi.StaticPseudoFunctionalStyleMethodInspection"
-                     displayName="Pseudo functional expression using static class"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MagicConstant" displayName="Magic Constant"
+                     key="inspection.static.pseudo.functional.style.method.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MagicConstant"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="TrivialFunctionalExpressionUsage" displayName="Trivial usage of functional expression"
+                     implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection"
+                     key="inspection.magic.constant.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="TrivialFunctionalExpressionUsage"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.TrivialFunctionalExpressionUsageInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="FunctionalExpressionCanBeFolded" displayName="Functional expression can be folded"
+                     implementationClass="com.intellij.codeInspection.TrivialFunctionalExpressionUsageInspection"
+                     key="inspection.trivial.functional.expression.usage.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="FunctionalExpressionCanBeFolded"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.FunctionalExpressionCanBeFoldedInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="LambdaCanBeMethodCall" displayName="Lambda can be replaced with method call"
+                     implementationClass="com.intellij.codeInspection.FunctionalExpressionCanBeFoldedInspection"
+                     key="inspection.functional.expression.can.be.folded.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="LambdaCanBeMethodCall"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.LambdaCanBeMethodCallInspection" />
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
+                     implementationClass="com.intellij.codeInspection.LambdaCanBeMethodCallInspection"
+                     key="inspection.lambda.can.be.method.call.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2MethodRef"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection" />
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
+                     implementationClass="com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection"
+                     key="inspection.convert.2.method.ref.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Anonymous2MethodRef"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="StreamToLoop" displayName="Stream API call chain can be replaced with loop"
+                     implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection"
+                     key="inspection.anonymous.2.method.ref.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StreamToLoop"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"/>
+                     implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"
+                     key="inspection.stream.to.loop.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalToIf"
-                     displayName="Optional can be replaced with sequence of if statements"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      isInternal="true"
                      level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.optionalToIf.OptionalToIfInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2streamapi" displayName="Loop can be collapsed with Stream API"
+                     implementationClass="com.intellij.codeInspection.optionalToIf.OptionalToIfInspection"
+                     key="inspection.optional.to.if.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2streamapi"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"/>
+                     implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"
+                     key="inspection.convert.2.streamapi.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FuseStreamOperations"
                      bundle="messages.JavaBundle" key="inspection.fuse.stream.operations.display.name"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
@@ -1551,9 +1553,10 @@
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection" />
-    <localInspection groupPath="Java" language="JAVA" suppressId="unchecked" shortName="UNCHECKED_WARNING" displayName="Unchecked warning" groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" suppressId="unchecked" shortName="UNCHECKED_WARNING" groupKey="group.names.compiler.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection" />
+                     implementationClass="com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection"
+                     key="inspection.unchecked.warning.display.name" bundle="messages.JavaBundle"/>
     <localInspection shortName="DefaultFileTemplate" bundle="messages.JavaBundle" key="default.file.template.display.name"
                      groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection"/>
@@ -1585,8 +1588,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="FieldCanBeLocal" bundle="messages.JavaBundle" key="inspection.field.can.be.local.display.name"
                      groupKey="group.names.class.structure" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Dependency" displayName="Illegal package dependencies" groupKey="group.names.dependency.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.codeInspection.dependencyViolation.DependencyInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Dependency" groupKey="group.names.dependency.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.codeInspection.dependencyViolation.DependencyInspection"
+                     key="inspection.dependency.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Since15" bundle="messages.JavaBundle" key="inspection.1.5.display.name"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.java15api.Java15APIUsageInspection"/>
@@ -1623,8 +1627,9 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.CharsetObjectCanBeUsedInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnusedAssignment" displayName="Unused assignment" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.intellij.codeInspection.defUse.DefUseInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnusedAssignment" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.intellij.codeInspection.defUse.DefUseInspection"
+                     key="inspection.unused.assignment.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.JavaBundle" key="inspection.data.flow.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.DataFlowInspection"/>
@@ -1704,18 +1709,20 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspection" />
 
-    <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
-                      level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
+                      level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
+                      key="inspection.empty.method.display.name" bundle="messages.JavaBundle"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.JavaBundle" key="inspection.unused.return.value.display.name"
                       groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue"/>
     <globalInspection groupPath="Java" language="UAST" shortName="SameParameterValue" bundle="messages.JavaBundle" key="inspection.same.parameter.display.name"
                       groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="unused" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
+    <globalInspection groupPath="Java" language="JAVA" shortName="unused" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"
-                      presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation"/>
+                      presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation" key="inspection.unused.display.name"
+                      bundle="messages.JavaBundle"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
@@ -1992,7 +1999,6 @@
     </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
-    <fileTypeDetector implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeDetector"/>
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
 
@@ -2006,7 +2012,8 @@
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="false" description="Enables using bundled JetBrains Runtime for execution"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLensProvider"/>
     <statistics.counterUsagesCollector groupId="java.lens" version="1"/>
-
+    <notificationWhitelist groupIds="Accepted language levels;Build Script Found;Clean artifact;Java Preview Features;HotSwap;
+    Analyze thread dump;SharedIndexes;Compiler;Source searcher;Repository;JSHELL_NOTIFICATIONS;Build;Quarantine Cleaner"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.codeInspection.JavaCommandLineInspectionProjectConfigurator"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>

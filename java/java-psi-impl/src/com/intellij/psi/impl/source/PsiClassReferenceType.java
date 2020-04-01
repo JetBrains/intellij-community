@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.impl.light.LightClassTypeReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -67,7 +68,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   public boolean equalsToText(@NotNull String text) {
     PsiJavaCodeReferenceElement reference = getReference();
     String name = reference.getReferenceName();
-    return (name == null || text.contains(name)) && Comparing.equal(text, getCanonicalText());
+    return (name == null || text.contains(name)) && Objects.equals(text, getCanonicalText());
   }
 
   @Override
@@ -167,6 +168,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   public @NotNull ClassResolveResult resolveGenerics() {
     PsiJavaCodeReferenceElement reference = getReference();
     if (!reference.isValid()) {
+      if (reference instanceof LightClassTypeReference) {
+        PsiUtil.ensureValidType(((LightClassTypeReference)reference).getType());
+      }
       throw new PsiInvalidElementAccessException(reference, myReference.toString() + "; augmenters=" + PsiAugmentProvider.EP_NAME.getExtensionList());
     }
     final JavaResolveResult result = reference.advancedResolve(false);

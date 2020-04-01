@@ -7,6 +7,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import java.awt.Component
@@ -136,6 +137,8 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
                 StackInfo.StackKind.Error,
                 StackInfo.StackKind.Loading -> append(stack.toString())
             }
+            if (selected)
+                background = UIUtil.getListSelectionBackground(hasFocus)
         }
     }
 }

@@ -5,7 +5,14 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * This class provides 'smart' isModified() behavior: it compares original settings with current snapshot by their XML 'externalized' presentations
@@ -44,5 +51,39 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
 
   boolean isSpecificallyModified() {
     return false;
+  }
+
+  @Override
+  public JComponent createComponent() {
+    return wrapWithScrollPane(super.createComponent());
+  }
+
+  @NotNull
+  protected static JBScrollPane wrapWithScrollPane(@Nullable JComponent component) {
+    JBScrollPane scrollPane =
+      new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+        @Override
+        public Dimension getMinimumSize() {
+          Dimension d = super.getMinimumSize();
+          JViewport viewport = getViewport();
+          if (viewport != null) {
+            Component view = viewport.getView();
+            if (view instanceof Scrollable) {
+              d.width = ((Scrollable)view).getPreferredScrollableViewportSize().width;
+            }
+            if (view != null) {
+              d.width = view.getMinimumSize().width;
+            }
+          }
+          d.height = Math.max(d.height, JBUIScale.scale(400));
+          return d;
+        }
+      };
+    scrollPane.setBorder(JBUI.Borders.empty());
+    scrollPane.setViewportBorder(JBUI.Borders.empty());
+    if (component != null) {
+      scrollPane.getViewport().setView(component);
+    }
+    return scrollPane;
   }
 }

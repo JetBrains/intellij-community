@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -49,11 +49,11 @@ object GithubAsyncUtil {
 
   private fun <T> handleToOtherIfCancelled(futureSupplier: () -> CompletableFuture<T>, other: CompletableFuture<T>) {
     futureSupplier().handle { result, error ->
-      if (result != null) other.complete(result)
       if (error != null) {
         if (isCancellation(error)) handleToOtherIfCancelled(futureSupplier, other)
         other.completeExceptionally(error.cause)
       }
+      other.complete(result)
     }
   }
 
@@ -101,39 +101,38 @@ fun <T> ProgressManager.submitBackgroundTask(project: Project?,
   return future
 }
 
-fun <T> CompletableFuture<T>.handleOnEdt(parentDisposable: Disposable, handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> {
+fun <T> CompletableFuture<T>.handleOnEdt(parentDisposable: Disposable, handler: (T, Throwable?) -> Unit): CompletableFuture<Unit> {
   val handlerReference = AtomicReference(handler)
   Disposer.register(parentDisposable, Disposable {
     handlerReference.set(null)
   })
 
-  return handleAsync(BiFunction<T?, Throwable?, Unit> { result: T?, error: Throwable? ->
+  return handleAsync(BiFunction<T, Throwable?, Unit> { result: T, error: Throwable? ->
     handlerReference.get()?.invoke(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 }
 
-fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> R): CompletableFuture<R> =
-  handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
+fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T, Throwable?) -> R): CompletableFuture<R> =
+  handleAsync(BiFunction<T, Throwable?, R> { result: T, error: Throwable? ->
     handler(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 
 fun <T, R> CompletableFuture<T>.successAsync(executor: Executor, handler: (T) -> R): CompletableFuture<R> =
-  handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
-    result?.let { handler(it) } ?: throw error?.let { extractError(it) } ?: IllegalStateException()
+  handleAsync(BiFunction<T, Throwable?, R> { result: T, error: Throwable? ->
+    if (error != null) throw extractError(error) else handler(result)
   }, executor)
 
 fun <T, R> CompletableFuture<T>.successOnEdt(handler: (T) -> R): CompletableFuture<R> =
   successAsync(EDT_EXECUTOR, handler)
 
 fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> T): CompletableFuture<T> =
-  handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
-    if (result != null) return@BiFunction result
+  handleAsync(BiFunction<T, Throwable?, T> { result: T, error: Throwable? ->
     if (error != null) {
       val actualError = extractError(error)
       if (isCancellation(actualError)) throw ProcessCanceledException()
-      return@BiFunction handler(actualError)
+      handler(actualError)
     }
-    throw IllegalStateException()
+    result
   }, EDT_EXECUTOR)
 
 val EDT_EXECUTOR = Executor { runnable -> runInEdt { runnable.run() } }

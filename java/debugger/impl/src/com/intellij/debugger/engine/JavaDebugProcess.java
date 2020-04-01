@@ -195,7 +195,9 @@ public class JavaDebugProcess extends XDebugProcess {
     if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
       ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
     }
-    DfaAssist.installDfaAssist(myJavaSession, session);
+    if (!DebuggerUtilsImpl.isRemote(process)) {
+      DfaAssist.installDfaAssist(myJavaSession, session);
+    }
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
   }

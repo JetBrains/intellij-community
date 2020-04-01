@@ -257,6 +257,8 @@ public interface IdeActions {
   @NonNls String ACTION_FILE_STRUCTURE_POPUP = "FileStructurePopup";
   @NonNls String ACTION_TOGGLE_RENDERED_DOC = "ToggleRenderedDocPresentation";
 
+  @NonNls String GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU = "DocCommentGutterIconContextMenu";
+
   @NonNls String GROUP_USAGE_VIEW_POPUP = "UsageView.Popup";
 
   /*GUI designer actions*/
@@ -348,5 +350,5 @@ public interface IdeActions {
   @NonNls String BREADCRUMBS_SHOW_BELOW = "EditorBreadcrumbsShowBelow";
   @NonNls String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
 
-  @NonNls String ACTION_RESTOR_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
+  @NonNls String ACTION_RESTORE_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
 }

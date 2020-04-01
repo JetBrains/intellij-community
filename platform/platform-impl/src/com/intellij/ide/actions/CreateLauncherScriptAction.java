@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -44,30 +44,30 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   private static class Holder {
     private static final String INTERPRETER_NAME =
-      PathEnvironmentVariableUtil.findInPath("python") != null ? "python":
-      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" :null;
+      PathEnvironmentVariableUtil.findInPath("python") != null ? "python" :
+      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" : null;
   }
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix &&
-           (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
-           Holder.INTERPRETER_NAME != null;
+    return SystemInfo.isUnix && !ExternalUpdateManager.isRoaming() && Holder.INTERPRETER_NAME != null;
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    boolean enabled = isAvailable();
+    boolean enabled = SystemInfo.isUnix &&
+                      (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
+                      Holder.INTERPRETER_NAME != null;
     event.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    if (!isAvailable()) return;
-
-    if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) {
-      String title = ApplicationBundle.message("launcher.script.title");
-      String message = ApplicationBundle.message("launcher.script.luke");
-      Messages.showInfoMessage(event.getProject(), message, title);
+    if (!isAvailable()) {
+      if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) {
+        String title = ApplicationBundle.message("launcher.script.title");
+        String message = ApplicationBundle.message("launcher.script.luke");
+        Messages.showInfoMessage(event.getProject(), message, title);
+      }
       return;
     }
 
@@ -101,7 +101,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       }
     }
 
-    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.title")) {
+    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

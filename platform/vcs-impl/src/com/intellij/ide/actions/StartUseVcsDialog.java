@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -12,16 +15,17 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 class StartUseVcsDialog extends DialogWrapper {
-  private final VcsDataWrapper myData;
+  private final Map<String, String> myVcses;
   private VcsCombo myVcsCombo;
   private String mySelected;
 
-  StartUseVcsDialog(@NotNull VcsDataWrapper data) {
-    super(data.getProject(), true);
-    myData = data;
+  StartUseVcsDialog(@NotNull Project project) {
+    super(project, true);
+    myVcses = getVcses(project);
     setTitle(VcsBundle.message("dialog.enable.version.control.integration.title"));
 
     init();
@@ -76,8 +80,8 @@ class StartUseVcsDialog extends DialogWrapper {
   }
 
   private String @NotNull [] prepareComboData() {
-    ArrayList<String> keys = new ArrayList<>(myData.getVcses().keySet());
-    Collections.sort(keys, (String o1, String o2) -> {
+    ArrayList<String> keys = new ArrayList<>(myVcses.keySet());
+    keys.sort((String o1, String o2) -> {
       if (o1.equals(o2)) return 0;
       if (o1.equals("Git")) return -1;
       if (o2.equals("Git")) return 1;
@@ -88,7 +92,16 @@ class StartUseVcsDialog extends DialogWrapper {
 
   @NotNull
   String getVcs() {
-    return myData.getVcses().get(mySelected);
+    return myVcses.get(mySelected);
+  }
+
+  private static Map<String, String> getVcses(@NotNull Project project) {
+    VcsDescriptor[] allVcss = ProjectLevelVcsManager.getInstance(project).getAllVcss();
+    Map<String, String> map = new HashMap<>(allVcss.length);
+    for (VcsDescriptor vcs : allVcss) {
+      map.put(vcs.getDisplayName(), vcs.getName());
+    }
+    return map;
   }
 
   private static class VcsCombo extends JComboBox<String> {

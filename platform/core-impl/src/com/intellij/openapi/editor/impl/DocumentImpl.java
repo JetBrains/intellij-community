@@ -1201,6 +1201,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     private final Attachment[] myAttachments;
 
     private UnexpectedBulkUpdateStateException(Throwable enteringTrace) {
+      super("Current operation is not permitted in bulk mode, see Document.setInBulkUpdate javadoc");
       myAttachments = enteringTrace == null ? Attachment.EMPTY_ARRAY
                                             : new Attachment[] {new Attachment("enteringTrace.txt", enteringTrace)};
     }

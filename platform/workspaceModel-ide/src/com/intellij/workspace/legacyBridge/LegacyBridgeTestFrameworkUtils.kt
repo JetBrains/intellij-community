@@ -12,7 +12,6 @@ import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvi
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
 import org.jetbrains.annotations.ApiStatus
 
 object LegacyBridgeTestFrameworkUtils {

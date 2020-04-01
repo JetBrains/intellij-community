@@ -1,54 +1,30 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes;
 
-import com.google.common.collect.Collections2;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dennis.Ushakov
@@ -78,7 +54,7 @@ public final class PyClassRefactoringUtil {
                                                                             @NotNull final PyStatementList superClassStatement,
                                                                             @Nullable final PyClass dequalifyIfDeclaredInClass) {
     final List<PyAssignmentStatement> declarations = new ArrayList<>(assignmentStatements.size());
-    Collections.sort(declarations, PyDependenciesComparator.INSTANCE);
+    declarations.sort(PyDependenciesComparator.INSTANCE);
 
 
     for (final PyAssignmentStatement pyAssignmentStatement : assignmentStatements) {
@@ -266,78 +242,16 @@ public final class PyClassRefactoringUtil {
       if (PsiTreeUtil.isAncestor(targetNode.getContainingFile(), target, false)) return;
       if (ArrayUtil.contains(target, otherMovedElements)) return;
       if (target instanceof PyFile || target instanceof PsiDirectory) {
-        insertImport(targetNode, target, asName, useFromImport != null ? useFromImport : true);
+        PyPsiRefactoringUtil.insertImport(targetNode, target, asName, useFromImport != null ? useFromImport : true);
       }
       else {
-        insertImport(targetNode, target, asName, true);
+        PyPsiRefactoringUtil.insertImport(targetNode, target, asName, true);
       }
     }
     finally {
       sourceNode.putCopyableUserData(ENCODED_IMPORT, null);
       sourceNode.putCopyableUserData(ENCODED_IMPORT_AS, null);
       sourceNode.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
-    }
-  }
-
-  public static void insertImport(PsiElement anchor, Collection<? extends PsiNamedElement> elements) {
-    for (PsiNamedElement newClass : elements) {
-      insertImport(anchor, newClass);
-    }
-  }
-
-  public static boolean isValidQualifiedName(QualifiedName name) {
-    if (name == null) {
-      return false;
-    }
-    final Collection<String> components = name.getComponents();
-    if (components.isEmpty()) {
-      return false;
-    }
-    for (String s : components) {
-      if (!PyNames.isIdentifier(s) || PyNames.isReserved(s)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public static boolean insertImport(@NotNull PsiElement anchor, @NotNull PsiNamedElement element) {
-    return insertImport(anchor, element, null);
-  }
-
-  public static boolean insertImport(@NotNull PsiElement anchor, @NotNull PsiNamedElement element, @Nullable String asName) {
-    return insertImport(anchor, element, asName, PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
-  }
-
-  public static boolean insertImport(@NotNull PsiElement anchor,
-                                     @NotNull PsiNamedElement element,
-                                     @Nullable String asName,
-                                     boolean preferFromImport) {
-    if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return false;
-    final PsiFileSystemItem elementSource = element instanceof PsiDirectory? (PsiFileSystemItem)element : element.getContainingFile();
-    final PsiFile file = anchor.getContainingFile();
-    if (elementSource == file) return false;
-    final QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(element, anchor);
-    if (qname == null || !isValidQualifiedName(qname)) {
-      return false;
-    }
-    final QualifiedName containingQName;
-    final String importedName;
-    final boolean importingModuleOrPackage = element instanceof PyFile || element instanceof PsiDirectory;
-    if (importingModuleOrPackage) {
-      containingQName = qname.removeLastComponent();
-      importedName = qname.getLastComponent();
-    }
-    else {
-      containingQName = qname;
-      importedName = getOriginalName(element);
-    }
-    final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, elementSource);
-    if (preferFromImport && !containingQName.getComponents().isEmpty() || !importingModuleOrPackage) {
-      return AddImportHelper.addOrUpdateFromImportStatement(file, containingQName.toString(), importedName, asName, priority, anchor);
-    }
-    else {
-      return AddImportHelper.addImportStatement(file, containingQName.append(importedName).toString(), asName, priority, anchor);
     }
   }
 
@@ -465,18 +379,18 @@ public final class PyClassRefactoringUtil {
    * @return                whether import statement was actually updated
    */
   public static boolean updateUnqualifiedImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
-    final String name = getOriginalName(element);
+    final String name = PyPsiRefactoringUtil.getOriginalName(element);
     if (name != null) {
       PyImportElement importElement = null;
       for (PyImportElement e : importStatement.getImportElements()) {
-        if (name.equals(getOriginalName(e))) {
+        if (name.equals(PyPsiRefactoringUtil.getOriginalName(e))) {
           importElement = e;
         }
       }
       if (importElement != null) {
         final PsiFile file = importStatement.getContainingFile();
         final PsiFile newFile = element.getContainingFile();
-        if (newFile == file || insertImport(importStatement, element, importElement.getAsName(), true)) {
+        if (newFile == file || PyPsiRefactoringUtil.insertImport(importStatement, element, importElement.getAsName(), true)) {
           if (importStatement.getImportElements().length == 1) {
             final boolean isInjected =
               InjectedLanguageManager.getInstance(importElement.getProject()).isInjectedFragment(importElement.getContainingFile());
@@ -503,96 +417,6 @@ public final class PyClassRefactoringUtil {
     if (sibling instanceof PsiWhiteSpace) sibling.delete();
   }
 
-  @Nullable
-  public static String getOriginalName(@NotNull PsiNamedElement element) {
-    if (element instanceof PyFile) {
-      VirtualFile virtualFile = PsiUtilBase.asVirtualFile(PyUtil.turnInitIntoDir(element));
-      if (virtualFile != null) {
-        return virtualFile.getNameWithoutExtension();
-      }
-      return null;
-    }
-    return element.getName();
-  }
-
-  @Nullable
-  private static String getOriginalName(PyImportElement element) {
-    final QualifiedName qname = element.getImportedQName();
-    if (qname != null && qname.getComponentCount() > 0) {
-      return qname.getComponents().get(0);
-    }
-    return null;
-  }
-
-  /**
-   * Adds super classes to certain class.
-   *
-   * @param project      project where refactoring takes place
-   * @param clazz        destination
-   * @param superClasses classes to add
-   */
-  public static void addSuperclasses(@NotNull final Project project,
-                                     @NotNull final PyClass clazz,
-                                     final PyClass @NotNull ... superClasses) {
-
-    final Collection<String> superClassNames = new ArrayList<>();
-
-
-    for (final PyClass superClass : Collections2.filter(Arrays.asList(superClasses), NotNullPredicate.INSTANCE)) {
-      if (superClass.getName() != null) {
-        superClassNames.add(superClass.getName());
-        insertImport(clazz, superClass);
-      }
-    }
-
-    addSuperClassExpressions(project, clazz, superClassNames, null);
-  }
-
-
-  /**
-   * Adds expressions to superclass list
-   *
-   * @param project          project
-   * @param clazz            class to add expressions to superclass list
-   * @param paramExpressions param expressions. Like "object" or "MySuperClass". Will not add any param exp. if null.
-   * @param keywordArguments keyword args like "metaclass=ABCMeta". key-value pairs.  Will not add any keyword arg. if null.
-   */
-  private static void addSuperClassExpressions(@NotNull final Project project,
-                                               @NotNull final PyClass clazz,
-                                               @Nullable final Collection<String> paramExpressions,
-                                               @Nullable final Collection<Pair<String, String>> keywordArguments) {
-    final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    final LanguageLevel languageLevel = LanguageLevel.forElement(clazz);
-
-    PyArgumentList superClassExpressionList = clazz.getSuperClassExpressionList();
-    boolean addExpression = false;
-    if (superClassExpressionList == null) {
-      superClassExpressionList = generator.createFromText(languageLevel, PyClass.class, "class foo():pass").getSuperClassExpressionList();
-      assert superClassExpressionList != null : "expression not created";
-      addExpression = true;
-    }
-
-
-    generator.createFromText(LanguageLevel.PYTHON34, PyClass.class, "class foo(object, metaclass=Foo): pass").getSuperClassExpressionList();
-    if (paramExpressions != null) {
-      for (final String paramExpression : paramExpressions) {
-        superClassExpressionList.addArgument(generator.createParameter(paramExpression));
-      }
-    }
-
-    if (keywordArguments != null) {
-      for (final Pair<String, String> keywordArgument : keywordArguments) {
-        superClassExpressionList.addArgument(generator.createKeywordArgument(languageLevel, keywordArgument.first, keywordArgument.second));
-      }
-    }
-
-    // If class has no expression list, then we need to add it manually.
-    if (addExpression) {
-      final ASTNode classNameNode = clazz.getNameNode(); // For nameless classes we simply add expression list directly to them
-      final PsiElement elementToAddAfter = (classNameNode == null) ? clazz.getFirstChild() : classNameNode.getPsi();
-      clazz.addAfter(superClassExpressionList, elementToAddAfter);
-    }
-  }
 
   /**
    * Optimizes imports resorting them and removing unneeded
@@ -601,52 +425,6 @@ public final class PyClassRefactoringUtil {
    */
   public static void optimizeImports(@NotNull final PsiFile file) {
     PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
-  }
-
-  /**
-   * Adds class attributeName (field) if it does not exist. like __metaclass__ = ABCMeta. Or CLASS_FIELD = 42.
-   *
-   * @param aClass        where to add
-   * @param attributeName attribute's name. Like __metaclass__ or CLASS_FIELD
-   * @param value         it's value. Like ABCMeta or 42.
-   * @return newly inserted attribute
-   */
-  @Nullable
-  public static PsiElement addClassAttributeIfNotExist(
-    @NotNull final PyClass aClass,
-    @NotNull final String attributeName,
-    @NotNull final String value) {
-    if (aClass.findClassAttribute(attributeName, false, null) != null) {
-      return null; //Do not add any if exist already
-    }
-    final PyElementGenerator generator = PyElementGenerator.getInstance(aClass.getProject());
-    final String text = String.format("%s = %s", attributeName, value);
-    final LanguageLevel level = LanguageLevel.forElement(aClass);
-
-    final PyAssignmentStatement assignmentStatement = generator.createFromText(level, PyAssignmentStatement.class, text);
-    //TODO: Add metaclass to the top. Add others between last attributeName and first method
-    return PyPsiRefactoringUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
-  }
-
-  public static boolean addMetaClassIfNotExist(@NotNull PyClass cls, @NotNull PyClass metaClass, @NotNull TypeEvalContext context) {
-    final String metaClassName = metaClass.getName();
-    if (metaClassName == null) return false;
-
-    final PyType metaClassType = cls.getMetaClassType(false, context);
-    if (metaClassType != null) return false;
-
-    insertImport(cls, metaClass);
-
-    final LanguageLevel languageLevel = LanguageLevel.forElement(cls);
-    if (languageLevel.isPython2()) {
-      addClassAttributeIfNotExist(cls, PyNames.DUNDER_METACLASS, metaClassName);
-    }
-    else {
-      final List<Pair<String, String>> keywordArguments = Collections.singletonList(Pair.create(PyNames.METACLASS, metaClassName));
-      addSuperClassExpressions(cls.getProject(), cls, null, keywordArguments);
-    }
-
-    return true;
   }
 
   private static class DynamicNamedElement extends LightElement implements PsiNamedElement {

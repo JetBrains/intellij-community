@@ -1,4 +1,4 @@
-<h1> <img align="left" width="40" height="40" src="https://plugins.jetbrains.com/files/12175/63853/icon/pluginIcon.svg" alt="Grazi Icon"> Grazie </h1>
+<h1> <img width="40" height="40" src="https://plugins.jetbrains.com/files/12175/63853/icon/pluginIcon.svg" alt="Grazie Icon"> Grazie </h1>
 
 [![JetBrains Plugin](https://img.shields.io/jetbrains/plugin/v/12175-grazi.svg?style=flat-square&label=jetbrains%20plugin)](https://plugins.jetbrains.com/plugin/12175-grazi)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/12175-graz.svg?style=flat-square)](https://plugins.jetbrains.com/plugin/12175-grazi)
@@ -35,6 +35,6 @@ Grazie supports (including dialects):
 ## Special thanks
 Special thanks goes to:
 * Alexandra Pavlova (aka sunalex) for our beautiful icon
-* Alexandr Sadovnikov and Nikita Sokolov as one of initial developers of plugin
+* Alexander Khvorov, Alexandr Sadovnikov, and Nikita Sokolov as one of initial developers of plugin
 
 

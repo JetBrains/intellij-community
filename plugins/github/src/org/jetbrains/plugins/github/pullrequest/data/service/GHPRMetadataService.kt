@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.Disposable
@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
@@ -23,11 +24,11 @@ interface GHPRMetadataService : Disposable {
   fun resetData()
 
   @CalledInBackground
-  fun adjustReviewers(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
+  fun adjustReviewers(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
 
   @CalledInBackground
-  fun adjustAssignees(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHUser>)
+  fun adjustAssignees(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>)
 
   @CalledInBackground
-  fun adjustLabels(indicator: ProgressIndicator, pullRequest: Long, delta: CollectionDelta<GHLabel>)
+  fun adjustLabels(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>)
 }

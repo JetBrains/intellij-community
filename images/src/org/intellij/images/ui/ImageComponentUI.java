@@ -37,7 +37,7 @@ public class ImageComponentUI extends ComponentUI {
             ImageDocument document = ic.getDocument();
             BufferedImage image = document.getValue(ic.getZoomFactor());
             if (image != null) {
-                if (ic.isFileSizeVisible()) paintBorder(g, ic);
+                if (ic.isFileSizeVisible() && ic.isBorderVisible()) paintBorder(g, ic);
 
                 Dimension size = ic.getCanvasSize();
                 Graphics igc = g.create(ImageComponent.IMAGE_INSETS, ImageComponent.IMAGE_INSETS, size.width, size.height);

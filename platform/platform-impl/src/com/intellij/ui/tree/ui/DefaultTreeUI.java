@@ -26,6 +26,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -113,6 +114,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
       return Component.class.equals(type) || Container.class.equals(type);
     }
     return true;
+  }
+
+  private static boolean isLeadSelectionNeeded(@NotNull JTree tree, int row) {
+    return 1 < tree.getSelectionCount() && tree.isRowSelected(row - 1) && tree.isRowSelected(row + 1);
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -223,7 +228,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 g.setColor(getBackground(tree, path, row, true));
                 DRAW.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
               }
-              else if (1 < tree.getSelectionModel().getSelectionCount()) {
+              else if (isLeadSelectionNeeded(tree, row)) {
                 g.setColor(RenderingUtil.getBackground(tree));
                 DRAW.paint((Graphics2D)g, helper.getX() + 1, bounds.y + 1, helper.getWidth() - 2, bounds.height - 2, 0);
               }
@@ -246,6 +251,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected void installDefaults() {
     super.installDefaults();
+    if (!is("ide.tree.large.model.allowed")) largeModel = false;
     JTree tree = getTree();
     if (tree != null) {
       LookAndFeel.installBorder(tree, "Tree.border");
@@ -301,6 +307,27 @@ public final class DefaultTreeUI extends BasicTreeUI {
     else {
       super.setRootVisible(newValue);
     }
+  }
+
+  @Override
+  protected void setLargeModel(boolean large) {
+    super.setLargeModel(large && is("ide.tree.large.model.allowed"));
+  }
+
+  @Override
+  protected void setModel(TreeModel model) {
+    if (!is("ide.tree.large.model.allowed")) largeModel = false;
+    super.setModel(model);
+  }
+
+  @Override
+  protected void updateSize() {
+    if (getTree() != null) super.updateSize();
+  }
+
+  @Override
+  protected void completeEditing() {
+    if (getTree() != null) super.completeEditing();
   }
 
   @Override

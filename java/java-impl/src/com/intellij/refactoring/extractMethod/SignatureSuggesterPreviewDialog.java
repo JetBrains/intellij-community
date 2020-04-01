@@ -62,9 +62,7 @@ class SignatureSuggesterPreviewDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    return new JLabel(JavaRefactoringBundle.message(
-      "no.exact.method.duplicates.were.found", myDuplicatesNumber,
-      myDuplicatesNumber > 1 ? "s" : ""));
+    return new JLabel(JavaRefactoringBundle.message("no.exact.method.duplicates.were.found", myDuplicatesNumber));
   }
 
   @Nullable

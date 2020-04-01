@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.TextCopyProvider
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.COPY_PROVIDER
@@ -28,6 +29,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.ObjectUtils.sentinel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
+import com.intellij.vcs.commit.ChangesViewCommitPanel
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
 import java.awt.Point
 import javax.swing.JList
@@ -46,6 +48,11 @@ class ShowMessageHistoryAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val commitMessage = getCommitMessage(e)
+
+    if (e.place == ChangesViewCommitPanel.COMMIT_TOOLBAR_PLACE) {
+      e.presentation.icon = AllIcons.Vcs.HistoryInline
+      e.presentation.hoveredIcon = AllIcons.Vcs.HistoryInlineHovered
+    }
 
     e.presentation.isVisible = project != null && commitMessage != null
     e.presentation.isEnabled = e.presentation.isVisible && !VcsConfiguration.getInstance(project!!).recentMessages.isEmpty()

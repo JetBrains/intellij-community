@@ -18,17 +18,18 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyProtectedMemberInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyAddPropertyForFieldQuickFixTest")
 public class PyAddPropertyForFieldQuickFixTest extends PyQuickFixTestCase {
   public void testProtectedMember() {
-    doQuickFixTest(PyProtectedMemberInspection.class, PyBundle.message("QFIX.add.property"));
+    doQuickFixTest(PyProtectedMemberInspection.class, PyPsiBundle.message("QFIX.add.property"));
   }
 
   public void testUseProperty() {
-    doQuickFixTest(PyProtectedMemberInspection.class, PyBundle.message("QFIX.use.property"));
+    doQuickFixTest(PyProtectedMemberInspection.class, PyPsiBundle.message("QFIX.use.property"));
   }
 
   public void testProtectedFunction() {
@@ -36,7 +37,7 @@ public class PyAddPropertyForFieldQuickFixTest extends PyQuickFixTestCase {
     myFixture.enableInspections(PyProtectedMemberInspection.class);
     myFixture.configureByFile(testFileName + ".py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.add.property"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyPsiBundle.message("QFIX.add.property"));
     assertNull(intentionAction);
   }
 }

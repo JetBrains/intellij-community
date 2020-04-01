@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,7 +20,7 @@ public abstract class TypePresentationService {
   }
 
   @Nullable
-  public abstract Icon getIcon(Object o);
+  public abstract Icon getIcon(@NotNull Object o);
 
   @Nullable
   public abstract Icon getTypeIcon(Class type);
@@ -28,13 +29,14 @@ public abstract class TypePresentationService {
   public abstract String getTypePresentableName(Class type);
 
   @Nullable
-  public abstract String getTypeName(Object o);
+  public abstract String getTypeName(@NotNull Object o);
 
   @ApiStatus.Internal
   @Nullable
-  public abstract String getObjectName(Object o);
+  public abstract String getObjectName(@NotNull Object o);
 
-  public static String getDefaultTypeName(final Class aClass) {
+  @NotNull
+  public static String getDefaultTypeName(@NotNull Class aClass) {
     String simpleName = aClass.getSimpleName();
     final int i = simpleName.indexOf('$');
     if (i >= 0) {

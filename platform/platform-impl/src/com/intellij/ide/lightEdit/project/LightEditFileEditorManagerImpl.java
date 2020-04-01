@@ -119,4 +119,9 @@ final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
     }
     return null;
   }
+
+  @Override
+  public boolean hasOpenFiles() {
+    return !LightEditService.getInstance().getEditorManager().getOpenFiles().isEmpty();
+  }
 }

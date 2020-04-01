@@ -574,7 +574,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       final InspectionEP extension = toolWrapper.getExtension();
-      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName()) : extension::getDisplayName;
+      Computable<String> computable = extension == null || extension.displayName == null && extension.key == null
+                                      ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
+                                      : extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());

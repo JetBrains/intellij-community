@@ -420,6 +420,7 @@
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
           <action id="ExportSettings" class="com.intellij.configurationStore.ExportSettingsAction"/>
           <separator/>
+          <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
@@ -455,6 +456,7 @@
             <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
             <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
             <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" />
+            <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
             <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
             <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider"/>
             <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider"/>
@@ -541,6 +543,7 @@
             <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
             <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
             <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+            <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
@@ -848,6 +851,7 @@
               icon="AllIcons.ToolbarDecorator.Import"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Export"/>
+      <action id="WelcomeScreen.Configure.RestoreDefault" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
 
       <action id="WelcomeScreen.Configure.CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
 
@@ -1009,7 +1013,7 @@
         <separator/>
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction"/>
         <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction"/>
-        <action id="WebBrowser" class="com.intellij.internal.WebBrowser"/>
+        <action id="WebBrowser" class="com.intellij.internal.jcef.WebBrowser"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction"/>
@@ -1193,6 +1197,7 @@
     <group id="CopyReferencePopupGroup">
       <group id="CopyFileReference">
         <reference ref="CopyAbsolutePath" />
+        <reference ref="CopyFileName" />
         <reference ref="CopyPathWithLineNumber" />
         <reference ref="CopyContentRootPath" />
         <reference ref="CopySourceRootPath" />

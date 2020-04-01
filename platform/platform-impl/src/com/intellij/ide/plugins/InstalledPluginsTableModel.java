@@ -88,8 +88,7 @@ public class InstalledPluginsTableModel {
         pluginIdMap = PluginManagerCore.buildPluginIdMap();
       }
 
-      PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, descriptor -> {
-        PluginId depId = descriptor.getPluginId();
+      PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, (depId, descriptor) -> {
         if (depId.equals(pluginId)) {
           return FileVisitResult.CONTINUE;
         }
@@ -175,8 +174,7 @@ public class InstalledPluginsTableModel {
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     for (final IdeaPluginDescriptor descriptorToCheckDependencies : descriptorsToCheckDependencies) {
       PluginId pluginId = descriptorToCheckDependencies.getPluginId();
-      PluginManagerCore.processAllDependencies(descriptorToCheckDependencies, false, pluginIdMap, descriptor -> {
-        PluginId depId = descriptor.getPluginId();
+      PluginManagerCore.processAllDependencies(descriptorToCheckDependencies, false, pluginIdMap, (depId, descriptor) -> {
         if (depId == pluginId) {
           return FileVisitResult.CONTINUE;
         }
@@ -232,9 +230,9 @@ public class InstalledPluginsTableModel {
       middleS = deps.size() == 1 ? "s" : "";
       endS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
     }
-    String message = newEnabledState ?
-                      "<html>The enabled plugin" + beginS + " depend" + middleS + " on the following plugin" + endS + ":<br>" + listOfDependencies + "</html>"
-                      : "<html>The following plugin" + beginS + " depend" + middleS + " on the disabled plugin" + endS + ":<br>" + listOfDependencies + "</html>";
+    String message = newEnabledState
+                     ? IdeBundle.message("dialog.message.enable.required.plugins", beginS, middleS, endS, listOfDependencies)
+                     : IdeBundle.message("dialog.message.disable.dependent.plugins", beginS, middleS, endS, listOfDependencies);
     if (Messages.showOkCancelDialog(message, newEnabledState ? IdeBundle.message("dialog.title.enable.required.plugins")
                                                              : IdeBundle.message("dialog.title.disable.dependent.plugins"),
                                     newEnabledState ? IdeBundle.message("button.enable") : IdeBundle.message("button.disable"), Messages.getCancelButton(), Messages.getQuestionIcon()) == Messages.OK) {

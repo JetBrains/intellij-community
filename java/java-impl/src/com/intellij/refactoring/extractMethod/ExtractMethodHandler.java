@@ -47,11 +47,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodAnalyzerKt;
-import com.intellij.refactoring.extractMethod.newImpl.MethodExtractorKt;
-import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector;
-import com.intellij.refactoring.extractMethod.newImpl.ExtractOptionsPipelineKt;
-import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions;
+import com.intellij.refactoring.extractMethod.newImpl.*;
 import com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -156,7 +152,27 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
+  public static boolean canUseNewImpl(@NotNull Project project, PsiFile file, PsiElement @NotNull [] elements){
+    final ExtractMethodProcessor processor = getProcessor(project, elements, file, false);
+    if (processor == null) return true;
+    try {
+      processor.prepare(null);
+      processor.prepareVariablesAndName();
+      processor.myMethodName = "extracted";
+    }
+    catch (PrepareFailedException e) {
+      return true;
+    }
+
+    return processor.estimateDuplicatesCount() == 0 && !processor.myInputVariables.isFoldable();
+  }
+
   public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
+    if (Registry.is("java.refactoring.extractMethod.newImplementation") && canUseNewImpl(project, file, elements)) {
+      new MethodExtractor().doExtract(editor, getRefactoringName(), HelpID.EXTRACT_METHOD);
+      return;
+    }
+
     getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
       @Override
       public void pass(ExtractMethodProcessor processor) {
@@ -192,30 +208,12 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
                                                     () -> doRefactoring(project, processor)), getRefactoringName(), null);
   }
 
-  private static void extractWithNewImpl(Editor editor, ExtractMethodProcessor processor){
-    final List<PsiElement> statements = new ExtractSelector().suggestElementsToExtract(editor);
-    final ExtractOptions extractOptions = ExtractMethodAnalyzerKt.findExtractOptions(statements);
-    if (extractOptions == null) return;
-    final ExtractOptions mappedOptions = ExtractOptionsPipelineKt.remap(extractOptions, processor.myVariableDatum, processor.myMethodName,
-                                                        processor.myStatic, processor.myMethodVisibility, processor.myIsChainedConstructor);
-    MethodExtractorKt.extractMethod(mappedOptions);
-  }
-
   private static void doRefactoring(@NotNull Project project, @NotNull ExtractMethodProcessor processor) {
     try {
       final RefactoringEventData beforeData = new RefactoringEventData();
       beforeData.addElements(processor.myElements);
       project.getMessageBus().syncPublisher(
         RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
-
-      if (Registry.is("java.refactoring.extractMethod.newImplementation")
-          && processor.estimateDuplicatesCount() == 0
-          && ! processor.myInputVariables.isFoldable()
-      ) {
-        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        extractWithNewImpl(editor, processor);
-        return;
-      }
 
       processor.doRefactoring();
 

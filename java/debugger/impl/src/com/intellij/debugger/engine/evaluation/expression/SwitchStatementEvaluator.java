@@ -3,10 +3,10 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public class SwitchStatementEvaluator implements Evaluator {
   private final Evaluator myExpressionEvaluator;
@@ -40,7 +40,7 @@ public class SwitchStatementEvaluator implements Evaluator {
       }
     }
     catch (BreakException e) {
-      if (!Comparing.equal(e.getLabelName(), myLabelName)) {
+      if (!Objects.equals(e.getLabelName(), myLabelName)) {
         throw e;
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
-import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
@@ -361,6 +360,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         lines = StreamEx.of(lines).map(l -> mapping.sourceToBytecode(l + 1) - 1).filter(l -> l >= 0).toSet();
       }
 
+
       if (!targets.isEmpty()) {
         StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
         if (frameProxy != null) {
@@ -371,11 +371,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           // sanity check
           DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
           try {
-            List<MethodSmartStepTarget> methodTargets =
-              StreamEx.of(targets)
-                .select(MethodSmartStepTarget.class)
-                .filter(target -> !target.needsBreakpointRequest())
-                .toList();
+            List<MethodSmartStepTarget> methodTargets = immediateMethodCalls(targets).toList();
             visitLinesInstructions(frameProxy.location(), true, lines,
                                    (opcode, owner, name, desc, itf, ordinal) ->
                                      removeMatchingMethod(methodTargets, owner, name, desc, ordinal, debugProcess));
@@ -390,19 +386,29 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           }
 
           try {
+            ArrayList<SmartStepTarget> all = new ArrayList<>(targets);
             // remove already executed
             JumpsAndInsnVisitor visitor = new JumpsAndInsnVisitor(targets, debugProcess);
             visitLinesInstructions(frameProxy.location(), false, lines, visitor);
 
-            if (!smart) {
+            if (!smart && !targets.isEmpty()) {
+              ArrayList<SmartStepTarget> copy = new ArrayList<>(targets);
               // remove after jumps
               visitor.setJumpsToIgnore(visitor.getJumpCounter() + 1);
               visitLinesInstructions(frameProxy.location(), true, lines, visitor);
+
+              // check if anything real left, fallback to the previous state
+              if (!targets.isEmpty() && !immediateMethodCalls(targets).findAny().isPresent()) {
+                targets.clear();
+                targets.addAll(copy);
+              }
             }
 
             // fix ordinals
-            List<SmartStepTarget> all = ContainerUtil.concat(targets, visitor.getRemoved());
-            for (MethodSmartStepTarget target : visitor.getRemoved()) {
+            ArrayList<SmartStepTarget> removed = new ArrayList<>(all);
+            removed.removeAll(targets);
+            for (SmartStepTarget m : removed) {
+              MethodSmartStepTarget target = (MethodSmartStepTarget)m;
               existingMethodCalls(all, target.getMethod())
                 .forEach(t -> {
                   int ordinal = t.getOrdinal();
@@ -501,17 +507,19 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     }, true);
   }
 
-  private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
+  private static StreamEx<MethodSmartStepTarget> immediateMethodCalls(List<SmartStepTarget> targets) {
     return StreamEx.of(targets)
       .select(MethodSmartStepTarget.class)
-      .filter(target -> !target.needsBreakpointRequest())
-      .filter(t -> t.getMethod().equals(psiMethod));
+      .filter(target -> !target.needsBreakpointRequest());
+  }
+
+  private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
+    return immediateMethodCalls(targets).filter(t -> t.getMethod().equals(psiMethod));
   }
 
   private static class JumpsAndInsnVisitor implements MethodInsnVisitor {
     private final List<SmartStepTarget> myTargets;
     private final DebugProcessImpl myDebugProcess;
-    private final List<MethodSmartStepTarget> myRemoved = new SmartList<>();
     private int myJumpCounter;
     private int myJumpsToIgnore;
 
@@ -530,7 +538,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               DebuggerUtilsEx.methodMatches(((MethodSmartStepTarget)e).getMethod(), owner.replace("/", "."), name, desc, myDebugProcess) &&
               ((MethodSmartStepTarget)e).getOrdinal() == ordinal) {
             iterator.remove();
-            myRemoved.add((MethodSmartStepTarget)e);
             break;
           }
         }
@@ -553,10 +560,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
     void setJumpsToIgnore(int jumpsToIgnore) {
       myJumpsToIgnore = jumpsToIgnore;
-    }
-
-    List<MethodSmartStepTarget> getRemoved() {
-      return myRemoved;
     }
   }
 }

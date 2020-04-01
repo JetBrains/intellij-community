@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
@@ -48,12 +49,16 @@ public interface StatusBarWidgetWrapper {
       setTextAlignment(Component.CENTER_ALIGNMENT);
       setBorder(StatusBarWidget.WidgetBorder.WIDE);
       new ClickListener() {
+        private final PopupState myPopupState = new PopupState();
+
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+          if (myPopupState.isRecentlyHidden()) return false; // do not show new popup
           final ListPopup popup = myPresentation.getPopupStep();
           if (popup == null) return false;
           final Dimension dimension = popup.getContent().getPreferredSize();
           final Point at = new Point(0, -dimension.height);
+          popup.addListener(myPopupState);
           popup.show(new RelativePoint(e.getComponent(), at));
           return true;
         }

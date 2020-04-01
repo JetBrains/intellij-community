@@ -3,6 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -17,7 +18,7 @@ import java.util.Objects;
  *
  * @author Alexey.Ushakov
  */
-public class WinProcessManager {
+public final class WinProcessManager {
   private static final Logger LOG = Logger.getInstance(WinProcessManager.class);
 
   private WinProcessManager() { }
@@ -26,7 +27,7 @@ public class WinProcessManager {
     String processClassName = process.getClass().getName();
     if (processClassName.equals("java.lang.Win32Process") || processClassName.equals("java.lang.ProcessImpl")) {
       try {
-        if (SystemInfo.IS_AT_LEAST_JAVA9) {
+        if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
           //noinspection JavaReflectionMemberAccess
           return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
         }

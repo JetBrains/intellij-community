@@ -104,26 +104,26 @@ public class GitRebaseUpdater extends GitUpdater {
       return false;
     }
     try {
-      markStart(myRoot);
+      markStart(repository);
     }
     catch (VcsException e) {
-      LOG.info("Couldn't mark start for repository " + myRoot, e);
+      LOG.info("Couldn't mark start for repository " + repository, e);
       return false;
     }
 
     GitCommandResult result = myGit.merge(repository, getRemoteBranchToMerge(), singletonList("--ff-only"));
 
     try {
-      markEnd(myRoot);
+      markEnd(repository);
     }
     catch (VcsException e) {
       // this is not critical, and update has already happened,
       // so we just notify the user about problems with collecting the updated changes.
-      LOG.info("Couldn't mark end for repository " + myRoot, e);
+      LOG.info("Couldn't mark end for repository " + repository, e);
       VcsNotifier.getInstance(myProject).
         notifyMinorWarning("Couldn't collect the updated files info",
                            String.format("Update of %s was successful, but we couldn't collect the updated changes because of an error",
-                                         myRoot));
+                                         repository));
     }
     return result.success();
   }

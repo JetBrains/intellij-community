@@ -16,6 +16,9 @@ internal class SyntheticLibraryIndexableFilesProvider(
 
   private fun getName() = (syntheticLibrary as? ItemPresentation)?.presentableText
 
+  override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }?.let { "Synthetic library '$it'" }
+                                ?: syntheticLibrary.toString()
+
   override fun getIndexingProgressText(): @Nullable String {
     val name = getName()
     if (!name.isNullOrEmpty()) {
@@ -27,7 +30,7 @@ internal class SyntheticLibraryIndexableFilesProvider(
   override fun getRootsScanningProgressText(): String {
     val name = getName()
     if (!name.isNullOrEmpty()) {
-      return name
+      return IndexingBundle.message("indexable.files.provider.scanning.library.name", name)
     }
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }

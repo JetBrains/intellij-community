@@ -177,8 +177,8 @@ class GitAbortRebaseProcess {
           else {
             myNotifier.notifyError(
               GitBundle.getString("rebase.abort.notification.failed.title"),
-              result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver)
-            );
+              result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver),
+              true);
             return;
           }
         }

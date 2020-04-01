@@ -202,6 +202,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final Document[] documents = getUncommittedDocuments();
     for (Document document : documents) {
       if (isCommitted(document)) {
+        if (!isEventSystemEnabled(document)) {
+          // another thread has just committed it, everything's fine
+          continue;
+        }
         boolean success = doCommitWithoutReparse(document);
         LOG.error("Committed document in uncommitted set: " + document + ", force-committed=" + success);
       }
@@ -337,7 +341,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   boolean isEventSystemEnabled(@NotNull Document document) {
     FileViewProvider viewProvider = getCachedViewProvider(document);
-    return viewProvider != null && viewProvider.isEventSystemEnabled() && !AbstractFileViewProvider.isFreeThreaded(viewProvider);
+    return viewProvider != null && viewProvider.isEventSystemEnabled();
   }
 
   boolean finishCommit(@NotNull final Document document,

@@ -17,8 +17,8 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,6 @@ import static com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.crea
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel.buildVcsWrappersModel;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 
@@ -51,7 +50,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final Map<String, VcsDescriptor> myVcses;
 
-  public VcsMappingConfigurationDialog(@NotNull Project project, String title) {
+  public VcsMappingConfigurationDialog(@NotNull Project project, @NlsContexts.DialogTitle String title) {
     super(project, false);
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);

@@ -4,7 +4,6 @@ package com.intellij.openapi.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
@@ -35,8 +34,6 @@ import java.util.stream.Collectors;
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class StringUtil extends StringUtilRt {
-  private static final Logger LOG = Logger.getInstance(StringUtil.class);
-
   @SuppressWarnings("SpellCheckingInspection") private static final String VOWELS = "aeiouy";
   private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
   private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
@@ -1118,7 +1115,7 @@ public class StringUtil extends StringUtilRt {
       }
     }
     catch (IOException e) {
-      LOG.error(e);
+      Logger.getInstance(StringUtil.class).error(e);
     }
   }
 
@@ -1168,7 +1165,7 @@ public class StringUtil extends StringUtilRt {
   @Nullable
   @Contract(pure = true)
   public static String nullize(@Nullable String s, @Nullable String defaultValue) {
-    boolean empty = isEmpty(s) || Comparing.equal(s, defaultValue);
+    boolean empty = isEmpty(s) || Objects.equals(s, defaultValue);
     return empty ? null : s;
   }
 
@@ -1618,10 +1615,6 @@ public class StringUtil extends StringUtilRt {
       if (remainder != 0 || !unitValues.isEmpty()) {
         unitValues.insert(0, remainder);
         unitIndices.insert(0, i - 1);
-      }
-      else {
-        remainder = Math.round(remainder * 100 / (double)multiplier);
-        count += remainder / 100;
       }
     }
     unitValues.insert(0, count);
@@ -2327,7 +2320,7 @@ public class StringUtil extends StringUtilRt {
       parser.parse(new StringReader(htmlString));
     }
     catch (IOException e) {
-      LOG.error(e);
+      Logger.getInstance(StringUtil.class).error(e);
     }
     return parser.getText();
   }

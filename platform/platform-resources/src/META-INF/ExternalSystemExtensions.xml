@@ -21,6 +21,8 @@
 
     <module.workingDirectoryProvider
         implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.util.environment.Environment"
+                        serviceImplementation="com.intellij.openapi.externalSystem.util.environment.SystemEnvironment"/>
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
@@ -86,6 +88,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>
     <statistics.counterUsagesCollector groupId="build.tools.actions" version="1"/>
+    <notificationWhitelist groupIds="Gradle Import;Unindexed maven repositories gradle detection;Build sync orphan modules;Content root duplicates"/>
   </extensions>
 
 </idea-plugin>

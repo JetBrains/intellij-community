@@ -19,4 +19,7 @@ public interface EventLogApplicationInfo {
 
   @NotNull
   DataCollectorDebugLogger getLogger();
+
+  @NotNull
+  DataCollectorSystemEventLogger getEventLogger();
 }

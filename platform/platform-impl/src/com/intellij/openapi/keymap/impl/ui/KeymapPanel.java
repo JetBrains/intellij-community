@@ -283,7 +283,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         editSelection(e, true);
         return true;
       }

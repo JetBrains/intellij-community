@@ -62,7 +62,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private boolean myClosed;
   private boolean myDirty;
   private boolean myCorrupted;
-  private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
+  private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private Flushable myMarkCleanCallback;
 
   public static class Version {
@@ -83,7 +83,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase> {
+  abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase<?>> {
     abstract int recordWriteOffset(T enumerator, byte[] buf);
     abstract byte @NotNull [] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
@@ -162,16 +162,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
                                   @NotNull KeyDescriptor<Data> dataDescriptor,
                                   int initialSize,
                                   @NotNull Version version,
-                                  @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler,
+                                  @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase<?>> recordBufferHandler,
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
     myVersion = version;
-    myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
+    myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase<?>>)recordBufferHandler;
     myDoCaching = doCaching;
 
     if (!Files.exists(file)) {
-      assert file.getFileSystem() == FileSystems.getDefault() : file + " in " + file.getFileSystem();
+      if (file.getFileSystem() != FileSystems.getDefault()) {
+        throw new IOException(file + " in " + file.getFileSystem() + " is not exist");
+      }
       FileUtil.delete(keyStreamFile());
       if (!FileUtil.createIfDoesntExist(file.toFile())) {
         throw new IOException("Cannot create empty file: " + file);
@@ -255,11 +257,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected abstract void setupEmptyFile() throws IOException;
 
   @NotNull
-  final RecordBufferHandler<PersistentEnumeratorBase> getRecordHandler() {
+  final RecordBufferHandler<PersistentEnumeratorBase<?>> getRecordHandler() {
     return myRecordHandler;
   }
 
-  public void setRecordHandler(@NotNull RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+  public void setRecordHandler(@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler) {
     myRecordHandler = recordHandler;
   }
 

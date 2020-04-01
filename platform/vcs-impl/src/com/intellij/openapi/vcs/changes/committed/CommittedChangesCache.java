@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -50,11 +51,12 @@ import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList
 /**
  * @author yole
  */
+@Service
 @State(
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
+public final class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
   private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
   private final Project myProject;
@@ -75,7 +77,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
                                                                                     CommittedChangesListener.class);
 
   public static CommittedChangesCache getInstance(Project project) {
-    return project.getComponent(CommittedChangesCache.class);
+    return project.getService(CommittedChangesCache.class);
   }
 
   public CommittedChangesCache(@NotNull Project project) {

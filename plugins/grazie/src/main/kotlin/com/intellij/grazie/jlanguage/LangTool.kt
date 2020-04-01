@@ -25,7 +25,7 @@ object LangTool : GrazieStateLifecycle {
     require(lang.jLanguage != null) { "Trying to get LangTool for not available language" }
 
     return langs.computeIfAbsent(lang) {
-      JLanguageTool(lang.jLanguage!!, state.nativeLanguage.jLanguage).apply {
+      JLanguageTool(lang.jLanguage!!).apply {
         addMatchFilter(UppercaseMatchFilter())
 
         state.userDisabledRules.forEach { id -> disableRule(id) }
@@ -46,7 +46,6 @@ object LangTool : GrazieStateLifecycle {
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
     if (
       prevState.availableLanguages == newState.availableLanguages
-      && prevState.nativeLanguage == newState.nativeLanguage
       && prevState.userDisabledRules == newState.userDisabledRules
       && prevState.userEnabledRules == newState.userEnabledRules
     ) return

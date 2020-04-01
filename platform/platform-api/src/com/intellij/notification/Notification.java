@@ -13,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +22,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.util.NlsContexts.*;
 
 /**
  * Notification bean class contains <b>title:</b>subtitle, content (plain text or HTML) and actions.
@@ -70,13 +72,12 @@ public class Notification {
   private WeakReference<Balloon> myBalloonRef;
   private final long myTimestamp;
 
-  public Notification(@NotNull String groupDisplayId, @Nullable Icon icon, @NotNull NotificationType type) {
-    this(groupDisplayId, icon, null, null, null, type, null);
+  public Notification(@NotNull String groupId, @Nullable Icon icon, @NotNull NotificationType type) {
+    this(groupId, icon, null, null, null, type, null);
   }
 
   /**
-   * @param groupDisplayId this should be a human-readable, capitalized string like "Facet Detector".
-   *                       It will appear in "Notifications" configurable.
+   * @param groupId        notification group id
    * @param icon           notification icon, if <b>null</b> used icon from type
    * @param title          notification title
    * @param subtitle       notification subtitle
@@ -84,14 +85,14 @@ public class Notification {
    * @param type           notification type
    * @param listener       notification lifecycle listener
    */
-  public Notification(@NotNull String groupDisplayId,
+  public Notification(@NotNull @NonNls String groupId,
                       @Nullable Icon icon,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String content,
+                      @Nullable @NotificationTitle String title,
+                      @Nullable @NotificationSubtitle String subtitle,
+                      @Nullable @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
-    myGroupId = groupDisplayId;
+    myGroupId = groupId;
     myTitle = StringUtil.notNullize(title);
     myContent = StringUtil.notNullize(content);
     myType = type;
@@ -104,27 +105,26 @@ public class Notification {
     id = calculateId(this);
   }
 
-  public Notification(@NotNull @Nls String groupDisplayId,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
+  public Notification(@NotNull @NonNls String groupId,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
                       @NotNull NotificationType type) {
-    this(groupDisplayId, title, content, type, null);
+    this(groupId, title, content, type, null);
   }
 
   /**
-   * @param groupDisplayId this should be a human-readable, capitalized string like "Facet Detector".
-   *                       It will appear in "Notifications" configurable.
+   * @param groupId        notification group id
    * @param title          notification title
    * @param content        notification content
    * @param type           notification type
    * @param listener       notification lifecycle listener
    */
-  public Notification(@NotNull @Nls String groupDisplayId,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
+  public Notification(@NotNull @NonNls String groupId,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
-    myGroupId = groupDisplayId;
+    myGroupId = groupId;
     myTitle = title;
     myContent = content;
     myType = type;
@@ -167,14 +167,14 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
+  public Notification setTitle(@Nullable @NotificationTitle String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                               @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle) {
+  public Notification setTitle(@Nullable @NotificationTitle String title,
+                               @Nullable @NotificationSubtitle String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
 
@@ -258,7 +258,7 @@ public class Notification {
    * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
    */
   @NotNull
-  public Notification setDropDownText(@NotNull String dropDownText) {
+  public Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }

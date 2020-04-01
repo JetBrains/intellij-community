@@ -28,13 +28,11 @@ public abstract class DockManager {
 
   public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent<?> content);
 
-  @NotNull
-  public abstract Set<@NotNull DockContainer> getContainers();
+  public abstract @NotNull Set<@NotNull DockContainer> getContainers();
 
   public abstract IdeFrame getIdeFrame(@NotNull DockContainer container);
 
   public abstract String getDimensionKeyForFocus(@NotNull String key);
 
-  @Nullable
-  public abstract DockContainer getContainerFor(Component c);
+  public abstract @Nullable DockContainer getContainerFor(Component c);
 }

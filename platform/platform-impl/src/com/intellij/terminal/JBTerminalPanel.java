@@ -12,6 +12,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -323,10 +324,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     mySettingsProvider.removeListener(this);
   }
 
-  public static void refreshAfterExecution() {
+  private static void refreshAfterExecution() {
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       //we need to refresh local file system after a command has been executed in the terminal
-      LocalFileSystem.getInstance().refresh(true);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        LocalFileSystem.getInstance().refresh(true);
+      }, ModalityState.NON_MODAL); // for write-safe context
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -18,6 +18,8 @@ public class PsiLiteralUtil {
   @NonNls public static final String BIN_PREFIX = "0b";
   @NonNls public static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
   @NonNls public static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
+
+  private static final String QUOT = "&quot;";
 
   @Nullable
   public static Integer parseInteger(String text) {
@@ -353,6 +355,25 @@ public class PsiLiteralUtil {
     return -1;
   }
 
+  public static String @Nullable [] getTextBlockLines(PsiLiteralExpression expression) {
+    if (!expression.isTextBlock()) return null;
+    String rawText = expression.getText();
+    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
+    int start = 3;
+    while (true) {
+      char c = rawText.charAt(start++);
+      if (c == '\n') break;
+      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
+    }
+    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+  }
+
+  public static int getTextBlockIndent(PsiLiteralExpression expression) {
+    String[] lines = getTextBlockLines(expression);
+    if (lines == null) return -1;
+    return getTextBlockIndent(lines);
+  }
+
   /**
    * Determines how many whitespaces would be excluded at the beginning of each line of text block content.
    * See JEP 368 for more details.
@@ -378,6 +399,47 @@ public class PsiLiteralUtil {
       else if (indent < prefix) prefix = indent;
     }
     return prefix;
+  }
+
+  @Nullable
+  public static String getInnerText(PsiLiteralExpression expression) {
+    String text = expression.getText();
+    int textLength = text.length();
+    if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {
+      return text.substring(1, textLength - 1);
+    }
+    if (textLength > QUOT.length() && text.startsWith(QUOT) && text.endsWith(QUOT)) {
+      return text.substring(QUOT.length(), textLength - QUOT.length());
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getTextBlockText(PsiLiteralExpression expression) {
+    String[] lines = getTextBlockLines(expression);
+    if (lines == null) return null;
+
+    int prefix = getTextBlockIndent(lines);
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      if (line.length() > 0) {
+        sb.append(trimTrailingSpaces(line.substring(prefix)));
+      }
+      if (i < lines.length - 1) {
+        sb.append('\n');
+      }
+    }
+    return sb.toString();
+  }
+
+  @NotNull
+  private static String trimTrailingSpaces(@NotNull String line) {
+    int index = line.length() - 1;
+    while (index >= 0 && line.charAt(index) == ' ') index--;
+    if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
+    return line.substring(0, index + 1);
   }
 
   /**

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -64,6 +63,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     new TObjectHashingStrategy<VirtualFilePointer>() {
       @Override
       public int computeHashCode(VirtualFilePointer pointer) {
+        // TODO !! hashCode is unstable - VirtualFilePointer URL can change
         return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
       }
 
@@ -96,10 +96,11 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public Element getState() {
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
-      List<VirtualFilePointer> files = new ArrayList<>(myMapping.keySet());
-      ContainerUtil.quickSort(files, Comparator.comparing(VirtualFilePointer::getUrl));
-      for (VirtualFilePointer file : files) {
-        Charset charset = myMapping.get(file);
+      List<Map.Entry<VirtualFilePointer, Charset>> mappings = new ArrayList<>(myMapping.entrySet());
+      ContainerUtil.quickSort(mappings, Comparator.comparing(e -> e.getKey().getUrl()));
+      for (Map.Entry<VirtualFilePointer, Charset> mapping : mappings) {
+        VirtualFilePointer file = mapping.getKey();
+        Charset charset = mapping.getValue();
         Element child = new Element("file");
         element.addContent(child);
         child.setAttribute("url", file.getUrl());
@@ -227,9 +228,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   private static void reload(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull FileDocumentManagerImpl documentManager) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      try (AccessToken ignored = ProjectLocator.runWithPreferredProject(virtualFile, project)) {
+      ProjectLocator.computeWithPreferredProject(virtualFile, project, ()-> {
         documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
-      }
+        return null;
+      });
     });
   }
 

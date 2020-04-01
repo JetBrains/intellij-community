@@ -4,10 +4,10 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -51,6 +51,7 @@ internal class LegacyBridgeModifiableModuleModel(
     )
 
     val module = LegacyBridgeModuleImpl(moduleEntity.persistentId(), moduleName, project, null, entityStoreOnDiff, diff)
+    moduleManager.addUncommittedModule(module)
     myModulesToAdd[moduleName] = module
 
     module.init {}
@@ -84,6 +85,7 @@ internal class LegacyBridgeModifiableModuleModel(
     )
 
     val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
+    moduleManager.addUncommittedModule(moduleInstance)
     myModulesToAdd[moduleName] = moduleInstance
 
     moduleInstance.setModuleType(moduleTypeId)
@@ -125,6 +127,7 @@ internal class LegacyBridgeModifiableModuleModel(
     }
 
     if (myModulesToAdd.inverse().remove(module) != null) {
+      (ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent).removeUncommittedModule(module.name)
       Disposer.dispose(module)
     }
 
@@ -150,7 +153,9 @@ internal class LegacyBridgeModifiableModuleModel(
 
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
+    val moduleManager = ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent
     for (moduleToAdd in myModulesToAdd.values) {
+      moduleManager.removeUncommittedModule(moduleToAdd.name)
       Disposer.dispose(moduleToAdd)
     }
 
@@ -182,8 +187,6 @@ internal class LegacyBridgeModifiableModuleModel(
                          ?: error("Could not find module to remove by id: ${moduleToDispose.moduleEntityId}")
       diff.removeEntity(moduleEntity)
     }
-
-    moduleManager.setNewModuleInstances(myModulesToAdd.values.toList())
 
     for (entry in myNewNameToModule.entries) {
       val entity = storage.resolve(entry.value.moduleEntityId) ?:

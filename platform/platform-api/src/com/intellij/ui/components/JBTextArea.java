@@ -81,22 +81,15 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
 
   @Override
   public Dimension getPreferredSize() {
+    if (isPreferredSizeSet()) return super.getPreferredSize();
+    int width = 0;
+    FontMetrics fontMetrics = getFontMetrics(getFont());
+    for (String line : getText().split("\n")) {
+      width = Math.max(width, fontMetrics.stringWidth(line));
+    }
     Dimension d = super.getPreferredSize();
     Insets insets = getInsets();
-    String[] lines = getText().split("\n");
-    int columns = 0;
-    int rows = lines.length;
-    for (String line : lines) {
-      columns = Math.max(columns, line.length());
-    }
-    if (columns != 0) {
-      d.width = Math.max(d.width, columns * getColumnWidth() +
-                                  insets.left + insets.right);
-    }
-    if (rows != 0) {
-      d.height = Math.max(d.height, rows * getRowHeight() +
-                                    insets.top + insets.bottom);
-    }
+    d.width = Math.min(d.width, width + insets.left + insets.right);
     return d;
   }
 

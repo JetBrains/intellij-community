@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
@@ -39,8 +41,13 @@ public abstract class EdtInvocationManager {
   }
 
   @SuppressWarnings("unused") // Used in Upsource
-  public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
-    ourInstance.set(edtInvocationManager);
+  public static @Nullable EdtInvocationManager setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
+    return ourInstance.getAndSet(edtInvocationManager);
+  }
+
+  @ApiStatus.Internal
+  public static void restoreEdtInvocationManager(@NotNull EdtInvocationManager current, @Nullable EdtInvocationManager old) {
+    ourInstance.compareAndSet(current, old);
   }
 
   /**
@@ -61,19 +68,8 @@ public abstract class EdtInvocationManager {
         invokeAndWait(runnable);
       }
       catch (Exception e) {
-        Logger.getInstance("#com.intellij.util.ui.EdtInvocationManager").error(e);
+        Logger.getInstance(EdtInvocationManager.class).error(e);
       }
-    }
-  }
-
-  public static void executeWithCustomManager(@NotNull EdtInvocationManager manager, @NotNull Runnable runnable) {
-    EdtInvocationManager old = null;
-    try {
-      old = ourInstance.getAndSet(manager);
-      runnable.run();
-    }
-    finally {
-      ourInstance.compareAndSet(manager, old);
     }
   }
 

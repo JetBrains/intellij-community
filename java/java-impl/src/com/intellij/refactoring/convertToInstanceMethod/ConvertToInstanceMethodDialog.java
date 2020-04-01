@@ -9,6 +9,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,7 +56,7 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
     final JList variableChooser = super.createTargetVariableChooser();
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         Point point = e.getPoint();
         int index = variableChooser.locationToIndex(point);
         if (index == -1) return false;

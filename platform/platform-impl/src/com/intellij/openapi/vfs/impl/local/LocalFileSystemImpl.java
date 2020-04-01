@@ -6,12 +6,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -33,6 +36,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
   private final WatchRootsManager myWatchRootsManager;
+  private volatile boolean myDisposed;
 
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -44,6 +48,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
+    new SymbolicLinkRefresher(this);
   }
 
   @NotNull
@@ -53,6 +58,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @Override
   public void dispose() {
+    myDisposed = true;
     myWatcher.dispose();
   }
 
@@ -126,6 +132,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequestsToRemove,
                                                @Nullable Collection<String> recursiveRootsToAdd,
                                                @Nullable Collection<String> flatRootsToAdd) {
+    if (myDisposed) return Collections.emptySet();
     Collection<WatchRequest> nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
     return myWatchRootsManager.replaceWatchedRoots(nonNullWatchRequestsToRemove,
@@ -151,8 +158,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   }
 
   @ApiStatus.Internal
-  public final void symlinkUpdated(int fileId, @NotNull String linkPath, @Nullable String linkTarget) {
-    myWatchRootsManager.updateSymlink(fileId, linkPath, linkTarget);
+  public final void symlinkUpdated(int fileId, @Nullable VirtualFile parent, @NotNull String linkPath, @Nullable String linkTarget) {
+    if (linkTarget == null || !isRecursiveOrCircularSymlink(linkPath, linkTarget, parent)) {
+      myWatchRootsManager.updateSymlink(fileId, linkPath, linkTarget);
+    }
   }
 
   @ApiStatus.Internal
@@ -170,5 +179,27 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     FileDocumentManager.getInstance().saveAllDocuments();
     PersistentFS.getInstance().clearIdCache();
     myWatchRootsManager.clear();
+  }
+
+  private static boolean isRecursiveOrCircularSymlink(@NotNull String linkPath,
+                                                      @NotNull String symlinkTarget,
+                                                      @Nullable VirtualFile parent) {
+    if (FileUtil.startsWith(linkPath, symlinkTarget)) return true;
+
+    if (!(parent instanceof VirtualFileSystemEntry)) {
+      return false;
+    }
+    // check if it's circular - any symlink above resolves to my target too
+    for (VirtualFileSystemEntry p = (VirtualFileSystemEntry)parent; p != null; p = p.getParent()) {
+      // optimization: when the file has no symlinks up the hierarchy, it's not circular
+      if (!p.hasSymlink()) return false;
+      if (p.is(VFileProperty.SYMLINK)) {
+        String parentResolved = p.getCanonicalPath();
+        if (parentResolved != null && symlinkTarget.equals(parentResolved)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

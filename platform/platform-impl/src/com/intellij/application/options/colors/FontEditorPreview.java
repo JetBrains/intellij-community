@@ -63,7 +63,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private static void registerRestoreAction(EditorEx editor) {
     editor.putUserData(RestorePreviewTextAction.OUR_EDITOR, Boolean.TRUE);
-    AnAction restoreAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RESTOR_FONT_PREVIEW_TEXT);
+    AnAction restoreAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RESTORE_FONT_PREVIEW_TEXT);
     if (restoreAction != null) {
       String originalGroupId = editor.getContextMenuGroupId();
       AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);

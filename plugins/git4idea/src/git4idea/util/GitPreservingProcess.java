@@ -21,6 +21,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public class GitPreservingProcess {
   public GitPreservingProcess(@NotNull Project project,
                               @NotNull Git git,
                               @NotNull Collection<? extends VirtualFile> rootsToSave,
-                              @NotNull String operationTitle,
+                              @Nls @NotNull String operationTitle,
                               @NotNull String destinationName,
                               @NotNull GitSaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,

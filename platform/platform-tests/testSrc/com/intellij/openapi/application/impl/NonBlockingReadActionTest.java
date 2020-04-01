@@ -186,7 +186,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotBlockExecutorThreadDuringWriteAction() throws Exception {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("a", 1);
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotBlockExecutorThreadDuringWriteAction", 1);
     Semaphore mayFinish = new Semaphore();
     Promise<Void> promise = ReadAction.nonBlocking(() -> {
       while (!mayFinish.waitFor(1)) {
@@ -215,7 +215,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotLeakSecondCancelledCoalescedAction() throws Exception {
-    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotLeakSecondCancelledCoalescedAction", 10);
 
     Object leak = new Object(){};
     CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
@@ -354,7 +354,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testExceptionInsideAsyncComputationIsLogged() throws Exception {
-    BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+    BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("TestExceptionInsideAsyncComputationIsLogged", 10);
 
     AtomicReference<Throwable> loggedError = watchLoggedExceptions();
 

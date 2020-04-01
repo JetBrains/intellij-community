@@ -2,9 +2,12 @@
 
 package com.intellij.ide.ui.search;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Preloader;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -69,20 +72,38 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^-]]+");
 
   public SearchableOptionsRegistrarImpl() {
-    if (ApplicationManager.getApplication().isCommandLine() ||
-        ApplicationManager.getApplication().isUnitTestMode()) return;
-    try {
-      //stop words
-      InputStream stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
-      if (stream == null) throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
+    if (!ApplicationManager.getApplication().isCommandLine() &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
+      try {
+        //stop words
+        InputStream stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
+        if (stream == null) throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
 
-      String text = ResourceUtil.loadText(stream);
-      final String[] stopWords = text.split("[\\W]");
-      ContainerUtil.addAll(myStopWords, stopWords);
+        String text = ResourceUtil.loadText(stream);
+        final String[] stopWords = text.split("[\\W]");
+        ContainerUtil.addAll(myStopWords, stopWords);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        dropStorage();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        dropStorage();
+      }
+    });
+  }
+
+  private synchronized void dropStorage() {
+    myStorage.clear();
+    allTheseHugeFilesAreLoaded = false;
+    ServiceManager.getService(Preloader.class).preload(new SearchableOptionPreloader(), null);
   }
 
   private void loadHugeFilesIfNecessary() {

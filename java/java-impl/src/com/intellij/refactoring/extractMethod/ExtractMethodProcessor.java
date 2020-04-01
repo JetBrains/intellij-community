@@ -235,9 +235,6 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    if (PsiTreeUtil.getParentOfType(myElements[0], PsiAnnotation.class) != null) {
-      throw new PrepareFailedException("Unable to extract method from annotation value", myElements[0]);
-    }
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
     myCodeFragmentMember = codeFragment.getUserData(ElementToWorkOn.PARENT);
     if (myCodeFragmentMember == null) {
@@ -247,6 +244,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       PsiElement context = codeFragment.getContext();
       LOG.assertTrue(context != null, "code fragment context is null");
       myCodeFragmentMember = ControlFlowUtil.findCodeFragment(context).getParent();
+    }
+
+    if (PsiTreeUtil.getParentOfType(myElements[0].isPhysical() ? myElements[0] : myCodeFragmentMember, PsiAnnotation.class) != null) {
+      throw new PrepareFailedException("Unable to extract method from annotation value", myElements[0]);
     }
 
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
@@ -801,6 +802,10 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @TestOnly
   public void testPrepare() {
+    prepareVariablesAndName();
+  }
+
+  protected void prepareVariablesAndName(){
     myInputVariables.setFoldingAvailable(myInputVariables.isFoldingSelectedByDefault());
     myMethodName = myInitialMethodName;
     myVariableDatum = new VariableData[myInputVariables.getInputVariables().size()];
@@ -2129,7 +2134,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected void showMultipleOutputMessage(PsiType expressionType) throws PrepareFailedException {
     if (myShowErrorDialogs) {
-      String message = buildMultipleOutputMessageError(expressionType) + "\nWould you like to Extract Method Object?";
+      String message = buildMultipleOutputMessageError(expressionType) + "\n"
+                       + JavaRefactoringBundle.message("extract.method.object.suggestion");
 
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(myRefactoringName, message, myHelpId, "OptionPane.errorIcon", true,

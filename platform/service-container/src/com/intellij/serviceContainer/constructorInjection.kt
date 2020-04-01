@@ -23,7 +23,7 @@ import kotlin.let
 internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
                                                requestorKey: Any,
                                                pluginId: PluginId,
-                                               componentManager: PlatformComponentManagerImpl,
+                                               componentManager: ComponentManagerImpl,
                                                parameterResolver: ConstructorParameterResolver): T {
   val sortedMatchingConstructors = getSortedMatchingConstructors(aClass)
 
@@ -83,7 +83,7 @@ private fun getGreediestSatisfiableConstructor(aClass: Class<*>,
                                                sortedMatchingConstructors: Array<Constructor<*>>,
                                                requestorKey: Any,
                                                pluginId: PluginId,
-                                               componentManager: PlatformComponentManagerImpl,
+                                               componentManager: ComponentManagerImpl,
                                                parameterResolver: ConstructorParameterResolver,
                                                isExtensionSupported: Boolean): Pair<Constructor<*>, Array<Class<*>>> {
   var conflicts: MutableSet<Constructor<*>>? = null

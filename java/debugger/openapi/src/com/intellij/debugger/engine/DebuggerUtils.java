@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +30,9 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -144,11 +145,13 @@ public abstract class DebuggerUtils {
 
   public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
     throws EvaluateException {
-    StackFrameProxy frameProxy = context.getFrameProxy();
-    if (frameProxy != null && frameProxy.location().method().isConstructor() && reference.equals(context.computeThisObject())) {
+    Location location = getInstance().getLocation(context.getSuspendContext());
+    if (location != null && location.method().isConstructor() && reference.equals(context.computeThisObject())) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.is.being.initialized"));
     }
   }
+
+  protected abstract Location getLocation(SuspendContext context);
 
   public static final int MAX_DISPLAY_LABEL_LENGTH = 1024 * 5;
 
@@ -183,16 +186,13 @@ public abstract class DebuggerUtils {
     }
 
     Method method = null;
-    if (methodSignature != null) {
-      if (refType instanceof ClassType) {
-        method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
-      }
-      if (method == null) {
-        method = ContainerUtil.getFirstItem(refType.methodsByName(methodName, methodSignature));
-      }
+    // speedup the search by not gathering all methods through the class hierarchy
+    if (refType instanceof ClassType) {
+      method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
     }
-    else {
-      method = ContainerUtil.getFirstItem(refType.methodsByName(methodName));
+    if (method == null) {
+      method = ContainerUtil.getFirstItem(
+        methodSignature != null ? refType.methodsByName(methodName, methodSignature) : refType.methodsByName(methodName));
     }
     return method;
   }
@@ -202,29 +202,33 @@ public abstract class DebuggerUtils {
    * It does not gather all visible methods before checking so can return early
    */
   @Nullable
-  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @NotNull String signature)  {
-    LinkedList<InterfaceType> interfaces = new LinkedList<>();
+  private static Method concreteMethodByName(@NotNull ClassType type, @NotNull String name, @Nullable String signature)  {
+    Processor<Method> signatureChecker = signature != null ? m -> m.signature().equals(signature) : CommonProcessors.alwaysTrue();
+    LinkedList<ReferenceType> types = new LinkedList<>();
     // first check classes
     while (type != null) {
       for (Method candidate : type.methods()) {
-        if (candidate.name().equals(name) && candidate.signature().equals(signature)) {
+        if (candidate.name().equals(name) && signatureChecker.process(candidate)) {
           return !candidate.isAbstract() ? candidate : null;
         }
       }
-      interfaces.addAll(type.interfaces());
+      types.add(type);
       type = type.superclass();
     }
     // then interfaces
-    Set<InterfaceType> checkedInterfaces = new HashSet<>();
-    InterfaceType iface;
-    while ((iface = interfaces.poll()) != null) {
-      if (checkedInterfaces.add(iface)) {
-        for (Method candidate : iface.methods()) {
-          if (candidate.name().equals(name) && candidate.signature().equals(signature) && !candidate.isAbstract()) {
+    Set<ReferenceType> checkedInterfaces = new HashSet<>();
+    ReferenceType t;
+    while ((t = types.poll()) != null) {
+      if (t instanceof ClassType) {
+        types.addAll(0, ((ClassType)t).interfaces());
+      }
+      else if (t instanceof InterfaceType && checkedInterfaces.add(t)) {
+        for (Method candidate : t.methods()) {
+          if (candidate.name().equals(name) && signatureChecker.process(candidate) && !candidate.isAbstract()) {
             return candidate;
           }
         }
-        interfaces.addAll(0, iface.superinterfaces());
+        types.addAll(0, ((InterfaceType)t).superinterfaces());
       }
     }
     return null;

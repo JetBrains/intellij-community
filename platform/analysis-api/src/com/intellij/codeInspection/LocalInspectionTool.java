@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,6 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    *
    * @return inspection tool ID.
    */
-  @Pattern(VALID_ID_PATTERN)
   @NonNls
   @NotNull
   public String getID() {

@@ -45,6 +45,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.ui.PyUiUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -190,6 +191,7 @@ var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
   set(value) {
     ModuleRootModificationUtil.setModuleSdk(this, value)
+    PyUiUtil.clearFileLevelInspectionResults(project)
     fireActivePythonSdkChanged(value)
   }
 
@@ -243,6 +245,8 @@ private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): 
       PathUtil.getFileName(venvRoot)
     condaRoot != null && (associatedPath == null || !FileUtil.isAncestor(associatedPath, condaRoot, true)) ->
       PathUtil.getFileName(condaRoot)
+    PythonSdkUtil.isBaseConda(sdkHome) ->
+      "base"
     else ->
       associatedPath?.let { PathUtil.getFileName(associatedPath) } ?: return null
   }
@@ -315,8 +319,8 @@ private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
     .filterNot { it in existingPaths }
     .distinct()
     .map { PyDetectedSdk(it) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.isAssociatedWithModule(module) },
-                                         { it.homePath }).reversed())
+    .sortedWith(compareBy({ !it.isAssociatedWithModule(module) },
+                          { it.homePath }))
     .toList()
 }
 

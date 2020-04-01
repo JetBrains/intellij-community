@@ -129,7 +129,6 @@
     <module old-name="icons" new-name="intellij.platform.icons" />
     <module old-name="idea-ui" new-name="intellij.java.ui" />
     <module old-name="idea-ui-tests" new-name="intellij.java.ui.tests" />
-    <module old-name="images" new-name="intellij.platform.images" />
     <module old-name="images-build-scripts" new-name="intellij.platform.images.build" />
     <module old-name="index-tools" new-name="intellij.tools.index" />
     <module old-name="indexing-api" new-name="intellij.platform.indexing" />
@@ -259,8 +258,6 @@
     <module old-name="relaxng" new-name="intellij.relaxng" />
     <module old-name="remote-servers-agent-rt" new-name="intellij.platform.remoteServers.agent.rt" />
     <module old-name="remote-servers-api" new-name="intellij.platform.remoteServers" />
-    <module old-name="remote-servers-git" new-name="intellij.platform.remoteServers.git" />
-    <module old-name="remote-servers-git-java" new-name="intellij.java.remoteServers.git" />
     <module old-name="remote-servers-impl" new-name="intellij.platform.remoteServers.impl" />
     <module old-name="remote-servers-java-api" new-name="intellij.java.remoteServers" />
     <module old-name="remote-servers-java-impl" new-name="intellij.java.remoteServers.impl" />
@@ -421,6 +418,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/gradle-tooling/studio-gradle-tooling-impl/intellij.android.gradle-tooling.impl.iml" filepath="$PROJECT_DIR$/android/gradle-tooling/studio-gradle-tooling-impl/intellij.android.gradle-tooling.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-plugin/intellij.android.jps.iml" filepath="$PROJECT_DIR$/android/jps-plugin/intellij.android.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" filepath="$PROJECT_DIR$/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/android-extensions-idea-common/intellij.android.kotlin.extensions.common.iml" filepath="$PROJECT_DIR$/android/android-kotlin/android-extensions-idea-common/intellij.android.kotlin.extensions.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" filepath="$PROJECT_DIR$/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" filepath="$PROJECT_DIR$/android/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-lang/intellij.android.lang.iml" filepath="$PROJECT_DIR$/android/android-lang/intellij.android.lang.iml" />
@@ -555,7 +553,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-api/intellij.java.psi.iml" filepath="$PROJECT_DIR$/java/java-psi-api/intellij.java.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-impl/intellij.java.psi.impl.iml" filepath="$PROJECT_DIR$/java/java-psi-impl/intellij.java.psi.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/remote-servers/api/intellij.java.remoteServers.iml" filepath="$PROJECT_DIR$/java/remote-servers/api/intellij.java.remoteServers.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/remote-servers-git-java/intellij.java.remoteServers.git.iml" filepath="$PROJECT_DIR$/plugins/git4idea/remote-servers-git-java/intellij.java.remoteServers.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/remote-servers/impl/intellij.java.remoteServers.impl.iml" filepath="$PROJECT_DIR$/java/remote-servers/impl/intellij.java.remoteServers.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources/intellij.java.resources.iml" filepath="$PROJECT_DIR$/resources/intellij.java.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources-en/intellij.java.resources.en.iml" filepath="$PROJECT_DIR$/resources-en/intellij.java.resources.en.iml" />
@@ -601,6 +598,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/intellij.maven.artifactResolver.m31.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/intellij.maven.artifactResolver.m31.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/error-prone-compiler/intellij.maven.errorProne.compiler.iml" filepath="$PROJECT_DIR$/plugins/maven/error-prone-compiler/intellij.maven.errorProne.compiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps-plugin/intellij.maven.jps.iml" filepath="$PROJECT_DIR$/plugins/maven/jps-plugin/intellij.maven.jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven-model/intellij.maven.model.iml" filepath="$PROJECT_DIR$/plugins/maven-model/intellij.maven.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-api/intellij.maven.server.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-api/intellij.maven.server.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-event-listener/intellij.maven.server.eventListener.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-event-listener/intellij.maven.server.eventListener.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven2-server-impl/intellij.maven.server.m2.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven2-server-impl/intellij.maven.server.m2.impl.iml" />
@@ -654,6 +652,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-api/intellij.platform.indexing.iml" filepath="$PROJECT_DIR$/platform/indexing-api/intellij.platform.indexing.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-impl/intellij.platform.indexing.impl.iml" filepath="$PROJECT_DIR$/platform/indexing-impl/intellij.platform.indexing.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/inspect/intellij.platform.inspect.iml" filepath="$PROJECT_DIR$/platform/inspect/intellij.platform.inspect.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" filepath="$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" filepath="$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" filepath="$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" />
@@ -677,7 +676,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-impl/intellij.platform.projectModel.impl.iml" filepath="$PROJECT_DIR$/platform/projectModel-impl/intellij.platform.projectModel.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/api/intellij.platform.remoteServers.iml" filepath="$PROJECT_DIR$/platform/remote-servers/api/intellij.platform.remoteServers.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/agent-rt/intellij.platform.remoteServers.agent.rt.iml" filepath="$PROJECT_DIR$/platform/remote-servers/agent-rt/intellij.platform.remoteServers.agent.rt.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/remote-servers-git/intellij.platform.remoteServers.git.iml" filepath="$PROJECT_DIR$/plugins/git4idea/remote-servers-git/intellij.platform.remoteServers.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/impl/intellij.platform.remoteServers.impl.iml" filepath="$PROJECT_DIR$/platform/remote-servers/impl/intellij.platform.remoteServers.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources/intellij.platform.resources.iml" filepath="$PROJECT_DIR$/platform/platform-resources/intellij.platform.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-resources-en/intellij.platform.resources.en.iml" filepath="$PROJECT_DIR$/platform/platform-resources-en/intellij.platform.resources.en.iml" />

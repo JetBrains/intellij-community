@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -191,6 +190,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                boolean acceptParameterizedFunctionTypes,
                                                boolean reportNotAnnotatedInterfaces,
                                                @NotNull Set<String> ignoredRuntimeAnnotations) {
+    if (aClass.getBaseClassType().getAnnotations().length > 0) return false;
     PsiElement parent = aClass.getParent();
     final PsiElement lambdaContext = parent != null ? PsiUtil.skipParenthesizedExprUp(parent.getParent()) : null;
     if (lambdaContext == null || !LambdaUtil.isValidLambdaContext(lambdaContext) && !(lambdaContext instanceof PsiReferenceExpression)) return false;
@@ -401,7 +401,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       for (PsiVariable parameter : parameters) {
         String parameterName = parameter.getName();
         String uniqueVariableName = UniqueNameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(parameterName, parameter.getParent(), false), usedLocalNames);
-        if (!Comparing.equal(parameterName, uniqueVariableName)) {
+        if (!Objects.equals(parameterName, uniqueVariableName)) {
           names.put(parameter, uniqueVariableName);
         }
       }
@@ -461,7 +461,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                             PsiCallExpression callExpression) {
     if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = psiMethod.getContainingClass();
-      if (containingClass != null && 
+      if (containingClass != null &&
           CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
         return !(callExpression instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified());
       }

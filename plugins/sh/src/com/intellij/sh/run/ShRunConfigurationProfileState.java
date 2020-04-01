@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -18,13 +19,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.sh.ShStringUtil.quote;
 
@@ -90,23 +93,31 @@ public class ShRunConfigurationProfileState implements RunProfileState {
       throw new ExecutionException("Cannot determine shell script parent directory");
     }
 
+    final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
+                                                                                          myRunConfiguration.getScriptPath());
+
     PtyCommandLine commandLine = new PtyCommandLine();
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfo.isWindows || wslDistribution != null) {
       commandLine.getEnvironment().put("TERM", "xterm-256color");
     }
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
+    commandLine.setWorkDirectory(convertToWslIfNeeded(myRunConfiguration.getScriptWorkingDirectory(), wslDistribution));
 
     commandLine.setExePath(myRunConfiguration.getInterpreterPath());
     if (StringUtil.isNotEmpty(myRunConfiguration.getInterpreterOptions())) {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getInterpreterOptions()));
     }
-    commandLine.addParameter(myRunConfiguration.getScriptPath());
+    commandLine.addParameter(convertToWslIfNeeded(myRunConfiguration.getScriptPath(), wslDistribution));
     if (StringUtil.isNotEmpty(myRunConfiguration.getScriptOptions())) {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getScriptOptions()));
     }
+
+    if (wslDistribution != null) {
+      commandLine = wslDistribution.patchCommandLine(commandLine, myProject, null, false);
+    }
+
     return commandLine;
   }
 
@@ -120,15 +131,39 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   @NotNull
   private String buildCommand() {
-    return String.join(" ", Arrays.asList(adaptPathForExecution(myRunConfiguration.getInterpreterPath()),
-                                          myRunConfiguration.getInterpreterOptions(),
-                                          adaptPathForExecution(myRunConfiguration.getScriptPath()),
-                                          myRunConfiguration.getScriptOptions()));
+    final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
+                                                                                          myRunConfiguration.getScriptPath());
+    final List<String> commandLine = new ArrayList<>();
+
+
+    addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), null));
+    addIfPresent(commandLine, myRunConfiguration.getInterpreterOptions());
+    commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), wslDistribution));
+    addIfPresent(commandLine, myRunConfiguration.getScriptOptions());
+
+    if (wslDistribution != null) {
+      return wslDistribution
+        .patchCommandLine(new GeneralCommandLine(commandLine), myProject, wslDistribution.getWslPath(myRunConfiguration.getScriptWorkingDirectory()), false)
+        .getCommandLineString();
+    }
+    else {
+      return String.join(" ", commandLine);
+    }
   }
 
-  private static String adaptPathForExecution(@NotNull String systemDependentPath) {
+  private static void addIfPresent(@NotNull List<String> commandLine, @Nullable String options) {
+    ContainerUtil.addIfNotNull(commandLine, StringUtil.nullize(options));
+  }
+
+  private static String adaptPathForExecution(@NotNull String systemDependentPath,
+                                              @Nullable WSLDistribution wslDistribution) {
+    if (wslDistribution != null) return quote(wslDistribution.getWslPath(systemDependentPath));
     if (Platform.current() != Platform.WINDOWS) return quote(systemDependentPath);
     String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
     return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.fun(escapedPath) : escapedPath;
+  }
+
+  private static String convertToWslIfNeeded(@NotNull String path, @Nullable WSLDistribution wslDistribution) {
+    return wslDistribution != null ? wslDistribution.getWslPath(path) : path;
   }
 }

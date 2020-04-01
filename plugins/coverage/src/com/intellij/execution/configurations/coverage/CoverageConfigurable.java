@@ -77,11 +77,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
           return true;
         }
       }, null);
-    }
-
-    @Override
-    protected int getPreferredRowsCount() {
-      return 4;
+      myTable.setVisibleRowCount(4);
     }
 
     @Override

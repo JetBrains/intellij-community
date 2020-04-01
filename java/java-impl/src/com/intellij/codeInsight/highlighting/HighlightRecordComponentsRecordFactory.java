@@ -39,17 +39,17 @@ public class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandl
     }
 
     @Override
-    public List<PsiRecordComponent> getTargets() {
+    public @NotNull List<PsiRecordComponent> getTargets() {
       return Collections.singletonList(myComponent);
     }
 
     @Override
-    protected void selectTargets(List<PsiRecordComponent> targets, Consumer<List<PsiRecordComponent>> selectionConsumer) {
+    protected void selectTargets(@NotNull List<? extends PsiRecordComponent> targets, @NotNull Consumer<? super List<? extends PsiRecordComponent>> selectionConsumer) {
       selectionConsumer.consume(targets);
     }
 
     @Override
-    public void computeUsages(List<PsiRecordComponent> targets) {
+    public void computeUsages(@NotNull List<? extends PsiRecordComponent> targets) {
       assert targets.size() == 1;
       PsiRecordComponent record = targets.get(0);
       PsiIdentifier nameIdentifier = record.getNameIdentifier();

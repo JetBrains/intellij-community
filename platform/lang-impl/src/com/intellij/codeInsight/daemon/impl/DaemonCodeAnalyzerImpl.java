@@ -17,7 +17,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -93,7 +96,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
   private final PassExecutorService myPassExecutorService;
-  private boolean runInspectionsAfterCompletionOfGeneralHighlightPass;
+  // Timestamp of myUpdateRunnable which it's needed to start (in System.nanoTime() sense)
+  // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
+  // When it's so happens that future is started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
+  private long myScheduledUpdateTimestamp; // guarded by this
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project) {
     // DependencyValidationManagerImpl adds scope listener, so, we need to force service creation
@@ -128,6 +134,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myDisposed = true;
       myLastSettings = null;
     });
+    myPassExecutorService.resetNextPassId();
   }
 
   @Override
@@ -521,13 +528,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @Override
   public void restart() {
-    doRestart();
+    doRestart("Global restart");
   }
 
   // return true if the progress was really canceled
-  boolean doRestart() {
-    myFileStatusMap.markAllFilesDirty("Global restart");
-    return stopProcess(true, "Global restart");
+  boolean doRestart(@NotNull String reason) {
+    myFileStatusMap.markAllFilesDirty(reason);
+    return stopProcess(true, reason);
   }
 
   @Override
@@ -587,14 +594,23 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   // return true if the progress really was canceled
   synchronized boolean stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     boolean canceled = cancelUpdateProgress(toRestartAlarm, reason);
-    // optimisation: this check is to avoid too many re-schedules in case of thousands of events spikes
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
 
-    if (restart && myUpdateRunnableFuture.isDone()) {
-      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.getAutoReparseDelay(), TimeUnit.MILLISECONDS);
+    // reset myScheduledUpdateStart always, but re-schedule myUpdateRunnable only rarely because of thread scheduling overhead
+    if (restart) {
+      myScheduledUpdateTimestamp = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
+    }
+    // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
+    boolean isDone = myUpdateRunnableFuture.isDone();
+    if (restart && isDone) {
+      scheduleUpdateRunnable(mySettings.getAutoReparseDelay());
     }
 
     return canceled;
+  }
+
+  private void scheduleUpdateRunnable(long delayNanos) {
+    myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
   }
 
   // return true if the progress really was canceled
@@ -649,7 +665,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    * @param includeFixRange states whether the rage of a fix associated with an info should be taken into account during the range checking
    * @param highestPriorityOnly states whether to include all infos or only the ones with the highest HighlightSeverity
    * @param minSeverity the minimum HighlightSeverity starting from which infos are considered for collection
-   * @return
    */
   @Nullable
   public HighlightInfo findHighlightsByOffset(@NotNull Document document,
@@ -657,31 +672,46 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                               final boolean includeFixRange,
                                               final boolean highestPriorityOnly,
                                               @NotNull HighlightSeverity minSeverity) {
-    final List<HighlightInfo> foundInfoList = new SmartList<>();
-    processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange,
-        info -> {
-          if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY || info.type == HighlightInfoType.TODO) {
-            return true;
-          }
+    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly);
+    processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
+    return processor.getResult();
+  }
 
-          if (!foundInfoList.isEmpty() && highestPriorityOnly) {
-            HighlightInfo foundInfo = foundInfoList.get(0);
-            int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
-            if (compare < 0) {
-              foundInfoList.clear();
-            }
-            else if (compare > 0) {
-              return true;
-            }
-          }
-          foundInfoList.add(info);
+  static class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
+    private final List<HighlightInfo> foundInfoList = new SmartList<>();
+    private final boolean highestPriorityOnly;
+
+    HighlightByOffsetProcessor(boolean highestPriorityOnly) {
+      this.highestPriorityOnly = highestPriorityOnly;
+    }
+
+    @Override
+    public boolean process(HighlightInfo info) {
+      if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY || info.type == HighlightInfoType.TODO) {
+        return true;
+      }
+
+      if (!foundInfoList.isEmpty() && highestPriorityOnly) {
+        HighlightInfo foundInfo = foundInfoList.get(0);
+        int compare = foundInfo.getSeverity().compareTo(info.getSeverity());
+        if (compare < 0) {
+          foundInfoList.clear();
+        }
+        else if (compare > 0) {
           return true;
-        });
+        }
+      }
+      foundInfoList.add(info);
+      return true;
+    }
 
-    if (foundInfoList.isEmpty()) return null;
-    if (foundInfoList.size() == 1) return foundInfoList.get(0);
-    foundInfoList.sort(Comparator.comparing(HighlightInfo::getSeverity).reversed());
-    return HighlightInfoComposite.create(foundInfoList);
+    @Nullable
+    HighlightInfo getResult() {
+      if (foundInfoList.isEmpty()) return null;
+      if (foundInfoList.size() == 1) return foundInfoList.get(0);
+      foundInfoList.sort(Comparator.comparing(HighlightInfo::getSeverity).reversed());
+      return HighlightInfoComposite.create(foundInfoList);
+    }
   }
 
   private static boolean isOffsetInsideHighlightInfo(int offset, @NotNull HighlightInfo info, boolean includeFixRange) {
@@ -762,7 +792,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
-  // made this class static and fields cleareable to avoid leaks when this object stuck in invokeLater queue
+  // made this class static and fields clearable to avoid leaks when this object stuck in invokeLater queue
   private static class UpdateRunnable implements Runnable {
     private Project myProject;
     private UpdateRunnable(@NotNull Project project) {
@@ -783,7 +813,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         return;
       }
 
-      final Collection<FileEditor> activeEditors = dca.getSelectedEditors();
+      synchronized (dca) {
+        long actualDelay = dca.myScheduledUpdateTimestamp - System.nanoTime();
+        if (actualDelay > 0) {
+           // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
+          dca.scheduleUpdateRunnable(actualDelay);
+          return;
+        }
+      }
+
+      Collection<FileEditor> activeEditors = dca.getSelectedEditors();
       boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
       PassExecutorService.log(dca.getUpdateProgress(), null, "Update Runnable. myUpdateByTimerEnabled:",
                               updateByTimerEnabled, " something disposed:",
@@ -823,9 +862,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
         boolean hasPasses = false;
         for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
-          HighlightingPass[] filtered = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
-          entry.setValue(filtered);
-          hasPasses |= filtered.length != 0;
+          HighlightingPass[] dumbAwarePasses = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
+          entry.setValue(dumbAwarePasses);
+          hasPasses |= dumbAwarePasses.length != 0;
         }
         if (!hasPasses) {
           HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
@@ -948,14 +987,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @ApiStatus.Internal
   public void runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(boolean flag) {
-    runInspectionsAfterCompletionOfGeneralHighlightPass = flag;
-    TextEditorHighlightingPassRegistrarImpl registrar =
-      (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
-    registrar.reregisterFactories();
-  }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    setUpdateByTimerEnabled(false);
+    try {
+      cancelUpdateProgress(false, "runLocalInspectionPassAfterCompletionOfGeneralHighlightPass");
+      myPassExecutorService.cancelAll(true);
 
-  @ApiStatus.Internal
-  boolean isRunInspectionsAfterCompletionOfGeneralHighlightPass() {
-    return runInspectionsAfterCompletionOfGeneralHighlightPass;
+      TextEditorHighlightingPassRegistrarImpl registrar =
+        (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
+      registrar.runInspectionsAfterCompletionOfGeneralHighlightPass(flag);
+      myPassExecutorService.resetNextPassId();
+    }
+    finally {
+      setUpdateByTimerEnabled(true);
+    }
   }
 }

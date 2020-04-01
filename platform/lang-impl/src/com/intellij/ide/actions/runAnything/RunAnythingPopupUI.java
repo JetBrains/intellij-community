@@ -805,6 +805,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
                              KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE));
   }
 
+  @Override
+  protected @NotNull String getAccessibleName() {
+    return IdeBundle.message("run.anything.accessible.name");
+  }
+
   @NotNull
   @Override
   protected ExtendableTextField createSearchField() {

@@ -344,7 +344,10 @@ private fun configureNewProject(project: Project, baseDir: Path, dummyFileConten
 }
 
 private fun checkExistingProjectOnOpen(projectToClose: Project, callback: ProjectOpenedCallback?, projectDir: Path?): Boolean {
-  if (projectDir != null && ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
+  val settings = GeneralSettings.getInstance()
+  val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
+  if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
+      (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
     val exitCode = ProjectUtil.confirmOpenOrAttachProject()
     if (exitCode == -1) {
       return true

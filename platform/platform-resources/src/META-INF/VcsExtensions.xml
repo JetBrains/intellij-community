@@ -53,6 +53,16 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
+                    headlessImplementation=""/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$PostStartupActivity"/>
+
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
 
@@ -201,6 +211,8 @@
     <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
+    <notificationWhitelist groupIds="Vcs Important Messages;Vcs Notifications;Vcs Silent Notifications;Vcs Messages;
+    Common Version Control Messages"/>
   </extensions>
 
   <applicationListeners>
@@ -209,6 +221,12 @@
     <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyProjectManagerListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyAppLevelProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase$InitMappingsListenerActivity"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 

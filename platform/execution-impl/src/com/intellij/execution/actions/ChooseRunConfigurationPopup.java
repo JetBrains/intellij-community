@@ -1163,7 +1163,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                                                                          context, false);
     if (producers == null) return;
 
-    Collections.sort(producers, ConfigurationFromContext.NAME_COMPARATOR);
+    producers.sort(ConfigurationFromContext.NAME_COMPARATOR);
 
     final RunnerAndConfigurationSettings[] preferred = {null};
 

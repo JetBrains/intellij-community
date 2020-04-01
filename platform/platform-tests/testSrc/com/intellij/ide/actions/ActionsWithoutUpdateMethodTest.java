@@ -22,7 +22,8 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
     "SaveAll",
     "MaintenanceAction",
     "ShowProjectStructureSettings",
-    "FocusEditor"
+    "FocusEditor",
+    "SearchEverywhere"
   );
 
   public void testActionsWithShortcuts() throws Exception {

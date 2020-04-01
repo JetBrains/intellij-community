@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -50,6 +50,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public volatile boolean myInProgress;
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<>();
   private EvaluationContextImpl myEvaluationContext = null;
+  private int myFrameCount = -1;
 
   private JavaExecutionStack myActiveExecutionStack;
 
@@ -70,12 +71,27 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myThread = threadProxy;
   }
 
+  public int frameCount() {
+    if (myFrameCount == -1) {
+      try {
+        myFrameCount = myThread != null ? myThread.frameCount() : 0;
+      }
+      catch (EvaluateException e) {
+        myFrameCount = 0;
+      }
+    }
+    return myFrameCount;
+  }
+
   @Nullable
   public Location getLocation() {
     // getting location from the event set is much faster than obtaining the frame and getting it from there
     if (myEventSet != null) {
       LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
       if (event != null) {
+        if (myThread != null && !myThread.getThreadReference().equals(event.thread())) {
+          LOG.error("Invalid thread");
+        }
         return event.location();
       }
     }
@@ -141,7 +157,17 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public StackFrameProxyImpl getFrameProxy() {
     assertNotResumed();
     try {
-      return myThread != null && myThread.frameCount() > 0 ? myThread.frame(0) : null;
+      if (myThread != null) {
+        int frameCount = myThread.frameCount();
+        if (myFrameCount != -1 && myFrameCount != frameCount) {
+          LOG.error("Incorrect frame count");
+        }
+        myFrameCount = frameCount;
+        if (frameCount > 0) {
+          return myThread.frame(0);
+        }
+      }
+      return null;
     }
     catch (EvaluateException ignored) {
       return null;

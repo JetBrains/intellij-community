@@ -63,6 +63,7 @@ public class ImageComponent extends JComponent {
     private boolean myFileSizeVisible = true;
     private boolean myFileNameVisible = true;
     private double zoomFactor = 1d;
+    private boolean myBorderVisible = true;
 
     public ImageComponent() {
         updateUI();
@@ -146,6 +147,16 @@ public class ImageComponent extends JComponent {
         boolean oldValue = myFileNameVisible;
         myFileNameVisible = fileNameVisible;
         firePropertyChange(FILE_NAME_VISIBLE_PROP, oldValue, fileNameVisible);
+    }
+
+    public boolean isBorderVisible() {
+        return myBorderVisible;
+    }
+
+    public void setBorderVisible(boolean borderVisible) {
+        boolean oldValue = myBorderVisible;
+        myBorderVisible = borderVisible;
+        firePropertyChange("Border.visible", oldValue, myBorderVisible);
     }
 
     public void setGridLineZoomFactor(int lineZoomFactor) {

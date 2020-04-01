@@ -2,13 +2,12 @@
 package com.intellij.cvsSupport2.config;
 
 import com.intellij.CvsBundle;
-import com.intellij.ide.ui.OptionsSearchTopHitProvider;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.ide.ui.PublicFieldBasedOptionDescription;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -16,7 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-final class CvsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
+final class CvsOptionsTopHitProvider extends VcsOptionsTopHitProviderBase {
   @NotNull
   @Override
   public String getId() {
@@ -26,12 +25,10 @@ final class CvsOptionsTopHitProvider implements OptionsSearchTopHitProvider.Proj
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions(@NotNull Project project) {
-    for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(project).getAllVcss()) {
-      if ("CVS".equals(descriptor.getDisplayName())) {
-        return Collections.unmodifiableCollection(Arrays.asList(
-          option(project, "checkbox.use.read.only.flag.for.not.edited.files", "MAKE_NEW_FILES_READONLY"),
-          option(project, "checkbox.show.cvs.server.output", "SHOW_OUTPUT")));
-      }
+    if (isEnabled(project, CvsVcs2.getInstance(project))) {
+      return Collections.unmodifiableCollection(Arrays.asList(
+        option(project, "checkbox.use.read.only.flag.for.not.edited.files", "MAKE_NEW_FILES_READONLY"),
+        option(project, "checkbox.show.cvs.server.output", "SHOW_OUTPUT")));
     }
     return Collections.emptyList();
   }

@@ -8,7 +8,7 @@ import java.util.stream.*;
 public class StreamCollectorInlining {
 
   void testCounting() {
-    long count = Stream.empty().collect(Collectors.counting());
+    long count = <warning descr="Result of 'Stream.empty().collect(Collectors.counting())' is always '0'">Stream.empty().collect(Collectors.counting())</warning>;
     if(<warning descr="Condition 'count > 0' is always 'false'">count > 0</warning>) {
       System.out.println("impossible");
     }

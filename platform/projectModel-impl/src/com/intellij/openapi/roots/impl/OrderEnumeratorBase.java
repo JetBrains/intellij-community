@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
@@ -307,6 +308,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
                                 boolean firstLevel,
                                 @NotNull List<? extends OrderEnumerationHandler> customHandlers,
                                 @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
+    ProgressManager.checkCanceled();
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
     for (OrderEntry entry : rootModel.getOrderEntries()) {

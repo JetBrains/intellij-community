@@ -34,8 +34,8 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   Placement getPlacement();
 
   /**
-   * Tells whether this element is valid. Inlay becomes invalid on explicit disposal,
-   * or when a document range fully containing inlay's offset, is deleted.
+   * Tells whether this element is valid. Inlay becomes invalid on explicit disposal, or when a document range fully containing inlay's
+   * offset, is deleted. It also becomes invalid on editor disposal.
    */
   boolean isValid();
 

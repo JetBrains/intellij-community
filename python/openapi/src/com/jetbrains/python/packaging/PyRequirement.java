@@ -63,7 +63,9 @@ public interface PyRequirement {
 
 
   default boolean isEditable() {
-    return getInstallOptions().size() > 0 && "-e".equals(getInstallOptions().get(0));
+    if (getInstallOptions().isEmpty()) return false;
+    String firstOption = getInstallOptions().get(0);
+    return "-e".equals(firstOption) || "--editable".equals(firstOption);
   }
 
   /**

@@ -42,9 +42,9 @@ object FileHistoryPersistence {
 
   private fun getPathToStorage(project: Project): Path? {
     val url = project.presentableUrl ?: return null
-
     val projectPath = Paths.get(VirtualFileManager.extractPath(url))
-    val dirName = PathUtil.suggestFileName(projectPath.fileName.toString() + Integer.toHexString(projectPath.toString().hashCode()))
-    return Paths.get(PathManager.getSystemPath(), "fileHistory", "$dirName.xml")
+    val dirName = projectPath.fileName?.toString() ?: projectPath.toString().substring(0, 1)
+    val storageName = PathUtil.suggestFileName(dirName + Integer.toHexString(projectPath.toString().hashCode()))
+    return Paths.get(PathManager.getSystemPath(), "fileHistory", "$storageName.xml")
   }
 }

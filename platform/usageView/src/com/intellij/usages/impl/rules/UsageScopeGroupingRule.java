@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {

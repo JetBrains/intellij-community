@@ -23,57 +23,12 @@ public class VcsNotifier {
 
   private final @NotNull Project myProject;
 
-
   public static VcsNotifier getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, VcsNotifier.class);
   }
 
   public VcsNotifier(@NotNull Project project) {
     myProject = project;
-  }
-
-  @NotNull
-  public static Notification createNotification(
-    @NotNull NotificationGroup notificationGroup,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
-    @NotNull NotificationType type,
-    @Nullable NotificationListener listener
-  ) {
-    // title can be empty; message can't be neither null, nor empty
-    if (StringUtil.isEmptyOrSpaces(message)) {
-      message = title;
-      title = "";
-    }
-    // if both title and message were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
-    return notificationGroup.createNotification(title, message, type, listener);
-  }
-
-  @NotNull
-  public Notification notify(
-    @NotNull NotificationGroup notificationGroup,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
-    @NotNull NotificationType type,
-    @Nullable NotificationListener listener
-  ) {
-    Notification notification = createNotification(notificationGroup, title, message, type, listener);
-    return notify(notification);
-  }
-
-  @NotNull
-  public Notification notify(
-    @NotNull NotificationGroup notificationGroup,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
-    @NotNull NotificationType type,
-    NotificationAction... actions
-  ) {
-    Notification notification = createNotification(notificationGroup, title, message, type, null);
-    for (NotificationAction action : actions) {
-      notification.addAction(action);
-    }
-    return notify(notification);
   }
 
   @NotNull
@@ -88,6 +43,19 @@ public class VcsNotifier {
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
   ) {
     return notifyError(title, message, (NotificationListener)null);
+  }
+
+  public Notification notifyError(
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    boolean showDetailsAction
+  ) {
+    if (showDetailsAction) {
+      return notifyError(title, message, createShowDetailsAction());
+    }
+    else {
+      return notifyError(title, message);
+    }
   }
 
   @NotNull
@@ -286,5 +254,60 @@ public class VcsNotifier {
     for (Notification notification : notificationsManager.getNotificationsOfType(klass, myProject)) {
       notification.expire();
     }
+  }
+
+  @NotNull
+  private static Notification createNotification(
+    @NotNull NotificationGroup notificationGroup,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotNull NotificationType type,
+    @Nullable NotificationListener listener
+  ) {
+    // title can be empty; message can't be neither null, nor empty
+    if (StringUtil.isEmptyOrSpaces(message)) {
+      message = title;
+      title = "";
+    }
+    // if both title and message were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
+    return notificationGroup.createNotification(title, message, type, listener);
+  }
+
+  @NotNull
+  private Notification notify(
+    @NotNull NotificationGroup notificationGroup,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotNull NotificationType type,
+    @Nullable NotificationListener listener
+  ) {
+    Notification notification = createNotification(notificationGroup, title, message, type, listener);
+    return notify(notification);
+  }
+
+  @NotNull
+  private Notification notify(
+    @NotNull NotificationGroup notificationGroup,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotNull NotificationType type,
+    NotificationAction... actions
+  ) {
+    Notification notification = createNotification(notificationGroup, title, message, type, null);
+    for (NotificationAction action : actions) {
+      notification.addAction(action);
+    }
+    return notify(notification);
+  }
+
+  @NotNull
+  private NotificationAction createShowDetailsAction() {
+    return NotificationAction.createSimple(
+      VcsBundle.message("notification.showDetailsInConsole"),
+      () -> {
+        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+        vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
+      }
+    );
   }
 }

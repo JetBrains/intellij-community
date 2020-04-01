@@ -1,4 +1,4 @@
-import datetime
+import turtle
 
-class MyDate(datetime.date):
+class C(turtle.TurtleScreenBase):
     pass

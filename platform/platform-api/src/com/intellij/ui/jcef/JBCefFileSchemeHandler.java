@@ -28,6 +28,8 @@ import java.nio.file.*;
 class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(JBCefFileSchemeHandler.class);
 
+  public static final String FILE_SCHEME_NAME = "file";
+
   @NotNull private final CefBrowser myBrowser;
   @NotNull private final CefFrame myFrame;
 

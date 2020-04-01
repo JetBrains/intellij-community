@@ -6,6 +6,8 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.grammar.Typo
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieDisableRuleQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.utils.*
@@ -14,7 +16,7 @@ import com.intellij.util.containers.WeakStringInterner
 import com.intellij.util.containers.toArray
 import kotlinx.html.*
 
-class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : ProblemDescriptorBase(
+class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescriptorBase(
   fix.location.element!!,
   fix.location.element!!,
   fix.toDescriptionTemplate(isOnTheFly),
@@ -25,10 +27,6 @@ class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : Prob
   true,
   isOnTheFly
 ) {
-
-  init {
-    problemGroup = GrazieProblemGroup(id, fix)
-  }
 
   companion object {
     private val interner: WeakStringInterner = WeakStringInterner()
@@ -41,6 +39,8 @@ class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : Prob
           GrazieFUSCounter.typoFound(this@toFixes)
           fixes.add(GrazieReplaceTypoQuickFix(this@toFixes))
         }
+        fixes.add(GrazieAddExceptionQuickFix(this))
+        fixes.add(GrazieDisableRuleQuickFix(this))
       }
 
       return fixes
@@ -67,7 +67,7 @@ class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : Prob
               td {
                 valign = "top"
                 style = "padding-right: 5px; color: gray; vertical-align: top;"
-                +msg("grazie.ui.settings.rules.rule.incorrect")
+                +msg("grazie.settings.grammar.rule.incorrect")
                 if (!isOnTheFly) nbsp()
               }
               td {
@@ -82,7 +82,7 @@ class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : Prob
                 td {
                   valign = "top"
                   style = "padding-top: 5px; padding-right: 5px; color: gray; vertical-align: top;"
-                  +msg("grazie.ui.settings.rules.rule.correct")
+                  +msg("grazie.settings.grammar.rule.correct")
                   if (!isOnTheFly) nbsp()
                 }
                 td {
@@ -96,8 +96,8 @@ class GrazieProblemDescriptor(id: String, fix: Typo, isOnTheFly: Boolean) : Prob
         }
 
         p {
-          style = "text-align: left; font-size: x-small; color: gray; padding-top: 10px; padding-left: 3px; padding-bottom: 0px;"
-          +"Powered by LanguageTool"
+          style = "text-align: left; font-size: x-small; color: gray; padding-top: 10px; padding-bottom: 0px;"
+          +msg("grazie.tooltip.powered-by-language-tool")
         }
       }
       return interner.intern(html)

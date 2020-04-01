@@ -1391,9 +1391,10 @@
                      key="expected.exception.never.thrown.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.ExpectedExceptionNeverThrownInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ParameterizedParametersStaticCollection" displayName="@RunWith(Parameterized.class) without data provider"
+    <localInspection groupPath="Java" language="JAVA" shortName="ParameterizedParametersStaticCollection"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.ParameterizedParametersStaticCollectionInspection"/>
+                     implementationClass="com.siyeh.ig.junit.ParameterizedParametersStaticCollectionInspection"
+                     key="inspection.parameterized.parameters.static.collection.display.name" bundle="messages.InspectionGadgetsBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantJUnitAssertArgument" bundle="messages.InspectionGadgetsBundle"
                      key="constant.junit.assert.argument.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"

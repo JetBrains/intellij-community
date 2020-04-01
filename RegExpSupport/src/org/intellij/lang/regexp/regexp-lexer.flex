@@ -365,7 +365,12 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
                             return RegExpTT.MYSQL_CHAR_BEGIN;
                           } else {
                             yypushback(1);
-                            return allowNestedCharacterClasses ? RegExpTT.CLASS_BEGIN : RegExpTT.CHARACTER;
+                            if (allowNestedCharacterClasses) {
+                              yypushstate(CLASS1);
+                              return RegExpTT.CLASS_BEGIN;
+                            } else {
+                              return RegExpTT.CHARACTER;
+                            }
                           }
                         }
   {LBRACKET} / "^"      { if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
@@ -429,6 +434,9 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   "(?P<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
   "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
+  "(?&" { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
+  "(?P>" { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
+  "(?|"  {  return RegExpTT.PCRE_BRANCH_RESET; }
 
   "(?<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP; }
   "(?'" { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }

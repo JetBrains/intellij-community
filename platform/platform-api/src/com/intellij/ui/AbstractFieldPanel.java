@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +43,7 @@ public abstract class AbstractFieldPanel extends JPanel {
 
   public AbstractFieldPanel(JComponent component,
                             String labelText,
-                            final String viewerDialogTitle,
+                            @NlsContexts.DialogTitle String viewerDialogTitle,
                             ActionListener browseButtonActionListener,
                             Runnable changeListener) {
     myComponent = component;

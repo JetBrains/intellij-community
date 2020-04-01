@@ -176,7 +176,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         return expandIfEllipsis();
       }
     }.installOn(this);

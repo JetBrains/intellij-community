@@ -67,17 +67,12 @@ abstract class MacDistributionCustomizer {
   String additionalDocTypes = ""
 
   /**
-   * List of file extensions (without leading dot) which installer will associate with the product. Note that users won't be able to switch off some
-   * of these associations during installation so include only types of files which users will definitely prefer to open by the product.
+   * Note that users won't be able to switch off some of these associations during installation
+   * so include only types of files which users will definitely prefer to open by the product.
+   *
+   * @see FileAssociation
    */
-  List<String> fileAssociations = []
-
-  /**
-   * List of custom icon files for association. Example:
-   * fileAssociationIcons = ["$projectHome/ruby/ideResources/artwork/rubymine.icns"]
-   * See IDEA-211187
-   */
-  List<String> fileAssociationIcons = []
+  List<FileAssociation> fileAssociations = []
 
   /**
    * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0

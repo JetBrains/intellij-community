@@ -128,7 +128,7 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
       final PluginDescriptor descriptor = ep.getPluginDescriptor();
       LOG.error(new PluginException(
         "Short name '" + shortName + "' is not unique\nclass '" + ep.instantiateTool().getClass().getCanonicalName() + "' in " + descriptor +
-        "\nand\nclass'" + duplicate.instantiateTool().getClass().getCanonicalName() + "' in " + duplicate.getPluginDescriptor() + "\nconflict",
+        "\nand\nclass '" + duplicate.instantiateTool().getClass().getCanonicalName() + "' in " + duplicate.getPluginDescriptor() + "\nconflict",
         descriptor.getPluginId()));
     }
   }

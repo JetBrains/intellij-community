@@ -59,12 +59,8 @@ final class ProjectLocatorImpl extends ProjectLocator {
     });
   }
 
-  // true if the file is either is in the project content or in some excluded folder of the project
+  // true if the file is either in the project content or in some excluded folder of the project
   private static boolean isUnder(@NotNull Project project, @NotNull VirtualFile file) {
-    if (!project.isInitialized() || project.isDisposed()) {
-      return false;
-    }
-
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return fileIndex.isInContent(file) || fileIndex.isExcluded(file);
   }
@@ -77,17 +73,14 @@ final class ProjectLocatorImpl extends ProjectLocator {
       return Collections.emptyList();
     }
 
-    Project[] openProjects = projectManager.getOpenProjects();
-    if (openProjects.length == 0) {
-      return Collections.emptyList();
-    }
-
     List<Project> result = new SmartList<>();
-    for (Project project : openProjects) {
-      if (isUnder(project, file)) {
-        result.add(project);
+    ReadAction.run(()-> {
+      for (Project project : projectManager.getOpenProjects()) {
+        if (isUnder(project, file)) {
+          result.add(project);
+        }
       }
-    }
+    });
     return result;
   }
 }

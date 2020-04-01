@@ -100,8 +100,8 @@ class PyAddExistingSdkPanel(project: Project?,
   private fun validateSdkChooserField(): ValidationInfo? {
     val selectedSdk = sdk
     val message = when {
-      selectedSdk == null -> "No Python interpreter selected"
-      PythonSdkUtil.isInvalid(selectedSdk) -> "Choose valid Python interpreter"
+      selectedSdk == null -> PyBundle.message("python.sdk.no.interpreter.selection")
+      PythonSdkUtil.isInvalid(selectedSdk) -> PyBundle.message("python.sdk.choose.valid.interpreter")
       else -> return null
     }
     return ValidationInfo(message, sdkChooserCombo)
@@ -168,7 +168,7 @@ class PyAddExistingSdkPanel(project: Project?,
           is ExecutionException, is InterruptedException -> {
             Logger.getInstance(PyAddExistingSdkPanel::class.java).warn("Failed to create server browse button", e)
             JBPopupFactory.getInstance()
-              .createMessage("Failed to browse remote server. Make sure you have permissions.")
+              .createMessage(PyBundle.message("remote.interpreter.remote.server.permissions"))
               .show(owner)
             return null
           }

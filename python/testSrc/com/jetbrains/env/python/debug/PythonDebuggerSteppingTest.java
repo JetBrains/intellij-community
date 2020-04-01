@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerTestUtil;
+import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
@@ -309,7 +310,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoConstructor() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_constructor.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(8);
       }
 
@@ -350,7 +351,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoChain() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_chain.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(6);
       }
 
@@ -385,7 +386,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoCondition() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_condition.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoints(13, 18);
       }
 
@@ -467,17 +468,28 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         toggleBreakpoint(26);
-        assertSmartStepIntoVariants("foo", "foo", "generate_power", "foo", "foo", "generate_power");
-        smartStepInto("generate_power", 1);
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        stepOver();
+        waitForPause();
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        smartStepInto("generate_power", 0);
         waitForPause();
         eval("exponent").hasValue("5");
         resume();
+        if (TestEnv.LINUX.isThisOs()) {
+          waitForPause();
+          resume();
+        }
         waitForTerminate();
       }
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python3");
+        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+        builder.addAll(super.getTags());
+        builder.add("-python2");
+        builder.add("-django");
+        return builder.build();
       }
     });
   }
@@ -493,8 +505,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
-        assertSmartStepIntoVariants("foo", "foo", "generate_power", "foo", "foo", "generate_power");
-        smartStepInto("generate_power", 1);
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        stepOver();
+        waitForPause();
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        smartStepInto("generate_power", 0);
         waitForPause();
         toggleBreakpoint(26);
         eval("exponent").hasValue("5");
@@ -546,7 +561,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoNativeFunctionInReturn() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_native_function_in_return.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(5);
       }
 
@@ -843,12 +858,23 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         eval("x").hasValue("100");
         resume();
+        if (TestEnv.LINUX.isThisOs()) {
+          // Python interpreter acts a but different on Linux.
+          waitForPause();
+          resume();
+          waitForPause();
+          resume();
+        }
         waitForTerminate();
       }
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("-python2.7");
+        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+        builder.addAll(super.getTags());
+        builder.add("-python2.7");
+        builder.add("-django");
+        return builder.build();
       }
     });
   }

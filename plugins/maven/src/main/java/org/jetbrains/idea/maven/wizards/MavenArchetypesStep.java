@@ -161,7 +161,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   private static TreeNode groupAndSortArchetypes(Set<MavenArchetype> archetypes) {
     List<MavenArchetype> list = new ArrayList<>(archetypes);
 
-    Collections.sort(list, (o1, o2) -> {
+    list.sort((o1, o2) -> {
       String key1 = o1.groupId + ":" + o1.artifactId;
       String key2 = o2.groupId + ":" + o2.artifactId;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -6,7 +6,6 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 
 import javax.tools.*;
@@ -204,7 +203,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     if (loc == StandardLocation.CLASS_OUTPUT) {
       if (myOutputsMap.size() > 1 && sourceFile != null) {
         // multiple outputs case
-        final File outputDir = findOutputDir(PathUtils.convertToFile(sourceFile.toUri()));
+        final File outputDir = findOutputDir(new File(sourceFile.toUri()));
         if (outputDir != null) {
           return outputDir;
         }

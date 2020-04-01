@@ -390,7 +390,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @NotNull
-  UsageViewSettings getUsageViewSettings() {
+  public UsageViewSettings getUsageViewSettings() {
     return UsageViewSettings.getInstance();
   }
 
@@ -1445,7 +1445,10 @@ public class UsageViewImpl implements UsageViewEx {
 
     if (!smartPointers.isEmpty()) {
       for (SmartPsiElementPointer<?> pointer : smartPointers) {
-        SmartPointerManager.getInstance(pointer.getProject()).removePointer(pointer);
+        Project project = pointer.getProject();
+        if (!project.isDisposed()) {
+          SmartPointerManager.getInstance(project).removePointer(pointer);
+        }
       }
     }
     myUsageNodes.clear();

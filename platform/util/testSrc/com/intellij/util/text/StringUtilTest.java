@@ -2,7 +2,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.LineColumn;
@@ -568,6 +568,7 @@ public class StringUtilTest {
   public void testFormatDuration() {
     assertEquals("0 ms", StringUtil.formatDuration(0));
     assertEquals("1 ms", StringUtil.formatDuration(1));
+    assertEquals("1 s", StringUtil.formatDuration(1000));
     assertEquals("24 d 20 h 31 m 23 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE));
     assertEquals("82 d 17 h 24 m 43 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE+5000000000L));
 
@@ -841,14 +842,14 @@ public class StringUtilTest {
   @Test
   public void testFirstLastDontConvertCharSequenceToString() {
     CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
-    assertTrue(s instanceof ByteArrayCharSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+    assertTrue(s instanceof ByteArrayCharSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     CharSequence first = StringUtil.first(s, 1, false);
     assertTrue(String.valueOf(first.getClass()),
-               first instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               first instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", first.toString());
     CharSequence last = StringUtil.last(s, 1, false);
     assertTrue(String.valueOf(last.getClass()),
-               last instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               last instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", last.toString());
   }
 

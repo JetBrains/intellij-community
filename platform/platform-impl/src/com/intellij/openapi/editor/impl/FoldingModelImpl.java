@@ -654,7 +654,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         if (!region.isExpanded()) topLevelRegions.add(region);
       }
     }
-    Collections.sort(topLevelRegions, Comparator.comparingInt(r -> r.getStartOffset()));
+    topLevelRegions.sort(Comparator.comparingInt(r -> r.getStartOffset()));
 
     FoldRegion[] actualVisibles = fetchVisible();
     if (actualVisibles != null) {

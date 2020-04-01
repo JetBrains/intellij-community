@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.errorreport.error.InternalEAPException;
@@ -46,10 +46,7 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.zip.GZIPOutputStream;
 
-/**
- * @author stathik
- */
-class ITNProxy {
+final class ITNProxy {
   private static final String DEFAULT_USER = "idea_anonymous";
   private static final String DEFAULT_PASS = "guest";
   private static final String DEVELOPERS_LIST_URL = "https://ea-engine.labs.intellij.net/data?category=developers";

@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.statistic.connect;
 
+import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ public class StatisticsConnectionService extends SettingsConnectionService {
   }
 
   public StatisticsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
-    super(settingsUrl, defaultServiceUrl, "IntelliJ", null);
+    super(settingsUrl, defaultServiceUrl, "IntelliJ", null, new EmptySystemEventLogger());
   }
 
   @Override
@@ -42,5 +43,10 @@ public class StatisticsConnectionService extends SettingsConnectionService {
   public boolean isTransmissionPermitted() {
     final String permitted = getSettingValue(PERMISSION_ATTR_NAME);
     return permitted == null || Boolean.parseBoolean(permitted);
+  }
+
+  private static class EmptySystemEventLogger implements DataCollectorSystemEventLogger {
+    @Override
+    public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) { }
   }
 }

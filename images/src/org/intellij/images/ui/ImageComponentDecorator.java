@@ -18,6 +18,8 @@ package org.intellij.images.ui;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.intellij.images.editor.ImageZoomModel;
 
+import java.awt.*;
+
 /**
  * Image Component manager. It can toggle backround transparency, grid, etc.
  *
@@ -55,4 +57,8 @@ public interface ImageComponentDecorator {
   }
   
   default void setFileNameVisible(boolean visible) {}
+
+  default void setBorderVisible(boolean visible) {}
+
+  default void setEditorBackground(Color color) {}
 }

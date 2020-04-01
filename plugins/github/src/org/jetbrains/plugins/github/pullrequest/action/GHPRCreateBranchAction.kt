@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github.pullrequest.action
 
@@ -32,8 +32,8 @@ class GHPRCreateBranchAction : DumbAwareAction("Create New Local Branch...",
     val dataProvider = context.pullRequestDataProvider ?: return
 
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
-                                                         "Create New Branch From Pull Request #${dataProvider.number}",
-                                                         "pull/${dataProvider.number}") ?: return
+                                                         "Create New Branch From Pull Request #${dataProvider.id.number}",
+                                                         "pull/${dataProvider.id.number}") ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, "Creating Branch From Pull Request", true) {

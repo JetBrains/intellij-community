@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.NlsContexts;
 
 /**
  * @author irengrig
@@ -28,7 +29,7 @@ public enum ApplyPatchMode {
   private final String myTitle;
   private final boolean myCanChangePatchFile;
 
-  ApplyPatchMode(String title, boolean canChangePatchFile) {
+  ApplyPatchMode(@NlsContexts.DialogTitle String title, boolean canChangePatchFile) {
     myTitle = title;
     myCanChangePatchFile = canChangePatchFile;
   }

@@ -41,18 +41,17 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </dict>
 """ : "")
     def associations = ""
-    if (!customizer.fileAssociations.empty) {
-      for (int i=0; i<customizer.fileAssociations.size(); i++) {
+    for (FileAssociation fileAssociation : customizer.fileAssociations) {
         def iconFileName = targetIcnsFileName
-        if (customizer.fileAssociationIcons.size() == customizer.fileAssociations.size()) {
-          def iconFile = customizer.fileAssociationIcons[i]
+        def iconFile = fileAssociation.iconPath
+        if (!iconFile.isEmpty()) {
           iconFileName = iconFile.substring(iconFile.lastIndexOf(File.separator) + 1, iconFile.size())
         }
         associations += """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
 """
-          associations += "          <string>${customizer.fileAssociations[i]}</string>\n"
+          associations += "          <string>${fileAssociation.extension}</string>\n"
           associations +=  """        </array>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
@@ -60,7 +59,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         <string>$iconFileName</string>        
       </dict>
 """
-      }
     }
     return iprAssociation + associations + customizer.additionalDocTypes
   }
@@ -142,9 +140,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
     buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
 
-    if (!customizer.fileAssociationIcons.empty) {
-      customizer.fileAssociationIcons.each {
-        buildContext.ant.copy(file: it, todir: "$target/Resources", overwrite: "true")
+    customizer.fileAssociations.each {
+      if (!it.iconPath.empty) {
+        buildContext.ant.copy(file: it.iconPath, todir: "$target/Resources", overwrite: "true")
       }
     }
 

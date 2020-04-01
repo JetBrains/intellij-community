@@ -3,23 +3,25 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.SearchSession;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class StatusTextAction extends DumbAwareAction implements CustomComponentAction, LightEditCompatible {
   @Override
   public void update(@NotNull AnActionEvent e) {
     SearchSession search = e.getData(SearchSession.KEY);
-    String statusText = search == null ? "" : search.getComponent().getStatusText();
     JLabel label = (JLabel)e.getPresentation().getClientProperty(COMPONENT_KEY);
-    if (label != null) {
-      label.setText(statusText);
-    }
+    if (label == null) return;
+    label.setText(search == null ? "" : search.getComponent().getStatusText());
+    label.setForeground(search == null ? UIUtil.getLabelForeground() : search.getComponent().getStatusColor());
   }
 
   @Override
@@ -32,7 +34,9 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
     JLabel label = new JLabel();
     //noinspection HardCodedStringLiteral
     label.setText("9888 results");
-    label.setPreferredSize(label.getPreferredSize());
+    Dimension size = label.getPreferredSize();
+    size.height = Math.max(size.height, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height);
+    label.setPreferredSize(size);
     label.setText(null);
     label.setHorizontalAlignment(SwingConstants.CENTER);
     return label;

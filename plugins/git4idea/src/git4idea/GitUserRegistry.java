@@ -38,7 +38,7 @@ public final class GitUserRegistry implements Disposable, VcsListener {
   }
 
   public void activate() {
-    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    myProject.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     directoryMappingChanged();
   }
 

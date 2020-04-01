@@ -147,7 +147,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         final TreePath path = myResultList.getPathForLocation(e.getX(), e.getY());
         if (path != null && myResultList.isPathSelected(path)) {
           Object sel = path.getLastPathComponent();

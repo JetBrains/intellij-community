@@ -499,7 +499,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   private void chooseRootAndAnnotateExternally(VirtualFile @NotNull [] roots, @NotNull ExternalAnnotation annotation) {
     if (roots.length > 1) {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>("Annotation Roots", roots) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>(JavaBundle.message("external.annotations.roots"), roots) {
         @Override
         public void canceled() {
           notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), false);

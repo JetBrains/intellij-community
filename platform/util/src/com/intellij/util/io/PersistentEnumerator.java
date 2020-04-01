@@ -18,7 +18,6 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -61,7 +60,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   }
 
   @Override
-  protected  void setupEmptyFile() throws IOException {
+  protected void setupEmptyFile() {
     allocVector(FIRST_VECTOR);
   }
 
@@ -205,17 +204,17 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return (hashcode >>> (byteN * BITS_PER_LEVEL)) & LEVEL_MASK;
   }
 
-  private int allocVector(final byte @NotNull [] empty) throws IOException {
+  private int allocVector(final byte @NotNull [] empty) {
     final int pos = (int)myStorage.length();
     myStorage.put(pos, empty, 0, empty.length);
     return pos;
   }
 
-  private int nextCandidate(final int idx) throws IOException {
+  private int nextCandidate(final int idx) {
     return -myStorage.getInt(idx);
   }
 
-  private int hashCodeOf(int idx) throws IOException {
+  private int hashCodeOf(int idx) {
     return myStorage.getInt(idx + KEY_HASHCODE_OFFSET);
   }
 
@@ -224,21 +223,21 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     return myStorage.getInt(idx + KEY_REF_OFFSET);
   }
 
-  private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator> {
+  private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator<?>> {
     private final byte[] myBuffer = new byte[RECORD_SIZE];
 
     @Override
-    protected int recordWriteOffset(@NotNull PersistentEnumerator enumerator, byte[] buf) {
+    protected int recordWriteOffset(@NotNull PersistentEnumerator<?> enumerator, byte[] buf) {
       return (int)enumerator.myStorage.length();
     }
 
     @Override
-    byte @NotNull [] getRecordBuffer(PersistentEnumerator t) {
+    byte @NotNull [] getRecordBuffer(PersistentEnumerator<?> t) {
       return myBuffer;
     }
 
     @Override
-    void setupRecord(PersistentEnumerator enumerator, int hashCode, int dataOffset, byte[] buf) {
+    void setupRecord(PersistentEnumerator<?> enumerator, int hashCode, int dataOffset, byte[] buf) {
       Bits.putInt(buf, COLLISION_OFFSET, 0);
       Bits.putInt(buf, KEY_HASHCODE_OFFSET, hashCode);
       Bits.putInt(buf, KEY_REF_OFFSET, dataOffset);

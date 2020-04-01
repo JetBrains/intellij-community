@@ -109,7 +109,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
     linkLabel.setHtmlText("This project type is recommended for simple plugins, such as a custom UI theme. " +
                           "For more complex plugins, a Gradle-based project is <a>recommended</a>.");
-    linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
+    linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
     panel.addToCenter(linkLabel);
 
     final JComponent component = step.getComponent();

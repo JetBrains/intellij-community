@@ -17,6 +17,7 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -518,12 +519,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
       @Override
       protected String getActionName() {
-        return myAutoscrollToSource.getName();
+        return ActionsBundle.message("action.ProjectView.AutoscrollToSource.text" );
       }
 
       @Override
       protected String getActionDescription() {
-        return myAutoscrollToSource.getDescription();
+        return ActionsBundle.message("action.ProjectView.AutoscrollToSource.description" );
       }
     };
 
@@ -801,8 +802,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     createToolbarActions(newPane);
 
     myAutoScrollToSourceHandler.install(newPane.myTree);
-
-    IdeFocusManager.getInstance(myProject).requestFocusInProject(newPane.getComponentToFocus(), myProject);
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
@@ -1089,7 +1088,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public void changeView() {
     final List<AbstractProjectViewPane> views = new ArrayList<>(myId2Pane.values());
     views.remove(getCurrentProjectViewPane());
-    Collections.sort(views, PANE_WEIGHT_COMPARATOR);
+    views.sort(PANE_WEIGHT_COMPARATOR);
 
     IPopupChooserBuilder<AbstractProjectViewPane> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(views)
@@ -1901,12 +1900,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     protected String getActionName() {
-      return myAutoscrollFromSource.getName();
+      return ActionsBundle.message("action.ProjectView.AutoscrollFromSource.text");
     }
 
     @Override
     protected String getActionDescription() {
-      return myAutoscrollFromSource.getDescription();
+      return ActionsBundle.message("action.ProjectView.AutoscrollFromSource.description");
     }
   }
 

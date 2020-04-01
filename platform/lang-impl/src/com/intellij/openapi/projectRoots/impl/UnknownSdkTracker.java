@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.openapi.progress.PerformInBackgroundOption.ALWAYS_BACKGROUND;
@@ -46,6 +46,8 @@ public class UnknownSdkTracker {
   @NotNull private final Project myProject;
   @NotNull private final MergingUpdateQueue myUpdateQueue;
 
+  private UnknownSdkSnapshot myPreviousRequestCache = null;
+
   public UnknownSdkTracker(@NotNull Project project) {
     myProject = project;
     myUpdateQueue = new MergingUpdateQueue(getClass().getSimpleName(),
@@ -59,7 +61,7 @@ public class UnknownSdkTracker {
   }
 
   public void updateUnknownSdks() {
-    myUpdateQueue.run(new Update("update") {
+    myUpdateQueue.queue(new Update("update") {
       @Override
       public void run() {
         if (!Registry.is("unknown.sdk") || !UnknownSdkResolver.EP_NAME.hasAnyExtensions()) {
@@ -69,6 +71,11 @@ public class UnknownSdkTracker {
 
         new UnknownSdkCollector(myProject)
           .collectSdksPromise(snapshot -> {
+
+            //there is nothing to do if we see the same snapshot, IDEA-236153
+            if (snapshot.equals(myPreviousRequestCache)) return;
+            myPreviousRequestCache = snapshot;
+
             //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
             onFixableAndMissingSdksCollected(filterOnlyAllowedEntries(snapshot.getResolvableSdks()));
           });
@@ -164,7 +171,7 @@ public class UnknownSdkTracker {
                                  @NotNull Consumer<? super Sdk> onSdkNameReady,
                                  @NotNull Consumer<? super Sdk> onCompleted) {
     SdkDownloadTask task;
-    String title = "Configuring SDK";
+    String title = ProjectBundle.message("progress.title.downloading.sdk");
     try {
       task = ProgressManager.getInstance().run(new Task.WithResult<SdkDownloadTask, RuntimeException>(project, title, true) {
         @Override
@@ -198,16 +205,15 @@ public class UnknownSdkTracker {
 
         SdkDownloadTracker downloadTracker = SdkDownloadTracker.getInstance();
         downloadTracker.registerSdkDownload(sdk, task);
+        String targetSdkName = actualSdkName;
         downloadTracker.tryRegisterDownloadingListener(sdk, lifetime, new ProgressIndicatorBase(), success -> {
           Disposer.dispose(lifetime);
+          registerNewSdkInJdkTable(targetSdkName, sdk);
           onCompleted.consume(success ? sdk : null);
         });
 
-        registerNewSdkInJdkTable(actualSdkName, sdk);
         onSdkNameReady.consume(sdk);
-
         downloadTracker.startSdkDownloadIfNeeded(sdk);
-
       } catch (Exception error) {
         LOG.warn("Failed to download " + info.getSdkType().getPresentableName() + " " + fix.getDownloadDescription() + " for " + info + ". " + error.getMessage(), error);
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -219,10 +225,10 @@ public class UnknownSdkTracker {
     });
   }
 
-  public void showSdkSelectionPopup(@Nullable String sdkName,
-                                    @Nullable SdkType sdkType,
-                                    @NotNull JComponent underneathRightOfComponent) {
-    SdkPopupFactory
+  @NotNull
+  public EditorNotificationPanel.ActionHandler createSdkSelectionPopup(@Nullable String sdkName,
+                                                                       @Nullable SdkType sdkType) {
+    return SdkPopupFactory
       .newBuilder()
       .withProject(myProject)
       .withSdkTypeFilter(type -> sdkType == null || Objects.equals(type, sdkType))
@@ -230,8 +236,7 @@ public class UnknownSdkTracker {
         registerNewSdkInJdkTable(sdkName, sdk);
         updateUnknownSdks();
       })
-      .buildPopup()
-      .showUnderneathToTheRightOf(underneathRightOfComponent);
+      .buildEditorNotificationPanelHandler();
   }
 
   private void configureLocalSdks(@NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {

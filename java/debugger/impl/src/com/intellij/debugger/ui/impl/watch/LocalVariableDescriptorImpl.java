@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -35,6 +35,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   private String myTypeName = JavaDebuggerBundle.message("label.unknown.value");
   private boolean myIsPrimitive;
+  private boolean myIsParameter;
 
   private boolean myIsNewLocal = true;
 
@@ -62,12 +63,14 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    boolean isVisible = myFrameProxy.isLocalVariableVisible(getLocalVariable());
+    LocalVariableProxyImpl variable = getLocalVariable();
+    boolean isVisible = myFrameProxy.isLocalVariableVisible(variable);
     if (isVisible) {
-      final String typeName = getLocalVariable().typeName();
+      final String typeName = variable.typeName();
       myTypeName = typeName;
       myIsPrimitive = DebuggerUtils.isPrimitiveType(typeName);
-      return myFrameProxy.getValue(getLocalVariable());
+      myIsParameter = variable.getVariable().isArgument();
+      return myFrameProxy.getValue(variable);
     }
 
     return null;
@@ -133,5 +136,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
         }
       }
     };
+  }
+
+  public boolean isParameter() {
+    return myIsParameter;
   }
 }

@@ -148,8 +148,7 @@ public class PluginGroups {
       "com.jetbrains.restWebServices," +
       "Web Services (JAX-WS)," +
       "com.intellij.javaee.webSocket," +
-      "com.intellij.jsp," +
-      "com.intellij.persistence",
+      "com.intellij.jsp",
 
       "com.intellij.hibernate",
       "com.intellij.reactivestreams",

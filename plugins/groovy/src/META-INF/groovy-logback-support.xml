@@ -7,6 +7,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <fileType name="logback" fileNames="logback.groovy"
+              implementationClass="org.jetbrains.plugins.groovy.ext.logback.LogbackFileType" fieldName="INSTANCE"/>
     <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackDeclarationSearcher"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.ext.logback.LogbackReferenceContributor" language="Groovy"/>
   </extensions>

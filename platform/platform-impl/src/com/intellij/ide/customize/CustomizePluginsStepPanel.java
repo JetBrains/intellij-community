@@ -135,7 +135,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   }
 
   @Override
-  public void linkSelected(LinkLabel linkLabel, String command) {
+  public void linkSelected(LinkLabel<String> linkLabel, String command) {
     if (command == null || !command.contains(":")) return;
     int semicolonPosition = command.indexOf(":");
     String group = command.substring(semicolonPosition + 1);
@@ -252,7 +252,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
     }
 
     @Override
-    public void linkSelected(LinkLabel aSource, String command) {
+    public void linkSelected(LinkLabel<String> aSource, String command) {
       if (myGroup == null) return;
       boolean enable = "enable".equals(command);
       List<IdSet> idSets = myPluginGroups.getSets(myGroup);

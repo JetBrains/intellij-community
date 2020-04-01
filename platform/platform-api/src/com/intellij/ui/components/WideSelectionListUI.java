@@ -81,12 +81,16 @@ public final class WideSelectionListUI extends BasicListUI {
         g.setClip(x, rowBounds.y, width, rowBounds.height);
         DRAW.paint((Graphics2D)g, x, rowBounds.y, width, rowBounds.height, 0);
       }
-      else if (list.getSelectionModel().getMinSelectionIndex() < list.getSelectionModel().getMaxSelectionIndex()) {
+      else if (isLeadSelectionNeeded(list, row)) {
         g.setColor(UIUtil.getListBackground());
         g.setClip(x, rowBounds.y, width, rowBounds.height);
         DRAW.paint((Graphics2D)g, x + 1, rowBounds.y + 1, width - 2, rowBounds.height - 2, 0);
       }
     }
+  }
+
+  private static boolean isLeadSelectionNeeded(@NotNull JList list, int row) {
+    return list.getMinSelectionIndex() < list.getMaxSelectionIndex() && list.isSelectedIndex(row - 1) && list.isSelectedIndex(row + 1);
   }
 
   @Nullable
@@ -181,7 +185,10 @@ public final class WideSelectionListUI extends BasicListUI {
           Object value = dataModel.getElementAt(index);
           Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
           rendererPane.add(c);
-          Dimension cellSize = UIUtil.updateListRowHeight(c.getPreferredSize());
+          Dimension cellSize = c.getPreferredSize();
+          if (UIUtil.getClientProperty(c, "IgnoreListRowHeight") == null) {
+            cellSize = UIUtil.updateListRowHeight(cellSize);
+          }
           if (fixedCellWidth == -1) {
             cellWidth = Math.max(cellSize.width, cellWidth);
           }

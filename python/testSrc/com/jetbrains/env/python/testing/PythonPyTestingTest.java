@@ -1,12 +1,10 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;

@@ -3,12 +3,9 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.*;
@@ -28,7 +25,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
-public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Disposable {
+public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
   private final Project myProject;
   private final Alarm myAlarm;
   private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
@@ -56,22 +53,10 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
         scheduleUpdate();
       }
     };
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ChangeListListener.TOPIC, changeListListener);
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (project == myProject) {
-          DumbService.getInstance(myProject).runWhenSmart(() -> scheduleUpdate());
-        }
-      }
-    });
-  }
-
-  @Override
-  public void dispose() {
-    myChangeListsToShow.set(Collections.emptySet());
+    DumbService.getInstance(myProject).runWhenSmart(() -> scheduleUpdate());
   }
 
   private void scheduleRefresh() {
@@ -85,8 +70,8 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
   }
 
   @Override
-  public void decorateChangeList(LocalChangeList changeList,
-                                 ColoredTreeCellRenderer renderer,
+  public void decorateChangeList(@NotNull LocalChangeList changeList,
+                                 @NotNull ColoredTreeCellRenderer renderer,
                                  boolean selected,
                                  boolean expanded,
                                  boolean hasFocus) {

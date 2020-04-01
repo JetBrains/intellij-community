@@ -37,7 +37,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
 
   @Nullable
   @Override
-  public Icon getIcon(Object o) {
+  public Icon getIcon(@NotNull Object o) {
     return getIcon(o.getClass(), o);
   }
 
@@ -61,18 +61,18 @@ public class TypePresentationServiceImpl extends TypePresentationService {
 
   @Nullable
   @Override
-  public String getTypeName(Object o) {
+  public String getTypeName(@NotNull Object o) {
     return findFirst(o.getClass(), template -> template.getTypeName(o));
   }
 
   @Nullable
   @Override
-  public String getObjectName(Object o) {
+  public String getObjectName(@NotNull Object o) {
     return findFirst(o.getClass(), template -> template.getName(o));
   }
 
   @Nullable
-  private <T> T findFirst(Class<?> clazz, Function<PresentationTemplate, T> f) {
+  private <T> T findFirst(Class<?> clazz, @NotNull Function<? super PresentationTemplate, ? extends T> f) {
     Set<PresentationTemplate> templates = mySuperClasses.get(clazz);
     for (PresentationTemplate template : templates) {
       T result = f.apply(template);

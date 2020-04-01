@@ -15,22 +15,15 @@
  */
 package org.jetbrains.java.generate.template;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.generate.GenerationUtil;
-import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import java.io.Serializable;
-import java.util.Collections;
 
 /**
  * A template contains the method body and the filename of the resource where
  * the text is stored.
  */
-public class TemplateResource implements Serializable {
+public final class TemplateResource implements Serializable {
   private final boolean isDefault;
   private String fileName = "";
   private String template = "";
@@ -55,52 +48,52 @@ public class TemplateResource implements Serializable {
   }
 
   /**
-     * Returns the part of s after the token.
-     * <p/>
-     * <br/>Example:   after("helloWorldThisIsMe", "World") will return "ThisIsMe".
-     * <br/>Example:   after("helloWorldThisIsMe", "Dog") will return null.
-     *
-     * @param s   the string to test.
-     * @param token   the token.
-     * @return  the part of s that is after the token.
-     */
-    public static String after(String s, String token) {
-        if (s == null) {
-            return null;
-        }
-
-        int i = s.indexOf(token);
-        if (i == -1) {
-            return s;
-        }
-
-        return s.substring(i + token.length());
+   * Returns the part of s after the token.
+   * <p/>
+   * <br/>Example:   after("helloWorldThisIsMe", "World") will return "ThisIsMe".
+   * <br/>Example:   after("helloWorldThisIsMe", "Dog") will return null.
+   *
+   * @param s     the string to test.
+   * @param token the token.
+   * @return the part of s that is after the token.
+   */
+  public static String after(String s, String token) {
+    if (s == null) {
+      return null;
     }
+
+    int i = s.indexOf(token);
+    if (i == -1) {
+      return s;
+    }
+
+    return s.substring(i + token.length());
+  }
 
   /**
-     * Returns the part of s before the token.
-     * <p/>
-     * <br/>Example:   before("helloWorldThisIsMe", "World") will return "hello".
-     * <br/>Example:   before("helloWorldThisIsMe", "Dog") will return "helloWorldThisIsMe".
-     * <p/>
-     * If the token is not in the string, the entire string is returned.
-     *
-     * @param s   the string to test.
-     * @param token   the token.
-     * @return  the part of s that is before the token.
-     */
-    public static String before(String s, String token) {
-        if (s == null) {
-            return null;
-        }
-
-        int i = s.lastIndexOf(token);
-        if (i == -1) {
-            return s;
-        }
-
-        return s.substring(0, i);
+   * Returns the part of s before the token.
+   * <p/>
+   * <br/>Example:   before("helloWorldThisIsMe", "World") will return "hello".
+   * <br/>Example:   before("helloWorldThisIsMe", "Dog") will return "helloWorldThisIsMe".
+   * <p/>
+   * If the token is not in the string, the entire string is returned.
+   *
+   * @param s     the string to test.
+   * @param token the token.
+   * @return the part of s that is before the token.
+   */
+  public static String before(String s, String token) {
+    if (s == null) {
+      return null;
     }
+
+    int i = s.lastIndexOf(token);
+    if (i == -1) {
+      return s;
+    }
+
+    return s.substring(0, i);
+  }
 
   public String getTemplate() {
     return template;
@@ -127,8 +120,7 @@ public class TemplateResource implements Serializable {
    *
    * @return the javadoc, null if no javadoc.
    */
-  @Nullable
-  public String getJavaDoc() {
+  public @Nullable String getJavaDoc() {
     int i = template.trim().startsWith("/*") ? template.indexOf("*/") : -1;
     if (i == -1) {
       return null;
@@ -146,8 +138,7 @@ public class TemplateResource implements Serializable {
     return getMethodBody(template);
   }
 
-  @Nullable
-  private static String getMethodBody(String template) {
+  private static @Nullable String getMethodBody(String template) {
     String signature = getMethodSignature(template);
     String s = after(template, signature);
 
@@ -198,21 +189,6 @@ public class TemplateResource implements Serializable {
   }
 
   /**
-   * Gets the method that this template is for (toString)
-   */
-  public String getTargetMethodName(PsiClass clazz) {
-    try {
-      String text = GenerationUtil.velocityGenerateCode(clazz, Collections.emptyList(), Collections.emptyMap(), template, 0, true);
-      return JavaPsiFacade.getElementFactory(clazz.getProject())
-          .createMethodFromText(text, clazz, PsiUtil.getLanguageLevel(clazz))
-          .getName();
-    }
-    catch (GenerateCodeException | IncorrectOperationException ignore) {
-      return null;
-    }
-  }
-
-  /**
    * Validates this template to see if its valid for plugin v3.10 or higher.
    *
    * @return true if valid, false if not
@@ -240,19 +216,11 @@ public class TemplateResource implements Serializable {
       return false;
     }
 
-    if (getMethodSignature(template) == null) {
-      return false;
-    }
-
-    if (getMethodBody(template) == null) {
-      return false;
-    }
-
-    return true;
+    return getMethodSignature(template) != null && getMethodBody(template) != null;
   }
 
   /**
-   * Class fqn to detect applicability 
+   * Class fqn to detect applicability
    */
   public String getClassName() {
     return className;

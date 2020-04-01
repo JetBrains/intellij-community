@@ -600,15 +600,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     DfaValue qualifierValue = callArguments.myQualifier;
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
+    PsiType type = instruction.getResultType();
+
     if (precalculated != null) {
-      return getPrecalculatedResult(qualifierValue, state, factory, precalculated);
+      return DfaUtil.boxUnbox(getPrecalculatedResult(qualifierValue, state, factory, precalculated), type);
     }
     SpecialField field = SpecialField.findSpecialField(instruction.getTargetMethod());
     if (field != null) {
-      return factory.fromDfType(field.getFromQualifier(state.getDfType(qualifierValue)));
+      return DfaUtil.boxUnbox(factory.fromDfType(field.getFromQualifier(state.getDfType(qualifierValue))), type);
     }
-
-    PsiType type = instruction.getResultType();
 
     if (instruction.getContext() instanceof PsiMethodReferenceExpression && qualifierValue instanceof DfaVariableValue) {
       PsiMethod method = instruction.getTargetMethod();

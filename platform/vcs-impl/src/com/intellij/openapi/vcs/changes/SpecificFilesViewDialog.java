@@ -20,6 +20,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected final Project myProject;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
-                                    @NotNull String title,
+                                    @NotNull @NlsContexts.DialogTitle String title,
                                     @NotNull DataKey<Stream<FilePath>> shownDataKey,
                                     @NotNull List<? extends FilePath> initDataFiles) {
     super(project, true);

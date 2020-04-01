@@ -355,7 +355,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
   private class MyDoubleClickListener extends DoubleClickListener {
     @Override
-    protected boolean onDoubleClick(MouseEvent event) {
+    protected boolean onDoubleClick(@NotNull MouseEvent event) {
       if (!isShowNewInstancesEvent(event)) {
         handleClassSelection(getTable().getSelectedClass());
         return true;

@@ -16,54 +16,18 @@
 package com.intellij.openapi.preview;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.DeprecatedMethodException;
 
+@Deprecated
 public interface PreviewManager {
   class SERVICE {
-
-    private SERVICE() {
-    }
-
-    @Nullable
-    private static PreviewManager getInstance(@NotNull Project project) {
-      return null;//disabled for a while
-      //if (!UISettings.getInstance().NAVIGATE_TO_PREVIEW) return null;
-      //return ServiceManager.getService(project, PreviewManager.class);
-    }
-
     /**
-     * @return null if preview cannot be performed
+     * @deprecated always return null
      */
-    @Nullable
-    public static <V, C> C preview(@NotNull Project project, @NotNull PreviewProviderId<V, C> id, V data, boolean requestFocus) {
-      PreviewManager instance = getInstance(project);
-      if (instance == null) return null;
-      return instance.preview(id, data, requestFocus);
-    }
-
-    public static <V, C> void close(@NotNull Project project, @NotNull PreviewProviderId<V, C> id, V data) {
-      PreviewManager instance = getInstance(project);
-      if (instance != null) {
-        instance.close(id, data);
-      }
-    }
-
-    public static <V, C> void moveToStandardPlaceImpl(@NotNull Project project, @NotNull PreviewProviderId<V, C> id, V data) {
-      PreviewManager instance = getInstance(project);
-      if (instance != null) {
-        instance.moveToStandardPlaceImpl(id, data);
-      }
+    @Deprecated
+    public static <V, C> C preview(Project project, PreviewProviderId<V, C> id, V data, boolean requestFocus) {
+      DeprecatedMethodException.report("Please don't use; always returns null");
+      return null;
     }
   }
-
-  /**
-   * @return {@code null} if provider is not available / not active or if it forces to use standard view instead of preview at the moment
-   */
-  @Nullable
-  <V, C> C preview(@NotNull PreviewProviderId<V, C> id, V data, boolean requestFocus);
-
-  <V, C> void moveToStandardPlaceImpl(@NotNull PreviewProviderId<V, C> id, V data);
-
-  <V, C> void close(@NotNull PreviewProviderId<V, C> id, V data);
 }

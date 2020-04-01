@@ -1,10 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import org.cef.browser.CefBrowser;
+import org.cef.browser.CefFrame;
+import org.cef.callback.CefContextMenuParams;
+import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
+import org.cef.network.CefCookieManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +17,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
 /**
  * A wrapper over {@link CefBrowser}.
@@ -28,6 +38,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
   @NotNull private final CefBrowser myCefBrowser;
+  @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
@@ -35,18 +46,27 @@ public class JBCefBrowser implements JBCefDisposable {
   private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
+  private JDialog myDevtoolsFrame = null;
+  protected CefContextMenuHandler myDefaultContextMenuHandler;
+  private final ReentrantLock myCookieManagerLock = new ReentrantLock();
 
   private static class LoadDeferrer {
     @Nullable protected final String myHtml;
     @NotNull protected final String myUrl;
 
-    LoadDeferrer(@NotNull String url) {
-      this(null, url);
-    }
-
-    LoadDeferrer(@Nullable String html, @NotNull String url) {
+    private LoadDeferrer(@Nullable String html, @NotNull String url) {
       myHtml = html;
       myUrl = url;
+    }
+
+    @NotNull
+    public static LoadDeferrer urlDeferrer(String url) {
+      return new LoadDeferrer(null, url);
+    }
+
+    @NotNull
+    public static LoadDeferrer htmlDeferrer(String html, String url) {
+      return new LoadDeferrer(html, url);
     }
 
     public void load(@NotNull CefBrowser browser) {
@@ -65,8 +85,8 @@ public class JBCefBrowser implements JBCefDisposable {
     this(client, false, url);
   }
 
-  public JBCefBrowser(@NotNull CefBrowser cefBrowser) {
-    this(cefBrowser, new JBCefClient(cefBrowser.getClient()), false, null);
+  public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
+    this(cefBrowser, client, false, null);
   }
 
   private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
@@ -115,6 +135,14 @@ public class JBCefBrowser implements JBCefDisposable {
         return false;
       }
     }, myCefBrowser);
+
+    myDefaultContextMenuHandler = createDefaultContextMenuHandler();
+    myCefClient.addContextMenuHandler(myDefaultContextMenuHandler, this.getCefBrowser());
+  }
+
+  protected DefaultCefContextMenuHandler createDefaultContextMenuHandler() {
+    boolean isInternal = ApplicationManager.getApplication().isInternal();
+    return new DefaultCefContextMenuHandler(isInternal);
   }
 
   /**
@@ -125,7 +153,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefBrowser.loadURL(url);
     }
     else {
-      myLoadDeferrer = new LoadDeferrer(url);
+      myLoadDeferrer = LoadDeferrer.urlDeferrer(url);
     }
   }
 
@@ -140,7 +168,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefBrowser.loadString(html, url);
     }
     else {
-      myLoadDeferrer = new LoadDeferrer(html, url);
+      myLoadDeferrer = LoadDeferrer.htmlDeferrer(html, url);
     }
   }
 
@@ -183,6 +211,66 @@ public class JBCefBrowser implements JBCefDisposable {
     return myCefClient;
   }
 
+  @NotNull
+  public JBCefCookieManager getJBCefCookieManager() {
+    myCookieManagerLock.lock();
+    try {
+      if (myJBCefCookieManager == null) {
+        myJBCefCookieManager = new JBCefCookieManager(CefCookieManager.getGlobalManager());
+      }
+      return myJBCefCookieManager;
+    }
+    finally {
+      myCookieManagerLock.unlock();
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public void setJBCefCookieManager(@NotNull JBCefCookieManager jBCefCookieManager) {
+    myCookieManagerLock.lock();
+    try {
+      myJBCefCookieManager = jBCefCookieManager;
+    }
+    finally {
+      myCookieManagerLock.unlock();
+    }
+  }
+
+  @Nullable
+  private Window getActiveFrame(){
+    for (Frame frame : Frame.getFrames()) {
+      if (frame.isActive()) return frame;
+    }
+    return null;
+  }
+
+  public void openDevtools() {
+    if (myDevtoolsFrame != null) {
+      myDevtoolsFrame.toFront();
+      return;
+    }
+
+    Window activeFrame = getActiveFrame();
+    if (activeFrame == null) return;
+    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
+
+    myDevtoolsFrame = new JDialog(activeFrame);
+    myDevtoolsFrame.setTitle("JCEF DevTools");
+    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
+    myDevtoolsFrame.setLayout(new BorderLayout());
+    JBCefBrowser devTools = new JBCefBrowser(myCefBrowser.getDevTools(), myCefClient);
+    myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
+    myDevtoolsFrame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosed(WindowEvent e) {
+        myDevtoolsFrame = null;
+        Disposer.dispose(devTools);
+      }
+    });
+    myDevtoolsFrame.setVisible(true);
+  }
+
   @Override
   public void dispose() {
     myDisposeHelper.dispose(() -> {
@@ -206,6 +294,31 @@ public class JBCefBrowser implements JBCefDisposable {
   protected static JBCefBrowser getJBCefBrowser(CefBrowser browser) {
     if (browser == null) return null;
     return ((MyComponent)browser.getUIComponent().getParent()).getJBCefBrowser();
+  }
+
+  protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
+    protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
+    private final boolean isInternal;
+
+    public DefaultCefContextMenuHandler(boolean isInternal) {
+      this.isInternal = isInternal;
+    }
+
+    @Override
+    public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
+      if (isInternal) {
+        model.addItem(DEBUG_COMMAND_ID, "Open DevTools");
+      }
+    }
+
+    @Override
+    public boolean onContextMenuCommand(CefBrowser browser, CefFrame frame, CefContextMenuParams params, int commandId, int eventFlags) {
+      if (commandId == DEBUG_COMMAND_ID) {
+        openDevtools();
+        return true;
+      }
+      return false;
+    }
   }
 
   private class MyComponent extends JPanel {

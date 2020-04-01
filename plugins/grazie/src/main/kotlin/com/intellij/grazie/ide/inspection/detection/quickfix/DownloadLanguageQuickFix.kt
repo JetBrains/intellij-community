@@ -5,12 +5,12 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.detection.displayName
 import com.intellij.grazie.detection.toLang
+import com.intellij.grazie.detector.model.Language
+import com.intellij.grazie.detector.model.utils.englishName
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.openapi.project.Project
-import tanvd.grazie.langdetect.model.Language
 
 class DownloadLanguageQuickFix(private val languages: Set<Language>) : LocalQuickFix {
   private val langs = languages.map { it.toLang() }
@@ -19,10 +19,10 @@ class DownloadLanguageQuickFix(private val languages: Set<Language>) : LocalQuic
 
   override fun getName() = when {
     langs.size in 1..3 && langs.all { it.isAvailable() } -> {
-      GrazieBundle.message("grazie.detection.quickfix.enable.several.text", languages.joinToString { it.displayName })
+      GrazieBundle.message("grazie.detection.quickfix.enable.several.text", languages.joinToString { it.englishName })
     }
     langs.size in 1..3 && langs.any { !it.isAvailable() } -> {
-      GrazieBundle.message("grazie.detection.quickfix.download.several.text", languages.joinToString { it.displayName })
+      GrazieBundle.message("grazie.detection.quickfix.download.several.text", languages.joinToString { it.englishName })
     }
     langs.size > 3 && langs.all { it.isAvailable() } -> GrazieBundle.message("grazie.detection.quickfix.enable.many.text")
     langs.size > 3 && langs.any { !it.isAvailable() } -> GrazieBundle.message("grazie.detection.quickfix.download.many.text")

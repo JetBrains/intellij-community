@@ -19,8 +19,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
-    <statistics.counterUsagesCollector groupId="terminalShell" version="1"/>
-    <statistics.validation.customWhiteListRule implementation="org.jetbrains.plugins.terminal.TerminalCommandUsageRule"/>
+    <statistics.counterUsagesCollector groupId="terminalShell" version="2"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
@@ -28,6 +27,7 @@
     <terminal.shellCommandHandler implementation="com.intellij.diff.actions.DiffCustomCommandHandler"/>
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="0"/>
     <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
+    <notificationWhitelist groupIds="Terminal"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

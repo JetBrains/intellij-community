@@ -61,15 +61,15 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   @NotNull
   @Override
-  public OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> files) {
-    if (files.isEmpty()) {
+  public OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles) {
+    if (originalFiles.isEmpty()) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
 
     checkThreading();
 
-    Set<VirtualFile> realFiles = new THashSet<>(files.size());
-    for (VirtualFile file : files) {
+    Set<VirtualFile> realFiles = new THashSet<>(originalFiles.size());
+    for (VirtualFile file : originalFiles) {
       if (file instanceof LightVirtualFile) {
         VirtualFile originalFile = ((LightVirtualFile)file).getOriginalFile();
         if (originalFile != null) {
@@ -81,15 +81,14 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         realFiles.add(file);
       }
     }
-    files = new ArrayList<>(realFiles);
+    Collection<? extends VirtualFile> files = new ArrayList<>(realFiles);
 
     if (!myProject.isDefault()) {
-      Collection<? extends VirtualFile> finalFiles = files;
       OperationStatusImpl status = WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
-        Collection<VirtualFile> denied = ContainerUtil.filter(finalFiles, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
+        Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
 
         if (denied.isEmpty()) {
-          denied = provider.requestWriting(finalFiles);
+          denied = provider.requestWriting(files);
         }
         if (!denied.isEmpty()) {
           return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), provider.getReadOnlyMessage());
@@ -104,14 +103,14 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     final List<FileInfo> fileInfos = createFileInfos(files);
     // if all files are already writable
     if (fileInfos.isEmpty()) {
-      return createResultStatus(files);
+      return createResultStatus(originalFiles, files);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myClearReadOnlyInTests) {
         processFiles(new ArrayList<>(fileInfos), null);
       }
-      return createResultStatus(files);
+      return createResultStatus(originalFiles, files);
     }
 
     // This event count hack is necessary to allow actions that called this stuff could still get data from their data contexts.
@@ -125,7 +124,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       processFiles(new ArrayList<>(fileInfos), null); // the collection passed is modified
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
-    return createResultStatus(files);
+    return createResultStatus(originalFiles, files);
   }
 
   private static void checkThreading() {
@@ -138,7 +137,8 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
   }
 
-  private static OperationStatus createResultStatus(@NotNull Collection<? extends VirtualFile> files) {
+  private static OperationStatus createResultStatus(@NotNull Collection<? extends VirtualFile> originalFiles,
+                                                    @NotNull Collection<? extends VirtualFile> files) {
     List<VirtualFile> readOnlyFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (file.exists()) {
@@ -147,6 +147,10 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         }
       }
     }
+
+    // we shouldn't report success if files for which write operation is requested are still non-writable
+    assert !readOnlyFiles.isEmpty() || originalFiles.stream().allMatch(file -> file == null || file.isWritable())
+      : "Original files: " + originalFiles + ", files: " + files;
 
     return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
   }

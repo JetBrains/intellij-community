@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -131,8 +131,7 @@ public final class SocketLock {
     }
   }
 
-  @Nullable
-  BuiltInServer getServer() {
+  @Nullable BuiltInServer getServer() {
     Future<BuiltInServer> future = myBuiltinServerFuture;
     if (future != null) {
       try {
@@ -148,13 +147,11 @@ public final class SocketLock {
     return null;
   }
 
-  @Nullable
-  CompletableFuture<BuiltInServer> getServerFuture() {
+  @Nullable CompletableFuture<BuiltInServer> getServerFuture() {
     return myBuiltinServerFuture;
   }
 
-  @NotNull
-  public Pair<ActivationStatus, CliResult> lockAndTryActivate(String @NotNull [] args) throws Exception {
+  public @NotNull Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     lockPortFiles();
@@ -353,9 +350,7 @@ public final class SocketLock {
     private final String myToken;
     private State myState = State.HEADER;
 
-    MyChannelInboundHandler(String @NotNull [] lockedPaths,
-                            @NotNull AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef,
-                            @NotNull String token) {
+    MyChannelInboundHandler(String[] lockedPaths, AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef, String token) {
       myLockedPaths = lockedPaths;
       myCommandProcessorRef = commandProcessorRef;
       myToken = token;

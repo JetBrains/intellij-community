@@ -346,8 +346,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     if (!model.isSoftWrappingEnabled()) {
       return false;
     }
-    LogicalPosition logical = myEditor.visualToLogicalPosition(visual);
-    int offset = myEditor.logicalPositionToOffset(logical);
+    int offset = myEditor.visualPositionToOffset(visual);
     if (offset <= 0) {
       // Never expect to be here, just a defensive programming.
       return false;

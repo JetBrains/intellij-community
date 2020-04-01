@@ -25,16 +25,15 @@ import static one.util.streamex.StreamEx.of;
  * @author yole
  */
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
-  private final List<ChangeListDecorator> myDecorators;
+  private final Project myProject;
   private final ChangeListManagerEx myClManager;
   private final ChangeListRemoteState myChangeListRemoteState;
 
   public ChangesBrowserChangeListNode(Project project, ChangeList userObject, final ChangeListRemoteState changeListRemoteState) {
     super(userObject);
+    myProject = project;
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    //noinspection deprecation
-    myDecorators = project.getComponentInstancesOfType(ChangeListDecorator.class);
   }
 
   @Override
@@ -48,7 +47,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
         renderer.setToolTipText(getTooltipText());
       }
       appendCount(renderer);
-      for (ChangeListDecorator decorator: myDecorators) {
+      for (ChangeListDecorator decorator : ChangeListDecorator.getDecorators(myProject)) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
       }
       final String freezed = myClManager.isFreezed();

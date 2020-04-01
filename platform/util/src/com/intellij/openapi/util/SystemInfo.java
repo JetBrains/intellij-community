@@ -11,14 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 @SuppressWarnings("unused")
-public final class SystemInfo extends SystemInfoRt {
+public final class SystemInfo {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   public static final String OS_ARCH = System.getProperty("os.arch");
@@ -39,26 +38,16 @@ public final class SystemInfo extends SystemInfoRt {
   public static final boolean isUnix = SystemInfoRt.isUnix;
   public static final boolean isChromeOS = isLinux && isCrostini();
 
-  public static final boolean isAppleJvm = containsIgnoreCase(JAVA_VENDOR, "Apple");
-  public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
-  public static final boolean isSunJvm = containsIgnoreCase(JAVA_VENDOR, "Sun") && containsIgnoreCase(JAVA_VENDOR, "Microsystems");
-  public static final boolean isIbmJvm = containsIgnoreCase(JAVA_VENDOR, "IBM");
-  public static final boolean isAzulJvm = containsIgnoreCase(JAVA_VENDOR, "Azul");
-  public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
+  public static final boolean isAppleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Apple");
+  public static final boolean isOracleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Oracle");
+  public static final boolean isSunJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Sun") && StringUtil
+    .containsIgnoreCase(JAVA_VENDOR, "Microsystems");
+  public static final boolean isIbmJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "IBM");
+  public static final boolean isAzulJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Azul");
+  public static final boolean isJetBrainsJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "JetBrains");
 
   @ReviseWhenPortedToJDK("9")
-  public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
-
-  @SuppressWarnings("JavaReflectionMemberAccess")
-  private static boolean isModularJava() {
-    try {
-      Class.class.getMethod("getModule");
-      return true;
-    }
-    catch (Throwable t) {
-      return false;
-    }
-  }
+  public static final boolean IS_AT_LEAST_JAVA9 = SystemInfoRt.IS_AT_LEAST_JAVA9;
 
   @SuppressWarnings("SpellCheckingInspection")
   private static boolean isCrostini() {
@@ -85,6 +74,11 @@ public final class SystemInfo extends SystemInfoRt {
                                          StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).endsWith("gnome"));
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
+
+  public static final boolean isXfce = isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("xfce")) ||
+                                       StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("xfce");
+  public static final boolean isI3= isXWindow && (notNull(System.getenv("GDMSESSION"), "").startsWith("i3")) ||
+                                    StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), "")).contains("i3");
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -179,7 +173,7 @@ public final class SystemInfo extends SystemInfoRt {
 
   private static int toInt(String string) {
     try {
-      return Integer.valueOf(string);
+      return Integer.parseInt(string);
     }
     catch (NumberFormatException e) {
       return 0;

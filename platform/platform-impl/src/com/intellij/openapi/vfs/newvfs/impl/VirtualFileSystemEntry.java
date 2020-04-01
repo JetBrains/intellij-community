@@ -75,13 +75,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   void registerLink(VirtualFileSystem fs) {
-    if (is(VFileProperty.SYMLINK) && isValid() && fs instanceof LocalFileSystemImpl) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, getPath(), getCanonicalPath());
+    if (fs instanceof LocalFileSystemImpl && is(VFileProperty.SYMLINK) && isValid()) {
+      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getPath(), getCanonicalPath());
     }
   }
 
   void updateLinkStatus() {
     setFlagInt(HAS_SYMLINK_FLAG, is(VFileProperty.SYMLINK) || getParent().getFlagInt(HAS_SYMLINK_FLAG));
+    registerLink(getFileSystem());
   }
 
   @Override
@@ -104,6 +105,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public VirtualDirectoryImpl getParent() {
     VirtualDirectoryImpl changedParent = mySegment.vfsData.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
+  }
+
+  public boolean hasSymlink() {
+    return getFlagInt(HAS_SYMLINK_FLAG);
   }
 
   @Override

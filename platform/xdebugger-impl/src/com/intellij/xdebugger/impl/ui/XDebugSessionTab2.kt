@@ -15,8 +15,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.ui.JBColor
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -25,6 +27,8 @@ import com.intellij.xdebugger.impl.frame.XThreadsFramesView
 import com.intellij.xdebugger.impl.frame.XVariablesView
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
 import javax.swing.Icon
+import javax.swing.event.AncestorEvent
+import javax.swing.event.AncestorListener
 
 class XDebugSessionTab2(
   session: XDebugSessionImpl,
@@ -44,7 +48,7 @@ class XDebugSessionTab2(
 
   private val lifetime = Disposer.newDisposable()
 
-  private val splitter = PersistentThreeComponentSplitter(false, true, "DebuggerViewTab", lifetime, project)
+  private val splitter = PersistentThreeComponentSplitter(false, true, "DebuggerViewTab", lifetime, project, 0.35f, 0.3f)
   private val xThreadsFramesView = XThreadsFramesView(myProject)
 
   private val toolWindow get() = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)
@@ -91,6 +95,29 @@ class XDebugSessionTab2(
         }
       }
     })
+
+    val ancestorListener = object : AncestorListener {
+      override fun ancestorAdded(event: AncestorEvent?) {
+        if (XDebuggerManager.getInstance(project).currentSession == session) {
+          splitter.restoreProportions()
+        }
+      }
+
+      override fun ancestorRemoved(event: AncestorEvent?) {
+        if (XDebuggerManager.getInstance(project).currentSession == session) {
+          splitter.saveProportions()
+          xThreadsFramesView.saveUiState()
+        }
+      }
+
+      override fun ancestorMoved(event: AncestorEvent?) {
+      }
+    }
+
+    toolWindow?.component?.addAncestorListener(ancestorListener)
+    Disposer.register(lifetime, Disposable {
+      toolWindow?.component?.removeAncestorListener(ancestorListener)
+    })
   }
 
   override fun getWatchesContentId() = debuggerContentId
@@ -127,8 +154,6 @@ class XDebugSessionTab2(
 
     session.rebuildViews()
   }
-
-  override fun initListeners(ui: RunnerLayoutUi?) = Unit
 
   override fun initDebuggerTab(session: XDebugSessionImpl) {
     val framesView = xThreadsFramesView
@@ -190,6 +215,14 @@ class XDebugSessionTab2(
       myUi.options.setTopRightToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
       toolWindow.decorator.isHeaderVisible = singleContent == null
+
+      if (toolWindow.decorator.isHeaderVisible) {
+        toolWindow.component.border = null
+        toolWindow.component.invalidate()
+        toolWindow.component.repaint()
+      } else if (toolWindow.component.border == null) {
+        UIUtil.addBorder(toolWindow.component, JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0))
+      }
     }
   }
 

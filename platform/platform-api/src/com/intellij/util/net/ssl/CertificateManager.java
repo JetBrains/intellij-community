@@ -27,7 +27,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.*;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -64,7 +66,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @State(name = "CertificateManager", storages = @Storage("certificates.xml"))
 public final class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
   @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
-  @NonNls public static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
+  @NonNls public static final String DEFAULT_PATH = FileUtil.join(PathManager.getConfigPath(), "ssl", "cacerts");
   @NonNls public static final String DEFAULT_PASSWORD = "changeit";
 
   private static final Logger LOG = Logger.getInstance(CertificateManager.class);
@@ -82,7 +84,30 @@ public final class CertificateManager implements PersistentStateComponent<Certif
   private final Config myConfig = new Config();
 
   private final AtomicNotNullLazyValue<ConfirmingTrustManager> myTrustManager =
-    AtomicNotNullLazyValue.createValue(() -> ConfirmingTrustManager.createForStorage(DEFAULT_PATH, DEFAULT_PASSWORD));
+    AtomicNotNullLazyValue.createValue(() -> ConfirmingTrustManager.createForStorage(tryMigratingDefaultTruststore(), DEFAULT_PASSWORD));
+
+  @NotNull
+  private static String tryMigratingDefaultTruststore() {
+    final Path legacySystemPath = Paths.get(PathManager.getSystemPath(), "tasks", "cacerts");
+    final Path configPath = Paths.get(DEFAULT_PATH);
+    if (!Files.exists(configPath) && Files.exists(legacySystemPath)) {
+      LOG.info("Migrating the default truststore from " + legacySystemPath + " to " + configPath);
+      try {
+        Files.createDirectories(configPath.getParent());
+        try {
+          Files.move(legacySystemPath, configPath);
+        }
+        catch (FileAlreadyExistsException | NoSuchFileException ignored) {
+          // The legacy truststore is either already copied or missing for some reason - use the new location.
+        }
+      }
+      catch (IOException e) {
+        LOG.error("Cannot move the default truststore from " + legacySystemPath + " to " + configPath, e);
+        return legacySystemPath.toString();
+      }
+    }
+    return DEFAULT_PATH;
+  }
 
   private final AtomicNotNullLazyValue<SSLContext> mySslContext = AtomicNotNullLazyValue.createValue(() -> calcSslContext());
 

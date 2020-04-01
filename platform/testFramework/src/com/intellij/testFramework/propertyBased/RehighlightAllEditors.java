@@ -59,7 +59,7 @@ public class RehighlightAllEditors implements MadTestingAction {
   }
 
   @NotNull
-  static List<HighlightInfo> highlightEditor(Editor editor, Project project) {
+  public static List<HighlightInfo> highlightEditor(Editor editor, Project project) {
     FileDocumentManager.getInstance().saveAllDocuments(); // to avoid async document changes on automatic save during highlighting
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

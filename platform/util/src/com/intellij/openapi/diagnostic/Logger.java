@@ -3,7 +3,6 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.Contract;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.util.function.Function;
 
 /**
  * A standard interface to write to %system%/log/idea.log (or %system%/testlog/idea.log in tests).<p/>
@@ -157,7 +157,7 @@ public abstract class Logger {
   }
 
   public void error(@NonNls String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
+    error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING::apply));
   }
 
   public void error(@NonNls String message, String @NotNull ... details) {

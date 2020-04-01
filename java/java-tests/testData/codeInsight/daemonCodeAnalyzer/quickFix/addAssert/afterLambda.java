@@ -1,13 +1,15 @@
 // "Assert 'container != null'" "true"
+import java.util.function.Supplier;
+
 class A{
   void test(){
     Object container = null;
-    Runnable r = () -> {
+    Supplier<String> r = () -> {
         if (container == null) {
             assert container != null;
-            container.toString();
+            return container.toString();
         } else {
-            "";
+            return "";
         }
     };
   }

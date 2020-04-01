@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.Validator;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -107,12 +107,12 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     Set<Validator> set = new THashSet<>(selectedElements, new TObjectHashingStrategy<Validator>() {
       @Override
       public int computeHashCode(Validator object) {
-        return object.getDescription().hashCode();
+        return object.getId().hashCode();
       }
 
       @Override
       public boolean equals(Validator o1, Validator o2) {
-        return o1.getDescription().equals(o2.getDescription());
+        return o1.getId().equals(o2.getId());
       }
     });
     return myConfiguration.isValidateOnBuild() != myValidateBox.isSelected() ||
@@ -134,7 +134,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   public void reset() {
     myValidateBox.setSelected(myConfiguration.isValidateOnBuild());
     final List<Validator> allValidators = getValidators();
-    Collections.sort(allValidators, Comparator.comparing(Validator::getDescription));
+    allValidators.sort(Comparator.comparing(Validator::getDescription));
     myValidators.setElements(allValidators, false);
     myValidators.markElements(getMarkedValidators(allValidators));
     myExcludedConfigurable.reset();
@@ -158,8 +158,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     myValidators = new ElementsChooser<Validator>(true) {
       @Override
       protected String getItemText(@NotNull final Validator validator) {
-        final String description = validator.getDescription();
-        return description.replace(" Validator", "").replace(" validator", "");
+        return validator.getDescription();
       }
     };
   }

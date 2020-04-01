@@ -19,6 +19,9 @@ class NonProportionalOnePixelSplitter(
 
   private val propertiesComponent get() = if (project != null)  PropertiesComponent.getInstance(project) else PropertiesComponent.getInstance()
 
+  private val size get() = if (orientation) height else width
+  private val minSize get() = if (orientation) minimumSize.height else minimumSize.width
+
   init {
     Disposer.register(disposable, Disposable {
       saveProportion()
@@ -30,11 +33,23 @@ class NonProportionalOnePixelSplitter(
   override fun addNotify() {
     super.addNotify()
     dividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION
-    SwingUtilities.invokeLater {
+    invokeLaterWhen({ checkSize() }) {
       loadProportion()
       dividerPositionStrategy = DividerPositionStrategy.KEEP_FIRST_SIZE
     }
   }
+
+  private fun invokeLaterWhen(condition: () -> Boolean, action: () -> Unit) {
+    SwingUtilities.invokeLater {
+      if (condition()) {
+        action()
+      } else {
+        invokeLaterWhen(condition, action)
+      }
+    }
+  }
+
+  private fun checkSize() = size != 0 && minSize < size
 
   override fun setProportion(proportion: Float) {
     if (proportion < 0 || proportion > 1) return

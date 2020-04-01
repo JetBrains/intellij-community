@@ -26,6 +26,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -198,7 +199,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   private static String getIncorrectTemplateMessage(String templateName, Project project) {
-    return PsiBundle.message("psi.error.incorrect.class.template.message",
+    return JavaBundle.message("psi.error.incorrect.class.template.message",
                              FileTemplateManager.getInstance(project).internalTemplateToSubject(templateName), templateName);
   }
 

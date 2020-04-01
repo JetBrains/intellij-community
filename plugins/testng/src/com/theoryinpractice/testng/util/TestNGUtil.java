@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
@@ -380,17 +379,11 @@ public class TestNGUtil {
   }
 
   public static PsiAnnotation[] getTestNGAnnotations(PsiElement element) {
-    PsiElementProcessor.CollectFilteredElements<PsiAnnotation> processor = new PsiElementProcessor.CollectFilteredElements<>(e -> {
-      if (e instanceof PsiAnnotation) {
-        String name = ((PsiAnnotation)e).getQualifiedName();
-        if (name != null && name.startsWith("org.testng.annotations")) {
-          return true;
-        }
-      }
-      return false;
-    });
-    PsiTreeUtil.processElements(element, processor);
-    return processor.toArray(PsiAnnotation.EMPTY_ARRAY);
+    return SyntaxTraverser.psiTraverser(element).filter(PsiAnnotation.class)
+      .filter(anno -> {
+        String name = anno.getQualifiedName();
+        return name != null && name.startsWith("org.testng.annotations");
+      }).toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   public static boolean isTestNGClass(PsiClass psiClass) {

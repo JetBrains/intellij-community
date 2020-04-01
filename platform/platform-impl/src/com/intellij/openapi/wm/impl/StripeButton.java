@@ -358,12 +358,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
   private void updateState(@NotNull ToolWindowImpl toolWindow) {
     boolean toShow = toolWindow.isAvailable() || toolWindow.isPlaceholderMode();
-    if (UISettings.getInstance().getAlwaysShowWindowsButton()) {
-      setVisible(toolWindow.isShowStripeButton() || isSelected());
-    }
-    else {
-      setVisible(toShow && (toolWindow.isShowStripeButton() || isSelected()));
-    }
+    setVisible(toShow && (toolWindow.isShowStripeButton() || isSelected()));
     setEnabled(toolWindow.isAvailable());
   }
 

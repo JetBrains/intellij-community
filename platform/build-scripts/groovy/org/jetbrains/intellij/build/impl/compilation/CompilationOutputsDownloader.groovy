@@ -33,15 +33,20 @@ class CompilationOutputsDownloader {
   private final CompilationContext context
   private final String remoteCacheUrl
   private final String gitUrl
+  /**
+   * If set to false latest commit in current repository copy will be used to download caches.
+   */
+  private final boolean checkHistory
 
   private final NamedThreadPoolExecutor executor
 
   private final SourcesStateProcessor sourcesStateProcessor
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl) {
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean checkHistory) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
+    this.checkHistory = checkHistory
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("Using $executorThreadsCount threads to download caches.")
@@ -51,10 +56,8 @@ class CompilationOutputsDownloader {
   }
 
   void downloadCachesAndOutput() {
-    Set<String> availableCachesKeys = getAvailableCachesKeys()
-
     def commits = getLastCommits()
-    int depth = commits.findIndexOf { availableCachesKeys.contains(it) }
+    int depth = checkHistory ? commits.findIndexOf { getAvailableCachesKeys().contains(it) } : 0
 
     if (depth != -1) {
       String lastCachedCommit = commits[depth]

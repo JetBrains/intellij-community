@@ -24,6 +24,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -59,6 +60,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
@@ -216,7 +218,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   @NotNull
   private Sdk getJdk() {
     if (myState.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
       if (!StringUtil.isEmptyOrSpaces(javaHome)) {
         return JavaSdk.getInstance().createJdk("", javaHome);
       }
@@ -329,6 +331,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   private static void prepareClassPathForProduction(@NotNull String mavenVersion,
                                                     List<File> classpath,
                                                     String root) {
+    classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "maven-server-api.jar"));
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
@@ -352,6 +355,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
+    classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
     File parentFile = getMavenPluginParentFile();
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {

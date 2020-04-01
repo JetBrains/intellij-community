@@ -117,6 +117,9 @@
         <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
       </action>
 
+      <action class="org.intellij.images.thumbnail.actions.ShowBorderAction" id="Images.ShowBorder"/>
+      <action class="org.intellij.images.editor.actions.ChangeBackgroundAction" id="Images.ChangeBackground"/>
+
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <group id="Images.EditorToolbar">
@@ -128,6 +131,7 @@
       <reference id="Images.Editor.ActualSize"/>
       <reference id="Images.Editor.FitZoomToWindow"/>
       <reference id="ShowColorPicker"/>
+      <reference id="Images.ChangeBackground"/>
     </group>
     <group id="Images.EditorPopupMenu">
       <reference id="CutCopyPasteGroup"/>
@@ -136,6 +140,7 @@
       <reference id="RefactoringMenu"/>
       <separator/>
       <reference id="Images.EditorToolbar"/>
+      <reference id="Images.ShowBorder"/>
       <separator/>
       <reference id="Images.SetBackgroundImage"/>
       <separator/>

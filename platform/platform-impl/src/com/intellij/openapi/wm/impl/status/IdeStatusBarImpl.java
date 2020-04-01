@@ -22,12 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarPopupActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -514,12 +514,15 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     if (e.isPopupTrigger() && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED)) {
       Project project = getProject();
       if (project != null) {
-        StatusBarPopupActionGroup group = new StatusBarPopupActionGroup(project.getService(StatusBarWidgetsManager.class));
-        ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.STATUS_BAR_PLACE, group);
-        menu.setTargetComponent(this);
-        menu.getComponent().show(myRightPanel, point.x, point.y);
-        e.consume();
-        return true;
+        ActionManager actionManager = ActionManager.getInstance();
+        ActionGroup group = ObjectUtils.tryCast(actionManager.getAction(StatusBarWidgetsActionGroup.GROUP_ID), ActionGroup.class);
+        if (group != null) {
+          ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.STATUS_BAR_PLACE, group);
+          menu.setTargetComponent(this);
+          menu.getComponent().show(myRightPanel, point.x, point.y);
+          e.consume();
+          return true;
+        }
       }
     }
     return false;

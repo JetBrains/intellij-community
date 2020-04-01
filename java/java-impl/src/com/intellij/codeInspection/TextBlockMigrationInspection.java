@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -40,7 +39,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightUtil.Feature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -49,7 +48,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         PsiExpression[] operands = expression.getOperands();
         TextRange firstNewLineTextRange = null;
         for (PsiExpression operand : operands) {
-          PsiLiteralExpressionImpl literal = getLiteralExpression(operand);
+          PsiLiteralExpression literal = getLiteralExpression(operand);
           if (literal == null) return;
           if (nNewLines > 1) continue;
           String text = literal.getText();
@@ -75,7 +74,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
         if (!mySuggestLiteralReplacement && !quickFixOnly) return;
-        PsiLiteralExpressionImpl literal = getLiteralExpression(expression);
+        PsiLiteralExpression literal = getLiteralExpression(expression);
         if (literal == null) return;
         String text = literal.getText();
         int newLineIdx = getNewLineIndex(text, 0);
@@ -102,9 +101,9 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (expression == null) return;
       Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getContainingFile());
       if (document == null) return;
-      PsiLiteralExpressionImpl literalExpression = tryCast(expression, PsiLiteralExpressionImpl.class);
-      if (literalExpression != null && literalExpression.getLiteralElementType() == JavaTokenType.STRING_LITERAL) {
-        replaceWithTextBlock(new PsiLiteralExpressionImpl[]{literalExpression}, literalExpression);
+      PsiLiteralExpression literalExpression = tryCast(expression, PsiLiteralExpression.class);
+      if (literalExpression != null) {
+        replaceWithTextBlock(new PsiExpression[]{literalExpression}, literalExpression);
         return;
       }
       PsiPolyadicExpression polyadicExpression = tryCast(expression, PsiPolyadicExpression.class);
@@ -142,7 +141,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       String[] lines = new String[operands.length];
       for (int i = 0; i < operands.length; i++) {
         PsiExpression operand = operands[i];
-        PsiLiteralExpressionImpl literal = getLiteralExpression(operand);
+        PsiLiteralExpression literal = getLiteralExpression(operand);
         if (literal == null) return null;
         String line = getLiteralText(literal);
         if (line == null) return null;
@@ -152,8 +151,8 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Nullable
-    private static String getLiteralText(@NotNull PsiLiteralExpressionImpl literal) {
-      if (literal.getLiteralElementType() == JavaTokenType.STRING_LITERAL) return literal.getInnerText();
+    private static String getLiteralText(@NotNull PsiLiteralExpression literal) {
+      if (!literal.isTextBlock() && !(literal.getType() instanceof PsiPrimitiveType)) return PsiLiteralUtil.getInnerText(literal);
       Object value = literal.getValue();
       return value == null ? null : value.toString();
     }
@@ -180,9 +179,9 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
   }
 
   @Nullable
-  private static PsiLiteralExpressionImpl getLiteralExpression(@NotNull PsiExpression expression) {
-    PsiLiteralExpressionImpl literal = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiLiteralExpressionImpl.class);
-    if (literal == null || literal.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) return null;
+  private static PsiLiteralExpression getLiteralExpression(@NotNull PsiExpression expression) {
+    PsiLiteralExpression literal = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiLiteralExpression.class);
+    if (literal == null || literal.isTextBlock()) return null;
     return literal;
   }
 }

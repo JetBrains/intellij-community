@@ -40,9 +40,9 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
     val PULL_REQUEST_EDITED_TOPIC = Topic(PullRequestEditedListener::class.java)
 
     interface PullRequestEditedListener {
-      fun onPullRequestEdited(number: Long) {}
-      fun onPullRequestReviewsEdited(number: Long) {}
-      fun onPullRequestCommentsEdited(number: Long) {}
+      fun onPullRequestEdited(id: GHPRIdentifier) {}
+      fun onPullRequestReviewsEdited(id: GHPRIdentifier) {}
+      fun onPullRequestCommentsEdited(id: GHPRIdentifier) {}
     }
   }
 }

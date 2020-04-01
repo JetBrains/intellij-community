@@ -43,7 +43,7 @@ public abstract class CustomWhiteListRule extends PerformanceCareRule implements
       return ValidationResultType.REJECTED;
     }
 
-    if (type == PluginType.PLATFORM || hasPluginField(context)) {
+    if (type == PluginType.PLATFORM || type == PluginType.FROM_SOURCES || hasPluginField(context)) {
       return ValidationResultType.ACCEPTED;
     }
     return ValidationResultType.REJECTED;

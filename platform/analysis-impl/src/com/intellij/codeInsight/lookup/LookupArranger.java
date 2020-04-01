@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
+ * An object holding the items to be shown in a {@link Lookup} and determining their order.
+ * If accessed from multiple threads, it needs to take care of proper synchronization itself.
  * @author peter
  */
 public abstract class LookupArranger implements WeighingContext {
@@ -26,13 +28,6 @@ public abstract class LookupArranger implements WeighingContext {
   public void addElement(LookupElement item, LookupElementPresentation presentation) {
     myItems.add(item);
     updateCache(item);
-  }
-
-  public void clear() {
-    myItems.clear();
-    myMatchingItems.clear();
-    myExactPrefixItems.clear();
-    myInexactPrefixItems.clear();
   }
 
   private void updateCache(LookupElement item) {
@@ -81,7 +76,7 @@ public abstract class LookupArranger implements WeighingContext {
   public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
   }
 
-  public final void prefixReplaced(Lookup lookup, String newPrefix) {
+  public void prefixReplaced(@NotNull Lookup lookup, @NotNull String newPrefix) {
     ArrayList<LookupElement> itemCopy = new ArrayList<>(myItems);
     myItems.clear();
     for (LookupElement item : itemCopy) {
@@ -188,7 +183,7 @@ public abstract class LookupArranger implements WeighingContext {
       result.addAll(items);
       ArrayList<LookupElement> list = new ArrayList<>(result);
       int selected = !lookup.isSelectionTouched() && onExplicitAction ? 0 : list.indexOf(lookup.getCurrentItem());
-      return new Pair<>(list, selected >= 0 ? selected : 0);
+      return new Pair<>(list, Math.max(selected, 0));
     }
 
     @Override

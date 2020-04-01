@@ -69,7 +69,7 @@ class SliceForwardUtil {
                                                                                           override.getSignature(substitutor));
 
             PsiParameter[] parameters = override.getParameterList().getParameters();
-            if (parameters.length <= parameterIndex) return true;
+            if (parameters.length <= parameterIndex || superSubstitutor == null) return true;
             PsiParameter actualParam = parameters[parameterIndex];
 
             return SliceUtil.createAndProcessSliceUsage(actualParam, parent, superSubstitutor, parent.indexNesting, "", processor);

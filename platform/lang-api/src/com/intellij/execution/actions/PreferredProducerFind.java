@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,7 +41,7 @@ class PreferredProducerFind {
     }
     final List<RuntimeConfigurationProducer> producers = findAllProducers(location, context);
     if (producers.isEmpty()) return null;
-    Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
+    producers.sort(RuntimeConfigurationProducer.COMPARATOR);
 
     if(strict) {
       final RuntimeConfigurationProducer first = producers.get(0);
@@ -115,7 +114,7 @@ class PreferredProducerFind {
     }
 
     if (configurationsFromContext.isEmpty()) return null;
-    Collections.sort(configurationsFromContext, ConfigurationFromContext.COMPARATOR);
+    configurationsFromContext.sort(ConfigurationFromContext.COMPARATOR);
 
     if(strict) {
       final ConfigurationFromContext first = configurationsFromContext.get(0);

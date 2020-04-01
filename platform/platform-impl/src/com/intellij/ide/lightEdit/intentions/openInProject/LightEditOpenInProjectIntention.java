@@ -14,18 +14,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+import static com.intellij.openapi.util.NlsContexts.ListItem;
+
+public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
+  @ListItem
   @Override
   public @NotNull String getText() {
     return ApplicationBundle.message("light.edit.open.in.project.intention");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @ListItem
   @Override
   public @NotNull String getFamilyName() {
     return getText();
@@ -40,15 +41,15 @@ final class LightEditOpenInProjectIntention implements IntentionAction, LightEdi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    VirtualFile currFile = file.getVirtualFile();
+    performOn(file.getVirtualFile());
+  }
+
+  public static void performOn(@NotNull VirtualFile currFile) throws IncorrectOperationException {
     LightEditorInfo editorInfo =
       ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
     if (editorInfo != null) {
       Project openProject = findOpenProject(currFile);
-      if (openProject != null) {
-        OpenFileAction.openFile(currFile, openProject);
-      }
-      else {
+      if (openProject == null) {
         VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
         if (projectRoot != null) {
           openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);
@@ -56,7 +57,7 @@ final class LightEditOpenInProjectIntention implements IntentionAction, LightEdi
       }
       if (openProject != null) {
         ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
-        OpenFileAction.openFile(file.getVirtualFile(), openProject);
+        OpenFileAction.openFile(currFile, openProject);
       }
     }
   }

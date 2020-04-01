@@ -39,16 +39,10 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<ClassMember> array = new ArrayList<>();
-    List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
-    fieldLoop:
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
 
-      for (ImplicitUsageProvider provider : implicitUsageProviders) {
-        if (provider.isImplicitWrite(field)) continue fieldLoop;
-      }
       array.add(new PsiFieldMember(field));
     }
     return array.toArray(ClassMember.EMPTY_ARRAY);
@@ -144,13 +138,20 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   }
 
   protected static List<ClassMember> preselect(ClassMember[] members) {
+    List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
     final List<ClassMember> preselection = new ArrayList<>();
+
+    fieldLoop:
     for (ClassMember member : members) {
       if (member instanceof PsiFieldMember) {
         final PsiField psiField = ((PsiFieldMember)member).getElement();
-        if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
-          preselection.add(member);
+        if (!psiField.hasModifierProperty(PsiModifier.FINAL)) {
+          continue fieldLoop;
         }
+        for (ImplicitUsageProvider provider : implicitUsageProviders) {
+          if (provider.isImplicitWrite(psiField)) continue fieldLoop;
+        }
+        preselection.add(member);
       }
     }
     return preselection;

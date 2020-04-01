@@ -101,7 +101,8 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       oldProviders = new FileEditorProvider[] { fallbackProvider };
     }
     if (editors.length <= 0) {
-      LOG.error("No editors for file " + file.getPresentableUrl());
+      // fileOpened notification is asynchronous, file could have been closed by now due to some reason
+      return;
     }
     FileEditor selectedEditor = editorManager.getSelectedEditor(file);
     if (selectedEditor == null) {

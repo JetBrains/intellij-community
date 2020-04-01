@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Provides documentation for PSI elements.
@@ -107,11 +108,20 @@ public interface DocumentationProvider {
    * This is used to display rendered documentation in editor, in place of corresponding documentation comment's text.
    * Documentation comment PSI elements should implement {@link PsiDocCommentBase} for this functionality to work.
    * Value returned by {@link PsiDocCommentBase#getOwner()} will be passed as {@code element} parameter to this method.
+   *
+   * @see #collectDocComments(PsiFile, Consumer)
    */
   @ApiStatus.Experimental
   default @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
     return null;
   }
+
+  /**
+   * This defines documentation comments in file, which can be rendered in place. HTML content to be displayed will be obtained using
+   * {@link #generateRenderedDoc(PsiElement)} method.
+   */
+  @ApiStatus.Experimental
+  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {}
 
   @Nullable
   default PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {

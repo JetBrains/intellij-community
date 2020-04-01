@@ -13,7 +13,9 @@ import com.intellij.profile.codeInspection.InspectionProfileLoadUtil
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileProcessor
 import com.intellij.serviceContainer.NonInjectable
+import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -67,16 +69,11 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
     }
   }
 
-  @Throws(Exception::class)
+  @Throws(JDOMException::class, IOException::class)
   open fun loadProfile(path: String): InspectionProfileImpl? {
     val file = Paths.get(path)
     if (Files.isRegularFile(file)) {
-      try {
-        return InspectionProfileLoadUtil.load(file, InspectionToolRegistrar.getInstance(), this)
-      }
-      catch (e: Exception) {
-        throw e
-      }
+      return InspectionProfileLoadUtil.load(file, InspectionToolRegistrar.getInstance(), this)
     }
     return getProfile(path, false)
   }

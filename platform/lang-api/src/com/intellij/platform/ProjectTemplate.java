@@ -17,7 +17,7 @@ package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.openapi.ui.ValidationInfo;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,11 +31,11 @@ public interface ProjectTemplate {
   ProjectTemplate[] EMPTY_ARRAY = new ProjectTemplate[0];
 
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsContexts.ListItem
   String getName();
 
   @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsContexts.Text
   String getDescription();
 
   Icon getIcon();

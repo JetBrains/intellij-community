@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -233,7 +232,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   protected void projectJdkChanged() {
     incModificationCount();
-    mergeRootsChangesDuring(getRootsChangeRunnable());
+    mergeRootsChangesDuring(getActionToRunWhenProjectJdkChanges());
     Sdk sdk = getProjectSdk();
     for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.projectSdkChanged(sdk);
@@ -241,7 +240,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @NotNull
-  protected Runnable getRootsChangeRunnable(){
+  protected Runnable getActionToRunWhenProjectJdkChanges() {
     return () -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
   }
 
@@ -285,7 +284,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     if (myStateLoaded) {
       Application app = ApplicationManager.getApplication();
       if (app != null) {
-        app.invokeLater(() -> projectJdkChanged(), app.getNoneModalityState());
+        app.invokeLater(() -> app.runWriteAction(() -> projectJdkChanged()), app.getNoneModalityState());
       }
     } else {
       myStateLoaded = true;

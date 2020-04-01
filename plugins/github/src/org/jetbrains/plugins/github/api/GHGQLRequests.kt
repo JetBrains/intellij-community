@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.api
 
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.GHConnection
+import org.jetbrains.plugins.github.api.data.GHNodes
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermission
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPagedRequestResponse
@@ -136,15 +138,60 @@ object GHGQLRequests {
 
     object Review {
 
+      fun create(server: GithubServerPath, pullRequestId: String, event: GHPullRequestReviewEvent, body: String?): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.createReview,
+                                 mapOf("pullRequestId" to pullRequestId,
+                                       "event" to event,
+                                       "body" to body),
+                                 Any::class.java)
+
+      fun submit(server: GithubServerPath, reviewId: String, event: GHPullRequestReviewEvent, body: String?): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.submitReview,
+                                 mapOf("reviewId" to reviewId,
+                                       "event" to event,
+                                       "body" to body),
+                                 Any::class.java)
+
+      fun delete(server: GithubServerPath, reviewId: String): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReview,
+                                 mapOf("reviewId" to reviewId),
+                                 Any::class.java)
+
+      fun pendingReviews(server: GithubServerPath, pullRequestId: String): GQLQuery<GHNodes<GHPullRequestPendingReview>> {
+        return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.pendingReview,
+                                        mapOf("pullRequestId" to pullRequestId),
+                                        PendingReviewNodes::class.java,
+                                        "node", "reviews")
+      }
+
+      private class PendingReviewNodes(nodes: List<GHPullRequestPendingReview>) :
+        GHNodes<GHPullRequestPendingReview>(nodes)
+
+      fun addComment(server: GithubServerPath,
+                     pullRequestId: String?, reviewId: String?,
+                     body: String, commitSha: String, fileName: String, diffLine: Int)
+        : GQLQuery<GHPullRequestReviewCommentWithPendingReview> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.addReviewComment,
+                                 mapOf("pullRequestId" to pullRequestId,
+                                       "reviewId" to reviewId,
+                                       "body" to body,
+                                       "commit" to commitSha,
+                                       "file" to fileName,
+                                       "position" to diffLine),
+                                 GHPullRequestReviewCommentWithPendingReview::class.java,
+                                 "addPullRequestReviewComment", "comment")
+
       fun getCommentBody(server: GithubServerPath, commentId: String): GQLQuery<String> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.getReviewCommentBody,
                                  mapOf("id" to commentId),
                                  String::class.java,
                                  "node", "body")
 
-      fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<Any> =
+      fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<GHPullRequestPendingReview> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReviewComment,
-                                 mapOf("id" to commentId), Any::class.java)
+                                 mapOf("id" to commentId),
+                                 GHPullRequestPendingReview::class.java,
+                                 "deletePullRequestReviewComment", "pullRequestReview")
 
       fun updateComment(server: GithubServerPath, commentId: String, newText: String): GQLQuery<GHPullRequestReviewComment> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.updateReviewComment,
@@ -152,6 +199,18 @@ object GHGQLRequests {
                                        "body" to newText),
                                  GHPullRequestReviewComment::class.java,
                                  "updatePullRequestReviewComment", "pullRequestReviewComment")
+
+      fun resolveThread(server: GithubServerPath, threadId: String): GQLQuery<GHPullRequestReviewThread> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.resolveReviewThread,
+                                 mapOf("threadId" to threadId),
+                                 GHPullRequestReviewThread::class.java,
+                                 "resolveReviewThread", "thread")
+
+      fun unresolveThread(server: GithubServerPath, threadId: String): GQLQuery<GHPullRequestReviewThread> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.unresolveReviewThread,
+                                 mapOf("threadId" to threadId),
+                                 GHPullRequestReviewThread::class.java,
+                                 "unresolveReviewThread", "thread")
     }
   }
 }

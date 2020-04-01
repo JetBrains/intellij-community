@@ -25,9 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -442,4 +440,5 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCheckAccessibilityBeforeSuperFieldReferenceInSuperCall() { doTest6(false); }
   public void testIDEA128159() { doTest6(false); }
   public void testIDEA139214() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
+  public void testUnboxingWildcards() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
 }

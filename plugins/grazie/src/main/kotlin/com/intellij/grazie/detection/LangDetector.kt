@@ -2,12 +2,13 @@
 package com.intellij.grazie.detection
 
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.config.DetectionContext
+import com.intellij.grazie.detector.chain.ChainDetectorBuilder
+import com.intellij.grazie.detector.model.Language
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.lazyConfig
-import tanvd.grazie.langdetect.chain.ChainDetectorBuilder
-import tanvd.grazie.langdetect.model.Language
 
 object LangDetector : GrazieStateLifecycle {
   private var available: Set<Lang> by lazyConfig(this::init)

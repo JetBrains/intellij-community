@@ -78,7 +78,7 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
   }
 
   private StructureViewTreeElement @NotNull [] doGetChildren() {
-    return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase(), false);
+    return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase(), true);
   }
 
   @Override

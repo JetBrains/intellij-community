@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
@@ -319,9 +318,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Returns the {@link FileType} of this file, or {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if a type cannot be determined
    * (i.e. file type is not registered via {@link FileTypeRegistry}).
    *
-   * <p> Performance notice: consider using {@link FileTypeRegistry#isFileOfType} or {@link FileTypeRegistry#getFileTypeByFileName}
-   * if this method is to be called for massive file collections, e.g. in {@link BulkFileListener}. See {@code FileTypeRegistry} javadoc
-   * for the details.
+   * <p> Performance notice: this method can be slow. See {@link FileTypeRegistry} javadoc for the details.
    *
    * @see FileTypeRegistry
    */

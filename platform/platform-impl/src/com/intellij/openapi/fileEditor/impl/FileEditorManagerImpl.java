@@ -33,7 +33,6 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -634,14 +633,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     else {
       wndToOpenIn = getSplitters().getCurrentWindow();
     }
-
-    if (wndToOpenIn == null || !wndToOpenIn.isFileOpen(file)) {
-      Pair<FileEditor[], FileEditorProvider[]> previewResult =
-        PreviewManager.SERVICE.preview(myProject, FilePreviewPanelProvider.ID, file, focusEditor);
-        if (previewResult != null) {
-          return previewResult;
-        }
-      }
 
     EditorsSplitters splitters = getSplitters();
 

@@ -19,25 +19,25 @@ import java.util.ResourceBundle;
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
-  public static final String L10N_MARKER = "🔅";
+  private static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
   private static final Logger LOG = Logger.getInstance(BundleBase.class);
 
-  private static boolean assertOnMissedKeys = false;
+  private static boolean assertOnMissedKeys;
 
   public static void assertOnMissedKeys(boolean doAssert) {
     assertOnMissedKeys = doAssert;
   }
 
   @NotNull
-  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, @NotNull Object... params) {
+  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return messageOrDefault(bundle, key, null, params);
   }
 
   public static String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
                                         @Nullable String defaultValue,
-                                        @NotNull Object... params) {
+                                        Object @NotNull ... params) {
     if (bundle == null) return defaultValue;
 
     boolean resourceFound = true;
@@ -81,8 +81,8 @@ public abstract class BundleBase {
     return "!" + key + "!";
   }
 
-  @Nullable
-  static String postprocessValue(@NotNull ResourceBundle bundle, @Nullable String value, @NotNull Object[] params) {
+  @NotNull
+  static String postprocessValue(@NotNull ResourceBundle bundle, @NotNull String value, Object @NotNull ... params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
@@ -101,11 +101,11 @@ public abstract class BundleBase {
   }
 
   @NotNull
-  public static String format(@NotNull String value, @NotNull Object... params) {
+  public static String format(@NotNull String value, Object @NotNull ... params) {
     return params.length > 0 && value.indexOf('{') >= 0 ? MessageFormat.format(value, params) : value;
   }
 
-  @Contract("null -> null")
+  @Contract("null -> null; !null -> !null")
   public static String replaceMnemonicAmpersand(@Nullable String value) {
     if (value == null || value.indexOf('&') < 0) {
       return value;

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -46,7 +47,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
 
   private static List<String> necessaryTags() {
     if (SystemInfo.isWindows) {
-      return ImmutableList.<String>builder().addAll(BASE_TAGS).add("iron").build();
+      return Collections.emptyList();// ImmutableList.<String>builder().addAll(BASE_TAGS).add("iron").build();
     }
     else {
       return ImmutableList.<String>builder().addAll(BASE_TAGS).add("packaging").build();

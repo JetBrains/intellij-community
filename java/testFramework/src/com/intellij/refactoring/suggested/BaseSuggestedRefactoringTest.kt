@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -82,14 +83,14 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
 
     executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
 
-    val intention = myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
+    val intention = suggestedRefactoringIntention()
     assertNotNull("No refactoring available", intention)
 
     assertEquals("Action name", actionName, intention!!.text)
 
     checkPresentation()
 
-    executeCommand {
+    executeCommand(project) {
       intention.invoke(project, editor, file)
 
       runWriteAction {
@@ -112,5 +113,9 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     if (!ignoreErrorsAfter) {
       myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
     }
+  }
+
+  protected fun suggestedRefactoringIntention(): IntentionAction? {
+    return myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
   }
 }

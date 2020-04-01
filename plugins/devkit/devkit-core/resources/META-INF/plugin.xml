@@ -252,6 +252,7 @@
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
     <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.FlushQueue"/>
     <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
     <stacktrace.fold substring="com.intellij.openapi.command.WriteCommandAction"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
@@ -333,6 +334,7 @@
     <lang.documentationProvider language="JSON"
                                 order="first"
                                 implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
+    <notificationWhitelist groupIds="Update from Sources;IntelliJ API Annotations;Plugin DevKit Deployment;testdata;DevKit Errors"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
@@ -393,6 +395,10 @@
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
     <action id="UpdateIdeFromSourcesSettings" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
+
+    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
 
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">

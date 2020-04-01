@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -26,15 +27,15 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private Color myActiveColor;
   private Color myNormalColor;
 
-  public ActionLink(@Nls(capitalization = Nls.Capitalization.Title) String text, @NotNull AnAction action) {
+  public ActionLink(@NlsContexts.LinkLabel String text, @NotNull AnAction action) {
     this(text, ICON, action);
   }
 
-  public ActionLink(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon, @NotNull AnAction action) {
+  public ActionLink(@NlsContexts.LinkLabel String text, Icon icon, @NotNull AnAction action) {
     this(text, icon, action, null, ActionPlaces.UNKNOWN);
   }
 
-  public ActionLink(@Nls(capitalization = Nls.Capitalization.Title) String text,
+  public ActionLink(@NlsContexts.LinkLabel String text,
                     Icon icon,
                     @NotNull AnAction action,
                     @Nullable Runnable onDone,
@@ -42,7 +43,7 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
     super(text, icon);
     setListener(new LinkListener<Object>() {
       @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         ActionUtil.invokeAction(myAction, ActionLink.this, place, myEvent, onDone);
       }
     }, null);

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.util.*;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -292,7 +293,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (fs instanceof LocalFileSystemImpl) {
         VirtualFile parent = getInstance().findFileById(parentId);
         assert parent != null : parentId + '/' + id + ": " + name.toString() + " -> " + symlinkTarget;
-        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent.getPath() + '/' + name.toString(), symlinkTarget);
+        String linkPath = parent.getPath() + '/' + name.toString();
+        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, linkPath, symlinkTarget);
       }
     }
 
@@ -1477,7 +1479,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     FSRecords.storeSymlinkTarget(id, target);
     VirtualFileSystem fs = file.getFileSystem();
     if (fs instanceof LocalFileSystemImpl) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getPath(), target);
+      ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getParent(), file.getPath(), target);
     }
   }
 

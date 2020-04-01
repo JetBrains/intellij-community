@@ -330,6 +330,14 @@ public class PyChangeSignatureDialog extends
             defaultValuePanel.add(defaultValueLabel);
             defaultValuePanel.add(myDefaultValueEditor);
             myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
+            // The corresponding PyParameterInfo field can't be updated by just RowEditorChangeListener(1) 
+            // because the corresponding column value is not String but Pair<PsiCodeFragment, Boolean>.
+            myDefaultValueEditor.addDocumentListener(new DocumentListener() {
+              @Override
+              public void documentChanged(@NotNull DocumentEvent event) {
+                item.parameter.setDefaultValue(myDefaultValueEditor.getText().trim());
+              }
+            });
             myDefaultValueEditor.addDocumentListener(mySignatureUpdater);
             return defaultValuePanel;
           }
@@ -342,10 +350,10 @@ public class PyChangeSignatureDialog extends
             namePanel.add(nameLabel);
             namePanel.add(myNameEditor);
             myNameEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myNameEditor.addDocumentListener(new RowEditorChangeListener(0));
             myNameEditor.addDocumentListener(new DocumentListener() {
               @Override
               public void documentChanged(@NotNull DocumentEvent event) {
-                fireDocumentChanged(event, 0);
                 myDefaultValueEditor.setEnabled(!myNameEditor.getText().startsWith("*"));
                 myDefaultInSignature.setEnabled(!myNameEditor.getText().startsWith("*"));
               }

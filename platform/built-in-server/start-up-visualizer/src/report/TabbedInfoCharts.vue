@@ -1,4 +1,4 @@
-<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<!-- Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
   <el-tabs v-model="activeName" @tab-click="navigate">
     <el-tab-pane label="Timeline" name="timeline" lazy>
@@ -33,6 +33,7 @@
   import StatsChart from "@/report/StatsChart.vue"
   import ActivityChart from "@/report/ActivityChart.vue"
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
+  import {Dictionary} from "vue-router/types/router"
 
   const DEFAULT_ACTIVE_TAB = "timeline"
 
@@ -51,7 +52,7 @@
       this.updateLocation(location)
     }
 
-    private updateLocation(location: Location): void {
+    private updateLocation(location: { query?: Dictionary<string | (string | null)[] | null | undefined> }): void {
       const tab = location.query == null ? null : location.query.infoTab
       // do not check `location.path === "/"` because if component displayed, so, active
       this.activeName = tab == null ? DEFAULT_ACTIVE_TAB : tab as string

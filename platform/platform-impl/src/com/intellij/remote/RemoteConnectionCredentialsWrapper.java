@@ -41,8 +41,7 @@ public class RemoteConnectionCredentialsWrapper {
     credentialsAndProvider.getSecond().putCredentials(copy.myCredentialsTypeHolder, credentialsAndProvider.getFirst());
   }
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getTypeHandler().getId();
   }
 

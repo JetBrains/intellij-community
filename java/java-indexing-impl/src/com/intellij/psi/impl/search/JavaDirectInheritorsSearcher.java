@@ -70,24 +70,24 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     boolean sameJarClassFound = false;
     String currentFQN = null;
     boolean[] isOutOfScope = new boolean[cache.length]; // here we cache results of isInScope(scope, subClass) to avoid calculating it twice
-    for (int i = 0; i <= cache.length; i++) {
+    for (int i = 0; i < cache.length; i++) {
       ProgressManager.checkCanceled();
 
-      PsiClass subClass = i == cache.length ? null : cache[i];
+      PsiClass subClass = cache[i];
       if (subClass instanceof PsiAnonymousClass) {
         // we reached anonymous classes tail, process them all and exit
         if (!parameters.includeAnonymous()) {
-          return true;
+          return flushCurrentGroup(consumer, cache, isOutOfScope, sameJarClassFound, groupStart, i);
         }
       }
-      if (i != cache.length && !isInScope(scope, subClass)) {
+      if (!isInScope(scope, subClass)) {
         isOutOfScope[i] = true;
         continue;
       }
 
-      String fqn = i == cache.length ? null : ReadAction.compute(subClass::getQualifiedName);
+      String fqn = ReadAction.compute(subClass::getQualifiedName);
 
-      if (currentFQN != null && Comparing.equal(fqn, currentFQN)) {
+      if (currentFQN != null && Objects.equals(fqn, currentFQN)) {
         VirtualFile currentJarFile = getJarFile(subClass);
         if (baseClassJarFile == null) {
           baseClassJarFile = getJarFile(baseClass);
@@ -101,19 +101,27 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       else {
         currentFQN = fqn;
         // the end of the same-FQN group. Process only same-jar classes in subClasses[groupStart..i-1] group or the whole group if there were none.
-        if (!sameJarClassFound) {
-          for (int g=groupStart; g<i; g++) {
-            ProgressManager.checkCanceled();
-            if (isOutOfScope[g]) continue;
-            PsiClass subClassCandidate = cache[g];
-            if (!consumer.process(subClassCandidate)) return false;
-          }
-        }
+        if (!flushCurrentGroup(consumer, cache, isOutOfScope, sameJarClassFound, groupStart, i)) return false;
         groupStart = i;
         sameJarClassFound = false;
       }
     }
 
+    return flushCurrentGroup(consumer, cache, isOutOfScope, sameJarClassFound, groupStart, cache.length);
+  }
+
+  private static boolean flushCurrentGroup(Processor<? super PsiClass> consumer,
+                                           PsiClass[] cache, boolean[] isOutOfScope,
+                                           boolean sameJarClassFound,
+                                           int groupStart, int afterGroup) {
+    if (!sameJarClassFound) {
+      for (int g = groupStart; g < afterGroup; g++) {
+        ProgressManager.checkCanceled();
+        if (!isOutOfScope[g] && !consumer.process(cache[g])) {
+          return false;
+        }
+      }
+    }
     return true;
   }
 
@@ -160,15 +168,16 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return cache;
   }
 
-  private static <T> boolean processConcurrentlyIfTooMany(@NotNull Collection<T> collection, @NotNull Processor<? super T> processor) {
+  private static <T> void processConcurrentlyIfTooMany(@NotNull Collection<T> collection, @NotNull Processor<? super T> processor) {
     int size = collection.size();
     if (size == 0) {
-      return true;
+      return;
     }
     if (size > 100) {
-      return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(collection), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(collection), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
+    } else {
+      ContainerUtil.process(collection, processor);
     }
-    return ContainerUtil.process(collection, processor);
   }
 
   private static PsiClass @NotNull [] calculateDirectSubClasses(@NotNull Project project,

@@ -26,6 +26,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
@@ -38,15 +39,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 class ParameterInfoTaskRunnerUtil {
+
+  public static final int DEFAULT_PROGRESS_POPUP_DELAY_MS = 1000;
+
+  /**
+   * @param progressTitle null means no loading panel should be shown
+   */
   static <T> void runTask(Project project,
                           NonBlockingReadAction<T> nonBlockingReadAction,
                           Consumer<T> continuationConsumer,
-                          String progressTitle,
-                          int offset,
+                          @Nullable String progressTitle,
                           Editor editor) {
     AtomicReference<CancellablePromise<?>> cancellablePromiseRef = new AtomicReference<>();
     Consumer<Boolean> stopAction =
-      startProgressAndCreateStopAction(editor.getProject(), progressTitle, cancellablePromiseRef, offset, editor);
+      startProgressAndCreateStopAction(editor.getProject(), progressTitle, cancellablePromiseRef, editor);
 
     final VisibleAreaListener visibleAreaListener = new CancelProgressOnScrolling(cancellablePromiseRef);
 
@@ -77,13 +83,9 @@ class ParameterInfoTaskRunnerUtil {
 
   @NotNull
   private static Consumer<Boolean> startProgressAndCreateStopAction(Project project,
-                                                                        String progressTitle,
-                                                                        AtomicReference<CancellablePromise<?>> promiseRef,
-                                                                        int offset,
-                                                                        Editor editor) {
-    offset = offset > 0 ? offset : editor.getCaretModel().getOffset() - 1;
-    ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, offset);
-
+                                                                    String progressTitle,
+                                                                    AtomicReference<CancellablePromise<?>> promiseRef,
+                                                                    Editor editor) {
     AtomicReference<Consumer<Boolean>> stopActionRef = new AtomicReference<>();
 
     Consumer<Boolean> originalStopAction = (cancel) -> {
@@ -96,24 +98,8 @@ class ParameterInfoTaskRunnerUtil {
       }
     };
 
-    HintListener hintListener = new HintListener() {
-      @Override
-      public void hintHidden(@NotNull EventObject event) {
-        Consumer<Boolean> stopAction = stopActionRef.get();
-        if (stopAction != null) {
-          stopAction.accept(true);
-        }
-      }
-    };
-
-    if (controller != null && controller.showLoading(hintListener)) {
-      stopActionRef.set((cancel) -> {
-        try {
-          controller.hideLoading(hintListener);
-        } finally {
-          originalStopAction.accept(cancel);
-        }
-      });
+    if (progressTitle == null) {
+      stopActionRef.set(originalStopAction);
     } else {
       final Disposable disposable = Disposer.newDisposable();
       Disposer.register(project, disposable);
@@ -150,7 +136,7 @@ class ParameterInfoTaskRunnerUtil {
           loadingPanel.startLoading();
           popup.show(popupPosition);
         }
-      }, ModalityState.defaultModalityState(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, TimeUnit.MILLISECONDS);
+      }, ModalityState.defaultModalityState(), DEFAULT_PROGRESS_POPUP_DELAY_MS, TimeUnit.MILLISECONDS);
 
       stopActionRef.set((cancel) -> {
         try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -112,12 +112,23 @@ public abstract class PopupHandler extends MouseAdapter {
   }
 
   @NotNull
+  public static MouseListener installSelectionListPopup(@NotNull JList<?> list,
+                                                        @NotNull ActionGroup group,
+                                                        @NonNls String place,
+                                                        @NotNull ActionManager actionManager) {
+    return installConditionalPopup(list, group, place, actionManager, (comp, x, y) -> ListUtil.isPointOnSelection(list, x, y));
+  }
+
+  @NotNull
   private static MouseListener installConditionalPopup(@NotNull JComponent component,
-                                                      @NotNull ActionGroup group,
-                                                      @NonNls String place,
-                                                      @NotNull ActionManager actionManager,
-                                                      @NotNull ShowPopupPredicate condition) {
-    if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
+                                                       @NotNull ActionGroup group,
+                                                       @NonNls String place,
+                                                       @NotNull ActionManager actionManager,
+                                                       @NotNull ShowPopupPredicate condition) {
+    if (ApplicationManager.getApplication() == null) {
+      return new MouseAdapter() {
+      };
+    }
     PopupHandler handler = new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {

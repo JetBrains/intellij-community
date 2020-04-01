@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github.pullrequest.action
 
@@ -15,6 +15,6 @@ class GHPRUpdateTimelineAction : RefreshAction("Refresh Timeline", "Check for ne
   override fun actionPerformed(e: AnActionEvent) {
     val dataProvider = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider
     if (dataProvider?.timelineLoader?.loadMore(true) != null)
-      dataProvider.reloadReviewThreads()
+      dataProvider.reviewData.resetReviewThreads()
   }
 }

@@ -26,7 +26,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
@@ -36,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
@@ -173,6 +177,18 @@ class GitPushResultNotification extends Notification {
       if (pushOperation != null) {
         notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected));
       }
+    }
+
+    if (Registry.is("vcs.showConsole")
+        && !grouped.errors.isEmpty()
+        || !grouped.rejected.isEmpty()
+        || !grouped.customRejected.isEmpty()) {
+      notification.addAction(NotificationAction.createSimple(
+        VcsBundle.message("notification.showDetailsInConsole"),
+        () -> {
+          ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+          vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
+        }));
     }
 
     return notification;

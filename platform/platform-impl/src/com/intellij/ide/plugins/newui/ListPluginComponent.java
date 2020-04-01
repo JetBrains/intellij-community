@@ -318,6 +318,9 @@ public class ListPluginComponent extends JPanel {
     if (myUpdateDescriptor == null && descriptor == null) {
       return;
     }
+    if (myIndicator != null || isRestartEnabled()) {
+      return;
+    }
 
     myUpdateDescriptor = descriptor;
 

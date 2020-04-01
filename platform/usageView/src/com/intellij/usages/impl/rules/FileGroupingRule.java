@@ -92,7 +92,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
 
     @Override
     public FileStatus getFileStatus() {
-      return isValid() ? FileStatusManager.getInstance(myProject).getStatus(myFile) : null;
+      return !myProject.isDisposed() && isValid() ? FileStatusManager.getInstance(myProject).getStatus(myFile) : null;
     }
 
     @Override
@@ -102,7 +102,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
 
     @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
-      FileEditorManager.getInstance(myProject).openFile(myFile, focus);
+      if (!myProject.isDisposed()) FileEditorManager.getInstance(myProject).openFile(myFile, focus);
     }
 
     @Override

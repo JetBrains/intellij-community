@@ -244,7 +244,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
     }
 
     @Override
-    public RunConfigurationBase getPeer() {
+    public @NotNull RunConfigurationBase getPeer() {
       return myConfiguration;
     }
 

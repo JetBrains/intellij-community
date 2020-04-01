@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.NlsContexts;
+
 /**
  * Thrown to indicate that a configurable component cannot {@link UnnamedConfigurable#apply() apply} entered values.
  */
@@ -26,7 +28,7 @@ public class ConfigurationException extends Exception {
   /**
    * @param message the detail message describing the problem
    */
-  public ConfigurationException(String message) {
+  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message) {
     super(message);
   }
 
@@ -34,12 +36,15 @@ public class ConfigurationException extends Exception {
    * @param message the detailed message describing the problem
    * @param title   the title describing the problem in short
    */
-  public ConfigurationException(String message, String title) {
+  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
+                                @NlsContexts.ConfigurationErrorTitle String title) {
     super(message);
     myTitle = title;
   }
 
-  public ConfigurationException(String message, Throwable cause, String title) {
+  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
+                                Throwable cause,
+                                @NlsContexts.ConfigurationErrorTitle String title) {
     super(message, cause);
     myTitle = title;
   }

@@ -17,7 +17,6 @@ public class JavaPsiConstructorUtil {
    * @param constructor constructor to search in
    * @return found this/super constructor method call or null if not found or supplied method is null or not a constructor
    */
-  @Contract("null -> null")
   @Nullable
   public static PsiMethodCallExpression findThisOrSuperCallInConstructor(@NotNull PsiMethod constructor) {
     if (!constructor.isConstructor()) return null;

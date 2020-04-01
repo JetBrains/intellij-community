@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.connect;
 
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
+import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.jdom.Element;
@@ -35,12 +36,19 @@ public abstract class SettingsConnectionService {
   @Nullable
   private final DataCollectorDebugLogger myLogger;
 
-  protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl,
-                                      @NotNull String userAgent, @Nullable DataCollectorDebugLogger logger) {
+  @NotNull
+  private final DataCollectorSystemEventLogger myEventLogger;
+
+  protected SettingsConnectionService(@Nullable String settingsUrl,
+                                      @Nullable String defaultServiceUrl,
+                                      @NotNull String userAgent,
+                                      @Nullable DataCollectorDebugLogger logger,
+                                      @NotNull DataCollectorSystemEventLogger eventLogger) {
     mySettingsUrl = settingsUrl;
     myDefaultServiceUrl = defaultServiceUrl;
     myUserAgent = userAgent;
     myLogger = logger;
+    myEventLogger = eventLogger;
   }
 
   @SuppressWarnings("unused")
@@ -74,21 +82,24 @@ public abstract class SettingsConnectionService {
           }
         }
         catch (JDOMException e) {
-          if (myLogger != null) {
-            final String message = e.getMessage();
-            myLogger.info(message != null ? message : "");
-          }
+          logError(e);
         }
         return settings;
       }
     }
     catch (Exception e) {
-      if (myLogger != null) {
-        final String message = e.getMessage();
-        myLogger.warn(message != null ? message : "", e);
-      }
+      logError(e);
     }
     return Collections.emptyMap();
+  }
+
+  private void logError(Exception e) {
+    if (myLogger != null) {
+      final String message = e.getMessage();
+      myLogger.warn(message != null ? message : "", e);
+    }
+
+    myEventLogger.logErrorEvent("loading.config.failed", e);
   }
 
   @Nullable

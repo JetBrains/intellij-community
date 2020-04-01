@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
@@ -226,7 +227,7 @@ public class TabbedPaneWrapper  {
     myTabbedPane.setTitleAt(index, title);
   }
 
-  public final void setToolTipTextAt(final int index, final String toolTipText) {
+  public final void setToolTipTextAt(final int index, @NlsContexts.Tooltip String toolTipText) {
     assertIsDispatchThread();
     myTabbedPane.setToolTipTextAt(index, toolTipText);
   }

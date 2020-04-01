@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +51,7 @@ import org.zmlx.hg4idea.provider.commit.HgMQNewExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.roots.HgIntegrationEnabler;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
-import org.zmlx.hg4idea.status.ui.HgHideableWidget;
-import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
+import org.zmlx.hg4idea.status.ui.HgWidgetUpdater;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
@@ -70,8 +68,7 @@ public class HgVcs extends AbstractVcs {
 
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<>("hg4idea.status", HgUpdater.class);
-  public static final Topic<HgHideableWidget> INCOMING_OUTGOING_CHECK_TOPIC =
-    new Topic<>("hg4idea.incomingcheck", HgHideableWidget.class);
+  public static final Topic<HgWidgetUpdater> INCOMING_OUTGOING_CHECK_TOPIC = new Topic<>("hg4idea.incomingcheck", HgWidgetUpdater.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
@@ -90,7 +87,6 @@ public class HgVcs extends AbstractVcs {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
-  private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
@@ -105,8 +101,6 @@ public class HgVcs extends AbstractVcs {
   private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
-  private HgIncomingOutgoingWidget myIncomingWidget;
-  private HgIncomingOutgoingWidget myOutgoingWidget;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
   public HgVcs(@NotNull Project project,
@@ -247,21 +241,8 @@ public class HgVcs extends AbstractVcs {
     // validate hg executable on start and update hg version
     checkExecutableAndVersion();
 
-    myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
-    myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (myIncomingWidget != null) myIncomingWidget.activate();
-      if (myOutgoingWidget != null) myOutgoingWidget.activate();
-    });
-
     // updaters and listeners
-    myHgRemoteStatusUpdater =
-      new HgRemoteStatusUpdater(this, myIncomingWidget.getChangesetStatus(), myOutgoingWidget.getChangesetStatus(),
-                                projectSettings);
-    myHgRemoteStatusUpdater.activate();
-
-    messageBusConnection = myProject.getMessageBus().connect();
+    myHgRemoteStatusUpdater = new HgRemoteStatusUpdater(this);
     myVFSListener = HgVFSListener.createInstance(this);
 
     // ignore temporary files
@@ -281,19 +262,8 @@ public class HgVcs extends AbstractVcs {
   @Override
   public void deactivate() {
     if (myHgRemoteStatusUpdater != null) {
-      myHgRemoteStatusUpdater.deactivate();
+      Disposer.dispose(myHgRemoteStatusUpdater);
       myHgRemoteStatusUpdater = null;
-    }
-    if (myIncomingWidget != null) {
-      myIncomingWidget.deactivate();
-      myIncomingWidget = null;
-    }
-    if (myOutgoingWidget != null) {
-      myOutgoingWidget.deactivate();
-      myOutgoingWidget = null;
-    }
-    if (messageBusConnection != null) {
-      messageBusConnection.disconnect();
     }
 
     if (myVFSListener != null) {
@@ -349,6 +319,11 @@ public class HgVcs extends AbstractVcs {
   @NotNull
   public HgCloseBranchExecutor getCloseBranchExecutor() {
     return myCloseBranchExecutor;
+  }
+
+  @Nullable
+  public HgRemoteStatusUpdater getRemoteStatusUpdater() {
+    return myHgRemoteStatusUpdater;
   }
 
   public static VcsKey getKey() {

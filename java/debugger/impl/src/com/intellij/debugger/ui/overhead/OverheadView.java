@@ -103,7 +103,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         getSelectedNavigatables().findFirst().ifPresent(b -> b.navigate(true));
         return true;
       }

@@ -170,7 +170,7 @@
         Describes the splash screen which is shown when the product is starting.
       </xs:documentation>
     </xs:annotation>
-    
+
     <xs:sequence>
       <xs:element name="progressSlide" minOccurs="0" maxOccurs="unbounded">
         <xs:complexType>
@@ -199,11 +199,12 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:hexBinary" name="textcolor" use="required">
+    <xs:attribute type="xs:hexBinary" name="textcolor">
       <xs:annotation>
         <xs:documentation>
           Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint text on the splash screen. Currently it is used to
           show information about licensee only.
+          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -250,6 +251,7 @@
       <xs:annotation>
         <xs:documentation>
           The X coordinate of a position on the splash screen where information about licensee will be shown.
+          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -257,6 +259,7 @@
       <xs:annotation>
         <xs:documentation>
           The Y coordinate of a position on the splash screen where information about licensee will be shown.
+          <strong>Deprecated: not used anymore because licensee is not displayed on the splash screen since 2019.3.</strong>
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

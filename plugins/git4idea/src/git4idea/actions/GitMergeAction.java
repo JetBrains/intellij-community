@@ -202,8 +202,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         Notification notification;
         if (notificationData != null) {
           String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
-          String content = getBodyForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount(),
-                                                        notificationData.getFilteredCommitsCount());
+          String content = getBodyForUpdateNotification(notificationData.getFilteredCommitsCount());
           notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
           notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
             "action.NotificationAction.GitMergeAction.text.view.commits"),
@@ -216,7 +215,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         VcsNotifier.getInstance(project).notify(notification);
       }
       else {
-        showUpdates(project, root, currentRev, beforeLabel, getActionName());
+        showUpdates(project, repository, currentRev, beforeLabel, getActionName());
       }
     }
     else if (localChangesDetector.wasMessageDetected()) {
@@ -234,13 +233,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
   }
 
   private static void showUpdates(@NotNull Project project,
-                                  @NotNull VirtualFile root,
+                                  @NotNull GitRepository repository,
                                   @NotNull GitRevisionNumber currentRev,
                                   @NotNull Label beforeLabel,
                                   @NotNull String actionName) {
     try {
       UpdatedFiles files = UpdatedFiles.create();
-      MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
+      MergeChangeCollector collector = new MergeChangeCollector(project, repository, currentRev);
       collector.collect(files);
 
       GuiUtils.invokeLaterIfNeeded(() -> {

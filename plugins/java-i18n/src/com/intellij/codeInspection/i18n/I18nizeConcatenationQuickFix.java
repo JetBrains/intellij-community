@@ -24,6 +24,10 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeConcatenationQuickFix.class);
   @NonNls static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
+  public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
+    super(info);
+  }
+
   @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
@@ -68,7 +72,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
     final List<PsiExpression> args = new ArrayList<>();
     String formatString = getValueString(concatenation, args);
 
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, null, true, true) {
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, getCustomization(formatString), true, true) {
       @Override
       @Nullable
       protected String getTemplateName() {

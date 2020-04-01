@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.intellij.util.io.Bits;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,8 @@ public class BatchEvaluator {
           public void action() {
             myBuffer.remove(suspendContext);
 
-            if(!doEvaluateBatch(commands, evaluationContext)) {
+            if ((commands.size() == 1 && !Registry.is("debugger.batch.evaluation.force")) ||
+                !doEvaluateBatch(commands, evaluationContext)) {
               commands.forEach(ToStringCommand::action);
             }
           }
@@ -145,31 +147,38 @@ public class BatchEvaluator {
       }
 
       ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
-      argArray.setValues(values);
+      DebuggerUtilsEx.setValuesNoCheck(argArray, values);
       String value = DebuggerUtils.processCollectibleValue(
-        () -> debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray)),
+        () -> ((DebugProcessImpl)debugProcess).invokeMethod(
+          evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
+          MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
         result -> result instanceof StringReference ? ((StringReference)result).value() : null
       );
       if (value != null) {
         byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
-        int pos = 0;
-        Iterator<ToStringCommand> iterator = requests.iterator();
-        while (pos < bytes.length) {
-          int length = Bits.getInt(bytes, pos);
-          boolean error = length < 0;
-          length = Math.abs(length);
-          String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
-          if (!iterator.hasNext()) {
-            return false;
+        try {
+          int pos = 0;
+          Iterator<ToStringCommand> iterator = requests.iterator();
+          while (pos < bytes.length) {
+            int length = Bits.getInt(bytes, pos);
+            boolean error = length < 0;
+            length = Math.abs(length);
+            String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
+            if (!iterator.hasNext()) {
+              return false;
+            }
+            ToStringCommand command = iterator.next();
+            if (error) {
+              command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message));
+            }
+            else {
+              command.evaluationResult(message);
+            }
+            pos += length + 4;
           }
-          ToStringCommand command = iterator.next();
-          if (error) {
-            command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message));
-          }
-          else {
-            command.evaluationResult(message);
-          }
-          pos += length + 4;
+        }
+        catch (StringIndexOutOfBoundsException e) {
+          LOG.error("Invalid batch toString response", e, Arrays.toString(bytes));
         }
       }
       return true;

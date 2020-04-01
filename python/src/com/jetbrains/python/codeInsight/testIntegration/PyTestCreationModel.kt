@@ -11,7 +11,7 @@ import com.jetbrains.python.codeInsight.testIntegration.PyTestCreationModel.Comp
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.testing.PythonUnitTestUtil
+import com.jetbrains.python.testing.PythonUnitTestDetectorsBasedOnSettings
 
 /**
  * Created with [createByElement], then modified my user and provided to [PyTestCreator.createTest] to create test
@@ -35,7 +35,7 @@ class PyTestCreationModel(var fileName: String,
      * @return model of null if no test could be created for this element
      */
     fun createByElement(element: PsiElement): PyTestCreationModel? {
-      if (PythonUnitTestUtil.isTestElement(element, null)) return null //Can't create tests for tests
+      if (PythonUnitTestDetectorsBasedOnSettings.isTestElement(element, null)) return null //Can't create tests for tests
       val fileUnderTest = element.containingFile as? PyFile ?: return null
       val classUnderTest = PsiTreeUtil.getParentOfType(element, PyClass::class.java, false)
       val functionUnderTest = PsiTreeUtil.getParentOfType(element, PyFunction::class.java, false)
@@ -43,7 +43,7 @@ class PyTestCreationModel(var fileName: String,
         functionUnderTest != null -> listOf(functionUnderTest)
         classUnderTest != null -> classUnderTest.methods.asList()
         else -> (fileUnderTest.topLevelFunctions + fileUnderTest.topLevelClasses)
-      }.asSequence().filterIsInstance<PsiNamedElement>().filterNot { PythonUnitTestUtil.isTestElement(it, null) }
+      }.asSequence().filterIsInstance<PsiNamedElement>().filterNot { PythonUnitTestDetectorsBasedOnSettings.isTestElement(it, null) }
 
 
       /**
@@ -59,7 +59,7 @@ class PyTestCreationModel(var fileName: String,
 
       val nameOfClassUnderTest = classUnderTest?.name
       // True for unitTest
-      val testCaseClassRequired = PythonUnitTestUtil.isTestCaseClassRequired(fileUnderTest)
+      val testCaseClassRequired = PythonUnitTestDetectorsBasedOnSettings.isTestCaseClassRequired(fileUnderTest)
       if (testFunctionNames.isEmpty()) {
         when {
           // No class, no function, what to generate?

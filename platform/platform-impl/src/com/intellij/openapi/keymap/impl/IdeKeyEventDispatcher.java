@@ -4,6 +4,7 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -51,6 +52,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,8 +139,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
+    int id = e.getID();
     if (myIgnoreNextKeyTypedEvent) {
-      if (KeyEvent.KEY_TYPED == e.getID()) return true;
+      if (KeyEvent.KEY_TYPED == id) return true;
       myIgnoreNextKeyTypedEvent = false;
     }
 
@@ -148,18 +151,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myLeftCtrlPressed = false;
       }
     }
     else if (e.getKeyCode() == KeyEvent.VK_ALT) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myRightAltPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myRightAltPressed = false;
       }
     }
@@ -170,10 +173,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
       // remove AltGr modifier to show a shortcut without AltGr in Settings
-      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == id) removeAltGraph(e);
       return false;
     }
-    if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
+    if (id == KeyEvent.KEY_PRESSED && focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
       if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
       }
@@ -680,40 +683,57 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
 
-      showDumbModeDialogLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
-                                                   nonDumbAwareAction.toArray(new AnActionEvent[0]));
+      showDumbModeBalloonLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
+                                                    nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
     IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
   }
 
-  private static void showDumbModeDialogLaterIfNobodyConsumesEvent(@Nullable Project project,
-                                                                   InputEvent e,
-                                                                   ActionProcessor processor,
-                                                                   AnAction[] actions,
-                                                                   PresentationFactory presentationFactory,
-                                                                   AnActionEvent... actionEvents) {
+  private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,
+                                                                    InputEvent e,
+                                                                    ActionProcessor processor,
+                                                                    AnAction[] actions,
+                                                                    PresentationFactory presentationFactory,
+                                                                    AnActionEvent... actionEvents) {
     if (project == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
       if (e.isConsumed()) return;
-
-      List<String> actionNames = new ArrayList<>();
-      for (final AnActionEvent event : actionEvents) {
-        final String s = event.getPresentation().getText();
-        if (StringUtil.isNotEmpty(s)) {
-          actionNames.add(s);
-        }
-      }
-      if (DumbService.getInstance(project).showDumbModeDialog(actionNames)) {
+      DumbService.getInstance(project).showDumbModeActionBalloon(getActionUnavailableMessage(actionEvents), () -> {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() -> {
           DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
             processAction(e, processor, context, actions, presentationFactory);
           });
         });
-      }
+      });
     });
+  }
+
+  private static @NotNull @Nls String getActionUnavailableMessage(AnActionEvent... actionEvents) {
+    List<String> actionNames = new ArrayList<>();
+    for (final AnActionEvent event : actionEvents) {
+      final String s = event.getPresentation().getText();
+      if (StringUtil.isNotEmpty(s)) {
+        actionNames.add(s);
+      }
+    }
+    if (actionNames.isEmpty()) {
+      return getUnavailableMessage(IdeBundle.message("this.action"), false);
+    }
+    else if (actionNames.size() == 1) {
+      return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
+    }
+    else {
+      return getUnavailableMessage(IdeBundle.message("none.of.the.following.actions"), true) +
+             ": " + StringUtil.join(actionNames, ", ");
+    }
+  }
+
+  public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
+    return plural ? IdeBundle.message("0.are.not.available.while.indexing", action) :
+           IdeBundle.message("0.is.not.available.while.indexing", action);
   }
 
   private static DumbModeWarningListener dumbModeWarningListener  = null;

@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
+import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
+import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
 public class VcsProjectLog implements Disposable {
@@ -52,7 +54,7 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
-  @NotNull private final Disposable myMessageBusConnections = Disposer.newDisposable();
+  @NotNull private final Disposable myListenersDisposable = Disposer.newDisposable();
   @NotNull private final ExecutorService myExecutor;
   private volatile boolean myDisposeStarted = false;
   private int myRecreatedLogCount = 0;
@@ -66,13 +68,13 @@ public class VcsProjectLog implements Disposable {
     myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myMessageBus.connect(myListenersDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myProject != project) return;
 
         myDisposeStarted = true;
-        Disposer.dispose(myMessageBusConnections);
+        Disposer.dispose(myListenersDisposable);
         disposeLog(false);
         myExecutor.shutdown();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -86,8 +88,10 @@ public class VcsProjectLog implements Disposable {
     });
   }
 
-  private void subscribeToMappingsChanges() {
-    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+  private void subscribeToMappingsAndEPsChanges() {
+    myMessageBus.connect(myListenersDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+    LOG_PROVIDER_EP.getPoint(myProject).addExtensionPointListener(() -> disposeLog(true), false, myListenersDisposable);
+    LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.addExtensionPointListener(myProject, () -> disposeLog(true), myListenersDisposable);
   }
 
   @Nullable
@@ -342,7 +346,7 @@ public class VcsProjectLog implements Disposable {
 
       VcsProjectLog projectLog = getInstance(project);
 
-      projectLog.subscribeToMappingsChanges();
+      projectLog.subscribeToMappingsAndEPsChanges();
       projectLog.createLogInBackground(false);
     }
   }

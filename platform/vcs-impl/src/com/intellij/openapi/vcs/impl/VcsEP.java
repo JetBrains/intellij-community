@@ -50,28 +50,8 @@ public class VcsEP extends AbstractExtensionPointBean {
   @Attribute("areChildrenValidMappings")
   public boolean areChildrenValidMappings;
 
-  private AbstractVcs myVcs;
-  private final Object LOCK = new Object();
-
   @Nullable
-  public AbstractVcs getVcs(@NotNull Project project) {
-    synchronized (LOCK) {
-      if (myVcs != null) {
-        return myVcs;
-      }
-    }
-    AbstractVcs vcs = getInstance(project, vcsClass);
-    synchronized (LOCK) {
-      if (myVcs == null && vcs != null) {
-        vcs.setupEnvironments();
-        myVcs = vcs;
-      }
-      return myVcs;
-    }
-  }
-
-  @Nullable
-  private AbstractVcs getInstance(@NotNull Project project, @NotNull String vcsClass) {
+  public AbstractVcs createVcs(@NotNull Project project) {
     try {
       final Class<? extends AbstractVcs> foundClass = findExtensionClass(vcsClass);
       final Class<?>[] interfaces = foundClass.getInterfaces();
@@ -85,7 +65,7 @@ public class VcsEP extends AbstractExtensionPointBean {
     catch (ProcessCanceledException pce) {
       throw pce;
     }
-    catch(Exception e) {
+    catch (Exception e) {
       LOG.error(new PluginException(e, getPluginId()));
       return null;
     }

@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ReportValue;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -21,13 +26,23 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListAdapter;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.serialization.SerializationException;
-import com.intellij.tasks.*;
+import com.intellij.tasks.BranchInfo;
+import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskListener;
+import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.context.WorkingContextManager;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -40,27 +55,38 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-
-import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.swing.Timer;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable {
+@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = true)
+public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
@@ -80,7 +106,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
         ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<>(entrySet());
-        Collections.sort(list, (o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
+        list.sort((o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
         for (Map.Entry<String, LocalTask> oldest : list) {
           if (!oldest.getValue().isDefault()) {
             remove(oldest.getKey());
@@ -113,7 +139,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         LocalTask task = getAssociatedTask((LocalChangeList)list);
         if (task != null) {
           for (ChangeListInfo info : task.getChangeLists()) {
-            if (Comparing.equal(info.id, ((LocalChangeList)list).getId())) {
+            if (Objects.equals(info.id, ((LocalChangeList)list).getId())) {
               info.id = "";
             }
           }
@@ -429,7 +455,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     for (VcsTaskHandler handler : handlers) {
       VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
       for (VcsTaskHandler.TaskInfo info : tasks) {
-        infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), info1 -> Comparing.equal(info1.repository, repo)));
+        infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), info1 -> Objects.equals(info1.repository, repo)));
       }
     }
     return infos;
@@ -733,7 +759,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     // search for active task
     LocalTask activeTask = null;
     final List<LocalTask> tasks = getLocalTasks();
-    Collections.sort(tasks, TASK_UPDATE_COMPARATOR);
+    tasks.sort(TASK_UPDATE_COMPARATOR);
     for (LocalTask task : tasks) {
       if (activeTask == null) {
         if (task.isActive()) {
@@ -932,18 +958,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
   }
 
-  @Override
-  public void decorateChangeList(@NotNull LocalChangeList changeList,
-                                 @NotNull ColoredTreeCellRenderer cellRenderer,
-                                 boolean selected,
-                                 boolean expanded,
-                                 boolean hasFocus) {
-    LocalTask task = getAssociatedTask(changeList);
-    if (task != null && task.isIssue()) {
-      cellRenderer.setIcon(task.getIcon());
-    }
-  }
-
   public void createChangeList(@NotNull LocalTask task, String name) {
     String comment = TaskUtil.getChangeListComment(task);
     createChangeList(task, name, comment);
@@ -1004,10 +1018,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     public int localTasksCounter = 1;
 
+    @ReportValue
     public int taskHistoryLength = 50;
 
     public boolean updateEnabled = true;
+    @ReportValue
     public int updateInterval = 20;
+    @ReportValue
     public int updateIssuesCount = 100;
 
     // create task options

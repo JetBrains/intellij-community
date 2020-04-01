@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -9,18 +8,21 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Calendar;
 
 /**
  * Provides IDE version/help and vendor information.
  */
 public abstract class ApplicationInfo {
+  public static ApplicationInfo getInstance() {
+    return ApplicationManager.getApplication().getService(ApplicationInfo.class);
+  }
+
   public abstract Calendar getBuildDate();
 
-  public abstract BuildNumber getBuild();
+  public abstract @NotNull BuildNumber getBuild();
 
-  public abstract String getApiVersion();
+  public abstract @NotNull String getApiVersion();
 
   public abstract String getMajorVersion();
 
@@ -66,22 +68,16 @@ public abstract class ApplicationInfo {
 
   public abstract String getKeyConversionUrl();
 
-  @Nullable
-  public abstract Rectangle getAboutLogoRect();
+  @SuppressWarnings("SSBasedInspection")
+  public abstract @Nullable int[] getAboutLogoRect();
 
   public abstract boolean hasHelp();
 
   public abstract boolean hasContextHelp();
 
-  @NotNull
-  public abstract String getFullVersion();
+  public abstract @NotNull String getFullVersion();
 
-  @NotNull
-  public abstract String getStrictVersion();
-
-  public static ApplicationInfo getInstance() {
-    return ServiceManager.getService(ApplicationInfo.class);
-  }
+  public abstract @NotNull String getStrictVersion();
 
   public static boolean helpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();

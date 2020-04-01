@@ -2,26 +2,13 @@
 package com.intellij.pom.tree;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
-import com.intellij.serviceContainer.NonInjectable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-
 public final class TreeAspect implements PomModelAspect {
-  public TreeAspect(@NotNull Project project) {
-    this(project.getService(PomModel.class));
-  }
-
-  @NonInjectable
-  public TreeAspect(@NotNull PomModel pomModel) {
-    pomModel.registerAspect(TreeAspect.class, this, Collections.emptySet());
-  }
-
   public static TreeAspect getInstance(@NotNull Project project) {
-    return project.getComponent(TreeAspect.class);
+    return project.getService(TreeAspect.class);
   }
 
   @Override

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -34,7 +33,7 @@ public class PyImportChooser implements ImportChooser {
       .createPopupChooserBuilder(sources)
       .setRenderer(new CellRenderer(name))
       .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
-      .setItemChosenCallback((item) -> {
+      .setItemChosenCallback(item -> {
         result.setResult(item);
       })
       .setNamerForFiltering(o -> o.getPresentableText(name))
@@ -45,7 +44,7 @@ public class PyImportChooser implements ImportChooser {
   }
 
   // Stolen from FQNameCellRenderer
-  private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer {
+  private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer<ImportCandidateHolder> {
     private final Font FONT;
     private final String myName;
 
@@ -56,24 +55,19 @@ public class PyImportChooser implements ImportChooser {
       setOpaque(true);
     }
 
-    // value is a QualifiedHolder
     @Override
-    public Component getListCellRendererComponent(
-      JList list,
-      Object value, // expected to be
-      int index,
-      boolean isSelected,
-      boolean cellHasFocus
-    ) {
-
+    public Component getListCellRendererComponent(JList<? extends ImportCandidateHolder> list,
+                                                  ImportCandidateHolder value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
       clear();
 
-      ImportCandidateHolder item = (ImportCandidateHolder)value;
-      PsiElement importable = ((ImportCandidateHolder)value).getImportable();
+      PsiElement importable = value.getImportable();
       if (importable != null) {
         setIcon(importable.getIcon(0));
       }
-      String item_name = item.getPresentableText(myName);
+      String item_name = value.getPresentableText(myName);
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
       setFont(FONT);

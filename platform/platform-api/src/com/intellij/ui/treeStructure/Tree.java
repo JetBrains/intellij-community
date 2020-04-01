@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
@@ -29,13 +29,14 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.dnd.Autoscroll;
 import java.awt.event.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
+import static com.intellij.ide.dnd.SmoothAutoScroller.installDropTargetAsNecessary;
+
+public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -203,31 +204,27 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void paint(Graphics g) {
     Rectangle visible = getVisibleRect();
 
-    boolean canHoldSelection = false;
-    TreePath[] paths = getSelectionModel().getSelectionPaths();
-    if (paths != null) {
-      for (TreePath each : paths) {
-        Rectangle selection = getPathBounds(each);
-        if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
-          if (myBusy && myBusyIcon != null) {
-            Rectangle busyIconBounds = myBusyIcon.getBounds();
-            if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
-              canHoldSelection = false;
-              break;
+    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      boolean canHoldSelection = false;
+      TreePath[] paths = getSelectionModel().getSelectionPaths();
+      if (paths != null) {
+        for (TreePath each : paths) {
+          Rectangle selection = getPathBounds(each);
+          if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
+            if (myBusy && myBusyIcon != null) {
+              Rectangle busyIconBounds = myBusyIcon.getBounds();
+              if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
+                canHoldSelection = false;
+                break;
+              }
             }
-            else {
-              canHoldSelection = true;
-            }
-          }
-          else {
             canHoldSelection = true;
+            if (!myBusy || myBusyIcon == null) break;
           }
         }
       }
-    }
 
-    if (canHoldSelection) {
-      if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      if (canHoldSelection) {
         mySelectionModel.holdSelection();
       }
     }
@@ -406,25 +403,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public TreePath getNextMatch(String prefix, int startingRow, Position.Bias bias) {
     return null;
-  }
-
-  private static final int AUTOSCROLL_MARGIN = 10;
-
-  @Override
-  public Insets getAutoscrollInsets() {
-    return new Insets(getLocation().y + AUTOSCROLL_MARGIN, 0, getParent().getHeight() - AUTOSCROLL_MARGIN, getWidth() - 1);
-  }
-
-  @Override
-  public void autoscroll(Point p) {
-    int realRow = getClosestRowForLocation(p.x, p.y);
-    if (getLocation().y + p.y <= AUTOSCROLL_MARGIN) {
-      if (realRow >= 1) realRow--;
-    }
-    else {
-      if (realRow < getRowCount() - 1) realRow++;
-    }
-    scrollRowToVisible(realRow);
   }
 
   protected boolean highlightSingleNode() {
@@ -831,6 +809,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return size;
   }
 
+  @Override
+  public void scrollPathToVisible(@Nullable TreePath path) {
+    if (path == null) return; // nothing to scroll
+    makeVisible(path); // expand parent paths if needed
+    TreeUtil.scrollToVisible(this, path, false);
+  }
+
   public boolean isHorizontalAutoScrollingEnabled() {
     return myHorizontalAutoScrolling != ThreeState.UNSURE ? myHorizontalAutoScrolling == ThreeState.YES : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
@@ -869,6 +854,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     return null;
+  }
+
+  @Override
+  public void setTransferHandler(TransferHandler handler) {
+    installDropTargetAsNecessary(this);
+    super.setTransferHandler(handler);
   }
 
   /**

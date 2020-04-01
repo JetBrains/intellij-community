@@ -92,7 +92,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void fullConfigurationReload() {
-    spellChecker = SpellCheckerFactory.create(project);
+    spellChecker = SpellCheckerFactory.create(project, this);
     fillEngineDictionary();
   }
 

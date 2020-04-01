@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -87,10 +88,10 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
       if (myImportElement != null) {
         PyReferenceExpression refex = myImportElement.getImportReferenceExpression();
         if (refex != null) {
-          add_name = PyBundle.message("INTN.add.alias.for.import.$0", refex.getText());
+          add_name = PyPsiBundle.message("INTN.add.alias.for.import.$0", refex.getText());
         }
       }
-      return myAlias == null? add_name : PyBundle.message("INTN.remove.alias.for.import.$0", myAlias);
+      return myAlias == null? add_name : PyPsiBundle.message("INTN.remove.alias.for.import.$0", myAlias);
     }
   }
 
@@ -131,7 +132,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
         // ask for and add alias
         Application application = ApplicationManager.getApplication();
         if (application != null && !application.isUnitTestMode()) {
-          String alias = Messages.showInputDialog(project, PyBundle.message("INTN.alias.for.$0.dialog.title", imported_name),
+          String alias = Messages.showInputDialog(project, PyPsiBundle.message("INTN.alias.for.$0.dialog.title", imported_name),
                                                   PyBundle.message("INTN.add.alias.title"), Messages.getQuestionIcon(), "", new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {

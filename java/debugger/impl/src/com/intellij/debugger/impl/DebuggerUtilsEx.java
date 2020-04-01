@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -55,9 +55,12 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.jetbrains.jdi.ArrayReferenceImpl;
+import com.jetbrains.jdi.ObjectReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
+import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -272,7 +275,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     for (Attribute aL2 : l2) {
       Attribute attr1 = i1.next();
 
-      if (!Comparing.equal(attr1.getName(), aL2.getName()) || !Comparing.equal(attr1.getValue(), aL2.getValue())) {
+      if (!Objects.equals(attr1.getName(), aL2.getName()) || !Objects.equals(attr1.getValue(), aL2.getValue())) {
         return false;
       }
     }
@@ -283,7 +286,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (e1 == null) {
       return e2 == null;
     }
-    if (!Comparing.equal(e1.getName(), e2.getName())) {
+    if (!Objects.equals(e1.getName(), e2.getName())) {
       return false;
     }
     if (!elementListsEqual(e1.getChildren(), e2.getChildren())) {
@@ -374,6 +377,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
+  }
+
+  public static void setValuesNoCheck(ArrayReference array, List<Value> values) throws ClassNotLoadedException, InvalidTypeException {
+    if (array instanceof ArrayReferenceImpl) {
+      ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, false);
+    }
+    else {
+      array.setValues(values);
+    }
   }
 
   @NotNull
@@ -536,6 +548,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static String signatureToName(String s) {
     return new SigReader(s).getSignature();
+  }
+
+  public static List<Method> declaredMethodsByName(@NotNull ReferenceType type, @NotNull String name) {
+    return StreamEx.of(type.methods()).filter(m -> name.equals(m.name())).toList();
   }
 
   @Nullable
@@ -1071,11 +1087,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static void enableCollection(ObjectReference reference) {
-    try {
-      reference.enableCollection();
+    if (reference instanceof ObjectReferenceImpl) {
+      ((ObjectReferenceImpl)reference).enableCollection(false);
     }
-    catch (UnsupportedOperationException ignored) {
-      // ignore: some J2ME implementations does not provide this operation
+    else {
+      try {
+        reference.enableCollection();
+      }
+      catch (UnsupportedOperationException ignored) {
+        // ignore: some J2ME implementations does not provide this operation
+      }
     }
   }
 

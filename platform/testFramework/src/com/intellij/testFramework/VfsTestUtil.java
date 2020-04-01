@@ -26,6 +26,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class VfsTestUtil {
@@ -157,7 +158,7 @@ public class VfsTestUtil {
 
   @NotNull
   public static List<VFileEvent> getEvents(@NotNull Runnable action) {
-    List<VFileEvent> allEvents = new ArrayList<>();
+    List<VFileEvent> allEvents = Collections.synchronizedList(new ArrayList<>());
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {

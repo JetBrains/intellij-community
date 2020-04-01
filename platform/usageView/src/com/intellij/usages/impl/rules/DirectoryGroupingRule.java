@@ -39,9 +39,14 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   protected final Project myProject;
+  private final boolean myFlattenDirs;
 
   public DirectoryGroupingRule(Project project) {
+    this(project, true);
+  }
+  DirectoryGroupingRule(Project project, boolean flattenDirs) {
     myProject = project;
+    myFlattenDirs = flattenDirs;
   }
 
   @Nullable
@@ -94,9 +99,12 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     @Override
     @NotNull
     public String getText(UsageView view) {
-      VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
-      String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
-      return relativePath == null ? myDir.getPresentableUrl() : relativePath;
+      if (myFlattenDirs || myDir.getParent() == null) {
+        VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+        String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
+        return relativePath == null ? myDir.getPresentableUrl() : relativePath;
+      }
+      return myDir.getName();
     }
 
     @Override

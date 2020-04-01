@@ -12,13 +12,30 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
 
   override val id: String = thread.id
   override val createdAt = thread.createdAt
+  override var state = thread.state
+    private set
+  override var isResolved: Boolean = thread.isResolved
+    private set
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
   override val firstCommentDatabaseId = thread.firstCommentDatabaseId
 
-  private val deletionEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+  private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+
+  init {
+    maybeMarkFirstCommentResolved()
+  }
 
   override fun update(thread: GHPullRequestReviewThread) {
+    if (state != thread.state) {
+      state = thread.state
+      stateEventDispatcher.multicaster.eventOccurred()
+    }
+    if (isResolved != thread.isResolved) {
+      isResolved = thread.isResolved
+      stateEventDispatcher.multicaster.eventOccurred()
+    }
+
     var removed = 0
     for (i in 0 until items.size) {
       val idx = i - removed
@@ -39,25 +56,25 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
       }
     }
 
-    if (size == thread.comments.size) return
     val newComments = thread.comments.subList(size, thread.comments.size)
     add(newComments.map { GHPRReviewCommentModel.convert(it) })
+    maybeMarkFirstCommentResolved()
+  }
+
+  private fun maybeMarkFirstCommentResolved() {
+    if (size > 0) {
+      getElementAt(0).isFirstInResolvedThread = isResolved
+      for (i in 1 until size) {
+        getElementAt(i).isFirstInResolvedThread = false
+      }
+    }
   }
 
   override fun addComment(comment: GHPRReviewCommentModel) {
     add(comment)
   }
 
-  override fun removeComment(comment: GHPRReviewCommentModel) {
-    val index = items.indexOf(comment)
-    if (index < 0) error("Comment not found in thread")
-    if (index == 0) {
-      deletionEventDispatcher.multicaster.eventOccurred()
-    }
-    else remove(index)
-  }
-
-  override fun addDeletionListener(listener: () -> Unit) = SimpleEventListener.addListener(deletionEventDispatcher, listener)
+  override fun addStateChangeListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

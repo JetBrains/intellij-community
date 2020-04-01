@@ -55,7 +55,9 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
    * @param key         the color key for which the color is specified.
    * @param kind        the type of color corresponding to the color key (foreground or background).
    */
-  public ColorDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String displayName, @NotNull ColorKey key, @NotNull Kind kind) {
+  public ColorDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String displayName,
+                         @NotNull ColorKey key,
+                         @NotNull Kind kind) {
     super(displayName, key);
     myKind = kind;
   }

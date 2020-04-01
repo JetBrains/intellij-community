@@ -9,20 +9,22 @@ import java.io.File
 internal object GraziePlugin {
   const val id = "tanvd.grazi"
 
-  const val languageToolVersion = "4.7.10"
-  const val languageToolURL = "https://resources.jetbrains.com/grazie/model/language-tool"
+  object LanguageTool {
+    const val version = "4.7.10"
+    const val url = "https://resources.jetbrains.com/grazie/model/language-tool"
+  }
 
   private val descriptor: IdeaPluginDescriptor
     get() = PluginManagerCore.getPlugin(PluginId.getId(id))!!
+
+  val group: String
+    get() = GrazieBundle.message("grazie.group.name")
 
   val name: String
     get() = GrazieBundle.message("grazie.name")
 
   val isBundled: Boolean
     get() = descriptor.isBundled
-
-  val version: String
-    get() = descriptor.version
 
   val classLoader: ClassLoader
     get() = descriptor.pluginClassLoader

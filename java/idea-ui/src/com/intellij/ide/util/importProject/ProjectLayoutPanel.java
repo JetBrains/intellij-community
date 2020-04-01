@@ -165,7 +165,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
 
   private List<T> alphaSortList(final List<T> entries) {
-    Collections.sort(entries, COMPARATOR);
+    entries.sort(COMPARATOR);
     return entries;
   }
 

@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EmptyStatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.getEventLogProvider
+import org.jetbrains.annotations.TestOnly
 
 /**
  * An entry point class to record in event log an information about feature usages.
@@ -23,7 +24,8 @@ import com.intellij.internal.statistic.eventLog.getEventLogProvider
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
 object FeatureUsageLogger {
-  private val loggerProvider = getEventLogProvider("FUS")
+  internal var loggerProvider = getEventLogProvider("FUS")
+  @TestOnly internal set
 
   init {
     if (isEnabled()) {

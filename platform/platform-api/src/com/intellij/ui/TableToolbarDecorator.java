@@ -60,7 +60,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  protected JComponent getComponent() {
+  protected @NotNull JComponent getComponent() {
     return myTable;
   }
 

@@ -31,5 +31,7 @@ class HgCloneDialogComponent(project: Project) : DvcsCloneDialogComponent(projec
     val parent = Paths.get(getDirectory()).toAbsolutePath().parent.toAbsolutePath().toString()
 
     HgCheckoutProvider.doClone(project, listener, directory, url, parent)
+    rememberedInputs.addUrl(url)
+    rememberedInputs.cloneParentDir = parent
   }
 }

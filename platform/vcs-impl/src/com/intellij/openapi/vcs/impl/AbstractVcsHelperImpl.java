@@ -63,6 +63,7 @@ import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
@@ -135,7 +136,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @Override
   @Nullable
   public Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                      String title,
+                                                      @NlsContexts.DialogTitle String title,
                                                       @Nullable String prompt,
                                                       @Nullable String singleFileTitle,
                                                       @Nullable String singleFilePromptTemplate,

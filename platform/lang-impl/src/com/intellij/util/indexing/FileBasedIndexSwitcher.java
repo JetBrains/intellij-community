@@ -55,6 +55,7 @@ public class FileBasedIndexSwitcher {
 
     public void turnOn() {
         LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
+        RebuildStatus.reset();
         myFileBasedIndex.initComponent();
         boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -66,6 +67,7 @@ public class FileBasedIndexSwitcher {
             myDumbModeSemaphore.up();
         }
 
+        FileBasedIndexImpl.cleanupProcessedFlag();
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
             DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
         }

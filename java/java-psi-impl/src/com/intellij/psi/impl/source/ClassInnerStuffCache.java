@@ -185,38 +185,43 @@ public class ClassInnerStuffCache {
   }
 
   private PsiMethod makeValuesMethod() {
-    return getSyntheticMethod("public static " + myClass.getName() + "[] values() { }");
+    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + "[] values() { }");
   }
 
   private PsiMethod makeValueOfMethod() {
-    return getSyntheticMethod("public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
-  }
-
-  private PsiMethod getSyntheticMethod(String text) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myClass.getProject());
-    PsiMethod method = factory.createMethodFromText(text, myClass);
-    return new LightMethod(myClass.getManager(), method, myClass) {
-      @Override
-      public int getTextOffset() {
-        return myClass.getTextOffset();
-      }
-
-      @Override
-      public boolean equals(Object another) {
-        return another != null &&
-               another.getClass() == getClass() &&
-               myClass.equals(((LightMethod)another).getContainingClass()) &&
-               text.equals(((LightMethod)another).getText());
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hash(text, myClass);
-      }
-    };
+    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
   }
 
   public void dropCaches() {
     myTracker.incModificationCount();
+  }
+
+  private static class EnumSyntheticMethod extends LightMethod implements SyntheticElement {
+    private final PsiClass myClass;
+    private final String myText;
+
+    EnumSyntheticMethod(@NotNull PsiClass enumClass, @NotNull String text) {
+      super(enumClass.getManager(), JavaPsiFacade.getElementFactory(enumClass.getProject()).createMethodFromText(text, enumClass), enumClass);
+      myClass = enumClass;
+      myText = text;
+    }
+
+    @Override
+    public int getTextOffset() {
+      return myClass.getTextOffset();
+    }
+
+    @Override
+    public boolean equals(Object another) {
+      return this == another ||
+             another instanceof EnumSyntheticMethod &&
+             myClass.equals(((EnumSyntheticMethod)another).myClass) &&
+             myText.equals(((EnumSyntheticMethod)another).myText);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myText, myClass);
+    }
   }
 }

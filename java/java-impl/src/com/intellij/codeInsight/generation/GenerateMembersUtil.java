@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -274,6 +274,12 @@ public class GenerateMembersUtil {
       PsiSubstitutor collisionResolvedSubstitutor =
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
+      PsiTypeElement typeElement = resultMethod.getReturnTypeElement();
+      if (typeElement != null && typeElement.getText().startsWith("@")) {
+        // If return type is annotated, substituteReturnType will add the annotation into type element,
+        // so the method should be reparsed to move it to the modifier list
+        resultMethod = factory.createMethodFromText(resultMethod.getText(), target);
+      }
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
       copyDocComment(sourceMethod, resultMethod, factory);
       GlobalSearchScope scope = sourceMethod.getResolveScope();
@@ -336,7 +342,7 @@ public class GenerateMembersUtil {
                                                                  @NotNull PsiSubstitutor substitutor) {
     String typeParamName = typeParam.getName();
     for (PsiType type : substitutor.getSubstitutionMap().values()) {
-      if (type != null && Comparing.equal(type.getCanonicalText(), typeParamName)) {
+      if (type != null && Objects.equals(type.getCanonicalText(), typeParamName)) {
         final String newName = suggestUniqueTypeParameterName(typeParamName, sourceTypeParameterList, PsiTreeUtil.getParentOfType(target, PsiClass.class, false));
         final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, typeParam.getSuperTypes());
         substitutor.put(typeParam, factory.createType(newTypeParameter));
@@ -362,7 +368,7 @@ public class GenerateMembersUtil {
     if (typeParameterList == null) return true;
 
     for (PsiTypeParameter typeParameter : typeParameterList.getTypeParameters()) {
-      if (Comparing.equal(typeParameter.getName(), baseName)) {
+      if (Objects.equals(typeParameter.getName(), baseName)) {
         return false;
       }
     }
@@ -677,8 +683,8 @@ public class GenerateMembersUtil {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String template = templatesManager.getDefaultTemplate().getTemplate();
-    Function<String, String> calculateTemplateText = 
-      currentTemplate -> 
+    Function<String, String> calculateTemplateText =
+      currentTemplate ->
         GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), currentTemplate, 0, false);
     String methodText;
     try {

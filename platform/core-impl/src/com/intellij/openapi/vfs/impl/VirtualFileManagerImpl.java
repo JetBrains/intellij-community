@@ -104,15 +104,20 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
     }
 
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
-    int size = systems.size();
+    return selectFileSystem(protocol, systems);
+  }
+
+  @Nullable
+  protected VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<VirtualFileSystem> candidates) {
+    int size = candidates.size();
     if (size == 0) {
       return null;
     }
 
     if (size > 1) {
-      LOG.error(protocol + ": " + systems);
+      LOG.error(protocol + ": " + candidates);
     }
-    return systems.get(0);
+    return candidates.get(0);
   }
 
   @Override

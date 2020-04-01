@@ -2,10 +2,12 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,8 +28,6 @@ public class EncodingManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String charsetKey = "charset";
 
-  private final Project myProject;
-
   public static final Map<String, Charset> encodingMap;
 
   static {
@@ -41,28 +41,32 @@ public class EncodingManager implements FileDocumentManagerListener {
 
   private boolean isApplyingSettings;
 
-  public EncodingManager(Project project) {
-    this.myProject = project;
+  public EncodingManager() {
     isApplyingSettings = false;
   }
 
   @Override
   public void beforeDocumentSaving(@NotNull Document document) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (!isApplyingSettings) {
-      applySettings(file);
+      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+      if (project != null) {
+        applySettings(project, file);
+      }
     }
   }
 
-  private void applySettings(VirtualFile file) {
+  private void applySettings(Project project, VirtualFile file) {
     if (file == null) return;
-    if (!Utils.isEnabled(CodeStyle.getSettings(myProject))) return;
+    if (!Utils.isEnabled(CodeStyle.getSettings(project))) return;
 
     // Prevent "setEncoding" calling "saveAll" from causing an endless loop
     isApplyingSettings = true;
     try {
-      final List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
-      final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(myProject);
+      final List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, file);
+      final EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
       final String charset = Utils.configValueForKey(outPairs, charsetKey);
       if (!charset.isEmpty()) {
         final Charset newCharset = encodingMap.get(charset);
@@ -70,7 +74,7 @@ public class EncodingManager implements FileDocumentManagerListener {
           if (Comparing.equal(newCharset, file.getCharset())) return;
           encodingProjectManager.setEncoding(file, newCharset);
         } else {
-          Utils.invalidConfigMessage(myProject, charset, charsetKey, file.getCanonicalPath());
+          Utils.invalidConfigMessage(project, charset, charsetKey, file.getCanonicalPath());
         }
       }
     } finally {

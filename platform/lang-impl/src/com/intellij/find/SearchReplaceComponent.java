@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
@@ -82,7 +83,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private final DataProvider myDataProviderDelegate;
 
   private boolean myMultilineMode;
-  private String myStatusText = "";
+  @NotNull private String myStatusText = "";
+  @NotNull private Color myStatusColor = UIUtil.getLabelForeground();
   private DefaultActionGroup myTouchbarActions;
 
   @NotNull
@@ -157,11 +159,20 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
         myReplaceTextComponent = unwrapTextComponent(wrapped);
       }
     };
+    myReplaceFieldWrapper.setBorder(JBUI.Borders.emptyTop(1));
 
-    myLeftPanel = new JPanel(new BorderLayout(0, 1));
+    myLeftPanel = new JPanel(new GridBagLayout());
     myLeftPanel.setBackground(JBColor.border());
-    myLeftPanel.add(mySearchFieldWrapper, BorderLayout.CENTER);
-    myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
+    GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.fill = GridBagConstraints.BOTH;
+    constraints.weightx = 1;
+    constraints.weighty = 1;
+    myLeftPanel.add(mySearchFieldWrapper, constraints);
+    constraints.gridy++;
+    myLeftPanel.add(myReplaceFieldWrapper, constraints);
+    myLeftPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 0, 1));
 
     mySearchActionsToolbar1 = createSearchToolbar1(searchToolbar1Actions);
     Wrapper searchToolbarWrapper1 = new NonOpaquePanel(new BorderLayout());
@@ -169,20 +180,22 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     mySearchActionsToolbar2 = createSearchToolbar2(searchToolbar2Actions);
     mySearchActionsToolbar2.setForceShowFirstComponent(true);
     Wrapper searchToolbarWrapper2 = new Wrapper(mySearchActionsToolbar2);
-    mySearchActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(4));
+    searchToolbarWrapper2.setBorder(JBUI.Borders.emptyLeft(4));
     JPanel searchPair = new NonOpaquePanel(new BorderLayout());
     searchPair.add(searchToolbarWrapper1, BorderLayout.WEST);
     searchPair.add(searchToolbarWrapper2, BorderLayout.CENTER);
 
     myReplaceActionsToolbar1 = createReplaceToolbar1(replaceToolbar1Actions);
+    myReplaceActionsToolbar1.setBorder(JBUI.Borders.empty());
     Wrapper replaceToolbarWrapper1 = new Wrapper(myReplaceActionsToolbar1);
     myReplaceActionsToolbar2 = createReplaceToolbar2(replaceToolbar2Actions);
     myReplaceActionsToolbar2.setForceShowFirstComponent(true);
     Wrapper replaceToolbarWrapper2 = new Wrapper(myReplaceActionsToolbar2);
-    myReplaceActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(4));
+    replaceToolbarWrapper2.setBorder(JBUI.Borders.emptyLeft(4));
     myReplaceToolbarWrapper = new NonOpaquePanel(new BorderLayout());
     myReplaceToolbarWrapper.add(replaceToolbarWrapper1, BorderLayout.WEST);
     myReplaceToolbarWrapper.add(replaceToolbarWrapper2, BorderLayout.CENTER);
+    myReplaceToolbarWrapper.setBorder(JBUI.Borders.emptyTop(3));
 
     searchToolbarWrapper1.setHorizontalSizeReferent(replaceToolbarWrapper1);
 
@@ -265,6 +278,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     return myStatusText;
   }
 
+  @NotNull
+  public Color getStatusColor() {
+    return myStatusColor;
+  }
+
   public void replace() {
     if (myReplaceAction != null) {
       myReplaceAction.run();
@@ -279,10 +297,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   public void setRegularBackground() {
     mySearchTextComponent.setBackground(UIUtil.getTextFieldBackground());
+    myStatusColor = UIUtil.getLabelForeground();
   }
 
   public void setNotFoundBackground() {
     mySearchTextComponent.setBackground(LightColors.RED);
+    myStatusColor = UIUtil.getErrorForeground();
   }
 
   @Nullable
@@ -318,7 +338,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     boolean stateChanged = multiline != myMultilineMode;
     myMultilineMode = multiline;
     if (stateChanged) {
-      multilineStateChanged();
+      myEventDispatcher.getMulticaster().multilineStateChanged();
     }
   }
 
@@ -342,7 +362,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(() -> searchFieldDocumentChanged());
+        ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().searchFieldDocumentChanged());
       }
     });
 
@@ -389,7 +409,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myReplaceTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(() -> replaceFieldDocumentChanged());
+        ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().replaceFieldDocumentChanged());
       }
     });
 
@@ -408,25 +428,9 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     boolean needToResetReplaceFocus = myReplaceTextComponent != null && myReplaceTextComponent.hasFocus();
     updateSearchComponent(findText);
     updateReplaceComponent(replaceText);
-    if (replaceMode) {
-      if (myReplaceFieldWrapper.getParent() == null) {
-        myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
-      }
-      if (myReplaceToolbarWrapper.getParent() == null) {
-        myRightPanel.add(myReplaceToolbarWrapper, BorderLayout.SOUTH);
-      }
-      if (needToResetReplaceFocus) {
-        myReplaceTextComponent.requestFocusInWindow();
-      }
-    }
-    else {
-      if (myReplaceFieldWrapper.getParent() != null) {
-        myLeftPanel.remove(myReplaceFieldWrapper);
-      }
-      if (myReplaceToolbarWrapper.getParent() != null) {
-        myRightPanel.remove(myReplaceToolbarWrapper);
-      }
-    }
+    myReplaceFieldWrapper.setVisible(replaceMode);
+    myReplaceToolbarWrapper.setVisible(replaceMode);
+    if (needToResetReplaceFocus) myReplaceTextComponent.requestFocusInWindow();
     if (needToResetSearchFocus) mySearchTextComponent.requestFocusInWindow();
     updateBindings();
     updateActions();
@@ -476,8 +480,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     if (oldComponent != null) return false;
     final MyTextComponentWrapper wrapper = search ? mySearchFieldWrapper : myReplaceFieldWrapper;
 
-    final JTextArea textComponent;
-    SearchTextArea textArea = new SearchTextArea(search);
+    final JBTextArea textComponent = new JBTextArea();
+    textComponent.setRows(isMultiline() ? 2 : 1);
+    textComponent.setColumns(32);
+    SearchTextArea textArea = new SearchTextArea(textComponent, search);
     if (search) {
       myExtraSearchButtons.clear();
       myExtraSearchButtons.addAll(textArea.setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
@@ -485,9 +491,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       myExtraReplaceButtons.clear();
       myExtraReplaceButtons.addAll(textArea.setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
     }
-    textComponent = textArea.getTextArea();
-    textComponent.setRows(isMultiline() ? 2 : 1);
-    textComponent.setColumns(32);
     // Display empty text only when focused
     textComponent.putClientProperty(
       "StatusVisibleFunction", (BooleanFunction<JTextComponent>)(c -> c.getText().isEmpty() && c.isFocusOwner()));
@@ -509,41 +512,13 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
         textComponent.repaint();
       }
     });
-    installCloseOnEscapeAction(textComponent);
-    return true;
-  }
-
-  private void searchFieldDocumentChanged() {
-    if (mySearchTextComponent instanceof JTextArea) {
-      adjustRows((JTextArea)mySearchTextComponent);
-    }
-    myEventDispatcher.getMulticaster().searchFieldDocumentChanged();
-  }
-
-  private void replaceFieldDocumentChanged() {
-    if (myReplaceTextComponent instanceof JTextArea) {
-      adjustRows((JTextArea)myReplaceTextComponent);
-    }
-    myReplaceActionsToolbar2.invalidate();
-    doLayout();
-    myEventDispatcher.getMulticaster().replaceFieldDocumentChanged();
-  }
-
-  private void multilineStateChanged() {
-    myEventDispatcher.getMulticaster().multilineStateChanged();
-  }
-
-  private static void adjustRows(@NotNull JTextArea area) {
-    area.setRows(Math.max(1, Math.min(3, StringUtil.countChars(area.getText(), '\n') + 1)));
-  }
-
-  private void installCloseOnEscapeAction(@NotNull JTextComponent c) {
     new CloseAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         close();
       }
-    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE), c);
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE), textArea);
+    return true;
   }
 
   private abstract static class CloseAction extends DumbAwareAction implements LightEditCompatible {
@@ -634,7 +609,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
-    toolbar.setBorder(JBUI.Borders.empty());
     toolbar.setTargetComponent(this);
     toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
     Utils.setSmallerFontForChildren(toolbar);
@@ -758,9 +732,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   private static class MyTextComponentWrapper extends Wrapper {
-    {
-      setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 0, 1));
-    }
     @Nullable
     public JTextComponent getTextComponent() {
       JComponent wrapped = getTargetComponent();

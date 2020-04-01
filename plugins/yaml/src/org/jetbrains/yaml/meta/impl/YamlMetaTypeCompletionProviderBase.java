@@ -47,17 +47,34 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
 
     PsiElement position = params.getPosition();
 
-    if (!isOfType(position.getParent(), YAMLElementTypes.SCALAR_PLAIN_VALUE, YAMLElementTypes.SCALAR_QUOTED_STRING)) {
-      //weird, should be filtered by contributor
-      return;
+    if (isOfType(position.getParent(), YAMLElementTypes.SCALAR_PLAIN_VALUE, YAMLElementTypes.SCALAR_QUOTED_STRING)) {
+      // it's a value or an inserted key (no ':' after)
+      processValueOrInsertedKey(params, result, metaTypeProvider);
     }
+    else if (isOfType(position, YAMLTokenTypes.SCALAR_KEY) && position.getParent() instanceof YAMLKeyValue) {
+      // if it's an updated key (followed by ':')
+      processUpdatedKey(params, result, metaTypeProvider);
+    }
+  }
 
-    final YAMLScalar insertedScalar = (YAMLScalar)position.getParent();
+  private void processUpdatedKey(@NotNull CompletionParameters params,
+                                 @NotNull CompletionResultSet result,
+                                 YamlMetaTypeProvider metaTypeProvider) {
+    YamlMetaTypeProvider.MetaTypeProxy meta = metaTypeProvider.getMetaTypeProxy(params.getPosition().getParent());
+    if (meta != null) {
+      addKeyCompletions(params, metaTypeProvider, meta, result, params.getPosition());
+    }
+  }
 
-    /*
-    trace("Position: " + getDebugInfo(position));
-    trace("Position parent: " + getDebugInfo(insertedScalar));
-    */
+  private void processValueOrInsertedKey(@NotNull CompletionParameters params,
+                                         @NotNull CompletionResultSet result,
+                                         YamlMetaTypeProvider metaTypeProvider) {
+    final YAMLScalar insertedScalar = (YAMLScalar)params.getPosition().getParent();
+
+      /*
+      trace("Position: " + getDebugInfo(position));
+      trace("Position parent: " + getDebugInfo(insertedScalar));
+      */
 
     if (insertedScalar.getTextRange().getStartOffset() < params.getOffset()) {
       // inserting scalar just after the end of `key:` transforms the key into scalar `key:IntelliJIdeaRulezzz`,
@@ -70,7 +87,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
         return;
       }
       if (combinedText.charAt(positionOffset - 1) == ':') {
-        trace("Completion rejected: misplaced just after key position : " + YamlDebugUtil.getDebugInfo(position));
+        trace("Completion rejected: misplaced just after key position : " + YamlDebugUtil.getDebugInfo(params.getPosition()));
         return;
       }
     }
@@ -120,7 +137,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
         }
       }
     }
-    if (!(metaType instanceof YamlScalarType)) {
+    if (!(metaType instanceof YamlScalarType)) { // if it's certainly not a value
       addKeyCompletions(params, metaTypeProvider, meta, result, insertedScalar);
     }
   }

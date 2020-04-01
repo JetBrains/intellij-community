@@ -6,12 +6,10 @@ import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -19,10 +17,14 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
@@ -44,6 +46,7 @@ import javax.swing.text.View;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
 import java.awt.image.ImageObserver;
 import java.util.HashMap;
@@ -53,13 +56,12 @@ import java.util.Objects;
 class DocRenderer implements EditorCustomElementRenderer {
   private static final int MIN_WIDTH = 350;
   private static final int MAX_WIDTH = 680;
-  private static final int LEFT_INSET = 15;
+  private static final int LEFT_INSET = 14;
   private static final int RIGHT_INSET = 12;
   private static final int TOP_BOTTOM_INSETS = 4;
-  private static final int LINE_WIDTH = 3;
 
   private static StyleSheet ourCachedStyleSheet;
-  private static String ourCachedStyleSheetLaf = "non-existing";
+  private static String ourCachedStyleSheetLinkColor = "non-existing";
   private static String ourCachedStyleSheetMonoFont = "non-existing";
 
   private final DocRenderItem myItem;
@@ -103,16 +105,23 @@ class DocRenderer implements EditorCustomElementRenderer {
     if (filledHeight <= 0) return;
     int filledStartY = targetRegion.y + topMargin;
 
-    g.setColor(((EditorEx)inlay.getEditor()).getBackgroundColor());
+    EditorEx editor = (EditorEx)inlay.getEditor();
+    Color defaultBgColor = editor.getBackgroundColor();
+    Color currentBgColor = textAttributes.getBackgroundColor();
+    Color bgColor = currentBgColor == null ? defaultBgColor
+                                           : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(),
+                                                           Registry.doubleValue("editor.render.doc.comments.bg.transparency"));
+    g.setColor(bgColor);
     g.fillRect(startX, filledStartY, endX - startX, filledHeight);
-    g.setColor(inlay.getEditor().getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
-    g.fillRect(startX, filledStartY, scale(LINE_WIDTH), filledHeight);
+    g.setColor(editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
+    g.fillRect(startX, filledStartY, scale(getLineWidth()), filledHeight);
 
     int topBottomInset = scale(TOP_BOTTOM_INSETS);
     int componentWidth = endX - startX - scale(LEFT_INSET) - scale(RIGHT_INSET);
     int componentHeight = filledHeight - topBottomInset * 2;
     if (componentWidth > 0 && componentHeight > 0) {
       JComponent component = getRendererComponent(inlay, componentWidth, componentHeight);
+      component.setBackground(bgColor);
       Graphics dg = g.create(startX + scale(LEFT_INSET), filledStartY + topBottomInset, componentWidth, componentHeight);
       GraphicsUtil.setupAntialiasing(dg);
       component.paint(dg);
@@ -120,9 +129,13 @@ class DocRenderer implements EditorCustomElementRenderer {
     }
   }
 
+  private static int getLineWidth() {
+    return Registry.intValue("editor.render.doc.comments.line.width", 2);
+  }
+
   @Override
   public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
-    return new DocRenderItem.MyGutterIconRenderer(getToggleAction(), AllIcons.Gutter.JavadocEdit);
+    return DocRenderDummyLineMarkerProvider.isGutterIconEnabled() ? myItem.new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit) : null;
   }
 
   @Override
@@ -188,7 +201,6 @@ class DocRenderer implements EditorCustomElementRenderer {
       fontAttributes.put(TextAttribute.KERNING, 0);
       myPane.setFont(myPane.getFont().deriveFont(fontAttributes));
       myPane.setForeground(getTextColor(editor.getColorsScheme()));
-      myPane.setBackground(editor.getBackgroundColor());
       String textToRender = myItem.textToRender;
       if (textToRender == null) {
         textToRender = CodeInsightBundle.message("doc.render.loading.text");
@@ -216,50 +228,81 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private void activateLink(HyperlinkEvent event) {
-    Editor editor = myItem.editor;
-    Project project = editor.getProject();
     Element element = event.getSourceElement();
-    if (project != null && element != null) {
-      Rectangle location = null;
-      try {
-        location = myPane.modelToView(element.getStartOffset());
+    if (element == null) return;
+
+    Rectangle location = null;
+    try {
+      location = myPane.modelToView(element.getStartOffset());
+    }
+    catch (BadLocationException ignored) {}
+    if (location == null) return;
+
+    PsiDocCommentBase comment = myItem.getComment();
+    PsiElement owner = comment == null ? null : comment.getOwner();
+    if (owner == null) return;
+
+    String url = event.getDescription();
+    if (isGotoDeclarationEvent()) {
+      navigateToDeclaration(owner, url);
+    }
+    else {
+      showDocumentation(myItem.editor, owner, url, location);
+    }
+  }
+
+  private static boolean isGotoDeclarationEvent() {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null) return false;
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (!(event instanceof MouseEvent)) return false;
+    MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut((MouseEvent)event);
+    return keymapManager.getActiveKeymap().getActionIds(mouseShortcut).contains(IdeActions.ACTION_GOTO_DECLARATION);
+  }
+
+  private static void navigateToDeclaration(@NotNull PsiElement context, @NotNull String linkUrl) {
+    PsiElement targetElement = DocumentationManager.getInstance(context.getProject()).getTargetElement(context, linkUrl);
+    if (targetElement instanceof Navigatable) {
+      ((Navigatable)targetElement).navigate(true);
+    }
+  }
+
+  private void showDocumentation(@NotNull Editor editor,
+                                 @NotNull PsiElement context,
+                                 @NotNull String linkUrl,
+                                 @NotNull Rectangle linkLocationWithinInlay) {
+    Project project = context.getProject();
+    DocumentationManager documentationManager = DocumentationManager.getInstance(project);
+    if (QuickDocUtil.getActiveDocComponent(project) == null) {
+      Point inlayPosition = Objects.requireNonNull(myItem.inlay.getBounds()).getLocation();
+      Point relativePosition = getEditorPaneLocationWithinInlay();
+      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT,
+                         new Point(inlayPosition.x + relativePosition.x + linkLocationWithinInlay.x,
+                                   inlayPosition.y + relativePosition.y + linkLocationWithinInlay.y + linkLocationWithinInlay.height));
+      documentationManager.showJavaDocInfo(editor, context, context, () -> {
+        editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
+      }, "", false, true);
+    }
+    DocumentationComponent component = QuickDocUtil.getActiveDocComponent(project);
+    if (component != null) {
+      if (!documentationManager.hasActiveDockedDocWindow()) {
+        component.startWait();
       }
-      catch (BadLocationException ignored) {}
-      PsiElement owner = myItem.getOwner();
-      if (owner != null && location != null) {
-        DocumentationManager documentationManager = DocumentationManager.getInstance(project);
-        if (QuickDocUtil.getActiveDocComponent(project) == null) {
-          Point inlayPosition = Objects.requireNonNull(myItem.inlay.getBounds()).getLocation();
-          Point relativePosition = getEditorPaneLocationWithinInlay();
-          editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT,
-                             new Point(inlayPosition.x + relativePosition.x + location.x,
-                                       inlayPosition.y + relativePosition.y + location.y + location.height));
-          documentationManager.showJavaDocInfo(editor, owner, owner, () -> {
-            editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
-          }, "", false, true);
+      documentationManager.navigateByLink(component, linkUrl);
+    }
+    if (documentationManager.getDocInfoHint() == null) {
+      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
+    }
+    if (documentationManager.hasActiveDockedDocWindow()) {
+      documentationManager.setAllowContentUpdateFromContext(false);
+      Disposable disposable = Disposer.newDisposable();
+      editor.getCaretModel().addCaretListener(new CaretListener() {
+        @Override
+        public void caretPositionChanged(@NotNull CaretEvent e) {
+          documentationManager.resetAutoUpdateState();
+          Disposer.dispose(disposable);
         }
-        DocumentationComponent component = QuickDocUtil.getActiveDocComponent(project);
-        if (component != null) {
-          if (!documentationManager.hasActiveDockedDocWindow()) {
-            component.startWait();
-          }
-          documentationManager.navigateByLink(component, event.getDescription());
-        }
-        if (documentationManager.getDocInfoHint() == null) {
-          editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
-        }
-        if (documentationManager.hasActiveDockedDocWindow()) {
-          documentationManager.setAllowContentUpdateFromContext(false);
-          Disposable disposable = Disposer.newDisposable();
-          editor.getCaretModel().addCaretListener(new CaretListener() {
-            @Override
-            public void caretPositionChanged(@NotNull CaretEvent e) {
-              documentationManager.resetAutoUpdateState();
-              Disposer.dispose(disposable);
-            }
-          }, disposable);
-        }
-      }
+      }, disposable);
     }
   }
 
@@ -307,25 +350,28 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private static StyleSheet getStyleSheet(@NotNull Editor editor) {
-    UIManager.LookAndFeelInfo lookAndFeel = LafManager.getInstance().getCurrentLookAndFeel();
-    String lafName = lookAndFeel == null ? null : lookAndFeel.getName();
-    String editorFontName = ObjectUtils.notNull(editor.getColorsScheme().getEditorFontName(), Font.MONOSPACED);
-    if (!Objects.equals(lafName, ourCachedStyleSheetLaf) || !Objects.equals(editorFontName, ourCachedStyleSheetMonoFont)) {
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    String editorFontName = ObjectUtils.notNull(colorsScheme.getEditorFontName(), Font.MONOSPACED);
+    Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
+    if (linkColor == null) linkColor = getTextColor(colorsScheme);
+    String linkColorHex = ColorUtil.toHex(linkColor);
+    if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor) || !Objects.equals(editorFontName, ourCachedStyleSheetMonoFont)) {
       String escapedFontName = StringUtil.escapeQuotes(editorFontName);
       ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
+        "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family:\"" + escapedFontName + "\"}" +
-        "pre {font-family:\"" + escapedFontName + "\"}" +
+        "pre {font-family:\"" + escapedFontName + "\";" +
+             "white-space: pre-wrap}" + // supported by JetBrains Runtime
         "h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }" +
-        "a { color: #" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkSecondaryColor()) + "; text-decoration: none;}" +
+        "a { color: #" + linkColorHex + "; text-decoration: none;}" +
         "p { padding: 1px 0 2px 0; }" +
         "ol { padding: 0 16px 0 0; }" +
         "ul { padding: 0 16px 0 0; }" +
         "li { padding: 1px 0 2px 0; }" +
         "table p { padding-bottom: 0}" +
-        "td { margin: 4px 0 0 0; padding: 0; }" +
         "th { text-align: left; }"
       );
-      ourCachedStyleSheetLaf = lafName;
+      ourCachedStyleSheetLinkColor = linkColorHex;
       ourCachedStyleSheetMonoFont = editorFontName;
     }
     return ourCachedStyleSheet;

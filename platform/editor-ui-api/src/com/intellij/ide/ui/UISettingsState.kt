@@ -88,8 +88,6 @@ class UISettingsState : BaseState() {
   var showNavigationBar by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR_MEMBERS")
   var showMembersInNavigationBar by property(true)
-  @get:OptionTag("ALWAYS_SHOW_WINDOW_BUTTONS")
-  var alwaysShowWindowsButton by property(false)
   @get:OptionTag("CYCLE_SCROLLING")
   var cycleScrolling by property(true)
   @get:OptionTag("SELECTED_TABS_LAYOUT_INFO_ID")

@@ -49,9 +49,9 @@ class Foo {
   @Contract("-><warning descr="Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: foo">foo</warning>")
   public native void invalidReturn();
 
-  @Contract("<warning descr="Contract clause 'true -> fail': parameter #1 has 'String' type (expected boolean)">true</warning> -> fail")
+  @Contract("<warning descr="Parameter 's' has 'String' type (expected boolean)">true</warning> -> fail")
   public native void invalidType(String s);
 
-  @Contract("<warning descr="Contract clause 'null -> fail': parameter #1 has primitive type 'int'">null</warning> -> fail")
+  @Contract("<warning descr="Parameter 's' has primitive type 'int', so 'null' is not applicable">null</warning> -> fail")
   public native void invalidType(int s);
 }

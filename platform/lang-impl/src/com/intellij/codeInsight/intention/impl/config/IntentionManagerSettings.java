@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.ui.TopHitCache;
+import com.intellij.ide.ui.search.SearchableOptionContributor;
+import com.intellij.ide.ui.search.SearchableOptionProcessor;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -67,7 +69,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
         unregisterMetaDataForEP(extension);
         TopHitCache.getInstance().invalidateCachedOptions(IntentionsOptionsTopHitProvider.class);
       }
-    }, true, this);
+    }, false, this);
   }
 
   @Override
@@ -176,9 +178,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
 
   private synchronized MetaDataKey registerMetaData(@NotNull IntentionActionMetaData metaData) {
     MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.getFamily());
-    if (!myMetaData.containsKey(key)){
-      processMetaData(metaData);
-    }
+    processMetaData(metaData);
     myMetaData.put(key, metaData);
     return key;
   }
@@ -224,7 +224,16 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
 
   private synchronized void unregisterMetaDataForEP(IntentionActionBean extension) {
     MetaDataKey key = myExtensionMapping.remove(extension);
-    assert key != null : extension;
-    myMetaData.remove(key);
+    if (key != null) {
+      myMetaData.remove(key);
+    }
+  }
+
+  private static class IntentionSearchableOptionContributor extends SearchableOptionContributor {
+    @Override
+    public void processOptions(@NotNull SearchableOptionProcessor processor) {
+      IntentionManagerSettings settings = getInstance();
+      IntentionManager.EP_INTENTION_ACTIONS.forEachExtensionSafe(bean -> settings.registerMetaDataForEP(bean));
+    }
   }
 }

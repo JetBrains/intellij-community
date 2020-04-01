@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -638,7 +639,7 @@ public class LambdaUtil {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
         for (PsiExpression expression : getReturnExpressions(lambdaExpression)) {
-          errors.put(expression, "Unexpected return value");
+          errors.put(expression, JavaPsiBundle.message("unexpected.return.value"));
         }
       }
       else if (body instanceof PsiExpression) {
@@ -646,10 +647,11 @@ public class LambdaUtil {
           if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
             final PsiType type = ((PsiExpression)body).getType();
             if (PsiType.VOID.equals(type)) {
-              errors.put(body, "Lambda body must be a statement expression");
+              errors.put(body, JavaPsiBundle.message("lambda.body.must.be.a.statement.expression"));
             }
             else {
-              errors.put(body, "Bad return type in lambda expression: " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) + " cannot be converted to void");
+              errors.put(body, JavaPsiBundle.message("bad.return.type.in.lambda.expression1",
+                                                     (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText())));
             }
           }
         }
@@ -662,7 +664,8 @@ public class LambdaUtil {
       for (final PsiExpression expression : returnExpressions) {
         final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, expression::getType);
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
-          errors.put(expression, "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText());
+          errors.put(expression, JavaPsiBundle.message("bad.return.type.in.lambda.expression", expressionType.getPresentableText(),
+                                                       functionalInterfaceReturnType.getPresentableText()));
         }
       }
       final PsiReturnStatement[] returnStatements = getReturnStatements(lambdaExpression);
@@ -670,12 +673,12 @@ public class LambdaUtil {
         for (PsiReturnStatement statement : returnStatements) {
           final PsiExpression value = statement.getReturnValue();
           if (value == null) {
-            errors.put(statement, "Missing return value");
+            errors.put(statement, JavaPsiBundle.message("missing.return.value.lambda"));
           }
         }
       }
       else if (returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
-        errors.put(lambdaExpression, "Missing return value");
+        errors.put(lambdaExpression, JavaPsiBundle.message("missing.return.value.lambda"));
       }
     }
     return errors.isEmpty() ? null : errors;
@@ -997,7 +1000,7 @@ public class LambdaUtil {
     return true;
   }
 
-  public static PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
+  public static @NotNull PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
     String canonicalText = type.getCanonicalText();
     if (!PsiUtil.isLanguageLevel8OrHigher(expression)) {
       final String arrayInitializer = "new " + canonicalText + "[]{0}";

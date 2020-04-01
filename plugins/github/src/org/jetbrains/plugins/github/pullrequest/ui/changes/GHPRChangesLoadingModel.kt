@@ -7,14 +7,11 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
-class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
-                              private val diffHelper: GHPRChangesDiffHelper,
-                              zipChanges: Boolean)
+class GHPRChangesLoadingModel(val commitsModel: GHPRCommitsModel,
+                              val cumulativeChangesModel: GHPRChangesModel,
+                              val diffHelper: GHPRChangesDiffHelper)
   : GHEventDispatcherLoadingModel() {
 
-  var zipChanges by Delegates.observable(zipChanges) { _, _, _ ->
-    update()
-  }
   private val requestChangesListener = object : GHPRDataProvider.RequestsChangedListener {
     override fun commitsRequestChanged() {
       update()
@@ -35,7 +32,7 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
   override var error: Throwable? = null
     private set
   override val resultAvailable: Boolean
-    get() = changesModel.changes != null || changesModel.commits != null
+    get() = cumulativeChangesModel.changes != null && commitsModel.commitsWithChanges != null
 
   init {
     update()
@@ -47,8 +44,8 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
     if (dataProvider == null) {
       loading = false
       error = null
-      changesModel.commits = null
-      changesModel.changes = null
+      commitsModel.commitsWithChanges = null
+      cumulativeChangesModel.changes = null
       diffHelper.reset()
       eventDispatcher.multicaster.onReset()
     }
@@ -56,18 +53,15 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
       loading = true
       error = null
 
-      updateFuture = dataProvider.changesProviderRequest.handleOnEdt { result, error ->
-
-        if (result != null) {
-          if (zipChanges) changesModel.changes = result.changes
-          else changesModel.commits = result.changesByCommits
-
-          diffHelper.setUp(dataProvider, result)
+      updateFuture = dataProvider.changesProviderRequest.handleOnEdt { changesProvider, error ->
+        if (error == null) {
+          commitsModel.commitsWithChanges = changesProvider.changesByCommits
+          cumulativeChangesModel.changes = changesProvider.changes
+          diffHelper.setUp(dataProvider, changesProvider)
         }
-        if (error != null) this.error = error
+        this.error = error
         loading = false
         eventDispatcher.multicaster.onLoadingCompleted()
-
       }
       eventDispatcher.multicaster.onLoadingStarted()
     }

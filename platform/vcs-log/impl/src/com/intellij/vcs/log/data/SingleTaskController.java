@@ -32,7 +32,7 @@ import java.util.concurrent.TimeoutException;
  * The class is thread-safe: all operations are synchronized.
  */
 public abstract class SingleTaskController<Request, Result> implements Disposable {
-  private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
+  protected static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
   @NotNull private final String myName;
   @NotNull private final Consumer<? super Result> myResultHandler;

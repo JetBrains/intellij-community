@@ -21,10 +21,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -54,6 +56,13 @@ public final class CommandLineProcessor {
     assert file != null;
 
     Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
+    if (PlatformUtils.isDataGrip() && !tempProject && projects.length == 0) {
+      RecentProjectsManager recentProjectsManager = RecentProjectsManager.getInstance();
+      if (recentProjectsManager.willReopenProjectOnStart() &&
+          recentProjectsManager.reopenLastProjectsOnStart()) {
+        projects = ProjectUtil.getOpenProjects();
+      }
+    }
     if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, column, tempProject);
       if (project == null) {
@@ -178,13 +187,18 @@ public final class CommandLineProcessor {
         arg = StringUtil.unquoteString(arg);
       }
 
-      Path file = Paths.get(arg);
-      if (!file.isAbsolute()) {
-        file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+      Path file = null;
+      try {
+        file = Paths.get(arg);
+        if (!file.isAbsolute()) {
+          file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+        }
       }
-
-      if (!Files.exists(file)) {
-        return CommandLineProcessorResult.createError("Cannot find file '" + file + "'");
+      catch (InvalidPathException e) {
+        LOG.warn(e);
+      }
+      if (file == null || !Files.exists(file)) {
+        return CommandLineProcessorResult.createError("Cannot find file '" + arg + "'");
       }
 
       if (line != -1 || tempProject) {

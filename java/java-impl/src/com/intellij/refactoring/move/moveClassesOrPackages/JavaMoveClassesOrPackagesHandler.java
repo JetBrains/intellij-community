@@ -439,10 +439,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
        final String moveDirectoryDescription;
        if (myDirectories.length > 1) {
-         moveDirectoryDescription = "Move everything from " + myDirectories.length + " directories to another directory";
+         moveDirectoryDescription =
+           JavaRefactoringBundle.message("move.everything.from.directories.to.another.directory", myDirectories.length);
        }
        else {
-         moveDirectoryDescription = "Move everything from " + myDirectories[0].getVirtualFile().getPresentableUrl() + " to another directory";
+         moveDirectoryDescription =
+           JavaRefactoringBundle.message("move.everything.to.another.directory", myDirectories[0].getVirtualFile().getPresentableUrl());
        }
        myRbMoveDirectory = new JRadioButton();
        myRbMoveDirectory.setMnemonic('e');

@@ -41,7 +41,7 @@ public class TopHitCache implements Disposable {
     if (option instanceof Disposable) Disposer.dispose((Disposable)option);
   }
 
-  public void invalidateCachedOptions(Class<? extends OptionsTopHitProvider.ApplicationLevelProvider> providerClass) {
+  public void invalidateCachedOptions(Class<? extends OptionsSearchTopHitProvider> providerClass) {
     Collection<OptionDescription> removed = map.remove(providerClass);
     if (removed != null) {
       dispose(removed);

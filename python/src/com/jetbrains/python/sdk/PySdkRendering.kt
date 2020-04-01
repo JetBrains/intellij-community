@@ -9,13 +9,14 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.LayeredIcon
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import javax.swing.Icon
 
-const val noInterpreterMarker: String = "<No interpreter>"
+val noInterpreterMarker: String = "<${PyBundle.message("python.sdk.there.is.no.interpreter")}>"
 
 fun name(sdk: Sdk, sdkModificator: SdkModificator? = null): Triple<String?, String, String?> = name(sdk, sdkModificator?.name ?: sdk.name)
 

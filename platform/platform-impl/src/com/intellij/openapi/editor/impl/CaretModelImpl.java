@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -184,7 +184,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     synchronized (myCarets) {
       carets = new ArrayList<>(myCarets);
     }
-    Collections.sort(carets, CARET_POSITION_COMPARATOR);
+    carets.sort(CARET_POSITION_COMPARATOR);
     return carets;
   }
 
@@ -327,7 +327,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     EditorImpl.assertIsDispatchThread();
     if (myCarets.size() > 1) {
       LinkedList<CaretImpl> carets = new LinkedList<>(myCarets);
-      Collections.sort(carets, CARET_POSITION_COMPARATOR);
+      carets.sort(CARET_POSITION_COMPARATOR);
       ListIterator<CaretImpl> it = carets.listIterator();
       CaretImpl keepPrimary = getPrimaryCaret();
       while (it.hasNext()) {

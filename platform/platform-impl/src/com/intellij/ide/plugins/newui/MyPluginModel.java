@@ -1025,8 +1025,8 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
         continue;
       }
 
-      PluginManagerCore.processAllDependencies(plugin, false, descriptor -> {
-        if (descriptor.getPluginId() == rootId) {
+      PluginManagerCore.processAllDependencies(plugin, false, PluginManagerCore.buildPluginIdMap(), (id, descriptor) -> {
+        if (id == rootId) {
           result.add(plugin);
           return FileVisitResult.TERMINATE;
         }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
+import com.intellij.util.io.hostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
@@ -26,6 +28,8 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class InstallPluginService : RestService() {
+  private val LOG = logger<InstallPluginService>()
+
   override fun getServiceName() = "installPlugin"
 
   override fun isAccessible(request: HttpRequest) = true
@@ -69,10 +73,10 @@ internal class InstallPluginService : RestService() {
   private fun installPlugin(request: FullHttpRequest,
                             context: ChannelHandlerContext,
                             pluginId: String): Nothing? {
-    if (isAvailable) {
-      isAvailable = false
-      val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
-      PluginId.findId(pluginId)?.let {
+    PluginId.findId(pluginId)?.let {
+      if (isAvailable) {
+        isAvailable = false
+        val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
         ApplicationManager.getApplication().invokeLater(Runnable {
           AppIcon.getInstance().requestAttention(effectiveProject, true)
           PluginsAdvertiser.installAndEnable(setOf(it)) { }
@@ -123,10 +127,14 @@ internal class InstallPluginService : RestService() {
       return false
     }
 
-    return (originHost != null &&
-            (originHost == "plugins.jetbrains.com" ||
-             originHost.endsWith(".dev.marketplace.intellij.net") ||
-             NetUtils.isLocalhost(originHost))) ||
-           super.isHostTrusted(request, urlDecoder)
+    val hostName = request.hostName
+    if (hostName != null && !NetUtils.isLocalhost(hostName)) {
+      LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
+    }
+
+    return (originHost != null && (
+      listOf("plugins.jetbrains.com", "package-search.services.jetbrains.com", "package-search.jetbrains.com").contains(originHost) ||
+      originHost.endsWith(".dev.marketplace.intellij.net") ||
+      NetUtils.isLocalhost(originHost))) || super.isHostTrusted(request, urlDecoder)
   }
 }

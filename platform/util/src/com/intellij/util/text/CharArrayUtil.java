@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
@@ -26,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CharArrayUtil {
+public final class CharArrayUtil {
   private static final int GET_CHARS_THRESHOLD = 10;
 
   private CharArrayUtil() {
@@ -34,7 +20,7 @@ public class CharArrayUtil {
 
   /**
    * Copies all symbols from the given char sequence to the given array
-   * 
+   *
    * @param src         source data holder
    * @param dst         output data buffer
    * @param dstOffset   start offset to use within the given output data buffer
@@ -54,10 +40,10 @@ public class CharArrayUtil {
   public static void getChars(@NotNull CharSequence src, char @NotNull [] dst, int dstOffset, int len) {
     getChars(src, dst, 0, dstOffset, len);
   }
-  
+
   /**
    * Copies necessary number of symbols from the given char sequence to the given array.
-   * 
+   *
    * @param src         source data holder
    * @param dst         output data buffer
    * @param srcOffset   source text offset
@@ -69,7 +55,7 @@ public class CharArrayUtil {
       ((CharArrayExternalizable)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
       return;
     }
-    
+
     if (len >= GET_CHARS_THRESHOLD) {
       if (src instanceof String) {
         ((String)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
@@ -126,7 +112,7 @@ public class CharArrayUtil {
   }
 
   /**
-   * @return a new char array containing the sub-sequence's chars 
+   * @return a new char array containing the sub-sequence's chars
    */
   public static char @NotNull [] fromSequence(@NotNull CharSequence seq, int start, int end) {
     char[] result = new char[end - start];
@@ -144,7 +130,7 @@ public class CharArrayUtil {
    * <p/>
    * Example:
    * {@code buffer="abc", startOffset=0, endOffset = 3, chars="ab". Result: 2}
-   * 
+   *
    * @param buffer       target buffer which symbols should be checked
    * @param startOffset  start offset to use within the given buffer (inclusive)
    * @param endOffset    end offset to use within the given buffer (exclusive)
@@ -193,10 +179,10 @@ public class CharArrayUtil {
   public static int shiftBackward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
     return shiftBackward(buffer, 0, offset, chars);
   }
-  
+
   public static int shiftBackward(@NotNull CharSequence buffer, int minOffset, int maxOffset, @NotNull String chars) {
     if (maxOffset >= buffer.length()) return maxOffset;
-    
+
     int offset = maxOffset;
     while (true) {
       if (offset < minOffset) break;
@@ -289,11 +275,11 @@ public class CharArrayUtil {
     final int len = s.length();
     if (start + len > end) return false;
     if (start < 0) return false;
-    
+
     //if (buffer instanceof String && s instanceof String) {
     //  return ((String)buffer).regionMatches(offset, (String)s, 0, len);
     //}
-    
+
     for (int i = 0; i < len; i++) {
       if (buffer.charAt(start + i) != s.charAt(i)) return false;
     }
@@ -503,7 +489,7 @@ public class CharArrayUtil {
 
   /**
    * Allows to answer if target region of the given text contains only white space symbols (tabulations, white spaces and line feeds).
-   * 
+   *
    * @param text      text to check
    * @param start     start offset within the given text to check (inclusive)
    * @param end       end offset within the given text to check (exclusive)

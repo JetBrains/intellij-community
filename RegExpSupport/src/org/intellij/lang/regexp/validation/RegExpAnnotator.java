@@ -125,41 +125,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpClass(RegExpClass regExpClass) {
-    if (!(regExpClass.getParent() instanceof RegExpClass)) {
-      checkForDuplicates(regExpClass, new HashSet<>());
-    }
-  }
-
-  private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
-    if (element instanceof RegExpChar) {
-      final RegExpChar regExpChar = (RegExpChar)element;
-      final int value = regExpChar.getValue();
-      if (value != -1 && !seen.add(value)) {
-        myHolder.newAnnotation(HighlightSeverity.WARNING,
-                               RegExpBundle.message("warning.duplicate.character.0.inside.character.class", regExpChar.getText()))
-          .range(regExpChar).create();
-      }
-    }
-    else if (element instanceof RegExpSimpleClass) {
-      final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
-      final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
-      if (!seen.add(kind)) {
-        final String text = regExpSimpleClass.getText();
-        myHolder.newAnnotation(HighlightSeverity.WARNING,
-                               RegExpBundle.message("warning.duplicate.predefined.character.class.0.inside.character.class", text))
-          .range(regExpSimpleClass).create();
-      }
-    }
-    else if (element instanceof RegExpClass) {
-      final RegExpClass regExpClass = (RegExpClass)element;
-      for (RegExpClassElement classElement : regExpClass.getElements()) {
-        checkForDuplicates(classElement, seen);
-      }
-    }
-  }
-
-  @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final PsiElement child = ch.getFirstChild();
     final IElementType type = child.getNode().getElementType();
@@ -362,10 +327,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
-    if (!myLanguageHosts.supportsPythonConditionalRefs(condRef)) {
+  public void visitRegExpConditional(RegExpConditional conditional) {
+    if (!myLanguageHosts.supportsConditionals(conditional)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR,
-                             RegExpBundle.message("error.conditional.references.are.not.supported.in.this.regex.dialect")).create();
+                             RegExpBundle.message("error.conditionals.are.not.supported.in.this.regex.dialect")).create();
     }
   }
 
@@ -530,29 +495,37 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
           return;
         }
       }
-      myLength = length;
+      myLength = length + branchLength;
     }
 
     @Override
-    public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
-      super.visitRegExpQuantifier(quantifier);
+    public void visitRegExpClosure(RegExpClosure closure) {
       if (mySupport == RegExpLanguageHost.Lookbehind.FULL) {
         return;
       }
+      final RegExpQuantifier quantifier = closure.getQuantifier();
       if (quantifier.isCounted()) {
-        final RegExpNumber minElement = quantifier.getMin();
-        final RegExpNumber maxElement = quantifier.getMax();
-        if (minElement != null && maxElement != null) {
-          try {
-            final long min = Long.parseLong(minElement.getText());
-            final long max = Long.parseLong(maxElement.getText());
-            if (min == max) {
-              myLength += min;
+        if (mySupport == RegExpLanguageHost.Lookbehind.FIXED_LENGTH_ALTERNATION ||
+          mySupport == RegExpLanguageHost.Lookbehind.VARIABLE_LENGTH_ALTERNATION) {
+          final RegExpNumber minElement = quantifier.getMin();
+          final RegExpNumber maxElement = quantifier.getMax();
+          if (minElement != null && maxElement != null) {
+            final Number min = minElement.getValue();
+            if (min == null) {
+              myStop = true;
               return;
             }
-          } catch (NumberFormatException ignore) {}
-        }
-        if (mySupport != RegExpLanguageHost.Lookbehind.FINITE_REPETITION) {
+            final Number max = maxElement.getValue();
+            if (min.equals(max)) {
+              final int length = myLength;
+              myLength = 0;
+              final RegExpAtom atom = closure.getAtom();
+              atom.accept(this);
+              final int atomLength = myLength;
+              myLength = length + (atomLength * min.intValue());
+              return;
+            }
+          }
           stopAndReportError(quantifier,
                              RegExpBundle.message("error.unequal.min.and.max.in.counted.quantifier.not.allowed.inside.lookbehind"));
         }
@@ -577,10 +550,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
 
     @Override
-    public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
-      super.visitRegExpPyCondRef(condRef);
+    public void visitRegExpConditional(RegExpConditional conditional) {
+      super.visitRegExpConditional(conditional);
       if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {
-        stopAndReportError(condRef, RegExpBundle.message("error.conditional.group.reference.not.allowed.inside.lookbehind"));
+        stopAndReportError(conditional, RegExpBundle.message("error.conditional.group.reference.not.allowed.inside.lookbehind"));
       }
     }
 

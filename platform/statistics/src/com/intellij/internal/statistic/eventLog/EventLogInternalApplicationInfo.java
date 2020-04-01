@@ -15,9 +15,16 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     new InternalDataCollectorDebugLogger(Logger.getInstance(EventLogStatisticsService.class));
 
   private final boolean myIsTest;
+  private final DataCollectorSystemEventLogger myEventLogger;
 
-  public EventLogInternalApplicationInfo(boolean isTest) {
+  public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
     myIsTest = isTest;
+    myEventLogger = new DataCollectorSystemEventLogger() {
+      @Override
+      public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+        EventLogSystemLogger.logSystemError(recorderId, eventId, exception.getClass().getName(), -1);
+      }
+    };
   }
 
   @NotNull
@@ -58,5 +65,10 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public DataCollectorDebugLogger getLogger() {
     return LOG;
+  }
+
+  @Override
+  public @NotNull DataCollectorSystemEventLogger getEventLogger() {
+    return myEventLogger;
   }
 }

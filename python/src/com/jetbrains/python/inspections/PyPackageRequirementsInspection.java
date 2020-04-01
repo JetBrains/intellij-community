@@ -8,9 +8,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.core.CoreBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
@@ -28,7 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
@@ -97,10 +96,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
       final Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
         if (file.getText().trim().isEmpty()) {
-          registerProblem(file, PyBundle.message("python.requirements.file.empty"),
+          registerProblem(file, PyPsiBundle.message("python.requirements.file.empty"),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
         }
-        else checkPackagesHaveBeenInstalled(file, module);
+        else {
+          checkPackagesHaveBeenInstalled(file, module);
+        }
       }
     }
 
@@ -115,10 +116,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "s" : "",
                                        PyPackageUtil.requirementsToString(unsatisfied),
                                        plural ? "are" : "is");
-            final Set<String> unsatisfiedNames = new HashSet<>();
-            for (PyRequirement req : unsatisfied) {
-              unsatisfiedNames.add(req.getName() + req.getExtras());
-            }
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
             // TODO: Introduce an inspection extension
             if (PipenvKt.isPipEnv(sdk)) {
@@ -127,7 +124,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             else {
               quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             }
-            quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
+            quickFixes.add(new IgnoreRequirementFix(ContainerUtil.map2Set(unsatisfied, PyRequirement::getName)));
             registerProblem(file, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
                             quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -347,16 +344,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   private static int askToConfigureInterpreter(@NotNull Project project, @NotNull Sdk sdk) {
     final String sdkName = StringUtil.shortenTextWithEllipsis(sdk.getName(), 25, 0);
-    final String text = PyBundle.message("INSP.package.requirements.administrator.privileges.required.description", sdkName);
+    final String text = PyPsiBundle.message("INSP.package.requirements.administrator.privileges.required.description", sdkName);
     final String[] options = {
-      PyBundle.message("INSP.package.requirements.administrator.privileges.required.button.configure"),
-      PyBundle.message("INSP.package.requirements.administrator.privileges.required.button.install.anyway"),
+      PyPsiBundle.message("INSP.package.requirements.administrator.privileges.required.button.configure"),
+      PyPsiBundle.message("INSP.package.requirements.administrator.privileges.required.button.install.anyway"),
       CoreBundle.message("button.cancel")
     };
     return Messages.showIdeaMessageDialog(
       project,
       text,
-      PyBundle.message("INSP.package.requirements.administrator.privileges.required"),
+      PyPsiBundle.message("INSP.package.requirements.administrator.privileges.required"),
       options,
       0,
       Messages.getWarningIcon(),
@@ -498,13 +495,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull
     @Override
     public String getName() {
-      return PyBundle.message("QFIX.NAME.install.and.import.package", myPackageName);
+      return PyPsiBundle.message("QFIX.NAME.install.and.import.package", myPackageName);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return PyBundle.message("QFIX.install.and.import.package");
+      return PyPsiBundle.message("QFIX.install.and.import.package");
     }
 
     @Override
@@ -533,7 +530,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
               AddImportHelper.addImportStatement(element.getContainingFile(), myPackageName, myAsName,
                                                  AddImportHelper.ImportPriority.THIRD_PARTY, element);
-            }), PyBundle.message("INSP.package.requirements.add.import"), "Add import");
+            }), PyPsiBundle.message("INSP.package.requirements.add.import"), "Add import");
           }
         }
       });
@@ -550,7 +547,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return PyBundle.message("python.requirements.quickfix.family.name");
+      return PyPsiBundle.message("python.requirements.quickfix.family.name");
     }
 
     @Override
@@ -621,33 +618,38 @@ public class PyPackageRequirementsInspection extends PyInspection {
             final ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(project);
             profileManager.fireProfileChanged();
 
-            BALLOON_NOTIFICATIONS
+            final Notification notification = BALLOON_NOTIFICATIONS
               .createNotification(
                 packagesToIgnore.size() == 1
-                ? PyBundle.message("INSP.package.requirements.requirement.has.been.ignored", packagesToIgnore.iterator().next())
-                : PyBundle.message("INSP.package.requirements.requirements.have.been.ignored"),
-                PyBundle.message("INSP.package.requirements.undo.add.requirement"),
-                NotificationType.INFORMATION,
-                (notification, event) -> {
-                  try {
-                    switch (event.getDescription()) {
-                      case "#undo":
-                        inspection.ignoredPackages.removeAll(packagesToIgnore);
-                        profileManager.fireProfileChanged();
-                        break;
-                      case "#settings":
-                        final InspectionProfileImpl profile = profileManager.getCurrentProfile();
-                        final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
-                        EditInspectionToolsSettingsAction.editToolSettings(project, profile, toolName);
-                        break;
-                    }
+                ? PyPsiBundle.message("INSP.package.requirements.requirement.has.been.ignored", packagesToIgnore.iterator().next())
+                : PyPsiBundle.message("INSP.package.requirements.requirements.have.been.ignored"),
+                NotificationType.INFORMATION
+              );
+
+            notification.addAction(
+              NotificationAction
+                .createSimpleExpiring(
+                  ActionsBundle.message("action.$Undo.text"),
+                  () -> {
+                    inspection.ignoredPackages.removeAll(packagesToIgnore);
+                    profileManager.fireProfileChanged();
                   }
-                  finally {
-                    notification.expire();
+                )
+            );
+
+            notification.addAction(
+              NotificationAction
+                .createSimpleExpiring(
+                  InspectionsBundle.message("inspection.action.edit.settings"),
+                  () -> {
+                    final InspectionProfileImpl profile = profileManager.getCurrentProfile();
+                    final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
+                    EditInspectionToolsSettingsAction.editToolSettings(project, profile, toolName);
                   }
-                }
-              )
-              .notify(project);
+                )
+            );
+
+            notification.notify(project);
           }
         }
       }

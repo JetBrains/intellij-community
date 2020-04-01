@@ -288,7 +288,7 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jre32").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jbr-x86").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
   {
     return true;
   }
@@ -764,7 +764,8 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
 
     std::wstring arg(argv[i]);
     std::string command(arg.begin(), arg.end());
-    if (command.find_last_of(":") != std::string::npos)
+    // IDEA-230983
+    if (command.find_last_of(":") != std::string::npos && command.rfind("jetbrains://", 0) != 0)
     {
       std::string line = command.substr(command.find_last_of(":") + 1);
       if (isNumber(line))
@@ -776,16 +777,11 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
         std::string fileName = command.substr(0, command.find_last_of(":"));
         LPWSTR* fileNameArg = CommandLineToArgvW(std::wstring(fileName.begin(), fileName.end()).c_str(), &numArgs);
         result.push_back(fileNameArg[0]);
-      }
-      else
-      {
-        result.push_back(argv[i]);
+        continue;
       }
     }
-    else
-    {
-      result.push_back(argv[i]);
-    }
+    
+    result.push_back(argv[i]);
   }
   return result;
 }

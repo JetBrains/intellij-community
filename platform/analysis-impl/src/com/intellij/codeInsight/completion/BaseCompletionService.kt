@@ -38,7 +38,7 @@ open class BaseCompletionService : CompletionService() {
                                consumer: Consumer<in CompletionResult>,
                                contributor: CompletionContributor,
                                matcher: PrefixMatcher): CompletionResultSet {
-    return BaseCompletionResultSet(consumer, matcher, contributor, parameters, defaultSorter(parameters, matcher), null)
+    return BaseCompletionResultSet(consumer, matcher, contributor, parameters, null, null)
   }
 
   override fun suggestPrefix(parameters: CompletionParameters): String {
@@ -100,7 +100,7 @@ open class BaseCompletionService : CompletionService() {
                                                matcher: PrefixMatcher,
                                                contributor: CompletionContributor,
                                                @JvmField protected val myParameters: CompletionParameters,
-                                               @JvmField protected val mySorter: CompletionSorterImpl,
+                                               @JvmField protected var mySorter: CompletionSorter?,
                                                @JvmField protected val myOriginal: BaseCompletionResultSet?) :
     CompletionResultSet(matcher, consumer, contributor) {
     override fun addElement(element: LookupElement) {
@@ -111,7 +111,13 @@ open class BaseCompletionService : CompletionService() {
         return
       }
 
-      val matched = CompletionResult.wrap(element, prefixMatcher, mySorter)
+      var sorter = mySorter
+      if (sorter == null) {
+        sorter = getCompletionService().defaultSorter(myParameters, prefixMatcher)
+        mySorter = sorter
+      }
+
+      val matched = CompletionResult.wrap(element, prefixMatcher, sorter!!)
       matched?.let { passResult(it) }
     }
 

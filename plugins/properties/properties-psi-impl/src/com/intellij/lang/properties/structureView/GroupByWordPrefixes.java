@@ -58,7 +58,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       List<String> words = StringUtil.split(text, mySeparator);
       keys.add(new Key(words, element));
     }
-    Collections.sort(keys, (k1, k2) -> {
+    keys.sort((k1, k2) -> {
       List<String> o1 = k1.words;
       List<String> o2 = k2.words;
       for (int i = 0; i < Math.max(o1.size(), o2.size()); i++) {

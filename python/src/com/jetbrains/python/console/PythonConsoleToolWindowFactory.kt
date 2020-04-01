@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import org.jetbrains.annotations.NonNls
 
 class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -19,6 +20,7 @@ class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   companion object {
+    @NonNls
     const val ID: String = "Python Console"
   }
 }

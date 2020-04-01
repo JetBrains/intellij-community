@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.detection.DetectionContext
+import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.grammar.ide.GraziePsiElementProcessor
@@ -58,7 +58,7 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
 
     if (languages.isEmpty()) return
 
-    holder.registerProblem(LanguageDetectionProblemDescriptor.create(id, holder.manager, holder.isOnTheFly, session.file, languages))
+    holder.registerProblem(LanguageDetectionProblemDescriptor.create(holder.manager, holder.isOnTheFly, session.file, languages))
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

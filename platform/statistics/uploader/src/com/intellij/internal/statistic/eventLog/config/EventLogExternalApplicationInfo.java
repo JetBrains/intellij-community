@@ -2,12 +2,14 @@
 package com.intellij.internal.statistic.eventLog.config;
 
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
+import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EventLogExternalApplicationInfo implements EventLogApplicationInfo {
   private final DataCollectorDebugLogger myLogger;
+  private final DataCollectorSystemEventLogger myEventLogger;
 
   private final String myTemplateUrl;
   private final String myProductCode;
@@ -18,13 +20,15 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   public EventLogExternalApplicationInfo(@NotNull String templateUrl, @NotNull String productCode,
                                          @Nullable String userAgent,
                                          boolean isInternal, boolean isTest,
-                                         @NotNull DataCollectorDebugLogger logger) {
+                                         @NotNull DataCollectorDebugLogger logger,
+                                         @NotNull DataCollectorSystemEventLogger eventLogger) {
     myTemplateUrl = templateUrl;
     myProductCode = productCode;
     myUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
     myIsInternal = isInternal;
     myIsTest = isTest;
     myLogger = logger;
+    myEventLogger = eventLogger;
   }
 
   @NotNull
@@ -59,5 +63,10 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public DataCollectorDebugLogger getLogger() {
     return myLogger;
+  }
+
+  @Override
+  public @NotNull DataCollectorSystemEventLogger getEventLogger() {
+    return myEventLogger;
   }
 }

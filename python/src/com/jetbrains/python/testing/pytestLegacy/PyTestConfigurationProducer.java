@@ -198,13 +198,13 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
   private static List<PyStatement> getResult(PyFile file, @NotNull final TypeEvalContext context) {
     List<PyStatement> result = Lists.newArrayList();
     for (PyClass cls : file.getTopLevelClasses()) {
-      if (com.jetbrains.python.testing.pytest.PyTestUtil.isPyTestClass(cls, context)) {
+      if (PythonUnitTestDetectorsKt.isTestClass(cls, context)) {
         result.add(cls);
       }
     }
-    for (PyFunction cls : file.getTopLevelFunctions()) {
-      if (com.jetbrains.python.testing.pytest.PyTestUtil.isPyTestFunction(cls)) {
-        result.add(cls);
+    for (PyFunction function : file.getTopLevelFunctions()) {
+      if (PythonUnitTestDetectorsKt.isTestFunction(function)) {
+        result.add(function);
       }
     }
     return result;

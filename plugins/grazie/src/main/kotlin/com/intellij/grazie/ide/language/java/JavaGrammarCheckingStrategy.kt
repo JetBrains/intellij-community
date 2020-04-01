@@ -34,7 +34,8 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
   override fun isAbsorb(element: PsiElement) = isTag(element) && (!isCommentData(element) || isCodeTag(element))
 
   override fun isStealth(element: PsiElement) = element is LeafPsiElement
-    && element.elementType in listOf(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END)
+                                                && element.elementType in listOf(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS,
+                                                                                 DOC_COMMENT_END)
 
   override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement) = when {
     root is PsiLiteralExpression -> RuleGroup.LITERALS

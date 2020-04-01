@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -48,7 +34,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  public List<PsiMember> getTargets() {
+  public @NotNull List<PsiMember> getTargets() {
     final PsiJavaCodeReferenceElement importReference = myImportStatement.getImportReference();
     if (importReference == null) {
       return Collections.emptyList();
@@ -76,7 +62,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  protected void selectTargets(final List<PsiMember> targets, final Consumer<List<PsiMember>> selectionConsumer) {
+  protected void selectTargets(final @NotNull List<? extends PsiMember> targets, final @NotNull Consumer<? super List<? extends PsiMember>> selectionConsumer) {
     if (targets.isEmpty()) {
       selectionConsumer.consume(Collections.emptyList());
       return;
@@ -89,7 +75,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       selectionConsumer.consume(targets);
       return;
     }
-    Collections.sort(targets, new PsiMemberComparator());
+    targets.sort(new PsiMemberComparator());
     final List<Object> model = new ArrayList<>();
     String allListed = CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry");
     model.add(allListed);
@@ -120,7 +106,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  public void computeUsages(List<PsiMember> targets) {
+  public void computeUsages(@NotNull List<? extends PsiMember> targets) {
     if (targets.isEmpty()) {
       buildStatusText("import", 0);
       return;

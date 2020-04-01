@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,6 +17,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -99,7 +97,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       return;
     }
 
-    if (isNotUnderSourceRoot(project, element.getContainingFile())) {
+    if (PyPsiIndexUtil.isNotUnderSourceRoot(project, element.getContainingFile())) {
       showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.not.under.source.root"));
       return;
     }
@@ -110,7 +108,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     }
     if (!superMethod.equals(element)) {
       element = superMethod;
-      if (isNotUnderSourceRoot(project, superMethod.getContainingFile())) {
+      if (PyPsiIndexUtil.isNotUnderSourceRoot(project, superMethod.getContainingFile())) {
         return;
       }
     }
@@ -132,20 +130,6 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   private static void showCannotRefactorErrorHint(@NotNull Project project, @Nullable Editor editor, @NotNull String details) {
     final String message = RefactoringBundle.getCannotRefactorMessage(details);
     CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.renameRefactorings");
-  }
-
-  public static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {
-    if (psiFile == null) {
-      return true;
-    }
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile != null) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      if (fileIndex.isExcluded(virtualFile) || (fileIndex.isInLibraryClasses(virtualFile) && !fileIndex.isInContent(virtualFile))) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable

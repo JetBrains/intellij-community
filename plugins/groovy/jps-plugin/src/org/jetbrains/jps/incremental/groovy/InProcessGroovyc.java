@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 /**
  * @author peter
  */
-class InProcessGroovyc implements GroovycFlavor {
+final class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance(InProcessGroovyc.class);
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(.*))?\\.jar");
@@ -228,7 +228,7 @@ class InProcessGroovyc implements GroovycFlavor {
   }
 
   static String evaluatePathToGroovyAllForParentClassloader(Collection<String> compilationClassPath) {
-    if (!SystemInfo.IS_AT_LEAST_JAVA9 && !"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
+    if (!SystemInfoRt.IS_AT_LEAST_JAVA9 && !"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }
 

@@ -78,8 +78,8 @@ if [ -z "$JDK" ] && [ "$OS_TYPE" = "Linux" ]; then
   if [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
     JDK="$IDE_HOME/jbr"
   fi
-  if [ -z "$JDK" ] && [ -d "$IDE_HOME/jre32" ] && "$IDE_HOME/jre32/bin/java" -version > /dev/null 2>&1 ; then
-    JDK="$IDE_HOME/jre32"
+  if [ -z "$JDK" ] && [ -d "$IDE_HOME/jbr-x86" ] && "$IDE_HOME/jbr-x86/bin/java" -version > /dev/null 2>&1 ; then
+    JDK="$IDE_HOME/jbr-x86"
   fi
 fi
 
@@ -137,8 +137,8 @@ JAVA_BIN="$JDK/bin/java"
 if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
   X86_JRE_URL="__x86_jre_url__"
   # shellcheck disable=SC2166
-  if [ -n "$X86_JRE_URL" ] && [ ! -d "$IDE_HOME/jre32" ] && [ "$OS_ARCH" = "i386" -o "$OS_ARCH" = "i686" ]; then
-    message "To run __product_full__ on a 32-bit system, please download 32-bit Java runtime from $X86_JRE_URL and unpack it into \"jre32\" directory."
+  if [ -n "$X86_JRE_URL" ] && [ ! -d "$IDE_HOME/jbr-x86" ] && [ "$OS_ARCH" = "i386" -o "$OS_ARCH" = "i686" ]; then
+    message "To run __product_full__ on a 32-bit system, please download 32-bit Java runtime from \"$X86_JRE_URL\" and unpack it into \"jbr-x86\" directory."
   else
     message "No JDK found. Please validate either __product_uc___JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
   fi

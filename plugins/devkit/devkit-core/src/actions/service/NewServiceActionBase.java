@@ -24,7 +24,9 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xml.util.IncludedXmlTag;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -96,6 +98,8 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
   protected abstract String getImplementationTemplateName();
 
+  @Nls
+  @NlsContexts.DialogTitle
   protected abstract String getDialogTitle();
 
 

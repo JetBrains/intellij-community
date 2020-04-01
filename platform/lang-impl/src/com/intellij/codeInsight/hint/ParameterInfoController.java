@@ -19,13 +19,14 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.popup.Balloon.Position;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,16 +40,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintHint;
-import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +73,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
   @NotNull private final Editor myEditor;
 
   private final RangeMarker myLbraceMarker;
-  private final JBLoadingPanel myLoadingPanel;
   private LightweightHint myHint;
   private final ParameterInfoComponent myComponent;
   private boolean myKeepOnHintHidden;
@@ -152,28 +146,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     myProvider = new MyBestLocationPointProvider(editor);
     myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
     myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, true);
-    myLoadingPanel = new JBLoadingPanel(null, panel -> new LoadingDecorator(panel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false, new AsyncProcessIcon("ShowParameterInfo")){
-      protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
-        parent.setLayout(new FlowLayout(FlowLayout.LEFT));
-        final NonOpaquePanel result = new NonOpaquePanel();
-        result.add(icon);
-        parent.add(result);
-        return result;
-      }
-
-      @Override
-      protected void _startLoading(boolean takeSnapshot) {
-          super._startLoading(takeSnapshot);
-          showHintLoading(true);
-      }
-    }) {
-      @Override
-      public String toString() {
-        return myComponent.toString();
-      }
-    };
-    myLoadingPanel.add(new JBLabel(EmptyIcon.ICON_18));
-    myLoadingPanel.add(new JBLabel(CodeInsightBundle.message("parameter.info.progress.title")));
     myHint = createHint();
     myKeepOnHintHidden = !showHint;
     mySingleParameterInfo = !showHint;
@@ -237,8 +209,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
   private LightweightHint createHint() {
     JPanel wrapper = new WrapperPanel();
-    wrapper.add(myLoadingPanel, LOADING_TAG);
-    wrapper.add(myComponent, COMPONENT_TAG);
+    wrapper.add(myComponent);
     return new LightweightHint(wrapper);
   }
 
@@ -253,33 +224,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
   }
 
-  public boolean showLoading(HintListener hintListener) {
-    if (myKeepOnHintHidden || myHint.isVisible()) {
-      myLoadingPanel.startLoading();
-      myHint.addHintListener(hintListener);
-
-      return true;
-    }
-    return false;
-  }
-
-  public void hideLoading(HintListener hintListener) {
-    if (myKeepOnHintHidden || myHint.isVisible()) {
-      myLoadingPanel.stopLoading();
-      showHintLoading(false);
-    }
-    myHint.removeHintListener(hintListener);
-  }
-
-  private void showHintLoading(boolean showLoading) {
-    if (myKeepOnHintHidden || myHint.isVisible()) {
-      JComponent component = myHint.getComponent();
-      CardLayout layout = (CardLayout)component.getLayout();
-      layout.show(component, showLoading ? LOADING_TAG : COMPONENT_TAG);
-      myHint.pack();
-    }
-  }
-
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
     if (myHint.isVisible()) {
       JComponent myHintComponent = myHint.getComponent();
@@ -290,7 +234,8 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
 
-    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(),
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), caretOffset,
                                                              null, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
@@ -304,6 +249,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
 
     Editor editorToShow = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+
+    //update presentation of descriptors synchronously
+    myComponent.update(mySingleParameterInfo);
+
     // is case of injection we need to calculate position for EditorWindow
     // also we need to show the hint in the main editor because of intention bulb
     HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), flags, 0, false, hintHint);
@@ -435,8 +384,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
               .coalesceBy(this)
               .expireWith(this),
             elementForUpdatingConsumer,
-            CodeInsightBundle.message("parameter.info.progress.title"),
-            myLbraceMarker.getStartOffset(),
+            null,
             myEditor);
   }
 
@@ -472,8 +420,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
                 continuation.run();
               }
             },
-            CodeInsightBundle.message("parameter.info.progress.title"),
-            myLbraceMarker.getStartOffset(),
+            null,
             myEditor);
   }
 
@@ -968,7 +915,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
   private static class WrapperPanel extends JPanel {
     WrapperPanel() {
-      super(new CardLayout());
+      super(new BorderLayout());
       setBorder(JBUI.Borders.empty());
     }
 

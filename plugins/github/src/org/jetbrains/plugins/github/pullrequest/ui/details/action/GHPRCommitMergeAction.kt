@@ -31,6 +31,6 @@ internal class GHPRCommitMergeAction(busyStateModel: SingleValueModel<Boolean>,
       return null
     }
 
-    return stateService.merge(EmptyProgressIndicator(), mergeability.number, dialog.message, mergeability.headRefOid)
+    return stateService.merge(EmptyProgressIndicator(), mergeability, dialog.message, mergeability.headRefOid)
   }
 }

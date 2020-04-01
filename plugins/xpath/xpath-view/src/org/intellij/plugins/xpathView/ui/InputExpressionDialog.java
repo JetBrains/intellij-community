@@ -26,8 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -467,7 +469,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                     final String uri = name.getNamespaceURI();
                     if (uri != null && uri.length() > 0) {
                         final String assignedPrefix = myNamespaceContext.getPrefixForURI(uri, null);
-                        if (assignedPrefix == null || assignedPrefix.length() == 0) {
+                        if (assignedPrefix == null) {
                             it.remove();
                         }
                     }
@@ -526,8 +528,13 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         @Override
         public String getDefaultNamespace(XmlElement context) {
-          return null;
-      }
+            if (context instanceof XmlTag)
+                return ((XmlTag)context).getNamespaceByPrefix("");
+            else if (context instanceof XmlAttribute && ((XmlAttribute)context).getNamespacePrefix().isEmpty()) {
+                return ((XmlAttribute)context).getNamespace();
+            }
+            return null;
+        }
     }
 
     private class MyRegisterPrefixAction implements IntentionAction {

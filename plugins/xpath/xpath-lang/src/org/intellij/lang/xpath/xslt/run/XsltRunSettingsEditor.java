@@ -31,6 +31,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel;
@@ -51,7 +52,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -368,7 +368,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           Logger.getInstance(XsltRunSettingsEditor.class.getName()).info("Encountered incompatible FileType: " + fileType.getName(), e);
         }
       }
-      Collections.sort(v, Comparator.comparing(FileType::getDescription));
+      v.sort(Comparator.comparing(FileType::getDescription));
 
       // off
       v.insertElementAt(null, 0);
@@ -417,7 +417,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       }
       myJDK.getModel().getSdksModel().reset(s.getProject());
       myJDK.reloadModel();
-      myJDK.setSelectedSdk(s.getJdk());
+      setSelectedSdkOrNone(myJDK, s.getJdk());
       mySmartErrorHandling.setSelected(s.mySmartErrorHandling);
       setSelectedIndex(myOutputOptions, s.getOutputType().ordinal());
       setSelectedIndex(myJdkOptions, s.getJdkChoice().ordinal());
@@ -487,6 +487,15 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         if (group.isSelected(button.getModel())) return i;
       }
       return -1;
+    }
+
+    private static void setSelectedSdkOrNone(@NotNull SdkComboBox comboBox, @Nullable Sdk sdk) {
+      if (sdk == null) {
+        comboBox.setSelectedItem(comboBox.showNoneSdkItem());
+      }
+      else {
+        comboBox.setSelectedSdk(sdk);
+      }
     }
 
     private static class ParamTableModel extends AbstractTableModel {

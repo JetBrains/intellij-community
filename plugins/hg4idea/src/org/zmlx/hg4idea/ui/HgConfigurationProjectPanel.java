@@ -18,7 +18,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBCheckBox;
@@ -145,12 +144,6 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     projectSettings.setIgnoreWhitespacesInAnnotations(myIgnoredWhitespacesInAnnotationsCbx.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     Objects.requireNonNull(HgVcs.getInstance(myProject)).checkVersion();
-    if (myCheckIncomingOutgoingCbx.isSelected()) {
-      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).show();
-    }
-    else {
-      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
-    }
   }
 
   @NotNull

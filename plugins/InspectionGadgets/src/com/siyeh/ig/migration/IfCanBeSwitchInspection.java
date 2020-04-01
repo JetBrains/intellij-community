@@ -2,7 +2,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -220,7 +220,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
     final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
     final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
-    if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(replacement)) {
+    if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
       final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {
         replacer.replace(replacement);

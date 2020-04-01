@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -14,7 +15,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,10 +82,14 @@ public class ExternalSystemJdkUtil {
 
   @NotNull
   private static Sdk getJavaHomeJdk() {
-    String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+    String javaHome = getJavaHome();
     if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
     if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
     return ExternalSystemJdkProvider.getInstance().createJdk(null, javaHome);
+  }
+
+  public static @Nullable String getJavaHome() {
+    return Environment.getVariable("JAVA_HOME");
   }
 
   @Nullable
@@ -120,7 +124,7 @@ public class ExternalSystemJdkUtil {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      String javaHome = getJavaHome();
       if (isValidJdk(javaHome)) {
         SimpleJavaSdkType simpleJavaSdkType = SimpleJavaSdkType.getInstance();
         String sdkName = simpleJavaSdkType.suggestSdkName(null, javaHome);

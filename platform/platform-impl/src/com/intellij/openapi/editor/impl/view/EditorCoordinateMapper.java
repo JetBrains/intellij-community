@@ -91,16 +91,9 @@ class EditorCoordinateMapper {
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
     int line = pos.line;
     int column = pos.column;
-    int logicalLineCount = myDocument.getLineCount();
+    int logicalLineCount = Math.max(1, myDocument.getLineCount());
     if (line >= logicalLineCount) {
-      if (line == 0) {
-        int resultColumn = logToVisWithInlays(0, column, pos.leansForward);
-        if (resultColumn < 0) resultColumn = Integer.MAX_VALUE; // guarding against overflow
-        return new VisualPosition(0, resultColumn, pos.leansForward);
-      }
-      else {
-        return new VisualPosition(line - logicalLineCount + myView.getEditor().getVisibleLineCount(), column, pos.leansForward);
-      }
+      return new VisualPosition(line - logicalLineCount + myView.getEditor().getVisibleLineCount(), column, pos.leansForward);
     }
     int offset = logicalPositionToOffset(pos);
     int visualLine = offsetToVisualLine(offset, beforeSoftWrap);
@@ -171,14 +164,7 @@ class EditorCoordinateMapper {
     int column = pos.column;
     int visualLineCount = myView.getEditor().getVisibleLineCount();
     if (line >= visualLineCount) {
-      if (line == 0) {
-        boolean[] leansForward = new boolean[] {pos.leansRight};
-        int resultColumn = visToLogWithInlays(0, column, leansForward);
-        return new LogicalPosition(0, resultColumn, leansForward[0]);
-      }
-      else {
-        return new LogicalPosition(line - visualLineCount + myDocument.getLineCount(), column, pos.leansRight);
-      }
+      return new LogicalPosition(line - visualLineCount + myDocument.getLineCount(), column, pos.leansRight);
     }
     int offset = visualLineToOffset(line);
     int logicalLine = myDocument.getLineNumber(offset);
@@ -363,9 +349,6 @@ class EditorCoordinateMapper {
         logicalLine = myDocument.getLineNumber(visualLineStartOffset);
       }
     }
-    else if (visualLine == 0) {
-      logicalLine = 0;
-    }
     float plainSpaceWidth = myView.getPlainSpaceWidth();
     float remainingShift = px - x;
     if (remainingShift > plainSpaceWidth && logicalLine >= 0) {
@@ -422,9 +405,6 @@ class EditorCoordinateMapper {
         logicalLine = myDocument.getLineNumber(visualLineStartOffset);
       }
     }
-    else if (visualLine == 0) {
-      logicalLine = 0;
-    }
     if (column > lastColumn + 1 && logicalLine >= 0) {
       List<Inlay> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
       int inlaysWidth = 0;
@@ -452,26 +432,24 @@ class EditorCoordinateMapper {
     int visualLineStartOffset = visualLineToOffset(visualLine);
     int y = visualLineToY(visualLine);
     float x = getStartX(logicalLine);
-    if (myDocument.getTextLength() > 0) {
-      boolean firstFragment = true;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, true)) {
-        if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets) {
-          x = fragment.getStartX();
-          break;
-        }
-        firstFragment = false;
-        int minOffset = fragment.getMinOffset();
-        int maxOffset = fragment.getMaxOffset();
-        if (fragment.getCurrentInlay() == null &&
-            (offset > minOffset && offset < maxOffset ||
-            offset == minOffset && leanTowardsLargerOffsets ||
-            offset == maxOffset && !leanTowardsLargerOffsets)) {
-          x = fragment.offsetToX(offset);
-          break;
-        }
-        else {
-          x = fragment.getEndX();
-        }
+    boolean firstFragment = true;
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, true)) {
+      if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets) {
+        x = fragment.getStartX();
+        break;
+      }
+      firstFragment = false;
+      int minOffset = fragment.getMinOffset();
+      int maxOffset = fragment.getMaxOffset();
+      if (fragment.getCurrentInlay() == null &&
+          (offset > minOffset && offset < maxOffset ||
+          offset == minOffset && leanTowardsLargerOffsets ||
+          offset == maxOffset && !leanTowardsLargerOffsets)) {
+        x = fragment.offsetToX(offset);
+        break;
+      }
+      else {
+        x = fragment.getEndX();
       }
     }
     return new Point2D.Double(x, y);

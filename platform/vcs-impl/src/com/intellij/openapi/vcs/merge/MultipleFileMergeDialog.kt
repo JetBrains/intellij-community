@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -118,12 +119,12 @@ open class MultipleFileMergeDialog(
     TableSpeedSearch(table, Convertor { (it as? VirtualFile)?.name })
 
     val modalityState = ModalityState.stateForComponent(descriptionLabel)
-    ApplicationManager.getApplication().executeOnPooledThread {
+    BackgroundTaskUtil.executeOnPooledThread(disposable, Runnable {
       val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
       runInEdt(modalityState) {
         descriptionLabel.text = description
       }
-    }
+    })
   }
 
   private fun selectFirstFile() {

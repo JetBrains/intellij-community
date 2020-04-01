@@ -55,7 +55,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private Component mySettingsButtons;
   private boolean myAutoselectOnMouseMove = true;
 
-  private Function<Object,String> myItemsNamer;
+  private Function<? super T, String> myItemsNamer;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
   private boolean myModalContext;
@@ -69,7 +69,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public interface PopupComponentAdapter<T> {
     JComponent getComponent();
 
-    default void setRenderer(ListCellRenderer renderer) {}
+    default void setRenderer(ListCellRenderer<? super T> renderer) {}
 
     void setItemChosenCallback(Consumer<? super T> callback);
 
@@ -132,7 +132,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private JScrollPane myScrollPane;
 
-  public PopupChooserBuilder(@NotNull JList list) {
+  public PopupChooserBuilder(@NotNull JList<T> list) {
     myChooserComponent = JBPopupFactory.getInstance().createPopupComponentAdapter(this, list);
   }
 
@@ -160,7 +160,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer) {
+  public IPopupChooserBuilder<T> setRenderer(ListCellRenderer<? super T> renderer) {
     myChooserComponent.setRenderer(renderer);
     return this;
   }
@@ -178,7 +178,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @NotNull
   @Override
-  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback) {
+  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<? extends T>> callback) {
     myChooserComponent.setItemsChosenCallback(callback);
     return this;
   }
@@ -275,11 +275,11 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public PopupChooserBuilder<T> setNamerForFiltering(Function<? super T, String> namer) {
-    myItemsNamer = (Function<Object, String>)namer;
+    myItemsNamer = namer;
     return this;
   }
 
-  public Function<Object, String> getItemsNamer() {
+  public Function<? super T, String> getItemsNamer() {
     return myItemsNamer;
   }
 

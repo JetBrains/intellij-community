@@ -27,14 +27,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.ACTIVATED;
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.CLICKED;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowEventType.*;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 import static com.intellij.openapi.wm.ToolWindowId.*;
 
 /**
- * @author Konstantin Bulenkov
+ * <p>
+ *   Toolwindows registered in plugin.xml are whitelisted by default.<br/>
+ *   See: {@link ToolWindowEP#EP_NAME}, {@link LibraryDependentToolWindow#EP_NAME}, {@link FacetDependentToolWindow#EP_NAME}
+ * </p>
+ *
+ * <p>
+ *   If toolwindow is registered dynamically is <b>should</b> be explicitly whitelisted
+ *   in plugin.xml {@link ToolWindowWhitelistEP#EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
+ * </p>
  */
 public final class ToolWindowCollector {
   private static final ToolWindowInfo UNKNOWN = new ToolWindowInfo("unknown", getUnknownPlugin());
@@ -43,17 +50,15 @@ public final class ToolWindowCollector {
     return ServiceManager.getService(ToolWindowCollector.class);
   }
 
+  /**
+   * Use this set to whitelist dynamically registered platform toolwindows.<br/><br/>
+   *
+   * If toolwindow is registered in plugin.xml, it's whitelisted automatically. <br/>
+   * To whitelist dynamically registered plugin toolwindow use {@link ToolWindowWhitelistEP#EP_NAME}
+   */
   public static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
   static {
-    // Constants from ToolWindowId can be changed by localization plugins, therefore
-    // we need to remember a link to a bundled message (which can be changed by localization)
-    // and a constant id for recording.
-    ourToolwindowWhitelist.put(COMMANDER, new ToolWindowInfo("Commander"));
     ourToolwindowWhitelist.put(MESSAGES_WINDOW, new ToolWindowInfo("Messages"));
-    ourToolwindowWhitelist.put(PROJECT_VIEW, new ToolWindowInfo("Project"));
-    ourToolwindowWhitelist.put(STRUCTURE_VIEW, new ToolWindowInfo("Structure"));
-    ourToolwindowWhitelist.put(FAVORITES_VIEW, new ToolWindowInfo("Favorites"));
-    ourToolwindowWhitelist.put(ANT_BUILD, new ToolWindowInfo("Ant"));
     ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo("Debug"));
     ourToolwindowWhitelist.put(RUN, new ToolWindowInfo("Run"));
     ourToolwindowWhitelist.put(BuildContentManager.TOOL_WINDOW_ID, new ToolWindowInfo("Build"));
@@ -61,19 +66,15 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put("CVS", new ToolWindowInfo("CVS"));
     ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo("Hierarchy"));
     ourToolwindowWhitelist.put(INSPECTION, new ToolWindowInfo("Inspection_Results"));
-    ourToolwindowWhitelist.put(TODO_VIEW, new ToolWindowInfo("TODO"));
     ourToolwindowWhitelist.put(DEPENDENCIES, new ToolWindowInfo("Dependency_Viewer"));
-    ourToolwindowWhitelist.put(VCS, new ToolWindowInfo("Version_Control"));
     ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, new ToolWindowInfo("Module_Dependencies"));
     ourToolwindowWhitelist.put(DUPLICATES, new ToolWindowInfo("Duplicates"));
     ourToolwindowWhitelist.put(EXTRACT_METHOD, new ToolWindowInfo("Extract_Method"));
     ourToolwindowWhitelist.put(DOCUMENTATION, new ToolWindowInfo("Documentation"));
-    ourToolwindowWhitelist.put(TASKS, new ToolWindowInfo("Time_Tracking"));
-    ourToolwindowWhitelist.put(DATABASE_VIEW, new ToolWindowInfo("Database"));
     ourToolwindowWhitelist.put(PREVIEW, new ToolWindowInfo("Preview"));
     ourToolwindowWhitelist.put(RUN_DASHBOARD, new ToolWindowInfo("Run_Dashboard"));
     ourToolwindowWhitelist.put(SERVICES, new ToolWindowInfo("Services"));
-    ourToolwindowWhitelist.put("Statistics Event Log", new ToolWindowInfo("Statistics_Event_Log"));
+    ourToolwindowWhitelist.put(ENDPOINTS, new ToolWindowInfo("Endpoints"));
   }
 
   private ToolWindowCollector() {
@@ -96,8 +97,16 @@ public final class ToolWindowCollector {
     }
   }
 
-  public static void recordActivation(String toolWindowId, @Nullable WindowInfoImpl info) {
+  public static void recordActivation(@Nullable String toolWindowId, @Nullable WindowInfoImpl info) {
     record(toolWindowId, ACTIVATED, info);
+  }
+
+  public static void recordHidden(@NotNull WindowInfoImpl info) {
+    record(info.getId(), HIDDEN, info);
+  }
+
+  public static void recordShown(@NotNull WindowInfoImpl info) {
+    record(info.getId(), SHOWN, info);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
@@ -105,7 +114,7 @@ public final class ToolWindowCollector {
     record(toolWindowId, CLICKED, info);
   }
 
-  private static void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source, @Nullable WindowInfoImpl windowInfo) {
+  private static void record(@Nullable String toolWindowId, @NotNull ToolWindowEventType eventType, @Nullable WindowInfoImpl windowInfo) {
     if (StringUtil.isEmpty(toolWindowId)) {
       return;
     }
@@ -118,7 +127,7 @@ public final class ToolWindowCollector {
       data.addData("ViewMode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
       data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
     }
-    FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
+    FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(eventType.name()), data);
   }
 
   @NotNull
@@ -148,8 +157,8 @@ public final class ToolWindowCollector {
     return null;
   }
 
-  enum ToolWindowActivationSource {
-    ACTIVATED, CLICKED
+  enum ToolWindowEventType {
+    ACTIVATED, CLICKED, SHOWN, HIDDEN
   }
 
   public static class ToolWindowUtilValidator extends CustomWhiteListRule {

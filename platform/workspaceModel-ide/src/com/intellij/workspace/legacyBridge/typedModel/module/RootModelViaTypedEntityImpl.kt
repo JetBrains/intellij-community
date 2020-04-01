@@ -17,6 +17,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import java.util.*
@@ -98,6 +99,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
 
   private val disposed = AtomicReference<Throwable>(null)
   override fun dispose() {
+    (filePointerProvider as? LegacyBridgeFilePointerProviderImpl)?.disposeAndClearCaches()
     val disposedStackTrace = disposed.getAndSet(Throwable())
     if (disposedStackTrace != null) throw IllegalStateException("${javaClass.name} was already disposed", disposedStackTrace)
   }

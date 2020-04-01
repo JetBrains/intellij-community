@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -9,7 +9,6 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
@@ -1888,6 +1888,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static boolean sameTokens(IElementType type, String text, IElementType reparsedType, String reparsedText) {
     return reparsedType == type ||
-           reparsedType == JavaTokenType.IDENTIFIER && ElementType.KEYWORD_BIT_SET.contains(type) && Comparing.equal(text, reparsedText);
+           reparsedType == JavaTokenType.IDENTIFIER && ElementType.KEYWORD_BIT_SET.contains(type) && Objects.equals(text, reparsedText);
   }
 }

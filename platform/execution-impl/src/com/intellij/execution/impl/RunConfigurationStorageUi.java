@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CompositeShortcutSet;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -129,9 +128,7 @@ class RunConfigurationStorageUi {
     String oldStorage = ProjectKt.isDirectoryBased(project)
                         ? FileUtil.toSystemDependentName(".idea/runConfigurations")
                         : PathUtil.getFileName(StringUtil.notNullize(project.getProjectFilePath()));
-    String compatibilityHint = ExecutionBundle.message("run.configuration.storage.compatibility.hint",
-                                                       ApplicationNamesInfo.getInstance().getProductName(),
-                                                       oldStorage);
+    String compatibilityHint = ExecutionBundle.message("run.configuration.storage.compatibility.hint", oldStorage);
     // All spaces should be &nbsp; - otherwise the comment may get wrapped in the middle of the sentence and it looks not great
     // Other way to solve wrapping problem is to create comment component using ComponentPanelBuilder.createCommentComponent(compatibilityHint, true, false, 1000);
     // but it doesn't allow to add custom HyperlinkListener

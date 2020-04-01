@@ -2,17 +2,20 @@
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -23,14 +26,16 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
@@ -43,7 +48,7 @@ import java.awt.geom.AffineTransform;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-class DocRenderItem {
+public class DocRenderItem {
   private static final Key<DocRenderItem> OUR_ITEM = Key.create("doc.render.item");
   private static final Key<Collection<DocRenderItem>> OUR_ITEMS = Key.create("doc.render.items");
   private static final Key<VisibleAreaListener> VISIBLE_AREA_LISTENER = Key.create("doc.render.visible.area.listener");
@@ -87,9 +92,12 @@ class DocRenderItem {
           updated |= item.remove(foldingTasks);
           it.remove();
         }
-        else if (!matchingItem.textToRender.equals(item.textToRender)) {
+        else if (matchingItem.textToRender != null && !matchingItem.textToRender.equals(item.textToRender)) {
           item.textToRender = matchingItem.textToRender;
           itemsToUpdateInlays.add(item);
+        }
+        else {
+          item.updateIcon();
         }
       }
       Collection<DocRenderItem> newRenderItems = new ArrayList<>();
@@ -134,7 +142,6 @@ class DocRenderItem {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
         connection.setDefaultHandler((event, params) -> updateInlays(editor));
         connection.subscribe(EditorColorsManager.TOPIC);
-        connection.subscribe(LafManagerListener.TOPIC);
         EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
           @Override
           public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -175,13 +182,43 @@ class DocRenderItem {
     }).min(Comparator.comparingInt(i -> i.highlighter.getStartOffset())).orElse(null);
   }
 
+  private static void resetToDefaultState(@NotNull Editor editor) {
+    Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
+    if (items == null) return;
+    boolean globalSetting = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled();
+    keepScrollingPositionWhile(editor, () -> {
+      List<Runnable> foldingTasks = new ArrayList<>();
+      List<DocRenderItem> itemsToUpdateInlays = new ArrayList<>();
+      boolean updated = false;
+      for (DocRenderItem item : items) {
+        if ((item.inlay == null) == globalSetting) {
+          updated |= item.toggle(foldingTasks);
+          itemsToUpdateInlays.add(item);
+        }
+      }
+      editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
+      updated |= updateInlays(itemsToUpdateInlays);
+      return updated;
+    });
+  }
+
+  public static void resetAllToDefaultState() {
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      resetToDefaultState(editor);
+      DocRenderPassFactory.forceRefreshOnNextPass(editor);
+    }
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
+  }
+
   private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
+    assert editor.getProject() != null;
     highlighter = editor.getMarkupModel()
       .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, null, HighlighterTargetArea.EXACT_RANGE);
-    AnAction toggleAction = new ToggleRenderingAction(this);
-    highlighter.setGutterIconRenderer(new MyGutterIconRenderer(toggleAction, AllIcons.Gutter.JavadocRead));
+    updateIcon();
   }
 
   private int calcFoldStartOffset() {
@@ -234,6 +271,10 @@ class DocRenderItem {
     if (!(editor instanceof EditorEx)) return false;
     FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
     if (foldRegion == null) {
+      if (textToRender == null && foldingTasks == null) {
+        generateHtmlInBackgroundAndToggle();
+        return false;
+      }
       int inlayOffset = calcInlayOffset();
       inlay = editor.getInlayModel().addBlockElement(inlayOffset, true, true, BlockInlayPriority.DOC_RENDER, new DocRenderer(this));
       if (inlay != null) {
@@ -271,21 +312,31 @@ class DocRenderItem {
       }
       Disposer.dispose(inlay);
       inlay = null;
+      if (!EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled()) {
+        // the value won't be updated by DocRenderPass on document modification, so we shouldn't cache the value
+        textToRender = null;
+      }
     }
     return true;
   }
 
-  PsiElement getOwner() {
-    Project project = editor.getProject();
-    if (project != null && highlighter.isValid()) {
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+  private void generateHtmlInBackgroundAndToggle() {
+    ReadAction.nonBlocking(() -> {
+      return DocRenderPassFactory.calcText(getComment());
+    }).withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
+      .coalesceBy(this)
+      .finishOnUiThread(ModalityState.any(), html -> {
+        textToRender = html;
+        toggle(null);
+      }).submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  PsiDocCommentBase getComment() {
+    if (highlighter.isValid()) {
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(Objects.requireNonNull(editor.getProject()));
       PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
       if (file != null) {
-        PsiDocCommentBase comment = PsiTreeUtil.getParentOfType(file.findElementAt(highlighter.getStartOffset()), PsiDocCommentBase.class,
-                                                                false);
-        if (comment != null) {
-          return comment.getOwner();
-        }
+        return PsiTreeUtil.getParentOfType(file.findElementAt(highlighter.getStartOffset()), PsiDocCommentBase.class, false);
       }
     }
     return null;
@@ -300,6 +351,24 @@ class DocRenderItem {
       Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
       return items != null && updateInlays(items);
     });
+  }
+
+  private void updateIcon() {
+    boolean iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
+    boolean iconExists = highlighter.getGutterIconRenderer() != null;
+    if (iconEnabled != iconExists) {
+      if (iconEnabled) {
+        highlighter.setGutterIconRenderer(new MyGutterIconRenderer(AllIcons.Gutter.JavadocRead));
+      }
+      else {
+        highlighter.setGutterIconRenderer(null);
+      }
+      if (inlay != null) inlay.update();
+    }
+  }
+
+  AnAction createToggleAction() {
+    return new ToggleRenderingAction(this);
   }
 
   private static class MyCaretListener implements CaretListener {
@@ -352,12 +421,10 @@ class DocRenderItem {
     }
   }
 
-  static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
-    private final AnAction action;
+  class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     private final Icon icon;
 
-    MyGutterIconRenderer(AnAction action, Icon icon) {
-      this.action = action;
+    MyGutterIconRenderer(Icon icon) {
       this.icon = icon;
     }
 
@@ -401,7 +468,13 @@ class DocRenderItem {
     @Nullable
     @Override
     public AnAction getClickAction() {
-      return action;
+      return createToggleAction();
+    }
+
+    @Override
+    public ActionGroup getPopupMenuActions() {
+      return ObjectUtils.tryCast(ActionManager.getInstance().getAction(IdeActions.GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU),
+                                 ActionGroup.class);
     }
   }
 

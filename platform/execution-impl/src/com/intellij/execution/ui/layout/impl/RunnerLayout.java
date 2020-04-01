@@ -1,23 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.swing.Icon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.*;
 
 public class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
@@ -222,7 +227,7 @@ public class RunnerLayout  {
   }
 
   public boolean isToFocus(final String id, @NotNull String condition) {
-    return Comparing.equal(id, getToFocus(condition));
+    return Objects.equals(id, getToFocus(condition));
   }
 
   public void setToFocus(final String id, @NotNull String condition) {

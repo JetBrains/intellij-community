@@ -26,6 +26,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
 
 /**
@@ -136,6 +137,34 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
 
     if (indicator.isCanceled) return
+
+    if (PyCondaSdkCustomizer.instance.suggestSharedCondaEnvironments) {
+      indicator.text = PyBundle.message("looking.for.shared.conda.environment")
+      guardIndicator(indicator) {
+        existingSdks
+          .asSequence()
+          .filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
+          .firstOrNull()
+      }?.let {
+        onEdt(project) {
+          SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+          notifyAboutConfiguredSdk(project, module, it)
+        }
+        return
+      }
+
+      guardIndicator(indicator) { detectCondaEnvs(module, existingSdks, context).firstOrNull() }?.let {
+        val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
+        onEdt(project) {
+          SdkConfigurationUtil.addSdk(newSdk)
+          SdkConfigurationUtil.setDirectoryProjectSdk(project, newSdk)
+          notifyAboutConfiguredSdk(project, module, newSdk)
+        }
+        return
+      }
+
+      if (indicator.isCanceled) return
+    }
 
     indicator.text = PyBundle.message("looking.for.default.interpreter")
     LOGGER.debug("Looking for the default interpreter setting for a new project")

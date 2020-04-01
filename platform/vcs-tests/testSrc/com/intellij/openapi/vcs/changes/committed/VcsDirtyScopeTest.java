@@ -87,9 +87,9 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
     final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject));
 
-    scope.addDirtyPathFast(VcsUtil.getFilePath(data.dir1), true);
-    scope.addDirtyPathFast(VcsUtil.getFilePath(data.dir2), true);
-    scope.addDirtyPathFast(VcsUtil.getFilePath(data.baseDir), false);
+    scope.addDirtyPathFast(data.baseDir, VcsUtil.getFilePath(data.dir1), true);
+    scope.addDirtyPathFast(data.baseDir, VcsUtil.getFilePath(data.dir2), true);
+    scope.addDirtyPathFast(data.baseDir, VcsUtil.getFilePath(data.baseDir), false);
     scope.pack();
     final Set<FilePath> dirtyDirs = scope.getRecursivelyDirtyDirectories();
     final Set<FilePath> dirtyFiles = scope.getDirtyFilesNoExpand();

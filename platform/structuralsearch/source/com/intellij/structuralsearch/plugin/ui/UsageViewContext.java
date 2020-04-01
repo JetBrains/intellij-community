@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
@@ -58,9 +55,7 @@ public class UsageViewContext {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        final Project project = mySearchContext.getProject();
-        final InspectionProfileImpl inspectionProfile = InspectionProfileManager.getInstance(project).getCurrentProfile();
-        StructuralSearchProfileActionProvider.createNewInspection(myConfiguration, inspectionProfile, project);
+        StructuralSearchProfileActionProvider.createNewInspection(myConfiguration, mySearchContext.getProject());
       }
     });
   }

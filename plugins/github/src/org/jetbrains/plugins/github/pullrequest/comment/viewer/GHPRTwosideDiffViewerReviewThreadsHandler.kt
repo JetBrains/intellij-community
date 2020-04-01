@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
@@ -11,7 +11,8 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapp
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
-class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
+class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
+                                                commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: TwosideTextDiffViewer,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -28,16 +29,22 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
   init {
     val inlaysManagerLeft = EditorComponentInlaysManager(viewer.editor1 as EditorImpl)
 
-    GHPREditorCommentableRangesController(commentableRangesLeft, componentsFactory, inlaysManagerLeft) {
+    val gutterIconRendererFactoryLeft = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerLeft,
+                                                                                    componentsFactory) {
       Side.LEFT to it
     }
+
+    GHPREditorCommentableRangesController(commentableRangesLeft, gutterIconRendererFactoryLeft, viewer.editor1)
     GHPREditorReviewThreadsController(editorThreadsLeft, componentsFactory, inlaysManagerLeft)
 
     val inlaysManagerRight = EditorComponentInlaysManager(viewer.editor2 as EditorImpl)
 
-    GHPREditorCommentableRangesController(commentableRangesRight, componentsFactory, inlaysManagerRight) {
+    val gutterIconRendererFactoryRight = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManagerRight,
+                                                                                     componentsFactory) {
       Side.RIGHT to it
     }
+
+    GHPREditorCommentableRangesController(commentableRangesRight, gutterIconRendererFactoryRight, viewer.editor2)
     GHPREditorReviewThreadsController(editorThreadsRight, componentsFactory, inlaysManagerRight)
   }
 

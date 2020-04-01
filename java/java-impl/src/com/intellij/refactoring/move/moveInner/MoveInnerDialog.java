@@ -37,6 +37,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class MoveInnerDialog extends MoveDialogBase {
@@ -190,7 +191,7 @@ public class MoveInnerDialog extends MoveDialogBase {
       PsiPackage oldPackage = getTargetPackage();
       String name = oldPackage == null ? "" : oldPackage.getQualifiedName();
       final String targetName = getPackageName();
-      if (!Comparing.equal(name, targetName)) {
+      if (!Objects.equals(name, targetName)) {
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
         final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
         final PackageWrapper newPackage = new PackageWrapper(PsiManager.getInstance(myProject), targetName);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.dvcs.repo.ClonePathProvider
@@ -172,12 +172,11 @@ internal class GHCloneDialogExtensionComponent(
     }
 
     repositoriesPanel = panel {
-      val gapLeft = JBUI.scale(VcsCloneDialogUiSpec.Components.innerHorizontalGap)
       row {
         cell(isFullWidth = true) {
           searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY).withLeftGap(gapLeft)
-          accountsPanel().withLeftGap(gapLeft)
+          JSeparator(JSeparator.VERTICAL)(growY).withLargeLeftGap()
+          accountsPanel().withLargeLeftGap()
         }
       }
       row {
@@ -414,15 +413,13 @@ internal class GHCloneDialogExtensionComponent(
               }
               errorPanel.repaint()
             }
-            if (loginToken != null) {
-              val login = loginToken.first
-              val token = loginToken.second
-              if (account != null) {
-                authenticationManager.updateAccountToken(account, token)
-              }
-              else {
-                authenticationManager.registerAccount(login, getServer().host, token)
-              }
+            val login = loginToken.first
+            val token = loginToken.second
+            if (account != null) {
+              authenticationManager.updateAccountToken(account, token)
+            }
+            else {
+              authenticationManager.registerAccount(login, getServer().host, token)
             }
           }
       })
@@ -457,7 +454,7 @@ internal class GHCloneDialogExtensionComponent(
   }
 
 
-  fun getGithubRepoPath(searchText: String): GHRepositoryCoordinates? {
+  private fun getGithubRepoPath(searchText: String): GHRepositoryCoordinates? {
     val url = searchText
       .trim()
       .removePrefix("git clone")

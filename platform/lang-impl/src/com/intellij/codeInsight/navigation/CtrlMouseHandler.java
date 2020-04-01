@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -13,8 +13,6 @@ import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,12 +42,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -59,8 +55,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.usageView.UsageViewShortNameLocation;
-import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -86,7 +80,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 public final class CtrlMouseHandler {
-  private static final Logger LOG = Logger.getInstance(CtrlMouseHandler.class);
+  static final Logger LOG = Logger.getInstance(CtrlMouseHandler.class);
 
   private final Project myProject;
 
@@ -129,8 +123,8 @@ public final class CtrlMouseHandler {
           }
           myStoredModifiers = modifiers;
           cancelPreviousTooltip();
-          myTooltipProvider = new TooltipProvider(tooltipProvider);
-          myTooltipProvider.execute(browseMode);
+          myTooltipProvider = new TooltipProvider(tooltipProvider, browseMode);
+          myTooltipProvider.execute();
         }
       }
     }
@@ -180,8 +174,8 @@ public final class CtrlMouseHandler {
         disposeHighlighter();
         return;
       }
-      myTooltipProvider = new TooltipProvider((EditorEx)editor, editor.xyToLogicalPosition(point));
-      myTooltipProvider.execute(browseMode);
+      myTooltipProvider = new TooltipProvider((EditorEx)editor, editor.xyToLogicalPosition(point), browseMode);
+      myTooltipProvider.execute();
     }
   };
 
@@ -248,7 +242,7 @@ public final class CtrlMouseHandler {
   @Nullable
   @TestOnly
   public static String getInfo(PsiElement element, PsiElement atPointer) {
-    return generateInfo(element, atPointer, true).text;
+    return SingleTargetElementInfo.generateInfo(element, atPointer, true).text;
   }
 
   @Nullable
@@ -258,111 +252,25 @@ public final class CtrlMouseHandler {
     if (project == null) return null;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
-    Info info = getInfoAt(project, editor, file, editor.getCaretModel().getOffset(), browseMode);
-    return info == null ? null : info.getInfo().text;
+    CtrlMouseInfo info = getInfoAt(project, editor, file, editor.getCaretModel().getOffset(), browseMode);
+    return info == null ? null : info.getDocInfo().text;
   }
 
-  @NotNull
-  private static DocInfo generateInfo(PsiElement element, PsiElement atPointer, boolean fallbackToBasicInfo) {
-    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
-    String result = documentationProvider.getQuickNavigateInfo(element, atPointer);
-    if (result == null && fallbackToBasicInfo) {
-      result = doGenerateInfo(element);
-    }
-    return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider);
+  private static boolean areSimilar(@NotNull CtrlMouseInfo info1, @NotNull CtrlMouseInfo info2) {
+    return info1.getElementAtPointer().equals(info2.getElementAtPointer())
+           && info1.getRanges().equals(info2.getRanges());
   }
 
-  @Nullable
-  private static String doGenerateInfo(@NotNull PsiElement element) {
-    if (element instanceof PsiFile) {
-      final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-      if (virtualFile != null) {
-        return virtualFile.getPresentableUrl();
-      }
+  private static boolean isValidAndRangesAreCorrect(@NotNull CtrlMouseInfo info, @NotNull Document document) {
+    if (!info.isValid()) {
+      return false;
     }
-
-    String info = getQuickNavigateInfo(element);
-    if (info != null) {
-      return info;
+    List<TextRange> ranges = info.getRanges();
+    final TextRange docRange = new TextRange(0, document.getTextLength());
+    for (TextRange range : ranges) {
+      if (!docRange.contains(range)) return false;
     }
-
-    if (element instanceof NavigationItem) {
-      final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
-      if (presentation != null) {
-        return presentation.getPresentableText();
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private static String getQuickNavigateInfo(PsiElement element) {
-    final String name = ElementDescriptionUtil.getElementDescription(element, UsageViewShortNameLocation.INSTANCE);
-    if (StringUtil.isEmpty(name)) return null;
-    final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
-    final PsiFile file = element.getContainingFile();
-    final StringBuilder sb = new StringBuilder();
-    if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
-    sb.append("\"").append(name).append("\"");
-    if (file != null && file.isPhysical()) {
-      sb.append(" [").append(file.getName()).append("]");
-    }
-    return sb.toString();
-  }
-
-  public abstract static class Info {
-    @NotNull final PsiElement myElementAtPointer;
-    @NotNull private final List<TextRange> myRanges;
-
-    public Info(@NotNull PsiElement elementAtPointer, @NotNull List<TextRange> ranges) {
-      myElementAtPointer = elementAtPointer;
-      myRanges = ranges;
-    }
-
-    public Info(@NotNull PsiElement elementAtPointer) {
-      this(elementAtPointer, getReferenceRanges(elementAtPointer));
-    }
-
-    @NotNull
-    private static List<TextRange> getReferenceRanges(@NotNull PsiElement elementAtPointer) {
-      if (!elementAtPointer.isPhysical()) return Collections.emptyList();
-      int textOffset = elementAtPointer.getTextOffset();
-      final TextRange range = elementAtPointer.getTextRange();
-      if (range == null) {
-        throw new AssertionError("Null range for " + elementAtPointer + " of " + elementAtPointer.getClass());
-      }
-      if (textOffset < range.getStartOffset() || textOffset < 0) {
-        LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.getClass());
-        textOffset = range.getStartOffset();
-      }
-      return Collections.singletonList(new TextRange(textOffset, range.getEndOffset()));
-    }
-
-    boolean isSimilarTo(@NotNull Info that) {
-      return Comparing.equal(myElementAtPointer, that.myElementAtPointer) && myRanges.equals(that.myRanges);
-    }
-
-    @NotNull
-    public List<TextRange> getRanges() {
-      return myRanges;
-    }
-
-    @NotNull
-    public abstract DocInfo getInfo();
-
-    public abstract boolean isValid(@NotNull Document document);
-
-    public abstract boolean isNavigatable();
-
-    boolean rangesAreCorrect(@NotNull Document document) {
-      final TextRange docRange = new TextRange(0, document.getTextLength());
-      for (TextRange range : getRanges()) {
-        if (!docRange.contains(range)) return false;
-      }
-
-      return true;
-    }
+    return true;
   }
 
   private static void showDumbModeNotification(@NotNull Project project) {
@@ -370,74 +278,14 @@ public final class CtrlMouseHandler {
       CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update"));
   }
 
-  private static class InfoSingle extends Info {
-    @NotNull private final PsiElement myTargetElement;
-
-    InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
-      super(elementAtPointer);
-      myTargetElement = targetElement;
-    }
-
-    InfoSingle(@NotNull PsiReference ref, @NotNull final PsiElement targetElement) {
-      super(ref.getElement(), ReferenceRange.getAbsoluteRanges(ref));
-      myTargetElement = targetElement;
-    }
-
-    @Override
-    @NotNull
-    public DocInfo getInfo() {
-      return areElementsValid() ? generateInfo(myTargetElement, myElementAtPointer, isNavigatable()) : DocInfo.EMPTY;
-    }
-
-    private boolean areElementsValid() {
-      return myTargetElement.isValid() && myElementAtPointer.isValid();
-    }
-
-    @Override
-    public boolean isValid(@NotNull Document document) {
-      return areElementsValid() && rangesAreCorrect(document);
-    }
-
-    @Override
-    public boolean isNavigatable() {
-      return myTargetElement != myElementAtPointer && myTargetElement != myElementAtPointer.getParent();
-    }
-  }
-
-  private static class InfoMultiple extends Info {
-    InfoMultiple(@NotNull final PsiElement elementAtPointer) {
-      super(elementAtPointer);
-    }
-
-    InfoMultiple(@NotNull final PsiElement elementAtPointer, @NotNull PsiReference ref) {
-      super(elementAtPointer, ReferenceRange.getAbsoluteRanges(ref));
-    }
-
-    @Override
-    @NotNull
-    public DocInfo getInfo() {
-      return new DocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null);
-    }
-
-    @Override
-    public boolean isValid(@NotNull Document document) {
-      return rangesAreCorrect(document);
-    }
-
-    @Override
-    public boolean isNavigatable() {
-      return true;
-    }
-  }
-
   @Nullable
-  private Info getInfoAt(@NotNull final Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
+  private CtrlMouseInfo getInfoAt(@NotNull final Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
     return getInfoAt(myProject, editor, file, offset, browseMode);
   }
 
   @Nullable
-  public static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset,
-                               @NotNull BrowseMode browseMode) {
+  public static CtrlMouseInfo getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset,
+                                        @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -462,19 +310,19 @@ public final class CtrlMouseHandler {
         }
         else if (targetElements.length == 1) {
           if (targetElements[0] != resolvedElement && elementAtPointer != null && targetElements[0].isPhysical()) {
-            return ref != null ? new InfoSingle(ref, targetElements[0]) : new InfoSingle(elementAtPointer, targetElements[0]);
+            return ref != null ? new SingleTargetElementInfo(ref, targetElements[0]) : new SingleTargetElementInfo(elementAtPointer, targetElements[0]);
           }
         }
         else {
-          return elementAtPointer != null ? new InfoMultiple(elementAtPointer) : null;
+          return elementAtPointer != null ? new MultipleTargetElementsInfo(elementAtPointer) : null;
         }
       }
 
       if (resolvedElements.size() == 1) {
-        return new InfoSingle(ref, resolvedElements.get(0));
+        return new SingleTargetElementInfo(ref, resolvedElements.get(0));
       }
       if (resolvedElements.size() > 1) {
-        return elementAtPointer != null ? new InfoMultiple(elementAtPointer, ref) : null;
+        return elementAtPointer != null ? new MultipleTargetElementsInfo(elementAtPointer, ref) : null;
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
@@ -496,7 +344,7 @@ public final class CtrlMouseHandler {
       if (targetElements.length > 1) {
         PsiElement elementAtPointer = file.findElementAt(offset);
         if (elementAtPointer != null) {
-          return new InfoMultiple(elementAtPointer);
+          return new MultipleTargetElementsInfo(elementAtPointer);
         }
         return null;
       }
@@ -512,7 +360,7 @@ public final class CtrlMouseHandler {
     if (targetElement != null && targetElement.isPhysical()) {
       PsiElement elementAtPointer = file.findElementAt(offset);
       if (elementAtPointer != null) {
-        return new InfoSingle(elementAtPointer, targetElement);
+        return new SingleTargetElementInfo(elementAtPointer, targetElement);
       }
     }
 
@@ -520,22 +368,16 @@ public final class CtrlMouseHandler {
     if (element instanceof PsiNameIdentifierOwner) {
       PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
       if (identifier != null && identifier.isValid()) {
-        return new Info(identifier){
-          @NotNull
+        return new BaseCtrlMouseInfo(identifier){
           @Override
-          public DocInfo getInfo() {
-            String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
-            return new DocInfo("Show usages of "+name, null);
+          public @NotNull CtrlMouseDocInfo getDocInfo() {
+            String name = UsageViewUtil.getType(element) + " '" + UsageViewUtil.getShortName(element) + "'";
+            return new CtrlMouseDocInfo("Show usages of " + name, null);
           }
 
           @Override
-          public boolean isValid(@NotNull Document document) {
+          public boolean isValid() {
             return element.isValid();
-          }
-
-          @Override
-          public boolean isNavigatable() {
-            return true;
           }
         };
       }
@@ -628,23 +470,25 @@ public final class CtrlMouseHandler {
     });
   }
 
-
   private final class TooltipProvider {
-    @NotNull private final EditorEx myHostEditor;
+
+    private final @NotNull EditorEx myHostEditor;
     private final int myHostOffset;
-    private BrowseMode myBrowseMode;
+    private final @NotNull BrowseMode myBrowseMode;
+
     private boolean myDisposed;
     private CancellablePromise<?> myExecutionProgress;
 
-    TooltipProvider(@NotNull EditorEx hostEditor, @NotNull LogicalPosition hostPos) {
+    TooltipProvider(@NotNull EditorEx hostEditor, @NotNull LogicalPosition hostPos, @NotNull BrowseMode browseMode) {
       myHostEditor = hostEditor;
       myHostOffset = hostEditor.logicalPositionToOffset(hostPos);
+      myBrowseMode = browseMode;
     }
 
-    @SuppressWarnings("CopyConstructorMissesField")
-    TooltipProvider(@NotNull TooltipProvider source) {
+    TooltipProvider(@NotNull TooltipProvider source, @NotNull BrowseMode browseMode) {
       myHostEditor = source.myHostEditor;
       myHostOffset = source.myHostOffset;
+      myBrowseMode = browseMode;
     }
 
     void dispose() {
@@ -654,13 +498,11 @@ public final class CtrlMouseHandler {
       }
     }
 
-    BrowseMode getBrowseMode() {
+    @NotNull BrowseMode getBrowseMode() {
       return myBrowseMode;
     }
 
-    void execute(@NotNull BrowseMode browseMode) {
-      myBrowseMode = browseMode;
-
+    void execute() {
       if (PsiDocumentManager.getInstance(myProject).getPsiFile(myHostEditor.getDocument()) == null) return;
 
       int selStart = myHostEditor.getSelectionModel().getSelectionStart();
@@ -691,12 +533,12 @@ public final class CtrlMouseHandler {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (file == null) return createDisposalContinuation();
 
-      final Info info;
-      final DocInfo docInfo;
+      final CtrlMouseInfo info;
+      final CtrlMouseDocInfo docInfo;
       try {
         info = getInfoAt(editor, file, offset, myBrowseMode);
         if (info == null) return createDisposalContinuation();
-        docInfo = info.getInfo();
+        docInfo = info.getDocInfo();
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
@@ -726,10 +568,10 @@ public final class CtrlMouseHandler {
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getDocument().hostToInjected(myHostOffset) : myHostOffset;
     }
 
-    private void addHighlighterAndShowHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull EditorEx editor) {
+    private void addHighlighterAndShowHint(@NotNull CtrlMouseInfo info, @NotNull CtrlMouseDocInfo docInfo, @NotNull EditorEx editor) {
       if (myDisposed || editor.isDisposed()) return;
       if (myHighlighter != null) {
-        if (!info.isSimilarTo(myHighlighter.getStoredInfo())) {
+        if (!areSimilar(info, myHighlighter.getStoredInfo())) {
           disposeHighlighter();
         }
         else {
@@ -741,7 +583,7 @@ public final class CtrlMouseHandler {
         }
       }
 
-      if (!info.isValid(editor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
+      if (!isValidAndRangesAreCorrect(info, editor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
         return;
       }
 
@@ -754,7 +596,7 @@ public final class CtrlMouseHandler {
 
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null
-                                   : new QuickDocHyperlinkListener(docInfo.docProvider, info.myElementAtPointer);
+                                   : new QuickDocHyperlinkListener(docInfo.docProvider, info.getElementAtPointer());
       Ref<Consumer<? super String>> newTextConsumerRef = new Ref<>();
       JComponent component = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, null, newTextConsumerRef);
       component.setBorder(JBUI.Borders.empty(6, 6, 5, 6));
@@ -796,7 +638,7 @@ public final class CtrlMouseHandler {
     }
 
     private void updateOnPsiChanges(@NotNull LightweightHint hint,
-                                    @NotNull Info info,
+                                    @NotNull CtrlMouseInfo info,
                                     @NotNull Consumer<? super String> textConsumer,
                                     @NotNull String oldText,
                                     @NotNull Editor editor) {
@@ -806,7 +648,7 @@ public final class CtrlMouseHandler {
       myProject.getMessageBus().connect(hintDisposable).subscribe(PsiModificationTracker.TOPIC, () -> ReadAction
         .nonBlocking(() -> {
           try {
-            DocInfo newDocInfo = info.getInfo();
+            CtrlMouseDocInfo newDocInfo = info.getDocInfo();
             return (Runnable)() -> {
               if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
                 updateText(newDocInfo.text, textConsumer, hint, editor);
@@ -821,7 +663,7 @@ public final class CtrlMouseHandler {
         .finishOnUiThread(ModalityState.defaultModalityState(), Runnable::run)
         .withDocumentsCommitted(myProject)
         .expireWith(hintDisposable)
-        .expireWhen(() -> !info.isValid(editor.getDocument()))
+        .expireWhen(() -> !isValidAndRangesAreCorrect(info, editor.getDocument()))
         .coalesceBy(CtrlMouseHandler.class, hint)
         .submit(AppExecutorUtil.getAppExecutorService()));
     }
@@ -843,7 +685,7 @@ public final class CtrlMouseHandler {
   }
 
   @NotNull
-  private HighlightersSet installHighlighterSet(@NotNull Info info, @NotNull EditorEx editor, boolean highlighterOnly) {
+  private HighlightersSet installHighlighterSet(@NotNull CtrlMouseInfo info, @NotNull EditorEx editor, boolean highlighterOnly) {
     editor.getContentComponent().addKeyListener(myEditorKeyListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     if (info.isNavigatable()) {
@@ -881,11 +723,11 @@ public final class CtrlMouseHandler {
   private final class HighlightersSet {
     @NotNull private final List<? extends RangeHighlighter> myHighlighters;
     @NotNull private final EditorEx myHighlighterView;
-    @NotNull private final Info myStoredInfo;
+    @NotNull private final CtrlMouseInfo myStoredInfo;
 
     private HighlightersSet(@NotNull List<? extends RangeHighlighter> highlighters,
                             @NotNull EditorEx highlighterView,
-                            @NotNull Info storedInfo) {
+                            @NotNull CtrlMouseInfo storedInfo) {
       myHighlighters = highlighters;
       myHighlighterView = highlighterView;
       myStoredInfo = storedInfo;
@@ -902,20 +744,8 @@ public final class CtrlMouseHandler {
     }
 
     @NotNull
-    Info getStoredInfo() {
+    CtrlMouseInfo getStoredInfo() {
       return myStoredInfo;
-    }
-  }
-
-  public static final class DocInfo {
-    public static final DocInfo EMPTY = new DocInfo(null, null);
-
-    @Nullable public final String text;
-    @Nullable final DocumentationProvider docProvider;
-
-    DocInfo(@Nullable String text, @Nullable DocumentationProvider provider) {
-      this.text = text;
-      docProvider = provider;
     }
   }
 

@@ -250,18 +250,25 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         DataProvider provider = dataId -> {
           if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
             if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
-              int row = myTable.getSelectedRow();
-              if (row != -1) {
-                Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
-                if (pair.second instanceof Color) {
+              int[] rows = myTable.getSelectedRows();
+              if (rows.length > 0) {
                   return new TextCopyProvider() {
                     @Override
                     public Collection<String> getTextLinesToCopy() {
-                      return Collections
-                        .singletonList("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"");
+                      List<String> result = new ArrayList<String>();
+                      String tail = rows.length > 1 ? "," : "";
+                      for (int row : rows) {
+                        Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
+                        if (pair.second instanceof Color) {
+                          result.add("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
+                        } else {
+                          result.add("\"" + pair.first.toString() + "\": \"" + pair.second + "\"" + tail);
+                        }
+                      }
+
+                      return result;
                     }
                   };
-                }
               }
             }
           }

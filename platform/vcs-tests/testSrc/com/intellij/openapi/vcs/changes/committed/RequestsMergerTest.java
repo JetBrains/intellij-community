@@ -153,7 +153,7 @@ public class RequestsMergerTest extends TestCase {
   }
 
   private static class SimpleExecutor implements Consumer<Runnable> {
-    private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("req merge test");
+    private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Req Merge Test");
 
     @Override
     public void consume(Runnable runnable) {

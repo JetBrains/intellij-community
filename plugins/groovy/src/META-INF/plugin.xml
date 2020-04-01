@@ -218,7 +218,7 @@
 
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
-    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureSamParameterEnhancer"/>
 
     <typeAugmenter implementation="org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter"/>
     <typeAugmenter implementation="org.jetbrains.plugins.groovy.intentions.style.inference.ClosureParameterAugmenter"/>
@@ -304,7 +304,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Groovy" language="Groovy" extensions="groovy;gy"
+    <fileType name="Groovy" language="Groovy" extensions="groovy;gy" hashBangs="groovy"
               implementationClass="org.jetbrains.plugins.groovy.GroovyFileType" fieldName="GROOVY_FILE_TYPE"/>
     <fileType name="gdsl" extensions="gdsl"
               implementationClass="org.jetbrains.plugins.groovy.GdslFileType" fieldName="INSTANCE"/>
@@ -321,6 +321,8 @@
                  description="Whether to throw error if the element is unexpected in resolve processor"/>
     <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
                  description="Allows to collect method usages for more precise type inference"/>
+    <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
+                 description="Enable type inference with using info from explicitly typed closures"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
 
@@ -328,8 +330,6 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
     <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
-
-    <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrMethodDeclarationRangeHandler"/>
@@ -514,6 +514,8 @@
     <inlineActionHandler implementation="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineLocalHandler"/>
 
     <refactoring.moveClassHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyClassHandler"/>
+    <refactoring.moveInnerHandler language="Groovy"
+                                  implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyInnerHandler"/>
     <refactoring.moveClassToInnerHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.GroovyMoveClassToInnerHandler"/>
     <moveFileHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyFileHandler"/>
     <refactoring.moveMemberHandler language="Groovy"
@@ -1246,6 +1248,7 @@
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader"/>
 
     <pathMacroContributor implementation="org.jetbrains.plugins.groovy.mvc.MvcPathMacros"/>
+    <notificationWhitelist groupIds="Groovy DSL errors;Grape;Mvc notifications;"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

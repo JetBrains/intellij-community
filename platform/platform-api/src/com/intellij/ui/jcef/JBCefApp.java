@@ -11,6 +11,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import org.cef.CefApp;
 import org.cef.CefSettings;
+import org.cef.CefSettings.LogSeverity;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefSchemeHandlerFactory;
@@ -28,7 +29,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
 
 /**
  * A wrapper over {@link CefApp}.
@@ -58,15 +62,36 @@ public abstract class JBCefApp {
     //noinspection AbstractMethodCallInConstructor
     CefAppConfig config = getCefAppConfig();
     config.mySettings.windowless_rendering_enabled = false;
-    config.mySettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
+    config.mySettings.log_severity = getLogLevel();
     Color bg = JBColor.background();
     config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     if (ApplicationManager.getApplication().isInternal()) {
-      config.mySettings.remote_debugging_port = 9229;
+      config.mySettings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
     }
     CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
     myCefApp = CefApp.getInstance(config.mySettings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
+  }
+
+  private static LogSeverity getLogLevel() {
+    String level = System.getProperty("ide.browser.jcef.log.level", "disable").toLowerCase(Locale.ENGLISH);
+    switch (level) {
+      case "disable":
+        return LogSeverity.LOGSEVERITY_DISABLE;
+      case "verbose":
+        return LogSeverity.LOGSEVERITY_VERBOSE;
+      case "info":
+        return LogSeverity.LOGSEVERITY_INFO;
+      case "warning":
+        return LogSeverity.LOGSEVERITY_WARNING;
+      case "error":
+        return LogSeverity.LOGSEVERITY_ERROR;
+      case "fatal":
+        return LogSeverity.LOGSEVERITY_FATAL;
+      case "default":
+      default:
+        return LogSeverity.LOGSEVERITY_DEFAULT;
+    }
   }
 
   @NotNull
@@ -182,8 +207,10 @@ public abstract class JBCefApp {
       settings.resources_dir_path = JCEF_PATH;
       settings.locales_dir_path = JCEF_PATH + "/locales";
       settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
+      double scale = JBUIScale.sysScale();
+      System.setProperty("jcef.forceDeviceScaleFactor", Double.toString(scale));
       return new CefAppConfig(settings, new String[] {
-        "--force-device-scale-factor=" + JBUIScale.sysScale()
+        "--force-device-scale-factor=" + scale
       });
     }
   }
@@ -244,10 +271,10 @@ public abstract class JBCefApp {
       }
       ourSchemeHandlerFactoryList.clear(); // no longer needed
 
-      getInstance().myCefApp.registerSchemeHandlerFactory("file", "", new CefSchemeHandlerFactory() {
+      getInstance().myCefApp.registerSchemeHandlerFactory(FILE_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
         @Override
         public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
-          return "file".equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
+          return FILE_SCHEME_NAME.equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
         }
       });
     }

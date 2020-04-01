@@ -288,7 +288,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         private fun calculateAffectsBorders(): Boolean {
             val windowsVersion = WINDOWS_VERSION?.toIntOrNull() ?: 0
-            if (windowsVersion < 1809) return false
+            if (windowsVersion < 1809) return true // should always be active on older versions on Windows
             return Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
         }
 

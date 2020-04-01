@@ -1,7 +1,6 @@
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
@@ -14,21 +13,19 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.virtualFileUrl
 import org.jdom.Element
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 internal class LegacyBridgeFilePointerProviderImpl : LegacyBridgeFilePointerProvider, Disposable {
-  private var currentDisposable = nextDisposable()
+  private val filePointers = mutableMapOf<VirtualFileUrl, VirtualFilePointer>()
+  private val filePointerDisposables = mutableListOf<Disposable>()
 
-  private val filePointers: ConcurrentMap<VirtualFileUrl, VirtualFilePointer> = ContainerUtil.newConcurrentMap()
-
-  private val fileContainers: ConcurrentMap<LegacyBridgeFileContainer, VirtualFilePointerContainer> = ContainerUtil.newConcurrentMap()
+  private val fileContainers = mutableMapOf<LegacyBridgeFileContainer, VirtualFilePointerContainer>()
+  private val fileContainerDisposables = mutableListOf<Disposable>()
 
   private val fileContainerUrlsLock = ReentrantLock()
   private val fileContainerUrls = MultiMap.create<VirtualFileUrl, LegacyBridgeFileContainer>()
@@ -58,8 +55,10 @@ internal class LegacyBridgeFilePointerProviderImpl : LegacyBridgeFilePointerProv
 
       object : AsyncFileListener.ChangeApplier {
         override fun beforeVfsChange() {
-          pointersToProcess.forEach { filePointers.remove(it) }
-          containersToProcess.forEach { fileContainers.remove(it) }
+          synchronized(this@LegacyBridgeFilePointerProviderImpl) {
+            pointersToProcess.forEach { filePointers.remove(it) }
+            containersToProcess.forEach { fileContainers.remove(it) }
+          }
         }
       }
     }, this)
@@ -67,27 +66,25 @@ internal class LegacyBridgeFilePointerProviderImpl : LegacyBridgeFilePointerProv
 
   override fun dispose() = Unit
 
-  override fun getAndCacheFilePointer(url: VirtualFileUrl): VirtualFilePointer =
-    filePointers.getOrPut(url) {
-      VirtualFilePointerManager.getInstance().create(url.url, currentDisposable, object : VirtualFilePointerListener {
-        override fun validityChanged(pointers: Array<out VirtualFilePointer>) {
-          filePointers.remove(url)
-        }
-      })
+  @Synchronized
+  override fun getAndCacheFilePointer(url: VirtualFileUrl): VirtualFilePointer {
+    return filePointers.getOrPut(url) {
+      val disposable = nextDisposable()
+      filePointerDisposables.add(disposable)
+      VirtualFilePointerManager.getInstance().create(url.url, disposable, null)
     }
+  }
 
+  @Synchronized
   override fun getAndCacheFileContainer(description: LegacyBridgeFileContainer): VirtualFilePointerContainer {
     val existingContainer = fileContainers[description]
     if (existingContainer != null) return existingContainer
 
-    val container = VirtualFilePointerManager.getInstance().createContainer(
-      currentDisposable,
-      object : VirtualFilePointerListener {
-        override fun validityChanged(pointers: Array<out VirtualFilePointer>) {
-          fileContainers.remove(description)
-        }
-      }
-    )
+    val disposable = nextDisposable()
+    fileContainerDisposables.add(disposable)
+    val container = VirtualFilePointerManager.getInstance().createContainer(disposable, object : VirtualFilePointerListener {
+      override fun validityChanged(pointers: Array<out VirtualFilePointer>) {  }
+    })
 
     for (url in description.urls) {
       container.add(url.url)
@@ -101,17 +98,14 @@ internal class LegacyBridgeFilePointerProviderImpl : LegacyBridgeFilePointerProv
     return ReadonlyFilePointerContainer(container)
   }
 
+  @Synchronized
   fun disposeAndClearCaches() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-    val oldDisposable = currentDisposable
-    currentDisposable = nextDisposable()
+    filePointerDisposables.forEach { Disposer.dispose(it) }
+    fileContainerDisposables.forEach { Disposer.dispose(it) }
 
     fileContainerUrlsLock.withLock { fileContainerUrls.clear() }
     filePointers.clear()
     fileContainers.clear()
-
-    Disposer.dispose(oldDisposable)
   }
 
   private fun registerContainer(description: LegacyBridgeFileContainer, container: VirtualFilePointerContainer) {

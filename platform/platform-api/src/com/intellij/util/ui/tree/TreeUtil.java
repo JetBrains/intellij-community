@@ -402,7 +402,7 @@ public final class TreeUtil {
   public static <T extends MutableTreeNode> void sortChildren(@NotNull T node, @Nullable Comparator<? super T> comparator) {
     //noinspection unchecked
     final List<T> children = (List)listChildren(node);
-    Collections.sort(children, comparator);
+    children.sort(comparator);
     for (int i = node.getChildCount() - 1; i >= 0; i--) {
       node.remove(i);
     }
@@ -429,6 +429,20 @@ public final class TreeUtil {
   }
 
   /**
+   * Makes visible the specified tree row and selects it.
+   * It does not clear selection if there is nothing to select.
+   *
+   * @param tree  a tree to select in
+   * @param index an index of a viewable node in the given tree
+   * @see JTree#getRowCount
+   * @see JTree#clearSelection
+   */
+  public static void selectRow(@NotNull JTree tree, int index) {
+    TreePath path = tree.getPathForRow(index);
+    if (path != null) internalSelect(tree, path);
+  }
+
+  /**
    * Makes visible specified tree paths and select them.
    * It does not clear selection if there are no paths to select.
    *
@@ -438,23 +452,22 @@ public final class TreeUtil {
    */
   @ApiStatus.Internal
   public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
-    if (paths.isEmpty()) return;
-    paths.forEach(tree::makeVisible);
-    internalSelect(tree, paths);
+    if (!paths.isEmpty()) selectPaths(tree, paths.toArray(EMPTY_TREE_PATH));
   }
 
   /**
-   * @deprecated use {{@link #selectPaths(JTree, Collection)}} instead
+   * Makes visible specified tree paths and select them.
+   * It does not clear selection if there are no paths to select.
+   *
+   * @param tree  a tree to select in
+   * @param paths an array of paths to select
+   * @see JTree#clearSelection
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void selectPaths(@NotNull JTree tree, TreePath @NotNull ... paths) {
+  @ApiStatus.Internal
+  public static void selectPaths(@NotNull JTree tree, @NotNull TreePath @NotNull ... paths) {
     if (paths.length == 0) return;
-    for (TreePath path : paths) {
-      tree.makeVisible(path);
-    }
-    tree.setSelectionPaths(paths);
-    tree.scrollPathToVisible(paths[0]);
+    for (TreePath path : paths) tree.makeVisible(path);
+    internalSelect(tree, paths);
   }
 
   @NotNull
@@ -1565,16 +1578,10 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
-    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelect(tree, paths));
+    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelect(tree, paths.toArray(EMPTY_TREE_PATH)));
   }
 
-  private static void internalSelect(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
-    assert EventQueue.isDispatchThread();
-    if (paths.isEmpty()) return;
-    internalSelect(tree, paths.toArray(EMPTY_TREE_PATH));
-  }
-
-  private static void internalSelect(@NotNull JTree tree, TreePath @NotNull ... paths) {
+  private static void internalSelect(@NotNull JTree tree, @NotNull TreePath @NotNull ... paths) {
     assert EventQueue.isDispatchThread();
     if (paths.length == 0) return;
     tree.setSelectionPaths(paths);
@@ -1588,7 +1595,7 @@ public final class TreeUtil {
   /**
    * @param tree     a tree to scroll
    * @param path     a visible tree path to scroll
-   * @param centered {@code true} to show the specified path
+   * @param centered {@code true} to show the specified path in the center
    * @return {@code false} if a path is hidden (under a collapsed parent)
    */
   public static boolean scrollToVisible(@NotNull JTree tree, @NotNull TreePath path, boolean centered) {
@@ -1602,9 +1609,8 @@ public final class TreeUtil {
     if (parent instanceof JViewport) {
       if (centered) {
         Rectangle visible = tree.getVisibleRect();
-        if (visible.y < bounds.y + bounds.height && bounds.y < visible.y + visible.height) {
-          centered = false; // disable centering if the given path is already visible
-        }
+        centered = bounds.y < visible.y || bounds.y > visible.y + visible.height - bounds.height;
+        // disable centering if the given path is already visible
       }
       int width = parent.getWidth();
       if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {

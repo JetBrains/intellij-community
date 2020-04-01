@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Activity;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,8 @@ public final class Splash extends Window {
     myProgressSlidePainter = new ProgressSlidePainter(myInfo);
     myProgressHeight = uiScale(info.getProgressHeight());
     myProgressY = uiScale(info.getProgressY());
-    myProgressTail = info.getProgressTailIcon();
+
+    myProgressTail = getProgressTailIcon(info);
 
     setFocusableWindowState(false);
 
@@ -52,6 +54,23 @@ public final class Splash extends Window {
     setAutoRequestFocus(false);
     setSize(size);
     setLocationInTheCenterOfScreen();
+  }
+
+  @Nullable
+  private static Icon getProgressTailIcon(@NotNull ApplicationInfoEx info) {
+    String progressTailIconName = info.getProgressTailIcon();
+    Icon progressTail = null;
+    if (progressTailIconName != null) {
+      try {
+        Image image = ImageLoader.loadFromUrl(Splash.class.getResource(progressTailIconName));
+        if (image != null) {
+          progressTail = new JBImageIcon(image);
+        }
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return progressTail;
   }
 
   public void initAndShow(Boolean visible) {

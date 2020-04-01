@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -71,6 +71,26 @@ public class ProjectSdksModel implements SdkModel {
   @Override
   public void removeListener(@NotNull Listener listener) {
     mySdkEventsDispatcher.removeListener(listener);
+  }
+
+  public void syncSdks() {
+    final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
+    for (Sdk sdk : projectSdks) {
+      if (myProjectSdks.containsKey(sdk) || myProjectSdks.containsValue(sdk)) continue;
+
+      Sdk editableCopy;
+      try {
+        editableCopy = (Sdk)sdk.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        LOG.error(e);
+        continue;
+      }
+
+      myProjectSdks.put(sdk, editableCopy);
+      SdkDownloadTracker.getInstance().registerEditableSdk(sdk, editableCopy);
+      getMulticaster().sdkAdded(editableCopy);
+    }
   }
 
   public void reset(@Nullable Project project) {
@@ -156,6 +176,12 @@ public class ProjectSdksModel implements SdkModel {
         if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
           jdkTable.addJdk(projectJdk);
           jdkTable.updateJdk(projectJdk, myProjectSdks.get(projectJdk));
+
+          SdkDownloadTracker.getInstance().tryRegisterSdkDownloadFailureHandler(projectJdk, () -> {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              ProjectJdkTable.getInstance().removeJdk(projectJdk);
+            });
+          });
         }
       }
     });
@@ -310,7 +336,7 @@ public class ProjectSdksModel implements SdkModel {
       SdkDownload downloadExtension = SdkDownload.EP_NAME.findFirstSafe(it -> it.supportsDownload(type));
       if (downloadExtension == null) continue;
 
-      String downloadText = ProjectBundle.message("sdk.configure.download.action", type.getPresentableName());
+      String downloadText = ProjectBundle.message("sdk.configure.download.subAction", type.getPresentableName());
       NewSdkAction downloadAction = new NewSdkAction(type, downloadText, downloadExtension.getIconForDownloadAction(type)) {
         @Override
         public void actionPerformed(@Nullable Sdk selectedSdk,
@@ -329,7 +355,7 @@ public class ProjectSdksModel implements SdkModel {
   public Map<SdkType, NewSdkAction> createAddActions(@Nullable Condition<? super SdkTypeId> filter) {
     Map<SdkType, NewSdkAction> result = new LinkedHashMap<>();
     for (final SdkType type : getAddableSdkTypes(filter)) {
-      String addOnDiskText = ProjectBundle.message("sdk.configure.add.default.action", type.getPresentableName());
+      String addOnDiskText = ProjectBundle.message("sdk.configure.add.sdkType.subAction", type.getPresentableName());
 
       NewSdkAction addAction = new NewSdkAction(type, addOnDiskText, type.getIconForAddAction()) {
         @Override
@@ -413,6 +439,7 @@ public class ProjectSdksModel implements SdkModel {
     Sdk editableSdk = doAddInternal(sdk, callback);
     if (editableSdk != null) {
       tracker.registerEditableSdk(sdk, editableSdk);
+      tracker.tryRegisterSdkDownloadFailureHandler(sdk, () -> removeSdk(editableSdk));
     }
     tracker.startSdkDownloadIfNeeded(sdk);
   }

@@ -44,8 +44,8 @@ def run_stubtest(typeshed_dir: Path) -> int:
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         print(
-            "\nNB: stubtest output depends on the Python version it is run with. See README.md "
-            "for more details.\n"
+            "\nNB: stubtest output depends on the Python version (and system) it is run with. "
+            "See README.md for more details.\n"
             "NB: We only check positional-only arg accuracy for Python 3.8.\n"
             "If stubtest is complaining about 'unused whitelist entry' after your fix, please "
             "remove the entry from the whitelist file. Note you may have to do this for other "

@@ -505,7 +505,7 @@ public abstract class VcsVFSListener implements Disposable {
     for (Document document : fileDocumentManager.getUnsavedDocuments()) {
       VirtualFile file = fileDocumentManager.getFile(document);
       if (file != null && ignoreFileNames.contains(file.getName())) {
-        fileDocumentManager.saveDocument(document);
+        ApplicationManager.getApplication().invokeAndWait(() -> fileDocumentManager.saveDocument(document));
       }
     }
   }

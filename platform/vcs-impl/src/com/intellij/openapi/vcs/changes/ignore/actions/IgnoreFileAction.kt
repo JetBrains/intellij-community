@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 import com.intellij.openapi.vcs.changes.IgnoredFileBean
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElements
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import kotlin.streams.toList
@@ -29,8 +30,9 @@ class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
+    val ignoreFileRoot = ignoreFile.parent ?: return
 
-    val ignored = getIgnoredFileBeans(e, vcs)
+    val ignored = getIgnoredFileBeans(e, ignoreFileRoot, vcs)
     if (ignored.isEmpty()) return
 
     writeIgnoreFileEntries(project, ignoreFile, ignored)
@@ -44,7 +46,7 @@ class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val 
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val ignoreFileRootVcs = VcsUtil.getVcsFor(project, ignoreFileRoot) ?: return
 
-    val ignored = getIgnoredFileBeans(e, ignoreFileRootVcs)
+    val ignored = getIgnoredFileBeans(e, ignoreFileRoot, ignoreFileRootVcs)
     if (ignored.isEmpty() || !confirmCreateIgnoreFile(project)) return
 
     val ignoreFile = runUndoTransparentWriteAction { ignoreFileRoot.createChildData(ignoreFileRoot, ignoreFileName) }
@@ -70,13 +72,16 @@ fun writeIgnoreFileEntries(project: Project,
   OpenFileDescriptor(project, ignoreFile).navigate(true)
 }
 
-fun getIgnoredFileBeans(e: AnActionEvent, vcs: AbstractVcs): List<IgnoredFileBean> {
+internal fun getIgnoredFileBeans(e: AnActionEvent, ignoreFileRoot: VirtualFile, vcs: AbstractVcs): List<IgnoredFileBean> {
   val project = e.getRequiredData(CommonDataKeys.PROJECT)
   val selectedFiles = getSelectedFiles(e)
 
   return selectedFiles
+    .asSequence()
+    .filter { VfsUtil.isAncestor(ignoreFileRoot, it, false) }
     .filter { VcsUtil.getVcsFor(project, it) == vcs }
     .map { IgnoredBeanFactory.ignoreFile(it, project) }
+    .toList()
 }
 
 fun getSelectedFiles(e: AnActionEvent): List<VirtualFile> {

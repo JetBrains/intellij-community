@@ -34,10 +34,10 @@ class date:
     max: ClassVar[date]
     resolution: ClassVar[timedelta]
 
-    def __init__(self, year: int, month: int, day: int) -> None: ...
+    def __new__(cls: Type[_S], year: int, month: int, day: int) -> _S: ...
 
     @classmethod
-    def fromtimestamp(cls: Type[_S], t: float) -> _S: ...
+    def fromtimestamp(cls: Type[_S], __timestamp: float) -> _S: ...
     @classmethod
     def today(cls: Type[_S]) -> _S: ...
     @classmethod
@@ -201,13 +201,31 @@ class datetime(date):
     resolution: ClassVar[timedelta]
 
     if sys.version_info >= (3, 6):
-        def __init__(self, year: int, month: int, day: int, hour: int = ...,
-                     minute: int = ..., second: int = ..., microsecond: int = ...,
-                     tzinfo: Optional[_tzinfo] = ..., *, fold: int = ...) -> None: ...
+        def __new__(
+            cls: Type[_S],
+            year: int,
+            month: int,
+            day: int,
+            hour: int = ...,
+            minute: int = ...,
+            second: int = ...,
+            microsecond: int = ...,
+            tzinfo: Optional[_tzinfo] = ...,
+            *,
+            fold: int = ...,
+        ) -> _S: ...
     else:
-        def __init__(self, year: int, month: int, day: int, hour: int = ...,
-                     minute: int = ..., second: int = ..., microsecond: int = ...,
-                     tzinfo: Optional[_tzinfo] = ...) -> None: ...
+        def __new__(
+            cls: Type[_S],
+            year: int,
+            month: int,
+            day: int,
+            hour: int = ...,
+            minute: int = ...,
+            second: int = ...,
+            microsecond: int = ...,
+            tzinfo: Optional[_tzinfo] = ...,
+        ) -> _S: ...
 
     @property
     def year(self) -> int: ...

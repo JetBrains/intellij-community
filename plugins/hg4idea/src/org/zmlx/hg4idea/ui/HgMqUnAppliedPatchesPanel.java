@@ -219,7 +219,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (project != null && !project.isDisposed()) {
+      if (!myProject.isDisposed()) {
         refreshAll();
       }
     });
