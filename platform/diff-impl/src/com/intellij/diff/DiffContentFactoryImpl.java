@@ -150,7 +150,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) return new FileDocumentContentImpl(project, document, file);
-    return new DocumentContentImpl(project, document, fileType, null, null, null, null);
+    return new DocumentContentImpl(project, document, fileType);
   }
 
   @NotNull
@@ -159,14 +159,14 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && file.equals(highlightFile)) return new FileDocumentContentImpl(project, document, file);
     if (highlightFile == null) return new DocumentContentImpl(document);
-    return new DocumentContentImpl(project, document, highlightFile.getFileType(), highlightFile, null, null, null);
+    return new FileReferentDocumentContent(project, document, highlightFile);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent) {
     if (referent == null) return new DocumentContentImpl(document);
-    return new DocumentContentImpl(project, document, referent.getContentType(), referent.getHighlightFile(), null, null, null);
+    return new ContentReferentDocumentContent(project, document, referent);
   }
 
 
@@ -579,7 +579,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     CharsetToolkit.GuessedEncoding guessedEncoding = toolkit.guessFromContent(content.length);
     switch (guessedEncoding) {
       case SEVEN_BIT:
-        return Charset.forName("US-ASCII");
+        return StandardCharsets.US_ASCII;
       case VALID_UTF8:
         return StandardCharsets.UTF_8;
       default:
@@ -599,6 +599,44 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @Override
     public String getPath() {
       return myPath.getPath();
+    }
+  }
+
+  private static class FileReferentDocumentContent extends DocumentContentBase {
+    @NotNull private final VirtualFile myHighlightFile;
+
+    private FileReferentDocumentContent(@Nullable Project project, @NotNull Document document, @NotNull VirtualFile highlightFile) {
+      super(project, document);
+      myHighlightFile = highlightFile;
+    }
+
+    @Override
+    public @NotNull FileType getContentType() {
+      return myHighlightFile.getFileType();
+    }
+
+    @Override
+    public @NotNull VirtualFile getHighlightFile() {
+      return myHighlightFile;
+    }
+  }
+
+  private static class ContentReferentDocumentContent extends DocumentContentBase {
+    @NotNull private final DocumentContent myReferent;
+
+    private ContentReferentDocumentContent(@Nullable Project project, @NotNull Document document, @NotNull DocumentContent referent) {
+      super(project, document);
+      myReferent = referent;
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      return myReferent.getContentType();
+    }
+
+    @Override
+    public @Nullable VirtualFile getHighlightFile() {
+      return myReferent.getHighlightFile();
     }
   }
 }
