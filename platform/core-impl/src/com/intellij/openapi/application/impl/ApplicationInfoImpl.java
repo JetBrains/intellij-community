@@ -52,7 +52,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private Color myCopyrightForeground;
   private Color myAboutForeground;
   private Color myAboutLinkColor;
-  private Rectangle myAboutLogoRect;
+  // don't use Rectangle to avoid dependency on awt
+  private int[] myAboutLogoRect;
   private String myProgressTailIconName;
   private int myProgressHeight = 2;
   private int myProgressY = 350;
@@ -250,7 +251,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       String logoH = aboutLogoElement.getAttributeValue("logoH");
       if (logoX != null && logoY != null && logoW != null && logoH != null) {
         try {
-          myAboutLogoRect = new Rectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
+          myAboutLogoRect = new int[]{Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH)};
         }
         catch (NumberFormatException ignored) { }
       }
@@ -795,7 +796,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public Rectangle getAboutLogoRect() {
+  @SuppressWarnings("SSBasedInspection")
+  public @Nullable int[] getAboutLogoRect() {
     return myAboutLogoRect;
   }
 

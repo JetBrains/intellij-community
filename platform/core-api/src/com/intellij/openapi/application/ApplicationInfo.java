@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Calendar;
 
 /**
@@ -69,18 +68,16 @@ public abstract class ApplicationInfo {
 
   public abstract String getKeyConversionUrl();
 
-  @Nullable
-  public abstract Rectangle getAboutLogoRect();
+  @SuppressWarnings("SSBasedInspection")
+  public abstract @Nullable int[] getAboutLogoRect();
 
   public abstract boolean hasHelp();
 
   public abstract boolean hasContextHelp();
 
-  @NotNull
-  public abstract String getFullVersion();
+  public abstract @NotNull String getFullVersion();
 
-  @NotNull
-  public abstract String getStrictVersion();
+  public abstract @NotNull String getStrictVersion();
 
   public static boolean helpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();
