@@ -96,12 +96,6 @@ public class NlsContexts {
   public @interface ConfigurationErrorMessage {
   }
 
-  @NlsContext(prefix = "configuration.error.title")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ConfigurationErrorTitle {
-  }
-
   @NlsContext(prefix = "parser.error")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)

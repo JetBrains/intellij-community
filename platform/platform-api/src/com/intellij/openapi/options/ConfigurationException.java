@@ -37,14 +37,14 @@ public class ConfigurationException extends Exception {
    * @param title   the title describing the problem in short
    */
   public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
-                                @NlsContexts.ConfigurationErrorTitle String title) {
+                                @NlsContexts.DialogTitle String title) {
     super(message);
     myTitle = title;
   }
 
   public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
                                 Throwable cause,
-                                @NlsContexts.ConfigurationErrorTitle String title) {
+                                @NlsContexts.DialogTitle String title) {
     super(message, cause);
     myTitle = title;
   }
