@@ -758,13 +758,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateIconLocation();
   }
 
-  //TODO: check is this is required
-  //public void dispose() {
-  //  remove(myIcon);
-  //  Disposer.dispose(myIcon);
-  //  super.dispose();
-  //}
-
   private void updateIconLocation() {
     if (myLoadingIcon.isVisible()) {
       myLoadingIcon.updateLocation(this);
