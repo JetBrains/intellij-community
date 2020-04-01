@@ -51,9 +51,9 @@ abstract class ConfigurationTypeBase protected constructor(@NonNls private val i
   override fun getConfigurationFactories() = factories
 }
 
-abstract class SimpleConfigurationType protected constructor(private val id: String,
+abstract class SimpleConfigurationType protected constructor(@NonNls private val id: String,
                                                              private val name: String,
-                                                             private val description: String? = null,
+                                                             @Nls private val description: String? = null,
                                                              private val icon: NotNullLazyValue<Icon>) : ConfigurationType, ConfigurationFactory() {
   @Suppress("LeakingThis")
   private val factories: Array<ConfigurationFactory> = arrayOf(this)
