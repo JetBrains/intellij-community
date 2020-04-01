@@ -349,7 +349,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return getModuleType().getNodeIcon(false);
   }
 
-  @NlsContexts.Text
+  @NlsContexts.DetailedDescription
   public String getDescription() {
     return getModuleType().getDescription();
   }

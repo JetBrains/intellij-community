@@ -168,7 +168,7 @@ public class NlsContexts {
   @NlsContext(prefix = "text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface Text {
+  public @interface DetailedDescription {
   }
 
   @NlsContext(prefix = "list.item")

@@ -39,7 +39,7 @@ public interface MessagesService {
   int showMoreInfoMessageDialog(Project project,
                                 @DialogMessage String message,
                                 @DialogTitle String title,
-                                @Text String moreInfo,
+                                @DetailedDescription String moreInfo,
                                 String[] options,
                                 int defaultOptionIndex,
                                 int focusedOptionIndex,
@@ -75,7 +75,7 @@ public interface MessagesService {
                          @Nullable @InputDialogInitialValue String initialValue,
                          @Nullable InputValidator validator,
                          @Nullable TextRange selection,
-                         @Nullable @Text String comment);
+                         @Nullable @DetailedDescription String comment);
 
   String showMultilineInputDialog(Project project,
                                   @DialogMessage String message,
