@@ -2,6 +2,7 @@
 package com.intellij.workspace.api.pstorage.containers
 
 import com.intellij.util.containers.IntIntHashMap
+import org.jetbrains.annotations.TestOnly
 
 /**
  * @author Alex Plate
@@ -53,28 +54,23 @@ internal sealed class IntIntMultiMap(
 
   private class RoIntSequence(
     private val values: IntArray?,
-    startIndex: Int
+    private var idx: Int
   ) : IntSequence() {
 
-    private var hasNext = true
-    private var idx = startIndex
-    private var nextValue = -1
+    override val iterator: IntIterator = object : IntIterator() {
+      private var hasNext = true
+      override fun hasNext(): Boolean = hasNext
 
-    override fun hasNext(): Boolean {
-      if (!hasNext) return false
-      if (values!![idx] < 0) {
-        nextValue = values[idx].unpack()
-        hasNext = false
+      override fun nextInt(): Int {
+        val value = values!![idx++]
+        return if (value < 0) {
+          hasNext = false
+          value.unpack()
+        }
+        else {
+          value
+        }
       }
-      else {
-        nextValue = values[idx]
-      }
-      return true
-    }
-
-    override fun next(): Int {
-      idx++
-      return nextValue
     }
   }
 }
@@ -253,12 +249,7 @@ internal sealed class MutableIntIntMultiMap(
   }
 
   private class RwIntSequence(values: IntArray) : IntSequence() {
-
-    private val iter = values.iterator()
-
-    override fun hasNext(): Boolean = iter.hasNext()
-
-    override fun next(): Int = iter.next()
+    override val iterator: IntIterator = values.iterator()
   }
 }
 
@@ -328,32 +319,39 @@ internal sealed class AbstractIntIntMultiMap(
 
   abstract class IntSequence {
 
-    abstract fun hasNext(): Boolean
-
-    abstract fun next(): Int
+    abstract val iterator: IntIterator
 
     fun forEach(action: (Int) -> Unit) {
-      while (hasNext()) action(next())
+      while (iterator.hasNext()) action(iterator.next())
     }
 
-    fun isEmpty(): Boolean = !hasNext()
+    fun isEmpty(): Boolean = !iterator.hasNext()
+
+    /**
+     * Please use this method only for debugging purposes.
+     * Some of implementations doesn't have any memory overhead when using this [IntSequence]
+     */
+    @TestOnly
+    internal fun toArray(): IntArray {
+      val list = ArrayList<Int>()
+      this.forEach { list.add(it) }
+      return list.toTypedArray().toIntArray()
+    }
 
     open fun <T> map(transformation: (Int) -> T): Sequence<T> {
       return Sequence {
         object : Iterator<T> {
-          override fun hasNext(): Boolean = this@IntSequence.hasNext()
+          override fun hasNext(): Boolean = iterator.hasNext()
 
           override fun next(): T {
-            return transformation(this@IntSequence.next())
+            return transformation(iterator.next())
           }
         }
       }
     }
 
-    object Empty : IntSequence() {
-      override fun hasNext(): Boolean = false
-
-      override fun next(): Int = throw NoSuchElementException()
+    internal object Empty : IntSequence() {
+      override val iterator: IntIterator = IntArray(0).iterator()
 
       override fun <T> map(transformation: (Int) -> T): Sequence<T> = emptySequence()
     }
