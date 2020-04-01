@@ -67,17 +67,17 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
   }
 
   @Override
-  public void doneBefore(@NotNull IElementType type, @NotNull PsiBuilder.Marker before, @NotNull @NlsContexts.ParserError String errorMessage) {
+  public void doneBefore(@NotNull IElementType type, @NotNull PsiBuilder.Marker before, @NotNull @NlsContexts.ParsingError String errorMessage) {
     myDelegate.doneBefore(type, before, errorMessage);
   }
 
   @Override
-  public void error(@NotNull @NlsContexts.ParserError String message) {
+  public void error(@NotNull @NlsContexts.ParsingError String message) {
     myDelegate.error(message);
   }
 
   @Override
-  public void errorBefore(@NotNull @NlsContexts.ParserError String message, @NotNull PsiBuilder.Marker before) {
+  public void errorBefore(@NotNull @NlsContexts.ParsingError String message, @NotNull PsiBuilder.Marker before) {
     myDelegate.errorBefore(message, before);
   }
 

@@ -96,10 +96,10 @@ public class NlsContexts {
   public @interface ConfigurationErrorMessage {
   }
 
-  @NlsContext(prefix = "parser.error")
+  @NlsContext(prefix = "parsing.error")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public static @interface ParserError {
+  public static @interface ParsingError {
   }
 
   @NlsContext(prefix = "system.notification.title")
@@ -141,10 +141,10 @@ public class NlsContexts {
   public @interface Checkbox {
   }
 
-  @NlsContext(prefix = "titled.border")
+  @NlsContext(prefix = "border.title")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public @interface TitledBorder {
+  public @interface BorderTitle {
   }
 
   @NlsContext(prefix = "tooltip")
