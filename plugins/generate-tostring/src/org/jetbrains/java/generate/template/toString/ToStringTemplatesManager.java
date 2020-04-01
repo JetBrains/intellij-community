@@ -10,6 +10,8 @@ import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @State(name = "ToStringTemplates", storages = @Storage("toStringTemplates.xml"))
 public final class ToStringTemplatesManager extends TemplatesManager {
@@ -30,21 +32,19 @@ public final class ToStringTemplatesManager extends TemplatesManager {
   }
 
   @Override
-  public @NotNull TemplateResource @NotNull [] getDefaultTemplates() {
+  public @NotNull List<TemplateResource> getDefaultTemplates() {
     try {
-      return new TemplateResource[]{
-        new TemplateResource("String concat (+)", readFile(DEFAULT_CONCAT), true),
-        new TemplateResource("String concat (+) and super.toString()", readFile(DEFAULT_CONCAT_SUPER), true),
-        new TemplateResource("StringBuffer", readFile(DEFAULT_BUFFER), true),
-        new TemplateResource("StringBuilder (JDK 1.5)", readFile(DEFAULT_BUILDER), true),
-        new TemplateResource("ToStringBuilder (Apache commons-lang)", readFile(DEFAULT_TOSTRINGBUILDER), true, "org.apache.commons.lang.builder.ToStringBuilder"),
-        new TemplateResource("ToStringBuilder (Apache commons-lang 3)", readFile(DEFAULT_TOSTRINGBUILDER3), true, "org.apache.commons.lang3.builder.ToStringBuilder"),
-        new TemplateResource("Objects.toStringHelper (Guava)", readFile(DEFAULT_GUAVA), true, "com.google.common.base.Objects"),
-        new TemplateResource("MoreObjects.toStringHelper (Guava 18+)", readFile(DEFAULT_GUAVA_18), true, "com.google.common.base.MoreObjects"),
-        new TemplateResource("StringJoiner (JDK 1.8)", readFile(DEFAULT_STRING_JOINER), true),
-        new TemplateResource("Groovy: String concat (+)", readFile(DEFAULT_CONCAT_GROOVY), true),
-        new TemplateResource("Groovy: String concat (+) and super.toString()", readFile(DEFAULT_CONCAT_SUPER_GROOVY), true),
-      };
+      return Arrays.asList(new TemplateResource("String concat (+)", readFile(DEFAULT_CONCAT), true),
+                           new TemplateResource("String concat (+) and super.toString()", readFile(DEFAULT_CONCAT_SUPER), true),
+                           new TemplateResource("StringBuffer", readFile(DEFAULT_BUFFER), true),
+                           new TemplateResource("StringBuilder (JDK 1.5)", readFile(DEFAULT_BUILDER), true),
+                           new TemplateResource("ToStringBuilder (Apache commons-lang)", readFile(DEFAULT_TOSTRINGBUILDER), true, "org.apache.commons.lang.builder.ToStringBuilder"),
+                           new TemplateResource("ToStringBuilder (Apache commons-lang 3)", readFile(DEFAULT_TOSTRINGBUILDER3), true, "org.apache.commons.lang3.builder.ToStringBuilder"),
+                           new TemplateResource("Objects.toStringHelper (Guava)", readFile(DEFAULT_GUAVA), true, "com.google.common.base.Objects"),
+                           new TemplateResource("MoreObjects.toStringHelper (Guava 18+)", readFile(DEFAULT_GUAVA_18), true, "com.google.common.base.MoreObjects"),
+                           new TemplateResource("StringJoiner (JDK 1.8)", readFile(DEFAULT_STRING_JOINER), true),
+                           new TemplateResource("Groovy: String concat (+)", readFile(DEFAULT_CONCAT_GROOVY), true),
+                           new TemplateResource("Groovy: String concat (+) and super.toString()", readFile(DEFAULT_CONCAT_SUPER_GROOVY), true));
     }
     catch (IOException e) {
       throw new TemplateResourceException("Error loading default templates", e);
