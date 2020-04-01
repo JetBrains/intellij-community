@@ -14,8 +14,11 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("SameParameterValue")
 @State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
@@ -139,8 +143,13 @@ public final class LightEditServiceImpl implements LightEditService,
     LightEditorInfo openEditorInfo = myEditorManager.findOpen(file);
     if (openEditorInfo == null) {
       LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
-      addEditorTab(newEditorInfo);
-      LOG.info("Opened new tab for " + file.getPresentableUrl());
+      if (newEditorInfo != null) {
+        addEditorTab(newEditorInfo);
+        LOG.info("Opened new tab for " + file.getPresentableUrl());
+      }
+      else {
+        processNotOpenedFile(file);
+      }
     }
     else {
       selectEditorTab(openEditorInfo);
@@ -148,6 +157,22 @@ public final class LightEditServiceImpl implements LightEditService,
     }
 
     logStartupTime();
+  }
+
+  private void processNotOpenedFile(@NotNull VirtualFile file) {
+    FileType fileType = file.getFileType();
+    Project project = Objects.requireNonNull(getProject());
+    boolean openExternally = fileType instanceof INativeFileType;
+    if (openExternally) {
+      ((INativeFileType)fileType).openFileInAssociatedApplication(project, file);
+    }
+    else {
+      Messages.showWarningDialog(project,
+                                 ApplicationBundle.message("light.edit.unableToOpenFile.text", file.getPresentableName()),
+                                 ApplicationBundle.message("light.edit.unableToOpenFile.title"));
+    }
+    LOG.info("Failed to open " + file.getPresentableUrl() + ", binary: " + fileType.isBinary() +
+             ", opened externally: " + openExternally);
   }
 
   private void logStartupTime() {
@@ -170,7 +195,7 @@ public final class LightEditServiceImpl implements LightEditService,
     }
   }
 
-  private void addEditorTab(LightEditorInfo newEditorInfo) {
+  private void addEditorTab(@NotNull LightEditorInfo newEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getEditPanel().getTabs().addEditorTab(newEditorInfo);
     }
