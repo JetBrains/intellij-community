@@ -20,8 +20,8 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
   lateinit var idImpl: PId<E>
   open val id: PId<E> by lazy { idImpl }
 
-  lateinit var snapshotImpl: PEntityStorage
-  open val snapshot: PEntityStorage by lazy { snapshotImpl }
+  lateinit var snapshotImpl: AbstractPEntityStorage
+  open val snapshot: AbstractPEntityStorage by lazy { snapshotImpl }
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     if (this.javaClass != e.javaClass) return false
@@ -83,7 +83,7 @@ internal abstract class PEntityData<E : TypedEntity> {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  fun createEntity(snapshot: PEntityStorage): E {
+  fun createEntity(snapshot: AbstractPEntityStorage): E {
     val returnClass = (this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*>) as KClass<E>
 
     val params = returnClass.primaryConstructor!!.parameters

@@ -12,56 +12,9 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
 
 internal open class PEntityStorage constructor(
-  open val entitiesByType: EntitiesBarrel,
-  open val refs: RefsTable
-) : TypedEntityStorage {
-  override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
-    return entitiesByType[entityClass]?.all()?.map { it.createEntity(this) } ?: emptySequence()
-  }
-
-  internal fun <E : TypedEntity> entityDataById(id: PId<E>): PEntityData<E>? {
-    return entitiesByType[id.clazz.java]?.get(id.arrayId)
-  }
-
-  override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
-                                                            entityClass: KClass<R>,
-                                                            property: KProperty1<R, EntityReference<E>>): Sequence<R> {
-    TODO()
-    //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
-  }
-
-  override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
-    TODO("Not yet implemented")
-  }
-
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
-    val entitiesList = entitiesByType[connectionId.toSequenceClass.java] ?: return emptySequence()
-    return refs.getOneToMany(connectionId, id.arrayId)?.map { entitiesList[it]!!.createEntity(this) } ?: emptySequence()
-  }
-
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId<T, SUBT>, index: PId<SUBT>): T? {
-    val entitiesList = entitiesByType[connectionId.toSingleClass.java] ?: return null
-    return refs.getManyToOne(connectionId, index.arrayId) { entitiesList[it]!!.createEntity(this) }
-  }
-
-  override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    return entitiesByType.all().asSequence().map { it.value.all() }.flatten().filterNotNull()
-      .map { it.createEntity(this) }.filterIsInstance<TypedEntityWithPersistentId>().find { it.persistentId() == id } as E
-  }
-
-  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
-    val res = HashMap<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
-    entitiesByType.all().forEach { (type, entities) ->
-      entities.all().forEach {
-        if (sourceFilter(it.entitySource)) {
-          val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
-          mutableMapRes.getOrPut(type, { mutableListOf() }).add(it.createEntity(this))
-        }
-      }
-    }
-    return res
-  }
-
+  entitiesByType: EntitiesBarrel,
+  override val refs: RefsTable
+) : AbstractPEntityStorage(entitiesByType, refs) {
   companion object {
     fun create(): TypedEntityStorageBuilder = PEntityStorageBuilder()
   }
@@ -71,7 +24,7 @@ internal class PEntityStorageBuilder(
   private val origStorage: PEntityStorage,
   override var entitiesByType: MutableEntitiesBarrel,
   override var refs: MutableRefsTable
-) : TypedEntityStorageBuilder, PEntityStorage(entitiesByType, refs) {
+) : TypedEntityStorageBuilder, AbstractPEntityStorage(entitiesByType, refs) {
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
 
@@ -115,7 +68,9 @@ internal class PEntityStorageBuilder(
 
   // modificationCount is not incremented
   // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
-  private fun <T : TypedEntity, E : TypedEntity> addEntityWithRefs(entity: PEntityData<T>, clazz: Class<E>, storage: PEntityStorage) {
+  private fun <T : TypedEntity, E : TypedEntity> addEntityWithRefs(entity: PEntityData<T>,
+                                                                   clazz: Class<E>,
+                                                                   storage: AbstractPEntityStorage) {
     clazz as Class<T>
     entitiesByType.add(entity, clazz)
 
@@ -126,7 +81,7 @@ internal class PEntityStorageBuilder(
   // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
   private fun <T : TypedEntity, E : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
                                                                        clazz: Class<E>,
-                                                                       storage: PEntityStorage) {
+                                                                       storage: AbstractPEntityStorage) {
     clazz as Class<T>
 
     entitiesByType.replaceById(newEntity, clazz)
@@ -134,7 +89,7 @@ internal class PEntityStorageBuilder(
     handleReferences(storage, newEntity, clazz)
   }
 
-  private fun <T : TypedEntity> handleReferences(storage: PEntityStorage,
+  private fun <T : TypedEntity> handleReferences(storage: AbstractPEntityStorage,
                                                  newEntity: PEntityData<T>,
                                                  clazz: Class<T>) {
     val childrenRefs = storage.refs.getChildren(newEntity.id, clazz)
@@ -441,8 +396,8 @@ internal class PEntityStorageBuilder(
   private fun deepEquals(data1: PEntityData<out TypedEntity>,
                          data2: PEntityData<out TypedEntity>,
                          replaceMap: Map<PId<*>, PId<*>>,
-                         storage1: PEntityStorage,
-                         storage2: PEntityStorage,
+                         storage1: AbstractPEntityStorage,
+                         storage2: AbstractPEntityStorage,
     /*
                              backReferrers1: MultiMap<Long, Long>,
                              backReferrers2: MultiMap<Long, Long>,
@@ -474,7 +429,7 @@ internal class PEntityStorageBuilder(
   }
 
 
-  private fun foreachNotProcessedEntity(storage: PEntityStorage,
+  private fun foreachNotProcessedEntity(storage: AbstractPEntityStorage,
                                         sourceFilter: (EntitySource) -> Boolean,
                                         replaceMap: Map<PId<out TypedEntity>, PId<out TypedEntity>>,
                                         otherProcessedSet: Set<PId<out TypedEntity>>,
@@ -489,7 +444,7 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun traverseNodes(storage: PEntityStorage, startNode: PId<out TypedEntity>, block: (PId<out TypedEntity>) -> Unit) {
+  private fun traverseNodes(storage: AbstractPEntityStorage, startNode: PId<out TypedEntity>, block: (PId<out TypedEntity>) -> Unit) {
     val queue = Queues.newArrayDeque(listOf(startNode))
     while (queue.isNotEmpty()) {
       val id = queue.remove()
@@ -572,7 +527,7 @@ internal class PEntityStorageBuilder(
   }
 
 
-  private fun groupByPersistentIdHash(storage: PEntityStorage): Multimap<Int, Pair<PEntityData<*>, Class<out TypedEntity>>> {
+  private fun groupByPersistentIdHash(storage: AbstractPEntityStorage): Multimap<Int, Pair<PEntityData<*>, Class<out TypedEntity>>> {
     val res = HashMultimap.create<Int, Pair<PEntityData<*>, Class<out TypedEntity>>>()
     for ((clazz, entityFamily) in storage.entitiesByType.all()) {
       for (pEntityData in entityFamily.all()) {
@@ -674,5 +629,57 @@ internal class PEntityStorageBuilder(
       val copiedRefs = MutableRefsTable.from(storage.refs)
       return PEntityStorageBuilder(storage, copiedBarrel, copiedRefs)
     }
+  }
+}
+
+internal open class AbstractPEntityStorage constructor(
+  open val entitiesByType: EntitiesBarrel,
+  open val refs: AbstractRefsTable
+) : TypedEntityStorage {
+  override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
+    return entitiesByType[entityClass]?.all()?.map { it.createEntity(this) } ?: emptySequence()
+  }
+
+  internal fun <E : TypedEntity> entityDataById(id: PId<E>): PEntityData<E>? {
+    return entitiesByType[id.clazz.java]?.get(id.arrayId)
+  }
+
+  override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
+                                                            entityClass: KClass<R>,
+                                                            property: KProperty1<R, EntityReference<E>>): Sequence<R> {
+    TODO()
+    //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
+  }
+
+  override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
+    TODO("Not yet implemented")
+  }
+
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
+    val entitiesList = entitiesByType[connectionId.toSequenceClass.java] ?: return emptySequence()
+    return refs.getOneToMany(connectionId, id.arrayId)?.map { entitiesList[it]!!.createEntity(this) } ?: emptySequence()
+  }
+
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId<T, SUBT>, index: PId<SUBT>): T? {
+    val entitiesList = entitiesByType[connectionId.toSingleClass.java] ?: return null
+    return refs.getManyToOne(connectionId, index.arrayId) { entitiesList[it]!!.createEntity(this) }
+  }
+
+  override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
+    return entitiesByType.all().asSequence().map { it.value.all() }.flatten().filterNotNull()
+      .map { it.createEntity(this) }.filterIsInstance<TypedEntityWithPersistentId>().find { it.persistentId() == id } as E
+  }
+
+  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
+    val res = HashMap<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
+    entitiesByType.all().forEach { (type, entities) ->
+      entities.all().forEach {
+        if (sourceFilter(it.entitySource)) {
+          val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
+          mutableMapRes.getOrPut(type, { mutableListOf() }).add(it.createEntity(this))
+        }
+      }
+    }
+    return res
   }
 }

@@ -4,13 +4,20 @@ package com.intellij.workspace.api.pstorage.containers
 internal class IntIntBiMultiMap(
   private var key2Values: IntIntMultiMap.BySet,
   private var value2Keys: IntIntMultiMap.BySet
-) {
+) : AbstractIntIntBiMultiMap(key2Values, value2Keys) {
+  override fun copy(): IntIntBiMultiMap {
+    val newKey2Values = key2Values.copy()
+    val newValue2Keys = value2Keys.copy()
+    return IntIntBiMultiMap(newKey2Values, newValue2Keys)
+  }
+}
 
-  constructor() : this(IntIntMultiMap.BySet(), IntIntMultiMap.BySet())
+internal class MutableIntIntBiMultiMap(
+  private var key2Values: MutableIntIntMultiMap.BySet,
+  private var value2Keys: MutableIntIntMultiMap.BySet
+) : AbstractIntIntBiMultiMap(key2Values, value2Keys) {
 
-  fun getValues(key: Int): IntIntMultiMap.IntSequence = key2Values[key]
-
-  fun getKeys(value: Int): IntIntMultiMap.IntSequence = value2Keys[value]
+  constructor() : this(MutableIntIntMultiMap.BySet(), MutableIntIntMultiMap.BySet())
 
   fun put(key: Int, value: Int) {
     value2Keys.put(value, key)
@@ -36,16 +43,29 @@ internal class IntIntBiMultiMap(
     value2Keys.remove(value, key)
   }
 
-  fun isEmpty(): Boolean = key2Values.isEmpty() && value2Keys.isEmpty()
 
   fun clear() {
     key2Values.clear()
     value2Keys.clear()
   }
 
-  fun copy(): IntIntBiMultiMap {
+  override fun copy(): MutableIntIntBiMultiMap {
     val newKey2Values = key2Values.copy()
     val newValue2Keys = value2Keys.copy()
-    return IntIntBiMultiMap(newKey2Values, newValue2Keys)
+    return MutableIntIntBiMultiMap(newKey2Values, newValue2Keys)
   }
+}
+
+internal sealed class AbstractIntIntBiMultiMap(
+  private var key2Values: AbstractIntIntMultiMap,
+  private var value2Keys: AbstractIntIntMultiMap
+) {
+
+  fun getValues(key: Int): AbstractIntIntMultiMap.IntSequence = key2Values[key]
+
+  fun getKeys(value: Int): AbstractIntIntMultiMap.IntSequence = value2Keys[value]
+
+  fun isEmpty(): Boolean = key2Values.isEmpty() && value2Keys.isEmpty()
+
+  abstract fun copy(): AbstractIntIntBiMultiMap
 }

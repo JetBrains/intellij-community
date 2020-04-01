@@ -5,60 +5,117 @@ import com.intellij.util.containers.IntIntHashMap
 
 /**
  * @author Alex Plate
+ *
+ * See:
+ *  - [IntIntMultiMap.ByList]
+ *  - [IntIntMultiMap.BySet]
+ * and
+ *  - [MutableIntIntMultiMap.ByList]
+ *  - [MutableIntIntMultiMap.BySet]
  */
 
 internal sealed class IntIntMultiMap(
-  private var values: IntArray,
-  private val links: IntIntHashMap,
-  private val distinctValues: Boolean
-) {
+  values: IntArray,
+  links: IntIntHashMap,
+  distinctValues: Boolean
+) : AbstractIntIntMultiMap(values, links, distinctValues) {
 
-  class BySet private constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, true) {
+  class BySet internal constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, true) {
     constructor() : this(IntArray(0), IntIntHashMap())
 
     override fun copy(): BySet = doCopy().let { BySet(it.first, it.second) }
+
+    override fun toMutable(): MutableIntIntMultiMap.BySet = MutableIntIntMultiMap.BySet(values.clone(), links.copy())
   }
 
-  class ByList private constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, false) {
+  class ByList internal constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, false) {
     constructor() : this(IntArray(0), IntIntHashMap())
+
+    override fun copy(): ByList = doCopy().let { ByList(it.first, it.second) }
+
+    override fun toMutable(): MutableIntIntMultiMap.ByList = MutableIntIntMultiMap.ByList(values.clone(), links.copy())
+  }
+
+  override operator fun get(key: Int): IntSequence {
+    val idx = links[key]
+    if (idx == -1) return IntSequence.Empty
+
+    return RoIntSequence(values, idx)
+  }
+
+  abstract fun toMutable(): MutableIntIntMultiMap
+
+  protected fun IntIntHashMap.copy(): IntIntHashMap {
+    val newKey2Values = IntIntHashMap()
+    this.forEachEntry { key, value -> newKey2Values.put(key, value); true }
+    return newKey2Values
+  }
+
+  private class RoIntSequence(
+    private val values: IntArray?,
+    startIndex: Int
+  ) : IntSequence() {
+
+    private var hasNext = true
+    private var idx = startIndex
+    private var nextValue = -1
+
+    override fun hasNext(): Boolean {
+      if (!hasNext) return false
+      if (values!![idx] < 0) {
+        nextValue = values[idx].unpack()
+        hasNext = false
+      }
+      else {
+        nextValue = values[idx]
+      }
+      return true
+    }
+
+    override fun next(): Int {
+      idx++
+      return nextValue
+    }
+  }
+}
+
+internal sealed class MutableIntIntMultiMap(
+  values: IntArray,
+  links: IntIntHashMap,
+  distinctValues: Boolean
+) : AbstractIntIntMultiMap(values, links, distinctValues) {
+
+  class BySet internal constructor(values: IntArray, links: IntIntHashMap) : MutableIntIntMultiMap(values, links, true) {
+    constructor() : this(IntArray(0), IntIntHashMap())
+
+    override fun copy(): BySet = doCopy().let { BySet(it.first, it.second) }
+
+    override fun toImmutable(): IntIntMultiMap.BySet {
+      return IntIntMultiMap.BySet(values.clone(), links.copy())
+    }
+  }
+
+  class ByList internal constructor(values: IntArray, links: IntIntHashMap) : MutableIntIntMultiMap(values, links, false) {
+    constructor() : this(IntArray(0), IntIntHashMap())
+
+    override fun toImmutable(): IntIntMultiMap.ByList {
+      return IntIntMultiMap.ByList(values.clone(), links.copy())
+    }
 
     override fun copy(): ByList = doCopy().let { ByList(it.first, it.second) }
   }
 
-  operator fun get(key: Int): IntSequence {
-    val idx = links[key]
-    if (idx == -1) return IntSequence.Empty
-
-    return IntSequence(values, idx)
-  }
-
-  fun get(key: Int, action: (Int) -> Unit) {
-    var idx = links[key]
-    if (idx == -1) return
-
-    val size = values.size
-
-    var value: Int
-    do {
-      value = values[idx]
-      if (value < 0) break
-      action(value)
+  override fun get(key: Int): IntSequence {
+    val size = size(key)
+    val startId = links[key]
+    val vals = values.sliceArray(startId until (startId + size))
+    return if (vals.isEmpty()) {
+      IntSequence.Empty
     }
-    while (idx++ != size)
-
-    action(value.unpack())
-  }
-
-  fun size(key: Int): Int {
-    var idx = links[key]
-    if (idx == -1) return 0
-
-    var res = 0
-    val size = values.size
-
-    while (idx != size && values[idx++] >= 0) res++
-
-    return res + 1
+    else {
+      vals[vals.lastIndex] = vals.last().unpack()
+      RwIntSequence(vals)
+    }
   }
 
   fun put(key: Int, value: Int) {
@@ -182,16 +239,80 @@ internal sealed class IntIntMultiMap(
     }
   }
 
-  operator fun contains(key: Int): Boolean = key in links
-
-  fun isEmpty(): Boolean = links.isEmpty
-
   fun clear() {
     links.clear()
     values = IntArray(0)
   }
 
-  abstract fun copy(): IntIntMultiMap
+  abstract fun toImmutable(): IntIntMultiMap
+
+  protected fun IntIntHashMap.copy(): IntIntHashMap {
+    val newKey2Values = IntIntHashMap()
+    this.forEachEntry { key, value -> newKey2Values.put(key, value); true }
+    return newKey2Values
+  }
+
+  private class RwIntSequence(values: IntArray) : IntSequence() {
+
+    private val iter = values.iterator()
+
+    override fun hasNext(): Boolean = iter.hasNext()
+
+    override fun next(): Int = iter.next()
+  }
+}
+
+internal sealed class AbstractIntIntMultiMap(
+  protected open var values: IntArray,
+  protected open val links: IntIntHashMap,
+  protected open val distinctValues: Boolean
+) {
+
+  abstract operator fun get(key: Int): IntSequence
+
+  fun get(key: Int, action: (Int) -> Unit) {
+    var idx = links[key]
+    if (idx == -1) return
+
+    val size = values.size
+
+    var value: Int
+    do {
+      value = values[idx]
+      if (value < 0) break
+      action(value)
+    }
+    while (idx++ != size)
+
+    action(value.unpack())
+  }
+
+  fun size(key: Int): Int {
+    var idx = links[key]
+    if (idx == -1) return 0
+
+    var res = 0
+    val size = values.size
+
+    while (idx != size && values[idx++] >= 0) res++
+
+    return res + 1
+  }
+
+
+  private fun exists(value: Int, startRange: Int, endRange: Int): Boolean {
+    for (i in startRange until endRange) {
+      if (values[i] == value) return true
+    }
+    if (values[endRange] == value.pack()) return true
+    return false
+  }
+
+  operator fun contains(key: Int): Boolean = key in links
+
+  fun isEmpty(): Boolean = links.isEmpty
+
+  abstract fun copy(): AbstractIntIntMultiMap
 
   protected fun doCopy(): Pair<IntArray, IntIntHashMap> {
     val newLinks = IntIntHashMap()
@@ -201,35 +322,15 @@ internal sealed class IntIntMultiMap(
   }
 
   companion object {
-    private fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
-    private fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
+    internal fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
+    internal fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
   }
 
-  open class IntSequence(
-    private val values: IntArray?,
-    startIndex: Int
-  ) {
+  abstract class IntSequence {
 
-    private var hasNext = true
-    private var idx = startIndex
-    private var nextValue = -1
+    abstract fun hasNext(): Boolean
 
-    protected open fun hasNext(): Boolean {
-      if (!hasNext) return false
-      if (values!![idx] < 0) {
-        nextValue = values[idx].unpack()
-        hasNext = false
-      }
-      else {
-        nextValue = values[idx]
-      }
-      return true
-    }
-
-    protected open fun next(): Int {
-      idx++
-      return nextValue
-    }
+    abstract fun next(): Int
 
     fun forEach(action: (Int) -> Unit) {
       while (hasNext()) action(next())
@@ -249,7 +350,7 @@ internal sealed class IntIntMultiMap(
       }
     }
 
-    object Empty : IntSequence(null, 0) {
+    object Empty : IntSequence() {
       override fun hasNext(): Boolean = false
 
       override fun next(): Int = throw NoSuchElementException()

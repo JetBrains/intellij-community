@@ -4,15 +4,30 @@ package com.intellij.workspace.api.pstorage.containers
 import com.intellij.util.containers.IntIntHashMap
 
 internal class IntIntBiMap(
-  private var key2Value: IntIntHashMap,
-  private var value2Keys: IntIntMultiMap.ByList
-) {
+  key2Value: IntIntHashMap,
+  override val value2Keys: IntIntMultiMap.ByList
+) : AbstractIntIntBiMap(key2Value, value2Keys) {
 
   constructor() : this(IntIntHashMap(), IntIntMultiMap.ByList())
 
-  fun get(key: Int) = key2Value[key]
+  override fun copy(): AbstractIntIntBiMap {
+    val newKey2Values = IntIntHashMap()
+    key2Value.forEachEntry { key, value -> newKey2Values.put(key, value); true }
+    val newValue2Keys = value2Keys.copy()
+    return IntIntBiMap(newKey2Values, newValue2Keys)
+  }
 
-  fun getKeys(value: Int): IntIntMultiMap.IntSequence = value2Keys[value]
+  override fun toImmutable(): IntIntBiMap = this
+
+  fun toMutable(): MutableIntIntBiMap = MutableIntIntBiMap(key2Value.copy(), value2Keys.toMutable())
+}
+
+internal class MutableIntIntBiMap(
+  key2Value: IntIntHashMap,
+  override val value2Keys: MutableIntIntMultiMap.ByList
+) : AbstractIntIntBiMap(key2Value, value2Keys) {
+
+  constructor() : this(IntIntHashMap(), MutableIntIntMultiMap.ByList())
 
   fun put(key: Int, value: Int) {
     value2Keys.put(value, key)
@@ -37,17 +52,34 @@ internal class IntIntBiMap(
     value2Keys.remove(value, key)
   }
 
-  fun isEmpty(): Boolean = key2Value.isEmpty && value2Keys.isEmpty()
-
   fun clear() {
     key2Value.clear()
     value2Keys.clear()
   }
 
-  fun copy(): IntIntBiMap {
+  override fun toImmutable(): IntIntBiMap = IntIntBiMap(key2Value.copy(), value2Keys.toImmutable())
+
+  override fun copy(): MutableIntIntBiMap = MutableIntIntBiMap(key2Value.copy(), value2Keys.copy())
+}
+
+internal sealed class AbstractIntIntBiMap(
+  protected val key2Value: IntIntHashMap,
+  protected open val value2Keys: AbstractIntIntMultiMap
+) {
+
+  fun get(key: Int) = key2Value[key]
+
+  fun getKeys(value: Int): AbstractIntIntMultiMap.IntSequence = value2Keys[value]
+
+  fun isEmpty(): Boolean = key2Value.isEmpty && value2Keys.isEmpty()
+
+  abstract fun copy(): AbstractIntIntBiMap
+
+  abstract fun toImmutable(): IntIntBiMap
+
+  protected fun IntIntHashMap.copy(): IntIntHashMap {
     val newKey2Values = IntIntHashMap()
-    key2Value.forEachEntry { key, value -> newKey2Values.put(key, value); true }
-    val newValue2Keys = value2Keys.copy()
-    return IntIntBiMap(newKey2Values, newValue2Keys)
+    this.forEachEntry { key, value -> newKey2Values.put(key, value); true }
+    return newKey2Values
   }
 }
