@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Intention actions are invoked by pressing
@@ -85,4 +87,18 @@ public interface IntentionAction extends FileModifier {
    */
   @Override
   boolean startInWriteAction();
+
+  /**
+   * Returns the action that could be applied to the non-physical copy of the file.
+   * May return itself if the action doesn't depend on the file.
+   * 
+   * @param target target non-physical file 
+   * @return the action that could be applied to the non-physical copy of the file.
+   * Returns null if operation is not supported.
+   */
+  default @Nullable IntentionAction tryTransferActionToPreviewFile(@NotNull PsiFile target) {
+    if (!startInWriteAction() || PreviewUtil.mayBeFileBound(this)) return null;
+    // No PSI-specific state: it's safe to apply this action to a file copy
+    return this;
+  }
 }

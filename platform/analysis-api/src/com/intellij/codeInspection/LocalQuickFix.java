@@ -2,6 +2,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInspection.util.PreviewUtil;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
@@ -24,4 +28,18 @@ import com.intellij.codeInsight.intention.FileModifier;
  */
 public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier {
   LocalQuickFix[] EMPTY_ARRAY = new LocalQuickFix[0];
+
+  /**
+   * Returns the fix that could be applied to the non-physical copy of the file.
+   * May return itself if the fix doesn't depend on the file.
+   *
+   * @param target target non-physical file 
+   * @return the action that could be applied to the non-physical copy of the file.
+   * Returns null if operation is not supported.
+   */
+  default @Nullable LocalQuickFix tryTransferFixToFile(@NotNull PsiFile target) {
+    if (!startInWriteAction() || PreviewUtil.mayBeFileBound(this)) return null;
+    // No PSI-specific state: it's safe to apply this fix to a file copy
+    return this;
+  }
 }
