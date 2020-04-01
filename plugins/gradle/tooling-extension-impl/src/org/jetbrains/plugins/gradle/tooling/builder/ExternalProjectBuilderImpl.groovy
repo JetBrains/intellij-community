@@ -125,7 +125,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
     final List<File> artifacts = new ArrayList<File>()
-    for (Jar jar : project.getTasks().withType(Jar.class)) {
+    project.getTasks().withType(Jar.class, { Jar jar ->
       try {
         // TODO use getArchiveFile method since Gradle 5.1
         artifacts.add(jar.getArchivePath())
@@ -134,7 +134,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         // TODO add reporting for such issues
         project.getLogger().error("warning: [task $jar.path] $e.message")
       }
-    }
+    })
     externalProject.setArtifacts(artifacts)
 
     def configurationsByName = project.getConfigurations().getAsMap()
