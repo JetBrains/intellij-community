@@ -54,6 +54,7 @@ import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.DeprecationStripePanel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +72,7 @@ import java.util.concurrent.locks.LockSupport;
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
+  private static final @NotNull JBInsets DUMB_BALLOON_INSETS = JBInsets.create(5, 8);
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
@@ -475,6 +477,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myBalloon = JBPopupFactory.getInstance().
             createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
             setBorderColor(JBColor.border()).
+            setBorderInsets(DUMB_BALLOON_INSETS).
             setShowCallout(false).
             createBalloon();
     myBalloon.setAnimationEnabled(false);
@@ -520,7 +523,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     Point point = relativePoint.getPoint();
     point.translate(size.width / 2, 0);
     //here are included hardcoded insets, icon width and small hardcoded delta to show before guessBestPopupLocation point
-    point.translate(-JBUIScale.scale(30), 0);
+    point.translate(-DUMB_BALLOON_INSETS.left - AllIcons.General.BalloonWarning.getIconWidth() - JBUIScale.scale(6), 0);
     return new RelativePoint(relativePoint.getComponent(), point);
   }
 
