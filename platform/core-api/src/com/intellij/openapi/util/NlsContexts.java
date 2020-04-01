@@ -102,12 +102,20 @@ public class NlsContexts {
   public static @interface ParsingError {
   }
 
+  /**
+   * Use it for annotating OS provided notification title, such as "project built" or "tests running finished".
+   * See also #SystemNotificationText.
+   */
   @NlsContext(prefix = "system.notification.title")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
   public static @interface SystemNotificationTitle {
   }
 
+  /**
+   * Use it for annotating OS provided notification content.
+   * See also #SystemNotificationTitle.
+   */
   @NlsContext(prefix = "system.notification.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
