@@ -68,7 +68,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
           methodName = StringUtil.getShortName(methodName, '#');
         }
       }
-      PsiMethod[] methods = cls.findMethodsByName(methodName, false);
+      PsiMethod[] methods = cls.findMethodsByName(methodName, true);
       return Arrays.stream(methods)
         .filter(MethodSourceReference::staticNoParams)
         .findFirst()
