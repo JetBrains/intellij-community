@@ -142,7 +142,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         }
         myBranchField.setText(url.getTail());
       }
-    }, message("select.branch.popup.general.title"), myPanel);
+    }, message("popup.title.select.branch"), myPanel);
   }
 
   private void chooseUrl() {

@@ -91,7 +91,7 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
     Url selectedBranchUrl = getSelectedBranchUrl(checker);
     if (selectedBranchUrl == null) {
       SelectBranchPopup.showForBranchRoot(project, checker.getRoot(), changesActionPerformer,
-                                          message("action.Subversion.integrate.changes.select.branch.text"));
+                                          message("popup.title.select.branch.to.integrate.to"));
     } else {
       changesActionPerformer.onBranchSelected(selectedBranchUrl, getSelectedBranchLocalPath(checker), getDialogTitle());
     }

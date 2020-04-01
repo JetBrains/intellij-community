@@ -87,7 +87,7 @@ public class SvnMergeInfoRootPanelManual {
           refreshSelectedBranch(new WCInfoWithBranches.Branch(url));
           calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
           myListener.run();
-        }, message("select.branch.popup.general.title"));
+        }, message("popup.title.select.branch"));
       }
     });
 

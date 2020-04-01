@@ -20,6 +20,7 @@ class Url private constructor(innerUri: URI) {
   val userInfo: String? = uri.userInfo
   val path: String = uri.path.orEmpty().removeSuffix("/")
 
+  @get:NlsSafe
   val tail: String get() = path.substringAfterLast('/')
 
   fun commonAncestorWith(url: Url): Url? {

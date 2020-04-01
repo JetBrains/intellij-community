@@ -9,6 +9,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -30,6 +32,8 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public final class SelectBranchPopup {
+  private static final @NlsSafe @NotNull String TRUNK_NAME = "trunk";
+
   private SelectBranchPopup() {
   }
 
@@ -40,14 +44,14 @@ public final class SelectBranchPopup {
   public static void show(@NotNull Project project,
                           @NotNull VirtualFile file,
                           @NotNull BranchSelectedCallback callback,
-                          @Nullable String title) {
+                          @PopupTitle @Nullable String title) {
     show(project, file, callback, title, null);
   }
 
   public static void show(@NotNull Project project,
                           @NotNull VirtualFile file,
                           @NotNull BranchSelectedCallback callback,
-                          @Nullable String title,
+                          @PopupTitle @Nullable String title,
                           @Nullable Component component) {
     SvnFileUrlMapping urlMapping = SvnVcs.getInstance(project).getSvnFileUrlMapping();
     Url svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
@@ -65,14 +69,14 @@ public final class SelectBranchPopup {
   public static void showForBranchRoot(@NotNull Project project,
                                        @NotNull VirtualFile vcsRoot,
                                        @NotNull BranchSelectedCallback callback,
-                                       @Nullable String title) {
+                                       @PopupTitle @Nullable String title) {
     showForBranchRoot(project, vcsRoot, callback, title, null);
   }
 
   public static void showForBranchRoot(@NotNull Project project,
                                        @NotNull VirtualFile vcsRoot,
                                        @NotNull BranchSelectedCallback callback,
-                                       @Nullable String title,
+                                       @PopupTitle @Nullable String title,
                                        @Nullable Component component) {
     SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
     List<Object> items = new ArrayList<>();
@@ -85,8 +89,7 @@ public final class SelectBranchPopup {
     step.showPopupAt(JBPopupFactory.getInstance().createListPopup(step));
   }
 
-  @NotNull
-  private static String getBranchName(@NotNull SvnBranchItem branch) {
+  private static @NlsSafe @NotNull String getBranchName(@NotNull SvnBranchItem branch) {
     return branch.getUrl().getTail();
   }
 
@@ -98,12 +101,12 @@ public final class SelectBranchPopup {
     @Nullable private final Component myComponent;
 
     BranchBasesPopupStep(@NotNull Project project,
-                                @NotNull VirtualFile vcsRoot,
-                                @NotNull SvnBranchConfigurationNew configuration,
-                                @NotNull BranchSelectedCallback callback,
-                                @NotNull List<Object> items,
-                                @Nullable String title,
-                                @Nullable Component component) {
+                         @NotNull VirtualFile vcsRoot,
+                         @NotNull SvnBranchConfigurationNew configuration,
+                         @NotNull BranchSelectedCallback callback,
+                         @NotNull List<Object> items,
+                         @PopupTitle @Nullable String title,
+                         @Nullable Component component) {
       myProject = project;
       myVcsRoot = vcsRoot;
       myConfiguration = configuration;
@@ -122,7 +125,7 @@ public final class SelectBranchPopup {
     public String getTextFor(@NotNull Object value) {
       if (value instanceof Url) {
         Url url = (Url)value;
-        String suffix = url.equals(myConfiguration.getTrunk()) ? " (trunk)" : "...";
+        String suffix = url.equals(myConfiguration.getTrunk()) ? " (" + TRUNK_NAME + ")" : "...";
 
         return url.getTail() + suffix;
       }
@@ -145,7 +148,7 @@ public final class SelectBranchPopup {
     }
 
     private void loadBranches(@NotNull Url branchLocation, @NotNull Runnable runnable) {
-      new Task.Backgroundable(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches"), true) {
+      new Task.Backgroundable(myProject, SvnBundle.message("progress.title.loading.branches"), true) {
         @Override
         public void onFinished() {
           runnable.run();

@@ -7,8 +7,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.xml.util.XmlStringUtil;
-import git4idea.annotate.AnnotationTooltipBuilder;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -27,6 +25,9 @@ import org.jetbrains.idea.svn.history.SvnFileRevision;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static com.intellij.xml.util.XmlStringUtil.escapeString;
+import static git4idea.annotate.AnnotationTooltipBuilder.buildSimpleTooltip;
 
 public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   private final String myContents;
@@ -74,9 +75,9 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
         if (info == null) return null;
 
         SvnFileRevision revision = myRevisionMap.get(info.getRevisionNumber());
-        return revision != null
-               ? XmlStringUtil.escapeString("Revision " + info.getRevisionNumber() + ": " + revision.getCommitMessage())
-               : "";
+        if (revision == null) return "";
+
+        return escapeString(SvnBundle.message("tooltip.revision.number.message", info.getRevisionNumber(), revision.getCommitMessage()));
       }
     };
 
@@ -137,18 +138,17 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return getToolTip(lineNumber, true);
   }
 
-  @Nullable
-  private String getToolTip(int lineNumber, boolean asHtml) {
+  private @NlsContexts.Tooltip @Nullable String getToolTip(int lineNumber, boolean asHtml) {
     final CommitInfo info = myInfos.getOrNull(lineNumber);
     if (info == null) return null;
 
     SvnFileRevision revision = myRevisionMap.get(info.getRevisionNumber());
     if (revision == null) return null;
 
-    String prefix = myInfos.getAnnotationSource(lineNumber).showMerged() ? "Merge source revision" : "Revision";
-    return AnnotationTooltipBuilder.buildSimpleTooltip(getProject(), asHtml, prefix,
-                                                       String.valueOf(info.getRevisionNumber()),
-                                                       revision.getCommitMessage());
+    String prefix = myInfos.getAnnotationSource(lineNumber).showMerged()
+                    ? SvnBundle.message("label.merge.source.revision")
+                    : SvnBundle.message("label.revision");
+    return buildSimpleTooltip(getProject(), asHtml, prefix, String.valueOf(info.getRevisionNumber()), revision.getCommitMessage());
   }
 
   @Override
