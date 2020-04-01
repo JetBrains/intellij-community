@@ -84,12 +84,6 @@ public class NlsContexts {
   public @interface ConfigurableName {
   }
 
-  @NlsContext(prefix = "validation.info")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ValidationInfo {
-  }
-
   @NlsContext(prefix = "configuration.error.message")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
