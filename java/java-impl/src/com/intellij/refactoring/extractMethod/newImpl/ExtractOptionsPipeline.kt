@@ -18,6 +18,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUs
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.VariableData
@@ -45,10 +46,12 @@ object ExtractMethodPipeline {
       options = withForcedStatic(analyzer, options) ?: throw PrepareFailedException("Fail", options.elements.first())
     }
 
+    options = options.copy(dataOutput = extractOptions.dataOutput.withType(returnType))
+
     if (isConstructor) {
       options = asConstructor(analyzer, options)
     }
-    return options.copy(dataOutput = extractOptions.dataOutput.withType(returnType))
+    return options
   }
 
   fun withTargetClass(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions, targetClass: PsiClass): ExtractOptions? {
@@ -205,7 +208,12 @@ object ExtractMethodPipeline {
   }
 
   fun asConstructor(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions {
-    return if (canBeConstructor(analyzer)) extractOptions.copy(isConstructor = true, methodName = "this") else extractOptions
+    if (! canBeConstructor(analyzer)) throw PrepareFailedException("Can't be a constructor", extractOptions.elements.first()) //TODO
+    return extractOptions.copy(isConstructor = true,
+                               methodName = "this",
+                               dataOutput = DataOutput.EmptyOutput(),
+                               requiredVariablesInside = emptyList()
+    )
   }
 
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {

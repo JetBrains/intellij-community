@@ -691,6 +691,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testDontExtractFieldWithConstructor() throws Exception {
+    doChainedConstructorTest(false);
+  }
+
   public void testExtractSingleLabelFromSwitch() throws Exception {
     doTest();
   }
