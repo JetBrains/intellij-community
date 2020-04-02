@@ -43,52 +43,51 @@ public class FileTypeUsageCounterCollector {
 
   private static final EventLogGroup GROUP = EventLogGroup.counter("file.types.usage");
 
-  private static class FileTypeEventId extends VarargEventId {
-    public static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
-    public static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
+  private static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
+  private static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
 
-    private FileTypeEventId(@NotNull String eventId) {
-      super(GROUP, eventId, EventFields.Project, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
-    }
 
-    public void log(@NotNull Project project, @NotNull VirtualFile file) {
-      FileType fileType = file.getFileType();
-      log(EventFields.Project.with(project),
-          EventFields.PluginInfoFromInstance.with(fileType),
-          FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
-          EventFields.AnonymizedPath.with(file.getPath()),
-          SCHEMA.with(findSchema(file)));
-    }
-
-    public void logEmptyFile() {
-      log(EventFields.AnonymizedPath.with(null));
-    }
+  private static VarargEventId registerFileTypeEvent(String eventId) {
+    return GROUP.registerVarargEvent(eventId, EventFields.Project, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
   }
 
-  private static final FileTypeEventId SELECT = new FileTypeEventId("select");
-  private static final FileTypeEventId EDIT = new FileTypeEventId("edit");
-  private static final FileTypeEventId OPEN = new FileTypeEventId("open");
-  private static final FileTypeEventId CLOSE = new FileTypeEventId("close");
+  private static final VarargEventId SELECT = registerFileTypeEvent("select");
+  private static final VarargEventId EDIT = registerFileTypeEvent("edit");
+  private static final VarargEventId OPEN = registerFileTypeEvent("open");
+  private static final VarargEventId CLOSE = registerFileTypeEvent("close");
 
   public static void triggerEdit(@NotNull Project project, @NotNull VirtualFile file) {
-    EDIT.log(project, file);
+    log(EDIT, project, file);
   }
 
   public static void triggerSelect(@NotNull Project project, @Nullable VirtualFile file) {
     if (file != null) {
-      SELECT.log(project, file);
+      log(SELECT, project, file);
     }
     else {
-      SELECT.logEmptyFile();
+      logEmptyFile();
     }
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    OPEN.log(project, file);
+    log(OPEN, project, file);
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    CLOSE.log(project, file);
+    log(CLOSE, project, file);
+  }
+
+  private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
+    FileType fileType = file.getFileType();
+    eventId.log(EventFields.Project.with(project),
+        EventFields.PluginInfoFromInstance.with(fileType),
+        FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
+        EventFields.AnonymizedPath.with(file.getPath()),
+        SCHEMA.with(findSchema(file)));
+  }
+
+  private static void logEmptyFile() {
+    SELECT.log(EventFields.AnonymizedPath.with(null));
   }
 
   private static @Nullable String findSchema(@NotNull VirtualFile file) {

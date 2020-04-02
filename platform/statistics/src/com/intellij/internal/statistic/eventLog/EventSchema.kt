@@ -41,31 +41,56 @@ data class IntEventField(private val name: String): EventField<Int>() {
   }
 }
 
-data class EnumEventField<T : Enum<*>>(private val name: String, private val enumClass: Class<T>): EventField<T>() {
-  override fun addData(fuData: FeatureUsageData, value: T) {
-    fuData.addData(name, value.toString())
+data class LongEventField(private val name: String): EventField<Long>() {
+  override fun addData(fuData: FeatureUsageData, value: Long) {
+    fuData.addData(name, value)
   }
+}
+
+data class BooleanEventField(private val name: String): EventField<Boolean>() {
+  override fun addData(fuData: FeatureUsageData, value: Boolean) {
+    fuData.addData(name, value)
+  }
+}
+
+data class EnumEventField<T : Enum<*>>(private val name: String,
+                                       private val enumClass: Class<T>,
+                                       private val transform: (T) -> String): EventField<T>() {
+  override fun addData(fuData: FeatureUsageData, value: T) {
+    fuData.addData(name, transform(value))
+  }
+}
+
+data class StringListEventField(private val name: String): EventField<List<String>>() {
+  override fun addData(fuData: FeatureUsageData, value: List<String>) {
+    fuData.addData(name, value)
+  }
+
 }
 
 object EventFields {
   @JvmStatic
-  fun String(name: String): StringEventField {
-    return StringEventField(name)
-  }
+  fun String(name: String): StringEventField = StringEventField(name)
 
   @JvmStatic
-  fun Int(name: String): IntEventField {
-    return IntEventField(name)
-  }
+  fun Int(name: String): IntEventField = IntEventField(name)
 
   @JvmStatic
-  fun <T : Enum<*>> Enum(name: String, enumClass: Class<T>): EnumEventField<T> {
-    return EnumEventField(name, enumClass)
-  }
+  fun Long(name: String): LongEventField = LongEventField(name)
 
-  inline fun <reified T : Enum<*>> Enum(name: String): EnumEventField<T> {
-    return EnumEventField(name, T::class.java)
-  }
+  @JvmStatic
+  fun Boolean(name: String): BooleanEventField = BooleanEventField(name)
+
+  @JvmStatic
+  @JvmOverloads
+  fun <T : Enum<*>> Enum(name: String, enumClass: Class<T>, transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+    EnumEventField(name, enumClass, transform)
+
+  inline fun <reified T : Enum<*>> Enum(name: String, noinline transform: (T) -> String = { it.toString() }): EnumEventField<T> =
+    EnumEventField(name, T::class.java, transform)
+
+  @JvmStatic
+  fun StringList(name: String): StringListEventField = StringListEventField(name)
 
   @JvmField
   val Project = object : EventField<Project?>() {
@@ -133,6 +158,11 @@ class EventLogGroup(val id: String, val version: Int) {
   fun <T1, T2, T3> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>, eventField3: EventField<T3>): EventId3<T1, T2, T3> {
     registeredEventIds.add(eventId)
     return EventId3(this, eventId, eventField1, eventField2, eventField3)
+  }
+
+  fun registerVarargEvent(eventId: String, vararg fields: EventField<*>): VarargEventId {
+    registeredEventIds.add(eventId)
+    return VarargEventId(this, eventId, *fields)
   }
 
   internal fun validateEventId(eventId: String) {
@@ -209,11 +239,7 @@ class EventId3<T1, T2, T3>(private val group: EventLogGroup, private val eventId
   }
 }
 
-open class VarargEventId(private val group: EventLogGroup, private val eventId: String, private vararg val fields: EventField<*>) {
-  init {
-    group.registerEventId(eventId)
-  }
-
+class VarargEventId internal constructor(private val group: EventLogGroup, private val eventId: String, private vararg val fields: EventField<*>) {
   fun log(vararg pairs: EventPair<*>) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())
   }
