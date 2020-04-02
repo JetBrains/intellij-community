@@ -139,17 +139,22 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun <T : TypedEntity> accumulateEntitiesToRemove(parentId: Int,
+  private fun <T : TypedEntity> accumulateEntitiesToRemove(entityId: Int,
                                                            entityClass: Class<T>,
                                                            accumulator: MutableMap<Class<out TypedEntity>, MutableSet<Int>>) {
-    val hardRef = refs.getChildReferencesOfParent(parentId, entityClass)
-    for ((klass, childrenIds) in hardRef) {
+    val children = refs.getHardChildReferencesOfParent(entityId, entityClass)
+    for ((childClass, childrenIds) in children) {
       childrenIds.forEach { childId ->
-        if (childId in accumulator.getOrPut(klass.java) { HashSet() }) return@forEach
-        accumulator.getOrPut(klass.java) { HashSet() }.add(childId)
-        accumulateEntitiesToRemove(childId, klass.java, accumulator)
+        if (childId in accumulator.getOrPut(childClass.java) { HashSet() }) return@forEach
+        accumulator.getOrPut(childClass.java) { HashSet() }.add(childId)
+        accumulateEntitiesToRemove(childId, childClass.java, accumulator)
       }
-      refs.removeRefsByParent(ConnectionId.create(entityClass.kotlin, klass, true), parentId)
+      refs.removeRefsByParent(ConnectionId.create(entityClass.kotlin, childClass, true), entityId)
+    }
+
+    val parents = refs.getHardParentReferencesOfChild(entityId, entityClass)
+    for ((parentClass, parentId) in parents) {
+      refs.removeParentToChildRef(ConnectionId.create(parentClass, entityClass.kotlin, true), parentId, entityId)
     }
   }
 

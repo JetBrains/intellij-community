@@ -17,7 +17,10 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
   companion object {
     fun <T : TypedEntity, SUBT : TypedEntity> create(
       parentClass: KClass<T>, childClass: KClass<SUBT>, isHard: Boolean
-    ): ConnectionId<T, SUBT> = ConnectionId(parentClass, childClass, isHard)
+    ): ConnectionId<T, SUBT> {
+      assert(parentClass != childClass)
+      return ConnectionId(parentClass, childClass, isHard)
+    }
   }
 }
 
@@ -59,6 +62,11 @@ internal class MutableRefsTable(
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeRefsByChild(connectionId: ConnectionId<T, SUBT>, childId: Int) {
     getMutableMap(connectionId).removeKey(childId)
+  }
+
+  fun <T : TypedEntity, SUBT : TypedEntity> removeParentToChildRef(connectionId: ConnectionId<T, SUBT>, parentId: Int, childId: Int) {
+    // XXX Maybe wrong method
+    getMutableMap(connectionId).remove(parentId, childId)
   }
 
   internal fun updateChildrenOfParent(connectionId: ConnectionId<*, *>, parentId: Int, childrenIds: AbstractIntIntMultiMap.IntSequence) {
@@ -125,7 +133,22 @@ internal sealed class AbstractRefsTable constructor(
     return res
   }
 
-  fun <T : TypedEntity> getChildReferencesOfParent(
+  fun <T : TypedEntity> getHardParentReferencesOfChild(
+    childId: Int, childClass: Class<T>
+  ): Map<KClass<out TypedEntity>, Int> {
+    val filtered = oneToManyContainer.filterKeys { it.childClass.java == childClass && it.isHard }
+    val res = HashMap<KClass<out TypedEntity>, Int>()
+    for ((connectionId, bimap) in filtered) {
+      val key = bimap.get(childId)
+      if (key != -1) {
+        val klass = connectionId.parentClass
+        res[klass] = key
+      }
+    }
+    return res
+  }
+
+  fun <T : TypedEntity> getHardChildReferencesOfParent(
     parentId: Int, parentClass: Class<T>
   ): Map<KClass<out TypedEntity>, AbstractIntIntMultiMap.IntSequence> {
     val filtered = oneToManyContainer.filterKeys { it.parentClass.java == parentClass && it.isHard }
