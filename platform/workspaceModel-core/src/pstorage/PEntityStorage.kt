@@ -63,7 +63,9 @@ internal class PEntityStorageBuilder(
     entitiesByType.add(pEntityData, unmodifiableEntityClass)
 
     val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
-    modifiableEntity.initializer()
+    (modifiableEntity as PModifiableTypedEntity<*>).allowModifications {
+      modifiableEntity.initializer()
+    }
     updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, unmodifiableEntityClass)) }
 
     return pEntityData.createEntity(this)
@@ -108,7 +110,10 @@ internal class PEntityStorageBuilder(
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     val copiedData = entitiesByType.getEntityDataForModification((e as PTypedEntity<T>).id)
-    (copiedData.wrapAsModifiable(this) as M).change()
+    val modifiableEntity = copiedData.wrapAsModifiable(this) as M
+    (modifiableEntity as PModifiableTypedEntity<*>).allowModifications {
+      modifiableEntity.change()
+    }
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(e.id, copiedData)) }
     return copiedData.createEntity(this)
   }

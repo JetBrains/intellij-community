@@ -93,6 +93,9 @@ internal sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<
   }
 
   override fun setValue(thisRef: MODT, property: KProperty<*>, value: Sequence<SUBT>) {
+    if (!thisRef.modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+    }
     thisRef.diff.updateChildrenOfParent(connectionId, thisRef.id, value)
   }
 }
@@ -116,6 +119,9 @@ internal sealed class MutableManyToOne {
     }
 
     override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
+      if (!thisRef.modifiable.get()) {
+        throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+      }
       return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
     }
   }
@@ -137,6 +143,9 @@ internal sealed class MutableManyToOne {
     }
 
     override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
+      if (!thisRef.modifiable.get()) {
+        throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+      }
       return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
     }
   }

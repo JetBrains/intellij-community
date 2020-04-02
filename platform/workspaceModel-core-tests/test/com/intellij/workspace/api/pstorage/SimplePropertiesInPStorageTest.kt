@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
+import com.intellij.openapi.util.Ref
 import com.intellij.workspace.api.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -155,5 +156,16 @@ class PSimplePropertiesInProxyBasedStorageTest {
     assertEquals(source2, builder.singlePSampleEntity().entitySource)
     assertEquals(foo2, builder.entitiesBySource { it == source2 }.values.flatMap { it.values.flatten() }.single())
     assertTrue(builder.entitiesBySource { it == source1 }.values.all { it.isEmpty() })
+  }
+
+  @Test(expected = IllegalStateException::class)
+  fun `modifications are allowed inside special methods only`() {
+    val thief = Ref.create<SecondSampleModifiableEntity>()
+    val builder = PEntityStorageBuilder.create()
+    builder.addEntity(SecondSampleModifiableEntity::class.java, SampleEntitySource("test")) {
+      thief.set(this)
+      intProperty = 10
+    }
+    thief.get().intProperty = 30
   }
 }

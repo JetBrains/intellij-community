@@ -51,13 +51,24 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
   override fun hashCode(): Int = id.hashCode()
 }
 
-internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>>
-  : PTypedEntity<T>(), ModifiableTypedEntity<T> {
+internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEntity<T>(), ModifiableTypedEntity<T> {
 
   internal lateinit var original: PEntityData<T>
   internal lateinit var diff: PEntityStorageBuilder
 
   override val id: PId<T> by lazy { PId(original.id, getEntityClass()) }
+
+  internal val modifiable = ThreadLocal.withInitial { false }
+
+  internal inline fun allowModifications(action: () -> Unit) {
+    modifiable.set(true)
+    try {
+      action()
+    }
+    finally {
+      modifiable.remove()
+    }
+  }
 
   internal fun getEntityClass(): KClass<T> = getEntityClass(this.javaClass.kotlin).kotlin
 
@@ -141,6 +152,9 @@ internal class EntityData<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<
   }
 
   override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
+    if (!thisRef.modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+    }
     ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original,
                                                                                                                        value)
   }

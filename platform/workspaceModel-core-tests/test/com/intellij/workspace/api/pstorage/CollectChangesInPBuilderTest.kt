@@ -11,7 +11,7 @@ internal class SecondSampleEntityData : PEntityData<SecondSampleEntity>() {
 }
 
 internal class SecondSampleEntity(
-  var intProperty: Int
+  val intProperty: Int
 ) : PTypedEntity<SecondSampleEntity>()
 
 internal class SecondSampleModifiableEntity : PModifiableTypedEntity<SecondSampleEntity>() {
