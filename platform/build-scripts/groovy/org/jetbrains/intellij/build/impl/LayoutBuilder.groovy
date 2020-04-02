@@ -283,7 +283,7 @@ class LayoutBuilder {
       context.findRequiredModule(name)
     }
 
-    private String getLibraryName(JpsLibrary lib) {
+    static String getLibraryName(JpsLibrary lib) {
       def name = lib.name
       if (name.startsWith("#")) {
         if (lib.getRoots(JpsOrderRootType.COMPILED).size() != 1) {
