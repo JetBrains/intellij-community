@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -207,6 +206,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
           LOG.error("Cannot save to " + targetFile + ": no document found for " + targetFile);
           return;
         }
+        targetFile.refresh(false, false); // to avoid memory-disk conflict if target file was changed externally
         target.setText(source.getCharsSequence());
         manager.saveDocument(target);
       });
