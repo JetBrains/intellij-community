@@ -414,7 +414,12 @@ public final class ProjectUtil {
       AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(project));
       frame.toFront();
       if (!SystemInfo.isMac && !frame.isAutoRequestFocus()) {
-        IdeFocusManager.getInstance(project).requestFocus(mostRecentFocusOwner, true);
+        if (mostRecentFocusOwner != null) {
+          IdeFocusManager.getInstance(project).requestFocus(mostRecentFocusOwner, true);
+        }
+        else {
+          LOG.warn("frame.getMostRecentFocusOwner() is null");
+        }
       }
     }
     else {

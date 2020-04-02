@@ -260,6 +260,9 @@
   <item name='java.awt.Toolkit java.awt.Cursor createCustomCursor(java.awt.Image, java.awt.Point, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.awt.Window java.awt.Component getMostRecentFocusOwner()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.awt.Window void setLocation(java.awt.Point) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
