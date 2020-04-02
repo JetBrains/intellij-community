@@ -803,7 +803,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       if (method.getName().equals(changeInfo.getNewName())) {
         final PsiTypeElement typeElement = method.getReturnTypeElement();
         if (typeElement != null) {
-          javaCodeStyleManager.shortenClassReferences(typeElement.replace(factory.createTypeElement(returnType)));
+          PsiTypeElement replacementType = factory.createTypeElement(returnType);
+          javaCodeStyleManager.shortenClassReferences(typeElement.replace(replacementType));
+          if (replacementType.getText().startsWith("@")) {
+            // Annotation could be moved to modifier list during the replace
+            javaCodeStyleManager.shortenClassReferences(method.getModifierList());
+          }
         }
       }
     }

@@ -576,5 +576,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       
   }
 
+  public void testAddReturnAnnotation() {
+    doTest(null, null, "@org.jetbrains.annotations.NotNull java.lang.String", method -> new ParameterInfoImpl[0], false);
+  }
+
   /* workers */
 }
