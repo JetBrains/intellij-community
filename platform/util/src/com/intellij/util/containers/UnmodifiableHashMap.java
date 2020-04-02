@@ -39,8 +39,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @return an empty {@code UnmodifiableHashMap}.
    * @see TObjectHashingStrategy#CANONICAL
    */
-  @NotNull
-  public static <K, V> UnmodifiableHashMap<K, V> empty() {
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty() {
     //noinspection unchecked
     return empty(TObjectHashingStrategy.CANONICAL);
   }
@@ -52,8 +51,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @param <V> type of map values
    * @return an empty {@code UnmodifiableHashMap}.
    */
-  @NotNull
-  public static <K, V> UnmodifiableHashMap<K, V> empty(TObjectHashingStrategy<K> strategy) {
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty(TObjectHashingStrategy<K> strategy) {
     return new UnmodifiableHashMap<>(strategy, ArrayUtil.EMPTY_OBJECT_ARRAY, null, null, null, null, null, null);
   }
 
@@ -65,8 +63,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @return a pre-populated {@code UnmodifiableHashMap}. Map return the supplied map if
    * it's already an {@code UnmodifiableHashMap} which uses the same equals/hashCode strategy.
    */
-  @NotNull
-  public static <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull Map<K, V> map) {
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull Map<K, V> map) {
     //noinspection unchecked
     return fromMap(TObjectHashingStrategy.CANONICAL, map);
   }
@@ -81,8 +78,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @return a pre-populated {@code UnmodifiableHashMap}. Map return the supplied map if
    * it's already an {@code UnmodifiableHashMap} which uses the same equals/hashCode strategy.
    */
-  @NotNull
-  public static <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull TObjectHashingStrategy<K> strategy, @NotNull Map<? extends K, ? extends V> map) {
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull TObjectHashingStrategy<K> strategy, @NotNull Map<? extends K, ? extends V> map) {
     //noinspection unchecked
     if (map instanceof UnmodifiableHashMap && ((UnmodifiableHashMap<K, V>)map).strategy == strategy) {
       //noinspection unchecked
@@ -133,8 +129,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @param key a key to exclude from the result
    * @return an {@code UnmodifiableHashMap} which contains all the entries as this map except the supplied key
    */
-  @Contract(pure = true) @NotNull
-  public UnmodifiableHashMap<K, V> without(@NotNull K key) {
+  @Contract(pure = true)
+  public @NotNull UnmodifiableHashMap<K, V> without(@NotNull K key) {
     int pos = data.length == 0 ? -1 : tablePos(strategy, data, key);
     if (pos >= 0) {
       Object[] newData = new Object[(size - 1) * 4];
@@ -183,8 +179,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * not the same but equal object, the new map will be created as sometimes it's desired to replace the object with
    * another one which is equal to the old object.
    */
-  @Contract(pure = true) @NotNull
-  public UnmodifiableHashMap<K, V> with(@NotNull K key, @Nullable V value) {
+  @Contract(pure = true)
+  public @NotNull UnmodifiableHashMap<K, V> with(@NotNull K key, @Nullable V value) {
     int pos = data.length == 0 ? -1 : tablePos(strategy, data, key);
     if (pos >= 0) {
       if (data[pos + 1] == value) return this;
@@ -233,8 +229,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * mappings already exist in this map (assuming values are compared by reference). The equals/hashCode strategy
    * of the resulting map is the same as the strategy of this map.
    */
-  @NotNull
-  public UnmodifiableHashMap<K, V> withAll(@NotNull Map<? extends K, ? extends V> map) {
+  public @NotNull UnmodifiableHashMap<K, V> withAll(@NotNull Map<? extends K, ? extends V> map) {
     if (map.isEmpty()) return this;
     if (map.size() == 1) {
       Entry<? extends K, ? extends V> entry = map.entrySet().iterator().next();
@@ -512,13 +507,12 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
     abstract E tableElement(int offset);
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     if (keySet == null) {
       keySet = new AbstractSet<K>() {
         @Override
-        public Iterator<K> iterator() {
+        public @NotNull Iterator<K> iterator() {
           return new MyIterator<K>() {
             @Override
             K fieldElement(int offset) {
@@ -567,13 +561,12 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
     return keySet;
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     if (values == null) {
       values = new AbstractCollection<V>() {
         @Override
-        public Iterator<V> iterator() {
+        public @NotNull Iterator<V> iterator() {
           return new MyIterator<V>() {
             @Override
             V fieldElement(int offset) {
@@ -622,12 +615,11 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
     return values;
   }
 
-  @NotNull
   @Override
-  public Set<Entry<K, V>> entrySet() {
+  public @NotNull Set<Entry<K, V>> entrySet() {
     return new AbstractSet<Entry<K, V>>() {
       @Override
-      public Iterator<Entry<K, V>> iterator() {
+      public @NotNull Iterator<Entry<K, V>> iterator() {
         return new MyIterator<Entry<K, V>>() {
           @Override
           Entry<K, V> fieldElement(int offset) {
