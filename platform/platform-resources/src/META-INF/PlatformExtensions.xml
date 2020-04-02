@@ -63,6 +63,8 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
 
+    <applicationService serviceInterface="com.intellij.codeWithMe.ClientIdValueStoreService" serviceImplementation="com.intellij.codeWithMe.ClientIdValueStoreServiceImpl" preload="true" />
+
     <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
     <projectService serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent" preload="notHeadless"/>
 

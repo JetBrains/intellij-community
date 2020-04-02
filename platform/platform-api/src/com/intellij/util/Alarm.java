@@ -18,6 +18,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -330,6 +331,7 @@ public class Alarm implements Disposable {
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelayMillis;
+    private final ClientId myClientId;
 
     @Async.Schedule
     private Request(final @NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
@@ -338,6 +340,7 @@ public class Alarm implements Disposable {
 
         myModalityState = modalityState;
         myDelayMillis = delayMillis;
+        myClientId = ClientId.getCurrent();
       }
     }
 
@@ -363,7 +366,7 @@ public class Alarm implements Disposable {
     private void runSafely(@Nullable Runnable task) {
       try {
         if (!myDisposed && task != null) {
-          QueueProcessor.runSafely(task);
+          ClientId.withClientId(myClientId, () -> QueueProcessor.runSafely(task));
         }
       }
       finally {

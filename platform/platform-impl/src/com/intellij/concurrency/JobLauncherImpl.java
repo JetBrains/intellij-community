@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +45,11 @@ public class JobLauncherImpl extends JobLauncher {
     Processor<? super T> processor = ((CoreProgressManager)pm).isPrioritizedThread(Thread.currentThread())
                                      ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
                                      : thingProcessor;
+    ClientId currentClientId = ClientId.getCurrent();
+    Processor<? super T> processorWithClientId = t -> ClientId.withClientId(currentClientId, (Callable<Boolean>) () -> processor.process(t));
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
-    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, processor, 0, things.size(), failedSubTasks, null);
+    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, processorWithClientId, 0, things.size(), failedSubTasks, null);
     try {
       ProgressIndicator existing = pm.getProgressIndicator();
       if (existing == progress) {

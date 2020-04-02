@@ -56,6 +56,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,7 +277,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void unsafeRunWhenSmart(@NotNull @Async.Schedule Runnable runnable) {
     synchronized (myRunWhenSmartQueue) {
       if (isDumb()) {
-        myRunWhenSmartQueue.addLast(runnable);
+        myRunWhenSmartQueue.addLast(ClientId.decorateRunnable(runnable));
         return;
       }
     }

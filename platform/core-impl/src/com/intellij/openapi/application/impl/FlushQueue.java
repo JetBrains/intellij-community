@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -77,7 +78,7 @@ class FlushQueue {
 
   // Extracted to have a capture point
   private static void doRun(@Async.Execute RunnableInfo info) {
-    info.runnable.run();
+    ClientId.withClientId(info.clientId, info.runnable);
   }
 
   @Override
@@ -190,6 +191,7 @@ class FlushQueue {
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
+    @Nullable private final ClientId clientId;
 
     @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
@@ -200,6 +202,7 @@ class FlushQueue {
       this.modalityState = modalityState;
       this.expired = expired;
       this.callback = callback;
+      this.clientId = ClientId.getCurrent();
     }
 
     void markDone() {

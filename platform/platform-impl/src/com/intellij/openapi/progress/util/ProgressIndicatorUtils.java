@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -201,7 +202,7 @@ public class ProgressIndicatorUtils {
       application.addApplicationListener(listener, listenerDisposable);
       future.whenComplete((__, ___) -> Disposer.dispose(listenerDisposable));
       try {
-        executor.execute(new Runnable() {
+        executor.execute(ClientId.decorateRunnable(new Runnable() {
           @Override
           public void run() {
             final ReadTask.Continuation continuation;
@@ -221,30 +222,31 @@ public class ProgressIndicatorUtils {
                 public void run() {
                   if (future.isCancelled()) return;
 
-                  Disposer.dispose(listenerDisposable); // remove listener early to prevent firing it during continuation execution
-                  try {
-                    if (!progressIndicator.isCanceled()) {
-                      continuation.getAction().run();
+                    Disposer.dispose(listenerDisposable); // remove listener early to prevent firing it during continuation execution
+                    try {
+                      if (!progressIndicator.isCanceled()) {
+                        continuation.getAction().run();
+                      }
+                    }
+                    finally {
+                      future.complete(null);
                     }
                   }
-                  finally {
-                    future.complete(null);
-                  }
-                }
 
-                @Override
-                public String toString() {
-                  return "continuation of " + readTask;
-                }
-              }, continuation.getModalityState());
-            }
+                  @Override
+                  public String toString() {
+                    return "continuation of " + readTask;
+                  }
+                }, continuation.getModalityState());
+              }
+
           }
 
           @Override
           public String toString() {
             return readTask.toString();
           }
-        });
+        }));
       }
       catch (Throwable e) {
         future.completeExceptionally(e);

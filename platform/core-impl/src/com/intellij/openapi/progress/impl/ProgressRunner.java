@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +115,8 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
                          boolean sync,
                          boolean modal, @NotNull ThreadToUse use,
                          @Nullable CompletableFuture<P> progressIndicatorFuture) {
-    myComputation = computation;
+    final ClientId clientId = ClientId.getCurrent();
+    myComputation = (indicator) -> ClientId.withClientId(clientId, (Callable<R>) () -> computation.apply(indicator));
     isSync = sync;
     isModal = modal;
     myThreadToUse = use;

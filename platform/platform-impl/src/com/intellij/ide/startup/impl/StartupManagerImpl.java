@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +96,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void registerPostStartupDumbAwareActivity(@NotNull Runnable runnable) {
     checkBeforeAddingPostStartupActivity();
     synchronized (myLock) {
-      myDumbAwarePostStartupActivities.add(runnable);
+      myDumbAwarePostStartupActivities.add(ClientId.decorateRunnable(runnable));
     }
   }
 

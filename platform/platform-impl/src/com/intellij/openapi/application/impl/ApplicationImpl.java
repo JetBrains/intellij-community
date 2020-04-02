@@ -48,6 +48,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -257,6 +258,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@SuppressWarnings("BoundedWildcard") @NotNull Callable<T> action) {
+    ClientId currentClientId = ClientId.getCurrent();
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
@@ -265,7 +267,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
 
         try {
-          return action.call();
+          return ClientId.withClientId(currentClientId, action);
         }
         catch (ProcessCanceledException e) {
           // ignore
