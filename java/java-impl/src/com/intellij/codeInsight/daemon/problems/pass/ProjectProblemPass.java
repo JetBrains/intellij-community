@@ -82,7 +82,7 @@ public class ProjectProblemPass extends TextEditorHighlightingPass {
                         @NotNull Map<PsiMember, Inlay<?>> inlays) {
     Inlay<?> oldInlay = inlays.remove(psiMember);
     if (oldInlay != null) Disposer.dispose(oldInlay);
-    if (brokenUsages.isEmpty()) return;
+    if (brokenUsages.isEmpty() || hasOtherElementsOnSameLine(psiMember)) return;
     int offset = getMemberOffset(psiMember);
     InlayPresentation presentation = getPresentation(myProject, myEditor, myEditor.getDocument(), factory, offset, psiMember, brokenUsages);
     BlockInlayRenderer renderer = createBlockRenderer(presentation);

@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
+import com.intellij.testFramework.UsefulTestCase
 
 internal class FieldProblemsTest : ProjectProblemsViewTest() {
 
@@ -195,6 +197,39 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       // too many usages now, cannot analyse all of them, so we give up and remove old errors
       assertFalse(hasReportedProblems<PsiStatement>(targetClass, outsideRefClass))
       assertFalse(hasReportedProblems<PsiAssignmentExpression>(targetClass, packageRefClass))
+    }
+  }
+
+  fun testReportOnlyOneMemberProblemsOnEachLine() {
+    val targetClass = myFixture.addClass("""
+      package foo;
+      public class A {
+        static String field1, field2;
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      package bar;
+      import foo.A;
+      public class B {
+        void test() {
+          A.field1 = "bar";
+          A.field2 = "baz";
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      val fields = targetClass.fields
+      val field = fields[0]
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val modifiers = field.modifierList!!
+        modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
+        modifiers.setModifierProperty(PsiModifier.STATIC, false)
+      }
+      myFixture.checkHighlighting()
+      UsefulTestCase.assertSize(1, ProjectProblemPassUtils.getInlays(targetClass.containingFile).entries)
     }
   }
 

@@ -68,11 +68,20 @@ public class ProjectProblemPassUtils {
     return new BlockInlayRenderer(Collections.singletonList(constrainedPresentation));
   }
 
-  static int getMemberOffset(@NotNull PsiMember element) {
-    return Arrays.stream(element.getChildren())
+  static int getMemberOffset(@NotNull PsiMember psiMember) {
+    return Arrays.stream(psiMember.getChildren())
       .filter(c -> !(c instanceof PsiDocComment) && !(c instanceof PsiWhiteSpace))
-      .findFirst().orElse(element)
+      .findFirst().orElse(psiMember)
       .getTextRange().getStartOffset();
+  }
+
+  static boolean hasOtherElementsOnSameLine(@NotNull PsiMember psiMember) {
+    PsiElement prevSibling = psiMember.getPrevSibling();
+    while (prevSibling != null && !(prevSibling instanceof PsiWhiteSpace && prevSibling.textContains('\n'))) {
+      if (!(prevSibling instanceof PsiWhiteSpace) && !prevSibling.getText().isEmpty()) return true;
+      prevSibling = prevSibling.getPrevSibling();
+    }
+    return false;
   }
 
   public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull PsiFile psiFile) {
