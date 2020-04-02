@@ -25,18 +25,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import java.awt.AWTEvent;
-import java.awt.Component;
-import java.awt.EventQueue;
-import java.awt.Window;
-import java.awt.event.KeyEvent;
-import java.util.Objects;
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.util.Objects;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -50,7 +45,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private ProgressDialog myDialog;
 
-  final Project myProject;
+  @Nullable protected final Project myProject;
   final boolean myShouldShowCancel;
   String myCancelText;
 
@@ -86,21 +81,33 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
                         @Nullable Project project,
                         @Nullable JComponent parentComponent,
                         @Nullable @NlsContexts.Button String cancelText) {
+    this(shouldShowCancel, shouldShowBackground, true, project, parentComponent, cancelText);
+  }
+
+  protected ProgressWindow(boolean shouldShowCancel,
+                        boolean shouldShowBackground,
+                        boolean shouldInitializeDialog,
+                        @Nullable Project project,
+                        @Nullable JComponent parentComponent,
+                        @Nullable @NlsContexts.Button String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
 
-    Window parentWindow = calcParentWindow(parentComponent);
-
     if (myProject != null) {
       Disposer.register(myProject, this);
     }
-    myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
-    Disposer.register(this, myDialog);
+    if (shouldInitializeDialog) initializeDialog(shouldShowBackground, parentComponent);
 
     setModalityProgress(shouldShowBackground ? null : this);
     addStateDelegate(new MyDelegate());
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
+  }
+
+  protected void initializeDialog(boolean shouldShowBackground, @Nullable JComponent parentComponent) {
+    Window parentWindow = calcParentWindow(parentComponent);
+    myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
+    Disposer.register(this, myDialog);
   }
 
   private Window calcParentWindow(@Nullable Component parent) {

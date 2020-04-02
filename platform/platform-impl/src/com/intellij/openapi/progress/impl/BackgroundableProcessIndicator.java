@@ -2,6 +2,8 @@
 
 package com.intellij.openapi.progress.impl;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -13,6 +15,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +25,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private PerformInBackgroundOption myOption;
   private TaskInfo myInfo;
 
+  private boolean myDidInitializeOnEdt = false;
   private boolean myDisposed;
 
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
@@ -29,30 +33,43 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
-    this(project, info, option, getStatusBar(project));
+    this(project, info, option, null);
   }
 
-  BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option, @Nullable StatusBarEx statusBar) {
-    super(info.isCancellable(), true, project, info.getCancelText());
+  @VisibleForTesting
+  BackgroundableProcessIndicator(@Nullable Project project,
+                                 @NotNull TaskInfo info,
+                                 @NotNull PerformInBackgroundOption option,
+                                 @Nullable StatusBarEx statusBarOverride) {
+    super(info.isCancellable(), true, false, project, null, info.getCancelText());
     setOwnerTask(info);
     myOption = option;
     myInfo = info;
-    setTitle(info.getTitle());
-    myStatusBar = statusBar;
+    myStatusBar = statusBarOverride;
     myBackgrounded = shouldStartInBackground();
-    if (myBackgrounded) {
-      doBackground();
-    }
+    UIUtil.invokeLaterIfNeeded(() -> initializeOnEdtIfNeeded());
   }
 
-  private static @Nullable StatusBarEx getStatusBar(@Nullable Project project) {
-    final Project nonDefaultProject = project == null || project.isDisposed() || project.isDefault() ? null : project;
-    IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
-    return frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+  @CalledInAwt
+  private void initializeOnEdtIfNeeded() {
+    if (myDisposed || myDidInitializeOnEdt) return;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myDidInitializeOnEdt = true;
+
+    initializeDialog(true, null);
+    setTitle(myInfo.getTitle());
+
+    if (myStatusBar == null) {
+      Project nonDefaultProject = myProject == null || myProject.isDisposed() || myProject.isDefault() ? null : myProject;
+      IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
+      myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+    }
+    myBackgrounded &= myStatusBar != null;
+    if (myBackgrounded) doBackground(myStatusBar);
   }
 
   private boolean shouldStartInBackground() {
-    return (Registry.is("ide.background.tasks") || myOption.shouldStartInBackground()) && myStatusBar != null;
+    return Registry.is("ide.background.tasks") || myOption.shouldStartInBackground();
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
@@ -89,8 +106,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Override
   protected void showDialog() {
     if (myDisposed) return;
+    initializeOnEdtIfNeeded(); // could happen before initialization succeeds - in that case we do it now
 
-    if (shouldStartInBackground()) {
+    if (shouldStartInBackground() && myStatusBar != null) {
       return;
     }
 
@@ -100,18 +118,17 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Override
   public void background() {
     if (myDisposed) return;
+    assert myDidInitializeOnEdt : "Call to background action before showing dialog";
 
     myOption.processSentToBackground();
-    doBackground();
+    doBackground(myStatusBar);
     super.background();
   }
 
-  private void doBackground() {
-    if (myStatusBar != null) { //not welcome screen
-      UIUtil.invokeLaterIfNeeded(() -> {
-        StatusBarEx statusBar = myStatusBar;
-        if (statusBar != null) statusBar.addProgress(this, myInfo);
-      });
+  @CalledInAwt
+  private void doBackground(@Nullable StatusBarEx statusBar) {
+    if (statusBar != null) { //not welcome screen
+      statusBar.addProgress(this, myInfo);
     }
   }
 
