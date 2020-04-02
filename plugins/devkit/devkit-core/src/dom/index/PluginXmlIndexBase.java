@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.*;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -45,9 +46,31 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
   @Nullable
   private static IdeaPlugin obtainIdeaPlugin(@NotNull FileContent content) {
+    if (!looksLikeIdeaPluginXml(content)) return null;
+
     PsiFile file = content.getPsiFile();
     if (!(file instanceof XmlFile)) return null;
 
     return DescriptorUtil.getIdeaPlugin((XmlFile)file);
+  }
+
+  private static boolean looksLikeIdeaPluginXml(@NotNull FileContent content) {
+    CharSequence text = content.getContentAsText();
+    int idx = 0;
+
+    while (true) {
+      // find open tag
+      idx = CharArrayUtil.indexOf(text, "<", idx);
+      if (idx == -1) return false;
+
+      // ignore processing & comment tags
+      if (CharArrayUtil.regionMatches(text, idx, "<!--") ||
+          CharArrayUtil.regionMatches(text, idx, "<?")) {
+        idx++;
+        continue;
+      }
+
+      return CharArrayUtil.regionMatches(text, idx, "<idea-plugin");
+    }
   }
 }
