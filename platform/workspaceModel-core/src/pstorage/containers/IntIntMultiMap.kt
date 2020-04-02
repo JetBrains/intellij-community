@@ -188,46 +188,56 @@ internal sealed class MutableIntIntMultiMap(
     }
   }
 
-  fun remove(key: Int, value: Int) {
-    if (key !in links) return
+  fun remove(key: Int, value: Int): Boolean {
+    if (key !in links) return false
 
     var idx = links[key]
+    val valuesStartIndex = idx
     val size = values.size
     var foundIndex = -1
 
-    var current: Int
+    // Search for the value in the values list
+    // In this loop last value is skipped in search (because it's negative and we should unpack it)
+    var removeLast = false
+    var valueUnderIdx: Int
     do {
-      current = values[idx]
-      if (current < 0) break
-      if (current == value) {
+      valueUnderIdx = values[idx]
+
+      if (valueUnderIdx < 0) {
+        // Last value in the sequence
+        if (valueUnderIdx.unpack() == value) {
+          foundIndex = idx
+          removeLast = true
+        }
+        break
+      }
+
+      if (valueUnderIdx == value) {
         foundIndex = idx
         break
       }
     }
     while (idx++ != size)
+    val removingLastValue = removeLast && idx == valuesStartIndex
 
-    var removeLast = false
-    if (foundIndex == -1 && current.unpack() == value) {
-      foundIndex = idx
-      removeLast = true
-    }
-
-    if (foundIndex == -1) return
+    // There is no such value by this key
+    if (foundIndex == -1) return false
 
     val newArray = IntArray(size - 1)
     values.copyInto(newArray, 0, 0, foundIndex)
     values.copyInto(newArray, foundIndex, foundIndex + 1)
     values = newArray
-    if (removeLast && foundIndex - 1 >= 0) {
+    if (removeLast && !removingLastValue) {
       values[foundIndex - 1] = values[foundIndex - 1].pack()
     }
 
-    if (foundIndex - idx == 0) links.remove(key)
+    if (removingLastValue) links.remove(key)
 
     links.keys().forEach { keyToUpdate ->
       val valueToUpdate = links[keyToUpdate]
       if (valueToUpdate > idx) links.put(keyToUpdate, valueToUpdate - 1)
     }
+    return true
   }
 
   fun clear() {
