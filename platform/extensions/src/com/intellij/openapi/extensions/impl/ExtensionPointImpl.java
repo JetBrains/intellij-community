@@ -226,16 +226,16 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   @Override
   public List<T> getExtensionList() {
     List<T> result = myExtensionsCache;
+    return result != null ? result : calcExtensionList();
+  }
+
+  private synchronized List<T> calcExtensionList() {
+    List<T> result = myExtensionsCache;
     if (result == null) {
-      synchronized (this) {
-        result = myExtensionsCache;
-        if (result == null) {
-          T[] array = processAdapters();
-          myExtensionsCacheAsArray = array;
-          result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
-          myExtensionsCache = result;
-        }
-      }
+      T[] array = processAdapters();
+      myExtensionsCacheAsArray = array;
+      result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
+      myExtensionsCache = result;
     }
     return result;
   }
