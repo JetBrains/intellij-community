@@ -65,8 +65,7 @@ internal class MutableRefsTable(
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeParentToChildRef(connectionId: ConnectionId<T, SUBT>, parentId: Int, childId: Int) {
-    // XXX Maybe wrong method
-    getMutableMap(connectionId).remove(parentId, childId)
+    getMutableMap(connectionId).remove(childId, parentId)
   }
 
   internal fun updateChildrenOfParent(connectionId: ConnectionId<*, *>, parentId: Int, childrenIds: AbstractIntIntMultiMap.IntSequence) {
