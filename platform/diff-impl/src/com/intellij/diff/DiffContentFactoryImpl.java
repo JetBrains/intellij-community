@@ -460,41 +460,39 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                          @Nullable FilePath originalFilePath,
                                          @Nullable @NonNls String fileName,
                                          boolean readOnly) {
-    if (project != null && !project.isDefault() &&
-        fileType != null && !fileType.isBinary()) {
-      if (fileName == null) {
-        fileName = "diff." + StringUtil.defaultIfEmpty(fileType.getDefaultExtension(), "txt");
-      }
-
-      Document document = createPsiDocument(project, content, fileType, originalFilePath, fileName, readOnly);
-      if (document != null) return document;
+    Document document = createPsiDocument(project, content, fileType, originalFilePath, fileName, readOnly);
+    if (document == null) {
+      document = EditorFactory.getInstance().createDocument(content);
+      document.setReadOnly(readOnly);
     }
-
-    Document document = EditorFactory.getInstance().createDocument(content);
-    document.setReadOnly(readOnly);
     return document;
   }
 
   @Nullable
-  private static Document createPsiDocument(@NotNull Project project,
+  private static Document createPsiDocument(@Nullable Project project,
                                             @NotNull String content,
-                                            @NotNull FileType fileType,
+                                            @Nullable FileType fileType,
                                             @Nullable FilePath originalFilePath,
-                                            @NonNls @NotNull String fileName,
+                                            @NonNls @Nullable String fileName,
                                             boolean readOnly) {
-    return ReadAction.compute(() -> {
-      LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);
-      file.setWritable(!readOnly);
+    if (project == null || project.isDefault()) return null;
+    if (fileType == null || fileType.isBinary()) return null;
 
-      OutsidersPsiFileSupport.markFile(file, originalFilePath != null ? originalFilePath.getPath() : null);
+    if (fileName == null) {
+      fileName = "diff." + StringUtil.defaultIfEmpty(fileType.getDefaultExtension(), "txt");
+    }
 
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document == null) return null;
+    LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);
+    file.setWritable(!readOnly);
 
-      PsiDocumentManager.getInstance(project).getPsiFile(document);
+    OutsidersPsiFileSupport.markFile(file, originalFilePath != null ? originalFilePath.getPath() : null);
 
-      return document;
-    });
+    Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
+    if (document == null) return null;
+
+    ReadAction.run(() -> PsiDocumentManager.getInstance(project).getPsiFile(document));
+
+    return document;
   }
 
   private static boolean isBinaryContent(byte @NotNull [] content, @NotNull FileType fileType) {
