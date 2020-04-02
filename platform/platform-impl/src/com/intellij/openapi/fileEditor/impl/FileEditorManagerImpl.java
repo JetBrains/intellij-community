@@ -734,7 +734,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
   @NotNull
-  Pair<FileEditor[], FileEditorProvider[]> openFileImpl4(@NotNull final EditorWindow window,
+  protected Pair<FileEditor[], FileEditorProvider[]> openFileImpl4(@NotNull final EditorWindow window,
                                                          @NotNull final VirtualFile file,
                                                          @Nullable final HistoryEntry entry,
                                                          final FileEditorOpenOptions options) {
