@@ -251,13 +251,13 @@ public final class StartupUtil {
                                @NotNull Future<AppStarter> appStarterFuture,
                                @Nullable Future<Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.startMainActivity("checking screen readers");
-      if (configImportNeeded) {
+      Activity activity = StartUpMeasurer.startMainActivity("eua showing");
+      boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
+
+      activity = activity.endAndStart("checking screen readers");
+      if (agreementDialogWasShown) {
         runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, initUiTask);
       }
-
-      activity = activity.endAndStart("eua showing");
-      boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
 
       if (configImportNeeded) {
         activity = activity.endAndStart("config importing");
