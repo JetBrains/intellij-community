@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage.containers
 
-import com.intellij.util.containers.IntIntHashMap
+import gnu.trove.TIntIntHashMap
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -17,40 +17,33 @@ import org.jetbrains.annotations.TestOnly
 
 internal sealed class IntIntMultiMap(
   values: IntArray,
-  links: IntIntHashMap,
+  links: TIntIntHashMap,
   distinctValues: Boolean
 ) : AbstractIntIntMultiMap(values, links, distinctValues) {
 
-  class BySet internal constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, true) {
-    constructor() : this(IntArray(0), IntIntHashMap())
+  class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : IntIntMultiMap(values, links, true) {
+    constructor() : this(IntArray(0), TIntIntHashMap())
 
     override fun copy(): BySet = doCopy().let { BySet(it.first, it.second) }
 
-    override fun toMutable(): MutableIntIntMultiMap.BySet = MutableIntIntMultiMap.BySet(values.clone(), links.copy())
+    override fun toMutable(): MutableIntIntMultiMap.BySet = MutableIntIntMultiMap.BySet(values.clone(), links.clone() as TIntIntHashMap)
   }
 
-  class ByList internal constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, false) {
-    constructor() : this(IntArray(0), IntIntHashMap())
+  class ByList internal constructor(values: IntArray, links: TIntIntHashMap) : IntIntMultiMap(values, links, false) {
+    constructor() : this(IntArray(0), TIntIntHashMap())
 
     override fun copy(): ByList = doCopy().let { ByList(it.first, it.second) }
 
-    override fun toMutable(): MutableIntIntMultiMap.ByList = MutableIntIntMultiMap.ByList(values.clone(), links.copy())
+    override fun toMutable(): MutableIntIntMultiMap.ByList = MutableIntIntMultiMap.ByList(values.clone(), links.clone() as TIntIntHashMap)
   }
 
   override operator fun get(key: Int): IntSequence {
-    val idx = links[key]
-    if (idx == -1) return IntSequence.Empty
+    if (key !in links) return IntSequence.Empty
 
-    return RoIntSequence(values, idx)
+    return RoIntSequence(values, links[key])
   }
 
   abstract fun toMutable(): MutableIntIntMultiMap
-
-  protected fun IntIntHashMap.copy(): IntIntHashMap {
-    val newKey2Values = IntIntHashMap()
-    this.forEachEntry { key, value -> newKey2Values.put(key, value); true }
-    return newKey2Values
-  }
 
   private class RoIntSequence(
     private val values: IntArray?,
@@ -77,31 +70,33 @@ internal sealed class IntIntMultiMap(
 
 internal sealed class MutableIntIntMultiMap(
   values: IntArray,
-  links: IntIntHashMap,
+  links: TIntIntHashMap,
   distinctValues: Boolean
 ) : AbstractIntIntMultiMap(values, links, distinctValues) {
 
-  class BySet internal constructor(values: IntArray, links: IntIntHashMap) : MutableIntIntMultiMap(values, links, true) {
-    constructor() : this(IntArray(0), IntIntHashMap())
+  class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : MutableIntIntMultiMap(values, links, true) {
+    constructor() : this(IntArray(0), TIntIntHashMap())
 
     override fun copy(): BySet = doCopy().let { BySet(it.first, it.second) }
 
     override fun toImmutable(): IntIntMultiMap.BySet {
-      return IntIntMultiMap.BySet(values.clone(), links.copy())
+      return IntIntMultiMap.BySet(values.clone(), links.clone() as TIntIntHashMap)
     }
   }
 
-  class ByList internal constructor(values: IntArray, links: IntIntHashMap) : MutableIntIntMultiMap(values, links, false) {
-    constructor() : this(IntArray(0), IntIntHashMap())
+  class ByList internal constructor(values: IntArray, links: TIntIntHashMap) : MutableIntIntMultiMap(values, links, false) {
+    constructor() : this(IntArray(0), TIntIntHashMap())
 
     override fun toImmutable(): IntIntMultiMap.ByList {
-      return IntIntMultiMap.ByList(values.clone(), links.copy())
+      return IntIntMultiMap.ByList(values.clone(), links.clone() as TIntIntHashMap)
     }
 
     override fun copy(): ByList = doCopy().let { ByList(it.first, it.second) }
   }
 
   override fun get(key: Int): IntSequence {
+    if (key !in links) return IntSequence.Empty
+
     val size = size(key)
     val startId = links[key]
     val vals = values.sliceArray(startId until (startId + size))
@@ -127,8 +122,8 @@ internal sealed class MutableIntIntMultiMap(
   }
 
   fun put(key: Int, newValues: IntArray) {
-    val idx = links[key]
-    if (idx != -1) {
+    if (key in links) {
+      val idx = links[key]
       val endIndexInclusive = idx + size(key)
 
       val filteredValues = if (distinctValues) {
@@ -173,9 +168,9 @@ internal sealed class MutableIntIntMultiMap(
   }
 
   fun remove(key: Int) {
-    val idx = links[key]
-    if (idx == -1) return
+    if (key !in links) return
 
+    val idx = links[key]
     val size = values.size
 
     val sizeToRemove = size(key)
@@ -194,9 +189,9 @@ internal sealed class MutableIntIntMultiMap(
   }
 
   fun remove(key: Int, value: Int) {
-    var idx = links[key]
-    if (idx == -1) return
+    if (key !in links) return
 
+    var idx = links[key]
     val size = values.size
     var foundIndex = -1
 
@@ -242,12 +237,6 @@ internal sealed class MutableIntIntMultiMap(
 
   abstract fun toImmutable(): IntIntMultiMap
 
-  protected fun IntIntHashMap.copy(): IntIntHashMap {
-    val newKey2Values = IntIntHashMap()
-    this.forEachEntry { key, value -> newKey2Values.put(key, value); true }
-    return newKey2Values
-  }
-
   private class RwIntSequence(values: IntArray) : IntSequence() {
     override val iterator: IntIterator = values.iterator()
   }
@@ -255,16 +244,16 @@ internal sealed class MutableIntIntMultiMap(
 
 internal sealed class AbstractIntIntMultiMap(
   protected open var values: IntArray,
-  protected open val links: IntIntHashMap,
+  protected open val links: TIntIntHashMap,
   protected open val distinctValues: Boolean
 ) {
 
   abstract operator fun get(key: Int): IntSequence
 
   fun get(key: Int, action: (Int) -> Unit) {
-    var idx = links[key]
-    if (idx == -1) return
+    if (key !in links) return
 
+    var idx = links[key]
     val size = values.size
 
     var value: Int
@@ -279,9 +268,9 @@ internal sealed class AbstractIntIntMultiMap(
   }
 
   fun size(key: Int): Int {
-    var idx = links[key]
-    if (idx == -1) return 0
+    if (key !in links) return 0
 
+    var idx = links[key]
     var res = 0
     val size = values.size
 
@@ -305,8 +294,8 @@ internal sealed class AbstractIntIntMultiMap(
 
   abstract fun copy(): AbstractIntIntMultiMap
 
-  protected fun doCopy(): Pair<IntArray, IntIntHashMap> {
-    val newLinks = IntIntHashMap()
+  protected fun doCopy(): Pair<IntArray, TIntIntHashMap> {
+    val newLinks = TIntIntHashMap()
     links.forEachEntry { key, value -> newLinks.put(key, value); true }
     val newValues = values.clone()
     return newValues to newLinks

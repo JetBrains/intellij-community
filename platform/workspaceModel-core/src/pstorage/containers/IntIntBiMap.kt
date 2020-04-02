@@ -1,17 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage.containers
 
-import com.intellij.util.containers.IntIntHashMap
+import gnu.trove.TIntIntHashMap
 
 internal class IntIntBiMap(
-  key2Value: IntIntHashMap,
+  key2Value: TIntIntHashMap,
   override val value2Keys: IntIntMultiMap.ByList
 ) : AbstractIntIntBiMap(key2Value, value2Keys) {
 
-  constructor() : this(IntIntHashMap(), IntIntMultiMap.ByList())
+  constructor() : this(TIntIntHashMap(), IntIntMultiMap.ByList())
 
   override fun copy(): AbstractIntIntBiMap {
-    val newKey2Values = IntIntHashMap()
+    val newKey2Values = TIntIntHashMap()
     key2Value.forEachEntry { key, value -> newKey2Values.put(key, value); true }
     val newValue2Keys = value2Keys.copy()
     return IntIntBiMap(newKey2Values, newValue2Keys)
@@ -19,15 +19,15 @@ internal class IntIntBiMap(
 
   override fun toImmutable(): IntIntBiMap = this
 
-  fun toMutable(): MutableIntIntBiMap = MutableIntIntBiMap(key2Value.copy(), value2Keys.toMutable())
+  fun toMutable(): MutableIntIntBiMap = MutableIntIntBiMap(key2Value.clone() as TIntIntHashMap, value2Keys.toMutable())
 }
 
 internal class MutableIntIntBiMap(
-  key2Value: IntIntHashMap,
+  key2Value: TIntIntHashMap,
   override val value2Keys: MutableIntIntMultiMap.ByList
 ) : AbstractIntIntBiMap(key2Value, value2Keys) {
 
-  constructor() : this(IntIntHashMap(), MutableIntIntMultiMap.ByList())
+  constructor() : this(TIntIntHashMap(), MutableIntIntMultiMap.ByList())
 
   fun put(key: Int, value: Int) {
     value2Keys.put(value, key)
@@ -57,15 +57,19 @@ internal class MutableIntIntBiMap(
     value2Keys.clear()
   }
 
-  override fun toImmutable(): IntIntBiMap = IntIntBiMap(key2Value.copy(), value2Keys.toImmutable())
+  override fun toImmutable(): IntIntBiMap = IntIntBiMap(key2Value.clone() as TIntIntHashMap, value2Keys.toImmutable())
 
-  override fun copy(): MutableIntIntBiMap = MutableIntIntBiMap(key2Value.copy(), value2Keys.copy())
+  override fun copy(): MutableIntIntBiMap = MutableIntIntBiMap(key2Value.clone() as TIntIntHashMap, value2Keys.copy())
 }
 
 internal sealed class AbstractIntIntBiMap(
-  protected val key2Value: IntIntHashMap,
+  protected val key2Value: TIntIntHashMap,
   protected open val value2Keys: AbstractIntIntMultiMap
 ) {
+
+  fun containsKey(key: Int) = key in key2Value
+
+  fun containsValue(value: Int) = value in value2Keys
 
   fun get(key: Int) = key2Value[key]
 
@@ -76,10 +80,4 @@ internal sealed class AbstractIntIntBiMap(
   abstract fun copy(): AbstractIntIntBiMap
 
   abstract fun toImmutable(): IntIntBiMap
-
-  protected fun IntIntHashMap.copy(): IntIntHashMap {
-    val newKey2Values = IntIntHashMap()
-    this.forEachEntry { key, value -> newKey2Values.put(key, value); true }
-    return newKey2Values
-  }
 }

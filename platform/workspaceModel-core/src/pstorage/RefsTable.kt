@@ -125,9 +125,8 @@ internal sealed class AbstractRefsTable constructor(
     val filtered = oneToManyContainer.filterKeys { it.childClass.java == childClass }
     val res = HashMap<ConnectionId<out TypedEntity, T>, Int>()
     for ((connectionId, bimap) in filtered) {
-      val keys = bimap.get(childId)
-      if (keys != -1) {
-        res[connectionId as ConnectionId<out TypedEntity, T>] = keys
+      if (bimap.containsKey(childId)) {
+        res[connectionId as ConnectionId<out TypedEntity, T>] = bimap.get(childId)
       }
     }
     return res
@@ -139,10 +138,8 @@ internal sealed class AbstractRefsTable constructor(
     val filtered = oneToManyContainer.filterKeys { it.childClass.java == childClass && it.isHard }
     val res = HashMap<KClass<out TypedEntity>, Int>()
     for ((connectionId, bimap) in filtered) {
-      val key = bimap.get(childId)
-      if (key != -1) {
-        val klass = connectionId.parentClass
-        res[klass] = key
+      if (bimap.containsKey(childId)) {
+        res[connectionId.parentClass] = bimap.get(childId)
       }
     }
     return res
@@ -172,8 +169,10 @@ internal sealed class AbstractRefsTable constructor(
   fun <T : TypedEntity, SUBT : TypedEntity> getParent(connectionId: ConnectionId<T, SUBT>,
                                                       childId: Int,
                                                       transformer: (Int) -> T?): T? {
-    val res = oneToManyContainer[connectionId]?.get(childId) ?: return null
-    if (res == -1) return null
+    val bimap = oneToManyContainer[connectionId] ?: return null
+    if (!bimap.containsKey(childId)) return null
+
+    val res = bimap.get(childId)
     return transformer(res)
   }
 }
