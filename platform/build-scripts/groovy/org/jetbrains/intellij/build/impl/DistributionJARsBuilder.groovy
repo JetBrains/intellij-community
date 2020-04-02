@@ -993,7 +993,7 @@ class DistributionJARsBuilder {
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
             collect { ((JpsLibraryDependency)it).library }.
-            findAll { !excluded.contains(it.name) }.
+            findAll { !excluded.contains(getLibraryName(it)) }.
             each {
               jpsLibrary(it)
             }
