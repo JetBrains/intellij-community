@@ -37,12 +37,12 @@ public final class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[
     LOG.assertTrue(dataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy);
   }
 
-  public boolean hasHashFor(@NotNull byte[] value) throws IOException {
+  public boolean hasHashFor(byte @NotNull [] value) throws IOException {
     return tryEnumerate(value) != NULL_ID;
   }
 
   @Override
-  public int enumerate(@NotNull byte[] value) throws IOException {
+  public int enumerate(byte @NotNull [] value) throws IOException {
     LOG.assertTrue(SIGNATURE_LENGTH == value.length);
     return super.enumerate(value);
   }
