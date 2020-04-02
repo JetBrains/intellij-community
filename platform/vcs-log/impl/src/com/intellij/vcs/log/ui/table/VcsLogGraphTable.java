@@ -646,7 +646,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return mySelection;
   }
 
-  public void handleAnswer(@Nullable GraphAnswer<Integer> answer) {
+  public void handleAnswer(@NotNull GraphAnswer<Integer> answer) {
     GraphCommitCellController controller = (GraphCommitCellController)Objects.requireNonNull(getController(VcsLogColumn.COMMIT));
     Cursor cursor = controller.handleGraphAnswer(answer, true, null, null);
     myMouseAdapter.handleCursor(cursor);
