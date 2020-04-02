@@ -56,17 +56,18 @@ class PrintElementManagerImpl implements PrintElementManager {
     return mySelection.isSelected(printElement);
   }
 
-  void setSelectedElement(@NotNull PrintElementWithGraphElement printElement) {
-    setSelection(new Selection(printElement));
+  boolean setSelectedElement(@NotNull PrintElementWithGraphElement printElement) {
+    return setSelection(new Selection(printElement));
   }
 
-  void setSelectedElements(@NotNull Set<Integer> selectedNodeId) {
-    setSelection(new Selection(selectedNodeId));
+  boolean setSelectedElements(@NotNull Set<Integer> selectedNodeId) {
+    return setSelection(new Selection(selectedNodeId));
   }
 
-  private void setSelection(@NotNull Selection newSelection) {
-    if (newSelection.equals(mySelection)) return;
+  private boolean setSelection(@NotNull Selection newSelection) {
+    if (newSelection.equals(mySelection)) return false;
     mySelection = newSelection;
+    return true;
   }
 
   @Override
