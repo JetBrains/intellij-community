@@ -236,11 +236,10 @@ public class JarRepositoryManager {
     return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
   }
 
-  public static @NotNull Promise<Collection<Artifact>> loadDependenciesAsyncIgnoringRoots(@NotNull Project project,
-                                                                                          @NotNull JpsMavenRepositoryLibraryDescriptor desc,
-                                                                                          @NotNull final Set<ArtifactKind> artifactKinds,
-                                                                                          @Nullable List<RemoteRepositoryDescription> repos
-                                                                                         ) {
+  public static @NotNull Promise<Collection<Artifact>> loadArtifactForDependenciesAsync(@NotNull Project project,
+                                                                                        @NotNull JpsMavenRepositoryLibraryDescriptor desc,
+                                                                                        @NotNull final Set<ArtifactKind> artifactKinds,
+                                                                                        @Nullable List<RemoteRepositoryDescription> repos) {
     Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
     return submitBackgroundJob(new LibraryResolveJob(desc, artifactKinds, effectiveRepos));
   }
