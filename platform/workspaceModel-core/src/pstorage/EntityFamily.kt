@@ -9,13 +9,13 @@ internal open class EntityFamily<E : TypedEntity> internal constructor(
   protected val emptySlots: TIntHashSet
 ) {
 
-  operator fun get(idx: Int) = entities[idx]
+  operator fun get(idx: Int) = entities.getOrNull(idx)
 
   fun copyToMutable() = MutableEntityFamily(entities.toMutableList(), true)
 
   fun all() = entities.asSequence().filterNotNull()
 
-  fun exists(id: Int) = entities[id] != null
+  fun exists(id: Int) = get(id) != null
 
   inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
     // Check that empty slots corresponds to real null values in [entities]

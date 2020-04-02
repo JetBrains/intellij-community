@@ -510,33 +510,33 @@ internal class PEntityStorageBuilder(
     val originalImpl = original as PEntityStorage
     //this can be optimized to avoid creation of entity instances which are thrown away and copying the results from map to list
     // LinkedHashMap<Long, EntityChange<T>>
-    val changes = LinkedHashMap<Int, Pair<Class<*>, EntityChange<*>>>()
+    val changes = LinkedHashMap<PId<*>, Pair<Class<*>, EntityChange<*>>>()
     for (change in changeLog) {
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as PTypedEntity<*>
-          changes[change.entityData.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
+          changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
         }
         is ChangeEntry.RemoveEntity -> {
           val removedData = originalImpl.entityDataById(change.id)
-          val oldChange = changes.remove(change.id.arrayId)
+          val oldChange = changes.remove(change.id)
           if (oldChange?.second !is EntityChange.Added && removedData != null) {
-            val replacedEntity = removedData.createEntity(this) as PTypedEntity<*>
-            changes[change.id.arrayId] = change.id.clazz.java to EntityChange.Removed(replacedEntity)
+            val removedEntity = removedData.createEntity(this) as PTypedEntity<*>
+            changes[removedEntity.id] = change.id.clazz.java to EntityChange.Removed(removedEntity)
           }
         }
         is ChangeEntry.ReplaceEntity -> {
-          val oldChange = changes.remove(change.id.arrayId)
+          val oldChange = changes.remove(change.id)
           if (oldChange?.second is EntityChange.Added) {
             val addedEntity = change.newData.createEntity(originalImpl) as PTypedEntity<*>
-            changes[change.id.arrayId] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
+            changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
           }
           else {
             val oldData = originalImpl.entityDataById(change.id)
             if (oldData != null) {
               val replacedData = oldData.createEntity(originalImpl) as PTypedEntity<*>
               val replaceToData = change.newData.createEntity(this) as PTypedEntity<*>
-              changes[change.id.arrayId] = replacedData.id.clazz.java to EntityChange.Replaced(replacedData, replaceToData)
+              changes[replacedData.id] = replacedData.id.clazz.java to EntityChange.Replaced(replacedData, replaceToData)
             }
           }
         }
