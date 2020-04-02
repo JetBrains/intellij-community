@@ -36,20 +36,25 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -80,6 +85,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private JPanel myHeaderPanel;
   private CaptionPanel myCaption;
   private JComponent myComponent;
+  private SpeedSearch mySpeedSearchFoundInRootComponent;
   private String myDimensionServiceKey;
   private Computable<Boolean> myCallBack;
   private Project myProject;
@@ -238,6 +244,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myActivityKey = new UiActivity.Focus("Popup:" + this);
     myProject = project;
     myComponent = component;
+    mySpeedSearchFoundInRootComponent =
+      findInComponentHierarchy(component, it -> it instanceof ListWithFilter ? ((ListWithFilter)it).getSpeedSearch() : null);
     myPopupBorder = showBorder ? borderColor != null ? PopupBorder.Factory.createColored(borderColor) :
                                  PopupBorder.Factory.create(true, showShadow) :
                                  PopupBorder.Factory.createEmpty();
@@ -1424,6 +1432,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myContent = null;
     myPreferredFocusedComponent = null;
     myComponent = null;
+    mySpeedSearchFoundInRootComponent = null;
     myCallBack = null;
     myListeners.clear();
 
@@ -1921,7 +1930,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (handler != null && handler.fun(e)) {
       return true;
     }
-    if (isCloseRequest(e) && myCancelKeyEnabled && !mySpeedSearch.isHoldingFilter()) {
+    if (isCloseRequest(e) && myCancelKeyEnabled && !mySpeedSearch.isHoldingFilter() &&
+        (mySpeedSearchFoundInRootComponent == null || !mySpeedSearchFoundInRootComponent.isHoldingFilter())) {
       cancel(e);
       return true;
     }
@@ -2048,5 +2058,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   @NotNull
   private static WindowStateService getWindowStateService(@Nullable Project project) {
     return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
+  }
+
+  private static <T> T findInComponentHierarchy(@NotNull Component component, Function<@NotNull Component, @Nullable T> mapper) {
+    T found = mapper.fun(component);
+    if (found != null) {
+      return found;
+    }
+    if (component instanceof JComponent) {
+      for (Component child : ((JComponent)component).getComponents()) {
+        found = findInComponentHierarchy(child, mapper);
+        if (found != null) {
+          return found;
+        }
+      }
+    }
+    return null;
   }
 }
