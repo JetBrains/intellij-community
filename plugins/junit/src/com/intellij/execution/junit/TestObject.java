@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -15,7 +15,6 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -536,7 +535,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected String getRunner() {
     if (myRunner == null) {
-      myRunner = getRunnerInner();
+      myRunner = ReadAction.compute(this::getRunnerInner);
     }
     return myRunner;
   }
@@ -544,7 +543,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   private String getRunnerInner() {
     Project project = myConfiguration.getProject();
-    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
     final GlobalSearchScope globalSearchScope = getScopeForJUnit(myConfiguration);
     JUnitConfiguration.Data data = myConfiguration.getPersistentData();

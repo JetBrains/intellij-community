@@ -10,6 +10,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,7 +30,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   @Override
   public JavaParameters getJavaParameters() throws ExecutionException {
     if (myParams == null) {
-      myParams = createJavaParameters();
+      myParams = ReadAction.compute(this::createJavaParameters);
     }
     return myParams;
   }
