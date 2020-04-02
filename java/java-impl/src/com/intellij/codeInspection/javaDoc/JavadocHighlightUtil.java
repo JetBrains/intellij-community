@@ -439,6 +439,10 @@ public class JavadocHighlightUtil {
 
   static void checkEmptyMethodTagsDescription(PsiDocTag @NotNull [] tags, @NotNull ProblemHolder holder) {
     for (PsiDocTag tag : tags) {
+      if (ContainerUtil
+        .exists(tag.getChildren(), e -> e instanceof PsiInlineDocTag && ((PsiInlineDocTag)e).getName().equals("inheritDoc"))) {
+        continue;
+      }
       if ("return".equals(tag.getName())) {
         if (emptyTag(tag)) {
           String tagText = "<code>@return</code>";
