@@ -67,6 +67,10 @@ internal sealed class AbstractIntIntBiMap(
   protected open val value2Keys: AbstractIntIntMultiMap
 ) {
 
+  inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
+    key2Value.forEachEntry { key, value -> action(key, value); true }
+  }
+
   fun containsKey(key: Int) = key in key2Value
 
   fun containsValue(value: Int) = value in value2Keys

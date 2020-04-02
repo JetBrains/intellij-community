@@ -20,7 +20,7 @@ internal open class PEntityStorage constructor(
   override val refs: RefsTable
 ) : AbstractPEntityStorage(entitiesByType, refs) {
   companion object {
-    fun create(): TypedEntityStorageBuilder = PEntityStorageBuilder()
+    fun create() = PEntityStorageBuilder()
   }
 }
 
@@ -681,6 +681,27 @@ internal sealed class AbstractPEntityStorage constructor(
   open fun <T : TypedEntity, SUBT : TypedEntity> extractParent(connectionId: ConnectionId<T, SUBT>, childId: PId<SUBT>): T? {
     val entitiesList = entitiesByType[connectionId.parentClass.java] ?: return null
     return refs.getParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) }
+  }
+
+  fun assertConsistency() {
+    entitiesByType.assertConsistency()
+
+    // Rules:
+    //  1) Refs should not have links without a corresponding entity
+    //  2) child entity should have only one parent --------------------------- Not Yet Implemented TODO
+    //  3) There is no child without a parent under the hard reference -------- Not Yet Implemented TODO
+
+    refs.oneToManyContainer.forEach { (connectionId, map) ->
+      map.forEachKey { childId, parentId ->
+        //  1) Refs should not have links without a corresponding entity
+        assert(entitiesByType[connectionId.parentClass.java]?.get(parentId) != null) {
+          "Reference to ${connectionId.parentClass}-:-$parentId cannot be resolved"
+        }
+        assert(entitiesByType[connectionId.childClass.java]?.get(childId) != null) {
+          "Reference to ${connectionId.childClass}-:-$childId cannot be resolved"
+        }
+      }
+    }
   }
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {

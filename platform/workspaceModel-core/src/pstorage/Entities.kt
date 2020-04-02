@@ -84,7 +84,7 @@ internal abstract class PEntityData<E : TypedEntity> {
   var id: Int = -1
 
   fun createEntity(snapshot: AbstractPEntityStorage): E {
-    val returnClass = (this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*>) as KClass<E>
+    val returnClass = immutableClass()
 
     val params = returnClass.primaryConstructor!!.parameters
       .filterNot { it.name == "snapshot" }
@@ -98,6 +98,8 @@ internal abstract class PEntityData<E : TypedEntity> {
     (res as PTypedEntity<E>).snapshotImpl = snapshot
     return res
   }
+
+  fun immutableClass() = this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*> as KClass<E>
 
   fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
     val returnClass = Class.forName(this::class.qualifiedName!!.dropLast(10) + "ModifiableEntity").kotlin

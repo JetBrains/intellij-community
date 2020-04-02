@@ -23,6 +23,19 @@ internal open class EntitiesBarrel internal constructor(
   fun copy(): EntitiesBarrel = EntitiesBarrel(this.entitiesByType)
 
   fun join(other: EntitiesBarrel): EntitiesBarrel = EntitiesBarrel(entitiesByType + other.entitiesByType)
+
+  fun assertConsistency() {
+    entitiesByType.forEach { (clazz, family) ->
+      family.assertConsistency { entityData ->
+        assert(clazz.kotlin == entityData.immutableClass()) {
+          """EntityFamily contains entity data of wrong type:
+            | - EntityFamily class:   $clazz
+            | - entityData class:     ${entityData.immutableClass()}
+          """.trimMargin()
+        }
+      }
+    }
+  }
 }
 
 internal class MutableEntitiesBarrel : EntitiesBarrel() {

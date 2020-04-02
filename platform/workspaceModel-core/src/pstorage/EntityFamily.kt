@@ -17,6 +17,23 @@ internal open class EntityFamily<E : TypedEntity> internal constructor(
 
   fun exists(id: Int) = entities[id] != null
 
+  inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
+    // Check that empty slots corresponds to real null values in [entities]
+    val emptySlotsCopy = HashSet<Int>()
+    emptySlots.forEach { emptySlotsCopy.add(it) }
+
+    entities.forEachIndexed { idx, entity ->
+      if (entity == null) {
+        assert(idx in emptySlotsCopy) { "EntityFamily contains a gap at index $idx, but it's not stored in emptySlots" }
+        emptySlotsCopy.remove(idx)
+      }
+      else {
+        entityAssertion(entity)
+      }
+    }
+    assert(emptySlotsCopy.isEmpty()) { "EntityFamily has emptySlots that aren't empty: $emptySlotsCopy" }
+  }
+
   val size: Int
     get() = entities.size - emptySlots.size()
 
