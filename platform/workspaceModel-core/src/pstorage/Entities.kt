@@ -10,6 +10,7 @@ import kotlin.reflect.*
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 
@@ -103,7 +104,9 @@ internal abstract class PEntityData<E : TypedEntity> {
 
   fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
     val returnClass = Class.forName(this::class.qualifiedName!!.dropLast(10) + "ModifiableEntity").kotlin
-    val res = returnClass.primaryConstructor!!.call() as ModifiableTypedEntity<E>
+    val primaryConstructor = returnClass.primaryConstructor!!
+    primaryConstructor.isAccessible = true
+    val res = primaryConstructor.call() as ModifiableTypedEntity<E>
     res as PModifiableTypedEntity
     res.original = this
     res.diff = diff

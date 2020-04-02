@@ -52,23 +52,23 @@ internal class PParentEntity(
 
 internal data class PDataClass(val stringProperty: String, val parent: EntityReference<PParentEntity>)
 
-internal class PChildModifiableEntity : PModifiableTypedEntity<PChildEntity>() {
+private class PChildModifiableEntity : PModifiableTypedEntity<PChildEntity>() {
   var childProperty: String by EntityData()
   var dataClass: PDataClass? by EntityData()
   var parent: PParentEntity by MutableManyToOne.HardRef(PChildEntity::class, PParentEntity::class)
 }
 
-internal class PNoDataChildModifiableEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
+private class PNoDataChildModifiableEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
   var childProperty: String by EntityData()
   var parent: PParentEntity by MutableManyToOne.HardRef(PNoDataChildEntity::class, PParentEntity::class)
 }
 
-internal class PChildChildModifiableEntity : PModifiableTypedEntity<PChildChildEntity>() {
+private class PChildChildModifiableEntity : PModifiableTypedEntity<PChildChildEntity>() {
   var parent1: PParentEntity by MutableManyToOne.HardRef(PChildChildEntity::class, PParentEntity::class)
   var parent2: PChildEntity by MutableManyToOne.HardRef(PChildChildEntity::class, PChildEntity::class)
 }
 
-internal class PParentModifiableEntity : PModifiableTypedEntity<PParentEntity>() {
+private class PParentModifiableEntity : PModifiableTypedEntity<PParentEntity>() {
   var parentProperty: String by EntityData()
 }
 

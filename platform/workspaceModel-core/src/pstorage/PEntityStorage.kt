@@ -10,6 +10,7 @@ import kotlin.collections.LinkedHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
 
 internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : EntityReference<E>() {
   override fun resolve(storage: TypedEntityStorage): E = (storage as AbstractPEntityStorage).entityDataById(id)?.createEntity(storage)!!
@@ -57,7 +58,9 @@ internal class PEntityStorageBuilder(
     val unmodifiableEntityClass = PModifiableTypedEntity.getEntityClass(clazz.kotlin)
     val entityDataClass = PEntityData.fromImmutableClass(unmodifiableEntityClass).kotlin
 
-    val pEntityData = entityDataClass.primaryConstructor!!.call() as PEntityData<T>
+    val primaryConstructor = entityDataClass.primaryConstructor!!
+    primaryConstructor.isAccessible = true
+    val pEntityData = primaryConstructor.call()
 
     pEntityData.entitySource = source
 
