@@ -489,6 +489,7 @@ msql
 mssql
 msvc
 multi
+multihost
 multilinestring
 multipart
 multipoint
