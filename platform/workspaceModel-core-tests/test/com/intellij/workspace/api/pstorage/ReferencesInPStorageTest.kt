@@ -109,7 +109,7 @@ private fun TypedEntityStorage.singlePChild() = entities(PChildEntity::class.jav
 class ReferencesInPStorageTest {
   @Test
   fun `add entity`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity(builder.addPParentEntity("foo"))
     builder.assertConsistency()
     assertEquals("foo", child.parent.parentProperty)
@@ -120,7 +120,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `add entity via diff`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val parentEntity = builder.addPParentEntity("foo")
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
@@ -137,7 +137,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `add remove reference inside data class`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val parent1 = builder.addPParentEntity("parent1")
     val parent2 = builder.addPParentEntity("parent2")
     builder.assertConsistency()
@@ -158,7 +158,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `remove child entity`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val parent = builder.addPParentEntity()
     builder.assertConsistency()
     val child = builder.addPChildEntity(parent)
@@ -172,7 +172,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `remove parent entity`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
     builder.removeEntity(child.parent)
     builder.assertConsistency()
@@ -182,7 +182,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `remove parent entity with two children`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child1 = builder.addPChildEntity()
     builder.addPChildEntity(parentEntity = child1.parent)
     builder.removeEntity(child1.parent)
@@ -193,7 +193,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `remove parent entity in DAG`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val parent = builder.addPParentEntity()
     val child = builder.addPChildEntity(parentEntity = parent)
     builder.addPChildChildEntity(parent, child)
@@ -205,7 +205,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `remove parent entity referenced via data class`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val parent1 = builder.addPParentEntity("parent1")
     val parent2 = builder.addPParentEntity("parent2")
     builder.addPChildEntity(parent1, "child", PDataClass("data", builder.createReference(parent2)))
@@ -218,7 +218,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `remove parent entity referenced via two paths`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val parent = builder.addPParentEntity()
     builder.addPChildEntity(parent, "child", PDataClass("data", builder.createReference(parent)))
     builder.assertConsistency()
@@ -230,7 +230,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `modify parent property`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
     val oldParent = child.parent
     val newParent = builder.modifyEntity(PParentModifiableEntity::class.java, child.parent) {
@@ -246,7 +246,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `modify parent property via diff`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
     val oldParent = child.parent
 
@@ -266,7 +266,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `modify child property`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
     val oldParent = child.parent
     val newChild = builder.modifyEntity(PChildModifiableEntity::class.java, child) {
@@ -284,7 +284,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `modify reference to parent`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
     val oldParent = child.parent
     val newParent = builder.addPParentEntity("new")
@@ -306,7 +306,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `modify reference to parent via data class`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val parent1 = builder.addPParentEntity("parent1")
     val oldParent = builder.addPParentEntity("parent2")
     val child = builder.addPChildEntity(parent1, "child", PDataClass("data", builder.createReference(oldParent)))
@@ -326,7 +326,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `builder from storage`() {
-    val storage = PEntityStorage.create().apply {
+    val storage = PEntityStorageBuilder.create().apply {
       addPChildEntity()
     }.toStorage()
     storage.assertConsistency()
@@ -362,7 +362,7 @@ class ReferencesInPStorageTest {
 
   @Test
   fun `storage from builder`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
 
     val snapshot = builder.toStorage()

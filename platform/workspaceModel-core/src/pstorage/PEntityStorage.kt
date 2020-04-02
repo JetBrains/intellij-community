@@ -16,14 +16,10 @@ internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : Entit
   override fun resolve(storage: TypedEntityStorage): E = (storage as AbstractPEntityStorage).entityDataById(id)?.createEntity(storage)!!
 }
 
-internal open class PEntityStorage constructor(
+internal class PEntityStorage constructor(
   entitiesByType: EntitiesBarrel,
   override val refs: RefsTable
-) : AbstractPEntityStorage(entitiesByType, refs) {
-  companion object {
-    fun create() = PEntityStorageBuilder()
-  }
-}
+) : AbstractPEntityStorage(entitiesByType, refs)
 
 internal class PEntityStorageBuilder(
   private val origStorage: PEntityStorage,
@@ -41,7 +37,7 @@ internal class PEntityStorageBuilder(
     modificationCount++
   }
 
-  constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()), MutableEntitiesBarrel(), MutableRefsTable())
+  private constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()), MutableEntitiesBarrel(), MutableRefsTable())
 
   private sealed class ChangeEntry {
     data class AddEntity<E : TypedEntity>(val entityData: PEntityData<E>, val clazz: Class<E>) : ChangeEntry()
@@ -186,8 +182,7 @@ internal class PEntityStorageBuilder(
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage) {
 
     val entitiesByPersistentIdHash = groupByPersistentIdHash(this)
-    val replaceWithEntitiesByPersistentIdHash = groupByPersistentIdHash(replaceWith as PEntityStorage)
-
+    val replaceWithEntitiesByPersistentIdHash = groupByPersistentIdHash(replaceWith as AbstractPEntityStorage)
 
     val replaceMap = HashBiMap.create<PId<*>, PId<*>>()
     val emptyBiMap = HashBiMap.create<PId<*>, PId<*>>()
@@ -273,7 +268,7 @@ internal class PEntityStorageBuilder(
         .filter { it !in entitiesToRemove && !replaceMap.containsKey(it) }
         .map { this.entityDataById(it)!! }
 
-      val eq = classifyByEquals(
+      val eq = Companion.classifyByEquals(
         c1 = oldChildren,
         c2 = newChildren,
         hashFunc1 = this::shallowHashCode, hashFunc2 = this::shallowHashCode,
@@ -377,7 +372,7 @@ internal class PEntityStorageBuilder(
 
   private fun recursiveAddEntity(id: PId<out TypedEntity>,
     /*backReferrers: MultiMap<PId<out TypedEntity>, PId<out TypedEntity>>,*/
-                                 storage: PEntityStorage,
+                                 storage: AbstractPEntityStorage,
                                  replaceMap: BiMap<PId<out TypedEntity>, PId<out TypedEntity>>,
                                  sourceFilter: (EntitySource) -> Boolean) {
     for ((conId, thisId) in storage.refs.getParents(id.arrayId, id.clazz.java)) {
@@ -431,7 +426,7 @@ internal class PEntityStorageBuilder(
       storage2.entityDataById(PId(value, conId.parentClass))!!
     }
 
-    val eq = classifyByEquals(data1parents, data2parents, this::shallowHashCode, this::shallowHashCode) { e1, e2 ->
+    val eq = Companion.classifyByEquals(data1parents, data2parents, this::shallowHashCode, this::shallowHashCode) { e1, e2 ->
       deepEquals(e1, e2, replaceMap, storage1, storage2/*, backReferrers1, backReferrers2*/, equalsCache)
     }
 
@@ -475,56 +470,6 @@ internal class PEntityStorageBuilder(
     return data.hashCode()
   }
 
-  internal fun <T1, T2> classifyByEquals(c1: Iterable<T1>,
-                                         c2: Iterable<T2>,
-                                         hashFunc1: (T1) -> Int,
-                                         hashFunc2: (T2) -> Int,
-                                         equalsFunc: (T1, T2) -> Boolean): EqualityResult<T1, T2> {
-    val hashes1 = c1.groupBy(hashFunc1)
-    val hashes2 = c2.groupBy(hashFunc2)
-
-    val onlyIn1 = mutableListOf<T1>()
-    for (key in hashes1.keys - hashes2.keys) {
-      onlyIn1.addAll(hashes1.getValue(key))
-    }
-
-    val onlyIn2 = mutableListOf<T2>()
-    for (key in hashes2.keys - hashes1.keys) {
-      onlyIn2.addAll(hashes2.getValue(key))
-    }
-
-    val equal = mutableListOf<Pair<T1, T2>>()
-    for (key in hashes1.keys.intersect(hashes2.keys)) {
-      val l1 = hashes1.getValue(key)
-      val l2 = hashes2.getValue(key)
-
-      if (l1.size == 1 && l2.size == 1 && equalsFunc(l1.single(), l2.single())) {
-        equal.add(l1.single() to l2.single())
-      }
-      else {
-        val ml1 = l1.toMutableList()
-        val ml2 = l2.toMutableList()
-
-        for (itemFrom1 in ml1) {
-          val index2 = ml2.indexOfFirst { equalsFunc(itemFrom1, it) }
-          if (index2 < 0) {
-            onlyIn1.add(itemFrom1)
-          }
-          else {
-            val itemFrom2 = ml2.removeAt(index2)
-            equal.add(itemFrom1 to itemFrom2)
-          }
-        }
-
-        for (itemFrom2 in ml2) {
-          onlyIn2.add(itemFrom2)
-        }
-      }
-    }
-
-    return EqualityResult(onlyIn1 = onlyIn1, onlyIn2 = onlyIn2, equal = equal)
-  }
-
   data class EqualityResult<T1, T2>(
     val onlyIn1: List<T1>,
     val onlyIn2: List<T2>,
@@ -534,7 +479,7 @@ internal class PEntityStorageBuilder(
   private fun shallowEquals(oldData: PEntityData<out TypedEntity>,
                             newData: PEntityData<out TypedEntity>,
                             emptyBiMap: HashBiMap<PId<*>, PId<*>>?,
-                            newStorage: PEntityStorage): Boolean {
+                            newStorage: AbstractPEntityStorage): Boolean {
     return oldData.createEntity(this).hasEqualProperties(newData.createEntity(newStorage))
   }
 
@@ -635,6 +580,9 @@ internal class PEntityStorageBuilder(
   }
 
   companion object {
+
+    fun create() = PEntityStorageBuilder()
+
     fun from(storage: TypedEntityStorage): PEntityStorageBuilder {
       storage as AbstractPEntityStorage
       return when (storage) {
@@ -649,6 +597,56 @@ internal class PEntityStorageBuilder(
           PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs)
         }
       }
+    }
+
+    internal fun <T1, T2> classifyByEquals(c1: Iterable<T1>,
+                                           c2: Iterable<T2>,
+                                           hashFunc1: (T1) -> Int,
+                                           hashFunc2: (T2) -> Int,
+                                           equalsFunc: (T1, T2) -> Boolean): EqualityResult<T1, T2> {
+      val hashes1 = c1.groupBy(hashFunc1)
+      val hashes2 = c2.groupBy(hashFunc2)
+
+      val onlyIn1 = mutableListOf<T1>()
+      for (key in hashes1.keys - hashes2.keys) {
+        onlyIn1.addAll(hashes1.getValue(key))
+      }
+
+      val onlyIn2 = mutableListOf<T2>()
+      for (key in hashes2.keys - hashes1.keys) {
+        onlyIn2.addAll(hashes2.getValue(key))
+      }
+
+      val equal = mutableListOf<Pair<T1, T2>>()
+      for (key in hashes1.keys.intersect(hashes2.keys)) {
+        val l1 = hashes1.getValue(key)
+        val l2 = hashes2.getValue(key)
+
+        if (l1.size == 1 && l2.size == 1 && equalsFunc(l1.single(), l2.single())) {
+          equal.add(l1.single() to l2.single())
+        }
+        else {
+          val ml1 = l1.toMutableList()
+          val ml2 = l2.toMutableList()
+
+          for (itemFrom1 in ml1) {
+            val index2 = ml2.indexOfFirst { equalsFunc(itemFrom1, it) }
+            if (index2 < 0) {
+              onlyIn1.add(itemFrom1)
+            }
+            else {
+              val itemFrom2 = ml2.removeAt(index2)
+              equal.add(itemFrom1 to itemFrom2)
+            }
+          }
+
+          for (itemFrom2 in ml2) {
+            onlyIn2.add(itemFrom2)
+          }
+        }
+      }
+
+      return EqualityResult(onlyIn1 = onlyIn1, onlyIn2 = onlyIn2, equal = equal)
     }
   }
 }

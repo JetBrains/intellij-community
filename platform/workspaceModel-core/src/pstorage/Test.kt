@@ -6,7 +6,7 @@ import com.intellij.workspace.api.TypedEntityStorageBuilder
 
 
 fun main() {
-  val pStoreBuilder = PEntityStorage.create()
+  val pStoreBuilder = PEntityStorageBuilder.create()
   val createdEntity = pStoreBuilder.addEntity(PFolderModifiableEntity::class.java, MySource) {
     this.id
     this.data = "xxxx"

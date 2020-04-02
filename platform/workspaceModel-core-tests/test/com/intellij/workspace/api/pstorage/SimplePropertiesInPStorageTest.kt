@@ -47,7 +47,7 @@ internal data class PSampleEntitySource(val name: String) : EntitySource
 class PSimplePropertiesInProxyBasedStorageTest {
   @Test
   fun `add entity`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val source = PSampleEntitySource("test")
     val entity = builder.addPSampleEntity("hello", source, true, mutableListOf("one", "two"))
     assertTrue(entity.booleanProperty)
@@ -59,7 +59,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `remove entity`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val entity = builder.addPSampleEntity("hello")
     builder.removeEntity(entity)
     assertTrue(builder.entities(PSampleEntity::class.java).toList().isEmpty())
@@ -67,7 +67,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `modify entity`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val original = builder.addPSampleEntity("hello")
     val modified = builder.modifyEntity(PSampleModifiableEntity::class.java, original) {
       stringProperty = "foo"
@@ -85,7 +85,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `builder from storage`() {
-    val storage = PEntityStorage.create().apply {
+    val storage = PEntityStorageBuilder.create().apply {
       addPSampleEntity("hello")
     }.toStorage()
 
@@ -104,7 +104,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `snapshot from builder`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     builder.addPSampleEntity("hello")
 
     val snapshot = builder.toStorage()
@@ -122,7 +122,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `different entities with same properties`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val foo1 = builder.addPSampleEntity("foo1")
     val foo2 = builder.addPSampleEntity("foo1")
     val bar = builder.addPSampleEntity("bar")
@@ -145,7 +145,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `change source`() {
-    val builder = PEntityStorage.create()
+    val builder = PEntityStorageBuilder.create()
     val source1 = PSampleEntitySource("1")
     val source2 = PSampleEntitySource("2")
     val foo = builder.addPSampleEntity("foo", source1)
