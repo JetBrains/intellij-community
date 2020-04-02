@@ -191,6 +191,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   @NotNull
   protected List<? extends XNamedValue> createExceptionNodes(EvaluationContextImpl evaluationContext) {
+    if (myDescriptor.getUiIndex() != 0) {
+      return Collections.emptyList();
+    }
     return StreamEx.of(DebuggerUtilsEx.getEventDescriptors(evaluationContext.getSuspendContext()))
       .map(p -> p.getSecond())
       .select(ExceptionEvent.class)
