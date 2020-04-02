@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
@@ -114,6 +114,26 @@ List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
 <div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></pre></div><table class='sections'></table><p>[inferred type] <a href="psi_element://java.lang.String"><code>String</code></a>'''
+  }
+
+  void 'test code tag'() {
+    doTest '''\
+class Foo {
+    /**
+     * May return {@code null}
+     */
+    String foo() {
+        null
+    }
+}
+new Foo().<caret>foo()
+''', '''\
+<div class='definition'><pre><a href="psi_element://Foo"><code>Foo</code></a><br><a href="psi_element://java.lang.String"><code>String</code></a>&nbsp;<b>foo</b>()</pre></div>\
+<div class='content'>
+       May return <code>null</code>
+     <p></div>\
+<table class='sections'><p></table>\
+'''
   }
 
   private void doTest(String text, String doc) {
