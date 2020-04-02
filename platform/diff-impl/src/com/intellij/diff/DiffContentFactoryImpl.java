@@ -539,8 +539,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     private final @Nullable Project project;
     private boolean readOnly;
 
-    private @Nullable VirtualFile highlightFile;
-    private @Nullable FileType fileType;
+    private @Nullable Context context;
     private @Nullable FilePath originalFilePath;
     private @Nullable @NonNls String fileName;
 
@@ -562,15 +561,16 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     @NotNull
     public DocumentContentBuilder contextByFileType(@Nullable FileType fileType) {
-      this.fileType = fileType;
+      if (fileType != null) {
+        context = new Context.ByFileType(fileType);
+      }
       return this;
     }
 
     @NotNull
     public DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath) {
       if (filePath != null) {
-        fileType = filePath.getFileType();
-        highlightFile = filePath.getVirtualFile();
+        context = new Context.ByFilePath(filePath);
         originalFilePath = filePath;
         fileName = filePath.getName();
       }
@@ -580,8 +580,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @NotNull
     public DocumentContentBuilder contextByHighlightFile(@Nullable VirtualFile file) {
       if (file != null) {
-        fileType = file.getFileType();
-        highlightFile = file;
+        context = new Context.ByHighlightFile(file);
         originalFilePath = VcsUtil.getFilePath(file);
         fileName = file.getName();
       }
@@ -591,11 +590,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @NotNull
     public DocumentContentBuilder contextByReferent(@Nullable DocumentContent referent) {
       if (referent != null) {
-        fileType = referent.getContentType();
-        highlightFile = referent.getHighlightFile();
-        if (highlightFile != null) {
-          originalFilePath = VcsUtil.getFilePath(highlightFile);
-          fileName = highlightFile.getName();
+        context = new Context.ByReferent(referent);
+        VirtualFile file = referent.getHighlightFile();
+        if (file != null) {
+          originalFilePath = VcsUtil.getFilePath(file);
+          fileName = file.getName();
         }
       }
       return this;
@@ -613,10 +612,10 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     @NotNull
     public DocumentContent build(@NotNull TextContent textContent) {
+      FileType fileType = context != null ? context.getContentType() : null;
       Document document = createDocument(project, textContent.text, fileType, fileName, readOnly);
 
-      DocumentContent documentContent = new DocumentContentImpl(project, document, fileType, highlightFile,
-                                                                textContent.separators, textContent.charset, textContent.isBom);
+      DocumentContent documentContent = new ContextReferentDocumentContent(project, document, textContent, context);
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (originalFilePath != null && file instanceof LightVirtualFile) {
@@ -688,6 +687,52 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
+  private static class ContextReferentDocumentContent extends DocumentContentBase {
+    @Nullable private final LineSeparator mySeparator;
+    @Nullable private final Charset myCharset;
+    @Nullable private final Boolean myBOM;
+
+    @Nullable private final Context myReferent;
+
+    private ContextReferentDocumentContent(@Nullable Project project, @NotNull Document document,
+                                           @NotNull TextContent content, @Nullable Context referent) {
+      super(project, document);
+      mySeparator = content.separators;
+      myCharset = content.charset;
+      myBOM = content.isBom;
+
+      myReferent = referent;
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      return myReferent != null ? myReferent.getContentType() : null;
+    }
+
+    @Override
+    public @Nullable VirtualFile getHighlightFile() {
+      return myReferent != null ? myReferent.getHighlightFile() : null;
+    }
+
+    @Nullable
+    @Override
+    public LineSeparator getLineSeparator() {
+      return mySeparator;
+    }
+
+    @Nullable
+    @Override
+    public Charset getCharset() {
+      return myCharset;
+    }
+
+    @Override
+    @Nullable
+    public Boolean hasBom() {
+      return myBOM;
+    }
+  }
+
   private static class TextContent {
     public final @NotNull String text;
     public @Nullable LineSeparator separators;
@@ -730,6 +775,84 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
         textContent.notification = DiffNotifications.createNotification(notificationText, LightColors.RED);
       }
       return textContent;
+    }
+  }
+
+  private interface Context {
+    @Nullable VirtualFile getHighlightFile();
+
+    @Nullable FileType getContentType();
+
+    class ByHighlightFile implements Context {
+      private final VirtualFile myHighlightFile;
+
+      public ByHighlightFile(@NotNull VirtualFile highlightFile) {
+        myHighlightFile = highlightFile;
+      }
+
+      @Override
+      public @Nullable VirtualFile getHighlightFile() {
+        return myHighlightFile;
+      }
+
+      @Override
+      public @Nullable FileType getContentType() {
+        return myHighlightFile.getFileType();
+      }
+    }
+
+    class ByReferent implements Context {
+      private final DocumentContent myReferent;
+
+      public ByReferent(@NotNull DocumentContent referent) {
+        myReferent = referent;
+      }
+
+      @Override
+      public @Nullable VirtualFile getHighlightFile() {
+        return myReferent.getHighlightFile();
+      }
+
+      @Override
+      public @Nullable FileType getContentType() {
+        return myReferent.getContentType();
+      }
+    }
+
+    class ByFilePath implements Context {
+      private final FilePath myFilePath;
+
+      public ByFilePath(@NotNull FilePath filePath) {
+        myFilePath = filePath;
+      }
+
+      @Override
+      public @Nullable VirtualFile getHighlightFile() {
+        return myFilePath.getVirtualFile();
+      }
+
+      @Override
+      public @Nullable FileType getContentType() {
+        return myFilePath.getFileType();
+      }
+    }
+
+    class ByFileType implements Context {
+      private final FileType myFileType;
+
+      public ByFileType(@NotNull FileType fileType) {
+        myFileType = fileType;
+      }
+
+      @Override
+      public @Nullable VirtualFile getHighlightFile() {
+        return null;
+      }
+
+      @Override
+      public @Nullable FileType getContentType() {
+        return myFileType;
+      }
     }
   }
 }
