@@ -76,7 +76,7 @@ internal class PFolderModifiableEntity : PModifiableTypedEntity<PFolderEntity>()
 internal class PSubFolderModifiableEntity : PModifiableTypedEntity<PSubFolderEntity>() {
   var data: String by EntityData()
 
-  var parent: PFolderEntity? by MutableManyToOne.HardRef(PSubFolderEntity::class, PFolderEntity::class)
+  var parent: PFolderEntity by MutableManyToOne.HardRef(PSubFolderEntity::class, PFolderEntity::class)
 }
 
 internal class PSoftSubFolderModifiableEntity : PModifiableTypedEntity<PSoftSubFolderEntity>() {

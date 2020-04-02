@@ -33,29 +33,35 @@ internal sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> 
   }
 }
 
-internal sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> : ReadOnlyProperty<SUBT, T?> {
-
-  lateinit var connectionId: ConnectionId<T, SUBT>
+internal sealed class ManyToOne {
 
   class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
     private val parentClass: KClass<T>
-  ) : ManyToOne<T, SUBT>() {
-    operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
+  ) : ReadOnlyProperty<SUBT, T> {
+
+    lateinit var connectionId: ConnectionId<T, SUBT>
+
+    operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T> {
       connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true)
       return this
     }
+
+    override fun getValue(thisRef: SUBT, property: KProperty<*>): T = thisRef.snapshot.extractParent(connectionId, thisRef.id)!!
   }
 
   class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
     private val parentClass: KClass<T>
-  ) : ManyToOne<T, SUBT>() {
+  ) : ReadOnlyProperty<SUBT, T?> {
+
+    lateinit var connectionId: ConnectionId<T, SUBT>
+
     operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
       connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, false)
       return this
     }
-  }
 
-  override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = thisRef.snapshot.extractParent(connectionId, thisRef.id)
+    override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = thisRef.snapshot.extractParent(connectionId, thisRef.id)
+  }
 }
 
 internal sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>> : ReadWriteProperty<MODT, Sequence<SUBT>> {
@@ -91,35 +97,47 @@ internal sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<
   }
 }
 
-internal sealed class MutableManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>> : ReadWriteProperty<MODSUBT, T?> {
-
-  lateinit var connectionId: ConnectionId<T, SUBT>
+internal sealed class MutableManyToOne {
 
   class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
     private val childClass: KClass<SUBT>,
     private val parentClass: KClass<T>
-  ) : MutableManyToOne<T, SUBT, MODSUBT>() {
-    operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
+  ) : ReadWriteProperty<MODSUBT, T> {
+
+    lateinit var connectionId: ConnectionId<T, SUBT>
+
+    operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T> {
       connectionId = ConnectionId.create(parentClass, childClass, true)
       return this
+    }
+
+    override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
+      return thisRef.diff.extractParent(connectionId, thisRef.id)!!
+    }
+
+    override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
+      return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
     }
   }
 
   class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
     private val childClass: KClass<SUBT>,
     private val parentClass: KClass<T>
-  ) : MutableManyToOne<T, SUBT, MODSUBT>() {
+  ) : ReadWriteProperty<MODSUBT, T?> {
+
+    lateinit var connectionId: ConnectionId<T, SUBT>
+
     operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
       connectionId = ConnectionId.create(parentClass, childClass, false)
       return this
     }
-  }
 
-  override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
-    return thisRef.diff.extractParent(connectionId, thisRef.id)
-  }
+    override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
+      return thisRef.diff.extractParent(connectionId, thisRef.id)
+    }
 
-  override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
-    return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+    override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
+      return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+    }
   }
 }
