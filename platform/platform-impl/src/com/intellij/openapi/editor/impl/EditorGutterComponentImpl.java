@@ -1025,7 +1025,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
         int iconWidth = icon.getIconWidth();
         int x = getIconAreaOffset() + myIconsAreaWidth - iconWidth;
-        y += getTextAlignmentShift(icon);
+        y += getTextAlignmentShiftForInlayIcon(icon, inlay);
         AffineTransform old = setMirrorTransformIfNeeded(g, x, iconWidth);
         icon.paintIcon(this, g, x, y);
         if (old != null) g.setTransform(old);
@@ -1182,6 +1182,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
     }
+  }
+
+  private int getTextAlignmentShiftForInlayIcon(Icon icon, Inlay inlay) {
+    return Math.min(getTextAlignmentShift(icon), inlay.getHeightInPixels() - icon.getIconHeight());
   }
 
   private int getTextAlignmentShift(Icon icon) {
@@ -2228,7 +2232,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int iconWidth = icon.getIconWidth();
     int rightX = getIconAreaOffset() + getIconsAreaWidth();
     if (x < rightX - iconWidth || x > rightX) return null;
-    PointInfo pointInfo = new PointInfo(renderer, new Point(rightX - iconWidth / 2, inlayY + getTextAlignmentShift(icon) + iconHeight / 2));
+    PointInfo pointInfo = new PointInfo(renderer, new Point(rightX - iconWidth / 2,
+                                                            inlayY + getTextAlignmentShiftForInlayIcon(icon, inlay) + iconHeight / 2));
     pointInfo.renderersInLine = 1;
     return pointInfo;
   }
