@@ -101,8 +101,7 @@ public final class StartupUtil {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
   }
 
-  @NotNull
-  public static synchronized CompletableFuture<BuiltInServer> getServerFuture() {
+  public static synchronized @NotNull CompletableFuture<BuiltInServer> getServerFuture() {
     CompletableFuture<BuiltInServer> serverFuture = ourSocketLock == null ? null : ourSocketLock.getServerFuture();
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
   }
@@ -211,25 +210,18 @@ public final class StartupUtil {
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-      Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");
-      logEssentialInfoAboutIde(log, appInfo);
-      subActivity.end();
+      setupSystemLibraries();
+      logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance());
+      loadSystemLibraries(log);
     });
 
-    Future<?> extraTaskFuture = executorService.submit(StartupUtil::setupSystemLibraries);
-
-    scheduleProcessEnvironmentFixing();
+    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
+    EnvironmentUtil.loadEnvironment(true)
+      .thenRun(subActivity::end);
 
     if (!configImportNeeded) {
       runPreAppClass(log);
     }
-
-    NonUrgentExecutor.getInstance().execute(() -> loadSystemLibraries(log));
-
-    activity = StartUpMeasurer.startMainActivity("tasks waiting");
-    extraTaskFuture.get();
-    activity.end();
 
     startApp(args, initUiTask, log, configImportNeeded, appStarterFuture, euaDocument);
   }
@@ -296,8 +288,7 @@ public final class StartupUtil {
     }
   }
 
-  @NotNull
-  private static CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args, @NotNull ExecutorService executor, @Nullable Future<Object> eulaDocument) {
+  private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args, @NotNull ExecutorService executor, @Nullable Future<Object> eulaDocument) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
@@ -570,8 +561,7 @@ public final class StartupUtil {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  @NotNull
-  private static Logger setupLogger() {
+  private static @NotNull Logger setupLogger() {
     Logger.setFactory(new LoggerFactory());
     Logger log = Logger.getInstance(Main.class);
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
@@ -585,12 +575,7 @@ public final class StartupUtil {
     return log;
   }
 
-  private static void scheduleProcessEnvironmentFixing() {
-    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
-    EnvironmentUtil.loadShellEnvironment(true)
-      .thenRun(subActivity::end);
-  }
-
+  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
 
@@ -616,7 +601,7 @@ public final class StartupUtil {
     subActivity.end();
   }
 
-  private static void loadSystemLibraries(Logger log) {
+  private static void loadSystemLibraries(@NotNull Logger log) {
     Activity activity = StartUpMeasurer.startActivity("system libs loading");
 
     JnaLoader.load(log);
@@ -628,6 +613,7 @@ public final class StartupUtil {
   }
 
   private static void logEssentialInfoAboutIde(@NotNull Logger log, @NotNull ApplicationInfo appInfo) {
+    Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
@@ -653,6 +639,7 @@ public final class StartupUtil {
     log.info("Locale=" + Locale.getDefault() +
              " JNU=" + System.getProperty("sun.jnu.encoding") +
              " file.encoding=" + System.getProperty("file.encoding"));
+    activity.end();
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
