@@ -3,8 +3,11 @@ package git4idea.index
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -16,6 +19,7 @@ import com.intellij.vcs.log.runInEdt
 import git4idea.GitVcs
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
+import org.jetbrains.annotations.NotNull
 import java.util.*
 import kotlin.collections.HashSet
 
@@ -33,22 +37,34 @@ class GitStageTracker(val project: Project) : Disposable {
         val roots = GitRepositoryManager.getInstance(project).repositories.filter { repo ->
           events.any { e -> GitUntrackedFilesHolder.totalRefreshNeeded(repo, e.path) }
         }.map { it.root }
-        if (roots.isNotEmpty()) {
-          singleTaskController.request(Request(roots))
-        }
+        scheduleUpdateRoots(roots)
+      }
+    })
+    connection.subscribe(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED, object : VcsDirtyScopeManagerListener {
+      override fun everythingDirty() {
+        scheduleUpdateRoots(gitRoots())
+      }
+
+      override fun filePathsDirty(filesConverted: Map<VcsRoot, Set<FilePath>>, dirsConverted: Map<VcsRoot, Set<FilePath>>) {
+        val roots = filesConverted.keys.union(dirsConverted.keys).filter { it.vcs?.keyInstanceMethod == GitVcs.getKey() }.map { it.path }
+        scheduleUpdateRoots(roots)
       }
     })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
-      val roots = gitRoots()
-      if (roots.isNotEmpty()) {
-        singleTaskController.request(Request(roots))
-      }
-      else {
+      if (!scheduleUpdateRoots(gitRoots())) {
         runInEdt(this) {
           update(State(emptyMap()))
         }
       }
     })
+  }
+
+  private fun scheduleUpdateRoots(roots: List<@NotNull VirtualFile>): Boolean {
+    if (roots.isNotEmpty()) {
+      singleTaskController.request(Request(roots))
+      return true
+    }
+    return false
   }
 
   fun addListener(listener: GitStageTrackerListener, disposable: Disposable) {
