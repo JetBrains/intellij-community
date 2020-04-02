@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableCellState;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
@@ -180,6 +182,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       myReferencePainter = new LabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
+      setCellState(new BorderlessTableCellState());
 
       myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
@@ -227,7 +230,6 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       setPaintFocusBorder(false);
       acquireState(myGraphTable, isSelected, hasFocus, row, column);
       getCellState().updateRenderer(this);
-      setBorder(null);
 
       myGraphImage = getGraphImage(cell.getPrintElements());
 
@@ -354,6 +356,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
      */
     int getWidth() {
       return myWidth;
+    }
+  }
+
+  public static class BorderlessTableCellState extends TableCellState {
+    @Override
+    protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
+      return null;
     }
   }
 }

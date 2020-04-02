@@ -750,9 +750,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private class StringCellRenderer extends ColoredTableCellRenderer {
+    private StringCellRenderer() {
+      setCellState(new GraphCommitCellRenderer.BorderlessTableCellState());
+    }
+
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setBorder(null);
       if (value == null) {
         return;
       }
