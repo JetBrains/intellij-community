@@ -578,7 +578,10 @@ public final class PluginManagerCore {
   }
 
   @NotNull
-  private static ClassLoader createPluginClassLoader(ClassLoader @NotNull [] parentLoaders, @NotNull IdeaPluginDescriptorImpl descriptor, @NotNull UrlClassLoader.Builder urlLoaderBuilder) {
+  private static ClassLoader createPluginClassLoader(ClassLoader @NotNull [] parentLoaders,
+                                                     @NotNull IdeaPluginDescriptorImpl descriptor,
+                                                     @NotNull UrlClassLoader.Builder urlLoaderBuilder,
+                                                     @NotNull ClassLoader coreLoader) {
     List<Path> classPath = descriptor.jarFiles;
     if (classPath == null) {
       classPath = descriptor.collectClassPath();
@@ -607,7 +610,11 @@ public final class PluginManagerCore {
       for (Path pathElement : classPath) {
         urls.add(localFileToUrl(pathElement, descriptor));
       }
-      return new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
+      PluginClassLoader loader =
+        new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor.getPluginId(), descriptor, descriptor.getVersion(),
+                              descriptor.getPluginPath());
+      loader.setCoreLoader(coreLoader);
+      return loader;
     }
   }
 
@@ -1388,8 +1395,11 @@ public final class PluginManagerCore {
       loaders.add(implicitDependency.getPluginClassLoader());
     }
 
-    ClassLoader[] array = loaders.isEmpty() ? new ClassLoader[]{PluginManagerCore.class.getClassLoader()} : loaders.toArray(new ClassLoader[0]);
-    rootDescriptor.setLoader(createPluginClassLoader(array, rootDescriptor, createUrlClassLoaderBuilder()));
+    ClassLoader[] array = loaders.isEmpty()
+                          ? new ClassLoader[]{PluginManagerCore.class.getClassLoader()}
+                          : loaders.toArray(new ClassLoader[0]);
+    rootDescriptor.setLoader(
+      createPluginClassLoader(array, rootDescriptor, createUrlClassLoaderBuilder(), PluginManagerCore.class.getClassLoader()));
   }
 
   @NotNull
@@ -1651,11 +1661,7 @@ public final class PluginManagerCore {
       }
 
       ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
-      ClassLoader classLoader = createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder);
-      if (classLoader instanceof PluginClassLoader) {
-        ((PluginClassLoader)classLoader).setCoreLoader(coreLoader);
-      }
-      rootDescriptor.setLoader(classLoader);
+      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder, coreLoader));
     }
   }
 
