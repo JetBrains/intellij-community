@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
@@ -100,36 +101,43 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
-    return createImpl(project, text, type, null, null, null, respectLineSeparators, true);
+    return readOnlyDocumentContent(project)
+      .contextByFileType(type)
+      .buildFromText(text, respectLineSeparators);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @NotNull FilePath filePath) {
-    return createImpl(project, text, filePath.getFileType(), filePath, filePath.getName(), filePath.getVirtualFile(), true, true);
+    return readOnlyDocumentContent(project)
+      .contextByFilePath(filePath)
+      .buildFromText(text, true);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile) {
-    FileType fileType = highlightFile != null ? highlightFile.getFileType() : null;
-    FilePath filePath = highlightFile != null ? VcsUtil.getFilePath(highlightFile) : null;
-    String fileName = highlightFile != null ? highlightFile.getName() : null;
-    return createImpl(project, text, fileType, filePath, fileName, highlightFile, true, true);
+    return readOnlyDocumentContent(project)
+      .contextByHighlightFile(highlightFile)
+      .buildFromText(text, true);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable DocumentContent referent) {
     if (referent == null) return create(text);
-    return createImpl(project, text, referent.getContentType(), null, null, referent.getHighlightFile(), false, true);
+    return readOnlyDocumentContent(project)
+      .contextByReferent(referent)
+      .buildFromText(text, false);
   }
 
 
   @NotNull
   @Override
   public DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType) {
-    return createImpl(project, text, fileType, null, null, null, false, false);
+    return mutableDocumentContent(project)
+      .contextByFileType(fileType)
+      .buildFromText(text, false);
   }
 
   @NotNull
@@ -225,13 +233,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent) {
-    String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    String text = StringUtil.notNullize(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
 
-    FileType type = referent != null ? referent.getContentType() : null;
-    VirtualFile highlightFile = referent != null ? referent.getHighlightFile() : null;
-    FilePath filePath = highlightFile != null ? VcsUtil.getFilePath(highlightFile) : null;
-
-    return createImpl(project, StringUtil.notNullize(text), type, filePath, "Clipboard.txt", highlightFile, false, false);
+    return mutableDocumentContent(project)
+      .contextByReferent(referent)
+      .withFileName("Clipboard.txt")
+      .buildFromText(text, false);
   }
 
 
@@ -288,14 +295,19 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                  @NotNull FileType fileType,
                                                  @NotNull String fileName) {
     Charset charset = guessCharset(project, content, fileType);
-    return createFromBytesImpl(project, content, fileType, null, fileName, null, charset);
+    return readOnlyDocumentContent(project)
+      .contextByFileType(fileType)
+      .withFileName(fileName)
+      .buildFromBytes(content, charset);
   }
 
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull FilePath filePath) {
     Charset charset = guessCharset(project, content, filePath);
-    return createFromBytesImpl(project, content, filePath.getFileType(), filePath, filePath.getName(), filePath.getVirtualFile(), charset);
+    return readOnlyDocumentContent(project)
+      .contextByFilePath(filePath)
+      .buildFromBytes(content, charset);
   }
 
   @NotNull
@@ -304,15 +316,18 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                          @NotNull FilePath filePath,
                                                          @Nullable Charset defaultCharset) {
     Charset charset = guessCharset(project, content, filePath, defaultCharset);
-    return createFromBytesImpl(project, content, filePath.getFileType(), filePath, filePath.getName(), filePath.getVirtualFile(), charset);
+    return readOnlyDocumentContent(project)
+      .contextByFilePath(filePath)
+      .buildFromBytes(content, charset);
   }
 
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, byte @NotNull [] content, @NotNull VirtualFile highlightFile) {
     Charset charset = guessCharset(project, content, highlightFile);
-    FilePath filePath = VcsUtil.getFilePath(highlightFile);
-    return createFromBytesImpl(project, content, highlightFile.getFileType(), filePath, highlightFile.getName(), highlightFile, charset);
+    return readOnlyDocumentContent(project)
+      .contextByHighlightFile(highlightFile)
+      .buildFromBytes(content, charset);
   }
 
   @NotNull
@@ -369,73 +384,6 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createContentFromFile(project, file, highlightFile);
   }
 
-  @NotNull
-  private static DocumentContent createImpl(@Nullable Project project,
-                                            @NotNull String text,
-                                            @Nullable FileType fileType,
-                                            @Nullable FilePath originalFilePath,
-                                            @Nullable String fileName,
-                                            @Nullable VirtualFile highlightFile,
-                                            boolean respectLineSeparators,
-                                            boolean readOnly) {
-    return createImpl(project, text, fileType, originalFilePath, fileName, highlightFile, null, null, respectLineSeparators, readOnly);
-  }
-
-  @NotNull
-  private static DocumentContent createImpl(@Nullable Project project,
-                                            @NotNull String text,
-                                            @Nullable FileType fileType,
-                                            @Nullable FilePath originalFilePath,
-                                            @Nullable @NonNls String fileName,
-                                            @Nullable VirtualFile highlightFile,
-                                            @Nullable Charset charset,
-                                            @Nullable Boolean bom,
-                                            boolean respectLineSeparators,
-                                            boolean readOnly) {
-    if (FileTypes.UNKNOWN.equals(fileType)) fileType = PlainTextFileType.INSTANCE;
-
-    // TODO: detect invalid (different across the file) separators ?
-    LineSeparator separator = respectLineSeparators ? StringUtil.detectSeparators(text) : null;
-    String correctedContent = StringUtil.convertLineSeparators(text);
-
-    Document document = createDocument(project, correctedContent, fileType, originalFilePath, fileName, readOnly);
-    DocumentContent content = new DocumentContentImpl(project, document, fileType, highlightFile, separator, charset, bom);
-
-    if (fileName != null) content.putUserData(DiffUserDataKeysEx.FILE_NAME, fileName);
-
-    return content;
-  }
-
-  @NotNull
-  private static DocumentContent createFromBytesImpl(@Nullable Project project,
-                                                     byte @NotNull [] content,
-                                                     @NotNull FileType fileType,
-                                                     @Nullable FilePath originalFilePath,
-                                                     @NotNull String fileName,
-                                                     @Nullable VirtualFile highlightFile,
-                                                     @NotNull Charset charset) {
-    if (fileType.isBinary()) fileType = PlainTextFileType.INSTANCE;
-
-    boolean isBOM = CharsetToolkit.guessFromBOM(content) != null;
-
-    boolean malformedContent = false;
-    String text = CharsetToolkit.tryDecodeString(content, charset);
-    if (text == null) {
-      text = CharsetToolkit.decodeString(content, charset);
-      malformedContent = true;
-    }
-
-    DocumentContent documentContent = createImpl(project, text, fileType, originalFilePath, fileName, highlightFile,
-                                                 charset, isBOM, true, true);
-
-    if (malformedContent) {
-      String notificationText = DiffBundle.message("error.content.decoded.with.wrong.charset", charset.name());
-      DiffUtil.addNotification(DiffNotifications.createNotification(notificationText, LightColors.RED), documentContent);
-    }
-
-    return documentContent;
-  }
-
 
   @NotNull
   private static VirtualFile createTemporalFile(@NonNls @NotNull String suffix, byte @NotNull [] content) throws IOException {
@@ -457,10 +405,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private static Document createDocument(@Nullable Project project,
                                          @NotNull String content,
                                          @Nullable FileType fileType,
-                                         @Nullable FilePath originalFilePath,
                                          @Nullable @NonNls String fileName,
                                          boolean readOnly) {
-    Document document = createPsiDocument(project, content, fileType, originalFilePath, fileName, readOnly);
+    Document document = createPsiDocument(project, content, fileType, fileName, readOnly);
     if (document == null) {
       document = EditorFactory.getInstance().createDocument(content);
       document.setReadOnly(readOnly);
@@ -472,7 +419,6 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private static Document createPsiDocument(@Nullable Project project,
                                             @NotNull String content,
                                             @Nullable FileType fileType,
-                                            @Nullable FilePath originalFilePath,
                                             @NonNls @Nullable String fileName,
                                             boolean readOnly) {
     if (project == null || project.isDefault()) return null;
@@ -484,8 +430,6 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);
     file.setWritable(!readOnly);
-
-    OutsidersPsiFileSupport.markFile(file, originalFilePath != null ? originalFilePath.getPath() : null);
 
     Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
     if (document == null) return null;
@@ -581,6 +525,116 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
+  @NotNull
+  public static DocumentContentBuilder readOnlyDocumentContent(@Nullable Project project) {
+    return new DocumentContentBuilder(project).withReadOnly(true);
+  }
+
+  @NotNull
+  public static DocumentContentBuilder mutableDocumentContent(@Nullable Project project) {
+    return new DocumentContentBuilder(project);
+  }
+
+  private static class DocumentContentBuilder {
+    private final @Nullable Project project;
+    private boolean readOnly;
+
+    private @Nullable VirtualFile highlightFile;
+    private @Nullable FileType fileType;
+    private @Nullable FilePath originalFilePath;
+    private @Nullable @NonNls String fileName;
+
+    DocumentContentBuilder(@Nullable Project project) {
+      this.project = project;
+    }
+
+    @NotNull
+    public DocumentContentBuilder withReadOnly(boolean readOnly) {
+      this.readOnly = readOnly;
+      return this;
+    }
+
+    @NotNull
+    public DocumentContentBuilder withFileName(@Nullable String fileName) {
+      this.fileName = fileName;
+      return this;
+    }
+
+    @NotNull
+    public DocumentContentBuilder contextByFileType(@Nullable FileType fileType) {
+      this.fileType = fileType;
+      return this;
+    }
+
+    @NotNull
+    public DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath) {
+      if (filePath != null) {
+        fileType = filePath.getFileType();
+        highlightFile = filePath.getVirtualFile();
+        originalFilePath = filePath;
+        fileName = filePath.getName();
+      }
+      return this;
+    }
+
+    @NotNull
+    public DocumentContentBuilder contextByHighlightFile(@Nullable VirtualFile file) {
+      if (file != null) {
+        fileType = file.getFileType();
+        highlightFile = file;
+        originalFilePath = VcsUtil.getFilePath(file);
+        fileName = file.getName();
+      }
+      return this;
+    }
+
+    @NotNull
+    public DocumentContentBuilder contextByReferent(@Nullable DocumentContent referent) {
+      if (referent != null) {
+        fileType = referent.getContentType();
+        highlightFile = referent.getHighlightFile();
+        if (highlightFile != null) {
+          originalFilePath = VcsUtil.getFilePath(highlightFile);
+          fileName = highlightFile.getName();
+        }
+      }
+      return this;
+    }
+
+    @NotNull
+    public DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators) {
+      return build(TextContent.fromText(text, respectLineSeparators));
+    }
+
+    @NotNull
+    public DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
+      return build(TextContent.fromBytes(content, charset));
+    }
+
+    @NotNull
+    public DocumentContent build(@NotNull TextContent textContent) {
+      Document document = createDocument(project, textContent.text, fileType, fileName, readOnly);
+
+      DocumentContent documentContent = new DocumentContentImpl(project, document, fileType, highlightFile,
+                                                                textContent.separators, textContent.charset, textContent.isBom);
+
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (originalFilePath != null && file instanceof LightVirtualFile) {
+        OutsidersPsiFileSupport.markFile(file, originalFilePath.getPath());
+      }
+
+      if (fileName != null) {
+        documentContent.putUserData(DiffUserDataKeysEx.FILE_NAME, fileName);
+      }
+
+      if (textContent.notification != null) {
+        DiffUtil.addNotification(textContent.notification, documentContent);
+      }
+
+      return documentContent;
+    }
+  }
+
   private static class MyBinaryLightVirtualFile extends BinaryLightVirtualFile {
     private final FilePath myPath;
 
@@ -631,6 +685,51 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     @Override
     public @Nullable VirtualFile getHighlightFile() {
       return myReferent.getHighlightFile();
+    }
+  }
+
+  private static class TextContent {
+    public final @NotNull String text;
+    public @Nullable LineSeparator separators;
+    public @Nullable Charset charset;
+    public @Nullable Boolean isBom;
+    public @Nullable JComponent notification;
+
+    TextContent(@NotNull String text) {
+      this.text = text;
+    }
+
+    @NotNull
+    public static TextContent fromText(@NotNull String text, boolean respectLineSeparators) {
+      // TODO: detect invalid (different across the file) separators ?
+      String correctedContent = StringUtil.convertLineSeparators(text);
+
+      TextContent textContent = new TextContent(correctedContent);
+      if (respectLineSeparators) {
+        textContent.separators = StringUtil.detectSeparators(text);
+      }
+      return textContent;
+    }
+
+    @NotNull
+    public static TextContent fromBytes(byte @NotNull [] content, @NotNull Charset charset) {
+      boolean isBom = CharsetToolkit.guessFromBOM(content) != null;
+
+      boolean malformedContent = false;
+      String text = CharsetToolkit.tryDecodeString(content, charset);
+      if (text == null) {
+        text = CharsetToolkit.decodeString(content, charset);
+        malformedContent = true;
+      }
+
+      TextContent textContent = fromText(text, true);
+      textContent.charset = charset;
+      textContent.isBom = isBom;
+      if (malformedContent) {
+        String notificationText = DiffBundle.message("error.content.decoded.with.wrong.charset", charset.name());
+        textContent.notification = DiffNotifications.createNotification(notificationText, LightColors.RED);
+      }
+      return textContent;
     }
   }
 }
