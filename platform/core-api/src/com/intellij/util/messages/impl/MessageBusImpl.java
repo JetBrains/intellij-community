@@ -345,13 +345,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private void postMessage(@NotNull Message message) {
-    checkNotDisposed();
-    List<MessageBusConnectionImpl> topicSubscribers = getTopicSubscribers(message.getTopic());
-    if (topicSubscribers.isEmpty()) {
-      return;
-    }
-
+  private static void postMessage(@NotNull Message message, @NotNull List<MessageBusConnectionImpl> topicSubscribers) {
     for (MessageBusConnectionImpl subscriber : topicSubscribers) {
       MessageBusImpl bus = subscriber.getBus();
       // maybe temporarily disposed (light test project)
@@ -400,8 +394,12 @@ public class MessageBusImpl implements MessageBus {
 
   private void sendMessage(@NotNull Message message) {
     pumpMessages();
-    postMessage(message);
-    pumpMessages();
+
+    List<MessageBusConnectionImpl> subscribers = getTopicSubscribers(message.getTopic());
+    if (!subscribers.isEmpty()) {
+      postMessage(message, subscribers);
+      pumpMessages();
+    }
   }
 
   private void pumpMessages() {
