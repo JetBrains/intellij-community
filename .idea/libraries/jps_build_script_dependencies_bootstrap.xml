@@ -64,7 +64,7 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations-java5/19.0.0/annotations-java5-19.0.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-class-loader/202.1538/util-class-loader-202.1538.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util-rt/202.1538/util-rt-202.1538.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20190514/trove4j-1.0.20190514.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/java/java-gui-forms-jps/202.1538/java-gui-forms-jps-202.1538.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/util/202.1538/util-202.1538.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.5.0/jna-platform-5.5.0.jar!/" />
