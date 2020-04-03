@@ -230,6 +230,9 @@ public final class PluginDownloader {
     if (state != null) {
       state.onPluginInstall(myDescriptor, PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
     }
+    else {
+      InstalledPluginsState.addPreInstalledPlugin(myDescriptor);
+    }
   }
 
   public boolean tryInstallWithoutRestart(@Nullable JComponent ownerComponent) {
