@@ -11,8 +11,7 @@ internal class IntIntBiMap(
   constructor() : this(TIntIntHashMap(), IntIntMultiMap.ByList())
 
   override fun copy(): AbstractIntIntBiMap {
-    val newKey2Values = TIntIntHashMap()
-    key2Value.forEachEntry { key, value -> newKey2Values.put(key, value); true }
+    val newKey2Values = TIntIntHashMap().clone() as TIntIntHashMap
     val newValue2Keys = value2Keys.copy()
     return IntIntBiMap(newKey2Values, newValue2Keys)
   }

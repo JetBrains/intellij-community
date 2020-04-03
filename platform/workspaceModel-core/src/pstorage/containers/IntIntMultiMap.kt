@@ -329,9 +329,9 @@ internal sealed class MutableIntIntMultiMap(
 }
 
 internal sealed class AbstractIntIntMultiMap(
-  protected open var values: IntArray,
-  protected open val links: TIntIntHashMap,
-  protected open val distinctValues: Boolean
+  protected var values: IntArray,
+  protected val links: TIntIntHashMap,
+  protected val distinctValues: Boolean
 ) {
 
   abstract operator fun get(key: Int): IntSequence
