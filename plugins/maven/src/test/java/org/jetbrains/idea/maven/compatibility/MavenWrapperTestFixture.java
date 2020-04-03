@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.compatibility;
 
+import com.intellij.openapi.project.Project;
 import org.apache.maven.wrapper.*;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
@@ -10,10 +12,12 @@ import java.net.URI;
 public class MavenWrapperTestFixture {
   private final static String DISTRIBUTION_URL_PATTERN =
     "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$version/apache-maven-$version-bin.zip";
+  private final Project myProject;
   private final String myMavenVersion;
 
 
-  public MavenWrapperTestFixture(String mavenVersion) {
+  public MavenWrapperTestFixture(Project project, String mavenVersion) {
+    myProject = project;
 
     myMavenVersion = mavenVersion;
   }
@@ -31,10 +35,10 @@ public class MavenWrapperTestFixture {
   }
 
   public void setUp() throws Exception {
-    MavenServerManager.getInstance().setMavenHome(getMavenHome().getAbsolutePath());
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(getMavenHome().getAbsolutePath());
   }
 
   public void tearDown() throws Exception {
-    MavenServerManager.getInstance().setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
   }
 }

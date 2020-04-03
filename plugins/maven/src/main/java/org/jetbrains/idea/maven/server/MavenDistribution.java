@@ -35,6 +35,6 @@ public class MavenDistribution {
 
   @Override
   public String toString() {
-    return myName +  "(" + myMavenHome + ")";
+    return myName + "(" + myMavenHome + ") v " + getVersion();
   }
 }

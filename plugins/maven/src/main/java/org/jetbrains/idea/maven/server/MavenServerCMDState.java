@@ -85,9 +85,9 @@ public class MavenServerCMDState extends CommandLineState {
 
     boolean xmxSet = false;
 
-    if (myServerConnector.getState().vmOptions != null) {
+    if (myServerConnector.getVMOptions() != null) {
       ParametersList mavenOptsList = new ParametersList();
-      mavenOptsList.addParametersString(myServerConnector.getState().vmOptions);
+      mavenOptsList.addParametersString(myServerConnector.getVMOptions());
 
       for (String param : mavenOptsList.getParameters()) {
         if (param.startsWith("-Xmx")) {
@@ -99,8 +99,7 @@ public class MavenServerCMDState extends CommandLineState {
 
     final File mavenHome;
     final String mavenVersion;
-    final File currentMavenHomeFile = myServerConnector.getState().mavenHome.getMavenHome();
-    final MavenDistribution distribution = myServerConnector.getState().mavenHome;
+    final MavenDistribution distribution = myServerConnector.getMavenDistribution();
 
     if (distribution == null) {
       MavenLog.LOG.warn("Not found maven at ");
@@ -110,10 +109,10 @@ public class MavenServerCMDState extends CommandLineState {
       showInvalidMavenNotification(mavenVersion);
     }
     else {
-      mavenHome = currentMavenHomeFile;
+      mavenHome = distribution.getMavenHome();
       mavenVersion = distribution.getVersion();
     }
-    MavenLog.LOG.debug("", currentMavenHomeFile, "with version ", mavenVersion, " chosen as maven home");
+    MavenLog.LOG.debug("", distribution, " chosen as maven home");
     assert mavenVersion != null;
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
@@ -195,7 +194,7 @@ public class MavenServerCMDState extends CommandLineState {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     final Project project = openProjects.length == 1 ? openProjects[0] : null;
 
-    String message = invalidHomeMessageToShow(myServerConnector.getState().mavenHome, mavenVersion, project);
+    String message = invalidHomeMessageToShow(myServerConnector.getMavenDistribution(), mavenVersion, project);
 
     NotificationListener listener = project == null ? null : new NotificationListener() {
       @Override

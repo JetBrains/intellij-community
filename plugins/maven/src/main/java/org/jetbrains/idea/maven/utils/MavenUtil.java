@@ -921,7 +921,7 @@ public class MavenUtil {
     if (mavenHome != null) {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
-    return result == null ? doResolveSuperPomFile(MavenServerManager.getMavenLibDirectory()) : result;
+    return null;
   }
 
   @Nullable

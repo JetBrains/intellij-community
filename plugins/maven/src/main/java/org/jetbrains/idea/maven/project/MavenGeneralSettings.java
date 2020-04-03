@@ -125,7 +125,6 @@ public class MavenGeneralSettings implements Cloneable {
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
     if (value == null) return; // null may come from deserializator
     if (!Comparing.equal(this.outputLevel, value)) {
-      MavenServerManager.getInstance().setLoggingLevel(value);
       this.outputLevel = value;
       changed();
     }
@@ -148,7 +147,6 @@ public class MavenGeneralSettings implements Cloneable {
   public void setMavenHome(@NotNull final String mavenHome) {
     if (!Objects.equals(this.mavenHome, mavenHome)) {
       this.mavenHome = mavenHome;
-      MavenServerManager.getInstance().setMavenHome(mavenHome);
       myDefaultPluginsCache = null;
       changed();
     }

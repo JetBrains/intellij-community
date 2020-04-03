@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
@@ -23,14 +24,16 @@ public class MavenServerConnector implements @NotNull Disposable {
     myDownloadListener = new RemoteMavenServerDownloadListener();
 
   private final MavenServerManager myManager;
-  private final MavenServerManager.State myState;
+  private final MavenWorkspaceSettings mySettings;
 
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
+  private final Sdk myJdk;
 
-  public MavenServerConnector(MavenServerManager manager, MavenServerManager.State state) {
+  public MavenServerConnector(@NotNull MavenServerManager manager, @NotNull MavenWorkspaceSettings settings, @NotNull Sdk jdk) {
     myManager = manager;
-    myState = state;
+    mySettings = settings;
+    myJdk = jdk;
     mySupport = new MavenServerRemoteProcessSupport(this);
     myMavenServer = connect();
   }
@@ -135,11 +138,15 @@ public class MavenServerConnector implements @NotNull Disposable {
 
   @NotNull
   public Sdk getJdk() {
-    return MavenServerManager.getJdk(myState);
+    return myJdk;
   }
 
-  public MavenServerManager.State getState() {
-    return myState;
+  public MavenDistribution getMavenDistribution() {
+    return new MavenDistributionConverter().fromString(mySettings.generalSettings.getMavenHome());
+  }
+
+  public String getVMOptions() {
+    return mySettings.importingSettings.getVmOptionsForImporter();
   }
 
 

@@ -84,12 +84,6 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     mySettingsForm.getData(myImportingSettings);
     ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(mySettingsForm.isStoreExternally());
 
-    MavenServerManager.getInstance().setMavenEmbedderVMOptions(myImportingSettings.getVmOptionsForImporter());
-    String jdk = myImportingSettings.getJdkForImporter();
-    if (jdk != null) {
-      MavenServerManager.getInstance().setEmbedderJdk(jdk);
-    }
-
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.apply();
     }
@@ -97,7 +91,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
 
   @Override
   public void reset() {
-    readGlobalOptions(myImportingSettings);
+    //readGlobalOptions(myImportingSettings);
     mySettingsForm.setData(myImportingSettings, myProject);
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
@@ -105,11 +99,6 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     }
   }
 
-  private void readGlobalOptions(MavenImportingSettings settings) {
-    // Embedder JDK is an application setting, not a project setting
-    settings.setJdkForImporter(MavenServerManager.getInstance().getEmbedderJdk());
-    settings.setVmOptionsForImporter(MavenServerManager.getInstance().getMavenEmbedderVMOptions());
-  }
 
   @Override
   @Nls

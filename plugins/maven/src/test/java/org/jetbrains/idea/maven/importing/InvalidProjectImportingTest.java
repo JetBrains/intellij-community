@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ import java.util.List;
 
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
   public void testUnknownProblem() {
-    MavenServerManager.getInstance().setUseMaven2();
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
     importProjectWithErrors("");
     assertModules("project");
 
@@ -51,7 +52,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testUndefinedPropertyInHeader() {
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>${undefined}</artifactId>" +
                             "<version>1</version>");
@@ -62,7 +62,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testUnresolvedParent() {
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -80,7 +79,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testUnresolvedParentForInvalidProject() {
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -155,7 +153,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     createModulePom("foo", "<groupId>test</groupId>" +
                            "<artifactId>foo</artifactId>" +
                            "<version>1</version>");
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors();
     assertModules("project", "foo");
 
@@ -257,7 +254,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testInvalidRepositoryLayout() {
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -491,7 +487,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testUnresolvedExtensionsAfterImport() {
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -511,7 +506,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testUnresolvedExtensionsAfterResolve() {
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -625,7 +619,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                     "  </extensions>" +
                     "</build>");
 
-    MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors();
 
     MavenProject root = getRootProjects().get(0);

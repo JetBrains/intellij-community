@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -397,7 +398,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
 
-    MavenServerManager.getInstance().setUseMaven2();
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -435,7 +436,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
-    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -473,7 +473,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
 
-    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -511,7 +510,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
-    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -546,7 +544,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
-    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
@@ -580,7 +577,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
-    MavenServerManager.getInstance().setUseMaven2();
     importProject();
     assertModules("project", "m1", "m2");
 
