@@ -67,14 +67,14 @@ internal class PSubFolderEntity(
 }
 
 internal class PFolderModifiableEntity : PModifiableTypedEntity<PFolderEntity>() {
-  var data: String by EntityData()
+  var data: String by EntityDataDelegation()
 
   var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(PFolderEntity::class, PSubFolderEntity::class)
   var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(PFolderEntity::class, PSoftSubFolderEntity::class)
 }
 
 internal class PSubFolderModifiableEntity : PModifiableTypedEntity<PSubFolderEntity>() {
-  var data: String by EntityData()
+  var data: String by EntityDataDelegation()
 
   var parent: PFolderEntity by MutableManyToOne.HardRef(PSubFolderEntity::class, PFolderEntity::class)
 }

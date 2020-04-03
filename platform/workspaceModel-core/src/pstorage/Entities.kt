@@ -146,7 +146,7 @@ internal abstract class PEntityData<E : TypedEntity> {
   }
 }
 
-internal class EntityData<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
+internal class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
     return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as B
   }

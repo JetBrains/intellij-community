@@ -53,13 +53,13 @@ internal class PParentEntity(
 internal data class PDataClass(val stringProperty: String, val parent: EntityReference<PParentEntity>)
 
 private class PChildModifiableEntity : PModifiableTypedEntity<PChildEntity>() {
-  var childProperty: String by EntityData()
-  var dataClass: PDataClass? by EntityData()
+  var childProperty: String by EntityDataDelegation()
+  var dataClass: PDataClass? by EntityDataDelegation()
   var parent: PParentEntity by MutableManyToOne.HardRef(PChildEntity::class, PParentEntity::class)
 }
 
 private class PNoDataChildModifiableEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
-  var childProperty: String by EntityData()
+  var childProperty: String by EntityDataDelegation()
   var parent: PParentEntity by MutableManyToOne.HardRef(PNoDataChildEntity::class, PParentEntity::class)
 }
 
@@ -69,7 +69,7 @@ private class PChildChildModifiableEntity : PModifiableTypedEntity<PChildChildEn
 }
 
 private class PParentModifiableEntity : PModifiableTypedEntity<PParentEntity>() {
-  var parentProperty: String by EntityData()
+  var parentProperty: String by EntityDataDelegation()
 }
 
 internal fun TypedEntityStorageBuilder.addPParentEntity(parentProperty: String = "parent",

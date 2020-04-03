@@ -28,8 +28,8 @@ internal data class PSampleEntityId(val name: String) : PersistentEntityId<PName
 }
 
 internal class PNamedSampleModifiableEntity : PModifiableTypedEntity<PNamedSampleEntity>() {
-  var name: String by EntityData()
-  var next: PSampleEntityId by EntityData()
+  var name: String by EntityDataDelegation()
+  var next: PSampleEntityId by EntityDataDelegation()
 }
 
 internal data class PChildEntityId(val childName: String,
@@ -51,8 +51,8 @@ internal class PChildWithPersistentIdEntity(
 }
 
 internal class PChildWithPersistentIdModifiableEntity : PModifiableTypedEntity<PChildWithPersistentIdEntity>() {
-  var parent: PNamedSampleEntity by EntityData()
-  var childName: String by EntityData()
+  var parent: PNamedSampleEntity by EntityDataDelegation()
+  var childName: String by EntityDataDelegation()
 }
 
 private fun PEntityStorageBuilder.addPNamedEntity(name: String, next: PSampleEntityId) =

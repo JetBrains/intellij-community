@@ -15,7 +15,7 @@ internal class SecondSampleEntity(
 ) : PTypedEntity<SecondSampleEntity>()
 
 internal class SecondSampleModifiableEntity : PModifiableTypedEntity<SecondSampleEntity>() {
-  var intProperty: Int by EntityData()
+  var intProperty: Int by EntityDataDelegation()
 }
 
 class CollectChangesInPBuilderTest {

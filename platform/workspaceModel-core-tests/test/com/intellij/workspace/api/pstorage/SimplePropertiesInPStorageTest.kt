@@ -21,10 +21,10 @@ internal class PSampleEntity(
 ) : PTypedEntity<PSampleEntity>()
 
 internal class PSampleModifiableEntity : PModifiableTypedEntity<PSampleEntity>() {
-  var booleanProperty: Boolean by EntityData()
-  var stringProperty: String by EntityData()
-  var stringListProperty: MutableList<String> by EntityData()
-  var fileProperty: VirtualFileUrl by EntityData()
+  var booleanProperty: Boolean by EntityDataDelegation()
+  var stringProperty: String by EntityDataDelegation()
+  var stringListProperty: MutableList<String> by EntityDataDelegation()
+  var fileProperty: VirtualFileUrl by EntityDataDelegation()
 }
 
 internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,
