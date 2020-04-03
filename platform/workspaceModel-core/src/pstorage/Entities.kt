@@ -4,15 +4,12 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.ModifiableTypedEntity
 import com.intellij.workspace.api.TypedEntity
-import java.lang.reflect.ParameterizedType
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.*
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
-import kotlin.reflect.jvm.javaType
-import kotlin.reflect.jvm.jvmErasure
 
 internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
   override lateinit var entitySource: EntitySource
@@ -76,10 +73,13 @@ internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEnti
   internal fun getEntityClass(): KClass<T> = getEntityClass(this.javaClass.kotlin).kotlin
 
   companion object {
+
+    private val entityClassCache = HashMap<KClass<*>, Class<*>>()
+
     fun <M : ModifiableTypedEntity<T>, T : TypedEntity> getEntityClass(clazz: KClass<M>): Class<T> {
-      return (clazz.supertypes.find {
-        PModifiableTypedEntity::class.java.isAssignableFrom((it.classifier as KClass<*>).java)
-      }!!.javaType as ParameterizedType).actualTypeArguments.first() as Class<T>
+      return entityClassCache.getOrPut(clazz) {
+        Class.forName(clazz.qualifiedName!!.dropLast(16) + "Entity")
+      } as Class<T>
     }
   }
 }
@@ -100,7 +100,6 @@ internal abstract class PEntityData<E : TypedEntity> {
     val returnClass = immutableClass()
 
     val params = returnClass.primaryConstructor!!.parameters
-      .filterNot { it.name == "snapshot" }
       .associateWith { param ->
         val value = this::class.memberProperties.first { it.name == param.name }.getter.call(this)
         if (param.type.isList()) ArrayList(value as List<*>) else value
@@ -140,7 +139,7 @@ internal abstract class PEntityData<E : TypedEntity> {
     return copied
   }
 
-  private fun KType.isList() = List::class.java.isAssignableFrom(jvmErasure.java)
+  private fun KType.isList(): Boolean = this.classifier == List::class
 
   companion object {
     fun <T : TypedEntity> fromImmutableClass(imm: Class<T>): Class<PEntityData<T>> {
