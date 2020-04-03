@@ -45,7 +45,5 @@ UFile (package = )
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = result)
         UMethod (name = values)
-            UBlockExpression
         UMethod (name = valueOf)
             UParameter (name = name)
-            UBlockExpression
