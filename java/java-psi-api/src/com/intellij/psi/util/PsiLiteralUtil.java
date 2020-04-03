@@ -389,7 +389,7 @@ public class PsiLiteralUtil {
    */
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length; i++) {
+    for (int i = 0; i < lines.length && prefix != 0; i++) {
       String line = lines[i];
       int indent = 0;
       while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
