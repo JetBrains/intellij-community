@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 
-/**
- * @author dyoma
- */
 public abstract class TreeModelAdapter implements TreeModelListener {
 
   public enum EventType {StructureChanged, NodesChanged, NodesInserted, NodesRemoved}

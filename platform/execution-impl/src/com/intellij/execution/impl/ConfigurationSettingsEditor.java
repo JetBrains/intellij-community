@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
@@ -32,9 +32,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author dyoma
- */
 public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
   private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
   private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();

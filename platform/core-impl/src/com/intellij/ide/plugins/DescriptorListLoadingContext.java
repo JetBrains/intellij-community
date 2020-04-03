@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 
 final class DescriptorListLoadingContext implements AutoCloseable {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  final static boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
+  static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
@@ -30,19 +30,16 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private static final Logger LOG = PluginManagerCore.getLogger();
 
-  @NotNull
-  private final ExecutorService executorService;
+  private final @NotNull ExecutorService executorService;
 
   private final ConcurrentLinkedQueue<SafeJdomFactory[]> toDispose;
 
   // synchronization will ruin parallel loading, so, string pool is local per thread
   private final Supplier<PluginXmlFactory> xmlFactorySupplier;
-  @Nullable
-  private final ThreadLocal<PluginXmlFactory[]> threadLocalXmlFactory;
+  private final @Nullable ThreadLocal<PluginXmlFactory[]> threadLocalXmlFactory;
   private final int maxThreads;
 
-  @NotNull
-  final PluginLoadingResult result;
+  final @NotNull PluginLoadingResult result;
 
   final Set<PluginId> disabledPlugins;
 
@@ -57,8 +54,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
 
-  @NotNull
-  public static DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
+  public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
   }
 
@@ -123,13 +119,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     executorService.shutdown();
   }
 
-  @NotNull
-  public Interner<String> getStringInterner() {
+  public @NotNull Interner<String> getStringInterner() {
     return xmlFactorySupplier.get().stringInterner;
   }
 
-  @NotNull
-  public String getDefaultVersion() {
+  public @NotNull String getDefaultVersion() {
     String result = defaultVersion;
     if (result == null) {
       result = this.result.productBuildNumber.asStringWithoutProductCode();
@@ -138,13 +132,11 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     return result;
   }
 
-  @NotNull
-  public DateFormat getDateParser() {
+  public @NotNull DateFormat getDateParser() {
     return xmlFactorySupplier.get().releaseDateFormat;
   }
 
-  @NotNull
-  public List<String> getVisitedFiles() {
+  public @NotNull List<String> getVisitedFiles() {
     return xmlFactorySupplier.get().visitedFiles;
   }
 }
@@ -171,9 +163,8 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
                                                                                                          IdeaPluginDescriptorImpl.APPLICATION_SERVICE,
                                                                                                          IdeaPluginDescriptorImpl.PROJECT_SERVICE,
                                                                                                          IdeaPluginDescriptorImpl.MODULE_SERVICE))) {
-    @NotNull
     @Override
-    public String intern(@NotNull String name) {
+    public @NotNull String intern(@NotNull String name) {
       // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
       return name.length() < 64 ? super.intern(name) : name;
     }
@@ -182,15 +173,13 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
   final List<String> visitedFiles = new ArrayList<>(3);
 
-  @NotNull
   @Override
-  public Element element(@NotNull String name, @Nullable Namespace namespace) {
+  public @NotNull Element element(@NotNull String name, @Nullable Namespace namespace) {
     return super.element(stringInterner.intern(name), namespace);
   }
 
-  @NotNull
   @Override
-  public Attribute attribute(@NotNull String name, @NotNull String value, @Nullable AttributeType type, @Nullable Namespace namespace) {
+  public @NotNull Attribute attribute(@NotNull String name, @NotNull String value, @Nullable AttributeType type, @Nullable Namespace namespace) {
     String internedName = stringInterner.intern(name);
     if (CLASS_NAMES.contains(internedName)) {
       return super.attribute(internedName, value, type, namespace);
@@ -200,9 +189,8 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
     }
   }
 
-  @NotNull
   @Override
-  public Text text(@NotNull String text, @NotNull Element parentElement) {
+  public @NotNull Text text(@NotNull String text, @NotNull Element parentElement) {
     if (CLASS_NAMES.contains(parentElement.getName())) {
       return super.text(text, parentElement);
     }
