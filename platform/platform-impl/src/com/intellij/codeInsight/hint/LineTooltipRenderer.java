@@ -95,13 +95,12 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       @Override
       public int getPreferredHeight(int width) {
         Dimension size = editorPane.getSize();
-        int sideComponentsWidth = getSideComponentWidth();
-        editorPane.setSize(width - leftBorder - rightBorder - sideComponentsWidth, Math.max(1, size.height));
+        int editorPaneInsets = leftBorder + rightBorder + getSideComponentWidth();
+        editorPane.setSize(width - editorPaneInsets, Math.max(1, size.height));
         int height;
         try {
-          Dimension preferredSize = getPreferredSize();
-          height = preferredSize.height;
-          if (width < preferredSize.width) {
+          height = getPreferredSize().height;
+          if (width - editorPaneInsets < editorPane.getMinimumSize().width) {
             JScrollBar scrollBar = pane.getHorizontalScrollBar();
             if (scrollBar != null) height += scrollBar.getPreferredSize().height;
           }
