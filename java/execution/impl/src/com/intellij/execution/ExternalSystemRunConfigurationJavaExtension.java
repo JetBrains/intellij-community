@@ -61,13 +61,6 @@ public class ExternalSystemRunConfigurationJavaExtension implements ExternalSyst
     if (javaRunConfigurationExtensionManager != null) {
       javaRunConfigurationExtensionManager.updateJavaParameters(configuration, extensionsJP, settings, executor);
     }
-    copy(extensionsJP.getVMParametersList(), javaParameters.getVMParametersList());
-  }
-
-  private static void copy(@NotNull ParametersList from, @NotNull ParametersList to) {
-    to.addAll(from.getParameters());
-    for (ParamsGroup group : from.getParamsGroups()) {
-      to.addParamsGroup(group);
-    }
+    extensionsJP.getVMParametersList().copyTo(javaParameters.getVMParametersList());
   }
 }
