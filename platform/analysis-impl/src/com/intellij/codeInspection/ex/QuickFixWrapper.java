@@ -5,7 +5,10 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,8 +117,8 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   }
 
   @Override
-  public @Nullable IntentionAction tryTransferActionToPreviewFile(@NotNull PsiFile target) {
-    LocalQuickFix result = myFix.tryTransferFixToFile(target);
+  public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
+    LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
     if (result == null) return null;
     PsiElement start, end, psi;
     try {
@@ -146,7 +150,7 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   }
 
   @Contract("_, null -> null")
-  private static PsiElement transferElement(@NotNull PsiFile target, PsiElement element) {
+  private static PsiElement transferElement(@NotNull PsiFile target, @Nullable PsiElement element) {
     if (element == null) return null;
     TextRange range = element.getTextRange();
     PsiElement newElement = target.findElementAt(range.getStartOffset());

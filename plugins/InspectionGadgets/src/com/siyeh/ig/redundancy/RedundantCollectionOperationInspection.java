@@ -631,7 +631,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public @Nullable LocalQuickFix tryTransferFixToFile(@NotNull PsiFile target) {
+    public @Nullable LocalQuickFix getFileModifierForPreview(@NotNull PsiFile target) {
       return myHandler.canPreview() ? this : null;
     }
 

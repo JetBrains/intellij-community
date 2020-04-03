@@ -441,7 +441,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
 
     @Override
-    public @Nullable LocalQuickFix tryTransferFixToFile(@NotNull PsiFile target) {
+    public @Nullable LocalQuickFix getFileModifierForPreview(@NotNull PsiFile target) {
       return null; // expects document for file -- see getLineNumber
     }
 

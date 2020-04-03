@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +63,8 @@ public class DelegatingFix extends InspectionGadgetsFix implements Iconable, Pri
   }
 
   @Override
-  public @Nullable LocalQuickFix tryTransferFixToFile(@NotNull PsiFile target) {
-    LocalQuickFix fix = delegate.tryTransferFixToFile(target);
+  public @Nullable LocalQuickFix getFileModifierForPreview(@NotNull PsiFile target) {
+    LocalQuickFix fix = ObjectUtils.tryCast(delegate.getFileModifierForPreview(target), LocalQuickFix.class);
     if (fix == null) return null;
     if (fix == delegate) return this;
     DelegatingFix newFix = new DelegatingFix(delegate);
