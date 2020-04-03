@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +11,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
 
-  public StructuralSearchInspectionToolWrapper(Configuration configuration) {
-    super(new StructuralSearchFakeInspection(configuration));
+  public StructuralSearchInspectionToolWrapper(@NotNull SSBasedInspection inspection,
+                                               @NotNull Configuration configuration) {
+    super(new StructuralSearchFakeInspection(inspection, configuration));
   }
 
   private StructuralSearchInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
@@ -48,7 +48,4 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     return getTool().getGroupDisplayName();
   }
 
-  public void setProfile(InspectionProfileImpl profile) {
-    ((StructuralSearchFakeInspection)myTool).setProfile(profile);
-  }
 }

@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -157,7 +156,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   public List<LocalInspectionToolWrapper> getChildren() {
     return getConfigurations().stream()
       .filter(configuration -> configuration.getOrder() == 0)
-      .map(configuration -> new StructuralSearchInspectionToolWrapper(configuration))
+      .map(configuration -> new StructuralSearchInspectionToolWrapper(this, configuration))
       .collect(Collectors.toList());
   }
 

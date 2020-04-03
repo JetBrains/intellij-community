@@ -62,13 +62,6 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       }
     }
 
-    for (ScopeToolState tool : profile.getAllTools()) {
-      final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
-      if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
-        ((StructuralSearchInspectionToolWrapper)wrapper).setProfile(profile);
-      }
-    }
-
     final DefaultActionGroup actionGroup = new DefaultActionGroup(
       new AddTemplateAction(panel, false),
       new AddTemplateAction(panel, true)
@@ -170,8 +163,8 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       // already added
       return;
     }
-    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
-    wrapped.setProfile(profile);
+    SSBasedInspection ssrInspection = (SSBasedInspection)profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project).getTool();
+    StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(ssrInspection, configuration);
     profile.addTool(project, wrapped, null);
 
     // enable inspection even when profile is locked, because either:

@@ -2,8 +2,7 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,10 +10,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.ui.AnActionButton;
@@ -25,6 +24,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -41,17 +41,19 @@ import java.util.List;
  */
 public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
-  @NotNull private Configuration myConfiguration;
-  private InspectionProfileImpl myProfile = null;
+  private Configuration myConfiguration;
+  private final SSBasedInspection myInspection;
   private Element myOldConfig = null;
 
-  public StructuralSearchFakeInspection(@NotNull Configuration configuration) {
+  public StructuralSearchFakeInspection(@NotNull SSBasedInspection inspection,
+                                        @NotNull Configuration configuration) {
+    myInspection = inspection;
     myConfiguration = configuration;
   }
 
-  public StructuralSearchFakeInspection(StructuralSearchFakeInspection copy) {
+  public StructuralSearchFakeInspection(@NotNull StructuralSearchFakeInspection copy) {
     myConfiguration = copy.myConfiguration;
-    myProfile = copy.myProfile;
+    myInspection = copy.myInspection;
     myOldConfig = null;
   }
 
@@ -113,10 +115,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return description;
   }
 
-  public void setProfile(InspectionProfileImpl profile) {
-    myProfile = profile;
-  }
-
   @Override
   public void writeSettings(@NotNull Element node) {
     super.writeSettings(node);
@@ -141,10 +139,12 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final MyListModel model = new MyListModel();
     final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
     button.addActionListener(e -> {
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
-      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+      SingleInspectionProfilePanel panel = UIUtil.uiParents(button, true).filter(SingleInspectionProfilePanel.class).first();
+      if (panel == null) return;
+      Project project = panel.getProject();
+      InspectionProfileModifiableModel profile = panel.getProfile();
       if (StructuralSearchProfileActionProvider.saveInspection(project, getStructuralSearchInspection(), model.getElementAt(0))) {
-        myProfile.getProfileManager().fireProfileChanged(myProfile);
+        profile.getProfileManager().fireProfileChanged(profile);
       }
     });
 
@@ -261,9 +261,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   private SSBasedInspection getStructuralSearchInspection() {
-    final InspectionToolWrapper<?, ?> wrapper = myProfile.getInspectionTool(SSBasedInspection.SHORT_NAME, (Project)null);
-    assert wrapper != null;
-    return (SSBasedInspection)wrapper.getTool();
+    return myInspection;
   }
 
   private class AddTemplateAction extends DumbAwareAction {
