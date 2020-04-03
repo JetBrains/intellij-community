@@ -355,6 +355,13 @@ public class PsiLiteralUtil {
     return -1;
   }
 
+  /**
+   * Returns the lines of text inside the quotes of a text block. No further processing is performed.
+   * Any escaped characters will remain escaped. Indent is not stripped.
+   *
+   * @param expression  a text block expression
+   * @return the lines of the expression, or null if the expression is not a text block.
+   */
   public static String @Nullable [] getTextBlockLines(PsiLiteralExpression expression) {
     if (!expression.isTextBlock()) return null;
     String rawText = expression.getText();
@@ -368,6 +375,14 @@ public class PsiLiteralUtil {
     return rawText.substring(start, rawText.length() - 3).split("\n", -1);
   }
 
+  /**
+   * Determines how many whitespaces would be excluded at the beginning of each line of text block content.
+   * See JEP 368 for more details.
+   *
+   * @see #getTextBlockIndent(String[], boolean, boolean)
+   * @param expression a text block literal expression
+   * @return the indent of the text block counted in characters, where a tab is also counted as 1.
+   */
   public static int getTextBlockIndent(PsiLiteralExpression expression) {
     String[] lines = getTextBlockLines(expression);
     if (lines == null) return -1;
@@ -375,17 +390,14 @@ public class PsiLiteralUtil {
   }
 
   /**
-   * Determines how many whitespaces would be excluded at the beginning of each line of text block content.
-   * See JEP 368 for more details.
-   *
-   * @param lines text block content
+   * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines) {
     return getTextBlockIndent(lines, false, false);
   }
 
   /**
-   * @see #getTextBlockIndent(String[])
+   * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;
@@ -401,6 +413,13 @@ public class PsiLiteralUtil {
     return prefix;
   }
 
+  /**
+   * Returns the text inside the quotes of a regular string literal. No further processing is performed.
+   * Any escaped characters will remain escaped.
+   *
+   * @param expression  regular string literal.
+   * @return the text inside the quotes, or null if the expression is not a string literal.
+   */
   @Nullable
   public static String getStringLiteralContent(PsiLiteralExpression expression) {
     String text = expression.getText();
@@ -414,6 +433,13 @@ public class PsiLiteralUtil {
     return null;
   }
 
+  /**
+   * Return the text of the specified text block without indent and trailing whitespace.
+   * Any escaped character will remain escaped.
+   *
+   * @param expression  a text block expression
+   * @return the text of the text block, or null if the expression is not a text block.
+   */
   @Nullable
   public static String getTextBlockText(PsiLiteralExpression expression) {
     String[] lines = getTextBlockLines(expression);
