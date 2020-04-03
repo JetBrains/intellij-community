@@ -14,10 +14,7 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
   companion object {
     fun <T : TypedEntity, SUBT : TypedEntity> create(
       parentClass: KClass<T>, childClass: KClass<SUBT>, isHard: Boolean
-    ): ConnectionId<T, SUBT> {
-      assert(parentClass != childClass)
-      return ConnectionId(parentClass, childClass, isHard)
-    }
+    ): ConnectionId<T, SUBT> = ConnectionId(parentClass, childClass, isHard)
   }
 }
 
