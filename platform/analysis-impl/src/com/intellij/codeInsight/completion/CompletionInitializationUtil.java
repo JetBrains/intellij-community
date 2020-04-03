@@ -5,6 +5,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -91,7 +93,7 @@ public class CompletionInitializationUtil {
 
   @NotNull
   public static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                CompletionProcessEx indicator, OffsetsInFile finalOffsets) {
+                                                                CompletionProcess indicator, OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -129,6 +131,40 @@ public class CompletionInitializationUtil {
         () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
       OffsetsInFile copyOffsets = apply.get();
       indicator.registerChildDisposable(() -> copyOffsets.getOffsets());
+      return copyOffsets;
+    });
+  }
+
+  //need for code with me
+  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, OffsetsInFile topLevelOffsets, Disposable parentDisposable) {
+    CompletionAssertions.checkEditorValid(initContext.getEditor());
+    if (initContext.getDummyIdentifier().isEmpty()) {
+      return () -> topLevelOffsets;
+    }
+
+    Editor editor = initContext.getEditor();
+    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    OffsetMap hostMap = topLevelOffsets.getOffsets();
+
+    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
+    Document copyDocument = Objects.requireNonNull(hostCopy.getViewProvider().getDocument());
+
+    String dummyIdentifier = initContext.getDummyIdentifier();
+    int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
+    int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+
+    Supplier<OffsetsInFile> apply = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
+
+    // despite being non-physical, the copy file should only be modified in a write action,
+    // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
+    return () -> WriteAction.compute(() -> {
+      OffsetTranslator offsetTranslator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
+      Disposer.register(parentDisposable, offsetTranslator);
+      OffsetsInFile copyOffsets = apply.get();
+      OffsetMap offsets = copyOffsets.getOffsets();
+
+      Disposer.register(parentDisposable, offsets);
+
       return copyOffsets;
     });
   }
