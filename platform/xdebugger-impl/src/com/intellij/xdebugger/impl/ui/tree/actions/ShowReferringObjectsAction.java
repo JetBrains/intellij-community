@@ -34,7 +34,7 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                                                    tree.getValueMarkers(), session, false);
         XDebuggerTree dialogTree = (XDebuggerTree)dialog.getPreferredFocusedComponent();
         if (dialogTree != null) {
-          dialogTree.expandNodesOnLoad(treeNode -> isInTopSubTree(dialogTree, treeNode));
+          dialogTree.expandNodesOnLoad(treeNode -> isInTopSubTree(treeNode));
         }
 
         dialog.setTitle(XDebuggerBundle.message("showReferring.dialog.title", nodeName));
@@ -43,16 +43,9 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
     }
   }
 
-  private static boolean isInTopSubTree(@NotNull XDebuggerTree tree, @NotNull TreeNode node) {
-    TreeNode root = tree.getRoot();
-    while (root != null) {
-      root = root.getChildAt(0);
-
-      if (root == node) {
-        return true;
-      }
-    }
-
-    return false;
+  private static boolean isInTopSubTree(@NotNull TreeNode node) {
+    TreeNode parent = node.getParent();
+    return parent != null && parent.getChildCount() > 0 &&
+           node == parent.getChildAt(0);
   }
 }
