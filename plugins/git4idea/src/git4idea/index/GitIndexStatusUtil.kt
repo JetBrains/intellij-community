@@ -99,7 +99,9 @@ fun parseGitStatusOutput(output: String): List<GitFileStatus.StatusRecord> {
   val result = mutableListOf<GitFileStatus.StatusRecord>()
 
   val split = output.split(NUL).toTypedArray()
-  for (line in split) {
+  val it = split.iterator()
+  while (it.hasNext()){
+    val line = it.next()
     if (StringUtil.isEmptyOrSpaces(line)) continue
     if (line.length < 4 || line[2] != ' ') {
       LOG.error("Could not parse status line '$line'")
@@ -109,8 +111,16 @@ fun parseGitStatusOutput(output: String): List<GitFileStatus.StatusRecord> {
     val xStatus = line[0]
     val yStatus = line[1]
     val pathPart = line.substring(3) // skipping the space
-
-    result.add(GitFileStatus.StatusRecord(xStatus, yStatus, pathPart))
+    if (isRenamed(xStatus) || isRenamed(yStatus)) {
+      if (!it.hasNext()) {
+        LOG.error("Missing original path for status line '$line'")
+        continue
+      }
+      val origPath = it.next()
+      result.add(GitFileStatus.StatusRecord(xStatus, yStatus, pathPart, origPath = origPath))
+    } else {
+      result.add(GitFileStatus.StatusRecord(xStatus, yStatus, pathPart))
+    }
   }
 
   return result;
@@ -131,6 +141,7 @@ private fun getFileStatus(status: StatusCode): FileStatus? {
 }
 
 typealias StatusCode = Char
+private fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
 
 sealed class GitFileStatus {
   internal abstract fun getFileStatus(): FileStatus
