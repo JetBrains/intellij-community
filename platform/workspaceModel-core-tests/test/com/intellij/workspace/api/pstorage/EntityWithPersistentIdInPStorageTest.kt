@@ -27,7 +27,7 @@ internal data class PSampleEntityId(val name: String) : PersistentEntityId<PName
     get() = name
 }
 
-internal class PNamedSampleModifiableEntity : PModifiableTypedEntity<PNamedSampleEntity>() {
+internal class ModifiablePNamedSampleEntity : PModifiableTypedEntity<PNamedSampleEntity>() {
   var name: String by EntityDataDelegation()
   var next: PSampleEntityId by EntityDataDelegation()
 }
@@ -50,13 +50,13 @@ internal class PChildWithPersistentIdEntity(
   override fun persistentId(): PersistentEntityId<*> = PChildEntityId(childName, parent.persistentId())
 }
 
-internal class PChildWithPersistentIdModifiableEntity : PModifiableTypedEntity<PChildWithPersistentIdEntity>() {
+internal class ModifiablePChildWithPersistentIdEntity : PModifiableTypedEntity<PChildWithPersistentIdEntity>() {
   var parent: PNamedSampleEntity by EntityDataDelegation()
   var childName: String by EntityDataDelegation()
 }
 
 private fun PEntityStorageBuilder.addPNamedEntity(name: String, next: PSampleEntityId) =
-  addEntity(PNamedSampleModifiableEntity::class.java, SampleEntitySource("test")) {
+  addEntity(ModifiablePNamedSampleEntity::class.java, SampleEntitySource("test")) {
     this.name = name
     this.next = next
   }
@@ -83,7 +83,7 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
     val bar = builder.addPNamedEntity("bar", PSampleEntityId("baz"))
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    builder.modifyEntity(PNamedSampleModifiableEntity::class.java, bar) {
+    builder.modifyEntity(ModifiablePNamedSampleEntity::class.java, bar) {
       name = "baz"
     }
     builder.assertConsistency()
@@ -98,7 +98,7 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
     val baz = builder.addPNamedEntity("baz", PSampleEntityId("foo"))
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    val newFoo = builder.modifyEntity(PNamedSampleModifiableEntity::class.java, foo) {
+    val newFoo = builder.modifyEntity(ModifiablePNamedSampleEntity::class.java, foo) {
       next = PSampleEntityId("baz")
     }
     builder.assertConsistency()
@@ -109,13 +109,13 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
   fun `remove child entity with parent entity`() {
     val builder = PEntityStorageBuilder.create()
     val parent = builder.addPNamedEntity("parent", PSampleEntityId("no"))
-    builder.addEntity(PChildWithPersistentIdModifiableEntity::class.java, SampleEntitySource("foo")) {
+    builder.addEntity(ModifiablePChildWithPersistentIdEntity::class.java, SampleEntitySource("foo")) {
       this.childName = "child"
       this.parent = parent
     }
     builder.assertConsistency()
     builder.removeEntity(parent)
-    assertEquals(emptyList<PChildWithPersistentIdModifiableEntity>(),
-                 builder.entities(PChildWithPersistentIdModifiableEntity::class.java).toList())
+    assertEquals(emptyList<ModifiablePChildWithPersistentIdEntity>(),
+                 builder.entities(ModifiablePChildWithPersistentIdEntity::class.java).toList())
   }
 }

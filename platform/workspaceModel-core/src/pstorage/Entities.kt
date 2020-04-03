@@ -6,7 +6,6 @@ import com.intellij.workspace.api.ModifiableTypedEntity
 import com.intellij.workspace.api.TypedEntity
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.*
-import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
@@ -70,18 +69,7 @@ internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEnti
     }
   }
 
-  internal fun getEntityClass(): KClass<T> = getEntityClass(this.javaClass.kotlin).kotlin
-
-  companion object {
-
-    private val entityClassCache = HashMap<KClass<*>, Class<*>>()
-
-    fun <M : ModifiableTypedEntity<T>, T : TypedEntity> getEntityClass(clazz: KClass<M>): Class<T> {
-      return entityClassCache.getOrPut(clazz) {
-        Class.forName(clazz.qualifiedName!!.dropLast(16) + "Entity")
-      } as Class<T>
-    }
-  }
+  internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
 }
 
 internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
@@ -97,7 +85,7 @@ internal abstract class PEntityData<E : TypedEntity> {
   var id: Int = -1
 
   fun createEntity(snapshot: AbstractPEntityStorage): E {
-    val returnClass = immutableClass()
+    val returnClass = ClassConversion.entityDataToEntity(this::class)
 
     val params = returnClass.primaryConstructor!!.parameters
       .associateWith { param ->
@@ -111,10 +99,8 @@ internal abstract class PEntityData<E : TypedEntity> {
     return res
   }
 
-  fun immutableClass() = this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*> as KClass<E>
-
   fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
-    val returnClass = Class.forName(this::class.qualifiedName!!.dropLast(10) + "ModifiableEntity").kotlin
+    val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
     val primaryConstructor = returnClass.primaryConstructor!!
     primaryConstructor.isAccessible = true
     val res = primaryConstructor.call() as ModifiableTypedEntity<E>
@@ -140,12 +126,6 @@ internal abstract class PEntityData<E : TypedEntity> {
   }
 
   private fun KType.isList(): Boolean = this.classifier == List::class
-
-  companion object {
-    fun <T : TypedEntity> fromImmutableClass(imm: Class<T>): Class<PEntityData<T>> {
-      return Class.forName(imm.name + "Data") as Class<PEntityData<T>>
-    }
-  }
 }
 
 internal class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {

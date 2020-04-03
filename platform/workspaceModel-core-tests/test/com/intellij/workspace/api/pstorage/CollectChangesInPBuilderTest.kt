@@ -14,7 +14,7 @@ internal class SecondSampleEntity(
   val intProperty: Int
 ) : PTypedEntity<SecondSampleEntity>()
 
-internal class SecondSampleModifiableEntity : PModifiableTypedEntity<SecondSampleEntity>() {
+internal class ModifiableSecondSampleEntity : PModifiableTypedEntity<SecondSampleEntity>() {
   var intProperty: Int by EntityDataDelegation()
 }
 
@@ -26,7 +26,7 @@ class CollectChangesInPBuilderTest {
   fun setUp() {
     initialStorage = PEntityStorageBuilder.create().apply {
       addPSampleEntity("initial")
-      addEntity(SecondSampleModifiableEntity::class.java, SampleEntitySource("test")) {
+      addEntity(ModifiableSecondSampleEntity::class.java, SampleEntitySource("test")) {
         intProperty = 1
       }
     }.toStorage()
@@ -36,7 +36,7 @@ class CollectChangesInPBuilderTest {
   @Test
   fun `add remove entity`() {
     builder.addPSampleEntity("added")
-    builder.addEntity(SecondSampleModifiableEntity::class.java, SampleEntitySource("test")) {
+    builder.addEntity(ModifiableSecondSampleEntity::class.java, SampleEntitySource("test")) {
       intProperty = 2
     }
     builder.removeEntity(initialStorage.singlePSampleEntity())
@@ -62,10 +62,10 @@ class CollectChangesInPBuilderTest {
 
   @Test
   fun `modify entity`() {
-    builder.modifyEntity(PSampleModifiableEntity::class.java, initialStorage.singlePSampleEntity()) {
+    builder.modifyEntity(ModifiablePSampleEntity::class.java, initialStorage.singlePSampleEntity()) {
       stringProperty = "changed"
     }
-    builder.modifyEntity(SecondSampleModifiableEntity::class.java, initialStorage.entities(SecondSampleEntity::class.java).single()) {
+    builder.modifyEntity(ModifiableSecondSampleEntity::class.java, initialStorage.entities(SecondSampleEntity::class.java).single()) {
       intProperty = 2
     }
     @Suppress("UNCHECKED_CAST")
@@ -76,10 +76,10 @@ class CollectChangesInPBuilderTest {
 
   @Test
   fun `modify modified entity`() {
-    builder.modifyEntity(PSampleModifiableEntity::class.java, initialStorage.singlePSampleEntity()) {
+    builder.modifyEntity(ModifiablePSampleEntity::class.java, initialStorage.singlePSampleEntity()) {
       stringProperty = "changed"
     }
-    builder.modifyEntity(PSampleModifiableEntity::class.java, initialStorage.singlePSampleEntity()) {
+    builder.modifyEntity(ModifiablePSampleEntity::class.java, initialStorage.singlePSampleEntity()) {
       stringProperty = "changed again"
     }
     val change = collectSampleEntityChanges().single() as EntityChange.Replaced
@@ -89,7 +89,7 @@ class CollectChangesInPBuilderTest {
 
   @Test
   fun `remove modified entity`() {
-    val modified = builder.modifyEntity(PSampleModifiableEntity::class.java, initialStorage.singlePSampleEntity()) {
+    val modified = builder.modifyEntity(ModifiablePSampleEntity::class.java, initialStorage.singlePSampleEntity()) {
       stringProperty = "changed"
     }
     builder.removeEntity(modified)
@@ -106,7 +106,7 @@ class CollectChangesInPBuilderTest {
   @Test
   fun `modify added entity`() {
     val added = builder.addPSampleEntity("added")
-    builder.modifyEntity(PSampleModifiableEntity::class.java, added) {
+    builder.modifyEntity(ModifiablePSampleEntity::class.java, added) {
       stringProperty = "changed"
     }
     assertEquals("changed", (collectSampleEntityChanges().single() as EntityChange.Added).entity.stringProperty)
@@ -115,7 +115,7 @@ class CollectChangesInPBuilderTest {
   @Test
   fun `removed modified added entity`() {
     val added = builder.addPSampleEntity("added")
-    val modified = builder.modifyEntity(PSampleModifiableEntity::class.java, added) {
+    val modified = builder.modifyEntity(ModifiablePSampleEntity::class.java, added) {
       stringProperty = "changed"
     }
     builder.removeEntity(modified)

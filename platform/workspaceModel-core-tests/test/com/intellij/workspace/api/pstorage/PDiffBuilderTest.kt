@@ -39,7 +39,7 @@ class ProxyBasedDiffBuilderTest {
     val target = PEntityStorageBuilder.create()
     val entity = target.addPSampleEntity("hello")
     val source = PEntityStorageBuilder.from(target.toStorage())
-    source.modifyEntity(PSampleModifiableEntity::class.java, entity) {
+    source.modifyEntity(ModifiablePSampleEntity::class.java, entity) {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
@@ -67,7 +67,7 @@ class ProxyBasedDiffBuilderTest {
     val source = PEntityStorageBuilder.from(target.toStorage())
     target.removeEntity(entity)
     source.assertConsistency()
-    source.modifyEntity(PSampleModifiableEntity::class.java, entity) {
+    source.modifyEntity(ModifiablePSampleEntity::class.java, entity) {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
@@ -79,7 +79,7 @@ class ProxyBasedDiffBuilderTest {
     val target = PEntityStorageBuilder.create()
     val entity = target.addPSampleEntity("hello")
     val source = PEntityStorageBuilder.from(target.toStorage())
-    target.modifyEntity(PSampleModifiableEntity::class.java, entity) {
+    target.modifyEntity(ModifiablePSampleEntity::class.java, entity) {
       stringProperty = "changed"
     }
     source.removeEntity(entity)

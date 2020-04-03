@@ -52,29 +52,29 @@ internal class PParentEntity(
 
 internal data class PDataClass(val stringProperty: String, val parent: EntityReference<PParentEntity>)
 
-private class PChildModifiableEntity : PModifiableTypedEntity<PChildEntity>() {
+private class ModifiablePChildEntity : PModifiableTypedEntity<PChildEntity>() {
   var childProperty: String by EntityDataDelegation()
   var dataClass: PDataClass? by EntityDataDelegation()
   var parent: PParentEntity by MutableManyToOne.HardRef(PChildEntity::class, PParentEntity::class)
 }
 
-private class PNoDataChildModifiableEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
+private class ModifiablePNoDataChildEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
   var childProperty: String by EntityDataDelegation()
   var parent: PParentEntity by MutableManyToOne.HardRef(PNoDataChildEntity::class, PParentEntity::class)
 }
 
-private class PChildChildModifiableEntity : PModifiableTypedEntity<PChildChildEntity>() {
+private class ModifiablePChildChildEntity : PModifiableTypedEntity<PChildChildEntity>() {
   var parent1: PParentEntity by MutableManyToOne.HardRef(PChildChildEntity::class, PParentEntity::class)
   var parent2: PChildEntity by MutableManyToOne.HardRef(PChildChildEntity::class, PChildEntity::class)
 }
 
-private class PParentModifiableEntity : PModifiableTypedEntity<PParentEntity>() {
+private class ModifiablePParentEntity : PModifiableTypedEntity<PParentEntity>() {
   var parentProperty: String by EntityDataDelegation()
 }
 
 internal fun TypedEntityStorageBuilder.addPParentEntity(parentProperty: String = "parent",
                                                         source: SampleEntitySource = SampleEntitySource("test")) =
-  addEntity(PParentModifiableEntity::class.java, source) {
+  addEntity(ModifiablePParentEntity::class.java, source) {
     this.parentProperty = parentProperty
   }
 
@@ -82,7 +82,7 @@ internal fun TypedEntityStorageBuilder.addPChildEntity(parentEntity: PParentEnti
                                                        childProperty: String = "child",
                                                        dataClass: PDataClass? = null,
                                                        source: SampleEntitySource = SampleEntitySource("test")) =
-  addEntity(PChildModifiableEntity::class.java, source) {
+  addEntity(ModifiablePChildEntity::class.java, source) {
     this.parent = parentEntity
     this.childProperty = childProperty
     this.dataClass = dataClass
@@ -91,13 +91,13 @@ internal fun TypedEntityStorageBuilder.addPChildEntity(parentEntity: PParentEnti
 internal fun TypedEntityStorageBuilder.addPNoDataChildEntity(parentEntity: PParentEntity = addPParentEntity(),
                                                              childProperty: String = "child",
                                                              source: SampleEntitySource = SampleEntitySource("test")) =
-  addEntity(PNoDataChildModifiableEntity::class.java, source) {
+  addEntity(ModifiablePNoDataChildEntity::class.java, source) {
     this.parent = parentEntity
     this.childProperty = childProperty
   }
 
 private fun TypedEntityStorageBuilder.addPChildChildEntity(parent1: PParentEntity, parent2: PChildEntity) =
-  addEntity(PChildChildModifiableEntity::class.java, SampleEntitySource("test")) {
+  addEntity(ModifiablePChildChildEntity::class.java, SampleEntitySource("test")) {
     this.parent1 = parent1
     this.parent2 = parent2
   }
@@ -149,7 +149,7 @@ class ReferencesInPStorageTest {
     assertEquals("parent2", child.dataClass!!.parent.resolve(builder).parentProperty)
     assertEquals(setOf(parent1, parent2), builder.entities(PParentEntity::class.java).toSet())
 
-    builder.modifyEntity(PChildModifiableEntity::class.java, child) {
+    builder.modifyEntity(ModifiablePChildEntity::class.java, child) {
       dataClass = null
     }
     builder.assertConsistency()
@@ -233,7 +233,7 @@ class ReferencesInPStorageTest {
     val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
     val oldParent = child.parent
-    val newParent = builder.modifyEntity(PParentModifiableEntity::class.java, child.parent) {
+    val newParent = builder.modifyEntity(ModifiablePParentEntity::class.java, child.parent) {
       parentProperty = "changed"
     }
     builder.assertConsistency()
@@ -251,7 +251,7 @@ class ReferencesInPStorageTest {
     val oldParent = child.parent
 
     val diff = PEntityStorageBuilder.from(builder)
-    diff.modifyEntity(PParentModifiableEntity::class.java, child.parent) {
+    diff.modifyEntity(ModifiablePParentEntity::class.java, child.parent) {
       parentProperty = "changed"
     }
     builder.addDiff(diff)
@@ -269,7 +269,7 @@ class ReferencesInPStorageTest {
     val builder = PEntityStorageBuilder.create()
     val child = builder.addPChildEntity()
     val oldParent = child.parent
-    val newChild = builder.modifyEntity(PChildModifiableEntity::class.java, child) {
+    val newChild = builder.modifyEntity(ModifiablePChildEntity::class.java, child) {
       childProperty = "changed"
     }
     builder.assertConsistency()
@@ -288,7 +288,7 @@ class ReferencesInPStorageTest {
     val child = builder.addPChildEntity()
     val oldParent = child.parent
     val newParent = builder.addPParentEntity("new")
-    val newChild = builder.modifyEntity(PChildModifiableEntity::class.java, child) {
+    val newChild = builder.modifyEntity(ModifiablePChildEntity::class.java, child) {
       parent = newParent
     }
     builder.assertConsistency()
@@ -312,7 +312,7 @@ class ReferencesInPStorageTest {
     val child = builder.addPChildEntity(parent1, "child", PDataClass("data", builder.createReference(oldParent)))
     val newParent = builder.addPParentEntity("new")
     builder.assertConsistency()
-    val newChild = builder.modifyEntity(PChildModifiableEntity::class.java, child) {
+    val newChild = builder.modifyEntity(ModifiablePChildEntity::class.java, child) {
       dataClass = PDataClass("data2", builder.createReference(newParent))
     }
     builder.assertConsistency()
@@ -338,7 +338,7 @@ class ReferencesInPStorageTest {
 
     val oldParent = builder.singlePParent()
     assertEquals("parent", oldParent.parentProperty)
-    val newParent = builder.modifyEntity(PParentModifiableEntity::class.java, oldParent) {
+    val newParent = builder.modifyEntity(ModifiablePParentEntity::class.java, oldParent) {
       parentProperty = "changed"
     }
     builder.assertConsistency()
@@ -349,7 +349,7 @@ class ReferencesInPStorageTest {
     assertEquals("parent", storage.singlePChild().parent.parentProperty)
 
     val parent2 = builder.addPParentEntity("parent2")
-    builder.modifyEntity(PChildModifiableEntity::class.java, builder.singlePChild()) {
+    builder.modifyEntity(ModifiablePChildEntity::class.java, builder.singlePChild()) {
       dataClass = PDataClass("data", builder.createReference(parent2))
     }
     builder.assertConsistency()
@@ -368,7 +368,7 @@ class ReferencesInPStorageTest {
     val snapshot = builder.toStorage()
     builder.assertConsistency()
 
-    builder.modifyEntity(PParentModifiableEntity::class.java, child.parent) {
+    builder.modifyEntity(ModifiablePParentEntity::class.java, child.parent) {
       parentProperty = "changed"
     }
     builder.assertConsistency()
@@ -378,7 +378,7 @@ class ReferencesInPStorageTest {
     assertEquals("parent", snapshot.singlePChild().parent.parentProperty)
 
     val parent2 = builder.addPParentEntity("new")
-    builder.modifyEntity(PChildModifiableEntity::class.java, child) {
+    builder.modifyEntity(ModifiablePChildEntity::class.java, child) {
       dataClass = PDataClass("data", builder.createReference(parent2))
     }
     builder.assertConsistency()

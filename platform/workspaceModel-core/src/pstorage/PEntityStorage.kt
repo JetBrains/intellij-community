@@ -51,8 +51,8 @@ internal class PEntityStorageBuilder(
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> addEntity(clazz: Class<M>,
                                                                          source: EntitySource,
                                                                          initializer: M.() -> Unit): T {
-    val unmodifiableEntityClass = PModifiableTypedEntity.getEntityClass(clazz.kotlin)
-    val entityDataClass = PEntityData.fromImmutableClass(unmodifiableEntityClass).kotlin
+    val unmodifiableEntityClass = ClassConversion.modifiableEntityToEntity(clazz.kotlin).java
+    val entityDataClass = ClassConversion.entityToEntityData(unmodifiableEntityClass.kotlin)
 
     val primaryConstructor = entityDataClass.primaryConstructor!!
     primaryConstructor.isAccessible = true
@@ -728,5 +728,32 @@ internal sealed class AbstractPEntityStorage constructor(
       }
     }
     return res
+  }
+}
+
+internal object ClassConversion {
+
+  private val modifiableToEntityCache = HashMap<KClass<*>, KClass<*>>()
+
+  fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifiableEntityToEntity(clazz: KClass<out M>): KClass<T> {
+    return modifiableToEntityCache.getOrPut(clazz) {
+      Class.forName(getPackage(clazz) + clazz.simpleName!!.drop(10)).kotlin
+    } as KClass<T>
+  }
+
+  fun <T : TypedEntity> entityToEntityData(clazz: KClass<out T>): KClass<PEntityData<T>> {
+    return (Class.forName(clazz.qualifiedName + "Data") as Class<PEntityData<T>>).kotlin
+  }
+
+  fun <M : PEntityData<out T>, T : TypedEntity> entityDataToEntity(clazz: KClass<out M>): KClass<T> {
+    return (Class.forName(clazz.qualifiedName!!.dropLast(4)) as Class<T>).kotlin
+  }
+
+  fun <D : PEntityData<T>, T : TypedEntity> entityDataToModifiableEntity(clazz: KClass<out D>): KClass<ModifiableTypedEntity<T>> {
+    return Class.forName(getPackage(clazz) + "Modifiable" + clazz.simpleName!!.dropLast(4)).kotlin as KClass<ModifiableTypedEntity<T>>
+  }
+
+  private fun getPackage(clazz: KClass<*>): String {
+    return clazz.qualifiedName!!.dropLastWhile { it != '.' }
   }
 }
