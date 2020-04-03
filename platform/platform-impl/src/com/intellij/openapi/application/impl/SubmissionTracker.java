@@ -14,29 +14,38 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class SubmissionTracker {
   private static final Logger LOG = Logger.getInstance(SubmissionTracker.class);
-  @VisibleForTesting
-  static final String TOO_MANY_SUBMISSIONS =
-    "Too many non-blocking read actions submitted at once. " +
+  private static final String TOO_MANY_NON_BLOCKING_READ_ACTIONS_SUBMITTED_AT_ONCE =
+    "Too many non-blocking read actions submitted at once";
+  private static final String SUGGESTIONS =
     "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.";
+  private static final String TOO_MANY_SUBMISSIONS =
+    TOO_MANY_NON_BLOCKING_READ_ACTIONS_SUBMITTED_AT_ONCE + ". " + SUGGESTIONS;
+  @VisibleForTesting
+  static final String ARE_CURRENTLY_ACTIVE = " with similar stack traces are currently active";
 
   private final AtomicInteger myCount = new AtomicInteger();
 
   /** Not-null if we're tracking submissions to provide diagnostics */
   @Nullable private volatile Map<String, Integer> myTraces;
+  private volatile boolean myStoppedTracing;
 
   @Nullable
   String preventTooManySubmissions() {
-    Map<String, Integer> traces = myTraces;
     int currentCount = myCount.incrementAndGet();
+    if (myStoppedTracing) return null;
+
+    Map<String, Integer> traces = myTraces;
     if (currentCount > 100) {
       if (traces == null) {
         myTraces = ContainerUtil.newConcurrentMap();
       } else {
         Integer count = traces.get(callerTrace());
         if (count != null && count > 10) {
-          LOG.error(TOO_MANY_SUBMISSIONS);
+          stopTracing();
+          LOG.error(TOO_MANY_SUBMISSIONS + ": " + count + ARE_CURRENTLY_ACTIVE);
         }
         else if (currentCount % 127 == 0) {
+          stopTracing();
           reportTooManyUnidentifiedSubmissions(traces);
         }
       }
@@ -47,6 +56,11 @@ class SubmissionTracker {
       return trace;
     }
     return null;
+  }
+
+  private void stopTracing() {
+    myStoppedTracing = true;
+    myTraces = null;
   }
 
   private String callerTrace() {
@@ -78,7 +92,7 @@ class SubmissionTracker {
     }
     Attachment attachment = new Attachment("diagnostic.txt", mostFrequentTraces);
     attachment.setIncluded(true);
-    LOG.error(TOO_MANY_SUBMISSIONS, attachment);
+    LOG.error(TOO_MANY_NON_BLOCKING_READ_ACTIONS_SUBMITTED_AT_ONCE + ". " + SUGGESTIONS, attachment);
   }
 
 }

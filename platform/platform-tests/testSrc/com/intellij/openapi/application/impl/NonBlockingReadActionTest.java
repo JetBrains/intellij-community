@@ -450,7 +450,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   public void testReportTooManyUnboundedCalls() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    assertThrows(Throwable.class, SubmissionTracker.TOO_MANY_SUBMISSIONS, () -> {
+    assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
       WriteAction.run(() -> {
         for (int i = 0; i < 1000; i++) {
           ReadAction.nonBlocking(() -> {}).submit(AppExecutorUtil.getAppExecutorService());
