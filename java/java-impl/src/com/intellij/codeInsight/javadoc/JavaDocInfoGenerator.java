@@ -752,7 +752,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateAuthorAndVersionSections(StringBuilder buffer, PsiDocComment docComment) {
-    generateSingleTagSection(buffer, docComment, "author", JavaBundle.messagePointer("javadoc.author"));
+    generateAuthorSection(buffer, docComment);
     generateSingleTagSection(buffer, docComment, "version", JavaBundle.messagePointer("javadoc.version"));
   }
 
@@ -1476,6 +1476,20 @@ public class JavaDocInfoGenerator {
             generateLink(buffer, text, comment, false);
           }
         }
+        if (i < tags.length - 1) {
+          buffer.append(",\n");
+        }
+      }
+      buffer.append(DocumentationMarkup.SECTION_END);
+    }
+  }
+
+  protected void generateAuthorSection(StringBuilder buffer, PsiDocComment comment) {
+    PsiDocTag[] tags = comment.findTagsByName("author");
+    if (tags.length > 0) {
+      startHeaderSection(buffer, JavaBundle.message("javadoc.author")).append("<p>");
+      for (int i = 0; i < tags.length; i++) {
+        generateValue(buffer, tags[i].getDataElements(), ourEmptyElementsProvider);
         if (i < tags.length - 1) {
           buffer.append(",\n");
         }
