@@ -94,12 +94,16 @@
             <el-row :gutter="5">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d"]' :chartSettings="chartSettings"/>
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                                      :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d", "euaShowing_d", "appStarter_d"]'
+                                      :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["appComponentCreation_d", "projectComponentCreation_d", "moduleLoading_d"]' :chartSettings="chartSettings"/>
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                                      :metrics='["pluginDescriptorInitV18_d", "appComponentCreation_d", "projectComponentCreation_d", "moduleLoading_d"]'
+                                      :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
             </el-row>
@@ -117,14 +121,14 @@
               </el-col>
             </el-row>
 
-            <el-row :gutter="5" style="margin-top: 5px;">
+            <el-row :gutter="5" style="margin-top: 5px;" v-if="item.order === 'date'">
               <el-col :span="12">
-                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="1M"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
-                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings" timeRange="1M"/>
                 </el-card>
               </el-col>
@@ -142,6 +146,9 @@
           </li>
           <li>
             <small>Events <code>editorRestoring</code> and <code>projectDumbAware_d</code> are reliably reported since 23 November 2019.</small>
+          </li>
+          <li>
+            <small>Event <code>pluginDescriptorInit</code> is reported since March 2019.</small>
           </li>
         </ul>
       </el-col>

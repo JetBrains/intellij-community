@@ -145,7 +145,7 @@ export class DataManager {
     const result = new Array(markerNames.length)
     // JS array is sparse and setting length doesn't pre-fill array
     result.fill(null)
-    itemLoop:  for (const item of items) {
+    itemLoop: for (const item of items) {
       for (let i = 0; i < markerNames.length; i++) {
         if (result[i] == null && item.name === markerNames[i]) {
           result[i] = item
@@ -160,7 +160,7 @@ export class DataManager {
 
     for (let i = 0; i < markerNames.length; i++) {
       if (result[i] == null) {
-        console.error(`Cannot find item for phase "${markerNames[i]}"`)
+        console.warn(`Cannot find item for phase "${markerNames[i]}"`)
       }
     }
 
