@@ -63,7 +63,7 @@ public interface FileModifier extends WriteActionAware {
       if (Modifier.isStatic(field.getModifiers())) continue;
       Class<?> type = field.getType();
       if (type.isPrimitive() || type.isEnum() || type.equals(String.class) ||
-          type.equals(Integer.class) || type.equals(Boolean.class)) continue;
+          type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class)) continue;
       return null;
     }
     // No PSI-specific state: it's safe to apply this action to a file copy
