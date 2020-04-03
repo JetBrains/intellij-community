@@ -161,6 +161,7 @@ public class MavenProjectImporter {
     for (MavenProject mavenProject : myAllProjects) {
       Module module = moduleManager.findModuleByName(mavenProject.getDisplayName());
       if (module == null) continue;
+      myCreatedModules.add(module);
       MavenModuleImporter importer = new MavenModuleImporter(module,
                                                              myProjectsTree,
                                                              mavenProject,
