@@ -46,10 +46,10 @@ object ExtractMethodPipeline {
       options = withForcedStatic(analyzer, options) ?: throw PrepareFailedException("Fail", options.elements.first())
     }
 
-    options = options.copy(dataOutput = extractOptions.dataOutput.withType(returnType))
-
     if (isConstructor) {
       options = asConstructor(analyzer, options)
+    } else {
+      options = options.copy(dataOutput = extractOptions.dataOutput.withType(returnType))
     }
     return options
   }
