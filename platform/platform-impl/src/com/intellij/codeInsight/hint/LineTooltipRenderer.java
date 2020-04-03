@@ -75,7 +75,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   @NotNull
   private static JPanel createMainPanel(@NotNull final HintHint hintHint,
-                                        @NotNull JComponent pane,
+                                        @NotNull JScrollPane pane,
                                         @NotNull JEditorPane editorPane,
                                         boolean newLayout,
                                         boolean highlightActions,
@@ -99,7 +99,12 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         editorPane.setSize(width - leftBorder - rightBorder - sideComponentsWidth, Math.max(1, size.height));
         int height;
         try {
-          height = getPreferredSize().height;
+          Dimension preferredSize = getPreferredSize();
+          height = preferredSize.height;
+          if (width < preferredSize.width) {
+            JScrollBar scrollBar = pane.getHorizontalScrollBar();
+            if (scrollBar != null) height += scrollBar.getPreferredSize().height;
+          }
         }
         finally {
           editorPane.setSize(size);
