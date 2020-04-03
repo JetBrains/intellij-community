@@ -128,7 +128,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (referent == null) return create(text);
     return readOnlyDocumentContent(project)
       .contextByReferent(referent)
-      .buildFromText(text, false);
+      .buildFromText(text, true);
   }
 
 
@@ -137,7 +137,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType) {
     return documentContent(project)
       .contextByFileType(fileType)
-      .buildFromText(text, false);
+      .buildFromText(text, true);
   }
 
   @NotNull
