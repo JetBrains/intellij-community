@@ -1,6 +1,8 @@
 *.pyc
 .DS_Store
 .gradle
+.idea/dictionaries/*.xml
+!.idea/dictionaries/adt.xml
 .idea/gradle_extensions.xml
 .idea/libraries/Gradle__*.xml
 .idea/shelf
