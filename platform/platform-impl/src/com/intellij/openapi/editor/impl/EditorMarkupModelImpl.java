@@ -270,6 +270,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     smallIconLabel.setVisible(false);
 
     JPanel statusPanel = new NonOpaquePanel();
+    statusPanel.setVisible(!myEditor.isOneLineMode());
     statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
     statusPanel.add(statusToolbar.getComponent());
     statusPanel.add(smallIconLabel);
