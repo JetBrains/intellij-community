@@ -4,17 +4,18 @@ package com.intellij.accessibility;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.User32Ex;
 import com.sun.jna.platform.win32.WinDef.BOOLByReference;
 import com.sun.jna.platform.win32.WinDef.UINT;
 
-public class AccessibilityUtils {
-
+public final class AccessibilityUtils {
   public static void enableScreenReaderSupportIfNecessary() {
-    if (GeneralSettings.isSupportScreenReadersOverridden()) return;
+    if (GeneralSettings.isSupportScreenReadersOverridden()) {
+      return;
+    }
 
     if (isScreenReaderDetected()) {
       AccessibilityUsageTrackerCollector.trigger(AccessibilityUsageTrackerCollector.SCREEN_READER_DETECTED);
@@ -29,14 +30,12 @@ public class AccessibilityUtils {
   }
 
   public static boolean isScreenReaderDetected() {
-
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       return isWindowsScreenReaderEnabled();
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       return isMacVoiceOverEnabled();
     }
-
     return false;
   }
 

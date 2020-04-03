@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -21,6 +21,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -198,76 +203,90 @@ public final class EnvironmentUtil {
      * @param timeoutMillis the time-out (in milliseconds) for reading environment variables.
      * @see #ShellEnvReader()
      */
-    public ShellEnvReader(final long timeoutMillis) {
+    public ShellEnvReader(long timeoutMillis) {
       myTimeoutMillis = timeoutMillis;
     }
 
-    protected @NotNull Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws IOException {
-      File reader = PathManager.findBinFileWithException("printenv.py");
+    protected final @NotNull Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws IOException {
+      Path reader = PathManager.findBinFileWithException("printenv.py");
 
-      File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
+      Path envFile = Files.createTempFile("intellij-shell-env.", ".tmp");
       try {
         List<String> command = getShellProcessCommand();
-
         int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
         if (idx >= 0) {
           // if there is already a command append command to the end
-          command.set(idx + 1, command.get(idx + 1) + ";" + "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
+          command.set(idx + 1, command.get(idx + 1) + ";" + "'" + reader.toAbsolutePath() + "' '" + envFile.toAbsolutePath() + "'");
         }
         else {
           command.add(SHELL_COMMAND_ARGUMENT);
-          command.add("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
+          command.add("'" + reader.toAbsolutePath() + "' '" + envFile.toAbsolutePath() + "'");
         }
 
         LOG.info("loading shell env: " + String.join(" ", command));
         return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envFile).second;
       }
       finally {
-        FileUtil.delete(envFile);
+        try {
+          Files.delete(envFile);
+        }
+        catch (NoSuchFileException ignore) {
+        }
+        catch (IOException e) {
+          LOG.warn("Cannot delete temporary file", e);
+        }
       }
     }
 
-    public @NotNull Map<String, String> readBatEnv(@NotNull File batchFile, List<String> args) throws Exception {
+    public @NotNull Map<String, String> readBatEnv(@NotNull Path batchFile, List<String> args) throws Exception {
       return readBatOutputAndEnv(batchFile, args).second;
     }
 
-    protected @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
-      File envFile = FileUtil.createTempFile("intellij-cmd-env.", ".tmp", false);
+    protected @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull Path batchFile, List<String> args) throws Exception {
+      Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp");
       try {
         List<String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
         cl.add("call");
-        cl.add(batchFile.getPath());
+        cl.add(batchFile.toString());
         cl.addAll(args);
         cl.add("&&");
         cl.addAll(getReadEnvCommand());
-        cl.add(envFile.getPath());
+        cl.add(envFile.toString());
         cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
-
-        return runProcessAndReadOutputAndEnvs(cl, batchFile.getParentFile(), null, envFile);
+        return runProcessAndReadOutputAndEnvs(cl, batchFile.getParent(), null, envFile);
       }
       finally {
-        FileUtil.delete(envFile);
+        try {
+          Files.delete(envFile);
+        }
+        catch (NoSuchFileException ignore) {
+        }
+        catch (IOException e) {
+          LOG.warn("Cannot delete temporary file", e);
+        }
       }
     }
 
     private static @NotNull List<String> getReadEnvCommand() {
-      return Arrays.asList(FileUtil.toSystemDependentName(System.getProperty("java.home") + "/bin/java"),
+      return Arrays.asList(FileUtilRt.toSystemDependentName(System.getProperty("java.home") + "/bin/java"),
                            "-cp", PathManager.getJarPathForClass(ReadEnv.class),
                            ReadEnv.class.getCanonicalName());
     }
 
     protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                              @Nullable File workingDir,
+                                                                                              @Nullable Path workingDir,
                                                                                               @Nullable Map<String, String> scriptEnvironment,
-                                                                                              @NotNull File envFile) throws IOException {
+                                                                                              @NotNull Path envFile) throws IOException {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
       if (scriptEnvironment != null) {
         // we might need default environment for the process to launch correctly
         builder.environment().putAll(scriptEnvironment);
       }
-      if (workingDir != null) builder.directory(workingDir);
+      if (workingDir != null) {
+        builder.directory(workingDir.toFile());
+      }
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
@@ -275,7 +294,7 @@ public final class EnvironmentUtil {
       final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
       gobbler.stop();
 
-      String lines = FileUtil.loadFile(envFile);
+      String lines = new String(Files.readAllBytes(envFile), StandardCharsets.UTF_8);
       if (exitCode != 0 || lines.isEmpty()) {
         throw new RuntimeException("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + gobbler.getText().trim());
       }
@@ -287,7 +306,7 @@ public final class EnvironmentUtil {
       if (StringUtilRt.isEmptyOrSpaces(shellScript)) {
         throw new RuntimeException("empty $SHELL");
       }
-      if (!new File(shellScript).canExecute()) {
+      if (!Files.isExecutable(Paths.get(shellScript))) {
         throw new RuntimeException("$SHELL points to a missing or non-executable file: " + shellScript);
       }
       return buildShellProcessCommand(shellScript, true, true, false);
@@ -327,7 +346,7 @@ public final class EnvironmentUtil {
     return commands;
   }
 
-  public static @NotNull Map<String, String> parseEnv(String... lines) {
+  public static @NotNull Map<String, String> parseEnv(String @NotNull[] lines) {
     Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<>();
@@ -350,7 +369,7 @@ public final class EnvironmentUtil {
     return newEnv;
   }
 
-  private static @NotNull Map<String, String> parseEnv(String text) {
+  private static @NotNull Map<String, String> parseEnv(@NotNull String text) {
     return parseEnv(text.split("\0"));
   }
 

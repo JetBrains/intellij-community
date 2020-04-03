@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,8 +37,7 @@ public final class ProcessListUtil {
     return result.toArray(ProcessInfo.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static List<ProcessInfo> doGetProcessList() {
+  private static @NotNull List<ProcessInfo> doGetProcessList() {
     List<ProcessInfo> result;
     if (SystemInfo.isWindows) {
       result = getProcessListUsingWinProcessListHelper();
@@ -70,16 +70,14 @@ public final class ProcessListUtil {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
-                                                      @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser) {
+  private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
+                                                                @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser) {
     return parseCommandOutput(command, parser, null);
   }
 
-  @Nullable
-  private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
-                                                      @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser,
-                                                      @Nullable Charset charset) {
+  private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
+                                                                @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser,
+                                                                @Nullable Charset charset) {
     String output;
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine(command);
@@ -102,8 +100,7 @@ public final class ProcessListUtil {
     return parser.fun(output);
   }
 
-  @Nullable
-  private static List<ProcessInfo> getProcessListOnUnix() {
+  private static @Nullable List<ProcessInfo> getProcessListOnUnix() {
     File proc = new File("/proc");
 
     File[] processes = proc.listFiles();
@@ -149,8 +146,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  @Nullable
-  private static List<ProcessInfo> getProcessListOnMac() {
+  private static @Nullable List<ProcessInfo> getProcessListOnMac() {
     // In order to correctly determine executable file name and retrieve arguments from the command line
     // we need first to get the executable from 'comm' parameter, and then subtract it from the 'command' parameter.
     // Example:
@@ -162,8 +158,7 @@ public final class ProcessListUtil {
                                                         full -> parseMacOutput(commandOnly, full)));
   }
 
-  @Nullable
-  public static List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
+  public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
@@ -188,8 +183,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  @Nullable
-  public static List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
+  public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
@@ -213,8 +207,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  @Nullable
-  private static List<MacProcessInfo> doParseMacOutput(String output) {
+  private static @Nullable List<MacProcessInfo> doParseMacOutput(String output) {
     List<MacProcessInfo> result = new ArrayList<>();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
@@ -268,13 +261,12 @@ public final class ProcessListUtil {
     }
   }
 
-  @Nullable
-  private static List<ProcessInfo> getProcessListUsingWinProcessListHelper() {
-    File exeFile = findWinProcessListHelperFile();
+  private static @Nullable List<ProcessInfo> getProcessListUsingWinProcessListHelper() {
+    Path exeFile = findWinProcessListHelperFile();
     if (exeFile == null) {
       return null;
     }
-    return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput, StandardCharsets.UTF_8);
+    return parseCommandOutput(Collections.singletonList(exeFile.toAbsolutePath().toString()), ProcessListUtil::parseWinProcessListHelperOutput, StandardCharsets.UTF_8);
   }
 
   private static void logErrorTestSafe(String message) {
@@ -286,8 +278,7 @@ public final class ProcessListUtil {
     }
   }
 
-  @Nullable
-  private static String unescapeString(@Nullable String str) {
+  private static @Nullable String unescapeString(@Nullable String str) {
     if (str == null) return null;
     StringBuilder builder = new StringBuilder();
     for (int index = 0; index < str.length(); index++) {
@@ -324,8 +315,7 @@ public final class ProcessListUtil {
     return builder.toString();
   }
 
-  @Nullable
-  private static String removePrefix(String str, String prefix) {
+  private static @Nullable String removePrefix(String str, String prefix) {
     if (str.startsWith(prefix)) {
       return str.substring(prefix.length());
     }
@@ -334,8 +324,7 @@ public final class ProcessListUtil {
     return null;
   }
 
-  @Nullable
-  static List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
     if (lines.length % 3 != 0) {
@@ -382,8 +371,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  @NotNull
-  private static String extractCommandLineArgs(@NotNull String fullCommandLine, @NotNull String executableName) {
+  private static @NotNull String extractCommandLineArgs(@NotNull String fullCommandLine, @NotNull String executableName) {
     List<String> commandLineList = StringUtil.splitHonorQuotes(fullCommandLine, ' ');
     if (commandLineList.isEmpty()) return "";
 
@@ -395,8 +383,7 @@ public final class ProcessListUtil {
     return "";
   }
 
-  @Nullable
-  private static File findWinProcessListHelperFile() {
+  private static @Nullable Path findWinProcessListHelperFile() {
     try {
       return PathManager.findBinFileWithException(WIN_PROCESS_LIST_HELPER_FILENAME);
     }
@@ -406,14 +393,12 @@ public final class ProcessListUtil {
     }
   }
 
-  @Nullable
-  static List<ProcessInfo> getProcessListUsingWindowsWMIC() {
+  static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline,ExecutablePath"),
-                              output -> parseWMICOutput(output));
+                              ProcessListUtil::parseWMICOutput);
   }
 
-  @Nullable
-  static List<ProcessInfo> parseWMICOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output) {
     List<ProcessInfo> result = new ArrayList<>();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
@@ -455,14 +440,12 @@ public final class ProcessListUtil {
     return result;
   }
 
-  @Nullable
-  static List<ProcessInfo> getProcessListUsingWindowsTaskList() {
+  static @Nullable List<ProcessInfo> getProcessListUsingWindowsTaskList() {
     return parseCommandOutput(Arrays.asList("tasklist.exe", "/fo", "csv", "/nh", "/v"),
-                              output -> parseListTasksOutput(output));
+                              ProcessListUtil::parseListTasksOutput);
   }
 
-  @Nullable
-  static List<ProcessInfo> parseListTasksOutput(@NotNull String output) {
+  static @Nullable List<ProcessInfo> parseListTasksOutput(@NotNull String output) {
     List<ProcessInfo> result = new ArrayList<>();
 
     CSVReader reader = new CSVReader(new StringReader(output));

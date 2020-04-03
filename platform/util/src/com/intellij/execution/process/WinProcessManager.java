@@ -15,8 +15,6 @@ import java.util.Objects;
 
 /**
  * Do not call this class directly - use {@link OSProcessUtil} instead.
- *
- * @author Alexey.Ushakov
  */
 public final class WinProcessManager {
   private static final Logger LOG = Logger.getInstance(WinProcessManager.class);

@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Disposer;
@@ -65,7 +64,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private static final String CONFIGURED_PROPERTY = "GeneralSettings.initiallyConfigured";
 
   public static GeneralSettings getInstance() {
-    return ServiceManager.getService(GeneralSettings.class);
+    return ApplicationManager.getApplication().getService(GeneralSettings.class);
   }
 
   public GeneralSettings() {

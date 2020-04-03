@@ -36,7 +36,6 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -246,8 +245,8 @@ public final class StartupUtil {
       Activity activity = StartUpMeasurer.startMainActivity("eua showing");
       boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
 
-      activity = activity.endAndStart("checking screen readers");
       if (agreementDialogWasShown) {
+        activity = activity.endAndStart("screen reader checking");
         runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, initUiTask);
       }
 
@@ -265,11 +264,8 @@ public final class StartupUtil {
           // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
           EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
         }
-        activity.end();
       }
-      else {
-        activity.end();
-      }
+      activity.end();
     }
 
     EdtInvocationManager oldEdtInvocationManager = null;
@@ -417,12 +413,9 @@ public final class StartupUtil {
       }
     }
 
-    if ("true".equals(System.getProperty("idea.64bit.check"))) {
-      if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
-        String message = "32-bit JVM is not supported. Please use a 64-bit version.";
-        Main.showMessage("Unsupported JVM", message, true);
-        return false;
-      }
+    if ("true".equals(System.getProperty("idea.64bit.check")) && !SystemInfo.is64Bit && PlatformUtils.isCidr()) {
+      Main.showMessage("Unsupported JVM", "32-bit JVM is not supported. Please use a 64-bit version.", true);
+      return false;
     }
 
     return true;
@@ -434,7 +427,7 @@ public final class StartupUtil {
   }
 
   private static void checkHiDPISettings() {
-    if (!SystemProperties.getBooleanProperty("hidpi", true)) {
+    if (!Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       // suppress JRE-HiDPI mode
       System.setProperty("sun.java2d.uiScale.enabled", "false");
     }
@@ -568,7 +561,7 @@ public final class StartupUtil {
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
-    if (SystemProperties.getBooleanProperty("intellij.log.stdout", true)) {
+    if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
     }
@@ -737,9 +730,8 @@ public final class StartupUtil {
   }
 
   private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> initUiTask) {
+    initUiTask.join();
     try {
-      initUiTask.join();
-
       if (!ourSystemPatched.get()) {
         EventQueue.invokeAndWait(() -> {
           if (!patchSystem(log)) {
