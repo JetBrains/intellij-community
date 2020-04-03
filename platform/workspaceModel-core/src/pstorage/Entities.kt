@@ -3,6 +3,7 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.ModifiableTypedEntity
+import com.intellij.workspace.api.ReferableTypedEntity
 import com.intellij.workspace.api.TypedEntity
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.*
@@ -10,15 +11,13 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
-internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
+abstract class PTypedEntity<E : TypedEntity> : ReferableTypedEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  open lateinit var id: PId<E>
-    internal set
+  internal open lateinit var id: PId<E>
 
-  open lateinit var snapshot: AbstractPEntityStorage
-    internal set
+  internal open lateinit var snapshot: AbstractPEntityStorage
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     if (this.javaClass != e.javaClass) return false
@@ -28,6 +27,12 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
       if (it.getter.call(this) != it.getter.call(e)) return false
     }
     return true
+  }
+
+  override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
+    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass) as ConnectionId<E, R>?
+    if (connectionId == null) return emptySequence()
+    return snapshot.extractChildren(connectionId, id)
   }
 
   override fun toString(): String = "${javaClass.simpleName}-:-$id"
@@ -46,7 +51,7 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
   override fun hashCode(): Int = id.hashCode()
 }
 
-internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEntity<T>(), ModifiableTypedEntity<T> {
+abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEntity<T>(), ModifiableTypedEntity<T> {
 
   internal lateinit var original: PEntityData<T>
   internal lateinit var diff: PEntityStorageBuilder
@@ -80,11 +85,11 @@ internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>)
   override fun toString(): String = arrayId.toString()
 }
 
-internal abstract class PEntityData<E : TypedEntity> {
+abstract class PEntityData<E : TypedEntity> {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  fun createEntity(snapshot: AbstractPEntityStorage): E {
+  internal fun createEntity(snapshot: AbstractPEntityStorage): E {
     val returnClass = ClassConversion.entityDataToEntity(this::class)
 
     val params = returnClass.primaryConstructor!!.parameters
@@ -99,7 +104,7 @@ internal abstract class PEntityData<E : TypedEntity> {
     return res
   }
 
-  fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
+  internal fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
     val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
     val primaryConstructor = returnClass.primaryConstructor!!
     primaryConstructor.isAccessible = true

@@ -106,6 +106,10 @@ internal sealed class AbstractRefsTable constructor(
   internal open val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntBiMap>
 ) {
 
+  fun <T : TypedEntity, SUBT : TypedEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT>? {
+    return oneToManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin } as ConnectionId<T, SUBT>?
+  }
+
   fun <T : TypedEntity> getChildren(
     parentId: Int, parentClass: Class<T>
   ): Map<ConnectionId<T, out TypedEntity>, AbstractIntIntMultiMap.IntSequence> {
