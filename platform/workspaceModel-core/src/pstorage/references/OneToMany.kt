@@ -1,27 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.api.pstorage
+package com.intellij.workspace.api.pstorage.references
 
+import com.intellij.workspace.api.pstorage.ConnectionId
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.PTypedEntity
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-internal sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> : ReadOnlyProperty<T, Sequence<SUBT>> {
+sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> : ReadOnlyProperty<T, Sequence<SUBT>> {
 
-  lateinit var connectionId: ConnectionId<T, SUBT>
+  internal lateinit var connectionId: ConnectionId<T, SUBT>
 
-  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-    private val childClass: KClass<SUBT>
-  ) : OneToMany<T, SUBT>() {
+  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(private val childClass: KClass<SUBT>) : OneToMany<T, SUBT>() {
     operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, Sequence<SUBT>> {
       connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, true)
       return this
     }
   }
 
-  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-    private val childClass: KClass<SUBT>
-  ) : OneToMany<T, SUBT>() {
+  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(private val childClass: KClass<SUBT>) : OneToMany<T, SUBT>() {
     operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, Sequence<SUBT>> {
       connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, false)
       return this
@@ -29,15 +28,13 @@ internal sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> 
   }
 
   override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
-    return thisRef.snapshot.extractChildren(connectionId, thisRef.id)
+    return thisRef.snapshot.extractOneToManyChildren(connectionId, thisRef.id)
   }
 }
 
 internal class ManyToOne private constructor() {
   internal class HardRef private constructor() {
-    class NotNull<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-      private val parentClass: KClass<T>
-    ) : ReadOnlyProperty<SUBT, T> {
+    class NotNull<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(private val parentClass: KClass<T>) : ReadOnlyProperty<SUBT, T> {
       lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T> {
@@ -45,12 +42,10 @@ internal class ManyToOne private constructor() {
         return this
       }
 
-      override fun getValue(thisRef: SUBT, property: KProperty<*>): T = thisRef.snapshot.extractParent(connectionId, thisRef.id)!!
+      override fun getValue(thisRef: SUBT, property: KProperty<*>): T = thisRef.snapshot.extractOneToManyParent(connectionId, thisRef.id)!!
     }
 
-    class Nullable<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-      private val parentClass: KClass<T>
-    ) : ReadOnlyProperty<SUBT, T?> {
+    class Nullable<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(private val parentClass: KClass<T>) : ReadOnlyProperty<SUBT, T?> {
       lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
@@ -58,13 +53,11 @@ internal class ManyToOne private constructor() {
         return this
       }
 
-      override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = thisRef.snapshot.extractParent(connectionId, thisRef.id)
+      override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = thisRef.snapshot.extractOneToManyParent(connectionId, thisRef.id)
     }
   }
 
-  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-    private val parentClass: KClass<T>
-  ) : ReadOnlyProperty<SUBT, T?> {
+  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(private val parentClass: KClass<T>) : ReadOnlyProperty<SUBT, T?> {
 
     lateinit var connectionId: ConnectionId<T, SUBT>
 
@@ -73,7 +66,7 @@ internal class ManyToOne private constructor() {
       return this
     }
 
-    override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = thisRef.snapshot.extractParent(connectionId, thisRef.id)
+    override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = thisRef.snapshot.extractOneToManyParent(connectionId, thisRef.id)
   }
 }
 
@@ -102,14 +95,14 @@ internal sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<
   }
 
   override fun getValue(thisRef: MODT, property: KProperty<*>): Sequence<SUBT> {
-    return thisRef.diff.extractChildren(connectionId, thisRef.id)
+    return thisRef.diff.extractOneToManyChildren(connectionId, thisRef.id)
   }
 
   override fun setValue(thisRef: MODT, property: KProperty<*>, value: Sequence<SUBT>) {
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    thisRef.diff.updateChildrenOfParent(connectionId, thisRef.id, value)
+    thisRef.diff.updateOneToManyChildrenOfParent(connectionId, thisRef.id, value)
   }
 }
 
@@ -127,14 +120,14 @@ internal class MutableManyToOne private constructor() {
       }
 
       override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
-        return thisRef.diff.extractParent(connectionId, thisRef.id)!!
+        return thisRef.diff.extractOneToManyParent(connectionId, thisRef.id)!!
       }
 
       override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
         if (!thisRef.modifiable.get()) {
           throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
         }
-        return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+        return thisRef.diff.updateOneToManyParentOfChild(connectionId, thisRef.id, value)
       }
     }
 
@@ -150,14 +143,14 @@ internal class MutableManyToOne private constructor() {
       }
 
       override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
-        return thisRef.diff.extractParent(connectionId, thisRef.id)
+        return thisRef.diff.extractOneToManyParent(connectionId, thisRef.id)
       }
 
       override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
         if (!thisRef.modifiable.get()) {
           throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
         }
-        return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+        return thisRef.diff.updateOneToManyParentOfChild(connectionId, thisRef.id, value)
       }
     }
   }
@@ -175,14 +168,14 @@ internal class MutableManyToOne private constructor() {
     }
 
     override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
-      return thisRef.diff.extractParent(connectionId, thisRef.id)
+      return thisRef.diff.extractOneToManyParent(connectionId, thisRef.id)
     }
 
     override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
       if (!thisRef.modifiable.get()) {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
-      return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+      return thisRef.diff.updateOneToManyParentOfChild(connectionId, thisRef.id, value)
     }
   }
 }

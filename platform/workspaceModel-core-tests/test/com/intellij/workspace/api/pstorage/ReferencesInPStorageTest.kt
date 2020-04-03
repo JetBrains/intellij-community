@@ -2,6 +2,9 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.references.ManyToOne
+import com.intellij.workspace.api.pstorage.references.MutableManyToOne
+import com.intellij.workspace.api.pstorage.references.OneToMany
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Test

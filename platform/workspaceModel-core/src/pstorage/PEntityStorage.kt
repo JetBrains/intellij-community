@@ -97,6 +97,7 @@ internal class PEntityStorageBuilder(
   private fun <T : TypedEntity> handleReferences(storage: AbstractPEntityStorage,
                                                  newEntity: PEntityData<T>,
                                                  clazz: Class<T>) {
+    // TODO: 03.04.2020 oneToMany references
     val childrenRefs = storage.refs.getOneToManyChildren(newEntity.id, clazz)
     for ((connection, childrenIds) in childrenRefs) {
       refs.updateOneToManyChildrenOfParent(connection, newEntity.id, childrenIds)
@@ -146,6 +147,7 @@ internal class PEntityStorageBuilder(
   private fun <T : TypedEntity> accumulateEntitiesToRemove(entityId: Int,
                                                            entityClass: Class<T>,
                                                            accumulator: MutableMap<Class<out TypedEntity>, MutableSet<Int>>) {
+    // TODO: 03.04.2020 OneToMany children
     val children = refs.getOneToManyHardChildReferencesOfParent(entityId, entityClass)
     for ((childClass, childrenIds) in children) {
       childrenIds.forEach { childId ->
@@ -162,20 +164,42 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
-                                                                              parentId: PId<T>,
-                                                                              children: Sequence<SUBT>) {
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
+                                                                                       parentId: PId<T>,
+                                                                                       children: Sequence<SUBT>) {
     refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, children)
   }
 
-  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateParentOfChild(connectionId: ConnectionId<T, SUBT>,
-                                                                           childId: PId<SUBT>,
-                                                                           parent: T?) {
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
+                                                                                   parentId: PId<T>,
+                                                                                   child: SUBT?) {
+    if (child != null) {
+      refs.updateOneToOneChildOfParent(connectionId, parentId.arrayId, child)
+    }
+    else {
+      refs.removeOneToOneRefByParent(connectionId, parentId.arrayId)
+    }
+  }
+
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>,
+                                                                                    childId: PId<SUBT>,
+                                                                                    parent: T?) {
     if (parent != null) {
       refs.updateOneToManyParentOfChild(connectionId, childId.arrayId, parent)
     }
     else {
       refs.removeOneToManyRefsByChild(connectionId, childId.arrayId)
+    }
+  }
+
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
+                                                                                   childId: PId<SUBT>,
+                                                                                   parent: T?) {
+    if (parent != null) {
+      refs.updateOneToOneParentOfChild(connectionId, childId.arrayId, parent)
+    }
+    else {
+      refs.removeOneToOneRefByChild(connectionId, childId.arrayId)
     }
   }
 
@@ -205,6 +229,7 @@ internal class PEntityStorageBuilder(
         if (!sourceFilter(oldData.entitySource)) continue
 
         // Currently persistent id entities must not have any parents
+        // TODO: 03.04.2020 oneToMany children
         if (refs.getOneToManyParents(oldData.id, clazz).isNotEmpty()) continue
 
         val persistentId = oldData.persistentId()
@@ -235,6 +260,7 @@ internal class PEntityStorageBuilder(
       for ((newData, clazz) in newEntities) {
         if (!sourceFilter(newData.entitySource)) continue
         // Currently persistent id entities must not have any parents
+        // TODO: 03.04.2020 oneToMany children
         if (replaceWith.refs.getOneToManyParents(newData.id, clazz).isNotEmpty()) continue
 
         val persistentId = newData.persistentId()
@@ -262,6 +288,7 @@ internal class PEntityStorageBuilder(
       // new nodes - children
 
       // TODO hash
+      // TODO: 03.04.2020 oneToMany children
       val newChildren = replaceWith.refs.getOneToManyChildren(newId.arrayId, newId.clazz.java)
         .map { (cId, seq) -> seq.map { PId(it, cId.childClass) } }
         .flatMap { it.asIterable() }
@@ -380,6 +407,7 @@ internal class PEntityStorageBuilder(
                                  storage: AbstractPEntityStorage,
                                  replaceMap: BiMap<PId<out TypedEntity>, PId<out TypedEntity>>,
                                  sourceFilter: (EntitySource) -> Boolean) {
+    // TODO: 03.04.2020 OneToMany parents
     for ((conId, thisId) in storage.refs.getOneToManyParents(id.arrayId, id.clazz.java)) {
       val parentId = PId(thisId, conId.parentClass)
       if (!replaceMap.containsValue(parentId)) {
@@ -424,6 +452,7 @@ internal class PEntityStorageBuilder(
     if (replaceMap[id1] == id2) return true
 
 
+    // TODO: 03.04.2020 OneToMany children
     val data1parents = storage1.refs.getOneToManyParents(id1.arrayId, id1.clazz.java).map { (conId, value) ->
       storage1.entityDataById(PId(value, conId.parentClass))!!
     }
@@ -462,6 +491,7 @@ internal class PEntityStorageBuilder(
       val id = queue.remove()
       block(id)
 
+      // TODO: 03.04.2020 OneToOneChildren
       for ((cid, seq) in storage.refs.getOneToManyChildren(id.arrayId, id.clazz.java)) {
         seq.forEach {
           queue.add(PId(it, cid.childClass))
@@ -681,12 +711,25 @@ internal sealed class AbstractPEntityStorage constructor(
     TODO("Not yet implemented")
   }
 
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractChildren(connectionId: ConnectionId<T, SUBT>, parentId: PId<T>): Sequence<SUBT> {
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyChildren(connectionId: ConnectionId<T, SUBT>,
+                                                                          parentId: PId<T>): Sequence<SUBT> {
     val entitiesList = entitiesByType[connectionId.childClass.java] ?: return emptySequence()
     return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { entitiesList[it]!!.createEntity(this) } ?: emptySequence()
   }
 
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractParent(connectionId: ConnectionId<T, SUBT>, childId: PId<SUBT>): T? {
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneChild(connectionId: ConnectionId<T, SUBT>,
+                                                                      parentId: PId<T>): SUBT? {
+    val entitiesList = entitiesByType[connectionId.childClass.java] ?: return null
+    return refs.getOneToOneChild(connectionId, parentId.arrayId) { entitiesList[it]!!.createEntity(this) }
+  }
+
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneParent(connectionId: ConnectionId<T, SUBT>,
+                                                                       childId: PId<SUBT>): T? {
+    val entitiesList = entitiesByType[connectionId.parentClass.java] ?: return null
+    return refs.getOneToOneParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) }
+  }
+
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyParent(connectionId: ConnectionId<T, SUBT>, childId: PId<SUBT>): T? {
     val entitiesList = entitiesByType[connectionId.parentClass.java] ?: return null
     return refs.getOneToManyParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) }
   }

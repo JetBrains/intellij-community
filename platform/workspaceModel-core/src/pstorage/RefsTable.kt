@@ -55,8 +55,33 @@ internal class MutableRefsTable(
     }
   }
 
+  private fun <T : TypedEntity, SUBT : TypedEntity> getOneToOneMutableMap(connectionId: ConnectionId<T, SUBT>): MutableIntIntUniqueBiMap {
+    val bimap = oneToOneContainer[connectionId] ?: run {
+      val empty = MutableIntIntUniqueBiMap()
+      oneToOneContainer[connectionId] = empty
+      return empty
+    }
+
+    return when (bimap) {
+      is MutableIntIntUniqueBiMap -> bimap
+      is IntIntUniqueBiMap -> {
+        val copy = bimap.toMutable()
+        oneToOneContainer[connectionId] = copy
+        copy
+      }
+    }
+  }
+
   fun <T : TypedEntity, SUBT : TypedEntity> removeOneToManyRefsByParent(connectionId: ConnectionId<T, SUBT>, parentId: Int) {
     getOneToManyMutableMap(connectionId).removeValue(parentId)
+  }
+
+  fun <T : TypedEntity, SUBT : TypedEntity> removeOneToOneRefByParent(connectionId: ConnectionId<T, SUBT>, parentId: Int) {
+    getOneToOneMutableMap(connectionId).removeValue(parentId)
+  }
+
+  fun <T : TypedEntity, SUBT : TypedEntity> removeOneToOneRefByChild(connectionId: ConnectionId<T, SUBT>, childId: Int) {
+    getOneToOneMutableMap(connectionId).removeKey(childId)
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeOneToManyRefsByChild(connectionId: ConnectionId<T, SUBT>, childId: Int) {
@@ -83,6 +108,22 @@ internal class MutableRefsTable(
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     childrenEntities.forEach { copiedMap.put(it.id.arrayId, parentId) }
+  }
+
+  fun <T : TypedEntity, SUBT : PTypedEntity<SUBT>> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
+                                                                               parentId: Int,
+                                                                               childEntity: SUBT) {
+    val copiedMap = getOneToOneMutableMap(connectionId)
+    copiedMap.removeValue(parentId)
+    copiedMap.put(childEntity.id.arrayId, parentId)
+  }
+
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
+                                                                                   childId: Int,
+                                                                                   parentEntity: T) {
+    val copiedMap = getOneToOneMutableMap(connectionId)
+    copiedMap.removeKey(childId)
+    copiedMap.put(childId, parentEntity.id.arrayId)
   }
 
   internal fun updateOneToManyParentOfChild(connectionId: ConnectionId<*, *>, childId: Int, parentId: Int) {
@@ -176,13 +217,31 @@ internal sealed class AbstractRefsTable constructor(
     return oneToManyContainer[connectionId]?.getKeys(parentId)
   }
 
+  fun <T : TypedEntity, SUBT : TypedEntity> getOneToOneChild(connectionId: ConnectionId<T, SUBT>,
+                                                             parentId: Int,
+                                                             transformer: (Int) -> SUBT?): SUBT? {
+    // TODO: 26.03.2020 What about missing values?
+    val bimap = oneToOneContainer[connectionId] ?: return null
+    if (!bimap.containsValue(parentId)) return null
+
+    return transformer(bimap.getKey(parentId))
+  }
+
+  fun <T : TypedEntity, SUBT : TypedEntity> getOneToOneParent(connectionId: ConnectionId<T, SUBT>,
+                                                              childId: Int,
+                                                              transformer: (Int) -> T?): T? {
+    val bimap = oneToOneContainer[connectionId] ?: return null
+    if (!bimap.containsKey(childId)) return null
+
+    return transformer(bimap.get(childId))
+  }
+
   fun <T : TypedEntity, SUBT : TypedEntity> getOneToManyParent(connectionId: ConnectionId<T, SUBT>,
                                                                childId: Int,
                                                                transformer: (Int) -> T?): T? {
     val bimap = oneToManyContainer[connectionId] ?: return null
     if (!bimap.containsKey(childId)) return null
 
-    val res = bimap.get(childId)
-    return transformer(res)
+    return transformer(bimap.get(childId))
   }
 }

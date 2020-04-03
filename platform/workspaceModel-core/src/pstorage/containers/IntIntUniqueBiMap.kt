@@ -13,6 +13,9 @@ class IntIntUniqueBiMap internal constructor(
   override fun copy(): IntIntUniqueBiMap = IntIntUniqueBiMap(key2Value.clone() as TIntIntHashMap, value2Key.clone() as TIntIntHashMap)
 
   override fun toImmutable(): IntIntUniqueBiMap = this
+
+  fun toMutable(): MutableIntIntUniqueBiMap = MutableIntIntUniqueBiMap(key2Value.clone() as TIntIntHashMap,
+                                                                       value2Key.clone() as TIntIntHashMap)
 }
 
 class MutableIntIntUniqueBiMap internal constructor(

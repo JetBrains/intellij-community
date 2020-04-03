@@ -3,6 +3,10 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.pstorage.references.ManyToOne
+import com.intellij.workspace.api.pstorage.references.MutableManyToOne
+import com.intellij.workspace.api.pstorage.references.MutableOneToMany
+import com.intellij.workspace.api.pstorage.references.OneToMany
 
 
 fun main() {
