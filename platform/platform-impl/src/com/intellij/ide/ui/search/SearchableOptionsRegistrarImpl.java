@@ -417,7 +417,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   @Override
-  public Set<String> getInnerPaths(SearchableConfigurable configurable, String option) {
+  public @NotNull Set<String> getInnerPaths(SearchableConfigurable configurable, String option) {
     loadHugeFilesIfNecessary();
     final Set<String> words = getProcessedWordsWithoutStemming(option);
     final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
