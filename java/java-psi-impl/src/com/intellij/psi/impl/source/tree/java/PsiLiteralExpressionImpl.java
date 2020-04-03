@@ -145,7 +145,7 @@ public class PsiLiteralExpressionImpl
 
   @Nullable
   public String getInnerText() {
-    return PsiLiteralUtil.getInnerText(this);
+    return PsiLiteralUtil.getStringLiteralContent(this);
   }
 
   @Nullable

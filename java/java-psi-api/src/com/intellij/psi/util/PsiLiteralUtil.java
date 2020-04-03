@@ -402,7 +402,7 @@ public class PsiLiteralUtil {
   }
 
   @Nullable
-  public static String getInnerText(PsiLiteralExpression expression) {
+  public static String getStringLiteralContent(PsiLiteralExpression expression) {
     String text = expression.getText();
     int textLength = text.length();
     if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {

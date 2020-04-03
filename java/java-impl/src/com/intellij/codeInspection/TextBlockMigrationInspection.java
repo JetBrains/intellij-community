@@ -152,7 +152,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Nullable
     private static String getLiteralText(@NotNull PsiLiteralExpression literal) {
-      if (!literal.isTextBlock() && !(literal.getType() instanceof PsiPrimitiveType)) return PsiLiteralUtil.getInnerText(literal);
+      if (!literal.isTextBlock() && !(literal.getType() instanceof PsiPrimitiveType)) return PsiLiteralUtil.getStringLiteralContent(literal);
       Object value = literal.getValue();
       return value == null ? null : value.toString();
     }
