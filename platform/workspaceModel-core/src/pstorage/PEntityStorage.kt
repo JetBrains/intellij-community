@@ -577,7 +577,9 @@ internal class PEntityStorageBuilder(
           }
         }
         is ChangeEntry.ReplaceEntity -> {
-          replaceEntityWithRefs(change.newData, change.id.clazz.java, diff)
+          if (this.entityDataById(change.id) != null) {
+            replaceEntityWithRefs(change.newData, change.id.clazz.java, diff)
+          }
         }
       }
     }
