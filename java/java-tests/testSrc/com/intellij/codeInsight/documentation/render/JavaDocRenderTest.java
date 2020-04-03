@@ -72,8 +72,8 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               " * @author bar\n" +
               " */\n" +
               "class C {}", true);
-    verifyItem(15, 52,"<table class='sections'><p><tr><td valign='top' class='section'><p>Author:</td><td valign='top'><p>foo  ,\n" +
-                      "bar</td></table>");
+    verifyItem(15, 52,"<table class='sections'><p><tr><td valign='top' class='section'><p>Author:</td>" +
+                      "<td valign='top'><p>foo, bar</td></table>");
   }
 
   private void configure(@NotNull String text, boolean enableRendering) {

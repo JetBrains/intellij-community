@@ -1489,9 +1489,11 @@ public class JavaDocInfoGenerator {
     if (tags.length > 0) {
       startHeaderSection(buffer, JavaBundle.message("javadoc.author")).append("<p>");
       for (int i = 0; i < tags.length; i++) {
-        generateValue(buffer, tags[i].getDataElements(), ourEmptyElementsProvider);
+        StringBuilder tmp = new StringBuilder();
+        generateValue(tmp, tags[i].getDataElements(), ourEmptyElementsProvider);
+        buffer.append(tmp.toString().trim());
         if (i < tags.length - 1) {
-          buffer.append(",\n");
+          buffer.append(", ");
         }
       }
       buffer.append(DocumentationMarkup.SECTION_END);
