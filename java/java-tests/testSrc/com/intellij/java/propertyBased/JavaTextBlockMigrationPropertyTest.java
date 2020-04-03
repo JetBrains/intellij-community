@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,6 +27,7 @@ import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.ImperativeCommand;
@@ -155,11 +155,11 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     String[] lines = new String[operands.length];
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
-      PsiLiteralExpressionImpl literal = ObjectUtils.tryCast(operand, PsiLiteralExpressionImpl.class);
+      PsiLiteralExpression literal = ObjectUtils.tryCast(operand, PsiLiteralExpression.class);
       if (literal == null) return null;
       String line;
-      if (literal.getLiteralElementType() == JavaTokenType.STRING_LITERAL) {
-        line = literal.getInnerText();
+      if (ExpressionUtils.hasStringType(literal) && !literal.isTextBlock()) {
+        line = PsiLiteralUtil.getStringLiteralContent(literal);
       }
       else {
         Object value = literal.getValue();
