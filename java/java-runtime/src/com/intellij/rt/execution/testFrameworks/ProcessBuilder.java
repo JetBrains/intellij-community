@@ -83,7 +83,7 @@ public class ProcessBuilder {
       if (isWindows) {
         int pos = parameter.indexOf('\"');
         if (pos >= 0) {
-          StringBuffer buffer = new StringBuffer(parameter);
+          StringBuilder buffer = new StringBuilder(parameter);
           do {
             buffer.insert(pos, '\\');
             pos += 2;

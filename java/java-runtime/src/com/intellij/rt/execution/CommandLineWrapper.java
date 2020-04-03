@@ -102,7 +102,7 @@ public class CommandLineWrapper {
     parameterString = parameterString.trim();
 
     List params = new ArrayList();
-    StringBuffer token = new StringBuffer(128);
+    StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
     boolean nonEmpty = false;
@@ -150,7 +150,7 @@ public class CommandLineWrapper {
    */
   private static AppData loadMainClassWithCustomLoader(File classpathFile, String[] args) throws Exception {
     List classpathUrls = new ArrayList();
-    StringBuffer classpathString = new StringBuffer();
+    StringBuilder classpathString = new StringBuilder();
     List pathElements = readLinesAndDeleteFile(classpathFile);
     for (int i = 0; i < pathElements.size(); i++) {
       String pathElement = (String)pathElements.get(i);

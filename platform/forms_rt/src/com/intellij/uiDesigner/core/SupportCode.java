@@ -19,7 +19,7 @@ public final class SupportCode {
 
     // Parsing is copied from Presentation.setText(String, boolean)
     int index = -1;
-    final StringBuffer plainText = new StringBuffer();
+    final StringBuilder plainText = new StringBuilder();
     for (int i = 0; i < textWithMnemonic.length(); i++) {
       char ch = textWithMnemonic.charAt(i);
       if (ch == '&') {

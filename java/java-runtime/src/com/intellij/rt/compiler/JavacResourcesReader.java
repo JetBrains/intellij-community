@@ -138,7 +138,7 @@ public class JavacResourcesReader {
       if (keys.length == 1) {
         return messagesBundle.getString(keys[0]);
       }
-      final StringBuffer buf = new StringBuffer();
+      final StringBuilder buf = new StringBuilder();
       for (int idx = 0; idx < keys.length; idx++) {
         buf.append(messagesBundle.getString(keys[idx]));
       }

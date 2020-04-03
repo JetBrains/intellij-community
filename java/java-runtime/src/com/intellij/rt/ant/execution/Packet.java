@@ -21,7 +21,7 @@ public class Packet extends PacketWriter {
   public static final int CODE_LENGTH = 2;
 
   public static String encode(String packet) {
-    StringBuffer buffer = new StringBuffer(packet.length());
+    StringBuilder buffer = new StringBuilder(packet.length());
     for (int i = 0; i < packet.length(); i++) {
       char chr = packet.charAt(i);
       if (chr == ourSpecialSymbol) {
