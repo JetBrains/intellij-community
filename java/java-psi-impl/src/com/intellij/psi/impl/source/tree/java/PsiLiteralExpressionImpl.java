@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.text.LiteralFormatUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +107,7 @@ public class PsiLiteralExpressionImpl
     }
 
     if (type == JavaTokenType.STRING_LITERAL) {
-      return internedParseStringCharacters(getInnerText());
+      return internedParseStringCharacters(PsiLiteralUtil.getStringLiteralContent(this));
     }
     if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
       return internedParseStringCharacters(PsiLiteralUtil.getTextBlockText(this));
@@ -143,6 +144,11 @@ public class PsiLiteralExpressionImpl
     return null;
   }
 
+  /**
+   * @deprecated use {@link PsiLiteralUtil#getStringLiteralContent(PsiLiteralExpression)} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Nullable
   public String getInnerText() {
     return PsiLiteralUtil.getStringLiteralContent(this);
