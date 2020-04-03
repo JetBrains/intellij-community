@@ -451,7 +451,7 @@ public class PsiLiteralUtil {
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       if (line.length() > 0) {
-        sb.append(trimTrailingSpaces(line.substring(prefix)));
+        sb.append(trimTrailingWhitespace(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
         sb.append('\n');
@@ -461,9 +461,9 @@ public class PsiLiteralUtil {
   }
 
   @NotNull
-  private static String trimTrailingSpaces(@NotNull String line) {
+  private static String trimTrailingWhitespace(@NotNull String line) {
     int index = line.length() - 1;
-    while (index >= 0 && line.charAt(index) == ' ') index--;
+    while (index >= 0 && Character.isWhitespace(line.charAt(index))) index--;
     if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
     return line.substring(0, index + 1);
   }
@@ -595,7 +595,7 @@ public class PsiLiteralUtil {
     private static int findLineSuffixLength(@NotNull String line, boolean isLastLine) {
       if (isLastLine) return 0;
       int lastIdx = line.length() - 1;
-      for (int i = lastIdx; i >= 0; i--) if (line.charAt(i) != ' ') return lastIdx - i;
+      for (int i = lastIdx; i >= 0; i--) if (!Character.isWhitespace(line.charAt(i))) return lastIdx - i;
       return 0;
     }
 
