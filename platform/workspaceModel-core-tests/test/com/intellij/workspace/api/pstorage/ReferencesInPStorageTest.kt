@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.EntityReference
-import com.intellij.workspace.api.SampleEntitySource
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.*
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -17,7 +15,7 @@ internal class PChildEntity(
   val childProperty: String,
   val dataClass: PDataClass?
 ) : PTypedEntity<PChildEntity>() {
-  val parent: PParentEntity by ManyToOne.HardRef(PParentEntity::class)
+  val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
 }
 
 internal class PNoDataChildEntityData : PEntityData<PNoDataChildEntity>() {
@@ -27,14 +25,14 @@ internal class PNoDataChildEntityData : PEntityData<PNoDataChildEntity>() {
 internal class PNoDataChildEntity(
   val childProperty: String
 ) : PTypedEntity<PNoDataChildEntity>() {
-  val parent: PParentEntity by ManyToOne.HardRef(PParentEntity::class)
+  val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
 }
 
 internal class PChildChildEntityData : PEntityData<PChildChildEntity>()
 
 internal class PChildChildEntity : PTypedEntity<PChildChildEntity>() {
-  val parent1: PParentEntity by ManyToOne.HardRef(PParentEntity::class)
-  val parent2: PChildEntity by ManyToOne.HardRef(PChildEntity::class)
+  val parent1: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
+  val parent2: PChildEntity by ManyToOne.HardRef.NotNull(PChildEntity::class)
 }
 
 internal class PParentEntityData : PEntityData<PParentEntity>() {
@@ -48,24 +46,41 @@ internal class PParentEntity(
   val children: Sequence<PChildEntity> by OneToMany.HardRef(PChildEntity::class)
 
   val noDataChildren: Sequence<PNoDataChildEntity> by OneToMany.HardRef(PNoDataChildEntity::class)
+
+  val optionalChildren: Sequence<PChildWithOptionalParentEntity> by OneToMany.HardRef(PChildWithOptionalParentEntity::class)
 }
 
 internal data class PDataClass(val stringProperty: String, val parent: EntityReference<PParentEntity>)
 
+internal class PChildWithOptionalParentEntityData : PEntityData<PChildWithOptionalParentEntity>() {
+  lateinit var childProperty: String
+}
+
+internal class PChildWithOptionalParentEntity(
+  val childProperty: String
+) : PTypedEntity<PChildWithOptionalParentEntity>() {
+  val optionalParent: PParentEntity? by ManyToOne.HardRef.Nullable(PParentEntity::class)
+}
+
+private class ModifiablePChildWithOptionalParentEntity : PModifiableTypedEntity<PChildWithOptionalParentEntity>() {
+  var optionalParent: PParentEntity? by MutableManyToOne.HardRef.Nullable(PChildWithOptionalParentEntity::class, PParentEntity::class)
+  var childProperty: String by EntityDataDelegation()
+}
+
 private class ModifiablePChildEntity : PModifiableTypedEntity<PChildEntity>() {
   var childProperty: String by EntityDataDelegation()
   var dataClass: PDataClass? by EntityDataDelegation()
-  var parent: PParentEntity by MutableManyToOne.HardRef(PChildEntity::class, PParentEntity::class)
+  var parent: PParentEntity by MutableManyToOne.HardRef.NotNull(PChildEntity::class, PParentEntity::class)
 }
 
 private class ModifiablePNoDataChildEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: PParentEntity by MutableManyToOne.HardRef(PNoDataChildEntity::class, PParentEntity::class)
+  var parent: PParentEntity by MutableManyToOne.HardRef.NotNull(PNoDataChildEntity::class, PParentEntity::class)
 }
 
 private class ModifiablePChildChildEntity : PModifiableTypedEntity<PChildChildEntity>() {
-  var parent1: PParentEntity by MutableManyToOne.HardRef(PChildChildEntity::class, PParentEntity::class)
-  var parent2: PChildEntity by MutableManyToOne.HardRef(PChildChildEntity::class, PChildEntity::class)
+  var parent1: PParentEntity by MutableManyToOne.HardRef.NotNull(PChildChildEntity::class, PParentEntity::class)
+  var parent2: PChildEntity by MutableManyToOne.HardRef.NotNull(PChildChildEntity::class, PChildEntity::class)
 }
 
 private class ModifiablePParentEntity : PModifiableTypedEntity<PParentEntity>() {
@@ -76,6 +91,14 @@ internal fun TypedEntityStorageBuilder.addPParentEntity(parentProperty: String =
                                                         source: SampleEntitySource = SampleEntitySource("test")) =
   addEntity(ModifiablePParentEntity::class.java, source) {
     this.parentProperty = parentProperty
+  }
+
+internal fun TypedEntityStorageBuilder.addPChildWithOptionalParentEntity(parentEntity: PParentEntity?,
+                                                                         childProperty: String = "child",
+                                                                         source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiablePChildWithOptionalParentEntity::class.java, source) {
+    this.optionalParent = parentEntity
+    this.childProperty = childProperty
   }
 
 internal fun TypedEntityStorageBuilder.addPChildEntity(parentEntity: PParentEntity = addPParentEntity(),
@@ -385,5 +408,26 @@ class ReferencesInPStorageTest {
     assertEquals("parent", snapshot.singlePParent().parentProperty)
     assertEquals(null, snapshot.singlePChild().dataClass)
     assertEquals(parent2, builder.singlePChild().dataClass!!.parent.resolve(builder))
+  }
+
+  @Test
+  fun `modify optional parent property`() {
+    val builder = PEntityStorageBuilder.create()
+    val child = builder.addPChildWithOptionalParentEntity(null)
+    Assert.assertNull(child.optionalParent)
+    val newParent = builder.addPParentEntity()
+    assertEquals(emptyList<PChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
+    val newChild = builder.modifyEntity(ModifiablePChildWithOptionalParentEntity::class.java, child) {
+      optionalParent = newParent
+    }
+    builder.assertConsistency()
+    assertEquals(newParent, newChild.optionalParent)
+    assertEquals(newChild, newParent.optionalChildren.single())
+
+    val veryNewChild = builder.modifyEntity(ModifiablePChildWithOptionalParentEntity::class.java, newChild) {
+      optionalParent = null
+    }
+    Assert.assertNull(veryNewChild.optionalParent)
+    assertEquals(emptyList<PChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
   }
 }

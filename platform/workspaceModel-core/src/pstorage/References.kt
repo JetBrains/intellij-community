@@ -33,20 +33,33 @@ internal sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> 
   }
 }
 
-internal sealed class ManyToOne {
+internal class ManyToOne private constructor() {
+  internal class HardRef private constructor() {
+    class NotNull<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+      private val parentClass: KClass<T>
+    ) : ReadOnlyProperty<SUBT, T> {
+      lateinit var connectionId: ConnectionId<T, SUBT>
 
-  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-    private val parentClass: KClass<T>
-  ) : ReadOnlyProperty<SUBT, T> {
+      operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T> {
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true)
+        return this
+      }
 
-    lateinit var connectionId: ConnectionId<T, SUBT>
-
-    operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T> {
-      connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true)
-      return this
+      override fun getValue(thisRef: SUBT, property: KProperty<*>): T = thisRef.snapshot.extractParent(connectionId, thisRef.id)!!
     }
 
-    override fun getValue(thisRef: SUBT, property: KProperty<*>): T = thisRef.snapshot.extractParent(connectionId, thisRef.id)!!
+    class Nullable<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+      private val parentClass: KClass<T>
+    ) : ReadOnlyProperty<SUBT, T?> {
+      lateinit var connectionId: ConnectionId<T, SUBT>
+
+      operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true)
+        return this
+      }
+
+      override fun getValue(thisRef: SUBT, property: KProperty<*>): T? = thisRef.snapshot.extractParent(connectionId, thisRef.id)
+    }
   }
 
   class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
@@ -100,29 +113,52 @@ internal sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<
   }
 }
 
-internal sealed class MutableManyToOne {
+internal class MutableManyToOne private constructor() {
+  internal class HardRef private constructor() {
+    class NotNull<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
+      private val childClass: KClass<SUBT>,
+      private val parentClass: KClass<T>
+    ) : ReadWriteProperty<MODSUBT, T> {
+      lateinit var connectionId: ConnectionId<T, SUBT>
 
-  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
-    private val childClass: KClass<SUBT>,
-    private val parentClass: KClass<T>
-  ) : ReadWriteProperty<MODSUBT, T> {
-
-    lateinit var connectionId: ConnectionId<T, SUBT>
-
-    operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T> {
-      connectionId = ConnectionId.create(parentClass, childClass, true)
-      return this
-    }
-
-    override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
-      return thisRef.diff.extractParent(connectionId, thisRef.id)!!
-    }
-
-    override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
-      if (!thisRef.modifiable.get()) {
-        throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+      operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T> {
+        connectionId = ConnectionId.create(parentClass, childClass, true)
+        return this
       }
-      return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+
+      override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
+        return thisRef.diff.extractParent(connectionId, thisRef.id)!!
+      }
+
+      override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
+        if (!thisRef.modifiable.get()) {
+          throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+        }
+        return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+      }
+    }
+
+    class Nullable<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
+      private val childClass: KClass<SUBT>,
+      private val parentClass: KClass<T>
+    ) : ReadWriteProperty<MODSUBT, T?> {
+      lateinit var connectionId: ConnectionId<T, SUBT>
+
+      operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
+        connectionId = ConnectionId.create(parentClass, childClass, true)
+        return this
+      }
+
+      override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
+        return thisRef.diff.extractParent(connectionId, thisRef.id)
+      }
+
+      override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
+        if (!thisRef.modifiable.get()) {
+          throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+        }
+        return thisRef.diff.updateParentOfChild(connectionId, thisRef.id, value)
+      }
     }
   }
 

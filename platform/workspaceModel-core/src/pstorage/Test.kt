@@ -7,19 +7,19 @@ import com.intellij.workspace.api.TypedEntityStorageBuilder
 
 fun main() {
   val pStoreBuilder = PEntityStorageBuilder.create()
-  val createdEntity = pStoreBuilder.addEntity(PFolderModifiableEntity::class.java, MySource) {
+  val createdEntity = pStoreBuilder.addEntity(ModifiablePFolderEntity::class.java, MySource) {
     this.id
     this.data = "xxxx"
   }
-  pStoreBuilder.addEntity(PSubFolderModifiableEntity::class.java, MySource) {
+  pStoreBuilder.addEntity(ModifiablePSubFolderEntity::class.java, MySource) {
     this.data = "XYZ"
     this.parent = createdEntity
   }
-  pStoreBuilder.addEntity(PSubFolderModifiableEntity::class.java, MySource) {
+  pStoreBuilder.addEntity(ModifiablePSubFolderEntity::class.java, MySource) {
     this.data = "XYZ2"
     this.parent = createdEntity
   }
-  pStoreBuilder.addEntity(PSoftSubFolderModifiableEntity::class.java, MySource) {
+  pStoreBuilder.addEntity(ModifiablePSoftSubFolderEntity::class.java, MySource) {
     this.parent = createdEntity
   }
 
@@ -63,23 +63,23 @@ internal class PSoftSubFolderEntity : PTypedEntity<PSoftSubFolderEntity>() {
 internal class PSubFolderEntity(
   val data: String
 ) : PTypedEntity<PSubFolderEntity>() {
-  val parent: PFolderEntity? by ManyToOne.HardRef(PFolderEntity::class)
+  val parent: PFolderEntity? by ManyToOne.HardRef.Nullable(PFolderEntity::class)
 }
 
-internal class PFolderModifiableEntity : PModifiableTypedEntity<PFolderEntity>() {
+internal class ModifiablePFolderEntity : PModifiableTypedEntity<PFolderEntity>() {
   var data: String by EntityDataDelegation()
 
   var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(PFolderEntity::class, PSubFolderEntity::class)
   var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(PFolderEntity::class, PSoftSubFolderEntity::class)
 }
 
-internal class PSubFolderModifiableEntity : PModifiableTypedEntity<PSubFolderEntity>() {
+internal class ModifiablePSubFolderEntity : PModifiableTypedEntity<PSubFolderEntity>() {
   var data: String by EntityDataDelegation()
 
-  var parent: PFolderEntity by MutableManyToOne.HardRef(PSubFolderEntity::class, PFolderEntity::class)
+  var parent: PFolderEntity by MutableManyToOne.HardRef.NotNull(PSubFolderEntity::class, PFolderEntity::class)
 }
 
-internal class PSoftSubFolderModifiableEntity : PModifiableTypedEntity<PSoftSubFolderEntity>() {
+internal class ModifiablePSoftSubFolderEntity : PModifiableTypedEntity<PSoftSubFolderEntity>() {
   var parent: PFolderEntity? by MutableManyToOne.SoftRef(PSoftSubFolderEntity::class, PFolderEntity::class)
 }
 
