@@ -67,7 +67,7 @@ class ExternalSystemRunConfigurationJavaExtensionTest : JavaProjectTestCase() {
 
       override fun attachToProcess(configuration: RunConfigurationBase<*>, handler: ProcessHandler, runnerSettings: RunnerSettings?) {
         // 'attachToProcess' is called after 'updateJavaParameters'
-        fail("Should note be here")
+        fail("Should not be here")
       }
     }
 
@@ -76,12 +76,12 @@ class ExternalSystemRunConfigurationJavaExtensionTest : JavaProjectTestCase() {
       override fun <T : RunConfigurationBase<*>?> updateJavaParameters(configuration: T,
                                                                        params: JavaParameters,
                                                                        runnerSettings: RunnerSettings?) {
-        fail("Should note be here")
+        fail("Should not be here")
       }
 
 
       override fun attachToProcess(configuration: RunConfigurationBase<*>, handler: ProcessHandler, runnerSettings: RunnerSettings?) {
-        fail("Should note be here")
+        fail("Should not be here")
       }
     }
 
