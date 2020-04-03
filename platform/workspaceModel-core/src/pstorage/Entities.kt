@@ -15,21 +15,20 @@ import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 
 internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
-  internal lateinit var entitySourceImpl: EntitySource
-  override val entitySource: EntitySource by lazy { entitySourceImpl }
+  override lateinit var entitySource: EntitySource
+    internal set
 
-  lateinit var idImpl: PId<E>
-  open val id: PId<E> by lazy { idImpl }
+  open lateinit var id: PId<E>
+    internal set
 
-  lateinit var snapshotImpl: AbstractPEntityStorage
-  open val snapshot: AbstractPEntityStorage by lazy { snapshotImpl }
+  open lateinit var snapshot: AbstractPEntityStorage
+    internal set
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     if (this.javaClass != e.javaClass) return false
 
     this::class.memberProperties.forEach {
       if (it.name == PTypedEntity<*>::id.name) return@forEach
-      if (it.name == PTypedEntity<*>::idImpl.name) return@forEach
       if (it.getter.call(this) != it.getter.call(e)) return false
     }
     return true
@@ -56,7 +55,11 @@ internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEnti
   internal lateinit var original: PEntityData<T>
   internal lateinit var diff: PEntityStorageBuilder
 
-  override val id: PId<T> by lazy { PId(original.id, getEntityClass()) }
+  override lateinit var id: PId<T>
+    internal set
+
+  override lateinit var entitySource: EntitySource
+    internal set
 
   internal val modifiable = ThreadLocal.withInitial { false }
 
@@ -71,8 +74,6 @@ internal abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEnti
   }
 
   internal fun getEntityClass(): KClass<T> = getEntityClass(this.javaClass.kotlin).kotlin
-
-  override val entitySource by lazy { original.entitySource }
 
   companion object {
     fun <M : ModifiableTypedEntity<T>, T : TypedEntity> getEntityClass(clazz: KClass<M>): Class<T> {
@@ -105,9 +106,9 @@ internal abstract class PEntityData<E : TypedEntity> {
         if (param.type.isList()) ArrayList(value as List<*>) else value
       }.toMutableMap()
     val res = returnClass.primaryConstructor!!.callBy(params)
-    (res as PTypedEntity<E>).entitySourceImpl = entitySource
-    (res as PTypedEntity<E>).idImpl = PId(this::class.memberProperties.first { it.name == "id" }.getter.call(this) as Int, returnClass)
-    (res as PTypedEntity<E>).snapshotImpl = snapshot
+    (res as PTypedEntity<E>).entitySource = entitySource
+    (res as PTypedEntity<E>).id = PId(this::class.memberProperties.first { it.name == "id" }.getter.call(this) as Int, returnClass)
+    (res as PTypedEntity<E>).snapshot = snapshot
     return res
   }
 
@@ -121,6 +122,8 @@ internal abstract class PEntityData<E : TypedEntity> {
     res as PModifiableTypedEntity
     res.original = this
     res.diff = diff
+    res.id = PId(this.id, res.getEntityClass())
+    res.entitySource = this.entitySource
     return res
   }
 
