@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,25 +36,18 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
   }
 
   @NotNull
-  public static TextRange getValueRange(@NotNull PsiLiteralExpression element) {
-    int length = element.getTextLength();
-    boolean isQuoted;
-    if (element instanceof PsiLiteralExpressionImpl) {
-      // avoid calling getValue(): it allocates new string, it returns null for invalid escapes
-      IElementType type = ((PsiLiteralExpressionImpl)element).getLiteralElementType();
-      if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-        final String text = element.getText();
-        int startOffset = findBlockStart(text);
-        return startOffset < 0
-               ? new TextRange(0, length)
-               : new TextRange(startOffset, length - (text.endsWith("\"\"\"") ? 3 : 0));
-      }
-      isQuoted = type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.CHARACTER_LITERAL;
+  public static TextRange getValueRange(@NotNull PsiLiteralExpression expression) {
+    int length = expression.getTextLength();
+    if (expression.isTextBlock()) {
+      final String text = expression.getText();
+      int startOffset = findBlockStart(text);
+      return startOffset < 0
+             ? new TextRange(0, length)
+             : new TextRange(startOffset, length - (text.endsWith("\"\"\"") ? 3 : 0));
     }
-    else {
-      Object value = element.getValue();
-      isQuoted = value instanceof String || value instanceof Character;
-    }
+    // avoid calling PsiLiteralExpression.getValue(): it allocates new string, it returns null for invalid escapes
+    final PsiType type = expression.getType();
+    boolean isQuoted = PsiType.CHAR.equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
   }
 
