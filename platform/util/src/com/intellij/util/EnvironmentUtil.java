@@ -63,13 +63,13 @@ public final class EnvironmentUtil {
   private EnvironmentUtil() { }
 
   @ApiStatus.Internal
-  public static synchronized CompletableFuture<Map<String, String>> loadShellEnvironment(boolean macEnvUnlocked) {
+  public static synchronized CompletableFuture<Map<String, String>> loadEnvironment(boolean loadShellEnvironment) {
     CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
     if (getter != null) {
       return getter;
     }
 
-    if (macEnvUnlocked && SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.fix.mac.env", "true"))) {
+    if (loadShellEnvironment && SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.fix.mac.env", "true"))) {
       getter = CompletableFuture.supplyAsync(() -> {
         try {
           return unmodifiableMap(setCharsetVar(getShellEnv()));
@@ -114,7 +114,7 @@ public final class EnvironmentUtil {
     try {
       CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
       if (getter == null) {
-        getter = loadShellEnvironment(false);
+        getter = loadEnvironment(false);
       }
       return getter.join();
     }
@@ -130,8 +130,7 @@ public final class EnvironmentUtil {
    *
    * @see #getEnvironmentMap()
    */
-  @Nullable
-  public static String getValue(@NonNls @NotNull String name) {
+  public static @Nullable String getValue(@NonNls @NotNull String name) {
     return getEnvironmentMap().get(name);
   }
 
@@ -180,8 +179,7 @@ public final class EnvironmentUtil {
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
-  @NotNull
-  private static Map<String, String> getShellEnv() throws IOException {
+  private static @NotNull Map<String, String> getShellEnv() throws IOException {
     return new ShellEnvReader().readShellEnv();
   }
 
@@ -235,13 +233,11 @@ public final class EnvironmentUtil {
       }
     }
 
-    @NotNull
-    public Map<String, String> readBatEnv(@NotNull File batchFile, List<String> args) throws Exception {
+    public @NotNull Map<String, String> readBatEnv(@NotNull File batchFile, List<String> args) throws Exception {
       return readBatOutputAndEnv(batchFile, args).second;
     }
 
-    @NotNull
-    protected Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
+    protected @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
       File envFile = FileUtil.createTempFile("intellij-cmd-env.", ".tmp", false);
       try {
         List<String> cl = new ArrayList<>();
@@ -262,18 +258,16 @@ public final class EnvironmentUtil {
       }
     }
 
-    @NotNull
-    private static List<String> getReadEnvCommand() {
+    private static @NotNull List<String> getReadEnvCommand() {
       return Arrays.asList(FileUtil.toSystemDependentName(System.getProperty("java.home") + "/bin/java"),
                            "-cp", PathManager.getJarPathForClass(ReadEnv.class),
                            ReadEnv.class.getCanonicalName());
     }
 
-    @NotNull
-    protected final Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                     @Nullable File workingDir,
-                                                                                     @Nullable Map<String, String> scriptEnvironment,
-                                                                                     @NotNull File envFile) throws IOException {
+    protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+                                                                                              @Nullable File workingDir,
+                                                                                              @Nullable Map<String, String> scriptEnvironment,
+                                                                                              @NotNull File envFile) throws IOException {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
       if (scriptEnvironment != null) {
         // we might need default environment for the process to launch correctly
@@ -294,8 +288,7 @@ public final class EnvironmentUtil {
       return Pair.create(gobbler.getText(), parseEnv(lines));
     }
 
-    @NotNull
-    protected List<String> getShellProcessCommand() {
+    protected @NotNull List<String> getShellProcessCommand() {
       String shellScript = getShell();
       if (StringUtil.isEmptyOrSpaces(shellScript)) {
         throw new RuntimeException("empty $SHELL");
@@ -306,8 +299,7 @@ public final class EnvironmentUtil {
       return buildShellProcessCommand(shellScript, true, true, false);
     }
 
-    @Nullable
-    protected String getShell() {
+    protected @Nullable String getShell() {
       return System.getenv(SHELL_VARIABLE_NAME);
     }
   }
@@ -322,8 +314,7 @@ public final class EnvironmentUtil {
    * @return list of commands for starting a process, e.g. {@code /bin/bash -l -i -c}
    */
   @ApiStatus.Experimental
-  @NotNull
-  public static List<String> buildShellProcessCommand(@NotNull String shellScript,
+  public static @NotNull List<String> buildShellProcessCommand(@NotNull String shellScript,
                                                       boolean isLogin,
                                                       boolean isInteractive,
                                                       boolean isCommand) {
@@ -342,8 +333,7 @@ public final class EnvironmentUtil {
     return commands;
   }
 
-  @NotNull
-  public static Map<String, String> parseEnv(String... lines) {
+  public static @NotNull Map<String, String> parseEnv(String... lines) {
     Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<>();
@@ -366,8 +356,7 @@ public final class EnvironmentUtil {
     return newEnv;
   }
 
-  @NotNull
-  private static Map<String, String> parseEnv(String text) {
+  private static @NotNull Map<String, String> parseEnv(String text) {
     return parseEnv(text.split("\0"));
   }
 
@@ -409,8 +398,7 @@ public final class EnvironmentUtil {
    * @param timeoutMillis the time-out (in milliseconds) for {@code process} to terminate.
    * @return the exit code of the process, or {@code null} if the time-out expires or {@code timeoutMillis} is zero or negative.
    */
-  @Nullable
-  private static Integer waitFor(@NotNull Process process, final long timeoutMillis) {
+  private static @Nullable Integer waitFor(@NotNull Process process, final long timeoutMillis) {
     long stop = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
     while (System.nanoTime() < stop) {
       TimeoutUtil.sleep(100);
@@ -441,8 +429,7 @@ public final class EnvironmentUtil {
     return false;
   }
 
-  @NotNull
-  public static String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
+  public static @NotNull String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
     Locale locale = Locale.getDefault();
     String language = locale.getLanguage();
     String country = locale.getCountry();
@@ -526,9 +513,8 @@ public final class EnvironmentUtil {
       start("stdout/stderr streams of shell env loading process");
     }
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return AppExecutorUtil.getAppExecutorService().submit(runnable);
     }
 
@@ -537,8 +523,7 @@ public final class EnvironmentUtil {
       myBuffer.append(text);
     }
 
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
       return myBuffer.toString();
     }
   }
