@@ -55,15 +55,11 @@ public class ExternalSystemRunConfigurationJavaExtension implements ExternalSyst
   public void updateVMParameters(@NotNull ExternalSystemRunConfiguration configuration,
                                  @NotNull SimpleJavaParameters javaParameters,
                                  @Nullable RunnerSettings settings,
-                                 @NotNull Executor executor) {
+                                 @NotNull Executor executor) throws ExecutionException {
     final JavaParameters extensionsJP = new JavaParameters();
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      try {
-        ext.updateJavaParameters(configuration, extensionsJP, settings, executor);
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstanceOrNull();
+    if (javaRunConfigurationExtensionManager != null) {
+      javaRunConfigurationExtensionManager.updateJavaParameters(configuration, extensionsJP, settings, executor);
     }
     copy(extensionsJP.getVMParametersList(), javaParameters.getVMParametersList());
   }
