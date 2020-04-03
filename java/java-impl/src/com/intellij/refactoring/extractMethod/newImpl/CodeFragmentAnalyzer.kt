@@ -238,7 +238,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   companion object {
     fun inferNullability(expressionGroup: List<PsiExpression>): Nullability {
-      if (expressionGroup.any { it.text == "null" }) return Nullability.NULLABLE
+      if (expressionGroup.any { it.type == PsiType.NULL }) return Nullability.NULLABLE
 
       if (expressionGroup.isEmpty()) return Nullability.UNKNOWN
       val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionGroup.first())

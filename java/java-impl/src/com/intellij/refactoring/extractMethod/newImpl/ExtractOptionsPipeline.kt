@@ -112,9 +112,7 @@ object ExtractMethodPipeline {
   fun adjustModifiersForInterface(options: ExtractOptions): ExtractOptions {
     val targetClass = options.anchor.containingClass!!
     if (! targetClass.isInterface) return options
-    val languageLevel: LanguageLevel = PsiUtil.getLanguageLevel(targetClass)
-    val isAtLeastJava9 = languageLevel.isAtLeast(LanguageLevel.JDK_1_9)
-    val isJava8 = languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && !isAtLeastJava9
+    val isJava8 = PsiUtil.getLanguageLevel(targetClass) == LanguageLevel.JDK_1_8
     val visibility = if (options.visibility == PsiModifier.PRIVATE && isJava8) null else options.visibility
     val holder = findClassMember(options.elements.first())
     val isStatic = holder is PsiField || options.isStatic
