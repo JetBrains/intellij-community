@@ -69,8 +69,9 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
         }
       }
       PsiMethod[] methods = cls.findMethodsByName(methodName, true);
+      final PsiClass finalCls = cls;
       return Arrays.stream(methods)
-        .filter(MethodSourceReference::staticOrOneInstancePerClassNoParams)
+        .filter(method -> staticOrOneInstancePerClassNoParams(method, finalCls))
         .findFirst()
         .orElse(methods.length == 0 ? null : methods[0]);
     }
@@ -83,10 +84,12 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     final PsiClass topLevelClass = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
     if (topLevelClass != null) {
       final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
-      final PsiMethod[] methods = topLevelClass.getMethods();
+      final PsiMethod[] methods = topLevelClass.getAllMethods();
       for (PsiMethod method : methods) {
+        if (method.getContainingClass() == null) continue;
+        if (Objects.equals(method.getContainingClass().getQualifiedName(), "java.lang.Object")) continue;
         if (current != null && method.getName().equals(current.getName())) continue;
-        if (!staticOrOneInstancePerClassNoParams(method)) continue;
+        if (!staticOrOneInstancePerClassNoParams(method, topLevelClass)) continue;
         final LookupElementBuilder builder = LookupElementBuilder.create(method);
         list.add(builder.withAutoCompletionPolicy(AutoCompletionPolicy.SETTINGS_DEPENDENT));
       }
@@ -94,8 +97,8 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return list.toArray();
   }
 
-  private static boolean staticOrOneInstancePerClassNoParams(PsiMethod method) {
+  private static boolean staticOrOneInstancePerClassNoParams(PsiMethod method, PsiClass psiClass) {
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    return (TestUtils.testInstancePerClass(Objects.requireNonNull(method.getContainingClass())) != isStatic) && method.getParameterList().isEmpty();
+    return (TestUtils.testInstancePerClass(psiClass) != isStatic) && method.getParameterList().isEmpty();
   }
 }
