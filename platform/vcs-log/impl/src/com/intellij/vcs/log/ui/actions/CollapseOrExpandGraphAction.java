@@ -79,10 +79,9 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     }
     else {
       e.getPresentation().setEnabled(false);
+      e.getPresentation().setText(myLinearBranchesAction.get());
+      e.getPresentation().setDescription(myLinearBranchesDescription.get());
     }
-
-    e.getPresentation().setText(myLinearBranchesAction.get());
-    e.getPresentation().setDescription(myLinearBranchesDescription.get());
   }
 
   protected abstract void executeAction(@NotNull MainVcsLogUi vcsLogUi);
