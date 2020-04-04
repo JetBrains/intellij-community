@@ -177,7 +177,7 @@ public class VfsData {
       String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
       if (parent > 0) {
         msg += "; parent.name=" + FSRecords.getName(parent);
-        msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
+        msg += "; parent.children=" + FSRecords.listAll(id);
       }
       throw new FileAlreadyCreatedException(msg);
     }

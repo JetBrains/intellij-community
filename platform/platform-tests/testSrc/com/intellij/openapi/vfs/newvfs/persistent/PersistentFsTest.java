@@ -40,8 +40,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Future;
 import java.util.jar.JarFile;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -727,6 +729,30 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
     for (VirtualFileSystemEntry f : fs.getIdToDirCache().values()) {
       assertTrue(f.isValid());
+    }
+  }
+
+  public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    for (int i=0; i<10; i++) {
+      File temp = createTempDir("", false);
+      File file = new File(temp, "file.txt");
+      FileUtil.createParentDirs(file);
+      FileUtil.writeToFile(file, "x");
+      VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
+      assertFalse(vTemp.allChildrenLoaded());
+      FileUtil.writeToFile(new File(temp, "new.txt"),"new" );
+      Future<FSRecords.NameId[]> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      Future<FSRecords.NameId[]> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      FSRecords.NameId[] children1 = f1.get();
+      FSRecords.NameId[] children2 = f2.get();
+      Arrays.sort(children1, Comparator.comparingInt(o -> o.id));
+      assertEquals(2, children1.length);
+      assertEquals(2, children2.length);
+      assertEquals("Duplicate ids found. child1="+children1[0]+"; child2="+children2[0], children1[0].id, children2[0].id);
+      assertEquals("Duplicate ids found. child1="+children1[1]+"; child2="+children2[1], children1[1].id, children2[1].id);
     }
   }
 }
