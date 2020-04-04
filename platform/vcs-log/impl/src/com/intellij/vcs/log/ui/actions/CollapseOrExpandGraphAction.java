@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -62,23 +63,14 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
-    if (ui != null && !ui.getDataPack().isEmpty() && properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
-      e.getPresentation().setEnabled(true);
-      if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
-        e.getPresentation().setEnabled(false);
-      }
-
-      if (properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
-        e.getPresentation().setText(myMergesAction.get());
-        e.getPresentation().setDescription(myMergesDescription.get());
-      }
-      else {
-        e.getPresentation().setText(myLinearBranchesAction.get());
-        e.getPresentation().setDescription(myLinearBranchesDescription.get());
-      }
+    e.getPresentation().setEnabled(ui != null && !ui.getDataPack().isEmpty() &&
+                                   ui.getFilterUi().getFilters().getDetailsFilters().isEmpty());
+    if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
+        properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
+      e.getPresentation().setText(myMergesAction.get());
+      e.getPresentation().setDescription(myMergesDescription.get());
     }
     else {
-      e.getPresentation().setEnabled(false);
       e.getPresentation().setText(myLinearBranchesAction.get());
       e.getPresentation().setDescription(myLinearBranchesDescription.get());
     }
