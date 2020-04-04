@@ -92,6 +92,8 @@ public final class PluginManagerCore {
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
 
+  private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();
+
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
   @ApiStatus.Internal
@@ -578,10 +580,11 @@ public final class PluginManagerCore {
   private static ClassLoader createPluginClassLoader(ClassLoader @NotNull [] parentLoaders,
                                                      @NotNull IdeaPluginDescriptorImpl descriptor,
                                                      @NotNull UrlClassLoader.Builder urlLoaderBuilder,
-                                                     @NotNull ClassLoader coreLoader) {
+                                                     @NotNull ClassLoader coreLoader,
+                                                     @NotNull Map<String, String[]> additionalLayoutMap) {
     List<Path> classPath = descriptor.jarFiles;
     if (classPath == null) {
-      classPath = descriptor.collectClassPath();
+      classPath = descriptor.collectClassPath(additionalLayoutMap);
     }
     else {
       descriptor.jarFiles = null;
@@ -1371,6 +1374,31 @@ public final class PluginManagerCore {
     return false;
   }
 
+  private static @NotNull Map<String, String[]> loadAdditionalLayoutMap() {
+    Path fileWithLayout = PluginManagerCore.usePluginClassLoader
+                          ? Paths.get(PathManager.getSystemPath(), PlatformUtils.getPlatformPrefix() + ".txt")
+                          : null;
+    if (fileWithLayout == null || !Files.exists(fileWithLayout)) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, String[]> additionalLayoutMap = new LinkedHashMap<>();
+    try (BufferedReader bufferedReader = Files.newBufferedReader(fileWithLayout)) {
+      String line;
+      while ((line = bufferedReader.readLine()) != null) {
+        List<String> parameters = ParametersListUtil.parse(line.trim());
+        if (parameters.size() < 2) {
+          continue;
+        }
+        additionalLayoutMap.put(parameters.get(0), ArrayUtilRt.toStringArray(parameters.subList(1, parameters.size())));
+      }
+    }
+    catch (Exception ignored) {
+    }
+    return additionalLayoutMap;
+  }
+
+  // not used by plugin manager - only for dynamic plugin reloading
   @ApiStatus.Internal
   public static void initClassLoader(@NotNull IdeaPluginDescriptorImpl rootDescriptor) {
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(ContainerUtil.concat(getLoadedPlugins(null), Collections.singletonList(rootDescriptor)));
@@ -1398,8 +1426,7 @@ public final class PluginManagerCore {
     ClassLoader[] array = loaders.isEmpty()
                           ? new ClassLoader[]{PluginManagerCore.class.getClassLoader()}
                           : loaders.toArray(new ClassLoader[0]);
-    rootDescriptor.setLoader(
-      createPluginClassLoader(array, rootDescriptor, createUrlClassLoaderBuilder(), PluginManagerCore.class.getClassLoader()));
+    rootDescriptor.setLoader(createPluginClassLoader(array, rootDescriptor, createUrlClassLoaderBuilder(), PluginManagerCore.class.getClassLoader(), ourAdditionalLayoutMap));
   }
 
   @NotNull
@@ -1611,7 +1638,9 @@ public final class PluginManagerCore {
     List<IdeaPluginDescriptorImpl> enabledPlugins = getOnlyEnabledPlugins(sortedAll);
 
     mergeOptionalConfigs(enabledPlugins, idMap);
-    configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins, context.usePluginClassLoader);
+    Map<String, String[]> additionalLayoutMap = loadAdditionalLayoutMap();
+    ourAdditionalLayoutMap = additionalLayoutMap;
+    configureClassLoaders(coreLoader, graph, coreDescriptor, enabledPlugins, additionalLayoutMap, context.usePluginClassLoader);
 
     if (checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap);
@@ -1625,6 +1654,7 @@ public final class PluginManagerCore {
                                             @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> graph,
                                             @Nullable IdeaPluginDescriptor coreDescriptor,
                                             @NotNull List<IdeaPluginDescriptorImpl> enabledPlugins,
+                                            @NotNull Map<String, String[]> additionalLayoutMap,
                                             boolean usePluginClassLoader) {
     ArrayList<ClassLoader> loaders = new ArrayList<>();
     ClassLoader[] emptyClassLoaderArray = new ClassLoader[0];
@@ -1661,7 +1691,7 @@ public final class PluginManagerCore {
       }
 
       ClassLoader[] parentLoaders = loaders.isEmpty() ? new ClassLoader[]{coreLoader} : loaders.toArray(emptyClassLoaderArray);
-      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder, coreLoader));
+      rootDescriptor.setLoader(createPluginClassLoader(parentLoaders, rootDescriptor, urlClassLoaderBuilder, coreLoader, additionalLayoutMap));
     }
   }
 

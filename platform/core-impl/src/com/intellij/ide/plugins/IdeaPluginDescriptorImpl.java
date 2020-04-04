@@ -5,7 +5,6 @@ import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
@@ -21,13 +20,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.ref.GCWatcher;
 import gnu.trove.THashMap;
@@ -39,8 +35,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -110,27 +106,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private boolean myExtensionsCleared = false;
 
   boolean incomplete;
-
-  private static final Map<String, String[]> ourAdditionalLayoutMap = new LinkedHashMap<>();
-  static {
-    File fileWithLayout = PluginManagerCore.usePluginClassLoader
-                          ? new File(PathManager.getSystemPath(), PlatformUtils.getPlatformPrefix() + ".txt")
-                          : null;
-    if (fileWithLayout != null && fileWithLayout.exists()) {
-      try (
-        FileInputStream fileInputStream = new FileInputStream(fileWithLayout);
-        InputStreamReader reader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
-        BufferedReader br = new BufferedReader(reader)) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          List<String> parameters = ParametersListUtil.parse(line.trim());
-          if (parameters.size() < 2) continue;
-          ourAdditionalLayoutMap.put(parameters.get(0), ArrayUtil.toStringArray(parameters.subList(1, parameters.size())));
-        }
-      }
-      catch (Exception ignored) { }
-    }
-  }
 
   public IdeaPluginDescriptorImpl(@NotNull Path pluginPath, boolean bundled) {
     myPath = pluginPath;
@@ -836,7 +811,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return result;
   }
 
-  @NotNull List<Path> collectClassPath() {
+  @NotNull List<Path> collectClassPath(@NotNull Map<String, String[]> additionalLayoutMap) {
     if (!Files.isDirectory(myPath)) {
       return Collections.singletonList(myPath);
     }
@@ -851,8 +826,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       Path productionDirectory = myPath.getParent();
       if (productionDirectory.endsWith("production")) {
         result.add(myPath);
-        String moduleName = myPath.toFile().getName();
-        String[] additionalPaths = ourAdditionalLayoutMap.get(moduleName);
+        String moduleName = myPath.getFileName().toString();
+        String[] additionalPaths = additionalLayoutMap.get(moduleName);
         if (additionalPaths != null) {
           for (String path : additionalPaths) {
             result.add(productionDirectory.resolve(path));
