@@ -10,6 +10,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.FakeConfigurationFactory
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.idea.Bombed
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.ui.Messages
@@ -21,7 +22,9 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.apache.log4j.Logger
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
+import java.util.*
 
+@Bombed(month = Calendar.APRIL, day = 20, user = "Kirill Timofeev")
 class ExternalSystemRunConfigurationJavaExtensionTest : JavaProjectTestCase() {
 
   fun `test ExecutionException thrown from RunConfigurationExtension#updateJavaParameters should terminate execution`() {
