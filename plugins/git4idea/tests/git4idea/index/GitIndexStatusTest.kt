@@ -35,6 +35,7 @@ class GitIndexStatusTest : GitPlatformTest() {
     for (file in repositoryFiles) {
       Executor.touch(file.relativePath().system(), RandomStringUtils.random(200))
     }
+    refresh()
     git("add .")
     git("commit -m initial")
   }
