@@ -38,10 +38,6 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private final Supplier<String> myLinearBranchesDescription;
   private final Supplier<String> myMergesAction;
   private final Supplier<String> myMergesDescription;
-  //private static final String LINEAR_BRANCHES = "Linear Branches";
-  //private static final String LINEAR_BRANCHES_DESCRIPTION = "linear branches";
-  //private static final String MERGES = "Merges";
-  //private static final String MERGES_DESCRIPTION = "merges";
 
   protected CollapseOrExpandGraphAction(@NotNull Supplier<String> linearBranchesAction,
                                         @NotNull Supplier<String> linearBranchesDescription,
@@ -53,10 +49,6 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     myMergesAction = mergesAction;
     myMergesDescription = mergesDescription;
   }
-
-  //CollapseOrExpandGraphAction(@NotNull String mergesAction) {
-  //  super(mergesAction + " " + LINEAR_BRANCHES, mergesAction + " " + LINEAR_BRANCHES_DESCRIPTION, null);
-  //}
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
