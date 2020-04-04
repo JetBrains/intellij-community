@@ -1087,8 +1087,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   private static final class XmlReader {
-    static final Map<String, PluginId> ourConfigNames = new THashMap<>();
-
     static void readListeners(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element list, @NotNull ContainerDescriptor containerDescriptor) {
       List<Content> content = list.getContent();
       List<ListenerDescriptor> result = containerDescriptor.listeners;
@@ -1222,15 +1220,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           continue;
         }
 
-        if (pathResolver instanceof ClassPathXmlPathResolver) {
-          PluginId pluginId = descriptor.getPluginId();
-          PluginId oldPlugin = ourConfigNames.put(configFile, pluginId);
-          if (oldPlugin != null && !oldPlugin.equals(pluginId)) {
-            context.parentContext.getLogger().error("Optional config file with name '" + configFile + "' already registered by '" + oldPlugin.getIdString() + "'. " +
-                                                    "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
-                                                    "Current plugin: '" + rootDescriptor.getPluginId() + "'. ");
-            continue;
-          }
+        if (pathResolver instanceof ClassPathXmlPathResolver &&
+            context.parentContext.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
+          continue;
         }
 
         Element element;
@@ -1238,7 +1230,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           element = pathResolver.resolvePath(descriptor.myBasePath, configFile, context.parentContext.getXmlFactory());
         }
         catch (IOException | JDOMException e) {
-          context.parentContext.getLogger().info("Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile);
+          context.parentContext.getLogger().info("Plugin " + rootDescriptor + " misses optional descriptor " + configFile);
           continue;
         }
 

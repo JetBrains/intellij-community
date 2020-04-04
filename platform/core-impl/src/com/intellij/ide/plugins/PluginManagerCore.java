@@ -58,9 +58,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.ide.plugins.DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
-import static com.intellij.ide.plugins.DescriptorListLoadingContext.IS_PARALLEL;
-
 // Prefer to use only JDK classes. Any post start-up functionality should be placed in PluginManager class.
 public final class PluginManagerCore {
   public static final String META_INF = "META-INF/";
@@ -1257,10 +1254,13 @@ public final class PluginManagerCore {
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
-    int flags = IS_PARALLEL;
+    int flags = DescriptorListLoadingContext.IS_PARALLEL;
     boolean isUnitTestMode = PluginManagerCore.isUnitTestMode;
     if (isUnitTestMode) {
-      flags |= IGNORE_MISSING_INCLUDE;
+      flags |= DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
+    }
+    if (isUnitTestMode || isRunningFromSources()) {
+      flags |= DescriptorListLoadingContext.CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS;
     }
 
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, disabledPlugins(), result);

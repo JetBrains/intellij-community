@@ -27,6 +27,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
   static final int SKIP_DISABLED_PLUGINS = 4;
+  static final int CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 4;
 
   private static final Logger LOG = PluginManagerCore.getLogger();
 
@@ -54,6 +55,8 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
 
+  private final Map<String, PluginId> optionalConfigNames;
+
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
   }
@@ -63,6 +66,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
     skipDisabledPlugins = (flags & SKIP_DISABLED_PLUGINS) == SKIP_DISABLED_PLUGINS;
+    optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? ContainerUtil.newConcurrentMap() : null;
 
     maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
@@ -86,6 +90,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull Logger getLogger() {
     return LOG;
   }
@@ -138,6 +143,29 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   public @NotNull List<String> getVisitedFiles() {
     return xmlFactorySupplier.get().visitedFiles;
+  }
+
+  boolean checkOptionalConfigShortName(@NotNull String configFile, @NotNull IdeaPluginDescriptor descriptor, @NotNull IdeaPluginDescriptor rootDescriptor) {
+    PluginId pluginId = descriptor.getPluginId();
+    if (pluginId == null) {
+      return false;
+    }
+
+    Map<String, PluginId> configNames = this.optionalConfigNames;
+    if (configNames == null) {
+      return false;
+    }
+
+    PluginId oldPluginId = configNames.put(configFile, pluginId);
+    if (oldPluginId == null || oldPluginId.equals(pluginId)) {
+      return false;
+    }
+
+    getLogger().error("Optional config file with name '" + configFile + "' already registered by '" + oldPluginId +
+                      "'. " +
+                      "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
+                      "Current plugin: '" + rootDescriptor + "'. ");
+    return true;
   }
 }
 
