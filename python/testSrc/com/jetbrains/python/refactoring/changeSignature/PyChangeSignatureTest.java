@@ -69,9 +69,16 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   // PY-24607
-  public void testAddDefaultParamBeforeAnotherDefault() {
-    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(NEW_PARAMETER, "d", "1", true),
+  public void testNewParameterWithSignatureDefaultMakesSubsequentExistingParametersUseKeywordArguments() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                              new PyParameterInfo(NEW_PARAMETER, "d", "1", true),
                                               new PyParameterInfo(1, "b", "None", true)));
+  }
+
+  // PY-26715
+  public void testMovedExistingParameterUsingSignatureDefaultMakesSubsequentExistingParametersUseKeywordArguments() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(1, "b", "None", true),
+                                              new PyParameterInfo(0, "a", "None", true)));
   }
 
   public void testRemoveDefaultFromParam() {
@@ -430,7 +437,6 @@ public class PyChangeSignatureTest extends PyTestCase {
                                                 new PyParameterInfo(NEW_PARAMETER, "bar", "42", false)));
     });
   }
-
 
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");

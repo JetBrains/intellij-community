@@ -222,8 +222,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             newArguments.add(formatArgument(newArgumentName, argValueText, keywordArgsRequired));
           }
         }
-        else if (!info.getDefaultInSignature() && !isPositionalVararg && !isKeywordVararg && !usesValueFromVariadic) {
-          // Existing ordinary parameter without default value. Perhaps, the default value was propagated to calls 
+        // Parameter receives its default value from the signature, all subsequent arguments must use keyword form
+        else if (info.getDefaultInSignature()) {
+          keywordArgsRequired = true;
+        }
+        else if (!isPositionalVararg && !isKeywordVararg && !usesValueFromVariadic) {
+          // Existing ordinary parameter with neither a default value in the signature, not a corresponding argument.
+          // Most likely its default was propagated from the signature down to calls.
           newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
       }
