@@ -234,12 +234,34 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest("decorator", Arrays.asList(new PyParameterInfo(0, "arg1", null, false)));
   }
 
-  public void testNonDefaultAfterDefault() {
-    doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", false), new PyParameterInfo(0, "b", "2", false)), null);
+  // PY-8098
+  public void testNewParameterWithCallDefaultBeforeExistingWithoutDefault() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", false),
+                                              new PyParameterInfo(0, "b", null, false)));
   }
 
-  public void testNonDefaultAfterDefault1() {
-    doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "b", "1", true), new PyParameterInfo(NEW_PARAMETER, "a", "2", false)),
+  // PY-8096
+  public void testNewParameterWithoutSignatureDefaultAfterExistingWithSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "b", "1", true),
+                                         new PyParameterInfo(NEW_PARAMETER, "a", "2", false)),
+                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+  }
+
+  public void testNewParameterWithSignatureDefaultBeforeExistingWithoutSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", true),
+                                         new PyParameterInfo(0, "b", null, false)),
+                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+  }
+
+  public void testNewParameterWithSignatureDefaultBeforeNewWithoutSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", true),
+                                         new PyParameterInfo(NEW_PARAMETER, "b", null, false)),
+                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+  }
+
+  public void testMovingExistingParameterWithSignatureDefaultBeforeExistingWithoutSignatureDefault() {
+    doValidationTest(null, Arrays.asList(new PyParameterInfo(1, "b", "1", true),
+                                         new PyParameterInfo(0, "a", null, false)),
                      PyPsiBundle.message("ANN.non.default.param.after.default"));
   }
 
