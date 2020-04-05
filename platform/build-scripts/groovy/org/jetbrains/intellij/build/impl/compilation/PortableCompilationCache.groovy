@@ -22,10 +22,10 @@ class PortableCompilationCache {
     return value
   }
 
-  private final String remoteCacheUrl = require('intellij.jps.remote.cache.url', "JPS remote cache url")
   private final String remoteGitUrl = require('intellij.remote.url', "Repository url")
 
   def warmUp() {
+    def remoteCacheUrl = require('intellij.jps.remote.cache.url', "JPS remote cache url")
     def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit', 'false').toBoolean()
     def forceDownload = System.getProperty('intellij.jps.cache.download.force', 'false').toBoolean()
     def cacheDir = context.compilationData.dataStorageRoot
@@ -40,6 +40,7 @@ class PortableCompilationCache {
   }
 
   def upload() {
+    def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
     def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
     def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
     def commitHash = require("build.vcs.number", "Repository commit")
