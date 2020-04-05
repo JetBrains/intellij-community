@@ -140,48 +140,6 @@
               </grid>
             </constraints>
           </hspacer>
-          <component id="e7c83" class="javax.swing.JLabel" binding="chessboardWhiteColorLabel">
-            <constraints>
-              <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="white.cell.color"/>
-            </properties>
-          </component>
-          <component id="5a0c4" class="javax.swing.JLabel" binding="chessboardBlackColorLabel">
-            <constraints>
-              <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="black.cell.color"/>
-            </properties>
-          </component>
-          <component id="b2df3" class="com.intellij.ui.ColorPanel" binding="chessboardWhiteColor">
-            <constraints>
-              <grid row="6" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="e12c2" class="com.intellij.ui.ColorPanel" binding="chessboardBlackColor">
-            <constraints>
-              <grid row="7" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="729f9" class="javax.swing.JLabel" binding="gridLineColorLabel">
-            <constraints>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="grid.line.color"/>
-            </properties>
-          </component>
-          <component id="61a7d" class="com.intellij.ui.ColorPanel" binding="gridLineColor">
-            <constraints>
-              <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
         </children>
       </grid>
       <hspacer id="e0712">

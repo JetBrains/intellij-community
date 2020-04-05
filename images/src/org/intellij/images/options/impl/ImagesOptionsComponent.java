@@ -65,12 +65,6 @@ final class ImagesOptionsComponent {
   private JLabel smartZoomingWidthLabel;
   private JSpinner smartZoomingHeight;
   private JLabel smartZoomingHeightLabel;
-  private JLabel gridLineColorLabel;
-  private ColorPanel gridLineColor;
-  private JLabel chessboardWhiteColorLabel;
-  private JLabel chessboardBlackColorLabel;
-  private ColorPanel chessboardBlackColor;
-  private ColorPanel chessboardWhiteColor;
   private JLabel externalEditorLabel;
   private TextFieldWithBrowseButton externalEditorPath;
 
@@ -87,9 +81,6 @@ final class ImagesOptionsComponent {
     chessboardSizeLabel.setLabelFor(chessboardSize);
     smartZoomingWidthLabel.setLabelFor(smartZoomingWidth);
     smartZoomingHeightLabel.setLabelFor(smartZoomingHeight);
-    gridLineColorLabel.setLabelFor(gridLineColor);
-    chessboardWhiteColorLabel.setLabelFor(chessboardWhiteColor);
-    chessboardBlackColorLabel.setLabelFor(chessboardBlackColor);
     externalEditorLabel.setLabelFor(externalEditorPath);
 
     // Setup listeners for enabling and disabling linked checkbox groups
@@ -116,9 +107,6 @@ final class ImagesOptionsComponent {
     smartZooming.addItemListener(new CheckboxOptionsListener(ZoomOptions.ATTR_SMART_ZOOMING));
     smartZoomingWidth.addChangeListener(new SpinnerOptionsListener(ZoomOptions.ATTR_PREFFERED_WIDTH));
     smartZoomingHeight.addChangeListener(new SpinnerOptionsListener(ZoomOptions.ATTR_PREFFERED_HEIGHT));
-    gridLineColor.addActionListener(new ColorOptionsListener(GridOptions.ATTR_LINE_COLOR));
-    chessboardWhiteColor.addActionListener(new ColorOptionsListener(TransparencyChessboardOptions.ATTR_WHITE_COLOR));
-    chessboardBlackColor.addActionListener(new ColorOptionsListener(TransparencyChessboardOptions.ATTR_BLACK_COLOR));
     externalEditorPath.getTextField().getDocument()
       .addDocumentListener(new TextDocumentOptionsListener(ExternalEditorOptions.ATTR_EXECUTABLE_PATH));
 
@@ -164,12 +152,9 @@ final class ImagesOptionsComponent {
     showGrid.setSelected(gridOptions.isShowDefault());
     gridLineZoomFactor.setValue(gridOptions.getLineZoomFactor());
     gridLineSpan.setValue(gridOptions.getLineSpan());
-    gridLineColor.setSelectedColor(gridOptions.getLineColor());
     TransparencyChessboardOptions transparencyChessboardOptions = editorOptions.getTransparencyChessboardOptions();
     showChessboard.setSelected(transparencyChessboardOptions.isShowDefault());
     chessboardSize.setValue(transparencyChessboardOptions.getCellSize());
-    chessboardWhiteColor.setSelectedColor(transparencyChessboardOptions.getWhiteColor());
-    chessboardBlackColor.setSelectedColor(transparencyChessboardOptions.getBlackColor());
     ZoomOptions zoomOptions = editorOptions.getZoomOptions();
     wheelZooming.setSelected(zoomOptions.isWheelZooming());
     smartZooming.setSelected(zoomOptions.isSmartZooming());
