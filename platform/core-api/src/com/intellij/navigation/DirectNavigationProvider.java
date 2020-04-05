@@ -4,12 +4,14 @@ package com.intellij.navigation;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @see com.intellij.model.psi.ImplicitReferenceProvider
  */
+@ApiStatus.Experimental
 public interface DirectNavigationProvider {
 
   ExtensionPointName<DirectNavigationProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.directNavigationProvider");
