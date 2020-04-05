@@ -167,7 +167,7 @@ typealias StatusCode = Char
 
 internal fun isIgnored(status: StatusCode) = status == '!'
 internal fun isUntracked(status: StatusCode) = status == '?'
-private fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
+fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
 internal fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
   return (index == 'D' && workTree == 'D') ||
          (index == 'A' && workTree == 'A') ||

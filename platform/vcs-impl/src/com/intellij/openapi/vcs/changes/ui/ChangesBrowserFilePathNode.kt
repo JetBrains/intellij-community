@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.FontUtil
 
 /**
  * @author yole
@@ -15,8 +16,12 @@ import com.intellij.ui.SimpleTextAttributes
 abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject) {
   private val filePath: FilePath
     get() = filePath(getUserObject())
+  private val originText: String?
+    get() = originText(getUserObject())
 
   protected abstract fun filePath(userObject: U): FilePath
+
+  protected open fun originText(userObject: U): String? = null
 
   override fun isFile(): Boolean {
     return !filePath.isDirectory
@@ -33,15 +38,23 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     val path = filePath
     if (renderer.isShowFlatten && isLeaf) {
       renderer.append(path.name, textAttributes)
+      appendOriginText(renderer)
       appendParentPath(renderer, path.parentPath)
     }
     else {
       renderer.append(getRelativePath(path), textAttributes)
+      appendOriginText(renderer)
     }
     if (!isLeaf) {
       appendCount(renderer)
     }
     renderer.setIcon(path, path.isDirectory || !isLeaf)
+  }
+
+  private fun appendOriginText(renderer: ChangesBrowserNodeRenderer) {
+    originText?.let {
+      renderer.append(FontUtil.spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
   }
 
   private val textAttributes: SimpleTextAttributes
