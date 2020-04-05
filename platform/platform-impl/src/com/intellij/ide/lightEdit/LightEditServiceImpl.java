@@ -193,6 +193,7 @@ public final class LightEditServiceImpl implements LightEditService,
   public boolean closeEditorWindow() {
     if (canClose()) {
       myFrameWrapper.getFrame().setVisible(false);
+      myEditorManager.releaseEditors();
       LOG.info("Window closed");
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
         disposeFrameWrapper();
