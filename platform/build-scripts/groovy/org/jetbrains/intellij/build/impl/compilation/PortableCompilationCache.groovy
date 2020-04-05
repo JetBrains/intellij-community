@@ -29,10 +29,11 @@ class PortableCompilationCache {
     def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit', 'false').toBoolean()
     def forceDownload = System.getProperty('intellij.jps.cache.download.force', 'false').toBoolean()
     def cacheDir = context.compilationData.dataStorageRoot
+    def downloader = new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
     if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
-      new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, !availableForHeadCommit).downloadCachesAndOutput()
+      downloader.downloadCachesAndOutput()
     }
-    if (!availableForHeadCommit) {
+    if (!downloader.availableForHeadCommit) {
       context.options.incrementalCompilation = true
       CompilationTasks.create(context).compileAllModulesAndTests()
     }
