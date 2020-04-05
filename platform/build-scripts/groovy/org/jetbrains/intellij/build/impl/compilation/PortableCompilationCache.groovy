@@ -26,13 +26,13 @@ class PortableCompilationCache {
   private final String remoteGitUrl = require('intellij.remote.url', "Repository url")
 
   def warmUp() {
-    def checkHistory = System.getProperty('intellij.jps.remote.cache.checkHistory', 'true').toBoolean()
+    def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit', 'false').toBoolean()
     def forceDownload = System.getProperty('intellij.jps.cache.download.force', 'false').toBoolean()
     def cacheDir = context.compilationData.dataStorageRoot
     if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
-      new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, checkHistory).downloadCachesAndOutput()
+      new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, !availableForHeadCommit).downloadCachesAndOutput()
     }
-    if (checkHistory) {
+    if (!availableForHeadCommit) {
       context.options.incrementalCompilation = true
       CompilationTasks.create(context).compileAllModulesAndTests()
     }
