@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.junit.Assume
@@ -52,6 +53,8 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
     startupManager.runStartupActivities()
+
+    TestLoggerFactory.enableDebugLogging(myProject, "#" + NewMappings::class.java.name)
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
