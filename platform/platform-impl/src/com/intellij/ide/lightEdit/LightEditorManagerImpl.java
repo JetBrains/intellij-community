@@ -111,11 +111,9 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   @Override
   public void dispose() {
-    //noinspection TestOnlyProblems
     releaseEditors();
   }
 
-  @TestOnly
   public void releaseEditors() {
     myEditors.forEach(editorInfo -> ((LightEditorInfoImpl)editorInfo).disposeEditor());
     myEditors.clear();
