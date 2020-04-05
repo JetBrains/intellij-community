@@ -49,6 +49,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.jetbrains.python.PyNames.CANONICAL_SELF;
+
 /**
  * User : ktisha
  */
@@ -200,11 +202,11 @@ public class PyChangeSignatureDialog extends
         }
       }
       if (parameter.getOldIndex() < 0) {
-        if (!parameter.getName().startsWith("*")) {
+        if (!name.startsWith("*") && !name.equals("/")) {
           if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText())) {
             return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
           }
-          if (StringUtil.isEmptyOrSpaces(parameter.getName())) {
+          if (StringUtil.isEmptyOrSpaces(name)) {
             return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
           }
         }
@@ -297,8 +299,9 @@ public class PyChangeSignatureDialog extends
             add(defaultValueCheckBox);
 
             final String nameText = myNameEditor.getText();
-            myDefaultValueEditor.setEnabled(!nameText.startsWith("*") && !PyNames.CANONICAL_SELF.equals(nameText));
-            myDefaultInSignature.setEnabled(!nameText.startsWith("*") && !PyNames.CANONICAL_SELF.equals(nameText));
+            final boolean specialParameter = nameText.startsWith("*") || nameText.equals("/") || CANONICAL_SELF.equals(nameText);
+            myDefaultValueEditor.setEnabled(!specialParameter);
+            myDefaultInSignature.setEnabled(!specialParameter);
           }
 
           private JPanel createDefaultValueCheckBox() {
@@ -354,8 +357,10 @@ public class PyChangeSignatureDialog extends
             myNameEditor.addDocumentListener(new DocumentListener() {
               @Override
               public void documentChanged(@NotNull DocumentEvent event) {
-                myDefaultValueEditor.setEnabled(!myNameEditor.getText().startsWith("*"));
-                myDefaultInSignature.setEnabled(!myNameEditor.getText().startsWith("*"));
+                final String paramName = myNameEditor.getText();
+                final boolean specialParameter = paramName.startsWith("*") || paramName.equals("/");
+                myDefaultValueEditor.setEnabled(!specialParameter);
+                myDefaultInSignature.setEnabled(!specialParameter);
               }
             });
 

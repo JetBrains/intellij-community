@@ -460,6 +460,34 @@ public class PyChangeSignatureTest extends PyTestCase {
     });
   }
 
+  // PY-41230
+  public void testPositionalOnlyMarkerTurnsKeywordArgumentIntoPositional() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                                new PyParameterInfo(NEW_PARAMETER, "/", null, false),
+                                                new PyParameterInfo(1, "b", null, false)));
+    });
+  }
+
+  // PY-41230
+  public void testPositionalOnlyMarkerPropagatesExistingParameterSignatureDefaultToCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", "None", true),
+                                                new PyParameterInfo(1, "b", "None", true),
+                                                new PyParameterInfo(NEW_PARAMETER, "/", null, false)));
+    });
+  }
+
+  // PY-41230
+  public void testPositionalOnlyMarkerPropagatesNewParameterSignatureDefaultToCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "None", true),
+                                                new PyParameterInfo(0, "b", "None", true),
+                                                new PyParameterInfo(1, "/", null, false)));
+    });
+  }
+
+
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);
