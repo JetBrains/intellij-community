@@ -30,6 +30,7 @@
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
 
     <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
+    <registryKey key="ide.images.wheel.zooming" defaultValue="true"/>
   </extensions>
 
   <actions>
