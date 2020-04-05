@@ -306,7 +306,7 @@ public class DiffDrawUtil {
                                                                     final boolean resolved) {
     return new LineMarkerRendererEx() {
       @Override
-      public void paint(Editor editor, Graphics g, Rectangle r) {
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
         EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
         Graphics2D g2 = (Graphics2D)g;
 

@@ -44,7 +44,7 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
   }
 
   @Override
-  public void paint(Editor editor, Graphics g, Rectangle r) {
+  public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
     if (myColor == null) return;
 
     g.setColor(myColor);

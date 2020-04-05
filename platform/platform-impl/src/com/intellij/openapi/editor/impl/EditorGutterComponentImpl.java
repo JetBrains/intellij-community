@@ -136,6 +136,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private ClickInfo myLastActionableClick;
+  @NotNull
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
@@ -1035,7 +1036,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     });
   }
 
-  private void paintLineMarkerRenderer(RangeHighlighter highlighter, Graphics g) {
+  private void paintLineMarkerRenderer(@NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
     LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
     if (lineMarkerRenderer != null) {
       Rectangle rectangle = getLineRendererRectangle(highlighter);
