@@ -13,151 +13,86 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.images.options.impl;
+package org.intellij.images.options.impl
 
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.util.JdomKt;
-import org.intellij.images.options.GridOptions;
-import org.jdom.Element;
-
-import java.awt.*;
-import java.beans.PropertyChangeSupport;
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.util.JDOMExternalizable
+import com.intellij.openapi.util.JDOMExternalizer
+import com.intellij.ui.JBColor
+import com.intellij.util.addOptionTag
+import org.intellij.images.options.GridOptions
+import org.jdom.Element
+import java.awt.Color
+import java.beans.PropertyChangeSupport
 
 /**
  * Grid options implementation.
  */
-final class GridOptionsImpl implements GridOptions, JDOMExternalizable {
-  private boolean showDefault;
-  private int lineMinZoomFactor = DEFAULT_LINE_ZOOM_FACTOR;
-  private int lineSpan = DEFAULT_LINE_SPAN;
-  private Color lineColor = DEFAULT_LINE_COLOR;
-  private final PropertyChangeSupport propertyChangeSupport;
-
-  GridOptionsImpl(PropertyChangeSupport propertyChangeSupport) {
-    this.propertyChangeSupport = propertyChangeSupport;
+internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChangeSupport) : GridOptions {
+  private var showDefault = false
+  private var lineMinZoomFactor = GridOptions.DEFAULT_LINE_ZOOM_FACTOR
+  private var lineSpan = GridOptions.DEFAULT_LINE_SPAN
+  private var lineColor = GridOptions.DEFAULT_LINE_COLOR
+  override fun isShowDefault(): Boolean {
+    return showDefault
   }
 
-  @Override
-  public boolean isShowDefault() {
-    return showDefault;
+  override fun getLineZoomFactor(): Int {
+    return lineMinZoomFactor
   }
 
-  @Override
-  public int getLineZoomFactor() {
-    return lineMinZoomFactor;
+  override fun getLineSpan(): Int {
+    return lineSpan
   }
 
-  @Override
-  public int getLineSpan() {
-    return lineSpan;
+  override fun getLineColor(): Color {
+    return EditorColorsManager.getInstance().globalScheme.getColor(GRID_LINE_COLOR_KEY)
+           ?: JBColor.DARK_GRAY
   }
 
-  @Override
-  public Color getLineColor() {
-    return lineColor;
-  }
-
-  void setShowDefault(boolean showDefault) {
-    boolean oldValue = this.showDefault;
+  fun setShowDefault(showDefault: Boolean) {
+    val oldValue = this.showDefault
     if (oldValue != showDefault) {
-      this.showDefault = showDefault;
-      propertyChangeSupport.firePropertyChange(ATTR_SHOW_DEFAULT, oldValue, this.showDefault);
+      this.showDefault = showDefault
+      propertyChangeSupport.firePropertyChange(GridOptions.ATTR_SHOW_DEFAULT, oldValue, this.showDefault)
     }
   }
 
-  void setLineMinZoomFactor(int lineMinZoomFactor) {
-    int oldValue = this.lineMinZoomFactor;
+  fun setLineMinZoomFactor(lineMinZoomFactor: Int) {
+    val oldValue = this.lineMinZoomFactor
     if (oldValue != lineMinZoomFactor) {
-      this.lineMinZoomFactor = lineMinZoomFactor;
-      propertyChangeSupport.firePropertyChange(ATTR_LINE_ZOOM_FACTOR, oldValue, this.lineMinZoomFactor);
+      this.lineMinZoomFactor = lineMinZoomFactor
+      propertyChangeSupport.firePropertyChange(GridOptions.ATTR_LINE_ZOOM_FACTOR, oldValue, this.lineMinZoomFactor)
     }
   }
 
-  void setLineSpan(int lineSpan) {
-    int oldValue = this.lineSpan;
+  fun setLineSpan(lineSpan: Int) {
+    val oldValue = this.lineSpan
     if (oldValue != lineSpan) {
-      this.lineSpan = lineSpan;
-      propertyChangeSupport.firePropertyChange(ATTR_LINE_SPAN, oldValue, this.lineSpan);
+      this.lineSpan = lineSpan
+      propertyChangeSupport.firePropertyChange(GridOptions.ATTR_LINE_SPAN, oldValue, this.lineSpan)
     }
   }
 
-  void setLineColor(Color lineColor) {
-    Color oldColor = this.lineColor;
-    if (lineColor == null) {
-      this.lineColor = DEFAULT_LINE_COLOR;
-    }
-    if (!oldColor.equals(lineColor)) {
-      this.lineColor = lineColor;
-      propertyChangeSupport.firePropertyChange(ATTR_LINE_COLOR, oldColor, this.lineColor);
-    }
+  override fun inject(options: GridOptions) {
+    isShowDefault = options.isShowDefault
+    setLineMinZoomFactor(options.lineZoomFactor)
+    setLineSpan(options.lineSpan)
   }
 
-  @Override
-  public void inject(GridOptions options) {
-    setShowDefault(options.isShowDefault());
-    setLineMinZoomFactor(options.getLineZoomFactor());
-    setLineSpan(options.getLineSpan());
-    setLineColor(options.getLineColor());
-  }
-
-  @Override
-  public boolean setOption(String name, Object value) {
-    if (ATTR_SHOW_DEFAULT.equals(name)) {
-      setShowDefault((Boolean)value);
+  override fun setOption(name: String, value: Any): Boolean {
+    if (GridOptions.ATTR_SHOW_DEFAULT == name) {
+      isShowDefault = value as Boolean
     }
-    else if (ATTR_LINE_ZOOM_FACTOR.equals(name)) {
-      setLineMinZoomFactor((Integer)value);
+    else if (GridOptions.ATTR_LINE_ZOOM_FACTOR == name) {
+      setLineMinZoomFactor(value as Int)
     }
-    else if (ATTR_LINE_SPAN.equals(name)) {
-      setLineSpan((Integer)value);
-    }
-    else if (ATTR_LINE_COLOR.equals(name)) {
-      setLineColor((Color)value);
+    else if (GridOptions.ATTR_LINE_SPAN == name) {
+      setLineSpan(value as Int)
     }
     else {
-      return false;
+      return false
     }
-    return true;
-  }
-
-  @Override
-  public void readExternal(Element element) {
-    showDefault = JDOMExternalizer.readBoolean(element, ATTR_SHOW_DEFAULT);
-    lineMinZoomFactor = JDOMExternalizer.readInteger(element, ATTR_LINE_ZOOM_FACTOR, DEFAULT_LINE_ZOOM_FACTOR);
-    lineSpan = JDOMExternalizer.readInteger(element, ATTR_LINE_SPAN, DEFAULT_LINE_SPAN);
-    lineColor = JDOMExternalizerEx.readColor(element, ATTR_LINE_COLOR, DEFAULT_LINE_COLOR);
-  }
-
-  @Override
-  public void writeExternal(Element element) {
-    JdomKt.addOptionTag(element, ATTR_SHOW_DEFAULT, Boolean.toString(showDefault), "setting");
-    JdomKt.addOptionTag(element, ATTR_LINE_ZOOM_FACTOR, Integer.toString(lineMinZoomFactor), "setting");
-    JdomKt.addOptionTag(element, ATTR_LINE_SPAN, Integer.toString(lineSpan), "setting");
-    JDOMExternalizerEx.write(element, ATTR_LINE_COLOR, lineColor);
-  }
-
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!(obj instanceof GridOptions)) {
-      return false;
-    }
-
-    GridOptions otherOptions = (GridOptions)obj;
-    return lineMinZoomFactor == otherOptions.getLineZoomFactor() &&
-           lineSpan == otherOptions.getLineSpan() &&
-           showDefault == otherOptions.isShowDefault() &&
-           lineColor != null ? lineColor.equals(otherOptions.getLineColor()) : otherOptions.getLineColor() == null;
-  }
-
-  public int hashCode() {
-    int result;
-    result = (showDefault ? 1 : 0);
-    result = 29 * result + lineMinZoomFactor;
-    result = 29 * result + lineSpan;
-    result = 29 * result + (lineColor != null ? lineColor.hashCode() : 0);
-    return result;
+    return true
   }
 }
