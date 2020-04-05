@@ -101,7 +101,6 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
     @Override
     public void readExternal(Element element) throws InvalidDataException {
         ((JDOMExternalizable)transparencyChessboardOptions).readExternal(element);
-        ((JDOMExternalizable)zoomOptions).readExternal(element);
         String fileNameVisibleAttr = element.getAttributeValue("fileNameVisible");
         fileNameVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileNameVisibleAttr);
         String fileSizeVisibleAttr = element.getAttributeValue("fileSizeVisible");
@@ -111,7 +110,6 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
         ((JDOMExternalizable)transparencyChessboardOptions).writeExternal(element);
-        ((JDOMExternalizable)zoomOptions).writeExternal(element);
         if (!fileNameVisible) {
             element.setAttribute("fileNameVisible", "false");
         }
