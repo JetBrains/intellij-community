@@ -29,12 +29,12 @@ import java.beans.PropertyChangeSupport
  * Grid options implementation.
  */
 internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChangeSupport) : GridOptions {
-  private var showDefault = false
+  private var showDefault: Boolean? = null
   private var lineMinZoomFactor = GridOptions.DEFAULT_LINE_ZOOM_FACTOR
   private var lineSpan = GridOptions.DEFAULT_LINE_SPAN
-  private var lineColor = GridOptions.DEFAULT_LINE_COLOR
+  private var lineColor: Color? = null
   override fun isShowDefault(): Boolean {
-    return showDefault
+    return showDefault ?: false
   }
 
   override fun getLineZoomFactor(): Int {
@@ -46,8 +46,8 @@ internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChange
   }
 
   override fun getLineColor(): Color {
-    return EditorColorsManager.getInstance().globalScheme.getColor(GRID_LINE_COLOR_KEY)
-           ?: JBColor.DARK_GRAY
+    return lineColor?:
+           EditorColorsManager.getInstance().globalScheme.getColor(GRID_LINE_COLOR_KEY) ?: JBColor.DARK_GRAY
   }
 
   fun setShowDefault(showDefault: Boolean) {
