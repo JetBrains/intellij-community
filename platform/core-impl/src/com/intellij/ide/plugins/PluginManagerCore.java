@@ -613,7 +613,9 @@ public final class PluginManagerCore {
       PluginClassLoader loader =
         new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor.getPluginId(), descriptor, descriptor.getVersion(),
                               descriptor.getPluginPath());
-      loader.setCoreLoader(coreLoader);
+      if (usePluginClassLoader) {
+        loader.setCoreLoader(coreLoader);
+      }
       return loader;
     }
   }
