@@ -55,18 +55,18 @@ internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
 
 internal class PFolderEntity(
   val data: String
-) : PTypedEntity<PFolderEntity>() {
+) : PTypedEntity() {
   val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(PSubFolderEntity::class)
   val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(PSoftSubFolderEntity::class)
 }
 
-internal class PSoftSubFolderEntity : PTypedEntity<PSoftSubFolderEntity>() {
+internal class PSoftSubFolderEntity : PTypedEntity() {
   val parent: PFolderEntity? by ManyToOne.SoftRef(PFolderEntity::class)
 }
 
 internal class PSubFolderEntity(
   val data: String
-) : PTypedEntity<PSubFolderEntity>() {
+) : PTypedEntity() {
   val parent: PFolderEntity? by ManyToOne.HardRef.Nullable(PFolderEntity::class)
 }
 

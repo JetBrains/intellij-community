@@ -121,7 +121,7 @@ internal class MutableRefsTable(
     childrenIds.forEach { copiedMap.put(it, parentId) }
   }
 
-  fun <T : TypedEntity, SUBT : PTypedEntity<SUBT>> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
+  fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
                                                                                    parentId: Int,
                                                                                    childrenEntities: Sequence<SUBT>) {
     val copiedMap = getOneToManyMutableMap(connectionId)
@@ -129,7 +129,7 @@ internal class MutableRefsTable(
     childrenEntities.forEach { copiedMap.put(it.id.arrayId, parentId) }
   }
 
-  fun <T : TypedEntity, SUBT : PTypedEntity<SUBT>> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
+  fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
                                                                                            parentId: PId<T>,
                                                                                            childrenEntities: Sequence<SUBT>) {
     val copiedMap = getOneToAbstractManyMutableMap(connectionId)
@@ -137,7 +137,7 @@ internal class MutableRefsTable(
     childrenEntities.forEach { copiedMap[it.id] = parentId }
   }
 
-  fun <T : TypedEntity, SUBT : PTypedEntity<SUBT>> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
+  fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
                                                                                parentId: Int,
                                                                                childEntity: SUBT) {
     val copiedMap = getOneToOneMutableMap(connectionId)
@@ -145,7 +145,7 @@ internal class MutableRefsTable(
     copiedMap.put(childEntity.id.arrayId, parentId)
   }
 
-  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
+  fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
                                                                                    childId: Int,
                                                                                    parentEntity: T) {
     val copiedMap = getOneToOneMutableMap(connectionId)
@@ -160,7 +160,7 @@ internal class MutableRefsTable(
   }
 
 
-  fun <T : PTypedEntity<T>, SUBT : TypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>, childId: Int, parent: T) {
+  fun <T : PTypedEntity, SUBT : TypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>, childId: Int, parent: T) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeKey(childId)
     copiedMap.put(childId, parent.id.arrayId)

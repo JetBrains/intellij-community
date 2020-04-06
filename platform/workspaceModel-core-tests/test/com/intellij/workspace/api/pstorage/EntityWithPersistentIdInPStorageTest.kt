@@ -15,7 +15,7 @@ internal class PNamedSampleEntityData : PEntityData<PNamedSampleEntity>() {
 internal class PNamedSampleEntity(
   val name: String,
   val next: PSampleEntityId
-) : TypedEntityWithPersistentId, PTypedEntity<PNamedSampleEntity>() {
+) : TypedEntityWithPersistentId, PTypedEntity() {
 
   override fun persistentId(): PSampleEntityId = PSampleEntityId(name)
 }
@@ -46,7 +46,7 @@ internal class PChildWithPersistentIdEntityData : PEntityData<PChildWithPersiste
 internal class PChildWithPersistentIdEntity(
   val parent: PNamedSampleEntity,
   val childName: String
-) : PTypedEntity<PChildWithPersistentIdEntity>(), TypedEntityWithPersistentId {
+) : PTypedEntity(), TypedEntityWithPersistentId {
   override fun persistentId(): PersistentEntityId<*> = PChildEntityId(childName, parent.persistentId())
 }
 

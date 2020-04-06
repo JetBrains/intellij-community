@@ -11,11 +11,11 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
-abstract class PTypedEntity<E : TypedEntity> : ReferableTypedEntity, Any() {
+abstract class PTypedEntity : ReferableTypedEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  internal open lateinit var id: PId<E>
+  internal open lateinit var id: PId<TypedEntity>
 
   internal open lateinit var snapshot: AbstractPEntityStorage
 
@@ -23,16 +23,16 @@ abstract class PTypedEntity<E : TypedEntity> : ReferableTypedEntity, Any() {
     if (this.javaClass != e.javaClass) return false
 
     this::class.memberProperties.forEach {
-      if (it.name == PTypedEntity<*>::id.name) return@forEach
+      if (it.name == PTypedEntity::id.name) return@forEach
       if (it.getter.call(this) != it.getter.call(e)) return false
     }
     return true
   }
 
   override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
-    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass) as ConnectionId<E, R>?
+    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass) as ConnectionId<PTypedEntity, R>?
     if (connectionId == null) return emptySequence()
-    return snapshot.extractOneToManyChildren(connectionId, id)
+    return snapshot.extractOneToManyChildren(connectionId, id as PId<PTypedEntity>)
   }
 
   override fun toString(): String = "${javaClass.simpleName}-:-$id"
@@ -41,7 +41,7 @@ abstract class PTypedEntity<E : TypedEntity> : ReferableTypedEntity, Any() {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as PTypedEntity<*>
+    other as PTypedEntity
 
     if (id != other.id) return false
 
@@ -51,16 +51,10 @@ abstract class PTypedEntity<E : TypedEntity> : ReferableTypedEntity, Any() {
   override fun hashCode(): Int = id.hashCode()
 }
 
-abstract class PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEntity<T>(), ModifiableTypedEntity<T> {
+abstract class PModifiableTypedEntity<T : PTypedEntity> : PTypedEntity(), ModifiableTypedEntity<T> {
 
   internal lateinit var original: PEntityData<T>
   internal lateinit var diff: PEntityStorageBuilder
-
-  override lateinit var id: PId<T>
-    internal set
-
-  override lateinit var entitySource: EntitySource
-    internal set
 
   internal val modifiable = ThreadLocal.withInitial { false }
 
@@ -98,9 +92,9 @@ abstract class PEntityData<E : TypedEntity> {
         if (param.type.isList()) ArrayList(value as List<*>) else value
       }.toMutableMap()
     val res = returnClass.primaryConstructor!!.callBy(params)
-    (res as PTypedEntity<E>).entitySource = entitySource
-    (res as PTypedEntity<E>).id = PId(this::class.memberProperties.first { it.name == "id" }.getter.call(this) as Int, returnClass)
-    (res as PTypedEntity<E>).snapshot = snapshot
+    (res as PTypedEntity).entitySource = entitySource
+    (res as PTypedEntity).id = PId(this::class.memberProperties.first { it.name == "id" }.getter.call(this) as Int, returnClass as KClass<TypedEntity>)
+    (res as PTypedEntity).snapshot = snapshot
     return res
   }
 
@@ -112,7 +106,7 @@ abstract class PEntityData<E : TypedEntity> {
     res as PModifiableTypedEntity
     res.original = this
     res.diff = diff
-    res.id = PId(this.id, res.getEntityClass())
+    res.id = PId(this.id, res.getEntityClass() as KClass<TypedEntity>)
     res.entitySource = this.entitySource
     return res
   }

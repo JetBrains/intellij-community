@@ -40,7 +40,7 @@ internal open class EntityFamily<E : TypedEntity> internal constructor(
   companion object {
     fun <E : TypedEntity> empty(): EntityFamily<E> = Empty as EntityFamily<E>
 
-    private object Empty : EntityFamily<PTypedEntity<*>>(emptyList(),
+    private object Empty : EntityFamily<PTypedEntity>(emptyList(),
                                                          TIntHashSet())
   }
 }

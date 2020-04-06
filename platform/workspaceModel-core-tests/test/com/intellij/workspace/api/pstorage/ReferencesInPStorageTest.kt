@@ -17,7 +17,7 @@ internal class PChildEntityData : PEntityData<PChildEntity>() {
 internal class PChildEntity(
   val childProperty: String,
   val dataClass: PDataClass?
-) : PTypedEntity<PChildEntity>() {
+) : PTypedEntity() {
   val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
 }
 
@@ -27,13 +27,13 @@ internal class PNoDataChildEntityData : PEntityData<PNoDataChildEntity>() {
 
 internal class PNoDataChildEntity(
   val childProperty: String
-) : PTypedEntity<PNoDataChildEntity>() {
+) : PTypedEntity() {
   val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
 }
 
 internal class PChildChildEntityData : PEntityData<PChildChildEntity>()
 
-internal class PChildChildEntity : PTypedEntity<PChildChildEntity>() {
+internal class PChildChildEntity : PTypedEntity() {
   val parent1: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
   val parent2: PChildEntity by ManyToOne.HardRef.NotNull(PChildEntity::class)
 }
@@ -44,7 +44,7 @@ internal class PParentEntityData : PEntityData<PParentEntity>() {
 
 internal class PParentEntity(
   val parentProperty: String
-) : PTypedEntity<PParentEntity>() {
+) : PTypedEntity() {
 
   val children: Sequence<PChildEntity> by OneToMany.HardRef(PChildEntity::class)
 
@@ -61,7 +61,7 @@ internal class PChildWithOptionalParentEntityData : PEntityData<PChildWithOption
 
 internal class PChildWithOptionalParentEntity(
   val childProperty: String
-) : PTypedEntity<PChildWithOptionalParentEntity>() {
+) : PTypedEntity() {
   val optionalParent: PParentEntity? by ManyToOne.HardRef.Nullable(PParentEntity::class)
 }
 

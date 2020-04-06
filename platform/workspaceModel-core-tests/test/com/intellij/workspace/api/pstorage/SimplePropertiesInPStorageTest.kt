@@ -18,7 +18,7 @@ internal class PSampleEntity(
   val stringProperty: String,
   val stringListProperty: List<String>,
   val fileProperty: VirtualFileUrl
-) : PTypedEntity<PSampleEntity>()
+) : PTypedEntity()
 
 internal class ModifiablePSampleEntity : PModifiableTypedEntity<PSampleEntity>() {
   var booleanProperty: Boolean by EntityDataDelegation()
