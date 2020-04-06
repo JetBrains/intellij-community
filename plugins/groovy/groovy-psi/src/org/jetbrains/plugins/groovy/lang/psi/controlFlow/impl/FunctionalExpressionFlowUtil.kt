@@ -4,6 +4,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
@@ -13,8 +15,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.*
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.SharedVariableTypeProvider.Companion.getWriteInstructionsFromNestedFlows
 import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
@@ -95,8 +99,23 @@ fun GrFunctionalExpression?.getControlFlowOwner(): GrControlFlowOwner? = when (t
   else -> null
 }
 
-fun computeInvocationKind(block: GrFunctionalExpression?): InvocationKind {
-  val call = block?.parentOfType<GrMethodCall>()?.takeIf { call ->
+fun GrFunctionalExpression?.getInvocationKind(): InvocationKind {
+  if (this == null) {
+    return UNKNOWN
+  }
+  return CachedValuesManager.getCachedValue(this) {
+    CachedValueProvider.Result(computeInvocationKind(this), this)
+  }
+}
+
+internal fun getUsagesMap(topFlowOwner: GrControlFlowOwner): Map<VariableDescriptor, List<GrControlFlowOwner>> {
+  return getWriteInstructionsFromNestedFlows(topFlowOwner)
+    .map { (instruction: ReadWriteVariableInstruction, scope: GrControlFlowOwner) -> instruction.descriptor to scope }
+    .groupBy(Pair<VariableDescriptor, GrControlFlowOwner>::first, Pair<VariableDescriptor, GrControlFlowOwner>::second)
+}
+
+private fun computeInvocationKind(block: GrFunctionalExpression): InvocationKind {
+  val call = block.parentOfType<GrMethodCall>()?.takeIf { call ->
     (call.invokedExpression as? GrReferenceExpression)?.referenceName in knownMethods &&
     call.getArguments()?.any { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } ?: false
   } ?: return UNKNOWN
@@ -124,4 +143,4 @@ private fun InvocationKind.weakenIfUsesSafeNavigation(call: GrMethodCall): Invoc
 
 
 internal const val GROOVY_PROCESS_NESTED_DFA = "groovy.process.nested.dfa"
-internal fun isNestedFlowProcessingAllowed() : Boolean = Registry.`is`(GROOVY_PROCESS_NESTED_DFA, false)
+internal fun isNestedFlowProcessingAllowed(): Boolean = Registry.`is`(GROOVY_PROCESS_NESTED_DFA, false)

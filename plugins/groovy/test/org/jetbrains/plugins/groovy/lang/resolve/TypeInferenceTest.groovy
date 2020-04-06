@@ -1764,4 +1764,130 @@ def foo(x) {
     cl()
   }''', JAVA_LANG_INTEGER
   }
+
+  void 'test assignment inside dangling closure flushes subsequent types'() {
+    doNestedDfaTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  def cl = {
+    x = new B()
+  }
+  x = new C()
+  <caret>x
+}''', "A"
+  }
+
+  void 'test assignment inside dangling closure affects unrelated flow'() {
+    doNestedDfaTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  if (false) {
+    def cl = {
+      x = new B()
+    }
+  }
+  if (false) {
+    x = new C()
+    <caret>x
+  }
+}''', "A"
+  }
+
+  void 'test assignment inside dangling closure does not change type in parallel flow'() {
+    doNestedDfaTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  if (false) {
+    def cl = {
+      x = new B()
+    }
+  } else {
+    x = new C()
+    <caret>x
+  }
+}''', "C"
+  }
+
+  void 'test assignment inside dangling closure does not change types before definition'() {
+    doNestedDfaTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  <caret>x
+  def cl = {
+    x = new B()
+  }
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test two dangling closures flush type together'() {
+    doNestedDfaTest '''
+class A {}
+class D extends A{}
+class B extends D {}
+class C extends D {}
+
+def foo() {
+  def x = new B()
+  def cl = {
+    x = new A()
+  }
+  def cl2 = {
+    x = new C()
+  } 
+  <caret>x  
+}''', "A"
+  }
+
+
+  void 'test two assignments inside single dangling closure'() {
+    doNestedDfaTest '''
+class A {}
+class D extends A{}
+class B extends D {}
+class C extends D {}
+
+def foo() {
+  def x = 1
+  def cl = {
+    x = new A()
+    x = new C()
+  }
+  x = new B()
+  <caret>x  
+}''', "A"
+  }
+
+  void 'test assignment in nested dangling closure'() {
+    doNestedDfaTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  def cl = {
+    def cl = {
+      x = new C()
+    }
+  }
+  x = new B()
+  <caret>x  
+}''', "A"
+  }
 }

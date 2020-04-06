@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -142,7 +143,8 @@ class InferenceCache {
       .map(it -> it.getFirst())
       .filter(predicate)
       .collect(Collectors.toSet());
-    return new DFAFlowInfo(initialState, interestingInstructions, acyclicInstructions, dependentOnSharedVariables);
+    Map<VariableDescriptor, List<GrControlFlowOwner>> usageInFlowMap = FunctionalExpressionFlowUtil.getUsagesMap(myScope);
+    return new DFAFlowInfo(initialState, interestingInstructions, acyclicInstructions, dependentOnSharedVariables, usageInFlowMap);
   }
 
   @NotNull

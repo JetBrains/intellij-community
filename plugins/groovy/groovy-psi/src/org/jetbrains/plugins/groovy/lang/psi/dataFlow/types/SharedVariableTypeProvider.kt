@@ -31,11 +31,7 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
 
   val sharedVariableDescriptors: Set<VariableDescriptor> by lazyPub { doGetSharedVariables() }
   private val writeInstructions: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> by lazyPub {
-    scope.mergeInnerFlows()
-      .filter { (instruction, _) ->
-        instruction is ReadWriteVariableInstruction && instruction.isWrite && instruction.descriptor in sharedVariableDescriptors
-      }
-      .map { (instruction, scope) -> instruction as ReadWriteVariableInstruction to scope }
+    getWriteInstructionsFromNestedFlows(scope).filter { it.first.descriptor in sharedVariableDescriptors }
   }
   private val flowTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(writeInstructions.size)
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
@@ -63,7 +59,7 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
    * This method is not supposed to be reentrant.
    * If DFA would have to query the type of shared variable, then DFA will be self-invoked with a nested context.
    * Such behavior is consistent with @CompileStatic approach: all variables inside DFA should see the type that was achieved via flow typing.
-   * @see TypeDfaInstance.myDependentOnSharedVariables
+   * @see DFAFlowInfo.dependentOnSharedVariables
    */
   private fun runSharedVariableInferencePhase() {
     for (index: Int in writeInstructions.indices) {
@@ -109,7 +105,7 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
       .filter { if (it is ResolvedVariableDescriptor) it.variable !is GrField else true }
       // do not bother to process variable if it was assigned only once
       .filter { descriptor ->
-        scope.mergeInnerFlows()
+        mergeInnerFlows(scope)
           .map(Pair<Instruction, GrControlFlowOwner>::first)
           .filterIsInstance<ReadWriteVariableInstruction>()
           .filter(ReadWriteVariableInstruction::isWrite)
@@ -120,16 +116,24 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
   }
 
   companion object {
-    private fun GrControlFlowOwner.mergeInnerFlows(): List<Pair<Instruction, GrControlFlowOwner>> {
-      return controlFlow.flatMap {
+    private fun mergeInnerFlows(owner: GrControlFlowOwner): List<Pair<Instruction, GrControlFlowOwner>> {
+      return owner.controlFlow.flatMap {
         val element = it.element
         if (it !is ReadWriteVariableInstruction && element is GrControlFlowOwner) {
-          element.mergeInnerFlows()
+          mergeInnerFlows(element)
         }
         else {
-          listOf<Pair<Instruction, GrControlFlowOwner>>(it to this)
+          listOf<Pair<Instruction, GrControlFlowOwner>>(it to owner)
         }
       }
+    }
+
+    internal fun getWriteInstructionsFromNestedFlows(scope: GrControlFlowOwner): List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> {
+      return mergeInnerFlows(scope)
+        .filter { (instruction, _) ->
+          instruction is ReadWriteVariableInstruction && instruction.isWrite
+        }
+        .map { (instruction, scope) -> instruction as ReadWriteVariableInstruction to scope }
     }
   }
 

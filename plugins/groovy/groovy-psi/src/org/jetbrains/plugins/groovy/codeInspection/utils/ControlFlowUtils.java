@@ -645,6 +645,26 @@ public final class ControlFlowUtils {
     return visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, visitor);
   }
 
+  /**
+   * Calculates set of instructions such that @instruction@ is reachable starting from each of them.
+   */
+  public static @NotNull Set<@NotNull Instruction> getPrecedingFlow(@NotNull Instruction instruction) {
+    LinkedHashSet<Instruction> instructions = new LinkedHashSet<>();
+    instructions.add(instruction);
+    Queue<Instruction> instructionQueue = new ArrayDeque<>();
+    instructionQueue.add(instruction);
+    while (!instructionQueue.isEmpty()) {
+      Instruction currentInstruction = instructionQueue.poll();
+      currentInstruction.allPredecessors().forEach(previous -> {
+        if (!instructions.contains(previous)) {
+          instructions.add(previous);
+          instructionQueue.add(previous);
+        }
+      });
+    }
+    return instructions;
+  }
+
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
     if (first == last) return true;
     if (last instanceof AfterCallInstruction) {

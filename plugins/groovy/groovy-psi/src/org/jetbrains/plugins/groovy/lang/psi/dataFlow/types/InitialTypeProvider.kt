@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.computeInvocationKind
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.getInvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
@@ -28,13 +28,12 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
     if (flow != null) ControlFlowUtils.findNearestInstruction(start, flow.controlFlow) else null
   }
 
-  private val invocationKind by lazyPub {
-    when (start) {
-      is GrClosableBlock -> computeInvocationKind(start)
-      is GrLambdaBody -> computeInvocationKind(start.lambdaExpression)
+  private val invocationKind: InvocationKind
+    get() = when (start) {
+      is GrClosableBlock -> start.getInvocationKind()
+      is GrLambdaBody -> start.lambdaExpression.getInvocationKind()
       else -> InvocationKind.UNKNOWN
     }
-  }
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {
     if (isNestedFlowProcessingAllowed()) {
