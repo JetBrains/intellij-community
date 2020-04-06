@@ -24,15 +24,17 @@ public class MavenServerConnector implements @NotNull Disposable {
     myDownloadListener = new RemoteMavenServerDownloadListener();
 
   private final MavenServerManager myManager;
-  private final MavenWorkspaceSettings mySettings;
 
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
   private final Sdk myJdk;
+  private final MavenDistribution myDistribution;
+  private final String myVmOptions;
 
   public MavenServerConnector(@NotNull MavenServerManager manager, @NotNull MavenWorkspaceSettings settings, @NotNull Sdk jdk) {
     myManager = manager;
-    mySettings = settings;
+    myDistribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
+    myVmOptions = settings.importingSettings.getVmOptionsForImporter();
     myJdk = jdk;
     mySupport = new MavenServerRemoteProcessSupport(this);
     myMavenServer = connect();
@@ -142,11 +144,11 @@ public class MavenServerConnector implements @NotNull Disposable {
   }
 
   public MavenDistribution getMavenDistribution() {
-    return new MavenDistributionConverter().fromString(mySettings.generalSettings.getMavenHome());
+    return myDistribution;
   }
 
   public String getVMOptions() {
-    return mySettings.importingSettings.getVmOptionsForImporter();
+    return myVmOptions;
   }
 
 

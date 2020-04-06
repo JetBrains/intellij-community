@@ -49,10 +49,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
@@ -93,6 +90,10 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     if (connector != null) {
       connector.shutdown(true);
     }
+  }
+
+  public Collection<MavenServerConnector> getAllConnectors() {
+    return Collections.unmodifiableCollection(myServerConnectors.values());
   }
 
   static class State {
@@ -147,13 +148,15 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
       MavenServerConnector connector = myServerConnectors.get(project);
       if (connector == null) {
         connector = myServerConnectors.computeIfAbsent(project, p -> new MavenServerConnector(this, settings, jdk));
-        Disposer.register(project, connector);
+        registerDisposable(project, connector);
+
         return connector;
       }
 
       if (!compatibleParameters(connector, jdk, settings.importingSettings.getVmOptionsForImporter())) {
+        connector.shutdown(false);
         connector = new MavenServerConnector(this, settings, jdk);
-        Disposer.register(project, connector);
+        registerDisposable(project, connector);
         myServerConnectors.put(project, connector);
       }
       return connector;
@@ -161,6 +164,15 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     catch (ExternalSystemJdkException e) {
       MavenLog.LOG.warn("cannot find JDK for project " + project, e);
       throw new RuntimeException("cannot find JDK"); //TODO
+    }
+  }
+
+  private void registerDisposable(Project project, MavenServerConnector connector) {
+    if (project.isDefault()) {
+      Disposer.register(this, connector);
+    }
+    else {
+      Disposer.register(project, connector);
     }
   }
 

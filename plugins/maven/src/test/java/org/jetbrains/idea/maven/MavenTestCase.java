@@ -15,7 +15,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EdtTestUtil;
@@ -112,6 +111,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void tearDown() throws Exception {
     new RunAll(
       () -> MavenServerManager.getInstance().shutdown(true),
+      () -> checkAllMavenConnectorsDisposed(),
       () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
@@ -128,6 +128,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
       },
       () -> super.tearDown()
     ).run();
+  }
+
+  private void checkAllMavenConnectorsDisposed() {
+    assertEmpty("all maven connectors should be disposed", MavenServerManager.getInstance().getAllConnectors());
   }
 
   private void ensureTempDirCreated() throws IOException {
