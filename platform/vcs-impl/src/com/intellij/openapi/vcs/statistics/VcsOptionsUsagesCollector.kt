@@ -1,12 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.statistics
 
-import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.addBoolIfDiffers
-import com.intellij.internal.statistic.beans.addMetricIfDiffers
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ASKED_ADD_EXTERNAL_FILES_PROPERTY
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import java.util.*
@@ -51,7 +50,31 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, conf, confDefault, { it.INCLUDE_TEXT_INTO_SHELF }, "include.text.into.shelf")
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND }, "check.conflicts.in.background")
 
+    addExternalFilesActionsStatistics(project, set, conf, confDefault)
+
     return set
+  }
+
+  private fun addExternalFilesActionsStatistics(project: Project, set: HashSet<MetricEvent>, conf: VcsConfiguration, confDefault: VcsConfiguration) {
+    addBoolIfDiffers(set, conf, confDefault, { it.ADD_EXTERNAL_FILES_SILENTLY }, "add.external.files.silently")
+    if (!conf.ADD_EXTERNAL_FILES_SILENTLY) {
+      addBooleanPropertyIfDiffers(project, set, ASKED_ADD_EXTERNAL_FILES_PROPERTY, false, "asked.add.external.files")
+    }
+  }
+
+  private fun addBooleanPropertyIfDiffers(project: Project, set: HashSet<MetricEvent>,
+                                          property: String, defaultValue: Boolean, eventId: String): Boolean {
+    val value = booleanPropertyIfDiffers(project, property, defaultValue)
+    if (value != null) {
+      return set.add(newBooleanMetric(eventId, value))
+    }
+
+    return false
+  }
+
+  private fun booleanPropertyIfDiffers(project: Project, property: String, defaultValue: Boolean): Boolean? {
+    val value = PropertiesComponent.getInstance(project).getBoolean(property, defaultValue)
+    return if (value != defaultValue) value else null
   }
 
   companion object {
