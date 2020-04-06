@@ -5,6 +5,7 @@ public class Html {
 
   private final String myText;
   private boolean myKeepFont = false;
+  private boolean mySmartWrap;
 
   public Html(String text) {
     myText = text;
@@ -21,5 +22,17 @@ public class Html {
 
   public boolean isKeepFont() {
     return myKeepFont;
+  }
+
+  /**
+   * By default, text can be soft-wrapped only at space positions. 'Smart' wrapping enables wrapping also at other places (e.g. punctuation)
+   */
+  public Html setSmartWrap(boolean smartWrap) {
+    mySmartWrap = smartWrap;
+    return this;
+  }
+
+  public boolean isSmartWrap() {
+    return mySmartWrap;
   }
 }

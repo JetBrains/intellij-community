@@ -218,7 +218,9 @@ public class HintUtil {
     return String.format(
       "<html><head>%s</head><body>%s</body></html>",
       UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()),
-      htmlBody
+      // U+200B is a 'zero width space' character. It's not rendered by itself, but its presence in the content makes JEditorPane use more
+      // advanced line breaking algorithm (see javax.swing.text.GlyphView#getBreaker())
+      htmlBody + (text.isSmartWrap() ? "\u200b" : "")
     );
   }
 
