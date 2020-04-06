@@ -236,7 +236,7 @@ public class GitConflictResolver {
 
   private void notifyException(@NotNull VcsException e) {
     LOG.info("mergeFiles ", e);
-    final String description = "Couldn't check the working tree for unmerged files because of an error.";
+    final String description = GitBundle.getString("conflict.resolver.unmerged.files.check.error.notification.description.text");
     VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
                                                    description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
                                                    e.getLocalizedMessage());
