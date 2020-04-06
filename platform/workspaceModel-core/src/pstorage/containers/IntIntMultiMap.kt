@@ -295,8 +295,8 @@ internal sealed class MutableIntIntMultiMap(
     else {
       val remainedValue = if (removeLast) values[idx - 1] else values[idx + 1].unpack()
       val newArray = IntArray(size - 2)
-      values.copyInto(newArray, 0, 0, foundIndex)
-      values.copyInto(newArray, foundIndex, foundIndex + 2)
+      values.copyInto(newArray, 0, 0, valuesStartIndex)
+      values.copyInto(newArray, valuesStartIndex, valuesStartIndex + 2)
       values = newArray
 
       links.put(key, remainedValue)
