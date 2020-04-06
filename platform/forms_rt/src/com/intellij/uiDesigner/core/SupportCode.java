@@ -73,9 +73,9 @@ public final class SupportCode {
    */
   public static void setDisplayedMnemonicIndex(JComponent component, int index) {
     try {
-      Method method = component.getClass().getMethod("setDisplayedMnemonicIndex", new Class[]{int.class});
+      Method method = component.getClass().getMethod("setDisplayedMnemonicIndex", int.class);
       method.setAccessible(true);
-      method.invoke(component, new Object[]{new Integer(index)});
+      method.invoke(component, Integer.valueOf(index));
     }
     catch (Exception e) {
       // JDK earlier than 1.4 - do nothing

@@ -30,8 +30,8 @@ public class Packet extends PacketWriter {
         continue;
       }
       boolean appendChar = true;
-      for (int j = 0; j < ourSymbolsToEncode.length; j++) {
-        if (ourSymbolsToEncode[j] == chr) {
+      for (char c : ourSymbolsToEncode) {
+        if (c == chr) {
           buffer.append(ourSpecialSymbol);
           final String code = String.valueOf((int)chr);
           for (int count = CODE_LENGTH - code.length(); count > 0; count--) {
