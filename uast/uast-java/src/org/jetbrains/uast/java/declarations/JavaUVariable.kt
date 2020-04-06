@@ -38,7 +38,7 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElem
   override fun hashCode(): Int = javaPsi.hashCode()
 }
 
-open class JavaUVariable(
+class JavaUVariable(
   override val javaPsi: PsiVariable,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UVariableEx, PsiVariable by javaPsi {
@@ -62,7 +62,7 @@ open class JavaUVariable(
   override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
 
-open class JavaUParameter(
+class JavaUParameter(
   override val javaPsi: PsiParameter,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UParameterEx, PsiParameter by javaPsi {
@@ -77,7 +77,7 @@ open class JavaUParameter(
   override fun getOriginalElement(): PsiElement? = javaPsi.originalElement
 }
 
-open class JavaUField(
+class JavaUField(
   override val sourcePsi: PsiField,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UFieldEx, PsiField by sourcePsi {
@@ -89,7 +89,7 @@ open class JavaUField(
   override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
-open class JavaULocalVariable(
+class JavaULocalVariable(
   override val sourcePsi: PsiLocalVariable,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), ULocalVariableEx, PsiLocalVariable by sourcePsi {
@@ -111,7 +111,7 @@ open class JavaULocalVariable(
 
 }
 
-open class JavaUEnumConstant(
+class JavaUEnumConstant(
   override val sourcePsi: PsiEnumConstant,
   givenParent: UElement?
 ) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionEx, PsiEnumConstant by sourcePsi, UMultiResolvable {
