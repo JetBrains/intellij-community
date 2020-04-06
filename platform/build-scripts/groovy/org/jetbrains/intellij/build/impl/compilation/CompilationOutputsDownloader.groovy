@@ -63,8 +63,12 @@ class CompilationOutputsDownloader {
       String lastCachedCommit = commits[depth]
       context.messages.info("Using cache for commit $lastCachedCommit ($depth behind last commit).")
 
-      executor.submit {
-        saveCache(lastCachedCommit)
+      // In case if outputs are available for the current commit
+      // cache is not needed as we are not going to compile anything.
+      if (!availableForHeadCommit) {
+        executor.submit {
+          saveCache(lastCachedCommit)
+        }
       }
 
       def sourcesState = getSourcesState(lastCachedCommit)
