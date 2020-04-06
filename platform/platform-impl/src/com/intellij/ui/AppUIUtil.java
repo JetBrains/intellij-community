@@ -272,7 +272,7 @@ public final class AppUIUtil {
       }
     }
 
-    File svgFile = ApplicationInfoEx.getInstanceEx().getApplicationSvgIconFile();
+    File svgFile = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconFile();
     if (svgFile != null) {
       return svgFile.getAbsolutePath();
     }
