@@ -526,9 +526,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       throw new UnsupportedOperationException("cannot remove node");
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public Enumeration<?> children() {
-      return enumeration(getChildren());
+    public Enumeration children() {
+      return enumeration((Collection)getChildren());
     }
 
     @Override
