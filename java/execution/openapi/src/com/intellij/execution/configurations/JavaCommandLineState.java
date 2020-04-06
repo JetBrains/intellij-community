@@ -66,7 +66,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
       return myCommandLine;
     }
 
-    if (Experiments.getInstance().isFeatureEnabled("run.targets")) {
+    if (Experiments.getInstance().isFeatureEnabled("run.targets") &&
+        !(getEnvironment().getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory)) {
       LOG.error("Command line hasn't been built yet. " +
                 "Probably you need to run environment#getPreparedTargetEnvironment first, " +
                 "or it return the environment from the previous run session");
