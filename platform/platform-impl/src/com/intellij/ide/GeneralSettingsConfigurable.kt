@@ -34,7 +34,7 @@ internal val allOptionDescriptors
     myChkSaveOnFrameDeactivation,
     myChkAutoSaveIfInactive,
     myChkUseSafeWrite
-  ).map { it.asOptionDescriptor() }
+  ).map { it.asUiOptionDescriptor() }
 
 /**
  * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:

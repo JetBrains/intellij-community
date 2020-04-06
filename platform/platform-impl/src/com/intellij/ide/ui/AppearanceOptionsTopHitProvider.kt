@@ -36,7 +36,7 @@ private val optionDescriptors
     cdNavigateToPreview,
     cdShowEditorPreview,
     cdShowBalloons
-  ).map(CheckboxDescriptor::asOptionDescriptor)
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
   override fun getId(): String = ID

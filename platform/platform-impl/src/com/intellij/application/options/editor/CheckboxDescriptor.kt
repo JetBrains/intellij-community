@@ -15,7 +15,13 @@ class CheckboxDescriptor(@Nls val name: String,
   constructor(name: String, mutableProperty: KMutableProperty0<Boolean>, comment: String? = null, groupName: String? = null)
     : this(name, mutableProperty.toBinding(), comment, groupName)
 
-  fun asOptionDescriptor(): BooleanOptionDescription {
+  fun asUiOptionDescriptor(): BooleanOptionDescription = asOptionDescriptor {
+    UISettings.instance.fireUISettingsChanged()
+  }
+
+  fun asOptionDescriptor(): BooleanOptionDescription = asOptionDescriptor(null)
+
+  fun asOptionDescriptor(fireUpdated: (() -> Unit)?): BooleanOptionDescription {
     val optionName = when {
       groupName != null -> {
         val prefix = groupName.trim().removeSuffix(":")
@@ -26,7 +32,7 @@ class CheckboxDescriptor(@Nls val name: String,
     return object : BooleanOptionDescription(optionName, ID) {
       override fun setOptionState(enabled: Boolean) {
         binding.set(enabled)
-        UISettings.instance.fireUISettingsChanged()
+        fireUpdated?.invoke()
       }
 
       override fun isOptionEnabled() = binding.get.invoke()

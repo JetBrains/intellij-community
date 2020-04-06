@@ -94,7 +94,7 @@ internal val appearanceOptionDescriptors: List<OptionDescription>
     cdHideNavigationPopups,
     cdDnDWithAlt,
     cdFullPathsInTitleBar
-  ).map(CheckboxDescriptor::asOptionDescriptor)
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
   private var shouldUpdateLaF = false
