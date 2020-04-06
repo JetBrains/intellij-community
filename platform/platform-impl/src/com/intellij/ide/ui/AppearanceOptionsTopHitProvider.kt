@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.Nls
 
 // @formatter:off
 internal val uiOptionGroupName get() = message("appearance.ui.option.group")
@@ -50,7 +51,7 @@ class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationL
     const val ID = "appearance"
 
     @JvmStatic
-    fun option(option: String, propertyName: String, configurableId: String): BooleanOptionDescription =
+    fun option(@Nls option: String, propertyName: String, configurableId: String): BooleanOptionDescription =
       object : PublicMethodBasedOptionDescription(option, configurableId,
                                                   "get" + StringUtil.capitalize(propertyName),
                                                   "set" + StringUtil.capitalize(propertyName)) {
@@ -59,6 +60,6 @@ class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationL
       }
 
     @JvmStatic
-    fun appearance(option: String, propertyName: String): BooleanOptionDescription = option(option, propertyName, "preferences.lookFeel")
+    fun appearance(@Nls option: String, propertyName: String): BooleanOptionDescription = option(option, propertyName, "preferences.lookFeel")
   }
 }
