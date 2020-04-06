@@ -57,6 +57,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -1660,6 +1661,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private class MyShowFilterPopupAction extends DumbAwareAction {
+    private final PopupState myPopupState = new PopupState();
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {
@@ -1685,9 +1687,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (e.getData(PlatformDataKeys.CONTEXT_COMPONENT) == null) return;
+      if (myPopupState.isRecentlyHidden()) return;
 
       ListPopup listPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null, mySwitchContextGroup, e.getDataContext(), false, null, 10);
+      listPopup.addListener(myPopupState);
       listPopup.showUnderneathOf(myFilterContextButton);
     }
   }
