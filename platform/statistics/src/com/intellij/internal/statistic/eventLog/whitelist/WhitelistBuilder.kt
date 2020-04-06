@@ -19,6 +19,9 @@ fun valueSchema(field: EventField<*>): List<String> = when(field) {
   is StringEventField ->
     if (field.customRuleId != null) listOf("{util#${field.customRuleId}}") else emptyList()
 
+  is StringListEventField ->
+    if (field.customRuleId != null) listOf("{util#${field.customRuleId}}") else emptyList()
+
   is EnumEventField<*> ->
     field.transformAllEnumConstants()
 
@@ -30,6 +33,9 @@ fun valueSchema(field: EventField<*>): List<String> = when(field) {
 
   EventFields.AnonymizedPath ->
     listOf("{util#hash}")
+
+  EventFields.InputEvent ->
+    listOf("{util#shortcut}")
 
   else -> {
     emptyList()

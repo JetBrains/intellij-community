@@ -66,10 +66,17 @@ data class EnumEventField<T : Enum<*>>(override val name: String,
 }
 
 data class StringListEventField(override val name: String): EventField<List<String>>() {
+  var customRuleId: String? = null
+    private set
+
   override fun addData(fuData: FeatureUsageData, value: List<String>) {
     fuData.addData(name, value)
   }
 
+  fun withCustomRule(id: String): StringListEventField {
+    customRuleId = id
+    return this
+  }
 }
 
 object EventFields {
@@ -106,7 +113,7 @@ object EventFields {
 
   @JvmField
   val InputEvent = object : EventField<InputEventPlace>() {
-    override val name = "input_field"
+    override val name = "input_event"
     override fun addData(fuData: FeatureUsageData, value: InputEventPlace) {
       fuData.addInputEvent(value.inputEvent, value.place)
     }

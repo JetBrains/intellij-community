@@ -47,7 +47,7 @@ public final class LifecycleUsageTriggerCollector extends FeatureUsagesCollector
   private static final EventField<String> errorField = EventFields.String("error");
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField = EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, (kind) -> kind.name().toLowerCase());
   private static final EventField<Integer> errorHashField = EventFields.Int("error_hash");
-  private static final StringListEventField errorFramesField = EventFields.StringList("error_frames");
+  private static final StringListEventField errorFramesField = EventFields.StringList("error_frames").withCustomRule("method_name");
   private static final EventField<Integer> errorSizeField = EventFields.Int("error_size");
   private static final EventField<Boolean> tooManyErrorsField = EventFields.Boolean("too_many_errors");
   private static final VarargEventId IDE_ERROR = LIFECYCLE.registerVarargEvent("ide.error",
