@@ -47,7 +47,7 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
       border = PIPETTE_BUTTON_BORDER
       background = PICKER_BACKGROUND_COLOR
 
-      ui = BasicButtonUI()
+      setUI(BasicButtonUI())
 
       isFocusable = false
       preferredSize = COLOR_INDICATOR_SIZE
