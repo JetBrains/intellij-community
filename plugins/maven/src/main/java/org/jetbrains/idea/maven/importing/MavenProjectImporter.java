@@ -172,7 +172,7 @@ public class MavenProjectImporter {
       importers.add(importer);
 
       //need for facets importing
-      importer.setRootModelAdapter(new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(mavenProject, module, providerForFacets)));
+      //importer.setRootModelAdapter(new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(mavenProject, module, providerForFacets)));
     }
 
     configFacets(postTasks, importers);
