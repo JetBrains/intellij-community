@@ -10,6 +10,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -65,10 +66,14 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
       return myCommandLine;
     }
 
-    LOG.error("Command line hasn't been built yet. " +
-              "Probably you need to run environment#getPreparedTargetEnvironment first.");
+    if (Experiments.getInstance().isFeatureEnabled("run.targets")) {
+      LOG.error("Command line hasn't been built yet. " +
+                "Probably you need to run environment#getPreparedTargetEnvironment first, " +
+                "or it return the environment from the previous run session");
+    }
     try {
-      getEnvironment().getPreparedTargetEnvironment(this, new EmptyProgressIndicator());
+      // force re-prepareTargetEnvironment in order to drop previous environment
+      getEnvironment().prepareTargetEnvironment(this, new EmptyProgressIndicator());
       return myCommandLine;
     }
     catch (ExecutionException e) {
