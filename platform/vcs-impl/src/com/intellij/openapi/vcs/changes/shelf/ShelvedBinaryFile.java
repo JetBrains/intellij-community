@@ -12,8 +12,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -82,10 +86,19 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
       ContentRevision after = null;
       final File baseDir = new File(project.getBaseDir().getPath());
       if (BEFORE_PATH != null) {
-        File localFile = new File(baseDir, BEFORE_PATH);
-        final FilePath filePath = VcsUtil.getFilePath(localFile, false);
+        final FilePath file = VcsUtil.getFilePath(new File(baseDir, BEFORE_PATH), false);
+        before = new CurrentBinaryContentRevision(file) {
+          @Override
+          public byte @Nullable [] getBinaryContent() throws VcsException {
+            return ObjectUtils.chooseNotNull(super.getBinaryContent(), EMPTY_BYTE_ARRAY);
+          }
 
-        before = localFile.exists() ? createCurrentBinaryContentRevision(filePath) : createEmptyBinaryContentRevision(filePath);
+          @NotNull
+          @Override
+          public VcsRevisionNumber getRevisionNumber() {
+            return new TextRevisionNumber(VcsBundle.message("local.version.title"));
+          }
+        };
       }
       if (AFTER_PATH != null) {
         after = createBinaryContentRevision(project);
@@ -93,27 +106,6 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
       myChange = new Change(before, after);
     }
     return myChange;
-  }
-
-  private static BinaryContentRevision createEmptyBinaryContentRevision(FilePath filePath) {
-    return new SimpleBinaryContentRevision(filePath, VcsBundle.message("not.found.content.binary.title")) {
-
-      @Override
-      public byte @Nullable [] getBinaryContent() throws VcsException {
-        return EMPTY_BYTE_ARRAY;
-      }
-    };
-  }
-
-  @NotNull
-  private static BinaryContentRevision createCurrentBinaryContentRevision(FilePath filePath) {
-    return new CurrentBinaryContentRevision(filePath) {
-      @NotNull
-      @Override
-      public VcsRevisionNumber getRevisionNumber() {
-        return new TextRevisionNumber(VcsBundle.message("local.version.title"));
-      }
-    };
   }
 
   @NotNull
