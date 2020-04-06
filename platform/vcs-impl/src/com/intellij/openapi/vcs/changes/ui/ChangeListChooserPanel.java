@@ -94,7 +94,7 @@ public class ChangeListChooserPanel extends JPanel {
 
       @Override
       protected void nameChangedImpl(Project project, LocalChangeList initial) {
-        nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? "Cannot create new changelist with empty name." : null);
+        nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? VcsBundle.message("new.changelist.empty.name.error") : null);
       }
     };
     myOkEnabledListener = okEnabledListener;
