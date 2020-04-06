@@ -50,7 +50,9 @@ public final class InstalledPluginsState {
   public InstalledPluginsState() {
     if (myPreInstalledPlugins != null) {
       for (IdeaPluginDescriptor plugin : myPreInstalledPlugins) {
-        onPluginInstall(plugin, false, true);
+        if (!PluginManagerCore.isPluginInstalled(plugin.getPluginId())) {
+          onPluginInstall(plugin, false, false);
+        }
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       myPreInstalledPlugins = null;
