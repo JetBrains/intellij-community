@@ -173,7 +173,7 @@ open class MultipleFileMergeDialog(
 
       if (project != null) {
         row {
-          checkBox("Group files by directory", groupByDirectory) { _, component ->
+          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"), groupByDirectory) { _, component ->
             toggleGroupByDirectory(component.isSelected)
           }
         }

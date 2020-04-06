@@ -35,6 +35,7 @@ import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
 import git4idea.history.GitLogUtil.readFullDetails
 import git4idea.history.GitLogUtil.readFullDetailsForHashes
+import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -329,7 +330,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
           },
           "${range.first}..${range.second}")
       },
-      "Collecting Commits Details...",
+      GitBundle.message("merge.dialog.customizer.collecting.details.progress"),
       true,
       repository.project)
     val dlg = MergeConflictMultipleCommitInfoDialog(repository.project, repository.root, details, filteredCommits)
@@ -341,7 +342,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
 internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
-    .addToRight(LinkLabel.create("Show Details", action))
+    .addToRight(LinkLabel.create(GitBundle.message("merge.dialog.customizer.show.details.link.label"), action))
 
 private class MergeConflictMultipleCommitInfoDialog(
   private val project: Project,
@@ -367,7 +368,7 @@ private class MergeConflictMultipleCommitInfoDialog(
   }
 
   override fun createSouthAdditionalPanel(): JPanel {
-    val checkbox = JBCheckBox("Filter by conflicted file", true)
+    val checkbox = JBCheckBox(GitBundle.message("merge.dialog.customizer.filter.by.conflicted.file.checkbox"), true)
     checkbox.addItemListener {
       if (checkbox.isSelected) {
         filterCommitsByConflictingFile()

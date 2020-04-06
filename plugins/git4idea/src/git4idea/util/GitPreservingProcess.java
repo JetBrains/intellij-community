@@ -134,7 +134,7 @@ public class GitPreservingProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
       setReverse(true).
       setMergeDialogCustomizer(mergeDialogCustomizer).
-      setErrorNotificationTitle("Local changes were not restored");
+      setErrorNotificationTitle(GitBundle.message("preserving.process.local.changes.not.restored.error.title"));
 
     saver.setConflictResolverParams(params);
     return saver;

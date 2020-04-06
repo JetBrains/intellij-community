@@ -111,7 +111,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       myPanel.setReverseEnabledAndVisible(myPatchBuilder.isReverseSupported());
 
       JComponent panel = myPanel.getPanel();
-      panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, "Patch File Settings");
+      panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, VcsBundle.message("create.patch.settings.dialog.title"));
       return panel;
     }
 

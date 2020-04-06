@@ -174,7 +174,8 @@ public class GitConflictResolver {
    */
   protected void notifyUnresolvedRemain() {
     notifyWarning(myParams.myErrorNotificationTitle,
-                  "Unresolved conflicts remaining in the project." + myParams.myErrorNotificationAdditionalDescription);
+                  GitBundle.message("merge.unresolved.conflicts.remaining.notification.body") +
+                  myParams.myErrorNotificationAdditionalDescription);
   }
 
   /**
@@ -182,7 +183,8 @@ public class GitConflictResolver {
    * notification.
    */
   private void notifyUnresolvedRemainAfterNotification() {
-    notifyWarning("Unresolved Conflicts Remaining", myParams.myErrorNotificationAdditionalDescription);
+    notifyWarning(GitBundle.message("merge.unresolved.conflicts.remaining.notification.title"),
+                  myParams.myErrorNotificationAdditionalDescription);
   }
 
   protected void notifyWarning(@NotNull String title, @NotNull String content) {

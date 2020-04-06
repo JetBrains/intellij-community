@@ -19,6 +19,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -124,7 +125,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
         return givenParams;
       }
       Params params = new Params(project);
-      params.setErrorNotificationTitle("Local changes were not restored");
+      params.setErrorNotificationTitle(GitBundle.message("preserving.process.local.changes.not.restored.error.title"));
       params.setMergeDialogCustomizer(new UnstashMergeDialogCustomizer());
       params.setReverse(true);
       return params;

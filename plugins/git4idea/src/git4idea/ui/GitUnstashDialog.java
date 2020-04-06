@@ -363,7 +363,7 @@ public class GitUnstashDialog extends DialogWrapper {
 
     private static Params makeParams(Project project, StashInfo stashInfo) {
       Params params = new Params(project);
-      params.setErrorNotificationTitle("Unstashed with conflicts");
+      params.setErrorNotificationTitle(GitBundle.getString("unstash.unstashed.with.conflicts.error.title"));
       params.setMergeDialogCustomizer(new UnstashMergeDialogCustomizer(stashInfo));
       return params;
     }
