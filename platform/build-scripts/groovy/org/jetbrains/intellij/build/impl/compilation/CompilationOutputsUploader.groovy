@@ -77,6 +77,7 @@ class CompilationOutputsUploader {
         uploader.upload(sourcePath, zipFile)
         File zipCopy = new File(tmpDir, sourcePath)
         FileUtil.copy(zipFile, zipCopy)
+        context.messages.artifactBuilt(zipCopy.absolutePath)
         FileUtil.delete(zipFile)
 
         // Upload compilation metadata
