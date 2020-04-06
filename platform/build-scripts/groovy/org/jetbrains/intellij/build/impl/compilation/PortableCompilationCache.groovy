@@ -14,7 +14,7 @@ class PortableCompilationCache {
   @Lazy
   private String remoteGitUrl = { require('intellij.remote.url', "Repository url") }()
   @Lazy
-  private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }
+  private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
   boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && System.getProperty(REMOTE_CACHE_URL_PROPERTY)?.with {
     !StringUtil.isEmptyOrSpaces(it)
   } == true
