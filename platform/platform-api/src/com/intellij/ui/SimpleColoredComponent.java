@@ -280,8 +280,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   @Override
   public final void setIcon(@Nullable final Icon icon) {
-    myIcon = icon;
-    revalidateAndRepaint();
+    if (!Objects.equals(icon, myIcon)) {
+      myIcon = icon;
+      revalidateAndRepaint();
+    }
   }
 
   /**
