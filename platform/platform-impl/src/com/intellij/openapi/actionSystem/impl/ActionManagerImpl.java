@@ -18,6 +18,8 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.eventLog.EventFields;
+import com.intellij.internal.statistic.eventLog.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -1432,14 +1434,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Language language = file != null ? file.getLanguage() : null;
-    ActionsCollectorImpl.recordActionInvoked(CommonDataKeys.PROJECT.getData(dataContext), action, event, (featureUsageData) -> {
-      if (language != null) {
-        featureUsageData.addCurrentFile(language);
-      }
-      if (action instanceof FusAwareAction) {
-        ((FusAwareAction) action).addAdditionalUsageData(event, featureUsageData);
-      }
-    });
+    final List<EventPair> customData = new ArrayList<>();
+    customData.add(EventFields.CurrentFile.with(language));
+    if (action instanceof FusAwareAction) {
+      ((FusAwareAction) action).addAdditionalUsageData(event, customData);
+    }
+    ActionsCollectorImpl.recordActionInvoked(CommonDataKeys.PROJECT.getData(dataContext), action, event, customData);
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }

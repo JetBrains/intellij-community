@@ -3,14 +3,21 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
 
-data class InputEventPlace(val inputEvent: InputEvent?, val place: String?)
+data class FusInputEvent(val inputEvent: InputEvent?, val place: String?) {
+  companion object {
+    @JvmStatic
+    fun from(actionEvent: AnActionEvent?): FusInputEvent? = actionEvent?.let { FusInputEvent(it.inputEvent, it.place) }
+  }
+}
 
 abstract class EventField<T> {
   abstract val name: String
@@ -24,6 +31,8 @@ data class EventPair<T>(val field: EventField<T>, val data: T)
 data class StringEventField(override val name: String): EventField<String?>() {
   var customRuleId: String? = null
     private set
+  var customEnumId: String? = null
+    private set
 
   override fun addData(fuData: FeatureUsageData, value: String?) {
     if (value != null) {
@@ -33,6 +42,11 @@ data class StringEventField(override val name: String): EventField<String?>() {
 
   fun withCustomRule(id: String): StringEventField {
     customRuleId = id
+    return this
+  }
+
+  fun withCustomEnum(id: String): StringEventField {
+    customEnumId = id
     return this
   }
 }
@@ -112,10 +126,20 @@ object EventFields {
   }
 
   @JvmField
-  val InputEvent = object : EventField<InputEventPlace>() {
+  val InputEvent = object : EventField<FusInputEvent?>() {
     override val name = "input_event"
-    override fun addData(fuData: FeatureUsageData, value: InputEventPlace) {
-      fuData.addInputEvent(value.inputEvent, value.place)
+    override fun addData(fuData: FeatureUsageData, value: FusInputEvent?) {
+      if (value != null) {
+        fuData.addInputEvent(value.inputEvent, value.place)
+      }
+    }
+  }
+
+  @JvmField
+  val ActionPlace = object : EventField<String?>() {
+    override val name: String = "place"
+    override fun addData(fuData: FeatureUsageData, value: String?) {
+      fuData.addPlace(value)
     }
   }
 
@@ -140,6 +164,14 @@ object EventFields {
     override val name = "file_path"
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addAnonymizedPath(value)
+    }
+  }
+
+  @JvmField
+  val CurrentFile = object : EventField<Language?>() {
+    override val name = "current_file"
+    override fun addData(fuData: FeatureUsageData, value: Language?) {
+      fuData.addCurrentFile(value)
     }
   }
 }
@@ -256,7 +288,24 @@ class EventId3<T1, T2, T3>(private val group: EventLogGroup, eventId: String, pr
   override fun getFields(): List<EventField<*>> = listOf(field1, field2, field3)
 }
 
-class VarargEventId internal constructor(private val group: EventLogGroup, eventId: String, private vararg val fields: EventField<*>) : BaseEventId(eventId) {
+class VarargEventId internal constructor(private val group: EventLogGroup, eventId: String, vararg fields: EventField<*>) : BaseEventId(eventId) {
+  private val fields = fields.toMutableList()
+
+  init {
+    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensions) {
+      if (ext.groupId == group.id && ext.eventId == eventId) {
+        for (field in ext.extensionFields) {
+          if (field == null) {
+            LOG.info("Null extension field returned from ${ext.javaClass.name}")
+          }
+          else {
+            this.fields.add(field)
+          }
+        }
+      }
+    }
+  }
+
   fun log(vararg pairs: EventPair<*>) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())
   }
@@ -276,4 +325,8 @@ class VarargEventId internal constructor(private val group: EventLogGroup, event
   }
 
   override fun getFields(): List<EventField<*>> = fields.toList()
+
+  companion object {
+    val LOG = Logger.getInstance(VarargEventId::class.java)
+  }
 }

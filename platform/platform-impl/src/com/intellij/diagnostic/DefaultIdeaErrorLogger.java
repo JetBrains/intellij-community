@@ -2,7 +2,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -58,7 +57,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       boolean isOOM = kind != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
 
-      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+      //LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
 
       return notificationEnabled ||
              showPluginError ||

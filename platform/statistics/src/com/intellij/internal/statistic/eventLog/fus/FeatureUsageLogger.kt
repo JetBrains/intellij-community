@@ -86,4 +86,7 @@ object FeatureUsageLogger {
   fun isEnabled() : Boolean {
     return loggerProvider.logger !is EmptyStatisticsEventLogger
   }
+
+  @JvmStatic
+  val configVersion: Int get() = getConfig().version
 }

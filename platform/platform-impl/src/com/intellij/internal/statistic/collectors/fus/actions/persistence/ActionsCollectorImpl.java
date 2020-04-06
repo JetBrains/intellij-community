@@ -3,8 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -16,23 +15,16 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ActionsCollectorImpl extends ActionsCollector {
-  public static final String GROUP = "actions";
-  public static final String ACTION_INVOKED_EVENT_ID = "action.invoked";
   public static final String DEFAULT_ID = "third.party";
 
   private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
@@ -42,72 +34,47 @@ public class ActionsCollectorImpl extends ActionsCollector {
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
-    FeatureUsageData data = new FeatureUsageData().addData("action_id", recorded);
-    if (event instanceof KeyEvent) {
-      data.addInputEvent((KeyEvent)event);
-    }
-    else if (event instanceof MouseEvent) {
-      data.addInputEvent((MouseEvent)event);
-    }
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, "custom.action.invoked", data);
+    ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(recorded, new FusInputEvent(event, null));
   }
 
   @Override
   public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
-    recordActionInvoked(project, action, event, data -> {
-      if (lang != null) data.addCurrentFile(lang);
-    });
+    recordActionInvoked(project, action, event, Collections.singletonList(EventFields.CurrentFile.with(lang)));
   }
 
   public static void recordActionInvoked(@Nullable Project project,
                                          @Nullable AnAction action,
                                          @Nullable AnActionEvent event,
-                                         @NotNull Consumer<FeatureUsageData> configurator) {
-    record(GROUP, ACTION_INVOKED_EVENT_ID, project, action, event, configurator);
+                                         @NotNull List<EventPair> customData) {
+    record(ActionsEventLogGroup.ACTION_INVOKED, project, action, event, customData);
   }
 
-  /**
-   * @deprecated Reporting dynamic action id as event id is deprecated. All event ids should be enumerable and known before ahead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public static void record(@NotNull String groupId,
+  public static void record(VarargEventId eventId,
                             @Nullable Project project,
                             @Nullable AnAction action,
                             @Nullable AnActionEvent event,
-                            @Nullable Consumer<FeatureUsageData> configurator) {
-    record(groupId, null, project, action, event, configurator);
-  }
-
-  public static void record(@NotNull String groupId,
-                            @Nullable String eventId,
-                            @Nullable Project project,
-                            @Nullable AnAction action,
-                            @Nullable AnActionEvent event,
-                            @Nullable Consumer<FeatureUsageData> configurator) {
+                            @Nullable List<EventPair> customData) {
     if (action == null) return;
-
     PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    FeatureUsageData data = new FeatureUsageData().addProject(project).addPluginInfo(info);
+
+    List<EventPair> data = new ArrayList<>();
+    data.add(EventFields.Project.with(project));
+    data.add(EventFields.PluginInfoFromInstance.with(action));
 
     if (event != null) {
-      data.addInputEvent(event).
-        addPlace(event.getPlace()).
-        addData("context_menu", event.isFromContextMenu());
+      data.add(EventFields.InputEvent.with(FusInputEvent.from(event)));
+      data.add(EventFields.ActionPlace.with(event.getPlace()));
+      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu()));
     }
-
-    if (configurator != null) {
-      configurator.accept(data);
+    if (customData != null) {
+      data.addAll(customData);
     }
-
-    String actionId = addActionClass(data, action, info);
-
-    String reportedEventId = StringUtil.notNullize(eventId, actionId);
-    FUCounterUsageLogger.getInstance().logEvent(groupId, reportedEventId, data);
+    addActionClass(data, action, info);
+    eventId.log(data.toArray(new EventPair[0]));
   }
 
   @NotNull
-  public static String addActionClass(@NotNull FeatureUsageData data,
+  public static String addActionClass(@NotNull List<EventPair> data,
                                       @NotNull AnAction action,
                                       @NotNull PluginInfo info) {
     String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
@@ -116,15 +83,26 @@ public class ActionsCollectorImpl extends ActionsCollector {
       Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
       PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
       actionId = delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID;
-      data.addData("class", actionId);
-      data.addData("parent", actionClassName);
+      data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionId));
+      data.add(ActionsEventLogGroup.ACTION_PARENT.with(actionClassName));
     }
     else {
-      data.addData("class", actionClassName);
+      data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionClassName));
     }
-    data.addData("action_id", actionId);
+    data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));
     return actionId;
   }
+
+  public static void addActionClass(@NotNull FeatureUsageData data,
+                                      @NotNull AnAction action,
+                                      @NotNull PluginInfo info) {
+    List<EventPair> list = new ArrayList<>();
+    addActionClass(list, action, info);
+    for (EventPair pair : list) {
+      data.addData(pair.component1().getName(), pair.component2().toString());
+    }
+  }
+
 
   @NotNull
   private String getActionId(@NotNull PluginInfo pluginInfo, @NotNull AnAction action) {

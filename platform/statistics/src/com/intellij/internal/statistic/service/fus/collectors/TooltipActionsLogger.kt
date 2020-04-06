@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.eventLog.EventFields
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.InputEventPlace
+import com.intellij.internal.statistic.eventLog.FusInputEvent
 import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
 
@@ -26,12 +26,12 @@ class TooltipActionsLogger : FeatureUsagesCollector() {
 
     @JvmStatic
     fun logExecute(project: Project?, inputEvent: InputEvent?) {
-      executeEvent.log(project, InputEventPlace(inputEvent, null))
+      executeEvent.log(project, FusInputEvent(inputEvent, null))
     }
 
     @JvmStatic
     fun logShowDescription(project: Project?, source: Source, inputEvent: InputEvent?, place: String?) {
-      showDescriptionEvent.log(project, source, InputEventPlace(inputEvent, place))
+      showDescriptionEvent.log(project, source, FusInputEvent(inputEvent, place))
     }
   }
 }

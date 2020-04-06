@@ -17,7 +17,12 @@ data class WhitelistGroup(val id: String, val type: String, val schema: List<Whi
 
 fun valueSchema(field: EventField<*>): List<String> = when(field) {
   is StringEventField ->
-    if (field.customRuleId != null) listOf("{util#${field.customRuleId}}") else emptyList()
+    if (field.customRuleId != null)
+      listOf("{util#${field.customRuleId}}")
+    else if (field.customEnumId != null)
+      listOf("{enum#${field.customEnumId}}")
+    else
+      emptyList()
 
   is StringListEventField ->
     if (field.customRuleId != null) listOf("{util#${field.customRuleId}}") else emptyList()
@@ -36,6 +41,12 @@ fun valueSchema(field: EventField<*>): List<String> = when(field) {
 
   EventFields.InputEvent ->
     listOf("{util#shortcut}")
+
+  EventFields.ActionPlace ->
+    listOf("{util#place}")
+
+  EventFields.CurrentFile ->
+    listOf("{util#current_file}")
 
   else -> {
     emptyList()
