@@ -24,7 +24,6 @@ import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import sun.rmi.runtime.Log;
 
 import java.util.Collections;
 import java.util.List;
