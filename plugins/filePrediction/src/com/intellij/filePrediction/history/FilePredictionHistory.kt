@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 
-class FilePredictionHistory(val project: Project) : Disposable {
+class FilePredictionHistory(project: Project) : Disposable {
   companion object {
     private const val RECENT_FILES_LIMIT = 50
 
@@ -22,13 +22,15 @@ class FilePredictionHistory(val project: Project) : Disposable {
   init {
     manager = FileHistoryManager(FileHistoryPersistence.loadFileHistory(project), RECENT_FILES_LIMIT)
 
-    project.messageBus.connect(this).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      override fun projectClosing(project: Project) {
-        ApplicationManager.getApplication().executeOnPooledThread {
-          FileHistoryPersistence.saveFileHistory(project, manager.getState())
+    if (!project.isDisposed) {
+      project.messageBus.connect(this).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+        override fun projectClosing(project: Project) {
+          ApplicationManager.getApplication().executeOnPooledThread {
+            FileHistoryPersistence.saveFileHistory(project, manager.getState())
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   fun onFileOpened(fileUrl: String) = manager.onFileOpened(fileUrl)
