@@ -339,7 +339,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
       }
     }
-    else if (resolved instanceof GrVariable && mayUseDefinition(refExpr, (GrVariable)resolved)) {
+    else if (resolved instanceof GrVariable) {
       ensureValid(resolved);
       PsiType typeGroovy = SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
       if (typeGroovy == null && PsiUtil.isCompileStatic(refExpr)) {
@@ -352,33 +352,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     else {
       return null;
     }
-  }
-
-  private static boolean mayUseDefinition(@NotNull GrReferenceExpression expression, @NotNull GrVariable definition) {
-    if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
-      return true;
-    }
-    if (definition.hasModifier(JvmModifier.FINAL)) {
-      return true;
-    }
-    if (!GrHighlightUtil.isReassigned(definition)) { // check if variable is effectively final
-      return true;
-    }
-    else {
-      GrFunctionalExpression firstEnclosingExpression = getNearestFunctionalExpression(expression);
-      if (firstEnclosingExpression == null) {
-        return true;
-      }
-      GrFunctionalExpression secondEnclosingExpression = getNearestFunctionalExpression(definition);
-      return Objects.equals(firstEnclosingExpression, secondEnclosingExpression);
-    }
-  }
-
-  private static @Nullable GrFunctionalExpression getNearestFunctionalExpression(@NotNull PsiElement element) {
-    if (element instanceof ClosureSyntheticParameter) {
-      return ((ClosureSyntheticParameter)element).getClosure();
-    }
-    return PsiTreeUtil.getParentOfType(element, GrFunctionalExpression.class);
   }
 
   @Nullable

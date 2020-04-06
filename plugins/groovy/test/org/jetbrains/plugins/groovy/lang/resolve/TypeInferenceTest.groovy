@@ -1338,7 +1338,7 @@ def foo() {
 }''', JAVA_LANG_INTEGER
   }
 
-  void 'test forbid use of outer context for nested closures'() {
+  void '_test forbid use of outer context for nested closures'() {
     doNestedDfaTest '''
 def foo() {
   def x = 1

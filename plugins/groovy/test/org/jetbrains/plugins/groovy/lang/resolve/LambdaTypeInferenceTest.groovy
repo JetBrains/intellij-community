@@ -389,7 +389,7 @@ class X {
 }''' , 'java.lang.Integer'
   }
 
-  void 'test do not use outer types inside unknown lambdas'() {
+  void '_test do not use outer types inside unknown lambdas'() {
     doNestedDfaTest '''
 def foo() {
   def a = 1
