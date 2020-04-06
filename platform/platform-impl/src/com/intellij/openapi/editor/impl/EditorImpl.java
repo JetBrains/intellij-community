@@ -82,10 +82,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -131,6 +128,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
   private static final Object MOUSE_DRAGGED_COMMAND_GROUP = ObjectUtils.sentinel("MouseDraggedGroup");
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
+  static final Key<Boolean> CONTAINS_BIDI_TEXT = Key.create("contains.bidi.text");
   public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
   public static final Key<Boolean> SOFT_WRAPS_EXIST = Key.create("soft.wraps.exist");
   @SuppressWarnings("WeakerAccess")
@@ -4753,6 +4751,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // cover the case of right margin update
         myEditorComponent.repaint();
       }
+    }
+  }
+
+  public void bidiTextFound() {
+    if (myProject != null && myVirtualFile != null && replace(CONTAINS_BIDI_TEXT, null, Boolean.TRUE)) {
+      EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
     }
   }
 
