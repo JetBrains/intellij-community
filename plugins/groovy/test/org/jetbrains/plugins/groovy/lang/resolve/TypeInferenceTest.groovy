@@ -1890,4 +1890,21 @@ def foo() {
   <caret>x  
 }''', "A"
   }
+
+  void 'test assignment in nested dangling closure 2'() {
+    doNestedDfaTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = new B()
+  def cl = {
+    def cl = {
+      x = new C()
+    }
+  }
+  <caret>x
+''', "A"
+  }
 }

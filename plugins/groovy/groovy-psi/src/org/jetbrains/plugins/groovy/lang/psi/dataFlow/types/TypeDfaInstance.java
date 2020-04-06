@@ -71,6 +71,17 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else if (instruction.getElement() instanceof GrFunctionalExpression) {
       handleFunctionalExpression(state, instruction);
+    } else if (instruction.getElement() == null) {
+      handleNullInstruction(state, instruction);
+    }
+  }
+
+  private void handleNullInstruction(@NotNull TypeDfaState state,
+                                     @NotNull Instruction instruction) {
+    if (instruction.num() == 0) {
+      for (Map.Entry<VariableDescriptor, DFAType> typeEntry : myFlowInfo.getDescriptorTypes().entrySet()) {
+        state.putType(typeEntry.getKey(), typeEntry.getValue());
+      }
     }
   }
 
