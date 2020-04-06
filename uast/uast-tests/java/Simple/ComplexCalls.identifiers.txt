@@ -1,10 +1,25 @@
 A -> UClass (name = A) from PsiIdentifier:A
 B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
+A -> UMethod (name = A) from PsiIdentifier:A
+    super -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiKeyword:super
+A -> UMethod (name = A) from PsiIdentifier:A
+a -> UParameter (name = a) from PsiIdentifier:a
+    super -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from PsiKeyword:super
+    a -> USimpleNameReferenceExpression (identifier = a) from PsiIdentifier:a
 foo -> UMethod (name = foo) from PsiIdentifier:foo
+C -> UClass (name = C) from PsiIdentifier:C
+A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
 B -> UClass (name = B) from PsiIdentifier:B
+B -> UMethod (name = B) from PsiIdentifier:B
+a -> UParameter (name = a) from PsiIdentifier:a
+B -> UMethod (name = B) from PsiIdentifier:B
+    this -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from PsiKeyword:this
 A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
 a -> UField (name = a) from PsiIdentifier:a
 A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
+C -> USimpleNameReferenceExpression (identifier = C) from PsiIdentifier:C
+c -> UField (name = c) from PsiIdentifier:c
+C -> USimpleNameReferenceExpression (identifier = C) from PsiIdentifier:C
 A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
 bar -> UMethod (name = bar) from PsiIdentifier:bar
     A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
@@ -12,7 +27,7 @@ A -> USimpleNameReferenceExpression (identifier = A) from PsiIdentifier:A
 barR -> UMethod (name = barR) from PsiIdentifier:barR
 String -> USimpleNameReferenceExpression (identifier = String) from PsiIdentifier:String
 a -> UParameter (name = a) from PsiIdentifier:a
-    bar -> USimpleNameReferenceExpression (identifier = bar) from PsiIdentifier:bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
 main -> UMethod (name = main) from PsiIdentifier:main
 String -> USimpleNameReferenceExpression (identifier = String) from PsiIdentifier:String
 args -> UParameter (name = args) from PsiIdentifier:args

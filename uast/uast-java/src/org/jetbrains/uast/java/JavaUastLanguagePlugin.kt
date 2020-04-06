@@ -187,7 +187,10 @@ internal object JavaConverter {
         is PsiStatement -> convertStatement(el, givenParent, requiredType)
         is PsiImportStatementBase -> el<UImportStatement>(build(::JavaUImportStatement))
         is PsiIdentifier -> el<USimpleNameReferenceExpression> { JavaUSimpleNameReferenceExpression(el, el.text, givenParent) }
-                            ?: el<UIdentifier> { LazyParentUIdentifier(el, givenParent) }
+                            ?: el<UIdentifier> { LazyParentUIdentifier(el, givenParent) } // it is hack described in IDEA-207979
+        is PsiKeyword -> if (el.text == PsiKeyword.SUPER || el.text == PsiKeyword.THIS)
+          el<UIdentifier> { LazyParentUIdentifier(el, givenParent) }
+        else null
         is PsiNameValuePair -> el<UNamedExpression>(build(::JavaUNamedExpression))
         is PsiArrayInitializerMemberValue -> el<UCallExpression>(build(::JavaAnnotationArrayInitializerUCallExpression))
         is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))

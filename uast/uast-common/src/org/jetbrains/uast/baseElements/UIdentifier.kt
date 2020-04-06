@@ -17,6 +17,8 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiReferenceExpression
 import org.jetbrains.uast.internal.log
 
 open class UIdentifier(
@@ -41,6 +43,14 @@ open class UIdentifier(
 
 open class LazyParentUIdentifier(psi: PsiElement?, private val givenParent: UElement?) : UIdentifier(psi, givenParent) {
 
-  override val uastParent: UElement? by lazy { givenParent ?: sourcePsi?.parent?.toUElement() }
+  override val uastParent: UElement? by lazy {
+    givenParent?.let { return@lazy it }
+
+    val parent = sourcePsi?.parent ?: return@lazy null
+    if (parent is PsiReferenceExpression && parent.parent is PsiMethodCallExpression) {
+      return@lazy parent.parent.toUElement()
+    }
+    parent.toUElement()
+  }
 
 }

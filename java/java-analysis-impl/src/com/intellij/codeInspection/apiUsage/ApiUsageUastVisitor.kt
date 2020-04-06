@@ -418,10 +418,6 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       return false
     }
     val expressionNameElement = expression.referenceNameElement
-    if (expressionNameElement == null && expression.identifier == "super") {
-      //UAST for Java returns null for "referenceNameElement" of "super()" statement : IDEA-210418
-      return true
-    }
     val methodIdentifier = callExpression.methodIdentifier
     return methodIdentifier != null && haveSameSourceElement(expressionNameElement, methodIdentifier)
   }
