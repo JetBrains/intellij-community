@@ -749,8 +749,8 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       FSRecords.NameId[] children1 = f1.get();
       FSRecords.NameId[] children2 = f2.get();
       Arrays.sort(children1, Comparator.comparingInt(o -> o.id));
-      assertEquals(2, children1.length);
-      assertEquals(2, children2.length);
+      assertEquals(Arrays.toString(children1),2, children1.length);
+      assertEquals(Arrays.toString(children2),2, children2.length);
       assertEquals("Duplicate ids found. child1="+children1[0]+"; child2="+children2[0], children1[0].id, children2[0].id);
       assertEquals("Duplicate ids found. child1="+children1[1]+"; child2="+children2[1], children1[1].id, children2[1].id);
     }
