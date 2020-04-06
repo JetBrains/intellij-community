@@ -880,36 +880,41 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
         VirtualFile virtualFile = entry.getFile();
         if (virtualFile == null) {
-          throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
-        }
-        FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
-          .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
-          .withIndex(i)
-          .withReopeningEditorsOnStartup();
-        try {
-          virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
-          Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
-
-          boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
-
-          fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
-          if (document != null) {
-            // This is just to make sure document reference is kept on stack till this point
-            // so that document is available for folding state deserialization in HistoryEntry constructor
-            // and that document will be created only once during file opening
-            document.putUserData(DUMMY_KEY, null);
-          }
-          if (isCurrentTab) {
-            focusedFile = virtualFile;
-          }
-        }
-        catch (InvalidDataException e) {
           if (ApplicationManager.getApplication().isUnitTestMode()) {
-            LOG.error(e);
+            LOG.error(new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl()));
           }
         }
-        finally {
-          virtualFile.putUserData(OPENED_IN_BULK, null);
+        else {
+          FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+            .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
+            .withIndex(i)
+            .withReopeningEditorsOnStartup();
+          try {
+            virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
+            Document document =
+              ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+
+            boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
+
+            fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
+            if (document != null) {
+              // This is just to make sure document reference is kept on stack till this point
+              // so that document is available for folding state deserialization in HistoryEntry constructor
+              // and that document will be created only once during file opening
+              document.putUserData(DUMMY_KEY, null);
+            }
+            if (isCurrentTab) {
+              focusedFile = virtualFile;
+            }
+          }
+          catch (InvalidDataException e) {
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              LOG.error(e);
+            }
+          }
+          finally {
+            virtualFile.putUserData(OPENED_IN_BULK, null);
+          }
         }
         activity.end();
       }
