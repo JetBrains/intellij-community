@@ -45,16 +45,10 @@ import {Component, Prop, Watch} from "vue-property-decorator"
 import {LineChartManager} from "@/aggregatedStats/LineChartManager"
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {SortedByCategory, SortedByDate} from "@/aggregatedStats/ChartConfigurator"
-import {
-  DataQuery,
-  DataQueryDimension,
-  DataRequest,
-  encodeQuery,
-  expandMachineAsFilterValue,
-  MetricDescriptor,
-  Metrics
-} from "@/aggregatedStats/model"
+import {DataQuery, DataQueryDimension, DataRequest, encodeQuery, MetricDescriptor, Metrics} from "@/aggregatedStats/model"
 import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
+
+const rison = require("rison-node")
 
 @Component
 export default class LineChartComponent extends BaseStatChartComponent<LineChartManager> {
@@ -89,13 +83,13 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
       filters: [
         {field: "product", value: request.product},
         {field: "project", value: request.project},
-        {field: "machine", value: expandMachineAsFilterValue(request)},
+        {field: "machine", value: request.machine},
       ],
     }
 
     const chartSettings = this.chartSettings
     let granularity = chartSettings.granularity
-    if (granularity == null || granularity == null) {
+    if (granularity == null) {
       granularity = "2 hour"
     }
 
@@ -186,7 +180,7 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
       const reportQuery: DataQuery = {
         filters: [
           {field: "product", value: request.product},
-          {field: "machine", value: expandMachineAsFilterValue(request)},
+          {field: "machine", value: request.machine},
           {field: "generated_time", value: data.t / 1000},
         ],
       }
@@ -205,7 +199,24 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
       this.reportTableData = tableData
       this.infoIsVisible = true
     }) : new SortedByCategory()
-    return new LineChartManager(this.$refs.chartContainer as HTMLElement, this.chartSettings || new ChartSettings(), this.type === "instant", metricDescriptors, configurator)
+    const chartManager = new LineChartManager(this.$refs.chartContainer as HTMLElement, this.chartSettings || new ChartSettings(), this.type === "instant", metricDescriptors, configurator)
+
+    chartManager.chart.exporting.menu!!.items[0]!!.menu!!.push({
+      label: "Open",
+      type: "custom",
+      options: {
+        callback: () => {
+          const configuration = rison.encode({
+            metrics: this.metrics,
+            order: this.order,
+            dataRequest: this.dataRequest,
+          })
+          window.open("/#/aggregatedStats/line-chart/" + configuration, "_blank")
+        }
+      }
+    })
+
+    return chartManager
   }
 }
 

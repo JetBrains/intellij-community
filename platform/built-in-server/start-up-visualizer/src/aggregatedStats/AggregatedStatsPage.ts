@@ -3,7 +3,7 @@ import {Component, Vue, Watch} from "vue-property-decorator"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {DataRequest, InfoResponse, MachineGroup} from "@/aggregatedStats/model"
+import {DataRequest, expandMachineAsFilterValue, InfoResponse, MachineGroup} from "@/aggregatedStats/model"
 import {debounce} from "debounce"
 import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
 import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
@@ -180,7 +180,7 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   private requestDataReloading(product: string, machine: Array<string>, project: string) {
-    this.dataRequest = Object.seal({product, machine, project, infoResponse: this.lastInfoResponse!!})
+    this.dataRequest = Object.seal({product, machine: expandMachineAsFilterValue(product, machine, this.lastInfoResponse!!), project})
   }
 
   @Watch("chartSettings.selectedMachine")
@@ -248,7 +248,7 @@ export default class AggregatedStatsPage extends Vue {
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
-  mounted() {
+  beforeMount() {
     const serverUrl = this.chartSettings.serverUrl
     if (!isEmpty(serverUrl)) {
       const query = this.$route.query

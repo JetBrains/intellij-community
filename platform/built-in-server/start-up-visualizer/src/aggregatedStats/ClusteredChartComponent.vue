@@ -4,21 +4,14 @@
 </template>
 
 <script lang="ts">
-  import {Component, Prop, Watch} from "vue-property-decorator"
-  import {
-    DataQuery,
-    DataQueryFilter,
-    DataRequest,
-    encodeQuery,
-    expandMachineAsFilterValue,
-    GroupedMetricResponse
-  } from "@/aggregatedStats/model"
-  import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
-  import {parseDuration, toClickhouseSql} from "@/aggregatedStats/parseDuration"
-  import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
-  import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
+import {Component, Prop, Watch} from "vue-property-decorator"
+import {DataQuery, DataQueryFilter, DataRequest, encodeQuery, GroupedMetricResponse} from "@/aggregatedStats/model"
+import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
+import {parseDuration, toClickhouseSql} from "@/aggregatedStats/parseDuration"
+import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
+import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
 
-  @Component
+@Component
   export default class ClusteredChartComponent extends BaseStatChartComponent<ClusteredChartManager> {
     @Watch("chartSettings.aggregationOperator")
     aggregationOperatorChanged() {
@@ -58,7 +51,7 @@
         {field: "project", value: request.project},
         {
           field: "machine",
-          value: expandMachineAsFilterValue(request)
+          value: request.machine
         },
         {field: "generated_time", sql: `> ${toClickhouseSql(duration)}`}
       ]
