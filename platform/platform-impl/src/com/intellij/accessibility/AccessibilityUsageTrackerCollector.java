@@ -3,17 +3,22 @@ package com.intellij.accessibility;
 
 import com.intellij.internal.statistic.eventLog.EventId;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
 
-public class AccessibilityUsageTrackerCollector {
-  private static final EventLogGroup group = EventLogGroup.counter("accessibility");
+public class AccessibilityUsageTrackerCollector extends FeatureUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("accessibility", 1);
 
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
   /**
    * Enabled screen reader is detected in OS
    */
-  public static final EventId SCREEN_READER_DETECTED = group.registerEvent("screenReaderDetected");
+  public static final EventId SCREEN_READER_DETECTED = GROUP.registerEvent("screenReaderDetected");
 
   /**
    * After screen reader detection user agreed to enable screen reader support
    */
-  public static final EventId SCREEN_READER_SUPPORT_ENABLED = group.registerEvent("screenReaderSupportEnabled");
+  public static final EventId SCREEN_READER_SUPPORT_ENABLED = GROUP.registerEvent("screenReaderSupportEnabled");
 }

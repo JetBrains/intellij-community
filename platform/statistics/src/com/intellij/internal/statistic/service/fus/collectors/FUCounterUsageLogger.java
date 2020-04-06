@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -58,9 +59,9 @@ public class FUCounterUsageLogger {
 
   @NonNls
   private static final String[] GENERAL_GROUPS = new String[]{
-    "event.log", "lifecycle", "performance", "actions", "ui.dialogs", "ui.settings",
+    "event.log", "performance", "actions", "ui.dialogs", "ui.settings",
     "toolwindow", "intentions", "toolbar", "run.configuration.exec",
-    "file.types.usage", "productivity", "live.templates", "completion.postfix", "notifications"
+    "productivity", "live.templates", "completion.postfix", "notifications"
   };
 
   private static final FUCounterUsageLogger INSTANCE = new FUCounterUsageLogger();
@@ -99,9 +100,15 @@ public class FUCounterUsageLogger {
   }
 
   private void registerGroupFromEP(CounterUsageCollectorEP ep) {
-    final String id = ep.getGroupId();
-    if (StringUtil.isNotEmpty(id)) {
-      register(new EventLogGroup(id, ep.version));
+    if (ep.implementationClass != null) {
+      FeatureUsagesCollector collector = ep.instantiateClass(ep.implementationClass, ApplicationManager.getApplication().getPicoContainer());
+      register(collector.getGroup());
+    }
+    else {
+      final String id = ep.getGroupId();
+      if (StringUtil.isNotEmpty(id)) {
+        register(new EventLogGroup(id, ep.version));
+      }
     }
   }
 

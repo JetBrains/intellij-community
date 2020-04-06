@@ -34,18 +34,7 @@ import java.util.*;
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "file.types";
-  }
-
-  @Override
-  public int getVersion() {
-    return 3;
-  }
-
-  private final EventLogGroup GROUP = EventLogGroup.project(this);
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 3);
 
   private final EventId3<Object, String, Integer> FILE_IN_PROJECT = GROUP.registerEvent(
     "file.in.project",
@@ -53,6 +42,11 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     EventFields.String("file_type").withCustomRule("file_type"),
     EventFields.Int("count")
   );
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
 
   @NotNull
   @Override

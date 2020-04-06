@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * @see FUCounterUsageLogger
  */
 public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector {
-  private static final ExtensionPointName<ApplicationUsagesCollector> EP_NAME =
+  public static final ExtensionPointName<ApplicationUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.applicationUsagesCollector");
 
   @NotNull

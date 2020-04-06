@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +32,26 @@ public abstract class FeatureUsagesCollector {
 
   @NonNls
   @NotNull
-  public abstract String getGroupId();
+  public String getGroupId() {
+    EventLogGroup group = getGroup();
+    if (group == null) {
+      throw new IllegalStateException("Please override either getGroupId() or getGroup()");
+    }
+    return group.getId();
+  }
 
   /**
    * Increment collector version if any changes in collector logic were implemented.
    */
   public int getVersion() {
+    EventLogGroup group = getGroup();
+    if (group != null) {
+      return group.getVersion();
+    }
     return 1;
+  }
+
+  public EventLogGroup getGroup() {
+    return null;
   }
 }

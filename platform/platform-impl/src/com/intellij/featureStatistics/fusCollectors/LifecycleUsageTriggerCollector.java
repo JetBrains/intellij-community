@@ -5,6 +5,8 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,9 +22,9 @@ import java.util.List;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 
-public final class LifecycleUsageTriggerCollector {
+public final class LifecycleUsageTriggerCollector extends FeatureUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = EventLogGroup.counter("lifecycle");
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", FeatureUsageLogger.INSTANCE.getConfig().getVersion());
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -59,6 +61,11 @@ public final class LifecycleUsageTriggerCollector {
 
   private static final EventsRateThrottle ourErrorsRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
   private static final EventsIdentityThrottle ourErrorsIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
+
+  @Override
+  public EventLogGroup getGroup() {
+    return LIFECYCLE;
+  }
 
   public static void onIdeStart() {
     Application app = ApplicationManager.getApplication();

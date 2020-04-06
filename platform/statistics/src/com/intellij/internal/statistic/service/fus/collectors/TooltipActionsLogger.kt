@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.InputEventPlace
 import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
 
-object TooltipActionsLogger {
-  private val GROUP = EventLogGroup.counter("tooltip.action.events")
+class TooltipActionsLogger : FeatureUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
   enum class Source(private val text: String) {
     Shortcut("shortcut"), Gear("gear"), MoreLink("more.link");
@@ -16,15 +16,22 @@ object TooltipActionsLogger {
     override fun toString() = text
   }
 
-  private val executeEvent = GROUP.registerEvent("execute", EventFields.Project, EventFields.InputEvent)
-  val showAllEvent = GROUP.registerEvent("show.all", EventFields.Project)
-  private val showDescriptionEvent = GROUP.registerEvent("show.description", EventFields.Project, EventFields.Enum<Source>("source"), EventFields.InputEvent)
+  companion object {
+    private val GROUP = EventLogGroup("tooltip.action.events", 1)
 
-  fun logExecute(project: Project?, inputEvent: InputEvent?) {
-    executeEvent.log(project, InputEventPlace(inputEvent, null))
-  }
 
-  fun logShowDescription(project: Project?, source: Source, inputEvent: InputEvent?, place: String?) {
-    showDescriptionEvent.log(project, source, InputEventPlace(inputEvent, place))
+    private val executeEvent = GROUP.registerEvent("execute", EventFields.Project, EventFields.InputEvent)
+    val showAllEvent = GROUP.registerEvent("show.all", EventFields.Project)
+    private val showDescriptionEvent = GROUP.registerEvent("show.description", EventFields.Project, EventFields.Enum<Source>("source"), EventFields.InputEvent)
+
+    @JvmStatic
+    fun logExecute(project: Project?, inputEvent: InputEvent?) {
+      executeEvent.log(project, InputEventPlace(inputEvent, null))
+    }
+
+    @JvmStatic
+    fun logShowDescription(project: Project?, source: Source, inputEvent: InputEvent?, place: String?) {
+      showDescriptionEvent.log(project, source, InputEventPlace(inputEvent, place))
+    }
   }
 }

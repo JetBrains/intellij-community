@@ -6,13 +6,14 @@ import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TipsOfTheDayUsagesCollector {
-  private static final EventLogGroup GROUP = EventLogGroup.counter("ui.tips");
+public class TipsOfTheDayUsagesCollector extends FeatureUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 3);
 
   public enum DialogType { automatically, manually }
 
@@ -27,6 +28,11 @@ public class TipsOfTheDayUsagesCollector {
                         EventFields.String("filename").withCustomRule("tip_info"));
 
   private static final String NO_FEATURE_ID = "no.feature.id";
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
 
   public static void triggerTipShown(@NotNull TipAndTrickBean tip) {
     String featureId = tip.featureId;

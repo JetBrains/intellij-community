@@ -1,0 +1,86 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistic.eventLog.whitelist
+
+import com.google.gson.GsonBuilder
+import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationStarter
+import kotlin.system.exitProcess
+
+data class WhitelistField(val path: String, val value: List<String>)
+data class WhitelistEvent(val event: String, val fields: List<WhitelistField>)
+data class WhitelistGroup(val id: String, val type: String, val schema: List<WhitelistEvent>)
+
+fun valueSchema(field: EventField<*>): List<String> = when(field) {
+  is StringEventField ->
+    if (field.customRuleId != null) listOf("{util#${field.customRuleId}}") else emptyList()
+
+  is EnumEventField<*> ->
+    field.transformAllEnumConstants()
+
+  is IntEventField, is LongEventField ->
+    listOf("{regexp#integer}")
+
+  is BooleanEventField ->
+    listOf("{enum#boolean}")
+
+  EventFields.AnonymizedPath ->
+    listOf("{util#hash}")
+
+  else -> {
+    emptyList()
+  }
+}
+
+fun fieldSchema(field: EventField<*>): List<WhitelistField> {
+  if (field == EventFields.Project) {
+    return listOf()  // this field is handled implicitly
+  }
+  if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
+    return listOf(
+      WhitelistField("plugin", listOf("{util#plugin}")),
+      WhitelistField("plugin_type", listOf("{util#plugin_type}")),
+      WhitelistField("plugin_info", listOf("{util#plugin_info}"))
+    )
+  }
+  return listOf(WhitelistField(field.name, valueSchema(field)))
+}
+
+fun buildWhitelist(): List<WhitelistGroup> {
+  val result = mutableListOf<WhitelistGroup>()
+  collectWhitelistFromExtensions(result, "counter", CounterUsageCollectorEP.EP_NAME.extensions.mapNotNull { ep ->
+    ep.implementationClass?.let { ep.instantiateClass<FeatureUsagesCollector>(it, ApplicationManager.getApplication().picoContainer) }
+  })
+  collectWhitelistFromExtensions(result, "state", ApplicationUsagesCollector.EP_NAME.extensionList)
+  collectWhitelistFromExtensions(result, "state", ProjectUsagesCollector.EP_NAME.extensionList)
+  return result
+}
+
+private fun collectWhitelistFromExtensions(result: MutableList<WhitelistGroup>,
+                                           groupType: String,
+                                           collectors: Collection<FeatureUsagesCollector>) {
+  for (collector in collectors) {
+    val group = collector.group ?: continue
+    val whitelistEvents = group.events.map { event ->
+      WhitelistEvent(event.eventId, event.getFields().flatMap { field -> fieldSchema(field) })
+    }
+    val whitelistGroup = WhitelistGroup(group.id, groupType, whitelistEvents)
+    result.add(whitelistGroup)
+  }
+}
+
+class WhitelistBuilderAppStarter : ApplicationStarter {
+  override fun getCommandName(): String = "buildWhitelist"
+
+  override fun main(args: List<String>) {
+    val groups = buildWhitelist()
+    for (group in groups) {
+      println(GsonBuilder().setPrettyPrinting().create().toJson(group))
+    }
+    exitProcess(0)
+  }
+}

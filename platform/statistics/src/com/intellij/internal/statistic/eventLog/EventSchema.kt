@@ -13,6 +13,7 @@ import java.awt.event.InputEvent
 data class InputEventPlace(val inputEvent: InputEvent?, val place: String?)
 
 abstract class EventField<T> {
+  abstract val name: String
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
   infix fun with(data: T): EventPair<T> = EventPair(this, data)
@@ -20,8 +21,9 @@ abstract class EventField<T> {
 
 data class EventPair<T>(val field: EventField<T>, val data: T)
 
-data class StringEventField(private val name: String): EventField<String?>() {
-  private var customRuleId: String? = null
+data class StringEventField(override val name: String): EventField<String?>() {
+  var customRuleId: String? = null
+    private set
 
   override fun addData(fuData: FeatureUsageData, value: String?) {
     if (value != null) {
@@ -35,33 +37,35 @@ data class StringEventField(private val name: String): EventField<String?>() {
   }
 }
 
-data class IntEventField(private val name: String): EventField<Int>() {
+data class IntEventField(override val name: String): EventField<Int>() {
   override fun addData(fuData: FeatureUsageData, value: Int) {
     fuData.addData(name, value)
   }
 }
 
-data class LongEventField(private val name: String): EventField<Long>() {
+data class LongEventField(override val name: String): EventField<Long>() {
   override fun addData(fuData: FeatureUsageData, value: Long) {
     fuData.addData(name, value)
   }
 }
 
-data class BooleanEventField(private val name: String): EventField<Boolean>() {
+data class BooleanEventField(override val name: String): EventField<Boolean>() {
   override fun addData(fuData: FeatureUsageData, value: Boolean) {
     fuData.addData(name, value)
   }
 }
 
-data class EnumEventField<T : Enum<*>>(private val name: String,
+data class EnumEventField<T : Enum<*>>(override val name: String,
                                        private val enumClass: Class<T>,
                                        private val transform: (T) -> String): EventField<T>() {
   override fun addData(fuData: FeatureUsageData, value: T) {
     fuData.addData(name, transform(value))
   }
+
+  fun transformAllEnumConstants(): List<String> = enumClass.enumConstants.map(transform)
 }
 
-data class StringListEventField(private val name: String): EventField<List<String>>() {
+data class StringListEventField(override val name: String): EventField<List<String>>() {
   override fun addData(fuData: FeatureUsageData, value: List<String>) {
     fuData.addData(name, value)
   }
@@ -94,6 +98,7 @@ object EventFields {
 
   @JvmField
   val Project = object : EventField<Project?>() {
+    override val name = "project"
     override fun addData(fuData: FeatureUsageData, value: Project?) {
       fuData.addProject(value)
     }
@@ -101,6 +106,7 @@ object EventFields {
 
   @JvmField
   val InputEvent = object : EventField<InputEventPlace>() {
+    override val name = "input_field"
     override fun addData(fuData: FeatureUsageData, value: InputEventPlace) {
       fuData.addInputEvent(value.inputEvent, value.place)
     }
@@ -108,6 +114,7 @@ object EventFields {
 
   @JvmField
   val PluginInfo = object : EventField<PluginInfo>() {
+    override val name = "plugin_type"
     override fun addData(fuData: FeatureUsageData, value: PluginInfo) {
       fuData.addPluginInfo(value)
     }
@@ -115,6 +122,7 @@ object EventFields {
 
   @JvmField
   val PluginInfoFromInstance = object : EventField<Any>() {
+    override val name = "plugin_type"
     override fun addData(fuData: FeatureUsageData, value: Any) {
       fuData.addPluginInfo(getPluginInfo(value::class.java))
     }
@@ -122,6 +130,7 @@ object EventFields {
 
   @JvmField
   val AnonymizedPath = object : EventField<String?>() {
+    override val name = "file_path"
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addAnonymizedPath(value)
     }
@@ -135,34 +144,33 @@ object EventFields {
  */
 class EventLogGroup(val id: String, val version: Int) {
   private val registeredEventIds = mutableSetOf<String>()
+  private val registeredEvents = mutableListOf<BaseEventId>()
 
-  internal fun registerEventId(eventId: String) {
-    registeredEventIds.add(eventId)
+  val events: List<BaseEventId> get() = registeredEvents
+
+  private fun addToRegisteredEvents(eventId: BaseEventId) {
+    registeredEvents.add(eventId)
+    registeredEventIds.add(eventId.eventId)
   }
 
   fun registerEvent(eventId: String): EventId {
-    registeredEventIds.add(eventId)
-    return EventId(this, eventId)
+    return EventId(this, eventId).also { addToRegisteredEvents(it) }
   }
 
   fun <T1> registerEvent(eventId: String, eventField1: EventField<T1>): EventId1<T1> {
-    registeredEventIds.add(eventId)
-    return EventId1(this, eventId, eventField1)
+    return EventId1(this, eventId, eventField1).also { addToRegisteredEvents(it) }
   }
 
   fun <T1, T2> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>): EventId2<T1, T2> {
-    registeredEventIds.add(eventId)
-    return EventId2(this, eventId, eventField1, eventField2)
+    return EventId2(this, eventId, eventField1, eventField2).also { addToRegisteredEvents(it) }
   }
 
   fun <T1, T2, T3> registerEvent(eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>, eventField3: EventField<T3>): EventId3<T1, T2, T3> {
-    registeredEventIds.add(eventId)
-    return EventId3(this, eventId, eventField1, eventField2, eventField3)
+    return EventId3(this, eventId, eventField1, eventField2, eventField3).also { addToRegisteredEvents(it) }
   }
 
   fun registerVarargEvent(eventId: String, vararg fields: EventField<*>): VarargEventId {
-    registeredEventIds.add(eventId)
-    return VarargEventId(this, eventId, *fields)
+    return VarargEventId(this, eventId, *fields).also { addToRegisteredEvents(it) }
   }
 
   internal fun validateEventId(eventId: String) {
@@ -170,25 +178,21 @@ class EventLogGroup(val id: String, val version: Int) {
       throw IllegalArgumentException("Trying to report unregistered event ID $eventId to group $id")
     }
   }
-
-  companion object {
-    @JvmStatic fun counter(id: String): EventLogGroup {
-      return FUCounterUsageLogger.getInstance().findRegisteredGroupById(id)
-    }
-
-    @JvmStatic fun project(collector: ProjectUsagesCollector): EventLogGroup {
-      return EventLogGroup(collector.groupId, collector.version)
-    }
-  }
 }
 
-class EventId(private val group: EventLogGroup, private val eventId: String) {
+abstract class BaseEventId(val eventId: String) {
+  abstract fun getFields(): List<EventField<*>>
+}
+
+class EventId(private val group: EventLogGroup, eventId: String) : BaseEventId(eventId) {
   fun log() {
     FeatureUsageLogger.log(group, eventId)
   }
+
+  override fun getFields(): List<EventField<*>> = emptyList()
 }
 
-class EventId1<T>(private val group: EventLogGroup, private val eventId: String, private val field1: EventField<T>) {
+class EventId1<T>(private val group: EventLogGroup, eventId: String, private val field1: EventField<T>) : BaseEventId(eventId) {
   fun log(value1: T) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(value1).build())
   }
@@ -202,9 +206,11 @@ class EventId1<T>(private val group: EventLogGroup, private val eventId: String,
     field1.addData(data, value1)
     return data
   }
+
+  override fun getFields(): List<EventField<*>> = listOf(field1)
 }
 
-class EventId2<T1, T2>(private val group: EventLogGroup, private val eventId: String, private val field1: EventField<T1>, private val field2: EventField<T2>) {
+class EventId2<T1, T2>(private val group: EventLogGroup, eventId: String, private val field1: EventField<T1>, private val field2: EventField<T2>) : BaseEventId(eventId) {
   fun log(value1: T1, value2: T2) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2).build())
   }
@@ -219,9 +225,11 @@ class EventId2<T1, T2>(private val group: EventLogGroup, private val eventId: St
     field2.addData(data, value2)
     return data
   }
+
+  override fun getFields(): List<EventField<*>> = listOf(field1, field2)
 }
 
-class EventId3<T1, T2, T3>(private val group: EventLogGroup, private val eventId: String, private val field1: EventField<T1>, private val field2: EventField<T2>, private val field3: EventField<T3>) {
+class EventId3<T1, T2, T3>(private val group: EventLogGroup, eventId: String, private val field1: EventField<T1>, private val field2: EventField<T2>, private val field3: EventField<T3>) : BaseEventId(eventId) {
   fun log(value1: T1, value2: T2, value3: T3) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2, value3).build())
   }
@@ -237,9 +245,11 @@ class EventId3<T1, T2, T3>(private val group: EventLogGroup, private val eventId
     field3.addData(data, value3)
     return data
   }
+
+  override fun getFields(): List<EventField<*>> = listOf(field1, field2, field3)
 }
 
-class VarargEventId internal constructor(private val group: EventLogGroup, private val eventId: String, private vararg val fields: EventField<*>) {
+class VarargEventId internal constructor(private val group: EventLogGroup, eventId: String, private vararg val fields: EventField<*>) : BaseEventId(eventId) {
   fun log(vararg pairs: EventPair<*>) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())
   }
@@ -257,4 +267,6 @@ class VarargEventId internal constructor(private val group: EventLogGroup, priva
     }
     return data
   }
+
+  override fun getFields(): List<EventField<*>> = fields.toList()
 }

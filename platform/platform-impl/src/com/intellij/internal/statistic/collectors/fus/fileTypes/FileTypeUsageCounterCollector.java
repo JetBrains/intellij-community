@@ -5,9 +5,11 @@ import com.intellij.internal.statistic.eventLog.EventField;
 import com.intellij.internal.statistic.eventLog.EventFields;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.VarargEventId;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -35,17 +37,21 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
-public class FileTypeUsageCounterCollector {
+public class FileTypeUsageCounterCollector extends FeatureUsagesCollector {
   private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = EventLogGroup.counter("file.types.usage");
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", FeatureUsageLogger.INSTANCE.getConfig().getVersion());
 
   private static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
   private static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
 
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
 
   private static VarargEventId registerFileTypeEvent(String eventId) {
     return GROUP.registerVarargEvent(eventId, EventFields.Project, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
