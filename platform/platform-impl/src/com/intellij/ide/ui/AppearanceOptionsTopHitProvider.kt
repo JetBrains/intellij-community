@@ -26,16 +26,17 @@ private val cdShowEditorPreview                get() = CheckboxDescriptor(Option
 private val cdShowBalloons                     get() = CheckboxDescriptor(message("display.balloon.notifications"), notificationSettings::SHOW_BALLOONS, groupName = uiOptionGroupName)
 // @formatter:on
 
-private val optionDescriptors = listOf(
-  cdShowMainToolbar,
-  cdShowStatusBar,
-  cdShowNavigationBar,
-  cdShowMembersInNavigationBar,
-  cdUseSmallTabLabels,
-  cdNavigateToPreview,
-  cdShowEditorPreview,
-  cdShowBalloons
-).map(CheckboxDescriptor::asOptionDescriptor)
+private val optionDescriptors
+  get() = listOf(
+    cdShowMainToolbar,
+    cdShowStatusBar,
+    cdShowNavigationBar,
+    cdShowMembersInNavigationBar,
+    cdUseSmallTabLabels,
+    cdNavigateToPreview,
+    cdShowEditorPreview,
+    cdShowBalloons
+  ).map(CheckboxDescriptor::asOptionDescriptor)
 
 class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
   override fun getId(): String = ID
