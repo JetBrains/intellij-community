@@ -24,6 +24,9 @@ class PortableCompilationCache {
 
   private final String remoteGitUrl = require('intellij.remote.url', "Repository url")
 
+  /**
+   * Download latest available compilation cache from remote cache and perform compilation if necessary
+   */
   def warmUp() {
     def remoteCacheUrl = require('intellij.jps.remote.cache.url', "JPS remote cache url")
     def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit', 'false').toBoolean()
@@ -39,6 +42,9 @@ class PortableCompilationCache {
     }
   }
 
+  /**
+   * Upload local compilation cache to remote cache
+   */
   def upload() {
     def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
     def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
