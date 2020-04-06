@@ -17,7 +17,6 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -532,7 +531,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       return resolvedPromise()
     }
 
-    if (environment.targetEnvironmentFactory is LocalTargetEnvironmentFactory) {
+    if ((environment.runProfile as TargetEnvironmentAwareRunProfile).defaultTargetName == null) {
       return resolvedPromise()
     }
 
