@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -528,6 +529,10 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?> {
     if (!(environment.runProfile is TargetEnvironmentAwareRunProfile &&
           Experiments.getInstance().isFeatureEnabled("run.targets"))) {
+      return resolvedPromise()
+    }
+
+    if (environment.targetEnvironmentFactory is LocalTargetEnvironmentFactory) {
       return resolvedPromise()
     }
 
