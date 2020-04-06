@@ -211,13 +211,14 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
          dumbService.runReadActionInSmartMode(() -> {
            final PsiClass candidate = (PsiClass)referenceList.getParent();
            if (checker.checkInheritance(candidate)) {
-             if (candidate instanceof PsiAnonymousClass) {
-               anonymous.add((PsiAnonymousClass)candidate);
-               return;
-             }
-
              String fqn = candidate.getQualifiedName();
+
              synchronized (classesWithFqn) {
+               if (candidate instanceof PsiAnonymousClass) {
+                 anonymous.add((PsiAnonymousClass)candidate);
+                 return;
+               }
+
                Object value = classesWithFqn.get(fqn);
                if (value == null) {
                  classesWithFqn.put(fqn, candidate);
