@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializer
@@ -31,8 +32,12 @@ data class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null,
 
   fun getPresentation(): String {
     val lines = ArrayList<String>()
-    author?.let { lines.add("Author: ${XmlStringUtil.escapeString(author.toString())}") }
-    date?.let { lines.add("Date: ${XmlStringUtil.escapeString(DateFormatUtil.formatDateTime(date))}") }
+    author?.let {
+      lines.add(VcsBundle.message("commit.description.tooltip.author", XmlStringUtil.escapeString(author.toString())))
+    }
+    date?.let {
+      lines.add(VcsBundle.message("commit.description.tooltip.date", XmlStringUtil.escapeString(DateFormatUtil.formatDateTime(date))))
+    }
     return StringUtil.join(lines, UIUtil.BR)
   }
 
