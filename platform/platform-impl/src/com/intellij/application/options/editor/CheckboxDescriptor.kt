@@ -5,12 +5,13 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.Nls
 import kotlin.reflect.KMutableProperty0
 
-class CheckboxDescriptor(val name: String,
+class CheckboxDescriptor(@Nls val name: String,
                          val binding: PropertyBinding<Boolean>,
-                         val comment: String? = null,
-                         val groupName: String? = null) {
+                         @Nls val comment: String? = null,
+                         @Nls val groupName: String? = null) {
   constructor(name: String, mutableProperty: KMutableProperty0<Boolean>, comment: String? = null, groupName: String? = null)
     : this(name, mutableProperty.toBinding(), comment, groupName)
 
