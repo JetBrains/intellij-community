@@ -95,8 +95,9 @@ public final class CreateTestDialog extends DialogWrapper {
     myModel.setClassName(myClassName.getText());
     myModel.setFileName(myFileName.getText());
     myModel.setTargetDir(myTargetDir.getText());
-    @SuppressWarnings("unchecked")
-    StreamEx<Vector<Object>> methods = StreamEx.of(myTableModel.getDataVector().stream());
+    @SuppressWarnings({"unchecked", "rawtypes", "UseOfObsoleteCollectionType"})
+    Vector<Vector<Object>> dataVector = (Vector)myTableModel.getDataVector();
+    StreamEx<Vector<Object>> methods = StreamEx.of(dataVector.stream());
     myModel.setMethods(new ArrayList<>(methods.map(v -> (v.get(0) == Boolean.TRUE) ? v.get(1).toString() : null).nonNull().toList()));
   }
 

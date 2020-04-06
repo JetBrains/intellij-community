@@ -133,7 +133,7 @@ public abstract class Node extends DefaultMutableTreeNode {
   void insertNewNode(@NotNull Node newChild, int childIndex) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (children == null) {
-      children = new Vector();
+      children = new Vector<>();
     }
     //noinspection unchecked
     children.insertElementAt(newChild, childIndex);
