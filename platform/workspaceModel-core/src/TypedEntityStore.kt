@@ -132,6 +132,8 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
   fun collectChanges(original: TypedEntityStorage): Map<Class<*>, List<EntityChange<*>>>
 
   // Reset all collected changes. TODO ugly!
+  // This method doesn't reset builder to it initial state, but just resets a changelog,
+  //   so next call to collectChanges will return empty list
   fun resetChanges()
 
   fun toStorage(): TypedEntityStorage

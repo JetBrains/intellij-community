@@ -588,8 +588,6 @@ internal class PEntityStorageBuilder(
 
   override fun resetChanges() {
     updateChangeLog { it.clear() }
-    entitiesByType = MutableEntitiesBarrel.from(origStorage.entitiesByType)
-    refs = MutableRefsTable.from(origStorage.refs)
   }
 
   override fun toStorage(): PEntityStorage {
