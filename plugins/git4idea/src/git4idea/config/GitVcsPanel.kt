@@ -5,6 +5,7 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle.message
+import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -59,6 +60,20 @@ private fun cdShowCommitAndPushDialog(project: Project)                       = 
 private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = CheckboxDescriptor(message("settings.push.dialog.for.protected.branches"), PropertyBinding({ projectSettings(project).isPreviewPushProtectedOnly }, { projectSettings(project).isPreviewPushProtectedOnly = it }), groupName = gitOptionGroupName)
 private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), PropertyBinding({ applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }), groupName = gitOptionGroupName)
 // @formatter:on
+
+internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
+  val list = mutableListOf(
+    cdCommitOnCherryPick,
+    cdAutoUpdateOnPush(project),
+    cdWarnAboutCrlf(project),
+    cdWarnAboutDetachedHead(project)
+  )
+  val manager = GitRepositoryManager.getInstance(project)
+  if (manager.moreThanOneRoot()) {
+    list += cdSyncBranches(project)
+  }
+  return list.map(CheckboxDescriptor::asOptionDescriptor)
+}
 
 internal class GitVcsPanel(private val project: Project,
                            private val applicationSettings: GitVcsApplicationSettings,
