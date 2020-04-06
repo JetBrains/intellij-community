@@ -170,6 +170,12 @@ internal class PEntityStorageBuilder(
     refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, children)
   }
 
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
+                                                                                               parentId: PId<T>,
+                                                                                               children: Sequence<SUBT>) {
+    refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, children)
+  }
+
   fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
                                                                                    parentId: PId<T>,
                                                                                    child: SUBT?) {
@@ -715,6 +721,13 @@ internal sealed class AbstractPEntityStorage constructor(
                                                                           parentId: PId<T>): Sequence<SUBT> {
     val entitiesList = entitiesByType[connectionId.childClass.java] ?: return emptySequence()
     return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { entitiesList[it]!!.createEntity(this) } ?: emptySequence()
+  }
+
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToAbstractManyChildren(connectionId: ConnectionId<T, SUBT>,
+                                                                                  parentId: PId<T>): Sequence<SUBT> {
+    return refs.getOneToAbstractManyChildren(connectionId, parentId)?.asSequence()?.map { pid ->
+      entityDataById(pid)?.createEntity(this) as SUBT
+    } ?: emptySequence()
   }
 
   open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneChild(connectionId: ConnectionId<T, SUBT>,
