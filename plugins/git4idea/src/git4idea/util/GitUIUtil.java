@@ -12,6 +12,7 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +44,8 @@ public class GitUIUtil {
   }
 
   public static void notifyMessages(@NotNull Project project,
-                                    @NotNull String title,
-                                    @Nullable String description,
+                                    @Nls @NotNull String title,
+                                    @Nls @Nullable String description,
                                     boolean important,
                                     @Nullable Collection<String> messages) {
     String desc = (description != null ? description.replace("\n", "<br/>") : "");
@@ -61,8 +62,8 @@ public class GitUIUtil {
   }
 
   public static void notifyMessage(Project project,
-                                   @NotNull String title,
-                                   @Nullable String description,
+                                   @Nls @NotNull String title,
+                                   @Nls @Nullable String description,
                                    boolean important,
                                    @Nullable Collection<? extends Exception> errors) {
     Collection<String> errorMessages;
@@ -85,7 +86,11 @@ public class GitUIUtil {
     notifyMessages(project, title, description, important, errorMessages);
   }
 
-  public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {
+  public static void notifyError(Project project,
+                                 @Nls @NotNull String title,
+                                 @Nls @Nullable String description,
+                                 boolean important,
+                                 @Nullable Exception error) {
     notifyMessage(project, title, description, important, error == null ? null : Collections.singleton(error));
   }
 
@@ -107,7 +112,7 @@ public class GitUIUtil {
     return content.toString();
   }
 
-  public static void notifyImportantError(Project project, String title, String description) {
+  public static void notifyImportantError(Project project, @Nls @NotNull String title, @Nls @Nullable String description) {
     notifyMessage(project, title, description, true, null);
   }
 
