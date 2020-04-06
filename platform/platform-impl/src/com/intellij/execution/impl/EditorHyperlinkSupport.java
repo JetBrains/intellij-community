@@ -297,7 +297,10 @@ public class EditorHyperlinkSupport {
       }
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
-      if (resultItem.getHyperlinkInfo() != null) {
+      if (resultItem instanceof InlayProvider) {
+        myEditor.getInlayModel().addInlineElement(end, ((InlayProvider)resultItem).createInlayRenderer(myEditor));
+      }
+      else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
                         resultItem.getHighlighterLayer());
       }
