@@ -5,10 +5,19 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.jps.incremental.storage.ProjectStamps
 
 @CompileStatic
 class PortableCompilationCache {
   private final CompilationContext context
+  private static final String REMOTE_CACHE_URL_PROPERTY = 'intellij.jps.remote.cache.url'
+  @Lazy
+  private final String remoteGitUrl = { require('intellij.remote.url', "Repository url") }()
+  @Lazy
+  private final String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }
+  boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && System.getProperty(REMOTE_CACHE_URL_PROPERTY)?.with {
+    !StringUtil.isEmptyOrSpaces(it)
+  } == true
 
   PortableCompilationCache(CompilationContext context) {
     this.context = context
@@ -22,13 +31,10 @@ class PortableCompilationCache {
     return value
   }
 
-  private final String remoteGitUrl = require('intellij.remote.url', "Repository url")
-
   /**
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
   def warmUp() {
-    def remoteCacheUrl = require('intellij.jps.remote.cache.url', "JPS remote cache url")
     def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit', 'false').toBoolean()
     def forceDownload = System.getProperty('intellij.jps.cache.download.force', 'false').toBoolean()
     def cacheDir = context.compilationData.dataStorageRoot
