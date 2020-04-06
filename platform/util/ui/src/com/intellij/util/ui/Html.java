@@ -25,7 +25,8 @@ public class Html {
   }
 
   /**
-   * By default, text can be soft-wrapped only at space positions. 'Smart' wrapping enables wrapping also at other places (e.g. punctuation)
+   * By default, text can be soft-wrapped only at space positions. 'Eager' wrapping enables wrapping also at other places
+   * (e.g. at punctuation characters).
    */
   public Html setEagerWrap(boolean eagerWrap) {
     myEagerWrap = eagerWrap;
