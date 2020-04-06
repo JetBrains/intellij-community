@@ -17,5 +17,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.boot" />
   </component>
 </module>

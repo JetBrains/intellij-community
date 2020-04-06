@@ -8,6 +8,7 @@ import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -468,7 +469,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (fileType == StdFileTypes.PROPERTIES) {
       EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
       Charset propertiesCharset = e.getDefaultCharsetForPropertiesFiles(null);
-      if (propertiesCharset != null) return propertiesCharset;
+      if (propertiesCharset != null && e.isNative2AsciiForPropertiesFiles()) {
+        return Native2AsciiCharset.wrap(propertiesCharset);
+      }
     }
 
     return filePath.getCharset(project);
