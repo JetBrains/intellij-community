@@ -3,11 +3,13 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
 import java.util.*
 import kotlin.collections.ArrayList
@@ -29,9 +31,9 @@ data class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null,
 
   fun getPresentation(): String {
     val lines = ArrayList<String>()
-    author?.let { lines.add("Author: $author") }
-    date?.let { lines.add("Date: ${DateFormatUtil.formatDateTime(date)}") }
-    return StringUtil.join(lines, "\n")
+    author?.let { lines.add("Author: ${XmlStringUtil.escapeString(author.toString())}") }
+    date?.let { lines.add("Date: ${XmlStringUtil.escapeString(DateFormatUtil.formatDateTime(date))}") }
+    return StringUtil.join(lines, UIUtil.BR)
   }
 
   @Tag(CHANGELIST_DATA)
