@@ -255,11 +255,15 @@ public final class StartupUtil {
         appStarter.importFinished(newConfigDir);
       }
 
-      PluginManagerCore.scheduleDescriptorLoading();
-
       if (configImportNeeded && !ConfigImportHelper.isConfigImported()) {
         // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
-        EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
+        EventQueue.invokeAndWait(() -> {
+          runStartupWizard(appStarter);
+          PluginManagerCore.scheduleDescriptorLoading();
+        });
+      }
+      else {
+        PluginManagerCore.scheduleDescriptorLoading();
       }
 
       activity.end();
