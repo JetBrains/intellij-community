@@ -265,7 +265,7 @@ public final class AppUIUtil {
       }
     }
 
-    String svgIconUrl = ApplicationInfoEx.getInstanceEx().getApplicationSvgIconUrl();
+    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
     if (svgIconUrl != null) {
       URL url = ApplicationInfoEx.class.getResource(svgIconUrl);
       if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
