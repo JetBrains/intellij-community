@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jdom.Element;
@@ -862,7 +863,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         myPluginsDownloadUrl = downloadUrl;
       }
 
-      myBuiltinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
+      String builtinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
+      if (StringUtil.isNotEmpty(builtinPluginsUrl)) {
+        myBuiltinPluginsUrl = builtinPluginsUrl;
+      }
     }
 
     String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
