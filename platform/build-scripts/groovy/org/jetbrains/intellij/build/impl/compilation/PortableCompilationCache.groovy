@@ -40,6 +40,8 @@ class PortableCompilationCache {
       context.options.incrementalCompilation = true
       CompilationTasks.create(context).compileAllModulesAndTests()
     }
+    context.options.incrementalCompilation = false
+    context.options.useCompiledClassesFromProjectOutput = true
   }
 
   /**
