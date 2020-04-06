@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution
 
+import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.ExecutionTestCase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
@@ -10,22 +12,25 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.FakeConfigurationFactory
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
-import com.intellij.idea.Bombed
+import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.JavaProjectTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.concurrency.Semaphore
 import org.apache.log4j.Logger
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
-import java.util.*
 
-@Bombed(month = Calendar.APRIL, day = 20, user = "Kirill Timofeev")
-class ExternalSystemRunConfigurationJavaExtensionTest : JavaProjectTestCase() {
+class ExternalSystemRunConfigurationJavaExtensionTest : ExecutionTestCase() {
+  override fun initOutputChecker(): OutputChecker = OutputChecker("", "")
+  override fun getTestAppPath(): String = ""
+  override fun setUpModule() {
+    // do nothing
+  }
 
   fun `test ExecutionException thrown from RunConfigurationExtension#updateJavaParameters should terminate execution`() {
     ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(CantUpdateJavaParametersExtension()), testRootDisposable)
@@ -48,14 +53,24 @@ class ExternalSystemRunConfigurationJavaExtensionTest : JavaProjectTestCase() {
   fun `test only applicable configuration extensions should be processed`() {
     ExtensionTestUtil.maskExtensions(RunConfigurationExtension.EP_NAME, listOf(UnApplicableConfigurationExtension()), testRootDisposable)
     val configuration = createExternalSystemRunConfiguration()
+    lateinit var processHandler: ProcessHandler
+    val executionStarted = Semaphore(1)
+    val environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build(
+      ProgramRunner.Callback {
+        processHandler = it.processHandler!!
+        executionStarted.up()
+      })
     runInEdtAndWait {
-      ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()
+      environment.runner.execute(environment)
     }
+    executionStarted.waitFor()
+    waitProcess(processHandler)
+    assertTrue(processHandler.isProcessTerminated)
   }
 
   private fun createExternalSystemRunConfiguration() =
     ExternalSystemRunConfiguration(ProjectSystemId("FakeExternalSystem"), project, FakeConfigurationFactory(), "FakeConfiguration").apply {
-      settings.externalProjectPath = module.moduleFilePath // any string to prevent NPE
+      settings.externalProjectPath = "" // any string to prevent NPE
     }
 
   private companion object {
