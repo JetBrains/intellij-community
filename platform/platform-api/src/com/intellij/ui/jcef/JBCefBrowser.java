@@ -230,7 +230,7 @@ public class JBCefBrowser implements JBCefDisposable {
     myCookieManagerLock.lock();
     try {
       if (myJBCefCookieManager == null) {
-        myJBCefCookieManager = new JBCefCookieManager(CefCookieManager.getGlobalManager());
+        myJBCefCookieManager = new JBCefCookieManager();
       }
       return myJBCefCookieManager;
     }

@@ -9,10 +9,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
-import com.intellij.ui.jcef.JBCefCookieManager;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
+import org.cef.network.CefCookie;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 /**
  * @author tav
@@ -29,7 +30,7 @@ import java.awt.event.WindowEvent;
 public class WebBrowser extends AnAction implements DumbAware {
   private static final String URL = "http://maps.google.com";
   private static final String myTitle = "Web Browser - JCEF";
-  private static final String myShowCookiesButtonText = "Show Cookies";
+  private static final String myCookieManagerText = "Cookie Manager";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -54,8 +55,7 @@ public class WebBrowser extends AnAction implements DumbAware {
     frame.setLayout(new BorderLayout());
 
     final JBCefBrowser myJBCefBrowser = new JBCefBrowser(URL);
-    final JBCefCookieManager myJBCefCookieManager = myJBCefBrowser.getJBCefCookieManager();
-    final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame);
+    final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
 
     frame.addWindowListener(new WindowAdapter() {
       @Override
@@ -79,15 +79,19 @@ public class WebBrowser extends AnAction implements DumbAware {
     JPanel controlPanel = new JPanel();
     controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
 
-    final JButton myShowCookies = new JButton(myShowCookiesButtonText);
-    myShowCookies.addActionListener(new ActionListener() {
+    final JButton myShowCookieManagerButton = new JButton(myCookieManagerText);
+    myShowCookieManagerButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         myCookieManagerDialog.setVisible(true);
-        myCookieManagerDialog.update(myJBCefCookieManager.getCookies());
+        List<CefCookie> cookies = myJBCefBrowser.getJBCefCookieManager().getCookies();
+        if (cookies != null) {
+          myCookieManagerDialog.update(cookies);
+        }
       }
     });
-    controlPanel.add(myShowCookies);
+    controlPanel.add(myShowCookieManagerButton);
+
     frame.add(controlPanel, BorderLayout.SOUTH);
 
     frame.setVisible(true);
