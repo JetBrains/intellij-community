@@ -487,6 +487,59 @@ public class PyChangeSignatureTest extends PyTestCase {
     });
   }
 
+  public void testPositionalOnlyMarkerAsFirstParameter() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "/", null, false),
+                                           new PyParameterInfo(0, "a", null, false)),
+                       PyPsiBundle.message("ANN.named.parameters.before.slash"));
+    });
+  }
+
+  public void testDuplicatedPositionalOnlyMarker() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                           new PyParameterInfo(1, "/", null, false),
+                                           new PyParameterInfo(2, "b", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.multiple.slash"));
+    });
+  }
+
+  public void testPositionalOnlyMarkerAfterPositionalVararg() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "*args", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.slash.param.after.vararg"));
+    });
+  }
+
+  public void testPositionalOnlyMarkerAfterKeywordOnlyMarker() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                           new PyParameterInfo(1, "*", null, false),
+                                           new PyParameterInfo(2, "b", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.slash.param.after.vararg"));
+    });
+  }
+
+  public void testPositionalOnlyMarkerAfterKeywordVararg() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "**kwargs", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "/", null, false)),
+                       PyPsiBundle.message("ANN.slash.param.after.keyword"));
+    });
+  }
+
+  public void testDuplicatedKeywordOnlyMarker() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false),
+                                           new PyParameterInfo(1, "*", null, false),
+                                           new PyParameterInfo(2, "b", null, false),
+                                           new PyParameterInfo(NEW_PARAMETER, "*", null, false)),
+                       PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star"));
+    });
+  }
 
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");

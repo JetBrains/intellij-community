@@ -127,13 +127,19 @@ public class PyChangeSignatureDialog extends
       final PyParameterTableModelItem info = parameters.get(index);
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
-      final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
-      if (parameterNames.contains(nameWithoutStars)) {
-        return PyPsiBundle.message("ANN.duplicate.param.name");
+      final boolean isMarkerParameter = name.equals("/") || name.equals("*");
+      if (!isMarkerParameter) {
+        final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
+        if (parameterNames.contains(nameWithoutStars)) {
+          return PyPsiBundle.message("ANN.duplicate.param.name");
+        }
+        parameterNames.add(nameWithoutStars);
       }
-      parameterNames.add(nameWithoutStars);
 
       if (name.equals("*")) {
+        if (hadSingleStar) {
+          return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
+        }
         hadSingleStar = true;
         if (index == parametersLength - 1) {
           return PyPsiBundle.message("ANN.named.parameters.after.star");
@@ -144,7 +150,7 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.multiple.slash");
         }
         hadSlash = true;
-        if (hadPositionalContainer) {
+        if (hadPositionalContainer || hadSingleStar) {
           return PyPsiBundle.message("ANN.slash.param.after.vararg");
         }
         else if (hadKeywordContainer) {
