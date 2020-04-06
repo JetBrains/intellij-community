@@ -5,9 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.ASKED_ADD_EXTERNAL_FILES_PROPERTY
-import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.openapi.vcs.*
 import java.util.*
 
 class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
@@ -51,8 +49,20 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, conf, confDefault, { it.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND }, "check.conflicts.in.background")
 
     addExternalFilesActionsStatistics(project, set, conf, confDefault)
+    addProjectConfigurationFilesActionsStatistics(project, set)
 
     return set
+  }
+
+  private fun addProjectConfigurationFilesActionsStatistics(project: Project, set: HashSet<MetricEvent>) {
+    //SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY can be set automatically to true without ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
+    //Such case should be filtered in order to check only an user manual interaction.
+    val askedToShare = booleanPropertyIfDiffers(project, ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, false)
+    if (askedToShare != null) {
+      if (!addBooleanPropertyIfDiffers(project, set, SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, false, "share.project.configuration.files")) {
+        set.add(newBooleanMetric("asked.share.project.configuration.files", askedToShare))
+      }
+    }
   }
 
   private fun addExternalFilesActionsStatistics(project: Project, set: HashSet<MetricEvent>, conf: VcsConfiguration, confDefault: VcsConfiguration) {
