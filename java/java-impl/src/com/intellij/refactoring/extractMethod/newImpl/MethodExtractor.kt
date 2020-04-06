@@ -33,6 +33,8 @@ class MethodExtractor {
 
   fun doExtract(editor: Editor, refactoringName: String, helpId: String): Boolean {
     val statements = ExtractSelector().suggestElementsToExtract(editor)
+    val file = statements.first().containingFile
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return false
     try {
       val extractOptions = findExtractOptions(statements) ?: return false
       selectTargetClass(extractOptions) { targetOptions ->
