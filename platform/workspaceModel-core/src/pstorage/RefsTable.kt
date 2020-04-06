@@ -9,13 +9,19 @@ import kotlin.reflect.KClass
 internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
   val parentClass: KClass<T>,
   val childClass: KClass<SUBT>,
-  var isHard: Boolean
+  var isHard: Boolean,
+  var connectionType: ConnectionType
 ) {
+  enum class ConnectionType {
+    ONE_TO_ONE,
+    ONE_TO_MANY,
+    ONE_TO_ABSTRACT_MANY
+  }
 
   companion object {
     fun <T : TypedEntity, SUBT : TypedEntity> create(
-      parentClass: KClass<T>, childClass: KClass<SUBT>, isHard: Boolean
-    ): ConnectionId<T, SUBT> = ConnectionId(parentClass, childClass, isHard)
+      parentClass: KClass<T>, childClass: KClass<SUBT>, isHard: Boolean, connectionType: ConnectionType
+    ): ConnectionId<T, SUBT> = ConnectionId(parentClass, childClass, isHard, connectionType)
   }
 }
 
@@ -122,32 +128,32 @@ internal class MutableRefsTable(
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
-                                                                                   parentId: Int,
-                                                                                   childrenEntities: Sequence<SUBT>) {
+                                                                             parentId: Int,
+                                                                             childrenEntities: Sequence<SUBT>) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     childrenEntities.forEach { copiedMap.put(it.id.arrayId, parentId) }
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
-                                                                                           parentId: PId<T>,
-                                                                                           childrenEntities: Sequence<SUBT>) {
+                                                                                     parentId: PId<T>,
+                                                                                     childrenEntities: Sequence<SUBT>) {
     val copiedMap = getOneToAbstractManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     childrenEntities.forEach { copiedMap[it.id] = parentId }
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
-                                                                               parentId: Int,
-                                                                               childEntity: SUBT) {
+                                                                         parentId: Int,
+                                                                         childEntity: SUBT) {
     val copiedMap = getOneToOneMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     copiedMap.put(childEntity.id.arrayId, parentId)
   }
 
   fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
-                                                                                   childId: Int,
-                                                                                   parentEntity: T) {
+                                                                          childId: Int,
+                                                                          parentEntity: T) {
     val copiedMap = getOneToOneMutableMap(connectionId)
     copiedMap.removeKey(childId)
     copiedMap.put(childId, parentEntity.id.arrayId)
@@ -191,8 +197,13 @@ internal sealed class AbstractRefsTable constructor(
 
   fun <T : TypedEntity, SUBT : TypedEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT>? {
     return (oneToManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
-            ?: oneToOneContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin })
+            ?: oneToOneContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
+            ?: oneToAbstractManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin })
       as ConnectionId<T, SUBT>?
+  }
+
+  fun <T : TypedEntity, SUBT : TypedEntity> findConnectionIdOrDie(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT> {
+    return findConnectionId(parentClass, childClass) ?: error("ConnectionId doesn't exists")
   }
 
   fun <T : TypedEntity> getOneToManyChildren(

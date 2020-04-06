@@ -2,6 +2,7 @@
 package com.intellij.workspace.api.pstorage.references
 
 import com.intellij.workspace.api.pstorage.ConnectionId
+import com.intellij.workspace.api.pstorage.ConnectionId.ConnectionType.ONE_TO_MANY
 import com.intellij.workspace.api.pstorage.PId
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
 import com.intellij.workspace.api.pstorage.PTypedEntity
@@ -16,14 +17,14 @@ sealed class OneToMany<T : PTypedEntity, SUBT : PTypedEntity> : ReadOnlyProperty
 
   class HardRef<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: KClass<SUBT>) : OneToMany<T, SUBT>() {
     operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, Sequence<SUBT>> {
-      connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, true)
+      connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, true, ONE_TO_MANY)
       return this
     }
   }
 
   class SoftRef<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: KClass<SUBT>) : OneToMany<T, SUBT>() {
     operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, Sequence<SUBT>> {
-      connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, false)
+      connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, false, ONE_TO_MANY)
       return this
     }
   }
@@ -39,7 +40,7 @@ internal class ManyToOne private constructor() {
       lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T> {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true, ONE_TO_MANY)
         return this
       }
 
@@ -50,7 +51,7 @@ internal class ManyToOne private constructor() {
       lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true, ONE_TO_MANY)
         return this
       }
 
@@ -63,7 +64,7 @@ internal class ManyToOne private constructor() {
     lateinit var connectionId: ConnectionId<T, SUBT>
 
     operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
-      connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, false)
+      connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, false, ONE_TO_MANY)
       return this
     }
 
@@ -80,7 +81,7 @@ internal sealed class MutableOneToMany<T : PTypedEntity, SUBT : PTypedEntity, MO
     private val childClass: KClass<SUBT>
   ) : MutableOneToMany<T, SUBT, MODT>() {
     operator fun provideDelegate(thisRef: MODT, property: KProperty<*>): ReadWriteProperty<MODT, Sequence<SUBT>> {
-      connectionId = ConnectionId.create(parentClass, childClass, true)
+      connectionId = ConnectionId.create(parentClass, childClass, true, ONE_TO_MANY)
       return this
     }
   }
@@ -90,7 +91,7 @@ internal sealed class MutableOneToMany<T : PTypedEntity, SUBT : PTypedEntity, MO
     private val childClass: KClass<SUBT>
   ) : MutableOneToMany<T, SUBT, MODT>() {
     operator fun provideDelegate(thisRef: MODT, property: KProperty<*>): ReadWriteProperty<MODT, Sequence<SUBT>> {
-      connectionId = ConnectionId.create(parentClass, childClass, false)
+      connectionId = ConnectionId.create(parentClass, childClass, false, ONE_TO_MANY)
       return this
     }
   }
@@ -116,7 +117,7 @@ internal class MutableManyToOne private constructor() {
       lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T> {
-        connectionId = ConnectionId.create(parentClass, childClass, true)
+        connectionId = ConnectionId.create(parentClass, childClass, true, ONE_TO_MANY)
         return this
       }
 
@@ -139,7 +140,7 @@ internal class MutableManyToOne private constructor() {
       lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
-        connectionId = ConnectionId.create(parentClass, childClass, true)
+        connectionId = ConnectionId.create(parentClass, childClass, true, ONE_TO_MANY)
         return this
       }
 
@@ -164,7 +165,7 @@ internal class MutableManyToOne private constructor() {
     lateinit var connectionId: ConnectionId<T, SUBT>
 
     operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
-      connectionId = ConnectionId.create(parentClass, childClass, false)
+      connectionId = ConnectionId.create(parentClass, childClass, false, ONE_TO_MANY)
       return this
     }
 

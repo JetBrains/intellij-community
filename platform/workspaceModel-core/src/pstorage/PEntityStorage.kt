@@ -155,12 +155,14 @@ internal class PEntityStorageBuilder(
         accumulator.getOrPut(childClass.java) { HashSet() }.add(childId)
         accumulateEntitiesToRemove(childId, childClass.java, accumulator)
       }
-      refs.removeOneToManyRefsByParent(ConnectionId.create(entityClass.kotlin, childClass, true), entityId)
+      val connectionId = refs.findConnectionIdOrDie(entityClass, childClass.java)
+      refs.removeOneToManyRefsByParent(connectionId, entityId)
     }
 
     val parents = refs.getOneToManyHardParentReferencesOfChild(entityId, entityClass)
     for ((parentClass, parentId) in parents) {
-      refs.removeOneToManyParentToChildRef(ConnectionId.create(parentClass, entityClass.kotlin, true), parentId, entityId)
+      val connectionId = refs.findConnectionIdOrDie(parentClass.java, entityClass)
+      refs.removeOneToManyParentToChildRef(connectionId, parentId, entityId)
     }
   }
 
