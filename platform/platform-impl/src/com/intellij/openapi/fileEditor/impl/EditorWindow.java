@@ -108,7 +108,7 @@ public final class EditorWindow {
   }
 
   public void closeAllExcept(final VirtualFile selectedFile) {
-    FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
+    getManager().runBulkTabChange(myOwner, splitters -> {
       for (VirtualFile file : getFiles()) {
         if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
           closeFile(file);
@@ -159,7 +159,7 @@ public final class EditorWindow {
 
   public void closeFile(final @NotNull VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
-    FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
+    editorManager.runBulkTabChange(myOwner, splitters -> {
       final List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
       if (editors.isEmpty()) return;
       try {
@@ -457,7 +457,7 @@ public final class EditorWindow {
   }
 
   /**
-   * @param ignorePopup if {@code false} and context menu is shown currently for some tab,
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
    *                    editor for which menu is invoked will be returned
    */
   public @Nullable EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {

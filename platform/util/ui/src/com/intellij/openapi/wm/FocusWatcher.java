@@ -111,7 +111,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     return SoftReference.dereference(myFocusedComponent);
   }
 
-  private Component getNearestFocusableComponent() {
+  public final Component getNearestFocusableComponent() {
     return SoftReference.dereference(myNearestFocusableComponent);
   }
 
@@ -142,7 +142,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     setFocusedComponentImpl(component, null);
   }
 
-  private void setFocusedComponentImpl(Component component, @Nullable AWTEvent cause) {
+  public void setFocusedComponentImpl(Component component, @Nullable AWTEvent cause) {
     if (!isFocusedComponentChangeValid(component, cause)) {
       return;
     }
@@ -170,6 +170,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
    * event are ignored.
    *
    * @param component currently focused component. The component can be {@code null}
+   * @param cause
    */
   protected void focusedComponentChanged(@Nullable Component component, @Nullable AWTEvent cause) {}
 
