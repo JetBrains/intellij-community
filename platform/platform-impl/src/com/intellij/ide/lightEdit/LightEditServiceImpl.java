@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
@@ -162,17 +161,10 @@ public final class LightEditServiceImpl implements LightEditService,
   private void processNotOpenedFile(@NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     Project project = Objects.requireNonNull(getProject());
-    boolean openExternally = fileType instanceof INativeFileType;
-    if (openExternally) {
-      ((INativeFileType)fileType).openFileInAssociatedApplication(project, file);
-    }
-    else {
-      Messages.showWarningDialog(project,
-                                 ApplicationBundle.message("light.edit.unableToOpenFile.text", file.getPresentableName()),
-                                 ApplicationBundle.message("light.edit.unableToOpenFile.title"));
-    }
-    LOG.info("Failed to open " + file.getPresentableUrl() + ", binary: " + fileType.isBinary() +
-             ", opened externally: " + openExternally);
+    Messages.showWarningDialog(project,
+                               ApplicationBundle.message("light.edit.unableToOpenFile.text", file.getPresentableName()),
+                               ApplicationBundle.message("light.edit.unableToOpenFile.title"));
+    LOG.info("Failed to open " + file.getPresentableUrl() + ", binary: " + fileType.isBinary());
   }
 
   private void logStartupTime() {
