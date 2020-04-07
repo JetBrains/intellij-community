@@ -69,6 +69,7 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
       val project = psiFile.project
       val fileStateCache = FileStateCache.SERVICE.getInstance(project)
       val (snapshot, changes) = fileStateCache.getState(psiFile) ?: return
+      if (changes.isEmpty()) return
       val manager = SmartPointerManager.getInstance(project)
       val oldSnapshot = snapshot.toMutableMap()
       changes.forEach { (psiMember, prevMember) ->

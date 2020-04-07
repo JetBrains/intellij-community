@@ -103,7 +103,9 @@ public class ProjectProblemPassUtils {
   }
 
   static void removeInlays(@NotNull PsiFile psiFile) {
-    getInlays(psiFile).values().forEach(inlay -> Disposer.dispose(inlay));
+    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> inlays = psiFile.getUserData(PROBLEM_INLAY_HINTS);
+    if (inlays == null) return;
+    inlays.values().forEach(inlay -> Disposer.dispose(inlay));
     psiFile.putUserData(PROBLEM_INLAY_HINTS, null);
   }
 }
