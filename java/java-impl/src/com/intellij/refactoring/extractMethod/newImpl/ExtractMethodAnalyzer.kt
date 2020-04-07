@@ -53,7 +53,7 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val anchor = findClassMember(elements.first()) ?: throw PrepareFailedException("No upper class", elements.first())
 
-  val typeParameters = findUsedTypeParameters((anchor as? PsiTypeParameterListOwner)?.typeParameterList, elements)
+  var extractOptions = ExtractOptions(anchor, elements, flowOutput, dataOutput)
 
   val inputParameters = analyzer.findExternalReferences()
     .map { externalReference -> inputParameterOf(externalReference) }
@@ -62,20 +62,12 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val exposedVariables = analyzer.findExposedLocalDeclarations()
 
-  var extractOptions = ExtractOptions(
-    anchor = anchor,
-    elements = elements,
-    flowOutput = flowOutput,
+  extractOptions = extractOptions.copy(
     dataOutput = normalizeDataOutput(dataOutput, flowOutput, elements, exposedVariables.mapNotNull { it.name }),
     thrownExceptions = analyzer.findThrownExceptions(),
     requiredVariablesInside = analyzer.findUndeclaredVariables().filterNot { it.name in parameterNames },
-    typeParameters = typeParameters,
-    methodName = "extracted",
-    isConstructor = false,
-    isStatic = false,
-    visibility = PsiModifier.PRIVATE,
+    typeParameters = findUsedTypeParameters((anchor as? PsiTypeParameterListOwner)?.typeParameterList, elements),
     inputParameters = inputParameters,
-    disabledParameters = emptyList(),
     exposedLocalVariables = exposedVariables
   )
 
