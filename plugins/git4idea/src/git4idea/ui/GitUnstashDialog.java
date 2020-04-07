@@ -47,6 +47,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
+import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
+import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
 import static java.util.Collections.singletonList;
 
 /**
@@ -141,7 +143,11 @@ public class GitUnstashDialog extends DialogWrapper {
                                                      GitBundle.message("git.unstash.drop.confirmation.message", stash.getStash(), stash.getMessage()),
                                                      GitBundle.message("git.unstash.drop.confirmation.title", stash.getStash()), Messages.getQuestionIcon())) {
           final ModalityState current = ModalityState.current();
-          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash() + "...", true) {
+          ProgressManager.getInstance().run(new Task.Modal(
+            myProject,
+            GitBundle.message("unstash.dialog.remove.stash.progress.indicator.title", stash.getStash()),
+            true
+          ) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               final GitLineHandler h = dropHandler(stash.getStash());
@@ -149,7 +155,8 @@ public class GitUnstashDialog extends DialogWrapper {
                 Git.getInstance().runCommand(h).throwOnError();
               }
               catch (final VcsException ex) {
-                ApplicationManager.getApplication().invokeLater(() -> GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine()), current);
+                ApplicationManager.getApplication()
+                  .invokeLater(() -> GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine()), current);
               }
             }
           });
@@ -171,7 +178,11 @@ public class GitUnstashDialog extends DialogWrapper {
         String selectedStash = getSelectedStash().getStash();
         try {
           String hash = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            () -> resolveHashOfStash(root, selectedStash), "Loading Stash Details...", true, project);
+            () -> resolveHashOfStash(root, selectedStash),
+            GitBundle.getString("unstash.dialog.stash.details.load.progress.indicator.title"),
+            true,
+            project
+          );
           GitUtil.showSubmittedFiles(myProject, hash, root, true, false);
         }
         catch (VcsException ex) {
@@ -258,7 +269,11 @@ public class GitUnstashDialog extends DialogWrapper {
     VirtualFile root = getGitRoot();
     try {
       List<StashInfo> listOfStashes = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> GitStashUtils.loadStashStack(myProject, root), "Loading List of Stashes...", true, myProject);
+        () -> GitStashUtils.loadStashStack(myProject, root),
+        GitBundle.getString("unstash.dialog.stash.list.load.progress.indicator.title"),
+        true,
+        myProject
+      );
 
       for (StashInfo info: listOfStashes) {
         listModel.addElement(info);
@@ -275,7 +290,7 @@ public class GitUnstashDialog extends DialogWrapper {
     }
     catch (VcsException e) {
       LOG.warn(e);
-      Messages.showErrorDialog(myProject, "Couldn't show the list of stashes", e.getMessage());
+      Messages.showErrorDialog(myProject, e.getMessage(), GitBundle.getString("unstash.dialog.show.stashes.error.dialog.title"));
     }
   }
 
@@ -370,9 +385,10 @@ public class GitUnstashDialog extends DialogWrapper {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyImportantWarning("Conflicts were not resolved during unstash",
-                                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
-                                                                "<a href='resolve'>Resolve</a> conflicts.", new NotificationListener() {
+      VcsNotifier.getInstance(myProject).notifyImportantWarning(
+        GitBundle.getString("unstash.dialog.unresolved.conflict.warning.notification.title"),
+        GitBundle.getString("unstash.dialog.unresolved.conflict.warning.notification.message"),
+        new NotificationListener() {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -397,19 +413,24 @@ public class GitUnstashDialog extends DialogWrapper {
     @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-      return "<html>Conflicts during unstashing <code>" + myStashInfo.getStash() + "\"" + myStashInfo.getMessage() + "\"</code></html>";
+      return wrapInHtml(
+        GitBundle.message(
+          "unstash.conflict.dialog.description.label.text",
+          wrapInHtmlTag(myStashInfo.getStash() + "\"" + myStashInfo.getMessage() + "\"", "code")
+        )
+      );
     }
 
     @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
-      return "Local changes";
+      return GitBundle.getString("unstash.conflict.diff.dialog.left.title");
     }
 
     @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
-      return "Changes from stash";
+      return GitBundle.getString("unstash.conflict.diff.dialog.right.title");
     }
   }
 }
