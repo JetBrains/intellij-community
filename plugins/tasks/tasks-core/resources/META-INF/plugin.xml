@@ -86,7 +86,7 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType"/>
+    <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType" dynamic="true"/>
     <extensionPoint name="dialogPanelProvider" interface="com.intellij.tasks.ui.TaskDialogPanelProvider"/>
     <extensionPoint name="commitPlaceholderProvider" interface="com.intellij.tasks.CommitPlaceholderProvider" dynamic="true"/>
   </extensionPoints>

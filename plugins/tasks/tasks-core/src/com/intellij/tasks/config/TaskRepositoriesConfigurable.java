@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.ide.DataManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
@@ -36,7 +37,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("unchecked")
-public class TaskRepositoriesConfigurable implements Configurable.NoScroll, SearchableConfigurable {
+public class TaskRepositoriesConfigurable implements Configurable.NoScroll, SearchableConfigurable, Configurable.WithEpDependencies {
 
   public static final String ID = "tasks.servers";
   private static final String EMPTY_PANEL = "empty.panel";
@@ -269,6 +270,11 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     TaskRepository matched =
       myRepositories.stream().filter(repository -> repository.getRepositoryType().getName().contains(option)).findFirst().orElse(null);
     return matched == null ? null : () -> myRepositoriesList.setSelectedValue(matched, true);
+  }
+
+  @Override
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singletonList(TaskRepositoryType.EP_NAME);
   }
 
   private abstract class AddServerAction extends IconWithTextAction implements DumbAware {

@@ -138,6 +138,17 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         }
       }
     });
+
+    // remove repositories pertaining to non-existent types
+    TaskRepositoryType.addEPListChangeListener(this, () -> {
+      List<Class<?>> possibleRepositoryClasses = TaskRepositoryType.getRepositoryClasses();
+      List<TaskRepository> repositories = myRepositories;
+      boolean removed = repositories.removeIf(repository -> {
+        return !ContainerUtil.exists(possibleRepositoryClasses, clazz -> clazz.isAssignableFrom(repository.getClass()));
+      });
+
+      if (removed) setRepositories(repositories);
+    });
   }
 
   @TestOnly
@@ -179,6 +190,17 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         server.type = type.getName();
         server.url = repository.getUrl();
         servers.add(server);
+      }
+    }
+
+    clearNonExistentRepositoriesFromTasks();
+  }
+
+  private void clearNonExistentRepositoriesFromTasks() {
+    for (LocalTask task : myTasks.values()) {
+      TaskRepository repository = task.getRepository();
+      if (repository != null && !myRepositories.contains(repository) && task instanceof LocalTaskImpl) {
+        ((LocalTaskImpl)task).setRepository(null);
       }
     }
   }
