@@ -21,11 +21,13 @@ class SuggestedRefactoringState(
   val oldImportsText: String?,
   val oldSignature: Signature,
   val newSignature: Signature,
-  val parameterMarkers: List<RangeMarker?>,
+  val parameterMarkers: List<ParameterMarker>,
   val disappearedParameters: Map<String, Any> = emptyMap() /* last known parameter name to its id */,
   val featureUsageId: Int = nextFeatureUsageId++,
   val additionalData: AdditionalData = AdditionalData.Empty
 ) {
+  data class ParameterMarker(val rangeMarker: RangeMarker, val parameterId: Any)
+
   fun withDeclaration(declaration: PsiElement): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
@@ -62,7 +64,7 @@ class SuggestedRefactoringState(
     return state
   }
 
-  fun withParameterMarkers(parameterMarkers: List<RangeMarker?>): SuggestedRefactoringState {
+  fun withParameterMarkers(parameterMarkers: List<ParameterMarker>): SuggestedRefactoringState {
     val state = SuggestedRefactoringState(
       declaration, refactoringSupport, errorLevel, oldDeclarationText, oldImportsText,
       oldSignature, newSignature, parameterMarkers, disappearedParameters, featureUsageId, additionalData

@@ -704,4 +704,40 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       expectedAvailability = Availability.Available(renameAvailableTooltip("local", "xxx"))
     )
   }
+
+  fun testRenameParameterWithNameErased1() {
+    doTest(
+      """
+        class RenameParam {
+          void foo(int x, int x2<caret>) {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("x2")
+      },
+      {
+        myFixture.type("y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("x2", "y"))
+    )
+  }
+
+  fun testRenameParameterWithNameErased2() {
+    doTest(
+      """
+        class RenameParam {
+          void foo(int x, int x2<caret>, Object o) {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("x2")
+      },
+      {
+        myFixture.type("y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("x2", "y"))
+    )
+  }
 }
