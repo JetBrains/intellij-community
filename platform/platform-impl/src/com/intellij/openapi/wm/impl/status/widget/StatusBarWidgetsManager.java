@@ -24,12 +24,11 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
 
   private final Map<StatusBarWidgetFactory, StatusBarWidget> myWidgetFactories = new LinkedHashMap<>();
   private final Map<String, StatusBarWidgetFactory> myWidgetIdsMap = new HashMap<>();
-  
+
   private final Project myProject;
 
   public StatusBarWidgetsManager(@NotNull Project project) {
     myProject = project;
-    Disposer.register(myProject, this);
 
     StatusBarWidgetFactory.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetFactory>() {
       @Override
@@ -43,6 +42,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       }
     }, true, this);
 
+    //noinspection deprecation
     StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
       @Override
       public void extensionAdded(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
