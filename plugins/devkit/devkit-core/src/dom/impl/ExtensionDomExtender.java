@@ -167,8 +167,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       final String withClassName = withElement.getImplements().getStringValue();
       extension.addCustomAnnotation(new ExtendClassImpl() {
         @Override
-        public String value() {
-          return withClassName;
+        public String[] value() {
+          return new String[]{withClassName};
         }
       });
     }
@@ -311,8 +311,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
 
     @Override
-    public String value() {
-      return myInterfaceName;
+    public String[] value() {
+      return new String[]{myInterfaceName};
     }
   }
 
