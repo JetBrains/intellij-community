@@ -70,15 +70,26 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
   private final Map<Project, MavenServerConnector> myServerConnectors = new ConcurrentHashMap<>();
   private File eventListenerJar;
 
-  public void showMavenNotifications(MavenSyncConsole console) {
-    String mavenVersion = getCurrentMavenVersion();
-    if (mavenVersion == null) {
+  public boolean checkMavenSettings(Project project, MavenSyncConsole console) {
+
+    MavenDistribution distribution = MavenDistribution.fromSettings(project);
+    if (distribution == null) {
       console.showQuickFixBadMaven(SyncBundle.message("maven.sync.quickfixes.nomaven"), MessageEvent.Kind.ERROR);
+      return false;
     }
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6.0") == 0) {
+    if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3.6.0") == 0) {
       console.showQuickFixBadMaven(SyncBundle.message("maven.sync.quickfixes.maven360"), MessageEvent.Kind.WARNING);
+      return false;
     }
+
+    Sdk jdk = ExternalSystemJdkUtil.getJdk(project, ExternalSystemJdkUtil.USE_PROJECT_JDK);
+    String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
+    if (!verifyMavenSdkRequirements(jdk, distribution.getVersion(), sdkConfigLocation)) {
+      console.showQuickFixJDK(distribution.getVersion());
+      return false;
+    }
+    return true;
   }
 
   public void unregisterConnector(MavenServerConnector serverConnector) {

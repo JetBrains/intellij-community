@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class MavenProjectsProcessor {
+  private final MavenProjectsManager myProjectsManager;
   private final Project myProject;
   private final String myTitle;
   private final boolean myCancellable;
@@ -43,7 +44,12 @@ public class MavenProjectsProcessor {
 
   private volatile boolean isStopped;
 
-  public MavenProjectsProcessor(Project project, String title, boolean cancellable, MavenEmbeddersManager embeddersManager) {
+  public MavenProjectsProcessor(MavenProjectsManager projectsManager,
+                                Project project,
+                                String title,
+                                boolean cancellable,
+                                MavenEmbeddersManager embeddersManager) {
+    myProjectsManager = projectsManager;
     myProject = project;
     myTitle = title;
     myCancellable = cancellable;
@@ -180,12 +186,12 @@ public class MavenProjectsProcessor {
     if (e instanceof ControlFlowException) {
       ExceptionUtil.rethrowAllAsUnchecked(e);
     }
-    MavenLog.LOG.error(e);
-    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+    myProjectsManager.showServerException(e);
+    /*new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                      MavenProjectBundle.message("maven.notification.unable.to.import"),
                      MavenProjectBundle.message("maven.notification.see.logs.for.details"),
                      NotificationType.ERROR
-    ).addAction(ActionManager.getInstance().getAction("ShowLog")).notify(myProject);
+    ).addAction(ActionManager.getInstance().getAction("ShowLog")).notify(myProject);*/
   }
 
   private static class MavenProjectsProcessorWaitForCompletionTask implements MavenProjectsProcessorTask {
