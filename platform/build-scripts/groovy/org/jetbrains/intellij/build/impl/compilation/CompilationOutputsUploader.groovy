@@ -117,9 +117,14 @@ class CompilationOutputsUploader {
     File zipFile = new File(dataStorageRoot.parent, commitHash)
     zipBinaryData(zipFile, dataStorageRoot)
     uploader.upload(cachePath, zipFile)
+
+    // Publish artifact for dependent configuration
+    File zipArtifact = new File(tmpDir, "caches.zip")
+    FileUtil.copy(zipFile, zipArtifact)
+    context.messages.artifactBuilt(zipArtifact.absolutePath)
+
     File zipCopy = new File(tmpDir, cachePath)
     FileUtil.rename(zipFile, zipCopy)
-
     return true
   }
 
