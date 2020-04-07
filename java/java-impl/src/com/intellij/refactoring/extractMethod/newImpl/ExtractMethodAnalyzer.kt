@@ -95,7 +95,9 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
 private fun normalizeDataOutput(dataOutput: DataOutput, flowOutput: FlowOutput, elements: List<PsiElement>, reservedNames: List<String>): DataOutput {
   var normalizedDataOutput = dataOutput
-  if (flowOutput is ConditionalFlow) {
+  if (flowOutput is ConditionalFlow && dataOutput.type is PsiPrimitiveType) {
+    val variableOutput = dataOutput as? VariableOutput
+    if (variableOutput?.declareType == false) throw PrepareFailedException("Too many outputs (TODO)", variableOutput.variable)
     normalizedDataOutput = dataOutput.withBoxedType()
   }
   if (normalizedDataOutput is ExpressionOutput) {
