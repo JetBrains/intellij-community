@@ -133,25 +133,25 @@ class MethodExtractor {
     }
     val codeBlock = BodyBuilder(factory)
       .build(
-        elements = dependencies.elements,
-        flowOutput = flowOutput,
-        dataOutput = dependencies.dataOutput,
-        inputParameters = dependencies.inputParameters,
-        missedDeclarations = dependencies.requiredVariablesInside,
-        disabledParameters = dependencies.disabledParameters
+        dependencies.elements,
+        flowOutput,
+        dependencies.dataOutput,
+        dependencies.inputParameters,
+        dependencies.disabledParameters,
+        dependencies.requiredVariablesInside
       )
     val method = SignatureBuilder(dependencies.project)
       .build(
-        context = dependencies.anchor.context,
-        scope = dependencies.elements,
-        isStatic = dependencies.isStatic,
-        visibility = dependencies.visibility,
-        typeParameters = dependencies.typeParameters,
-        returnType = dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
-        methodName = dependencies.methodName,
-        inputParameters = dependencies.inputParameters,
-        thrownExceptions = dependencies.thrownExceptions,
-        anchor = dependencies.anchor
+        dependencies.anchor.context,
+        dependencies.elements,
+        dependencies.isStatic,
+        dependencies.visibility,
+        dependencies.typeParameters,
+        dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
+        dependencies.methodName,
+        dependencies.inputParameters,
+        dependencies.thrownExceptions,
+        dependencies.anchor
       )
     method.body?.replace(codeBlock)
 
