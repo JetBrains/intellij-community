@@ -73,7 +73,7 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
     methodName = "extracted",
     isConstructor = false,
     isStatic = false,
-    visibility = "private",
+    visibility = PsiModifier.PRIVATE,
     inputParameters = inputParameters,
     disabledParameters = emptyList(),
     exposedLocalVariables = exposedVariables
@@ -84,7 +84,10 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)!!
 
   val fieldUsages = analyzer.findFieldUsages(targetClass, elements)
-  val finalFields = fieldUsages.filter { it.isWrite && it.field.hasExplicitModifier("final") }.map { it.field }.distinct()
+  val finalFields = fieldUsages
+    .filter { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
+    .map { it.field }
+    .distinct()
   val field = finalFields.singleOrNull()
   extractOptions = when {
     finalFields.isEmpty() -> extractOptions

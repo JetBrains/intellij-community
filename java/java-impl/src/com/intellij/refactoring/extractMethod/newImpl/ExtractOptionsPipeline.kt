@@ -234,7 +234,7 @@ object ExtractMethodPipeline {
     val outStatements = method.body?.statements.orEmpty().dropWhile { it.textRange.endOffset <= elements.last().textRange.endOffset }
     val hasOuterFinalFieldAssignments = analyzer
       .findFieldUsages(holderClass, outStatements)
-      .any { it.isWrite && it.field.hasExplicitModifier("final") }
+      .any { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
     return method.isConstructor && startsOnBegin && !hasOuterFinalFieldAssignments && analyzer.findOutputVariables().isEmpty()
   }
 }
