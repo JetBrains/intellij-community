@@ -2059,7 +2059,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                         coverLine().weightx(1).insets(topIndent, 10, 10, 6));
       }
 
-      myContent.add(new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), controller::openProblemsView),
+      JLabel openProblemsViewLabel = new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), () -> {
+        hidePopup();
+        controller.openProblemsView();
+      });
+      myContent.add(openProblemsViewLabel,
                     gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(10, 10, 10, 0));
       
       myContent.add(createLowerPanel(controller),
