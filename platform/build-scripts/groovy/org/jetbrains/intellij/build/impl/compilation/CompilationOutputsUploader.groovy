@@ -25,8 +25,9 @@ import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private final String commitHistoryFile = "commit_history.json"
-  private final int commitsLimit = 200
+  private static final String COMMIT_HISTORY_FILE = "commit_history.json"
+  private static final int COMMITS_LIMIT = 200
+
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
@@ -34,7 +35,20 @@ class CompilationOutputsUploader {
   private final String tmpDir
   private final Map<String, String> remotePerCommitHash
   private final boolean updateCommitHistory
-  private final SourcesStateProcessor sourcesStateProcessor
+
+  private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
+  private final JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+
+  @Lazy
+  private String commitHash = {
+    if (remotePerCommitHash.size() == 1) return remotePerCommitHash.values().first()
+    StringBuilder commitHashBuilder = new StringBuilder()
+    int hashLength = (remotePerCommitHash.values().first().length() / remotePerCommitHash.size()) as int
+    remotePerCommitHash.each { key, value ->
+      commitHashBuilder.append(value.substring(0, hashLength))
+    }
+    return commitHashBuilder.toString()
+  }()
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
                              String agentPersistentStorage, String tmpDir, boolean updateCommitHistory) {
@@ -45,12 +59,9 @@ class CompilationOutputsUploader {
     this.remotePerCommitHash = remotePerCommitHash
     this.context = context
     this.updateCommitHistory = updateCommitHistory
-
-    sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
   def upload(File outputDirectoryFile) {
-    JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("$executorThreadsCount threads will be used for upload")
     NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
@@ -58,7 +69,6 @@ class CompilationOutputsUploader {
 
     try {
       def start = System.nanoTime()
-      def dataStorageRoot = context.compilationData.dataStorageRoot
       def sourceStateFile = sourcesStateProcessor.sourceStateFile
       if (!sourceStateFile.exists()) {
         context.messages.
@@ -66,30 +76,14 @@ class CompilationOutputsUploader {
         return
       }
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
-      def commitHash = getCommitHash()
 
       executor.submit {
         // Upload jps caches started first because of the significant size of the output
-        def sourcePath = "caches/$commitHash"
-        if (uploader.isExist(sourcePath)) return
-        File zipFile = new File(dataStorageRoot.parent, commitHash)
-        zipBinaryData(zipFile, dataStorageRoot)
-        uploader.upload(sourcePath, zipFile)
-        File zipCopy = new File(tmpDir, sourcePath)
-        FileUtil.copy(zipFile, zipCopy)
-        FileUtil.delete(zipFile)
+        if (updateCommitHistory) {
+          if (!uploadCompilationCache(outputDirectoryFile)) return
+        }
 
-//        File compilationArtifact = new File(tmpDir, "output.zip")
-//        zipBinaryData(compilationArtifact, outputDirectoryFile)
-//        context.messages.artifactBuilt(compilationArtifact.absolutePath)
-
-        // Upload compilation metadata
-        sourcePath = "metadata/$commitHash"
-        if (uploader.isExist(sourcePath)) return
-        uploader.upload(sourcePath, sourceStateFile)
-        File sourceStateFileCopy = new File(tmpDir, sourcePath)
-        FileUtil.copy(sourceStateFile, sourceStateFileCopy)
-        return
+        uploadMetadata()
       }
 
       uploadCompilationOutputs(currentSourcesState, uploader, executor)
@@ -114,6 +108,36 @@ class CompilationOutputsUploader {
     }
   }
 
+  private boolean uploadCompilationCache(File outputDirectoryFile) {
+    String cachePath = "caches/$commitHash"
+    if (uploader.isExist(cachePath)) return false
+
+    File dataStorageRoot = context.compilationData.dataStorageRoot
+    File zipFile = new File(dataStorageRoot.parent, commitHash)
+    zipBinaryData(zipFile, dataStorageRoot)
+    uploader.upload(cachePath, zipFile)
+    File zipCopy = new File(tmpDir, cachePath)
+    FileUtil.copy(zipFile, zipCopy)
+    FileUtil.delete(zipFile)
+
+    // FIXME remove this?
+//    File compilationArtifact = new File(tmpDir, "output.zip")
+//    zipBinaryData(compilationArtifact, outputDirectoryFile)
+//    context.messages.artifactBuilt(compilationArtifact.absolutePath)
+
+    return true
+  }
+
+  private void uploadMetadata() {
+    String metadataPath = "metadata/$commitHash"
+    if (uploader.isExist(metadataPath)) return
+
+    File sourceStateFile = sourcesStateProcessor.sourceStateFile
+    uploader.upload(metadataPath, sourceStateFile)
+    File sourceStateFileCopy = new File(tmpDir, metadataPath)
+    FileUtil.copy(sourceStateFile, sourceStateFileCopy)
+  }
+
   void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
                                 JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
     sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEach { CompilationOutput it ->
@@ -121,7 +145,9 @@ class CompilationOutputsUploader {
     }
   }
 
-  private void uploadCompilationOutput(CompilationOutput compilationOutput, JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+  private void uploadCompilationOutput(CompilationOutput compilationOutput,
+                                       JpsCompilationPartsUploader uploader,
+                                       NamedThreadPoolExecutor executor) {
     executor.submit {
       def sourcePath = "${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}"
       def outputFolder = new File(compilationOutput.path)
@@ -149,10 +175,10 @@ class CompilationOutputsUploader {
 
   private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
     Map<String, List<String>> commitHistory = new HashMap<>()
-    if (uploader.isExist(commitHistoryFile)) {
-      def content = uploader.getAsString(commitHistoryFile)
+    if (uploader.isExist(COMMIT_HISTORY_FILE)) {
+      def content = uploader.getAsString(COMMIT_HISTORY_FILE)
       if (!content.isEmpty()) {
-        Type type = new TypeToken<Map<String, List<String>>>(){}.getType()
+        Type type = new TypeToken<Map<String, List<String>>>() {}.getType()
         commitHistory = new Gson().fromJson(content, type) as Map<String, List<String>>
       }
     }
@@ -166,29 +192,19 @@ class CompilationOutputsUploader {
       }
       else {
         listOfCommits.add(value)
-        if (listOfCommits.size() > commitsLimit) commitHistory.put(key, listOfCommits.takeRight(commitsLimit))
+        if (listOfCommits.size() > COMMITS_LIMIT) commitHistory.put(key, listOfCommits.takeRight(COMMITS_LIMIT))
       }
     }
 
     // Upload and publish file with commits history
     def jsonAsString = new Gson().toJson(commitHistory)
-    def file = new File("$agentPersistentStorage/$commitHistoryFile")
+    def file = new File("$agentPersistentStorage/$COMMIT_HISTORY_FILE")
     file.write(jsonAsString)
     messages.artifactBuilt(file.absolutePath)
-    uploader.upload(commitHistoryFile, file)
-    File commitHistoryFileCopy = new File(tmpDir, commitHistoryFile)
+    uploader.upload(COMMIT_HISTORY_FILE, file)
+    File commitHistoryFileCopy = new File(tmpDir, COMMIT_HISTORY_FILE)
     FileUtil.copy(file, commitHistoryFileCopy)
     FileUtil.delete(file)
-  }
-
-  private String getCommitHash() {
-    if (remotePerCommitHash.size() == 1) return remotePerCommitHash.values().first()
-    StringBuilder commitHashBuilder = new StringBuilder()
-    int hashLength = (remotePerCommitHash.values().first().length() / remotePerCommitHash.size()) as int
-    remotePerCommitHash.each { key, value ->
-      commitHashBuilder.append(value.substring(0, hashLength))
-    }
-    return commitHashBuilder.toString()
   }
 
   @CompileStatic
