@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    */
   public static final int DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS = 300;
 
+  private Runnable myDialogInitialization;
   private ProgressDialog myDialog;
 
   @Nullable protected final Project myProject;
@@ -81,15 +83,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
                         @Nullable Project project,
                         @Nullable JComponent parentComponent,
                         @Nullable @NlsContexts.Button String cancelText) {
-    this(shouldShowCancel, shouldShowBackground, true, project, parentComponent, cancelText);
-  }
-
-  protected ProgressWindow(boolean shouldShowCancel,
-                        boolean shouldShowBackground,
-                        boolean shouldInitializeDialog,
-                        @Nullable Project project,
-                        @Nullable JComponent parentComponent,
-                        @Nullable @NlsContexts.Button String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
@@ -97,17 +90,30 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (myProject != null) {
       Disposer.register(myProject, this);
     }
-    if (shouldInitializeDialog) initializeDialog(shouldShowBackground, parentComponent);
+
+    myDialogInitialization = () -> {
+      Window parentWindow = calcParentWindow(parentComponent);
+      myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
+      Disposer.register(this, myDialog);
+    };
+    UIUtil.invokeLaterIfNeeded(this::initializeDialog);
 
     setModalityProgress(shouldShowBackground ? null : this);
     addStateDelegate(new MyDelegate());
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
   }
 
-  protected void initializeDialog(boolean shouldShowBackground, @Nullable JComponent parentComponent) {
-    Window parentWindow = calcParentWindow(parentComponent);
-    myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
-    Disposer.register(this, myDialog);
+  @CalledInAwt
+  protected void initializeOnEdtIfNeeded() {
+    assert EventQueue.isDispatchThread();
+    initializeDialog();
+  }
+
+  private void initializeDialog() {
+    Runnable initialization = myDialogInitialization;
+    if (initialization == null) return;
+    myDialogInitialization = null;
+    initialization.run();
   }
 
   private Window calcParentWindow(@Nullable Component parent) {
@@ -209,6 +215,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public void pumpEventsForHierarchy() {
+    initializeOnEdtIfNeeded();
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
       if (isCancellationEvent(event)) {
         cancel();
@@ -230,6 +237,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       return;
     }
 
+    initializeOnEdtIfNeeded();
     myDialog.show();
     if (myDialog != null) {
       myDialog.myRepaintRunnable.run();
@@ -340,6 +348,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public void dispose() {
     assert EventQueue.isDispatchThread();
+    myDialogInitialization = null;
     stopSystemActivity();
     if (isRunning()) {
       cancel();

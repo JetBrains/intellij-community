@@ -3,7 +3,6 @@
 package com.intellij.openapi.progress.impl;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -18,6 +17,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
   protected StatusBarEx myStatusBar;
@@ -41,22 +42,27 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
                                  @NotNull TaskInfo info,
                                  @NotNull PerformInBackgroundOption option,
                                  @Nullable StatusBarEx statusBarOverride) {
-    super(info.isCancellable(), true, false, project, null, info.getCancelText());
+    super(info.isCancellable(), true, project, null, info.getCancelText());
     setOwnerTask(info);
     myOption = option;
     myInfo = info;
     myStatusBar = statusBarOverride;
     myBackgrounded = shouldStartInBackground();
-    UIUtil.invokeLaterIfNeeded(() -> initializeOnEdtIfNeeded());
+    UIUtil.invokeLaterIfNeeded(() -> initializeStatusBar());
   }
 
   @CalledInAwt
-  private void initializeOnEdtIfNeeded() {
+  @Override
+  protected void initializeOnEdtIfNeeded() {
+    super.initializeOnEdtIfNeeded();
+    initializeStatusBar();
+  }
+
+  private void initializeStatusBar() {
     if (myDisposed || myDidInitializeOnEdt) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert EventQueue.isDispatchThread();
     myDidInitializeOnEdt = true;
 
-    initializeDialog(true, null);
     setTitle(myInfo.getTitle());
 
     if (myStatusBar == null) {
