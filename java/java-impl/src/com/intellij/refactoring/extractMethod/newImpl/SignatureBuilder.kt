@@ -47,7 +47,7 @@ class SignatureBuilder(private val project: Project) {
     method.modifierList.setModifierProperty(PsiModifier.STATIC, isStatic)
     method.modifierList.setModifierProperty(PsiModifier.DEFAULT, shouldHaveDefaultModifier)
     if (visibility != null) method.modifierList.setModifierProperty(visibility, true)
-    thrownExceptions.map { exception -> factory.createReferenceElementByType(exception) }.forEach { method.throwsList.add(it) }
+    thrownExceptions.forEach { exception -> method.throwsList.add(factory.createReferenceElementByType(exception)) }
     return method
   }
 

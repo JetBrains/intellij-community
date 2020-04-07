@@ -240,8 +240,7 @@ private fun checkLocalClass(options: ExtractOptions): Boolean {
     }
     if (classExtracted) {
       analyzer.findUsedVariablesAfter()
-        .filter { isExtracted(it) }
-        .filter { PsiUtil.resolveClassInType(it.type) === localClass }
+        .filter { isExtracted(it) && PsiUtil.resolveClassInType(it.type) === localClass }
         .forEach {
           throw PrepareFailedException(
             "Cannot extract method because the selected code fragment defines variable of local class type used outside of the fragment", it
