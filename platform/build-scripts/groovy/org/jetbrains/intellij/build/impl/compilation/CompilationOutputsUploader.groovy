@@ -77,8 +77,12 @@ class CompilationOutputsUploader {
         uploader.upload(sourcePath, zipFile)
         File zipCopy = new File(tmpDir, sourcePath)
         FileUtil.copy(zipFile, zipCopy)
-        context.messages.artifactBuilt(zipCopy.absolutePath)
-        FileUtil.delete(zipFile)
+
+        def artifactName = "caches.zip"
+        FileUtil.rename(zipFile, artifactName)
+        def artifact = new File(zipFile.parent, artifactName)
+        context.messages.artifactBuilt(artifact.absolutePath)
+        FileUtil.delete(artifact)
 
         // Upload compilation metadata
         sourcePath = "metadata/$commitHash"
