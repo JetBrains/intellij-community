@@ -22,8 +22,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -31,7 +32,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -466,7 +466,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
                                                                             : StatusBarWidget.WidgetBorder.INSTANCE);
       }
       // wrap with a panel, so it will fill entire status bar height
-      JComponent result = component instanceof JLabel ? UI.Panels.simplePanel(component) : component;
+      JComponent result = component instanceof JLabel ? new NonOpaquePanel(new BorderLayout(), component) : component;
       result.putClientProperty(WIDGET_ID, widget.ID());
       return result;
     }
