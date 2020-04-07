@@ -240,7 +240,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun suggestParentWindow(project: Project?) = windowWatcher.suggestParentWindow(project, this)
 
-  override fun getStatusBar(project: Project): StatusBar = getFrameHelper(project)?.statusBar!!
+  override fun getStatusBar(project: Project) = getFrameHelper(project)?.statusBar
 
   override fun getStatusBar(component: Component, project: Project?): StatusBar? {
     val parent = ComponentUtil.findUltimateParent(component)

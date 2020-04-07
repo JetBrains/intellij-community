@@ -127,7 +127,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     var frameInfo = options.frame
     if (frameInfo?.bounds == null) {
       isFrameBoundsCorrect = false
-      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfo
+      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfoHelper.info
     }
     else {
       isFrameBoundsCorrect = true
