@@ -127,16 +127,14 @@ class MethodExtractor {
   fun extractMethod(dependencies: ExtractOptions): PsiMethod {
     val factory = PsiElementFactory.getInstance(dependencies.project)
     val styleManager = CodeStyleManager.getInstance(dependencies.project)
-    val flowOutput = dependencies.flowOutput
-    val newFlowOutput = when {
-      dependencies.dataOutput is ExpressionOutput && flowOutput is ConditionalFlow ->
-        flowOutput.copy(statements = flowOutput.statements.filterNot { it is PsiReturnStatement })
-      else -> flowOutput
+    var flowOutput = dependencies.flowOutput
+    if (dependencies.dataOutput is ExpressionOutput && flowOutput is ConditionalFlow) {
+      flowOutput = flowOutput.copy(statements = flowOutput.statements.filterNot { it is PsiReturnStatement })
     }
     val codeBlock = with(dependencies) {
       BodyBuilder(factory).build(
         elements = elements,
-        flowOutput = newFlowOutput,
+        flowOutput = flowOutput,
         dataOutput = dataOutput,
         inputParameters = inputParameters,
         missedDeclarations = requiredVariablesInside,
@@ -162,9 +160,10 @@ class MethodExtractor {
 
     val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first().context)
     val expressionElement = (dependencies.elements.singleOrNull() as? PsiExpression)
-    val callElements = when (expressionElement) {
-      null -> callBuilder.buildCall(methodCall, dependencies.flowOutput, dependencies.dataOutput, dependencies.exposedLocalVariables)
-      else -> callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
+    val callElements = if (expressionElement != null) {
+      callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
+    } else {
+      callBuilder.buildCall(methodCall, dependencies.flowOutput, dependencies.dataOutput, dependencies.exposedLocalVariables)
     }
     val formattedCallElements = callElements.map { styleManager.reformat(it) }
 
@@ -189,9 +188,10 @@ class MethodExtractor {
       return
     }
 
-    val normalizedTarget = when {
-      target.size > 1 && source.first().parent !is PsiCodeBlock -> wrapWithCodeBlock(target)
-      else -> target
+    val normalizedTarget = if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
+      wrapWithCodeBlock(target)
+    } else {
+      target
     }
     normalizedTarget.reversed().forEach { statement ->
       source.last().addSiblingAfter(statement)
@@ -211,12 +211,9 @@ private fun findExtractQualifier(options: ExtractOptions): String {
   val targetClassName = options.anchor.containingClass?.name
   val member = findClassMember(options.elements.first())
   if (member == options.anchor) return options.methodName
-  if (callElement.resolveMethod() != null && !options.isConstructor) {
-    return when {
-      options.isStatic -> "$targetClassName.${options.methodName}"
-      else -> "$targetClassName.this.${options.methodName}"
-    }
+  return if (callElement.resolveMethod() != null && !options.isConstructor) {
+    if (options.isStatic) "$targetClassName.${options.methodName}" else "$targetClassName.this.${options.methodName}"
   } else {
-    return options.methodName
+    options.methodName
   }
 }

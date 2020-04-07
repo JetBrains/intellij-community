@@ -28,9 +28,10 @@ class SignatureBuilder(private val project: Project) {
 
     val parameterList = createParameterList(inputParameters, scope)
 
-    val method = when (returnType) {
-      null -> factory.createConstructor("methodName", context)
-      else -> factory.createMethod(methodName, returnType, context)
+    val method = if (returnType != null) {
+      factory.createMethod(methodName, returnType, context)
+    } else {
+      factory.createConstructor("methodName", context)
     }
 
     JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method)

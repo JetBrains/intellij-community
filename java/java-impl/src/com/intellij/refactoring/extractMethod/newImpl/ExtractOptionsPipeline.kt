@@ -37,9 +37,10 @@ object ExtractMethodPipeline {
     var options = withMappedName(extractOptions, methodName)
     options = withMappedParametersInput(options, variableData.toList())
     val targetClass = extractOptions.anchor.containingClass!!
-    options = when {
-      targetClass.isInterface -> adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
-      else -> options.copy(visibility = visibility)
+    options = if (targetClass.isInterface) {
+      adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
+    } else {
+      options.copy(visibility = visibility)
     }
 
     if (isStatic && ! options.isStatic) {
@@ -127,10 +128,7 @@ object ExtractMethodPipeline {
     if (statement != null && JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
       return extractOptions.copy(isStatic = true)
     }
-    val shouldBeStatic = when {
-      extractOptions.anchor.hasExplicitModifier(PsiModifier.STATIC) -> true
-      else -> false
-    }
+    val shouldBeStatic = extractOptions.anchor.hasExplicitModifier(PsiModifier.STATIC)
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 
@@ -171,10 +169,7 @@ object ExtractMethodPipeline {
 
   private fun findFoldableArrayExpression(reference: PsiElement): PsiArrayAccessExpression? {
     val arrayAccess = reference.parent as? PsiArrayAccessExpression
-    return when (arrayAccess?.arrayExpression) {
-      reference -> arrayAccess
-      else -> null
-    }
+    return if (arrayAccess?.arrayExpression == reference) arrayAccess else null
   }
 
   fun withFoldedArrayParameters(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions {

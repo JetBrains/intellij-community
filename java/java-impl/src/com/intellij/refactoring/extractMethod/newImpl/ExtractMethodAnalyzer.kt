@@ -85,15 +85,11 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val fieldUsages = analyzer.findFieldUsages(targetClass, elements)
   val finalFields = fieldUsages.filter { it.isWrite && it.field.hasExplicitModifier("final") }.map { it.field }.distinct()
-  extractOptions = when (finalFields.size) {
-    0 -> extractOptions
-    1 -> when (extractOptions.dataOutput is EmptyOutput) {
-      true -> extractOptions.copy(
-          dataOutput = VariableOutput(finalFields.first().type, finalFields.first(), false),
-          requiredVariablesInside = listOf(finalFields.first())
-      )
-      false -> throw PrepareFailedException("Too many final fields", finalFields.first())
-    }
+  val field = finalFields.singleOrNull()
+  extractOptions = when {
+    finalFields.isEmpty() -> extractOptions
+    field != null && extractOptions.dataOutput is EmptyOutput ->
+      extractOptions.copy(dataOutput = VariableOutput(field.type, field, false), requiredVariablesInside = listOf(field))
     else -> throw PrepareFailedException("Too many final fields", finalFields.first())
   }
 
@@ -103,21 +99,21 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 }
 
 private fun normalizeDataOutput(dataOutput: DataOutput, flowOutput: FlowOutput, elements: List<PsiElement>, reservedNames: List<String>): DataOutput {
-  val boxedDataOutput = when (flowOutput) {
-    is ConditionalFlow -> dataOutput.withBoxedType()
-    else -> dataOutput
+  var normalizedDataOutput = dataOutput
+  if (flowOutput is ConditionalFlow) {
+    normalizedDataOutput = dataOutput.withBoxedType()
   }
-  val uniqueName = when (boxedDataOutput) {
-    is ExpressionOutput -> boxedDataOutput.copy(name = uniqueNameOf(boxedDataOutput.name, elements, reservedNames))
-    else -> boxedDataOutput
+  if (normalizedDataOutput is ExpressionOutput) {
+    normalizedDataOutput = normalizedDataOutput.copy(name = uniqueNameOf(normalizedDataOutput.name, elements, reservedNames))
   }
-  return uniqueName
+  return normalizedDataOutput
 }
 
 private fun normalizeType(type: PsiType): PsiType {
-  return when (type) {
-    is PsiDisjunctionType -> PsiTypesUtil.getLowestUpperBoundClassType(type)!!
-    else -> GenericsUtil.getVariableTypeByExpressionType(type)
+  return if (type is PsiDisjunctionType) {
+    PsiTypesUtil.getLowestUpperBoundClassType(type)!!
+  } else {
+    GenericsUtil.getVariableTypeByExpressionType(type)
   }
 }
 

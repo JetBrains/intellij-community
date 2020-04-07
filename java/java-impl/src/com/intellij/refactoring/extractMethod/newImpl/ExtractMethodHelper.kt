@@ -52,17 +52,19 @@ object ExtractMethodHelper {
   }
 
   fun normalizedAnchor(anchor: PsiMember): PsiMember {
-    return when (anchor) {
-      is PsiField -> findLastFieldInDeclaration(anchor)
-      else -> anchor
+    return if (anchor is PsiField) {
+      findLastFieldInDeclaration(anchor)
+    } else {
+      anchor
     }
   }
 
   private fun findLastFieldInDeclaration(field: PsiField): PsiField {
     val nextSibling = PsiTreeUtil.skipWhitespacesForward(field)
-    return when (PsiUtil.getElementType(nextSibling)) {
-      JavaTokenType.COMMA -> PsiTreeUtil.skipWhitespacesForward(nextSibling) as PsiField
-      else -> field
+    return if (PsiUtil.getElementType(nextSibling) == JavaTokenType.COMMA) {
+      PsiTreeUtil.skipWhitespacesForward(nextSibling) as PsiField
+    } else {
+      field
     }
   }
 
@@ -129,10 +131,7 @@ object ExtractMethodHelper {
 
   tailrec fun findTopmostParenthesis(expression: PsiExpression): PsiExpression {
     val parent = expression.parent as? PsiParenthesizedExpression
-    return when (parent?.expression) {
-      expression -> findTopmostParenthesis(parent)
-      else -> expression
-    }
+    return if (parent != null) findTopmostParenthesis(parent) else expression
   }
 
   fun getExpressionType(expression: PsiExpression): PsiType {
