@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.Computable;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +101,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     public VfsFile(LocalFsFinder finder, final VirtualFile file) {
       myFinder = finder;
       myFile = file;
+      if (file != null) RefreshQueue.getInstance().refresh(true, false, null, ModalityState.any(), file);
     }
 
     @Override
