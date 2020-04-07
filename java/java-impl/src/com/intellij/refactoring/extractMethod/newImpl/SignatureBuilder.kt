@@ -36,7 +36,8 @@ class SignatureBuilder(private val project: Project) {
     JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method)
 
     val isInInterface = anchor.containingClass?.isInterface == true
-    val shouldHaveDefaultModifier = isJava8() && ! isStatic && isInInterface
+    val isJava8 = PsiUtil.getLanguageLevel(anchor) == LanguageLevel.JDK_1_8
+    val shouldHaveDefaultModifier = isJava8 && ! isStatic && isInInterface
 
     val typeParameterList = factory.createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }
@@ -75,12 +76,6 @@ class SignatureBuilder(private val project: Project) {
 
   private fun isInsideAnonymousOrLocal(element: PsiElement, scope: List<PsiElement>): Boolean {
     return scope.any { upperBound -> RefactoringUtil.isInsideAnonymousOrLocal(element, upperBound) }
-  }
-
-  private fun isJava8(): Boolean {
-    val languageLevel: LanguageLevel = PsiUtil.getLanguageLevel(project)
-    val isAtLeastJava9 = languageLevel.isAtLeast(LanguageLevel.JDK_1_9)
-    return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && !isAtLeastJava9
   }
 
 }
