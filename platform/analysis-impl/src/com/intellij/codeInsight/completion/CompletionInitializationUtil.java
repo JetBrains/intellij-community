@@ -32,6 +32,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -106,37 +107,22 @@ public class CompletionInitializationUtil {
 
   public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
-    CompletionAssertions.checkEditorValid(initContext.getEditor());
-    if (initContext.getDummyIdentifier().isEmpty()) {
-      return () -> topLevelOffsets;
-    }
+    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
 
-    Editor editor = initContext.getEditor();
-    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-    OffsetMap hostMap = topLevelOffsets.getOffsets();
-
-    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
-    Document copyDocument = Objects.requireNonNull(hostCopy.getViewProvider().getDocument());
-
-    String dummyIdentifier = initContext.getDummyIdentifier();
-    int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
-    int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
-
-    Supplier<OffsetsInFile> apply = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
-
-    // despite being non-physical, the copy file should only be modified in a write action,
-    // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
-    return () -> WriteAction.compute(() -> {
-      indicator.registerChildDisposable(
-        () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
-      OffsetsInFile copyOffsets = apply.get();
-      indicator.registerChildDisposable(() -> copyOffsets.getOffsets());
-      return copyOffsets;
-    });
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
   }
 
   //need for code with me
   public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, OffsetsInFile topLevelOffsets, Disposable parentDisposable) {
+    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> Disposer.register(parentDisposable, supplier.get());
+
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+  }
+
+  private static Supplier<OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
+                                                                 OffsetsInFile topLevelOffsets,
+                                                                 Consumer<Supplier<Disposable>> registerDisposable) {
+
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
       return () -> topLevelOffsets;
@@ -158,12 +144,10 @@ public class CompletionInitializationUtil {
     // despite being non-physical, the copy file should only be modified in a write action,
     // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
     return () -> WriteAction.compute(() -> {
-      OffsetTranslator offsetTranslator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
-      Disposer.register(parentDisposable, offsetTranslator);
+      registerDisposable.accept(() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
       OffsetsInFile copyOffsets = apply.get();
-      OffsetMap offsets = copyOffsets.getOffsets();
 
-      Disposer.register(parentDisposable, offsets);
+      registerDisposable.accept(() -> copyOffsets.getOffsets());
 
       return copyOffsets;
     });
