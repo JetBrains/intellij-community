@@ -1004,16 +1004,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       UastUtils.getParentOfType(expression, UCallExpression.class, true, UBlockExpression.class, UClass.class);
     if (newExpression != null) {
       if (UastExpressionUtils.isConstructorCall(newExpression)) {
-        final PsiType newExpressionType = newExpression.getExpressionType();
-        return InheritanceUtil.isInheritor(newExpressionType, CommonClassNames.JAVA_LANG_THROWABLE);
-      }
-      else if (UastExpressionUtils.isMethodCall(newExpression)) {
-        String methodName = newExpression.getMethodName();
-        if (PsiKeyword.SUPER.equals(methodName) || PsiKeyword.THIS.equals(methodName)) {
           PsiMethod ctor = newExpression.resolve();
-          return ctor != null &&
-                 InheritanceUtil.isInheritor(ctor.getContainingClass(), CommonClassNames.JAVA_LANG_THROWABLE);
-        }
+          return ctor != null && InheritanceUtil.isInheritor(ctor.getContainingClass(), CommonClassNames.JAVA_LANG_THROWABLE);
       }
     }
     return false;

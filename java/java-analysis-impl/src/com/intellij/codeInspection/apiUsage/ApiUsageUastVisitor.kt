@@ -164,7 +164,7 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       return true
     }
 
-    if (node.methodName == "super" && node.valueArgumentCount == 0) {
+    if (node.kind == UastCallKind.CONSTRUCTOR_CALL) {
       //Java does not resolve constructor for subclass constructor's "super()" statement
       // if the superclass has the default constructor, which is not declared in source code and lacks PsiMethod.
       val superClass = node.getContainingUClass()?.javaPsi?.superClass ?: return true
@@ -409,7 +409,7 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     if (classReferenceNameElement != null) {
       return haveSameSourceElement(classReferenceNameElement, simpleReference.referenceNameElement)
     }
-    return callExpression.classReference?.resolvedName == simpleReference.resolvedName
+    return callExpression.resolve()?.name == simpleReference.resolvedName
   }
 
   private fun isMethodReferenceOfCallExpression(expression: USimpleNameReferenceExpression): Boolean {
