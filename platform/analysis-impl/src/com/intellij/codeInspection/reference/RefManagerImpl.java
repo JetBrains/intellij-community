@@ -613,7 +613,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Nullable
-  public <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<? extends T> factory) {
+  public <T extends RefElement> T getFromRefTableOrCache(@NotNull final PsiElement element, @NotNull NullableFactory<? extends T> factory) {
     return getFromRefTableOrCache(element, factory, null);
   }
 
