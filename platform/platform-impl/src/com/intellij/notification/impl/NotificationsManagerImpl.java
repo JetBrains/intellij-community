@@ -629,6 +629,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
+    balloon.getContent().addMouseListener(new MouseAdapter() {
+    });
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
 
