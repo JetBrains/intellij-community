@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
@@ -521,7 +520,7 @@ public class EditorWindow {
         if (initialIndex != null) {
           indexToInsert = initialIndex;
         }
-        else if (RegistryManager.getInstance().is("ide.editor.tabs.open.at.the.end")) {
+        else if (UISettings.getInstance().getOpenTabsAtTheEnd()) {
           indexToInsert = myTabbedPane.getTabCount();
         }
         else {
