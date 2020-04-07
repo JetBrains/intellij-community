@@ -163,10 +163,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     super.installDefaults();
     if (SystemInfo.isMacOSCatalina) {
       JTextComponent component = getComponent();
-      Font oldFont = component.getFont();
-      Font newFont = oldFont.deriveFont(DISABLE_KERNING);
-      component.setFont(oldFont instanceof UIResource ? new FontUIResource(newFont) : newFont);
+      component.setFont(disableKerning(component.getFont()));
     }
+  }
+
+  @NotNull
+  private static Font disableKerning(@NotNull Font oldFont) {
+    Font newFont = oldFont.deriveFont(DISABLE_KERNING);
+    return oldFont instanceof UIResource ? new FontUIResource(newFont) : newFont;
   }
 
   /**
@@ -581,7 +585,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         Font font = component.getFont();
         if (font == null || font instanceof UIResource) {
           font = UIManager.getFont(getPropertyPrefix() + ".font");
-          component.setFont(!monospaced ? font : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
+          component.setFont(!monospaced
+                            ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
+                            : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
         }
       }
     }
