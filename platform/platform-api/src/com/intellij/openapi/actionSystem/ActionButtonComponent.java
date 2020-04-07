@@ -17,6 +17,8 @@ package com.intellij.openapi.actionSystem;
 
 import org.intellij.lang.annotations.MagicConstant;
 
+import java.awt.*;
+
 public interface ActionButtonComponent {
   int NORMAL = 0;
   int POPPED = 1;
@@ -32,4 +34,6 @@ public interface ActionButtonComponent {
   int getWidth();
 
   int getHeight();
+
+  Insets getInsets();
 }

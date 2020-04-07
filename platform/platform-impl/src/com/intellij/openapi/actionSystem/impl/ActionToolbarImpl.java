@@ -164,7 +164,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     };
 
-    setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
     mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
@@ -299,16 +298,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (action instanceof Separator) {
         if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
-          add(new MySeparator(myShowSeparatorTitles ? ((Separator) action).getText() : null));
+          add(SEPARATOR_CONSTRAINT, new MySeparator(myShowSeparatorTitles ? ((Separator) action).getText() : null));
           isLastElementSeparator = true;
           continue;
         }
       }
       else if (action instanceof CustomComponentAction) {
-        add(getCustomComponent(action));
+        add(CUSTOM_COMPONENT_CONSTRAINT, getCustomComponent(action));
       }
       else {
-        add(createToolbarButton(action));
+        add(ACTION_BUTTON_CONSTRAINT, createToolbarButton(action));
       }
       isLastElementSeparator = false;
     }
@@ -331,7 +330,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           }
         };
       mySecondaryActionsButton.setNoIconsInPopup(true);
-      add(mySecondaryActionsButton);
+      add(SECONDARY_ACTION_CONSTRAINT, mySecondaryActionsButton);
     }
 
     for (AnAction action : rightAligned) {
@@ -830,6 +829,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   @NotNull
   public Dimension getPreferredSize() {
+    return updatePreferredSize(super.getPreferredSize());
+  }
+
+  protected Dimension updatePreferredSize(Dimension preferredSize) {
     final ArrayList<Rectangle> bounds = new ArrayList<>();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);//it doesn't take into account wrapping
     if (bounds.isEmpty()) return JBUI.emptySize();
@@ -899,6 +902,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public Dimension getMinimumSize() {
+    return updateMinimumSize(super.getMinimumSize());
+  }
+
+  protected Dimension updateMinimumSize(Dimension minimumSize) {
     if (myForceMinimumSize) {
       return getPreferredSize();
     }
@@ -919,7 +926,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height() + i.top + i.bottom);
     }
     else {
-      return super.getMinimumSize();
+      return minimumSize;
     }
   }
 

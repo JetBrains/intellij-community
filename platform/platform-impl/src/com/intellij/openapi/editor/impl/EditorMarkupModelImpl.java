@@ -116,6 +116,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     return JBUIScale.scale(10);
   }
 
+  private static int getStatusIconSize() {
+    return JBUIScale.scale(18);
+  }
+
   @NotNull private final EditorImpl myEditor;
   // null renderer means we should not show traffic light icon
   @Nullable private ErrorStripeRenderer myErrorStripeRenderer;
@@ -165,7 +169,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     AnAction nextErrorAction = findAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
     AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
-    DefaultActionGroup navigateGroup = new DefaultActionGroup(Separator.create(), nextErrorAction, prevErrorAction) {
+    DefaultActionGroup navigateGroup = new DefaultActionGroup(nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabledAndVisible(analyzerStatus != null && analyzerStatus.getShowNavigation());
@@ -178,29 +182,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
       @Override
       protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          Rectangle rect = new Rectangle(getSize());
-          int leftGradientWidth = JBUIScale.scale(5);
-          rect.x += leftGradientWidth;
-          rect.width -= leftGradientWidth;
-
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                              MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
-          g2.setColor(myEditor.getBackgroundColor());
-          g2.fill(rect);
-
-          g2.setPaint(new GradientPaint(0, 0, ColorUtil.withAlpha(myEditor.getBackgroundColor(), 0),
-                                        leftGradientWidth, 0, myEditor.getBackgroundColor()));
-          g2.fillRect(0, 0, leftGradientWidth, getHeight());
-        }
-        finally {
-          g2.dispose();
-        }
-
-        super.paintComponent(g);
+        editorButtonLook.paintBackground(g, this, myEditor.getBackgroundColor());
       }
 
       @Override
@@ -226,10 +208,20 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           }
 
           @Override
+          public Insets getInsets() {
+            return myAction == nextErrorAction ? JBUI.insets(2, 2, 2, 1) :
+                   myAction == prevErrorAction ? JBUI.insets(2, 1, 2, 2) :
+                   JBUI.insets(2);
+          }
+
+          @Override
           public Dimension getPreferredSize() {
             Icon icon = getIcon();
-            Dimension size = new Dimension(Math.max(icon.getIconWidth(), DEFAULT_MINIMUM_BUTTON_SIZE.width),
-                                           Math.max(icon.getIconHeight(), DEFAULT_MINIMUM_BUTTON_SIZE.height));
+            Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
+
+            int minSize = getStatusIconSize();
+            size.width = Math.max(size.width, minSize);
+            size.height = Math.max(size.height, minSize);
 
             JBInsets.addTo(size, getInsets());
             return size;
@@ -238,6 +230,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
         actionButton.setLook(editorButtonLook);
         return actionButton;
+      }
+
+      @Override
+      public void doLayout() {
+        LayoutManager layoutManager = getLayout();
+        if (layoutManager != null) {
+          layoutManager.layoutContainer(this);
+        }
+        else {
+          super.doLayout();
+        }
+      }
+
+      @Override
+      protected Dimension updatePreferredSize(Dimension preferredSize) {
+        return preferredSize;
+      }
+
+      @Override
+      protected Dimension updateMinimumSize(Dimension minimumSize) {
+        return minimumSize;
       }
     };
 
@@ -251,8 +264,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
     };
-    statusToolbar.getComponent().addComponentListener(toolbarComponentListener);
-    statusToolbar.getComponent().setBorder(JBUI.Borders.emptyTop(1));
+
+    JComponent toolbar = statusToolbar.getComponent();
+    toolbar.setLayout(new StatusComponentLayout());
+    toolbar.addComponentListener(toolbarComponentListener);
+    toolbar.setBorder(JBUI.Borders.empty(2));
 
     smallIconLabel = new JLabel();
     smallIconLabel.addMouseListener(new MouseAdapter() {
@@ -1714,7 +1730,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private static class StatusButton extends JPanel {
-    private static final int LEFT_RIGHT_INDENT = 7;
+    private static final int LEFT_RIGHT_INDENT = 5;
     private static final int INTER_GROUP_OFFSET = 6;
 
     private boolean mousePressed;
@@ -1807,7 +1823,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         updateContents(newStatus);
       }
 
-      setBorder(JBUI.Borders.empty(1, 2));
+      setBorder(JBUI.Borders.empty(2));
     }
 
     @Override
@@ -1874,6 +1890,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       };
 
       label.setForeground(colorsScheme.getColor(ICON_TEXT_COLOR));
+      label.setIconTextGap(JBUIScale.scale(1));
 
       Font font = label.getFont();
       font = font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2));
@@ -1892,11 +1909,106 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public Dimension getPreferredSize() {
+      if (getComponentCount() == 0) {
+        return JBUI.emptySize();
+      }
+
       Dimension size = super.getPreferredSize();
-      size.height = Math.max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height, size.height);
-      size.width = Math.max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width, size.width);
-      JBInsets.addTo(size, getInsets());
+      Insets i = getInsets();
+      size.height = Math.max(getStatusIconSize() + i.top + i.bottom, size.height);
+      size.width = Math.max(getStatusIconSize() + i.left + i.right, size.width);
       return size;
+    }
+  }
+
+  private static class StatusComponentLayout implements LayoutManager {
+    private JComponent statusComponent;
+    private final List<JComponent> actionButtons = new ArrayList<>();
+
+    @Override
+    public void addLayoutComponent(String s, Component component) {
+      JComponent jc = (JComponent)component;
+      if (ActionToolbar.CUSTOM_COMPONENT_CONSTRAINT.equals(s) && jc instanceof StatusButton) {
+        statusComponent = jc;
+      }
+      else if (ActionToolbar.ACTION_BUTTON_CONSTRAINT.equals(s) && jc instanceof ActionButton) {
+        actionButtons.add(jc);
+      }
+    }
+
+    @Override
+    public void removeLayoutComponent(Component component) {
+      JComponent jc = (JComponent)component;
+      if (jc instanceof StatusButton) {
+        statusComponent = null;
+      }
+      else if (jc instanceof ActionButton) {
+        actionButtons.remove(jc);
+      }
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container container) {
+      Dimension size = statusComponent != null && statusComponent.isVisible() ? statusComponent.getPreferredSize() : JBUI.emptySize();
+
+      for (JComponent jc : actionButtons) {
+        if (jc.isVisible()) {
+          Dimension prefSize = jc.getPreferredSize();
+          size.height = Math.max(size.height, prefSize.height);
+        }
+      }
+
+      for (JComponent jc : actionButtons) {
+        if (jc.isVisible()) {
+          Dimension prefSize = jc.getPreferredSize();
+          Insets i = jc.getInsets();
+          JBInsets.removeFrom(prefSize, i);
+
+          int maxBareHeight = size.height - i.top - i.bottom;
+          size.width += Math.max(prefSize.width, maxBareHeight) + i.left + i.right;
+        }
+      }
+
+      if (size.width > 0 && size.height > 0) {
+        JBInsets.addTo(size, container.getInsets());
+      }
+      return size;
+    }
+
+    @Override
+    public Dimension minimumLayoutSize(Container container) {
+      return preferredLayoutSize(container);
+    }
+
+    @Override
+    public void layoutContainer(Container container) {
+      Dimension prefSize = preferredLayoutSize(container);
+
+      if (prefSize.width > 0 && prefSize.height > 0) {
+        Insets i = container.getInsets();
+        JBInsets.removeFrom(prefSize, i);
+        int offset = i.left;
+
+        if (statusComponent != null && statusComponent.isVisible()) {
+          Dimension size = statusComponent.getPreferredSize();
+          statusComponent.setBounds(offset, i.top, size.width, prefSize.height);
+          offset += size.width;
+        }
+
+        for (JComponent jc : actionButtons) {
+          if (jc.isVisible()) {
+            Dimension jcPrefSize = jc.getPreferredSize();
+            Insets jcInsets = jc.getInsets();
+            JBInsets.removeFrom(jcPrefSize, jcInsets);
+
+            int maxBareHeight = prefSize.height - jcInsets.top - jcInsets.bottom;
+            int width = Math.max(jcPrefSize.width, maxBareHeight) + jcInsets.left + jcInsets.right;
+
+            jc.setBounds(offset, i.top, width, prefSize.height);
+            offset += width;
+          }
+        }
+      }
     }
   }
 
@@ -1922,6 +2034,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       if (color != null) {
         ActionButtonLook.SYSTEM_LOOK.paintLookBackground(g, rect, color);
       }
+    }
+
+    @Override
+    public void paintBackground(Graphics g, JComponent component, Color color) {
+      ActionButtonLook.SYSTEM_LOOK.paintBackground(g, component, color);
     }
 
     @Override
