@@ -562,14 +562,14 @@ internal class PEntityStorageBuilder(
           val removedData = originalImpl.entityDataById(change.id)
           val oldChange = changes.remove(change.id)
           if (oldChange?.second !is EntityChange.Added && removedData != null) {
-            val removedEntity = removedData.createEntity(this) as PTypedEntity
+            val removedEntity = removedData.createEntity(originalImpl) as PTypedEntity
             changes[removedEntity.id] = change.id.clazz.java to EntityChange.Removed(removedEntity)
           }
         }
         is ChangeEntry.ReplaceEntity -> {
           val oldChange = changes.remove(change.id)
           if (oldChange?.second is EntityChange.Added) {
-            val addedEntity = change.newData.createEntity(originalImpl) as PTypedEntity
+            val addedEntity = change.newData.createEntity(this) as PTypedEntity
             changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
           }
           else {
