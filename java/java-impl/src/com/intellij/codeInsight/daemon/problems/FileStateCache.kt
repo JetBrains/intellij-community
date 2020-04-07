@@ -20,15 +20,15 @@ class FileStateCache : Disposable {
   }
 
   init {
-    LowMemoryWatcher.register(Runnable { cache.clear() }, this)
+    LowMemoryWatcher.register(Runnable { synchronized(cache) { cache.clear() } }, this)
   }
 
   internal fun getState(psiFile: PsiFile): FileState? {
-    return cache.get(SmartPointerManager.createPointer(psiFile))?.toFileState()
+    return synchronized(cache) { cache.get(SmartPointerManager.createPointer(psiFile))?.toFileState() }
   }
 
   internal fun setState(psiFile: PsiFile, snapshot: Snapshot, changes: Map<PsiMember, ScopedMember?>) {
-    return cache.put(SmartPointerManager.createPointer(psiFile), PrivateFileState.create(snapshot, changes))
+    return synchronized(cache) { cache.put(SmartPointerManager.createPointer(psiFile), PrivateFileState.create(snapshot, changes)) }
   }
 
   private data class PrivateFileState(
