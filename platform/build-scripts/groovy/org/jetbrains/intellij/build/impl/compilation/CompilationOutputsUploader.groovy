@@ -78,9 +78,8 @@ class CompilationOutputsUploader {
         File zipCopy = new File(tmpDir, sourcePath)
         FileUtil.copy(zipFile, zipCopy)
 
-        def artifactName = "caches.zip"
-        FileUtil.rename(zipFile, artifactName)
-        def artifact = new File(zipFile.parent, artifactName)
+        def artifact = new File(zipFile.parentFile, "caches.zip")
+        FileUtil.rename(zipFile, artifact)
         context.messages.artifactBuilt(artifact.absolutePath)
         FileUtil.delete(artifact)
 
