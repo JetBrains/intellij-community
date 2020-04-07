@@ -81,7 +81,6 @@ class CompilationOutputsUploader {
         FileUtil.copy(zipFile, zipArtifact)
         context.messages.artifactBuilt(zipArtifact.absolutePath)
         FileUtil.delete(zipFile)
-        FileUtil.delete(zipArtifact)
 
         // Upload compilation metadata
         sourcePath = "metadata/$commitHash"
