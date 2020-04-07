@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,30 +9,30 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ErrorTreeView;
+import org.jetbrains.annotations.Nullable;
 
-public class ContentManagerUtil {
+public final class ContentManagerUtil {
   private ContentManagerUtil() {
   }
 
   /**
    * This is utility method. It returns {@code ContentManager} from the current context.
    */
-  public static ContentManager getContentManagerFromContext(DataContext dataContext, boolean requiresVisibleToolWindow){
+  public static @Nullable ContentManager getContentManagerFromContext(DataContext dataContext, boolean requiresVisibleToolWindow) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }
 
-    ToolWindowManagerEx mgr=ToolWindowManagerEx.getInstanceEx(project);
-
-    String id = mgr.getActiveToolWindowId();
+    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
+    String id = toolWindowManager.getActiveToolWindowId();
     if (id == null) {
-      if(mgr.isEditorComponentActive()){
-        id = mgr.getLastActiveToolWindowId();
+      if (toolWindowManager.isEditorComponentActive()) {
+        id = toolWindowManager.getLastActiveToolWindowId();
       }
     }
 
-    ToolWindowEx toolWindow = id != null ? (ToolWindowEx)mgr.getToolWindow(id) : null;
+    ToolWindowEx toolWindow = id != null ? (ToolWindowEx)toolWindowManager.getToolWindow(id) : null;
     if (requiresVisibleToolWindow && (toolWindow == null || !toolWindow.isVisible())) {
       return null;
     }

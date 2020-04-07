@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -36,16 +35,14 @@ public final class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
   private static final Logger LOG = Logger.getInstance(VcsLogTabsWatcher.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final PostponableLogRefresher myRefresher;
-  @NotNull private final ToolWindowManagerEx myToolWindowManager;
+  private final @NotNull Project myProject;
+  private final @NotNull PostponableLogRefresher myRefresher;
 
-  @NotNull private final Disposable myListenersDisposable = Disposer.newDisposable();
+  private final @NotNull Disposable myListenersDisposable = Disposer.newDisposable();
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher) {
     myProject = project;
     myRefresher = refresher;
-    myToolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
     project.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new MyToolWindowManagerListener());
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileManagerListener());
@@ -53,9 +50,8 @@ public final class VcsLogTabsWatcher implements Disposable {
     installContentListeners();
   }
 
-  @NotNull
-  public Disposable addTabToWatch(@NotNull String logId, @NotNull VisiblePackRefresher refresher,
-                                  @NotNull VcsLogManager.LogWindowKind kind, boolean isClosedOnDispose) {
+  public @NotNull Disposable addTabToWatch(@NotNull String logId, @NotNull VisiblePackRefresher refresher,
+                                           @NotNull VcsLogManager.LogWindowKind kind, boolean isClosedOnDispose) {
     VcsLogWindow window;
     switch (kind) {
       case TOOL_WINDOW:
@@ -109,8 +105,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  @NotNull
-  private List<String> getToolWindowTabsToClose() {
+  private @NotNull List<String> getToolWindowTabsToClose() {
     return StreamEx.of(myRefresher.getLogWindows())
       .select(VcsLogToolWindowTab.class)
       .filter(VcsLogToolWindowTab::isClosedOnDispose)
@@ -118,8 +113,7 @@ public final class VcsLogTabsWatcher implements Disposable {
       .toList();
   }
 
-  @NotNull
-  private List<String> getEditorTabsToClose() {
+  private @NotNull List<String> getEditorTabsToClose() {
     return StreamEx.of(myRefresher.getLogWindows())
       .select(VcsLogEditorTab.class)
       .filter(VcsLogEditorTab::isClosedOnDispose)
@@ -127,9 +121,8 @@ public final class VcsLogTabsWatcher implements Disposable {
       .toList();
   }
 
-  @Nullable
-  private ToolWindow getToolWindow() {
-    return myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+  private @Nullable ToolWindow getToolWindow() {
+    return ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
   }
 
   @Override
@@ -138,8 +131,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     removeContentListeners();
   }
 
-  @Nullable
-  private static String getSelectedToolWindowTabId(@Nullable ToolWindow toolWindow) {
+  private static @Nullable String getSelectedToolWindowTabId(@Nullable ToolWindow toolWindow) {
     if (toolWindow == null || !toolWindow.isVisible()) {
       return null;
     }
@@ -151,8 +143,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     return null;
   }
 
-  @NotNull
-  private static Set<String> getSelectedEditorTabIds(@NotNull Project project) {
+  private static @NotNull Set<String> getSelectedEditorTabIds(@NotNull Project project) {
     return VcsLogEditorUtilKt.findSelectedLogIds(project);
   }
 
@@ -177,7 +168,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     @Override
     public boolean isVisible() {
       String selectedTab = getSelectedToolWindowTabId(getToolWindow());
-      return selectedTab != null && getId().equals(selectedTab);
+      return getId().equals(selectedTab);
     }
 
     public boolean isClosedOnDispose() {
@@ -243,9 +234,9 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  private static abstract class VcsLogTabsListener
+  private abstract static class VcsLogTabsListener
     implements ToolWindowManagerListener, PropertyChangeListener, ContentManagerListener {
-    @NotNull private final ToolWindow myToolWindow;
+    private final @NotNull ToolWindow myToolWindow;
     private boolean myIsVisible;
 
     private VcsLogTabsListener(@NotNull Project project, @NotNull ToolWindow toolWindow, @NotNull Disposable disposable) {

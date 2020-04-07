@@ -11,11 +11,9 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtilRt;
@@ -33,7 +31,7 @@ import java.util.List;
 import java.util.*;
 
 // not final for android
-public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
+public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
@@ -127,60 +125,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
-  }
-
-  @Override
-  public void initToolWindow(@NotNull ToolWindowEP bean) {
-  }
-
-  @Override
-  public void init(ProjectFrameHelper frameHelper) {
-  }
-
-  @Override
-  public String getLastActiveToolWindowId() {
-    return null;
-  }
-
-  @Override
-  public String getLastActiveToolWindowId(Condition<? super JComponent> condition) {
-    return null;
-  }
-
-  @Override
-  public @NotNull DesktopLayout getLayout() {
-    return new DesktopLayout();
-  }
-
-  @Override
-  public void setLayoutToRestoreLater(DesktopLayout layout) {
-  }
-
-  @Override
-  public DesktopLayout getLayoutToRestoreLater() {
-    return new DesktopLayout();
-  }
-
-  @Override
-  public void setLayout(@NotNull DesktopLayout layout) {
-  }
-
-  @Override
-  public void clearSideStack() {
-  }
-
-  @Override
-  public void hideToolWindow(final @NotNull String id, final boolean hideSide) {
-  }
-
-  @Override
-  public @NotNull List<String> getIdsOn(final @NotNull ToolWindowAnchor anchor) {
-    return new ArrayList<>();
-  }
-
-  @Override
-  public @NotNull Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon) {
-    return fallbackIcon;
   }
 
   public static class MockToolWindow implements ToolWindowEx {

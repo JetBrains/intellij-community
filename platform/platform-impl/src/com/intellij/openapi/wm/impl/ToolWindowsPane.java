@@ -35,7 +35,6 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -248,28 +247,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         removeSlidingComponent(component, info, dirtyMode);
       }
     }
-  }
-
-  final void updateButtonPosition(@NotNull ToolWindowAnchor anchor) {
-    Stripe stripe;
-    if (ToolWindowAnchor.TOP == anchor) {
-      stripe = topStripe;
-    }
-    else if (ToolWindowAnchor.LEFT == anchor) {
-      stripe = leftStripe;
-    }
-    else if (ToolWindowAnchor.BOTTOM == anchor) {
-      stripe = bottomStripe;
-    }
-    else if (ToolWindowAnchor.RIGHT == anchor) {
-      stripe = rightStripe;
-    }
-    else {
-      LOG.error("unknown anchor: " + anchor);
-      return;
-    }
-
-    stripe.revalidate();
   }
 
   public final @NotNull JComponent getLayeredPane() {
@@ -720,12 +697,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     // otherwise we add empty splitter
     if (c == null) {
       List<ToolWindowEx> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(info.getId()));
-      for (Iterator<ToolWindowEx> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
-        ToolWindow window = iterator.next();
-        if (window == null || window.isSplitMode() == info.isSplit() || !window.isVisible()) {
-          iterator.remove();
-        }
-      }
+      toolWindows.removeIf(window -> window == null || window.isSplitMode() == info.isSplit() || !window.isVisible());
       if (!toolWindows.isEmpty()) {
         c = ((ToolWindowImpl)toolWindows.get(0)).getDecoratorComponent();
       }
@@ -832,13 +804,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  void removeStripeButton(@NotNull StripeButton button) {
-    Container parent = button.getParent();
-    if (parent != null) {
-      ((Stripe)parent).removeButton(button);
-    }
-  }
-
   private void removeSlidingComponent(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
     UISettings uiSettings = UISettings.getInstance();
     if (!dirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
@@ -846,7 +811,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       // Prepare top image. This image is scrolling over bottom image. It contains
       // picture of component is being removed.
       Image topImage = layeredPane.getTopImage();
-      useSafely(topImage.getGraphics(), topGraphics -> component.paint(topGraphics));
+      useSafely(topImage.getGraphics(), component::paint);
 
       // Prepare bottom image. This image contains picture of component that is located
       // under the component to is being removed.
@@ -953,13 +918,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       }
 
       // Resize component at the DEFAULT layer. It should be only on component in that layer
-      Component[] components = getComponentsInLayer(JLayeredPane.DEFAULT_LAYER.intValue());
+      Component[] components = getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
       LOG.assertTrue(components.length <= 1);
       for (Component component : components) {
         component.setBounds(0, 0, getWidth(), getHeight());
       }
       // Resize components at the PALETTE layer
-      components = getComponentsInLayer(JLayeredPane.PALETTE_LAYER.intValue());
+      components = getComponentsInLayer(JLayeredPane.PALETTE_LAYER);
       for (Component component : components) {
         if (!(component instanceof InternalDecorator)) {
           continue;
