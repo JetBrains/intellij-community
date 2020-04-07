@@ -97,8 +97,12 @@ internal class MutableRefsTable(
     }
   }
 
-  fun <T : TypedEntity, SUBT : TypedEntity> removeOneToManyRefsByParent(connectionId: ConnectionId<T, SUBT>, parentId: Int) {
-    getOneToManyMutableMap(connectionId).removeValue(parentId)
+  fun <T : TypedEntity, SUBT : TypedEntity> removeRefsByParent(connectionId: ConnectionId<T, SUBT>, parentId: PId<T>) {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).removeValue(parentId.arrayId)
+      ConnectionId.ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).removeValue(parentId.arrayId)
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).removeValue(parentId)
+    }
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeOneToOneRefByParent(connectionId: ConnectionId<T, SUBT>, parentId: Int) {
@@ -113,18 +117,35 @@ internal class MutableRefsTable(
     getOneToManyMutableMap(connectionId).removeKey(childId)
   }
 
-  fun <T : TypedEntity, SUBT : TypedEntity> removeOneToManyParentToChildRef(connectionId: ConnectionId<T, SUBT>,
-                                                                            parentId: Int,
-                                                                            childId: Int) {
-    getOneToManyMutableMap(connectionId).remove(childId, parentId)
+  fun <T : TypedEntity, SUBT : TypedEntity> removeParentToChildRef(connectionId: ConnectionId<T, SUBT>,
+                                                                   parentId: PId<T>,
+                                                                   childId: PId<SUBT>) {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
+      ConnectionId.ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).remove(childId, parentId)
+    }
   }
 
-  internal fun updateOneToManyChildrenOfParent(connectionId: ConnectionId<*, *>,
-                                               parentId: Int,
-                                               childrenIds: AbstractIntIntMultiMap.IntSequence) {
-    val copiedMap = getOneToManyMutableMap(connectionId)
-    copiedMap.removeValue(parentId)
-    childrenIds.forEach { copiedMap.put(it, parentId) }
+  internal fun <T : TypedEntity, SUBT : TypedEntity> updateChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
+                                                                            parentId: PId<T>,
+                                                                            childrenIds: List<PId<out TypedEntity>>) {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> {
+        val copiedMap = getOneToManyMutableMap(connectionId)
+        copiedMap.removeValue(parentId.arrayId)
+        childrenIds.map { it.arrayId }.forEach { copiedMap.put(it, parentId.arrayId) }
+      }
+      ConnectionId.ConnectionType.ONE_TO_ONE -> {
+        val copiedMap = getOneToOneMutableMap(connectionId)
+        copiedMap.putForce(childrenIds.single().arrayId, parentId.arrayId)
+      }
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+        val copiedMap = getOneToAbstractManyMutableMap(connectionId)
+        copiedMap.removeValue(parentId)
+        childrenIds.forEach { copiedMap[it] = parentId }
+      }
+    }
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
@@ -159,12 +180,27 @@ internal class MutableRefsTable(
     copiedMap.put(childId, parentEntity.id.arrayId)
   }
 
-  internal fun updateOneToManyParentOfChild(connectionId: ConnectionId<*, *>, childId: Int, parentId: Int) {
-    val copiedMap = getOneToManyMutableMap(connectionId)
-    copiedMap.removeKey(childId)
-    copiedMap.put(childId, parentId)
+  internal fun <T : TypedEntity, SUBT : TypedEntity> updateParentOfChild(connectionId: ConnectionId<T, SUBT>,
+                                                                         childId: PId<SUBT>,
+                                                                         parentId: PId<T>) {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> {
+        val copiedMap = getOneToManyMutableMap(connectionId)
+        copiedMap.removeKey(childId.arrayId)
+        copiedMap.put(childId.arrayId, parentId.arrayId)
+      }
+      ConnectionId.ConnectionType.ONE_TO_ONE -> {
+        val copiedMap = getOneToOneMutableMap(connectionId)
+        copiedMap.removeKey(childId.arrayId)
+        copiedMap.putForce(childId.arrayId, parentId.arrayId)
+      }
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+        val copiedMap = getOneToAbstractManyMutableMap(connectionId)
+        copiedMap.remove(childId)
+        copiedMap.put(childId, parentId)
+      }
+    }
   }
-
 
   fun <T : PTypedEntity, SUBT : TypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>, childId: Int, parent: T) {
     val copiedMap = getOneToManyMutableMap(connectionId)
@@ -196,6 +232,7 @@ internal sealed class AbstractRefsTable constructor(
 ) {
 
   fun <T : TypedEntity, SUBT : TypedEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT>? {
+    // TODO: 07.04.2020 broken for abstract container
     return (oneToManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
             ?: oneToOneContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
             ?: oneToAbstractManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin })
@@ -206,56 +243,65 @@ internal sealed class AbstractRefsTable constructor(
     return findConnectionId(parentClass, childClass) ?: error("ConnectionId doesn't exists")
   }
 
-  fun <T : TypedEntity> getOneToManyChildren(
-    parentId: Int, parentClass: Class<T>
-  ): Map<ConnectionId<T, out TypedEntity>, AbstractIntIntMultiMap.IntSequence> {
-    val filtered = oneToManyContainer.filterKeys { it.parentClass.java == parentClass }
-    val res = HashMap<ConnectionId<T, out TypedEntity>, AbstractIntIntMultiMap.IntSequence>()
-    for ((connectionId, bimap) in filtered) {
-      val keys = bimap.getKeys(parentId)
+  fun <T : TypedEntity> getParentRefsOfChild(childId: PId<T>, hardReferencesOnly: Boolean): Set<PId<out TypedEntity>> {
+    val childArrayId = childId.arrayId
+    val childClass = childId.clazz.java
+
+    val res = HashSet<PId<out TypedEntity>>()
+
+    val filteredOneToMany = oneToManyContainer.filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+    for ((connectionId, bimap) in filteredOneToMany) {
+      if (!bimap.containsKey(childArrayId)) continue
+      val value = bimap.get(childArrayId)
+      res += PId(value, connectionId.parentClass)
+    }
+
+    val filteredOneToOne = oneToOneContainer.filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+    for ((connectionId, bimap) in filteredOneToOne) {
+      if (!bimap.containsKey(childArrayId)) continue
+      val value = bimap.get(childArrayId)
+      res += PId(value, connectionId.parentClass)
+    }
+
+    val filteredOneToAbstractOne = oneToAbstractManyContainer.filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+    for ((_, bimap) in filteredOneToAbstractOne) {
+      if (!bimap.containsKey(childId)) continue
+      val value = bimap.get(childId) ?: continue
+      res += value
+    }
+
+    return res
+  }
+
+  fun <T : TypedEntity> getChildrenRefsOfParent(parentId: PId<T>, hardReferencesOnly: Boolean): Set<PId<out TypedEntity>> {
+    val parentArrayId = parentId.arrayId
+    val parentClass = parentId.clazz.java
+
+    val res = HashSet<PId<out TypedEntity>>()
+
+    val filteredOneToMany = oneToManyContainer.filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+    for ((connectionId, bimap) in filteredOneToMany) {
+      val keys = bimap.getKeys(parentArrayId)
       if (!keys.isEmpty()) {
-        res[connectionId as ConnectionId<T, out TypedEntity>] = keys
+        res += keys.map { PId(it, connectionId.childClass) }
       }
     }
-    return res
-  }
 
-  fun <T : TypedEntity> getOneToManyParents(childId: Int, childClass: Class<T>): Map<ConnectionId<out TypedEntity, T>, Int> {
-    val filtered = oneToManyContainer.filterKeys { it.childClass.java == childClass }
-    val res = HashMap<ConnectionId<out TypedEntity, T>, Int>()
-    for ((connectionId, bimap) in filtered) {
-      if (bimap.containsKey(childId)) {
-        res[connectionId as ConnectionId<out TypedEntity, T>] = bimap.get(childId)
-      }
+    val filteredOneToOne = oneToOneContainer.filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+    for ((connectionId, bimap) in filteredOneToOne) {
+      if (!bimap.containsValue(parentArrayId)) continue
+      val key = bimap.getKey(parentArrayId)
+      res += PId(key, connectionId.childClass)
     }
-    return res
-  }
 
-  fun <T : TypedEntity> getOneToManyHardParentReferencesOfChild(
-    childId: Int, childClass: Class<T>
-  ): Map<KClass<out TypedEntity>, Int> {
-    val filtered = oneToManyContainer.filterKeys { it.childClass.java == childClass && it.isHard }
-    val res = HashMap<KClass<out TypedEntity>, Int>()
-    for ((connectionId, bimap) in filtered) {
-      if (bimap.containsKey(childId)) {
-        res[connectionId.parentClass] = bimap.get(childId)
+    val filteredOneToAbstractMany = oneToAbstractManyContainer.filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+    for ((connectionId, bimap) in filteredOneToAbstractMany) {
+      val keys = bimap.getKeysByValue(parentId) ?: continue
+      if (keys.isNotEmpty()) {
+        res += keys
       }
     }
-    return res
-  }
 
-  fun <T : TypedEntity> getOneToManyHardChildReferencesOfParent(
-    parentId: Int, parentClass: Class<T>
-  ): Map<KClass<out TypedEntity>, AbstractIntIntMultiMap.IntSequence> {
-    val filtered = oneToManyContainer.filterKeys { it.parentClass.java == parentClass && it.isHard }
-    val res = HashMap<KClass<out TypedEntity>, AbstractIntIntMultiMap.IntSequence>()
-    for ((connectionId, bimap) in filtered) {
-      val keys = bimap.getKeys(parentId)
-      if (!keys.isEmpty()) {
-        val klass = connectionId.childClass
-        res[klass] = keys
-      }
-    }
     return res
   }
 

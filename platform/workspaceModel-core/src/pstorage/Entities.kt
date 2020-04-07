@@ -87,6 +87,8 @@ abstract class PEntityData<E : TypedEntity> {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
+  internal fun createPid(): PId<E> = PId(id, ClassConversion.entityDataToEntity(this::class))
+
   internal fun createEntity(snapshot: AbstractPEntityStorage): E {
     val returnClass = ClassConversion.entityDataToEntity(this::class)
 
@@ -97,7 +99,7 @@ abstract class PEntityData<E : TypedEntity> {
       }.toMutableMap()
     val res = returnClass.primaryConstructor!!.callBy(params)
     (res as PTypedEntity).entitySource = entitySource
-    (res as PTypedEntity).id = PId(this::class.memberProperties.first { it.name == "id" }.getter.call(this) as Int, returnClass as KClass<TypedEntity>)
+    (res as PTypedEntity).id = createPid() as PId<TypedEntity>
     (res as PTypedEntity).snapshot = snapshot
     return res
   }
