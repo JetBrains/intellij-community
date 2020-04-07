@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
@@ -18,7 +19,7 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 
-public class TextPanel extends JComponent implements Accessible {
+public class TextPanel extends NonOpaquePanel implements Accessible {
   @Nullable private String myText;
 
   private Integer myPrefHeight;
@@ -27,7 +28,6 @@ public class TextPanel extends JComponent implements Accessible {
   protected float myAlignment;
 
   protected TextPanel() {
-    setOpaque(true);
     updateUI();
   }
 
@@ -63,7 +63,7 @@ public class TextPanel extends JComponent implements Accessible {
     int panelWidth = getWidth();
     int panelHeight = getHeight();
     Color background = getBackground();
-    if (background != null && isOpaque()) {
+    if (background != null && background.equals(JBUI.CurrentTheme.StatusBar.hoverBackground())) {
       g.setColor(background);
       g.fillRect(0, 0, panelWidth, panelHeight);
     }

@@ -37,7 +37,6 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
   private StatusBar myStatusBar;
 
   public MemoryUsagePanel() {
-    setOpaque(false);
     setFocusable(false);
     setTextAlignment(CENTER_ALIGNMENT);
     new ClickListener() {
@@ -53,6 +52,11 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
     updateUI();
 
     new UiNotifyConnector(this, this);
+  }
+
+  @Override
+  public Color getBackground() {
+    return null;
   }
 
   @Override
