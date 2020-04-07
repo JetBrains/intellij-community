@@ -8,9 +8,9 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.util.NlsContexts
 
 abstract class FilesProcessorWithNotificationImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
   private val files = mutableSetOf<VirtualFile>()
@@ -22,6 +22,8 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   abstract val askedBeforeProperty: String
 
   abstract val doForCurrentProjectProperty: String?
+
+  abstract val notificationDisplayId: String
 
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
@@ -77,7 +79,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
           }
           add(muteAction())
         }
-        notification = VcsNotifier.getInstance(project).notifyMinorInfo(true, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
+        notification = VcsNotifier.getInstance(project).notifyMinorInfo(true, notificationDisplayId, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
       }
     }
   }

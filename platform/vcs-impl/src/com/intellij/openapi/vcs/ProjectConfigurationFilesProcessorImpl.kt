@@ -86,6 +86,8 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     addChosenFiles(files)
   }
 
+  override val notificationDisplayId: String = "project.configuration.files.added.notification"
+
   override val askedBeforeProperty = ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
 
   override val doForCurrentProjectProperty = SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
