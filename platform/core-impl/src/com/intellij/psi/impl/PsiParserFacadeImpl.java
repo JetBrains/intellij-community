@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,15 +83,13 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
   }
 
   private PsiComment findPsiCommentChild(PsiFile aFile) {
-    PsiElement[] children = aFile.getChildren();
-    for (PsiElement aChildren : children) {
-      if (aChildren instanceof PsiComment) {
-        PsiComment comment = (PsiComment)aChildren;
-        DummyHolderFactory.createHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), null);
-        return comment;
-      }
+    PsiComment comment = PsiTreeUtil.findChildOfType(aFile, PsiComment.class);
+    if (comment == null) {
+      throw new IncorrectOperationException("Incorrect comment \"" + aFile.getText() + "\".");
     }
-    throw new IncorrectOperationException("Incorrect comment \"" + aFile.getText() + "\".");
+
+    DummyHolderFactory.createHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), null);
+    return comment;
   }
 
   private PsiFile createDummyFile(String text, final LanguageFileType fileType) {
