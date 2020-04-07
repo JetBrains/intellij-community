@@ -274,7 +274,7 @@ public class ListPluginComponent extends JPanel {
   private void createLicensePanel() {
     String productCode = myPlugin.getProductCode();
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (myMarketplace || productCode == null || instance == null) {
+    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled()) {
       return;
     }
 
