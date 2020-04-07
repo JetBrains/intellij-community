@@ -24,7 +24,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -45,7 +44,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
@@ -65,10 +67,6 @@ public class GitUnstashDialog extends DialogWrapper {
   private JPanel myPanel;
   private JList myStashList;
   private JCheckBox myReinstateIndexCheckBox;
-  /**
-   * Set of branches for the current root
-   */
-  private final HashSet<String> myBranches = new HashSet<>();
 
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance(GitUnstashDialog.class);
@@ -277,14 +275,6 @@ public class GitUnstashDialog extends DialogWrapper {
 
       for (StashInfo info: listOfStashes) {
         listModel.addElement(info);
-      }
-      myBranches.clear();
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(root);
-      if (repository != null) {
-        myBranches.addAll(GitBranchUtil.convertBranchesToNames(repository.getBranches().getLocalBranches()));
-      }
-      else {
-        LOG.error("Repository is null for root " + root);
       }
       myStashList.setSelectedIndex(0);
     }
