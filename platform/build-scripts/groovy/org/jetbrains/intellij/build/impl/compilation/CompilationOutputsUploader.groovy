@@ -79,9 +79,9 @@ class CompilationOutputsUploader {
         FileUtil.copy(zipFile, zipCopy)
         FileUtil.delete(zipFile)
 
-        File compilationArtifact = new File(tmpDir, "output.zip")
-        zipBinaryData(compilationArtifact, outputDirectoryFile)
-        context.messages.artifactBuilt(compilationArtifact.absolutePath)
+//        File compilationArtifact = new File(tmpDir, "output.zip")
+//        zipBinaryData(compilationArtifact, outputDirectoryFile)
+//        context.messages.artifactBuilt(compilationArtifact.absolutePath)
 
         // Upload compilation metadata
         sourcePath = "metadata/$commitHash"
