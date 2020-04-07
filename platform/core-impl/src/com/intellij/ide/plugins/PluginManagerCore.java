@@ -1522,6 +1522,11 @@ public final class PluginManagerCore {
     return isIncompatible(descriptor, getBuildNumber());
   }
 
+  @Nullable
+  public static String getIncompatible(@NotNull IdeaPluginDescriptor descriptor) {
+    return isIncompatible(getBuildNumber(), descriptor.getSinceBuild(), descriptor.getUntilBuild());
+  }
+
   public static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) {
     if (buildNumber == null) {
       buildNumber = getBuildNumber();

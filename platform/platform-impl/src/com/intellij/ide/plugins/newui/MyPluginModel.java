@@ -979,9 +979,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   @NotNull
   public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
     String message;
+    String incompatible = PluginManagerCore.getIncompatible(pluginDescriptor);
 
-    if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
+    if (incompatible != null) {
+      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() +
+                " version [" + StringUtil.escapeXmlEntities(incompatible) + "].";
     }
     else {
       Set<PluginId> requiredPlugins = filterRequiredPlugins(getRequiredPlugins(pluginDescriptor.getPluginId()));
