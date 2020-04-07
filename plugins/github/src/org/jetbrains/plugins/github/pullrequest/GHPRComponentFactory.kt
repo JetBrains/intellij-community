@@ -172,7 +172,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     updateCommitsTabText()
     commitsModel.addStateChangesListener(::updateCommitsTabText)
 
-    return object : SingleHeightTabs(project, project) {
+    return object : SingleHeightTabs(project, disposable) {
       override fun adjust(each: TabInfo?) {}
     }.apply {
       addTab(infoTabInfo)
