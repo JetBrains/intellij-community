@@ -154,7 +154,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
         myContent.setCloseable(false);
         myContent.setDisposer(myPanel);
-        addContent(myContent);
         DnDSupport.createBuilder(myPanel.myTree)
           .setImageProvider(myPanel::createDraggedImage)
           .setBeanProvider(myPanel::createDragStartBean)
@@ -162,6 +161,7 @@ public class ShelvedChangesViewManager implements Disposable {
           .setDropHandler(dnDTarget)
           .setDisposableParent(myContent)
           .install();
+        addContent(myContent);
       }
       updateTreeIfShown(tree -> {
         tree.rebuildTree();
