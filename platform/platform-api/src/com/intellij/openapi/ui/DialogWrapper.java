@@ -591,6 +591,14 @@ public abstract class DialogWrapper {
     return !myCheckBoxDoNotShowDialog.isSelected();
   }
 
+  /**
+   * @deprecated Do not use. Always returns false
+   */
+  @Deprecated
+  public boolean isTypeAheadEnabled() {
+      return false;
+  }
+
   @NotNull
   private List<JButton> createButtons(@NotNull List<? extends Action> actions) {
     List<JButton> buttons = new ArrayList<>();
