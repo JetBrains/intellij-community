@@ -159,7 +159,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
     @Override
-    public void paint(Component c, Graphics g, Rectangle r) {
+    public void paint(@NotNull Component c, Graphics g, @NotNull Rectangle r) {
       Icon icon = AllIcons.General.InspectionsOK;
       icon.paintIcon(c, g, r.x, r.y);
     }

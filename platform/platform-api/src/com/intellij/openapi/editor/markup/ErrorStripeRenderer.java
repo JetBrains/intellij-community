@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public interface ErrorStripeRenderer {
-  void paint(Component c, Graphics g, Rectangle r);
+  void paint(@NotNull Component c, Graphics g, @NotNull Rectangle r);
 
   default @NotNull AnalyzerStatus getStatus(@NotNull Editor editor) { return AnalyzerStatus.getDEFAULT(); }
 }
