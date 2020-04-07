@@ -435,6 +435,11 @@ public class TypeConstraints {
       }
       return false;
     }
+
+    @Override
+    public @NotNull Exact getArrayComponent() {
+      return myComponent;
+    }
   }
 
   private static final class Unresolved implements TypeConstraint.Exact {
