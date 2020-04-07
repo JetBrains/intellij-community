@@ -38,7 +38,8 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
     TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
     final String testId = testDescriptor.getId();
     final String parentTestId = testDescriptor.getParentId();
-    final String name = testDescriptor.getMethodName();
+    String methodName = testDescriptor.getMethodName();
+    final String name = methodName != null ? methodName : testId;
     final String fqClassName = testDescriptor.getClassName();
 
     doProcess(testId, parentTestId, name, fqClassName);
