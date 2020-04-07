@@ -432,4 +432,11 @@ public class PyChangeSignatureDialog extends
   protected boolean postponeValidation() {
     return false;
   }
+
+  @Override
+  protected JPanel createParametersPanel(boolean hasTabsInDialog) {
+    final JPanel panel = super.createParametersPanel(hasTabsInDialog);
+    myPropagateParamChangesButton.setVisible(false);
+    return panel;
+  }
 }
