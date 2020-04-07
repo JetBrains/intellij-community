@@ -15,9 +15,9 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
-  internal open lateinit var id: PId<TypedEntity>
+  internal lateinit var id: PId<TypedEntity>
 
-  internal open lateinit var snapshot: AbstractPEntityStorage
+  internal lateinit var snapshot: AbstractPEntityStorage
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     if (this.javaClass != e.javaClass) return false
