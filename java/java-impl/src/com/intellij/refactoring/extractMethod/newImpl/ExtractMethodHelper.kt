@@ -33,8 +33,8 @@ object ExtractMethodHelper {
     return typeParameterList?.typeParameters.orEmpty().toList()
   }
 
-  fun inputParameterOf(externalReference: ExternalReference) = with(externalReference) {
-    InputParameter(references, requireNotNull(variable.name), variable.type)
+  fun inputParameterOf(externalReference: ExternalReference): InputParameter {
+    return InputParameter(externalReference.references, requireNotNull(externalReference.variable.name), externalReference.variable.type)
   }
 
   fun PsiElement.addSiblingAfter(element: PsiElement): PsiElement {

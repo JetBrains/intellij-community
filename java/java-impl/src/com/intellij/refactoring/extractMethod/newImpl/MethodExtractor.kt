@@ -131,16 +131,15 @@ class MethodExtractor {
     if (dependencies.dataOutput is ExpressionOutput && flowOutput is ConditionalFlow) {
       flowOutput = flowOutput.copy(statements = flowOutput.statements.filterNot { it is PsiReturnStatement })
     }
-    val codeBlock = with(dependencies) {
-      BodyBuilder(factory).build(
-        elements = elements,
+    val codeBlock = BodyBuilder(factory)
+      .build(
+        elements = dependencies.elements,
         flowOutput = flowOutput,
-        dataOutput = dataOutput,
-        inputParameters = inputParameters,
-        missedDeclarations = requiredVariablesInside,
-        disabledParameters = disabledParameters
+        dataOutput = dependencies.dataOutput,
+        inputParameters = dependencies.inputParameters,
+        missedDeclarations = dependencies.requiredVariablesInside,
+        disabledParameters = dependencies.disabledParameters
       )
-    }
     val method = SignatureBuilder(dependencies.project)
       .build(
         context = dependencies.anchor.context,
