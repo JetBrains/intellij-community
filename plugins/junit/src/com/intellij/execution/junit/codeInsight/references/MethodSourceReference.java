@@ -29,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
 
@@ -87,7 +88,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
       final PsiMethod[] methods = topLevelClass.getAllMethods();
       for (PsiMethod method : methods) {
         if (method.getContainingClass() == null) continue;
-        if (Objects.equals(method.getContainingClass().getQualifiedName(), "java.lang.Object")) continue;
+        if (JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) continue;
         if (current != null && method.getName().equals(current.getName())) continue;
         if (!staticOrOneInstancePerClassNoParams(method, topLevelClass)) continue;
         final LookupElementBuilder builder = LookupElementBuilder.create(method);
