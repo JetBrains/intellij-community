@@ -4,7 +4,6 @@ package com.intellij.openapi.wm;
 import com.intellij.ide.ui.UISettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -51,12 +50,18 @@ public final class ToolWindowAnchor {
            || this == RIGHT && !UISettings.getInstance().getRightHorizontalSplit();
   }
 
-  public static @NotNull ToolWindowAnchor fromText(@Nullable String anchor) {
-    for (ToolWindowAnchor a : new ToolWindowAnchor[]{TOP, LEFT, BOTTOM, RIGHT}) {
-      if (a.myText.equals(anchor)) {
-        return a;
-      }
+  public static @NotNull ToolWindowAnchor fromText(@NotNull String anchor) {
+    switch (anchor) {
+      case "top":
+        return TOP;
+      case "left":
+        return LEFT;
+      case "bottom":
+        return BOTTOM;
+      case "right":
+        return RIGHT;
+      default:
+        throw new IllegalArgumentException("Unknown anchor constant: " + anchor);
     }
-    throw new IllegalArgumentException("Unknown anchor constant: " + anchor);
   }
 }
