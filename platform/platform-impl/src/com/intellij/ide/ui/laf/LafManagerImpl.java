@@ -983,7 +983,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
-        rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane, true));
+        rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane, false));
         rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
         rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
