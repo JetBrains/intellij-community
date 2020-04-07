@@ -76,12 +76,10 @@ class CompilationOutputsUploader {
         zipBinaryData(zipFile, dataStorageRoot)
         uploader.upload(sourcePath, zipFile)
         File zipCopy = new File(tmpDir, sourcePath)
-        File zipArtifact = new File(tmpDir, "caches.zip")
-        File compilationArtifact = new File(tmpDir, "output.zip")
         FileUtil.copy(zipFile, zipCopy)
-        FileUtil.copy(zipFile, zipArtifact)
-        context.messages.artifactBuilt(zipArtifact.absolutePath)
         FileUtil.delete(zipFile)
+
+        File compilationArtifact = new File(tmpDir, "output.zip")
         zipBinaryData(compilationArtifact, outputDirectoryFile)
         context.messages.artifactBuilt(compilationArtifact.absolutePath)
 
