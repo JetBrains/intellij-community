@@ -61,6 +61,9 @@ class CompilationOutputsDownloader {
     if (depth == 0) availableForHeadCommit = true
     if (depth != -1) {
       String lastCachedCommit = commits[depth]
+      if (lastCachedCommit == null) {
+        context.messages.error("Unable to find last cached commit for $depth in $commits")
+      }
       context.messages.info("Using cache for commit $lastCachedCommit ($depth behind last commit).")
 
       // In case if outputs are available for the current commit
