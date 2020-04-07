@@ -29,7 +29,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final String myId;
   private final IdeaPluginDescriptor myPlugin;
   private final String myIconPath;
-  private SmartFMap<String, String> myActionTextOverrides = SmartFMap.emptyMap();
+  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
@@ -46,7 +46,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     myIconPath = iconPath;
   }
 
-  public void addActionTextOverride(@NotNull String place, @NotNull String text) {
+  public void addActionTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 

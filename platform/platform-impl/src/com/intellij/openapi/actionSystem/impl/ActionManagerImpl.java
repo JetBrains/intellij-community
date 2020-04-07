@@ -934,10 +934,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
       if (text.isEmpty() && bundle != null) {
         String key = "action." + stub.getId() + "." + place + ".text";
-        text = BundleBase.message(bundle, key);
+        stub.addActionTextOverride(place, () -> BundleBase.message(bundle, key));
       }
-
-      stub.addActionTextOverride(place, text);
+      else {
+        stub.addActionTextOverride(place, () -> text);
+      }
     }
   }
 
