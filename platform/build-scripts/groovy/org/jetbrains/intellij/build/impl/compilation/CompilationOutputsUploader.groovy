@@ -61,7 +61,7 @@ class CompilationOutputsUploader {
     this.updateCommitHistory = updateCommitHistory
   }
 
-  def upload(File outputDirectoryFile) {
+  def upload() {
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("$executorThreadsCount threads will be used for upload")
     NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
@@ -78,9 +78,12 @@ class CompilationOutputsUploader {
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
 
       executor.submit {
-        // Upload jps caches started first because of the significant size of the output
+        // In case if commits history is not updated it makes no sense to upload
+        // caches archive as were going to use outputs only and not to perform any
+        // further compilations.
         if (updateCommitHistory) {
-          if (!uploadCompilationCache(outputDirectoryFile)) return
+        // Upload jps caches started first because of the significant size of the output
+          if (!uploadCompilationCache()) return
         }
 
         uploadMetadata()
@@ -108,7 +111,7 @@ class CompilationOutputsUploader {
     }
   }
 
-  private boolean uploadCompilationCache(File outputDirectoryFile) {
+  private boolean uploadCompilationCache() {
     String cachePath = "caches/$commitHash"
     if (uploader.isExist(cachePath)) return false
 
@@ -119,11 +122,6 @@ class CompilationOutputsUploader {
     File zipCopy = new File(tmpDir, cachePath)
     FileUtil.copy(zipFile, zipCopy)
     FileUtil.delete(zipFile)
-
-    // FIXME remove this?
-//    File compilationArtifact = new File(tmpDir, "output.zip")
-//    zipBinaryData(compilationArtifact, outputDirectoryFile)
-//    context.messages.artifactBuilt(compilationArtifact.absolutePath)
 
     return true
   }

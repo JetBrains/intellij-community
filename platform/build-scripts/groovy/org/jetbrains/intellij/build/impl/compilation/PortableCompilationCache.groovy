@@ -53,7 +53,7 @@ class PortableCompilationCache {
   /**
    * Upload local compilation cache to remote cache
    */
-  def upload(File outputDirectoryFile) {
+  def upload() {
     def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
     def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
     def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
@@ -66,6 +66,6 @@ class PortableCompilationCache {
     new CompilationOutputsUploader(
       context, remoteCacheUrl, remotePerCommitHash,
       agentPersistentStorage, syncFolder, updateCommitHistory
-    ).upload(outputDirectoryFile)
+    ).upload()
   }
 }
