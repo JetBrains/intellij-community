@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl
 
+import com.intellij.application.options.RegistryManager
 import com.intellij.diff.editor.VCSContentVirtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -46,14 +47,13 @@ internal class VcsToolWindowEditorSynchronizer {
   }
 
   internal class MyToolwindowListener(private val project: Project) : ToolWindowManagerListener {
-    override fun toolWindowRegistered(id: String) {
-      if (!Registry.`is`("show.log.as.editor.tab")) return
-      if (id != TOOLWINDOW_ID) return
-
-      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(id)
-      if (toolwindow != null) {
-        getInstance(project).addContentManagerListener(toolwindow, VcsLogEditorTabSelector(project))
+    override fun toolWindowsRegistered(ids: MutableList<String>) {
+      if (!ids.contains(TOOLWINDOW_ID) || !RegistryManager.getInstance().`is`("show.log.as.editor.tab")) {
+        return
       }
+
+      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID) ?: return
+      getInstance(project).addContentManagerListener(toolwindow, VcsLogEditorTabSelector(project))
     }
   }
 }

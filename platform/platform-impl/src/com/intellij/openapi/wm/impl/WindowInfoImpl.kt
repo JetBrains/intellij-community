@@ -44,6 +44,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    */
   @get:Attribute("maximized")
   override var isMaximized by property(false)
+
   /**
    * ID of the tool window
    */

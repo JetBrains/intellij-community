@@ -75,7 +75,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final Stripe bottomStripe;
   private final Stripe topStripe;
 
-  private final List<Stripe> stripes = new ArrayList<>();
+  private final List<Stripe> stripes = new ArrayList<>(4);
 
   private boolean isWideScreen;
   private boolean leftHorizontalSplit;
@@ -272,8 +272,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     stripe.revalidate();
   }
 
-  @NotNull
-  public final JComponent getLayeredPane() {
+  public final @NotNull JComponent getLayeredPane() {
     return layeredPane;
   }
 
@@ -284,6 +283,14 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     for (Stripe stripe : stripes) {
       stripe.revalidate();
       stripe.repaint();
+    }
+  }
+
+  public void revalidateNotEmptyStripes() {
+    for (Stripe stripe : stripes) {
+      if (!stripe.isEmpty()) {
+        stripe.revalidate();
+      }
     }
   }
 
@@ -428,8 +435,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     pair.first.setSize(Math.max(minValue, Math.min(maxValue, actualSize)));
   }
 
-  @Nullable
-  private Pair<Resizer, Component> findResizerAndComponent(@NotNull ToolWindow window) {
+  private @Nullable Pair<Resizer, Component> findResizerAndComponent(@NotNull ToolWindow window) {
     if (!window.isVisible()) return null;
 
     Resizer resizer = null;
@@ -568,7 +574,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         mySplitter = splitter;
       }
 
-      final static class FirstComponent extends Splitter {
+      static final class FirstComponent extends Splitter {
         FirstComponent(@NotNull ThreeComponentsSplitter splitter) {
           super(splitter);
         }
@@ -579,7 +585,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
       }
 
-      final static class LastComponent extends Splitter {
+      static final class LastComponent extends Splitter {
         LastComponent(@NotNull ThreeComponentsSplitter splitter) {
           super(splitter);
         }
@@ -610,7 +616,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
       abstract void _setSize(int size);
 
-      final static class Left extends LayeredPane {
+      static final class Left extends LayeredPane {
         Left(@NotNull Component component) {
           super(component);
         }
@@ -621,7 +627,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
       }
 
-      final static class Right extends LayeredPane {
+      static final class Right extends LayeredPane {
         Right(@NotNull Component component) {
           super(component);
         }
@@ -876,8 +882,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static final class ImageRef extends SoftReference<BufferedImage> {
-    @Nullable
-    private BufferedImage myStrongRef;
+    private @Nullable BufferedImage myStrongRef;
 
     ImageRef(@NotNull BufferedImage image) {
       super(image);

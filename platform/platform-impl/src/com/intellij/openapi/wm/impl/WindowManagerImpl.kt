@@ -14,13 +14,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.WindowManagerListener
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
@@ -32,13 +28,11 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.UIUtil
 import com.sun.jna.platform.WindowUtils
 import org.jdom.Element
-import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.io.IOException
 import java.util.*
 import java.util.function.Supplier
 import javax.swing.JDialog
@@ -67,7 +61,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   internal val windowWatcher = WindowWatcher()
 
   // default layout
-  private var myLayout = DesktopLayout()
+  private var layout = DesktopLayout()
 
   // null keys must be supported
   // null key - root frame
@@ -397,26 +391,41 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getFocusedComponent(project: Project?) = windowWatcher.getFocusedComponent(project)
 
   override fun noStateLoaded() {
-    try {
-      myLayout.readExternal(JDOMUtil.load(
-        """<layout>
-  <!-- left stripe -->
-  <window_info id="Project" order="0" weight="0.25" content_ui="combo" />
-  <window_info id="Structure" order="1" weight="0.25" />
-  <!-- bottom stripe -->
-  <window_info id="Version Control" anchor="bottom" order="0" />
-  <window_info id="Find" anchor="bottom" order="1" />
-  <window_info id="Run" anchor="bottom" order="2" />
-  <window_info id="Debug" anchor="bottom" order="3" weight="0.4" />
-  <window_info id="Inspection" anchor="bottom" order="4" weight="0.4" />
-</layout>"""
-      ))
+    var anchor = ToolWindowAnchor.LEFT
+    var order = 0
+    fun info(id: String, weight: Float = -1f, contentUiType: ToolWindowContentUiType? = null): WindowInfoImpl {
+      val result = WindowInfoImpl()
+      result.id = id
+      result.anchor = anchor
+      if (weight != -1f) {
+        result.weight = weight
+      }
+      contentUiType?.let {
+        result.contentUiType = it
+      }
+      result.order = order++
+      result.isFromPersistentSettings = false
+      result.resetModificationCount()
+      return result
     }
-    catch (e: IOException) {
-      LOG.error(e)
-    }
-    catch (e: JDOMException) {
-      LOG.error(e)
+
+    val list = mutableListOf<WindowInfoImpl>()
+
+    // left stripe
+    list.add(info(id = "Project", weight = 0.25f, contentUiType = ToolWindowContentUiType.COMBO))
+    list.add(info(id = "Structure", weight = 0.25f))
+
+    // bottom stripe
+    anchor = ToolWindowAnchor.BOTTOM
+    order = 0
+    list.add(info(id = "Version Control"))
+    list.add(info(id = "Find"))
+    list.add(info(id = "Run"))
+    list.add(info(id = "Debug", weight = 0.4f))
+    list.add(info(id = "Inspection", weight = 0.4f))
+
+    for (info in list) {
+      layout.addInfo(info.id!!, info)
     }
   }
 
@@ -438,12 +447,12 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       defaultFrameInfoHelper.copyFrom(info)
     }
     state.getChild(DesktopLayout.TAG)?.let {
-      myLayout.readExternal(it)
+      layout.readExternal(it)
     }
   }
 
   override fun getStateModificationCount(): Long {
-    return defaultFrameInfoHelper.getModificationCount() + myLayout.stateModificationCount
+    return defaultFrameInfoHelper.getModificationCount() + layout.stateModificationCount
   }
 
   override fun getState(): Element {
@@ -453,16 +462,16 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
 
     // save default layout
-    myLayout.writeExternal(DesktopLayout.TAG)?.let {
+    layout.writeExternal(DesktopLayout.TAG)?.let {
       state.addContent(it)
     }
     return state
   }
 
-  override fun getLayout() = myLayout
+  override fun getLayout() = layout
 
   override fun setLayout(layout: DesktopLayout) {
-    myLayout = layout.copy()
+    this.layout = layout.copy()
   }
 
   override fun isFullScreenSupportedInCurrentOS() = isFullScreenSupportedInCurrentOs()

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.dashboard.RunDashboardManager;
@@ -23,10 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 final class ProjectData {
@@ -54,16 +53,16 @@ final class ProjectData {
       }
 
       @Override
-      public void toolWindowRegistered(@NotNull String id) {
+      public void toolWindowsRegistered(@NotNull List<String> ids) {
         ApplicationManager.getApplication().assertIsDispatchThread();
-
         ToolWindowManagerEx windowManager = ToolWindowManagerEx.getInstanceEx(myProject);
-        ToolWindow toolWindow = windowManager.getToolWindow(id);
-
-        ToolWindowData toolWindowData = new ToolWindowData(toolWindow, id);
-        myToolWindows.put(toolWindow, toolWindowData);
-        // System.out.println("register tool-window: " + id);
-        toolWindow.addContentManagerListener(toolWindowData);
+        for (String id : ids) {
+          ToolWindow toolWindow = windowManager.getToolWindow(id);
+          ToolWindowData toolWindowData = new ToolWindowData(toolWindow, id);
+          myToolWindows.put(toolWindow, toolWindowData);
+          // System.out.println("register tool-window: " + id);
+          toolWindow.addContentManagerListener(toolWindowData);
+        }
       }
 
       @Override
@@ -344,17 +343,14 @@ final class ProjectData {
       // System.out.printf("register content of ToolWindow %s with touchbar-action '%s' [%s]\n", toolWindowId, optAction.toString(), ActionManager.getInstance().getId(optAction));
       _registerContent(content, optAction);
 
-      content.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (Content.PROP_COMPONENT.equals(evt.getPropertyName())) {
-            // final Component oldComponent = (Component)evt.getOldValue();
-            // final Component newComponent = (Component)evt.getNewValue();
-            // final ActionGroup actions = _getTouchbarActions(newComponent);
-            // TODO: update link to ToolWindowData.JComponent, ToolWindowData.AnAction, items of corresponding touchbar
-          }
-        }
-      });
+      //content.addPropertyChangeListener(evt -> {
+      //  if (Content.PROP_COMPONENT.equals(evt.getPropertyName())) {
+      //    // final Component oldComponent = (Component)evt.getOldValue();
+      //    // final Component newComponent = (Component)evt.getNewValue();
+      //    // final ActionGroup actions = _getTouchbarActions(newComponent);
+      //    // TODO: update link to ToolWindowData.JComponent, ToolWindowData.AnAction, items of corresponding touchbar
+      //  }
+      //});
     }
 
     @Override
