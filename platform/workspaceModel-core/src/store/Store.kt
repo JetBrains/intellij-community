@@ -78,53 +78,24 @@ class Store {
 
   //fun remove(path: String, entity: PEntityData<out TypedEntity>) {
   fun remove(path: String, entityId: Int) {
-    val names = splitNames(path)
-    var latestNode: FilePathNode? = rootNode
-    for (index in names.indices.reversed()) {
-      val name = names[index]
-      // Latest node can be NULL only if it's root node
-      if (latestNode == null) {
-        println("Path doesn't exist")
+    val node = findLatestFilePathNode(path)
+    if (node == null || node.values.remove(entityId)) {
+      println("File not found")
+      return
+    }
+    if (node.values.isNotEmpty() || node.children.isNotEmpty()) return
+
+    var currentNode: FilePathNode = node
+    do {
+      val parent = currentNode.parent
+      if (parent == null) {
+        if (parent === rootNode) rootNode = null
         return
       }
 
-      if (latestNode === rootNode) {
-        if (latestNode.content != name) {
-          println("Path doesn't exist")
-          return
-        } else {
-          if (index == 0) {
-            if (!latestNode.values.remove(entityId)) {
-              println("EntityId $entityId doesn't exist")
-              return
-            }
-            if (latestNode.values.isEmpty() && latestNode.children.isEmpty()) {
-              rootNode = null
-              return
-            }
-          } else continue
-        }
-      }
-
-      val node = latestNode.children.find { it.content == name }
-      if (node == null) {
-        println("Path doesn't exist")
-      } else {
-        if (index == 0) {
-          if (!node.values.remove(entityId)) {
-            println("EntityId $entityId doesn't exist")
-            return
-          }
-          if (latestNode.values.isEmpty() && latestNode.children.isEmpty()) {
-            rootNode = null
-            return
-          }
-          node.values.add(entityId)
-          return
-        }
-        latestNode = node
-      }
-    }
+      parent.children.remove(node)
+      currentNode = parent
+    } while (currentNode.values.isEmpty() && currentNode.children.isEmpty())
   }
 
   //fun update(oldPath: String, newPath: String, entity: PEntityData<out TypedEntity>) {
