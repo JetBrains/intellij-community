@@ -76,12 +76,12 @@ class CompilationOutputsUploader {
         zipBinaryData(zipFile, dataStorageRoot)
         uploader.upload(sourcePath, zipFile)
         File zipCopy = new File(tmpDir, sourcePath)
+        File zipArtifact = new File(tmpDir, "caches.zip")
         FileUtil.copy(zipFile, zipCopy)
-
-        def artifact = new File(zipFile.parentFile, "caches.zip")
-        FileUtil.rename(zipFile, artifact)
-        context.messages.artifactBuilt(artifact.absolutePath)
-        FileUtil.delete(artifact)
+        FileUtil.copy(zipFile, zipArtifact)
+        context.messages.artifactBuilt(zipArtifact.absolutePath)
+        FileUtil.delete(zipFile)
+        FileUtil.delete(zipArtifact)
 
         // Upload compilation metadata
         sourcePath = "metadata/$commitHash"
