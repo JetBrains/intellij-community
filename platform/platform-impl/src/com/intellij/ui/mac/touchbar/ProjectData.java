@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -55,9 +54,9 @@ final class ProjectData {
       @Override
       public void toolWindowsRegistered(@NotNull List<String> ids) {
         ApplicationManager.getApplication().assertIsDispatchThread();
-        ToolWindowManagerEx windowManager = ToolWindowManagerEx.getInstanceEx(myProject);
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         for (String id : ids) {
-          ToolWindow toolWindow = windowManager.getToolWindow(id);
+          ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
           ToolWindowData toolWindowData = new ToolWindowData(toolWindow, id);
           myToolWindows.put(toolWindow, toolWindowData);
           // System.out.println("register tool-window: " + id);
@@ -133,7 +132,7 @@ final class ProjectData {
   BarContainer findDebugToolWindowByComponent(Component child) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(myProject);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow dtw = toolWindowManager.getToolWindow(ToolWindowId.DEBUG);
     ToolWindow rtw = toolWindowManager.getToolWindow(RunDashboardManager.getInstance(myProject).getToolWindowId());
 

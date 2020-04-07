@@ -300,7 +300,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     additionalGearActions = value
   }
 
-  override fun setTitleActions(vararg actions: AnAction) {
+  override fun setTitleActions(actions: List<AnAction>) {
     ensureContentManagerInitialized()
     decorator!!.setTitleActions(actions)
   }

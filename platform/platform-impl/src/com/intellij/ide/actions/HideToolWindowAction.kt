@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.util.ui.UIUtil
 
 class HideToolWindowAction : AnAction(), DumbAware {
@@ -19,8 +18,7 @@ class HideToolWindowAction : AnAction(), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
+    val toolWindowManager = ToolWindowManager.getInstance(e.project ?: return)
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
     toolWindowManager.getToolWindow(id)?.hide(null)
   }
@@ -33,7 +31,7 @@ class HideToolWindowAction : AnAction(), DumbAware {
       return
     }
 
-    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
+    val toolWindowManager = ToolWindowManager.getInstance(project)
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId
     val window = if (id == null) null else toolWindowManager.getToolWindow(id)
     if (window == null) {

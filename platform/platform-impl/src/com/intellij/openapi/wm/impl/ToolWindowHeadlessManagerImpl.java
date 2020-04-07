@@ -92,6 +92,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
   }
 
   @Override
+  public @Nullable String getLastActiveToolWindowId() {
+    return null;
+  }
+
+  @Override
   public ToolWindow getToolWindow(@Nullable String id) {
     return myToolWindows.get(id);
   }
@@ -354,7 +359,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     }
 
     @Override
-    public void setTitleActions(@NotNull AnAction @NotNull... actions) {
+    public void setTitleActions(@NotNull List<AnAction> actions) {
     }
 
     @Override

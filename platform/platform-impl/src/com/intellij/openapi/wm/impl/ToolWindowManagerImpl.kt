@@ -667,9 +667,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return null
     }
 
-  override fun getLastActiveToolWindowId(): String? {
-    return getLastActiveToolWindowId(null)
-  }
+  override val lastActiveToolWindowId: String?
+    get() = getLastActiveToolWindowId(null)
 
   override fun getLastActiveToolWindowId(condition: Condition<in JComponent>?): String? {
     EDT.assertIsEdt()

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -35,7 +34,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 @Slow
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
-
   final String basePath = TestUtils.testDataPath + 'highlighting/'
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3
@@ -125,7 +123,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void measureHighlighting(String text, int time) {
-    IdeaTestUtil.startPerformanceTest(getTestName(false), time, configureAndHighlight(text)).usesAllCPUCores().assertTiming()
+    PlatformTestUtil.startPerformanceTest(getTestName(false), time, configureAndHighlight(text)).usesAllCPUCores().assertTiming()
   }
 
   void testDeeplyNestedClosures() {
@@ -262,7 +260,7 @@ class Cl {
     }
 }
 """
-    IdeaTestUtil.startPerformanceTest(getTestName(false), 750, configureAndHighlight(text))
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 750, configureAndHighlight(text))
       .attempts(20)
       .usesAllCPUCores()
       .assertTiming()
@@ -611,7 +609,7 @@ foo${n}(a) {
     foo${n - 1}(1)
 }""")
     def file = fixture.configureByText('_.groovy', builder.toString()) as GroovyFile
-    IdeaTestUtil.startPerformanceTest(getTestName(false), 2000, {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, {
       myFixture.psiManager.dropPsiCaches()
       (file.methods.last().block.statements.last() as GrExpression).type
     }).attempts(5).assertTiming()

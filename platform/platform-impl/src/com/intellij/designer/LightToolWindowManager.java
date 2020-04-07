@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -162,7 +163,7 @@ public abstract class LightToolWindowManager implements Disposable {
                                                 @NotNull JComponent component,
                                                 @NotNull JComponent focusedComponent,
                                                 int defaultWidth,
-                                                AnAction @Nullable [] actions) {
+                                                @Nullable List<AnAction> actions) {
     return new LightToolWindow(content,
                                title,
                                icon,

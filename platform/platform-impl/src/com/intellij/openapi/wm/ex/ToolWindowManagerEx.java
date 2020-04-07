@@ -54,11 +54,6 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   }
 
   /**
-   * @return {@code ID} of tool window that was activated last time.
-   */
-  public abstract @Nullable String getLastActiveToolWindowId();
-
-  /**
    * @return {@code ID} of tool window which was last activated among tool windows satisfying the current condition
    */
   public abstract @Nullable String getLastActiveToolWindowId(@Nullable Condition<? super JComponent> condition);
@@ -82,10 +77,4 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
   public abstract @NotNull List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
-
-  /*
-   * Returns visual representation of tool window location
-   * @see AllIcons.Actions#MoveToBottomLeft ... com.intellij.icons.AllIcons.Actions#MoveToWindow icon set
-   */
-  public abstract @NotNull Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon);
 }
