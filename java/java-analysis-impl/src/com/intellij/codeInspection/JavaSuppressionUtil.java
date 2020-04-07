@@ -33,6 +33,7 @@ import java.util.regex.Matcher;
 
 public class JavaSuppressionUtil {
   private static final String GENERATED_ANNOTATION_NAME = "javax.annotation.Generated";
+  private static final String JDK9_GENERATED_ANNOTATION_NAME = "javax.annotation.processing.Generated";
 
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
 
@@ -119,7 +120,7 @@ public class JavaSuppressionUtil {
       if (directory != null) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage != null) {
-          return AnnotationUtil.findAnnotation(aPackage, GENERATED_ANNOTATION_NAME);
+          return AnnotationUtil.findAnnotation(aPackage, GENERATED_ANNOTATION_NAME, JDK9_GENERATED_ANNOTATION_NAME);
         }
       }
     }
@@ -135,7 +136,7 @@ public class JavaSuppressionUtil {
         return modifierList != null ? AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
-    return AnnotationUtil.findAnnotation(owner, GENERATED_ANNOTATION_NAME);
+    return AnnotationUtil.findAnnotation(owner, GENERATED_ANNOTATION_NAME, JDK9_GENERATED_ANNOTATION_NAME);
   }
 
   static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
@@ -180,11 +181,11 @@ public class JavaSuppressionUtil {
       if (docComment != null) {
         PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (inspectionTag != null) {
-          String valueText = "";
+          StringBuilder valueText = new StringBuilder();
           for (PsiElement dataElement : inspectionTag.getDataElements()) {
-            valueText += dataElement.getText();
+            valueText.append(dataElement.getText());
           }
-          return valueText;
+          return valueText.toString();
         }
       }
     }
@@ -218,8 +219,7 @@ public class JavaSuppressionUtil {
       PsiJavaDocumentedElement container = up == null || up instanceof PsiJavaDocumentedElement
                                            ? (PsiJavaDocumentedElement)up
                                            : PsiTreeUtil.getNonStrictParentOfType(up, PsiJavaDocumentedElement.class);
-      while (true) {
-        if (!(container instanceof PsiTypeParameter)) break;
+      while (container instanceof PsiTypeParameter) {
         container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
       }
 
