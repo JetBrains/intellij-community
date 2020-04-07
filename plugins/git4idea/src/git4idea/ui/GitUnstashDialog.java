@@ -57,7 +57,7 @@ import static java.util.Collections.singletonList;
  * The unstash dialog
  */
 public class GitUnstashDialog extends DialogWrapper {
-  private JComboBox myGitRootComboBox;
+  private JComboBox<VirtualFile> myGitRootComboBox;
   private JLabel myCurrentBranch;
   private JButton myViewButton;
   private JButton myDropButton;
@@ -65,7 +65,8 @@ public class GitUnstashDialog extends DialogWrapper {
   private JCheckBox myPopStashCheckBox;
   private JTextField myBranchTextField;
   private JPanel myPanel;
-  private JList myStashList;
+  private JList<StashInfo> myStashList;
+  private final DefaultListModel<StashInfo> myStashListModel;
   private JCheckBox myReinstateIndexCheckBox;
 
   private final Project myProject;
@@ -79,7 +80,8 @@ public class GitUnstashDialog extends DialogWrapper {
     setOKButtonText(GitBundle.getString("unstash.button.apply"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
-    myStashList.setModel(new DefaultListModel());
+    myStashListModel = new DefaultListModel<>();
+    myStashList.setModel(myStashListModel);
     refreshStashList();
     myGitRootComboBox.addActionListener(new ActionListener() {
       @Override
@@ -262,8 +264,7 @@ public class GitUnstashDialog extends DialogWrapper {
   }
 
   private void refreshStashList() {
-    final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
-    listModel.clear();
+    myStashListModel.clear();
     VirtualFile root = getGitRoot();
     try {
       List<StashInfo> listOfStashes = ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -274,7 +275,7 @@ public class GitUnstashDialog extends DialogWrapper {
       );
 
       for (StashInfo info: listOfStashes) {
-        listModel.addElement(info);
+        myStashListModel.addElement(info);
       }
       myStashList.setSelectedIndex(0);
     }
@@ -306,7 +307,7 @@ public class GitUnstashDialog extends DialogWrapper {
   }
 
   private StashInfo getSelectedStash() {
-    return (StashInfo)myStashList.getSelectedValue();
+    return myStashList.getSelectedValue();
   }
 
   @Override
