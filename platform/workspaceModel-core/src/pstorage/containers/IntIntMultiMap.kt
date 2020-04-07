@@ -47,16 +47,18 @@ internal sealed class IntIntMultiMap(
   abstract fun toMutable(): MutableIntIntMultiMap
 
   private class RoMultiResultIntSequence(
-    private val values: IntArray?,
-    private var idx: Int
+    private val values: IntArray,
+    private val idx: Int
   ) : IntSequence() {
 
-    override val iterator: IntIterator = object : IntIterator() {
+    override fun getIterator(): IntIterator = object : IntIterator() {
+      private var index = idx
       private var hasNext = true
+
       override fun hasNext(): Boolean = hasNext
 
       override fun nextInt(): Int {
-        val value = values!![idx++]
+        val value = values[index++]
         return if (value < 0) {
           hasNext = false
           value.unpack()
@@ -323,8 +325,8 @@ internal sealed class MutableIntIntMultiMap(
 
   abstract fun toImmutable(): IntIntMultiMap
 
-  private class RwIntSequence(values: IntArray) : IntSequence() {
-    override val iterator: IntIterator = values.iterator()
+  private class RwIntSequence(private val values: IntArray) : IntSequence() {
+    override fun getIterator(): IntIterator = values.iterator()
   }
 }
 
@@ -396,13 +398,14 @@ internal sealed class AbstractIntIntMultiMap(
 
   abstract class IntSequence {
 
-    abstract val iterator: IntIterator
+    protected abstract fun getIterator(): IntIterator
 
     fun forEach(action: (Int) -> Unit) {
-      while (iterator.hasNext()) action(iterator.next())
+      val iterator = getIterator()
+      while (iterator.hasNext()) action(iterator.nextInt())
     }
 
-    fun isEmpty(): Boolean = !iterator.hasNext()
+    fun isEmpty(): Boolean = !getIterator().hasNext()
 
     /**
      * Please use this method only for debugging purposes.
@@ -418,24 +421,33 @@ internal sealed class AbstractIntIntMultiMap(
     open fun <T> map(transformation: (Int) -> T): Sequence<T> {
       return Sequence {
         object : Iterator<T> {
+          private val iterator = getIterator()
+
           override fun hasNext(): Boolean = iterator.hasNext()
 
-          override fun next(): T {
-            return transformation(iterator.next())
-          }
+          override fun next(): T = transformation(iterator.nextInt())
         }
       }
     }
   }
 
-  protected class SingleResultIntSequence(
-    value: Int
-  ) : IntSequence() {
-    override val iterator: IntIterator = intArrayOf(value).iterator()
+  protected class SingleResultIntSequence(private val value: Int) : IntSequence() {
+    override fun getIterator(): IntIterator = object : IntIterator() {
+
+      private var hasNext = true
+
+      override fun hasNext(): Boolean = hasNext
+
+      override fun nextInt(): Int {
+        if (!hasNext) throw NoSuchElementException()
+        hasNext = false
+        return value
+      }
+    }
   }
 
   protected object EmptyIntSequence : IntSequence() {
-    override val iterator: IntIterator = IntArray(0).iterator()
+    override fun getIterator(): IntIterator = IntArray(0).iterator()
 
     override fun <T> map(transformation: (Int) -> T): Sequence<T> = emptySequence()
   }
