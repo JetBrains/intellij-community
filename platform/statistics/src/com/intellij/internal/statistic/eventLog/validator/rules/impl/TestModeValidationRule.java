@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -10,15 +10,14 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED;
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.REJECTED;
 
-public class TestModeValidationRule extends CustomWhiteListRule {
+public final class TestModeValidationRule extends CustomWhiteListRule {
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "fus_test_mode".equals(ruleId);
   }
 
-  @NotNull
   @Override
-  protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+  protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     return isTestModeEnabled() ? ACCEPTED : REJECTED;
   }
 

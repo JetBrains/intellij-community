@@ -94,8 +94,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     apply(info);
   }
 
-  @NotNull
-  public WindowInfo getWindowInfo() {
+  public @NotNull WindowInfo getWindowInfo() {
     return toolWindow.getWindowInfo();
   }
 
@@ -104,9 +103,8 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     return toolWindow.getId();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
       return toolWindow;
     }
@@ -253,8 +251,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
     myLastStripe = stripe;
   }
 
-  @NotNull
-  public ToolWindowImpl getToolWindow() {
+  public @NotNull ToolWindowImpl getToolWindow() {
     return toolWindow;
   }
 
@@ -275,8 +272,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
       .DRAG_START_DEADZONE;
   }
 
-  @Nullable
-  private static JLayeredPane findLayeredPane(MouseEvent e) {
+  private static @Nullable JLayeredPane findLayeredPane(MouseEvent e) {
     if (!(e.getComponent() instanceof JComponent)) {
       return null;
     }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -37,9 +37,9 @@ internal fun ContentManager.selectFirstContent() {
   if (firstContent != null) setSelectedContent(firstContent)
 }
 
-class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
-  private val LOG: Logger = Logger.getInstance(ChangesViewContentManager::class.java)
+private val LOG = logger<ChangesViewContentManager>()
 
+class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val addedContents = mutableListOf<Content>()
 
@@ -201,8 +201,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   companion object {
-    @JvmField
-    val TOOLWINDOW_ID: String = ToolWindowId.VCS
+    const val TOOLWINDOW_ID: String = ToolWindowId.VCS
     internal const val COMMIT_TOOLWINDOW_ID: String = "Commit"
 
     @JvmField
