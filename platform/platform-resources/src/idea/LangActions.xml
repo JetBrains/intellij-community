@@ -219,9 +219,7 @@
 
     <!-- Go To -->
     <group id="GoToTargetEx">
-      <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction">
-        <override-text place="MainMenu"/>
-      </action>
+      <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
       <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction">
         <override-text place="MainMenu"/>
       </action>
