@@ -650,4 +650,58 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       wrapIntoCommandAndWriteActionAndCommitAll = false
     )
   }
+
+  fun testRenameClassWithNameErased() {
+    doTest(
+      """
+        class X<caret> {
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("X")
+      },
+      {
+        myFixture.type("Y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("X", "Y"))
+    )
+  }
+
+  fun testRenameMethodWithNameErased() {
+    doTest(
+      """
+        class X {
+          void foo<caret>() {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("foo")
+      },
+      {
+        myFixture.type("bar")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("foo", "bar"))
+    )
+  }
+
+  fun testRenameLocalWithNameErased() {
+    doTest(
+      """
+        class X {
+          int foo() {
+            int local<caret> = 10;
+            return local;
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("local")
+      },
+      {
+        myFixture.type("xxx")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("local", "xxx"))
+    )
+  }
 }

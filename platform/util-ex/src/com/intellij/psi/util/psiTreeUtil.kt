@@ -338,6 +338,15 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   val stopAt = leaf.parents.first { range in it.textRange }
   if (stopAt is PsiErrorElement) return true
 
+  if (leafRange.startOffset == range.startOffset) {
+    val prevLeaf = leaf.prevLeaf()
+    if (prevLeaf is PsiErrorElement && prevLeaf.textLength == 0) return true
+  }
+  if (leafRange.endOffset == range.endOffset) {
+    val nextLeaf = leaf.nextLeaf()
+    if (nextLeaf is PsiErrorElement && nextLeaf.textLength == 0) return true
+  }
+
   fun PsiElement.isInsideErrorElement(): Boolean {
     var element: PsiElement? = this
     while (element != null && element != stopAt) {
