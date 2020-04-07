@@ -1716,8 +1716,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     AddAnnotationPsiFix.removePhysicalAnnotations(owner, ArrayUtilRt.toStringArray(toRemove));
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null && !AnnotationUtil.isAnnotated(owner, toKeep, CHECK_TYPE)) {
-      PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, modifierList);
-      JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(annotation);
+      PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(toAdd, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+      if (annotation != null) {
+        JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(annotation);
+      }
     }
   }
 

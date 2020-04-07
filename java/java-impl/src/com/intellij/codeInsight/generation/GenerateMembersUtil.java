@@ -615,13 +615,7 @@ public class GenerateMembersUtil {
       }
       PsiClass newClass = JavaPsiFacade.getInstance(target.getProject()).findClass(qualifiedName, target.getResolveScope());
       if (newClass == null || !oldClass.getManager().areElementsEquivalent(oldClass, newClass)) continue;
-      PsiElement owner = target.getParent();
-      PsiType type = owner instanceof PsiMethod ? ((PsiMethod)owner).getReturnType() :
-                     owner instanceof PsiVariable ? ((PsiVariable)owner).getType() : null;
-      if (type != null && type.hasAnnotation(qualifiedName)) {
-        continue;
-      }
-      AddAnnotationPsiFix.addPhysicalAnnotation(qualifiedName, annotation.getParameterList().getAttributes(), target);
+      AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(qualifiedName, annotation.getParameterList().getAttributes(), target);
     }
   }
 

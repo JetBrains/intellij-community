@@ -76,8 +76,10 @@ object ExtractMethodHelper {
       else -> return
     }
     val modifierList = owner.modifierList ?: return
-    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList)
-    JavaCodeStyleManager.getInstance(owner.project).shortenClassReferences(annotationElement)
+    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList)
+    if (annotationElement != null) {
+      JavaCodeStyleManager.getInstance(owner.project).shortenClassReferences(annotationElement)
+    }
   }
 
   private fun findVariableReferences(element: PsiElement): Sequence<PsiVariable> {
