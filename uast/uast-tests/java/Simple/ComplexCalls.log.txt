@@ -2,12 +2,12 @@ UFile (package = )
     UClass (name = A)
         UMethod (name = A)
             UBlockExpression
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                     UIdentifier (Identifier (super))
         UMethod (name = A)
             UParameter (name = a)
             UBlockExpression
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                     UIdentifier (Identifier (super))
                     USimpleNameReferenceExpression (identifier = a)
         UMethod (name = foo)
@@ -25,7 +25,7 @@ UFile (package = )
             UBlockExpression
         UMethod (name = B)
             UBlockExpression
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                     UIdentifier (Identifier (this))
                     ULiteralExpression (value = 1)
         UMethod (name = bar)
