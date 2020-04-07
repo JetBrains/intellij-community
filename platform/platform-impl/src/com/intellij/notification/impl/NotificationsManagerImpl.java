@@ -348,6 +348,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       layoutData.mergeData = null;
     }
     layoutData.id = notification.id;
+    layoutData.displayId = notification.displayId;
     layoutDataRef.set(layoutData);
 
     if (layoutData.textColor == null) {
@@ -638,7 +639,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id));
+        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
     }
 
     Disposer.register(parentDisposable, balloon);

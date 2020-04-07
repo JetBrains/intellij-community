@@ -52,6 +52,8 @@ public class Notification {
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final String id;
+  @Nullable
+  public final String displayId;
 
   private final String myGroupId;
   private Icon myIcon;
@@ -102,6 +104,7 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
+    this.displayId = null;
     id = calculateId(this);
   }
 
@@ -109,7 +112,7 @@ public class Notification {
                       @NotNull @NotificationTitle String title,
                       @NotNull @NotificationContent String content,
                       @NotNull NotificationType type) {
-    this(groupId, title, content, type, null);
+    this(groupId, null, title, content, type, null);
   }
 
   /**
@@ -124,6 +127,15 @@ public class Notification {
                       @NotNull @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
+    this(groupId, null, title, content, type, listener);
+  }
+
+  public Notification(@NotNull @NonNls String groupId,
+                      @Nullable @NonNls String displayId,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
+                      @NotNull NotificationType type,
+                      @Nullable NotificationListener listener) {
     myGroupId = groupId;
     myTitle = title;
     myContent = content;
@@ -131,6 +143,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
+    this.displayId = displayId;
     id = calculateId(this);
   }
 

@@ -51,7 +51,7 @@ public class NotificationCollector {
                               @NotNull NotificationDisplayType displayType,
                               @NotNull Notification notification,
                               boolean isExpandable) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id)
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
       .addData("display_type", displayType.name())
       .addData("severity", notification.getType().name())
       .addData("is_expandable", isExpandable);
@@ -60,62 +60,63 @@ public class NotificationCollector {
 
   public void logToolWindowNotificationShown(@Nullable Project project,
                                              @NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id)
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
       .addData("display_type", NotificationDisplayType.TOOL_WINDOW.name())
       .addData("severity", notification.getType().name());
     FUCounterUsageLogger.getInstance().logEvent(project, NOTIFICATIONS, "shown", data);
   }
 
   public void logNotificationLoggedInEventLog(@NotNull Project project, @NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id)
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
       .addData("severity", notification.getType().name());
     FUCounterUsageLogger.getInstance().logEvent(project, NOTIFICATIONS, "logged", data);
   }
 
-  public void logNotificationBalloonClosedByUser(@Nullable String notificationId, @Nullable String groupId) {
+  public void logNotificationBalloonClosedByUser(@Nullable String notificationId, @Nullable String notificationDisplayId, @Nullable String groupId) {
     if (notificationId == null) return;
-    FeatureUsageData data = createNotificationData(groupId, notificationId);
+    FeatureUsageData data = createNotificationData(groupId, notificationId, notificationDisplayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "closed.by.user", data);
   }
 
   public void logNotificationActionInvoked(@NotNull Notification notification,
                                            @NotNull AnAction action,
                                            @NotNull NotificationPlace notificationPlace) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id)
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId)
       .addData("notification_place", notificationPlace.name());
     ActionsCollectorImpl.addActionClass(data, action, PluginInfoDetectorKt.getPluginInfo(action.getClass()));
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "action.invoked", data);
   }
 
   public void logHyperlinkClicked(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id);
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "hyperlink.clicked", data);
   }
 
   public void logBalloonShownFromEventLog(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id);
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "event.log.balloon.shown", data);
   }
 
-  public void logNotificationSettingsClicked(@NotNull String notificationId, @Nullable String groupId) {
-    FeatureUsageData data = createNotificationData(groupId, notificationId);
+  public void logNotificationSettingsClicked(@NotNull String notificationId, @Nullable String notificationDisplayId, @Nullable String groupId) {
+    FeatureUsageData data = createNotificationData(groupId, notificationId, notificationDisplayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "settings.clicked", data);
   }
 
   public void logNotificationBalloonExpanded(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id);
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "balloon.expanded", data);
   }
 
   public void logNotificationBalloonCollapsed(@NotNull Notification notification) {
-    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id);
+    FeatureUsageData data = createNotificationData(notification.getGroupId(), notification.id, notification.displayId);
     FUCounterUsageLogger.getInstance().logEvent(NOTIFICATIONS, "balloon.collapsed", data);
   }
 
   @NotNull
-  private static FeatureUsageData createNotificationData(@Nullable String groupId, @NotNull String id) {
+  private static FeatureUsageData createNotificationData(@Nullable String groupId, @NotNull String id, @Nullable String displayId) {
     return new FeatureUsageData()
       .addData("id", id)
+      .addData("display_id", StringUtil.isNotEmpty(displayId) ? displayId : UNKNOWN)
       .addData(NOTIFICATION_GROUP, StringUtil.isNotEmpty(groupId) ? groupId : UNKNOWN)
       .addPluginInfo(getPluginInfo(groupId));
   }
