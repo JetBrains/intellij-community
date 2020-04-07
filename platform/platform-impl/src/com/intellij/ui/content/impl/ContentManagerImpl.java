@@ -100,9 +100,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myCanCloseContents;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     if (myComponent == null) {
       myComponent = new MyNonOpaquePanel();
       myComponent.add(myUI.getComponent(), BorderLayout.CENTER);
@@ -110,9 +109,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myComponent;
   }
 
-  @NotNull
   @Override
-  public ActionCallback getReady(@NotNull Object requestor) {
+  public @NotNull ActionCallback getReady(@NotNull Object requestor) {
     Content selected = getSelectedContent();
     if (selected == null) return ActionCallback.DONE;
     BusyObject busyObject = selected.getBusyObject();
@@ -127,8 +125,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.CONTENT_MANAGER.is(dataId) || PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && getContentCount() > 1) {
         return ContentManagerImpl.this;
       }
@@ -159,7 +156,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     doAddContent(content, -1);
   }
 
-  private void doAddContent(@NotNull final Content content, final int index) {
+  private void doAddContent(final @NotNull Content content, final int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myContents.contains(content)) {
       myContents.remove(content);
@@ -190,9 +187,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
 
-  @NotNull
   @Override
-  public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean forcedFocus) {
+  public @NotNull ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean forcedFocus) {
     ActionCallback result = new ActionCallback();
     doRemoveContent(content, dispose).doWhenDone(() -> {
       if (requestFocus) {
@@ -213,8 +209,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return result;
   }
 
-  @NotNull
-  private ActionCallback doRemoveContent(@NotNull Content content, boolean dispose) {
+  private @NotNull ActionCallback doRemoveContent(@NotNull Content content, boolean dispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
     if (indexToBeRemoved == -1) {
@@ -343,33 +338,28 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myContents.indexOf(content);
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return myUI.getCloseActionName();
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return myUI.getCloseAllButThisActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return myUI.getPreviousContentActionName();
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return myUI.getNextContentActionName();
   }
 
-  @NotNull
   @Override
-  public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) {
+  public @NotNull List<AnAction> getAdditionalPopupActions(final @NotNull Content content) {
     return Collections.emptyList();
   }
 
@@ -387,7 +377,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void addSelectedContent(@NotNull final Content content) {
+  public void addSelectedContent(final @NotNull Content content) {
     if (!checkSelectionChangeShouldBeProcessed(content, false)) return;
 
     if (getIndexOfContent(content) == -1) {
@@ -399,14 +389,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
-  private boolean checkSelectionChangeShouldBeProcessed(Content content, boolean implicit) {
+  private boolean checkSelectionChangeShouldBeProcessed(@NotNull Content content, boolean implicit) {
     if (!myUI.canChangeSelectionTo(content, implicit)) {
       return false;
     }
 
-    final boolean result = !isSelected(content) || myContentWithChangedComponent.contains(content);
+    boolean result = !isSelected(content) || myContentWithChangedComponent.contains(content);
     myContentWithChangedComponent.remove(content);
-
     return result;
   }
 
@@ -428,8 +417,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @Nullable
-  public Content getSelectedContent() {
+  public @Nullable Content getSelectedContent() {
     return mySelection.isEmpty() ? null : mySelection.get(0);
   }
 
@@ -438,9 +426,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     setSelectedContentCB(content, requestFocus);
   }
 
-  @NotNull
   @Override
-  public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) {
+  public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content, final boolean requestFocus) {
     return setSelectedContentCB(content, requestFocus, true);
   }
 
@@ -449,15 +436,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     setSelectedContentCB(content, requestFocus, forcedFocus);
   }
 
-  @NotNull
   @Override
-  public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
+  public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content, final boolean requestFocus, final boolean forcedFocus) {
     return setSelectedContent(content, requestFocus, forcedFocus, false);
   }
 
-  @NotNull
   @Override
-  public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
+  public @NotNull ActionCallback setSelectedContent(final @NotNull Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
@@ -476,9 +461,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     final Content[] old = getSelectedContents();
 
     final ActiveRunnable selection = new ActiveRunnable() {
-      @NotNull
       @Override
-      public ActionCallback run() {
+      public @NotNull ActionCallback run() {
         if (myDisposed || getIndexOfContent(content) == -1) return ActionCallback.REJECTED;
 
         for (Content each : old) {
@@ -516,9 +500,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return focused;
   }
 
-  @NotNull
   @Override
-  public ActionCallback setSelectedContentCB(@NotNull Content content) {
+  public @NotNull ActionCallback setSelectedContentCB(@NotNull Content content) {
     return setSelectedContentCB(content, false);
   }
 
@@ -591,9 +574,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return true;
   }
 
-  @NotNull
   @Override
-  public ActionCallback requestFocus(final Content content, final boolean forced) {
+  public @NotNull ActionCallback requestFocus(final Content content, final boolean forced) {
     final Content toSelect = content == null ? getSelectedContent() : content;
     if (toSelect == null) return ActionCallback.REJECTED;
     assert myContents.contains(toSelect);
@@ -606,7 +588,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void addDataProvider(@NotNull final DataProvider provider) {
+  public void addDataProvider(final @NotNull DataProvider provider) {
     dataProviders.add(provider);
   }
 
@@ -618,8 +600,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @NotNull
-  public ContentFactory getFactory() {
+  public @NotNull ContentFactory getFactory() {
     return ServiceManager.getService(ContentFactory.class);
   }
 

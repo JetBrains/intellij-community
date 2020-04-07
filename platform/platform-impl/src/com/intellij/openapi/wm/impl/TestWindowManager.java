@@ -133,7 +133,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final Rectangle getScreenBounds() {
+  public final @NotNull Rectangle getScreenBounds() {
     throw new UnsupportedOperationException();
   }
 
@@ -173,7 +173,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) { }
+  public void adjustContainerWindow(@NotNull Component c, Dimension oldSize, Dimension newSize) { }
 
   @Override
   public void addListener(@NotNull WindowManagerListener listener) { }

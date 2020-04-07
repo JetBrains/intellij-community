@@ -28,9 +28,8 @@ public abstract class WindowManagerEx extends WindowManager {
     return (WindowManagerEx)WindowManager.getInstance();
   }
 
-  @Nullable
   @Override
-  public abstract IdeFrameImpl getFrame(@Nullable Project project);
+  public abstract @Nullable IdeFrameImpl getFrame(@Nullable Project project);
 
   @Override
   public void requestUserAttention(@NotNull IdeFrame frame, boolean critical) {
@@ -55,8 +54,7 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract Window getMostRecentFocusedWindow();
 
-  @Nullable
-  public abstract IdeFrame findFrameFor(@Nullable Project project);
+  public abstract @Nullable IdeFrame findFrameFor(@Nullable Project project);
 
   /**
    * @return default layout for tool windows.
@@ -86,7 +84,7 @@ public abstract class WindowManagerEx extends WindowManager {
   /**
    * @return bounds for the screen device for the given project frame
    */
-  public abstract Rectangle getScreenBounds(@NotNull final Project project);
+  public abstract @Nullable Rectangle getScreenBounds(@NotNull Project project);
 
   public abstract void setWindowMask(Window window, Shape mask);
 
@@ -103,28 +101,24 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize);
 
-  @Nullable
   @ApiStatus.Internal
-  public abstract ProjectFrameHelper getFrameHelper(@Nullable Project project);
+  public abstract @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project);
 
   /**
    * Find frame for project or if project is null, for a last focused window.
    */
-  @Nullable
   @ApiStatus.Internal
-  public abstract IdeFrameEx findFrameHelper(@Nullable Project project);
+  public abstract @Nullable IdeFrameEx findFrameHelper(@Nullable Project project);
 
   /**
    * GUI test only.
    */
   @ApiStatus.Internal
-  @Nullable
-  public abstract IdeFrameEx findFirstVisibleFrameHelper();
+  public abstract @Nullable IdeFrameEx findFirstVisibleFrameHelper();
 
   @ApiStatus.Internal
   public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
 
-  @NotNull
   @ApiStatus.Internal
-  public abstract List<ProjectFrameHelper> getProjectFrameHelpers();
+  public abstract @NotNull List<ProjectFrameHelper> getProjectFrameHelpers();
 }

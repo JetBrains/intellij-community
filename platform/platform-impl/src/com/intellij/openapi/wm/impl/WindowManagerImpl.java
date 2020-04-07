@@ -153,9 +153,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return myProjectToFrame.values().toArray(new ProjectFrameHelper[0]);
   }
 
-  @NotNull
   @Override
-  public List<ProjectFrameHelper> getProjectFrameHelpers() {
+  public @NotNull List<ProjectFrameHelper> getProjectFrameHelpers() {
     return new ArrayList<>(myProjectToFrame.values());
   }
 
@@ -166,8 +165,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  @Nullable
-  public IdeFrameEx findFirstVisibleFrameHelper() {
+  public @Nullable IdeFrameEx findFirstVisibleFrameHelper() {
     return ContainerUtil.getFirstItem(myProjectToFrame.values());
   }
 
@@ -211,7 +209,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     if (myAlphaModeSupported == null) {
       myAlphaModeSupported = calcAlphaModelSupported();
     }
-    return myAlphaModeSupported.booleanValue();
+    return myAlphaModeSupported;
   }
 
   private static boolean calcAlphaModelSupported() {
@@ -267,7 +265,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public void setWindowMask(final Window window, @Nullable final Shape mask) {
+  public void setWindowMask(final Window window, final @Nullable Shape mask) {
     try {
       if (isPerPixelTransparencySupported()) {
         window.setShape(mask);
@@ -367,8 +365,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  @Nullable
-  public final Window suggestParentWindow(@Nullable Project project) {
+  public final @Nullable Window suggestParentWindow(@Nullable Project project) {
     return myWindowWatcher.suggestParentWindow(project, this);
   }
 
@@ -409,8 +406,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return frame;
   }
 
-  @Nullable
-  private static IdeFrame tryToFindTheOnlyFrame() {
+  private static @Nullable IdeFrame tryToFindTheOnlyFrame() {
     IdeFrameImpl candidate = null;
     for (Frame each : Frame.getFrames()) {
       if (each instanceof IdeFrameImpl) {
@@ -435,15 +431,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  @Nullable
   @ApiStatus.Internal
-  public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
+  public @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project) {
     return myProjectToFrame.get(project);
   }
 
-  @Nullable
   @Override
-  public ProjectFrameHelper findFrameHelper(@Nullable Project project) {
+  public @Nullable ProjectFrameHelper findFrameHelper(@Nullable Project project) {
     if (project == null) {
       IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
       if (frame == null) {
@@ -458,16 +452,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return getFrameHelper(project);
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public IdeRootPane getProjectFrameRootPane(@Nullable Project project) {
+  public @Nullable IdeRootPane getProjectFrameRootPane(@Nullable Project project) {
     ProjectFrameHelper helper = myProjectToFrame.get(project);
     return helper == null ? null : helper.getRootPane();
   }
 
   @Override
-  @Nullable
-  public IdeFrame getIdeFrame(@Nullable Project project) {
+  public @Nullable IdeFrame getIdeFrame(@Nullable Project project) {
     if (project != null) {
       return getFrameHelper(project);
     }
@@ -488,8 +480,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return null;
   }
 
-  @Nullable
-  private static IdeFrame getIdeFrame(@NotNull Component component) {
+  private static @Nullable IdeFrame getIdeFrame(@NotNull Component component) {
     if (component instanceof IdeFrameImpl) {
       return ProjectFrameHelper.getFrameHelper((IdeFrameImpl)component);
     }
@@ -501,9 +492,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public ProjectFrameHelper removeAndGetRootFrame() {
+  public @Nullable ProjectFrameHelper removeAndGetRootFrame() {
     return myProjectToFrame.remove(null);
   }
 
@@ -519,14 +509,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frame.addComponentListener(myFrameStateListener);
   }
 
-  @NotNull
-  public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
+  public final @NotNull ProjectFrameHelper allocateFrame(@NotNull Project project) {
     return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(false), null));
   }
 
-  @NotNull
-  public final ProjectFrameHelper allocateFrame(@NotNull Project project,
-                                                @NotNull Supplier<@NotNull ? extends ProjectFrameHelper> projectFrameHelperFactory) {
+  public final @NotNull ProjectFrameHelper allocateFrame(@NotNull Project project,
+                                                         @NotNull Supplier<@NotNull ? extends ProjectFrameHelper> projectFrameHelperFactory) {
     ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
@@ -709,9 +697,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return defaultFrameInfoHelper.getModificationCount() + myLayout.getStateModificationCount();
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public FrameInfo getDefaultFrameInfo() {
+  public @Nullable FrameInfo getDefaultFrameInfo() {
     return defaultFrameInfoHelper.getInfo();
   }
 
