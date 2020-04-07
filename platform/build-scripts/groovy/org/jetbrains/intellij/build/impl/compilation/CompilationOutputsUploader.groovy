@@ -49,7 +49,7 @@ class CompilationOutputsUploader {
     sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
-  def upload() {
+  def upload(File outputDirectoryFile) {
     JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("$executorThreadsCount threads will be used for upload")
@@ -77,10 +77,13 @@ class CompilationOutputsUploader {
         uploader.upload(sourcePath, zipFile)
         File zipCopy = new File(tmpDir, sourcePath)
         File zipArtifact = new File(tmpDir, "caches.zip")
+        File compilationArtifact = new File(tmpDir, "output.zip")
         FileUtil.copy(zipFile, zipCopy)
         FileUtil.copy(zipFile, zipArtifact)
         context.messages.artifactBuilt(zipArtifact.absolutePath)
         FileUtil.delete(zipFile)
+        zipBinaryData(compilationArtifact, outputDirectoryFile)
+        context.messages.artifactBuilt(compilationArtifact.absolutePath)
 
         // Upload compilation metadata
         sourcePath = "metadata/$commitHash"
