@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.FusInputEvent
 import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
 
-class TooltipActionsLogger : FeatureUsagesCollector() {
+class TooltipActionsLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   enum class Source(private val text: String) {

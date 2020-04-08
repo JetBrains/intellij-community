@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.VarargEventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,7 +17,7 @@ import java.awt.event.InputEvent;
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolbarClicksCollector extends FeatureUsagesCollector {
+public class ToolbarClicksCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("toolbar", FeatureUsageLogger.getConfigVersion());
   private static final VarargEventId CLICKED = ActionsEventLogGroup.registerActionInvokedEvent(GROUP, "clicked");
 

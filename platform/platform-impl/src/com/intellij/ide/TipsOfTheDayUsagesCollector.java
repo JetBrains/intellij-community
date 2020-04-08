@@ -6,13 +6,13 @@ import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TipsOfTheDayUsagesCollector extends FeatureUsagesCollector {
+public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 3);
 
   public enum DialogType { automatically, manually }

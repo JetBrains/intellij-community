@@ -3,9 +3,9 @@ package com.intellij.accessibility;
 
 import com.intellij.internal.statistic.eventLog.EventId;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
-public class AccessibilityUsageTrackerCollector extends FeatureUsagesCollector {
+public class AccessibilityUsageTrackerCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("accessibility", 1);
 
   @Override
