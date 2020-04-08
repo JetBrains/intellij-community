@@ -86,12 +86,14 @@ public class BatchEvaluator {
     final EvaluationContext evaluationContext = command.getEvaluationContext();
     final SuspendContext suspendContext = evaluationContext.getSuspendContext();
 
-    if(!Registry.is("debugger.batch.evaluation") || !hasBatchEvaluator(evaluationContext)) {
+    if (!Registry.is("debugger.batch.evaluation") ||
+        !Registry.is("debugger.batch.evaluation.force") ||
+        !hasBatchEvaluator(evaluationContext)) {
       myDebugProcess.getManagerThread().invokeCommand(command);
     }
     else {
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
-      if(toStringCommands == null) {
+      if (toStringCommands == null) {
         final List<ToStringCommand> commands = new ArrayList<>();
         toStringCommands = commands;
         myBuffer.put(suspendContext, commands);

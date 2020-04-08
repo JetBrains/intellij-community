@@ -14,11 +14,14 @@ public class BatchEvaluatorServer {
    */
   public static String evaluate(Object[] objects) throws IOException {
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
-    for (int idx = 0; idx < objects.length; idx++) {
+    for (Object object : objects) {
       String res;
       int length;
       try {
-        res = objects[idx].toString();
+        res = object.toString();
+        if (res == null) {
+          res = "null";
+        }
         length = res.length();
       }
       catch (Throwable e) {
