@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
@@ -12,6 +13,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.LiteralFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This inspection adds a {@link ConvertNumericLiteralQuickFix} quickfix to remove underscores from numeric literals
+ * if they have some. This inspection allows to revert the changes made by {@link InsertLiteralUnderscoresInspection}
+ *
+ * @see InsertLiteralUnderscoresInspection
+ */
 public final class RemoveLiteralUnderscoresInspection extends LocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -33,7 +40,7 @@ public final class RemoveLiteralUnderscoresInspection extends LocalInspectionToo
         if (converted.length() == text.length()) return;
 
         final String displayMessage = JavaBundle.message("inspection.remove.literal.underscores.display.name");
-        final String actionText = JavaBundle.message("inspection.numeric.literal.underscores.fix.name", text, converted);
+        final String actionText = CommonQuickFixBundle.message("fix.replace.x.with.y", text, converted);
         final ConvertNumericLiteralQuickFix quickFix = new ConvertNumericLiteralQuickFix(converted, actionText);
 
         holder.registerProblem(literalExpression, displayMessage, quickFix);

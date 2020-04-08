@@ -3,7 +3,9 @@ package com.intellij.codeInspection.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
@@ -12,7 +14,16 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Converts content of string literals to proposed values. The sole purpose of the class is to act as quickfix
+ * for adding/removing underscores to/from numeric literals.
+ *
+ * @see InsertLiteralUnderscoresInspection
+ * @see RemoveLiteralUnderscoresInspection
+ */
 final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
+
+  private static final Logger LOGGER = Logger.getInstance(ConvertNumericLiteralQuickFix.class);
 
   @NotNull private final String myConvertedValue;
   @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) private final String myName;
@@ -36,7 +47,11 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    assert element != null : "Problem descriptor cannot be without PsiElement";
+
+    if (element == null) {
+      LOGGER.warn("Problem descriptor cannot be without PsiElement");
+      return;
+    }
 
     final PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myConvertedValue, null);
     element.replace(replacement);

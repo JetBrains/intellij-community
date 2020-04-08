@@ -19,17 +19,9 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.numeric.InsertLiteralUnderscoresInspection;
 import com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_1_7;
-
 public class UnderscoresInLiteralsTest extends LightQuickFixParameterizedTestCase {
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
-  }
 
   @Override
   protected String getBasePath() {
