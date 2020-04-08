@@ -94,7 +94,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public ScrollingModel getScrollingModel() {
-    throw notImplemented();
+    return new ImaginaryScrollingModel(this);
   }
 
   @NotNull
