@@ -88,8 +88,8 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     return instantiate(aClass, container, true);
   }
 
-  public static @NotNull <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container, boolean allowNonPublicClasses) {
-    ComponentAdapter adapter = new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses);
+  public static @NotNull <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container, @SuppressWarnings("unused") boolean allowNonPublicClasses) {
+    ComponentAdapter adapter = new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass);
     @SuppressWarnings("unchecked") T t = (T)adapter.getComponentInstance(container);
     return t;
   }

@@ -28,8 +28,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
@@ -41,8 +39,8 @@ import org.picocontainer.PicoContainer
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
-import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
@@ -82,7 +80,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
   }
 
-  private val picoContainer = DefaultPicoContainer(parent?.getPicoContainer())
+  private val picoContainer: DefaultPicoContainer = DefaultPicoContainer(parent?.picoContainer)
   private val containerState = AtomicReference(ContainerState.ACTIVE)
 
   protected val containerStateName: String
@@ -108,7 +106,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     private set
 
   private val lightServices: ConcurrentMap<Class<*>, Any>? = when {
-    parent == null || parent.picoContainer.parent == null -> ContainerUtil.newConcurrentMap()
+    parent == null || parent.picoContainer.parent == null -> ConcurrentHashMap()
     else -> null
   }
 
@@ -202,7 +200,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       val listeners = containerDescriptor.listeners
       if (listeners.isNotEmpty()) {
         if (map == null) {
-          map = ContainerUtil.newConcurrentMap()
+          map = ConcurrentHashMap()
         }
 
         for (listener in listeners) {
@@ -210,7 +208,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             continue
           }
 
-          map.getOrPut(listener.topicClassName) { SmartList() }.add(listener)
+          map.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
         }
       }
 
@@ -466,14 +464,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       return result
     }
 
-    HeavyProcessLatch.INSTANCE.processStarted("Creating service '${serviceClass.name}'", HeavyProcessLatch.Type.Process).use {
-      if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+      result = createLightService(serviceClass)
+    }
+    else {
+      ProgressManager.getInstance().executeNonCancelableSection {
         result = createLightService(serviceClass)
-      }
-      else {
-        ProgressManager.getInstance().executeNonCancelableSection {
-          result = createLightService(serviceClass)
-        }
       }
     }
 
@@ -596,7 +592,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
       else {
         val constructors = aClass.declaredConstructors
-
         var constructor: Constructor<*>? = if (constructors.size > 1) {
           // see ConfigurableEP - prefer constructor that accepts our instance
           constructors.firstOrNull { it.parameterCount == 1 && it.parameterTypes[0].isAssignableFrom(javaClass) }
@@ -721,18 +716,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
 
   @Internal
-  fun unloadServices(containerDescriptor: ContainerDescriptor): List<Any> {
-    val unloadedInstances = mutableListOf<Any>()
-    val picoContainer = checkStateAndGetPicoContainer()
-    for (service in containerDescriptor.services) {
-      val adapter = picoContainer.unregisterComponent(service.getInterface()) as? ServiceComponentAdapter ?: continue
-      val instance = adapter.getInstance<Any>(this, null, createIfNeeded = false) ?: continue
+  fun unloadServices(services: List<ServiceDescriptor>) {
+    val container = checkStateAndGetPicoContainer()
+    val stateStore = stateStore
+    for (service in services) {
+      val adapter = (container.unregisterComponent(service.`interface`) ?: continue) as ServiceComponentAdapter
+      val instance = adapter.getInitializedInstance() ?: continue
       if (instance is Disposable) {
         Disposer.dispose(instance)
       }
-      unloadedInstances.add(instance)
+      stateStore.unloadComponent(instance)
     }
-    return unloadedInstances
   }
 
   @Internal
@@ -870,7 +864,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   @Suppress("DEPRECATION")
   override fun getComponent(name: String): BaseComponent? {
-    for (componentAdapter in checkStateAndGetPicoContainer().componentAdapters) {
+    for (componentAdapter in checkStateAndGetPicoContainer().unsafeGetAdapters()) {
       if (componentAdapter is MyComponentAdapter) {
         val instance = componentAdapter.getInitializedInstance()
         if (instance is BaseComponent && name == instance.componentName) {
@@ -905,7 +899,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         }
       }
     }
-    return ContainerUtil.notNullize(result)
+    return result ?: emptyList()
   }
 
   protected open fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {

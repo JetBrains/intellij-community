@@ -2,10 +2,13 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -61,5 +64,61 @@ public final class ExtensionProcessingHelper {
     }
 
     return null;
+  }
+
+  public static @NotNull <@NotNull K, @NotNull T> List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point, @NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
+    ConcurrentMap<Function<T, K>, Map<K, List<T>>> keyMapperToCache = point.getCacheMap();
+    Map<K, List<T>> cache = keyMapperToCache.get(keyMapper);
+    if (cache == null) {
+      cache = buildCacheForGroupingKeyMapper(keyMapper, point);
+      Map<K, List<T>> prev = keyMapperToCache.putIfAbsent(keyMapper, cache);
+      if (prev != null) {
+        cache = prev;
+      }
+    }
+
+    List<T> result = cache.get(key);
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  /**
+   * To exclude extension from result, return null key.
+   */
+  public static <@NotNull K, @NotNull T> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point, @NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
+    ConcurrentMap<Function<T, K>, Map<K, T>> keyMapperToCache = point.getCacheMap();
+    Map<K, T> cache = keyMapperToCache.get(keyMapper);
+    if (cache == null) {
+      cache = buildCacheForKeyMapper(keyMapper, point);
+      Map<K, T> prev = keyMapperToCache.putIfAbsent(keyMapper, cache);
+      if (prev != null) {
+        cache = prev;
+      }
+    }
+    return cache.get(key);
+  }
+
+  private static  @NotNull <K, T> Map<K, List<T>> buildCacheForGroupingKeyMapper(@NotNull Function<T, K> keyMapper, @NotNull ExtensionPointImpl<T> point) {
+    // use HashMap instead of THashMap - a lot of keys not expected, nowadays HashMap is a more optimized (e.g. computeIfAbsent implemented in an efficient manner)
+    Map<K, List<T>> cache = new HashMap<>();
+    for (T extension : point.getExtensionList()) {
+      K key = keyMapper.apply(extension);
+      if (key != null) {
+        // SmartList is not used - expected that list size will be > 1
+        cache.computeIfAbsent(key, k -> new ArrayList<>()).add(extension);
+      }
+    }
+    return cache;
+  }
+
+  private static @NotNull <K, T> Map<K, T> buildCacheForKeyMapper(@NotNull Function<T, K> keyMapper, @NotNull ExtensionPointImpl<T> point) {
+    List<T> extensions = point.getExtensionList();
+    Map<K, T> cache = new THashMap<>(extensions.size());
+    for (T extension : extensions) {
+      K key = keyMapper.apply(extension);
+      if (key != null) {
+        cache.put(key, extension);
+      }
+    }
+    return cache;
   }
 }

@@ -3,14 +3,12 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.List;
 
 public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   private final @NotNull PluginId myPluginId;
@@ -87,11 +85,6 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   }
 
   @Override
-  public PluginId @NotNull [] getDependentPluginIds() {
-    return PluginId.EMPTY_ARRAY;
-  }
-
-  @Override
   public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
@@ -113,11 +106,6 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
 
   @Override
   public String getCategory() {
-    return null;
-  }
-
-  @Override
-  public @Nullable List<Element> getActionDescriptionElements() {
     return null;
   }
 

@@ -1,10 +1,10 @@
-/*****************************************************************************
+/*
  * Copyright (C) PicoContainer Organization. All rights reserved.            *
  * ------------------------------------------------------------------------- *
  * The software in this package is published under the terms of the BSD      *
  * style license a copy of which has been included with this distribution in *
  * the LICENSE.txt file.                                                     *
- *****************************************************************************/
+*/
 package org.picocontainer;
 
 /**
@@ -16,10 +16,8 @@ package org.picocontainer;
  * @author Jon Tirs&eacute;n
  * @author Paul Hammant
  * @author Aslak Helles&oslash;y
- * @version $Revision: 1801 $
  * @see MutablePicoContainer an extension of the PicoContainer interface which allows you to modify the contents of the
  * container.
- * @since 1.0
  */
 public interface ComponentAdapter {
   /**
@@ -43,15 +41,15 @@ public interface ComponentAdapter {
    * @return the component instance.
    * @throws PicoInitializationException if the component could not be instantiated.
    * @throws PicoIntrospectionException  if the component has dependencies which could not be resolved, or
-   *                                     instantiation of the component lead to an ambigous situation within the
+   *                                     instantiation of the component lead to an ambiguous situation within the
    *                                     container.
    */
-  Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException;
+  Object getComponentInstance(PicoContainer container);
 
   /**
    * @deprecated Not used anymore.
    */
   @Deprecated
-  default void verify(PicoContainer container) {
+  default void verify(@SuppressWarnings("unused") PicoContainer container) {
   }
 }

@@ -78,6 +78,7 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
     return (Class<T>)implementationClassOrName;
   }
 
+  // used externally - cannot be package-local
   public final @NotNull String getAssignableToClassName() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {

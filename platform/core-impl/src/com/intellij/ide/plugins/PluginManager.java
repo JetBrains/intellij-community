@@ -156,6 +156,7 @@ public final class PluginManager {
     return PluginManagerCore.getLoadedPlugins();
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     return PluginManagerCore.getPluginOrPlatformByClassName(className);
   }
@@ -193,6 +194,7 @@ public final class PluginManager {
   /**
    * Consider using {@link #enablePlugins(Collection, boolean)}.
    */
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean enablePlugin(@NotNull PluginId id) {
     return PluginManagerCore.enablePlugin(id);
   }
@@ -206,22 +208,19 @@ public final class PluginManager {
   public static void loadDescriptorFromFile(@NotNull IdeaPluginDescriptorImpl descriptor,
                                             @NotNull Path file,
                                             @Nullable SafeJdomFactory factory,
-                                            boolean ignoreMissingInclude,
                                             @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
-    int flags = 0;
-    if (ignoreMissingInclude) {
-      flags |= DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
-    }
+    int flags = DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, descriptor.isBundled(), /* doesn't matter */ false,
                                                                     PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
-    descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), context.pathResolver, context, descriptor);
+    descriptor.readExternal(JDOMUtil.load(file, factory), context.pathResolver, context, descriptor);
   }
 
   public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean isDevelopedByJetBrains(@Nullable String vendorString) {
     if (vendorString == null) {
       return false;
@@ -239,6 +238,7 @@ public final class PluginManager {
     return false;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
     Set<PluginId> disabled = PluginManagerCore.getDisabledIds();
     int sizeBefore = disabled.size();
@@ -260,6 +260,7 @@ public final class PluginManager {
     PluginManagerCore.trySaveDisabledPlugins(disabled);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     List<IdeaPluginDescriptorImpl> result = PluginManagerCore.ourLoadedPlugins;
     if (result == null) {
@@ -274,10 +275,12 @@ public final class PluginManager {
     return null;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean hideImplementationDetails() {
     return !Registry.is("plugins.show.implementation.details");
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @ApiStatus.Internal
   public void setPlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     @SuppressWarnings("SuspiciousToArrayCall")

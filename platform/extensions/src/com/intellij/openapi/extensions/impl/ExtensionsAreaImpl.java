@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -19,15 +18,16 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+@ApiStatus.Internal
 public final class ExtensionsAreaImpl implements ExtensionsArea {
   private static final Logger LOG = Logger.getInstance(ExtensionsAreaImpl.class);
-  public static final String ATTRIBUTE_AREA = "area";
 
-  private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
+  private static final boolean DEBUG_REGISTRATION = false;
 
   private final ComponentManager myComponentManager;
-  private final Map<String, ExtensionPointImpl<?>> myExtensionPoints = ContainerUtil.newConcurrentMap();
+  private final Map<String, ExtensionPointImpl<?>> myExtensionPoints = new ConcurrentHashMap<>();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
 
   public ExtensionsAreaImpl(@NotNull ComponentManager componentManager) {
@@ -101,6 +101,40 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement) {
     ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myComponentManager);
+  }
+
+  public boolean unregisterExtensions(@NotNull String extensionPointName, @NotNull PluginDescriptor loadedPluginDescriptor, @NotNull List<Element> elements, @NotNull List<Runnable> listenerCallbacks) {
+    ExtensionPointImpl<?> point = myExtensionPoints.get(extensionPointName);
+    if (point == null) {
+      return false;
+    }
+
+    point.unregisterExtensions(myComponentManager, loadedPluginDescriptor, elements, listenerCallbacks);
+    return true;
+  }
+
+  // extensionPoints here are raw and not initialized (not the same instance, only name can be used)
+  public void resetExtensionPoints(@NotNull List<ExtensionPointImpl<?>> extensionPoints) {
+    for (ExtensionPointImpl<?> point : extensionPoints) {
+      ExtensionPointImpl<?> extensionPoint = myExtensionPoints.get(point.getName());
+      if (extensionPoint != null) {
+        extensionPoint.reset();
+      }
+    }
+  }
+
+  public void clearUserCache() {
+    myExtensionPoints.values().forEach(ExtensionPointImpl::clearUserCache);
+  }
+
+  // note about extension point here the same as for resetExtensionPoints
+  /**
+   * You must call {@link #resetExtensionPoints(PluginId)} before otherwise event ExtensionEvent.REMOVED will be not fired.
+   */
+  public void unregisterExtensionPoints(@NotNull List<ExtensionPointImpl<?>> extensionPoints) {
+    for (ExtensionPointImpl<?> point : extensionPoints) {
+      myExtensionPoints.remove(point.getName());
+    }
   }
 
   public static @NotNull String extractPointName(@NotNull Element extensionElement, @Nullable String ns) {
@@ -244,9 +278,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public @Nullable <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
-    @SuppressWarnings("unchecked")
-    ExtensionPointImpl<T> extensionPoint = (ExtensionPointImpl<T>)myExtensionPoints.get(extensionPointName);
-    return extensionPoint;
+    //noinspection unchecked
+    return (ExtensionPointImpl<T>)myExtensionPoints.get(extensionPointName);
   }
 
   @Override
@@ -292,8 +325,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void unregisterExtensionPoint(final @NotNull String extensionPointName) {
-    ExtensionPoint<?> extensionPoint = myExtensionPoints.get(extensionPointName);
+  public void unregisterExtensionPoint(@NotNull String extensionPointName) {
+    ExtensionPointImpl<?> extensionPoint = myExtensionPoints.get(extensionPointName);
     if (extensionPoint != null) {
       extensionPoint.reset();
       myExtensionPoints.remove(extensionPointName);

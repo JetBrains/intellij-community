@@ -19,7 +19,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.*;
@@ -70,6 +70,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   private final boolean myDynamic;
 
+  private final AtomicReference<ConcurrentMap<Function<T, ?>, Map<?, ?>>> keyMapperToCacheRef = new AtomicReference<>();
+
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
                      @NotNull PluginDescriptor pluginDescriptor,
@@ -84,7 +86,16 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     myComponentManager = value;
   }
 
-  @NotNull
+  final @NotNull <@NotNull K, @NotNull V> ConcurrentMap<Function<@NotNull T, @Nullable K>, Map<@NotNull K, @NotNull V>> getCacheMap() {
+    @SuppressWarnings("rawtypes")
+    ConcurrentMap keyMapperToCache = keyMapperToCacheRef.get();
+    if (keyMapperToCache == null) {
+      keyMapperToCache = keyMapperToCacheRef.updateAndGet(prev -> prev == null ? new ConcurrentHashMap<>() : prev);
+    }
+    //noinspection unchecked
+    return (ConcurrentMap<Function<T, K>, Map<K, V>>)keyMapperToCache;
+  }
+
   @Override
   public @NotNull String getName() {
     return myName;
@@ -515,7 +526,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   public synchronized void maskAll(@NotNull List<? extends T> list, @NotNull Disposable parentDisposable, boolean fireEvents) {
     if (POINTS_IN_READONLY_MODE == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      POINTS_IN_READONLY_MODE = ContainerUtil.newIdentityTroveSet();
+      POINTS_IN_READONLY_MODE = Collections.newSetFromMap(new IdentityHashMap<>());
     }
     else {
       assertNotReadOnlyMode();
@@ -600,10 +611,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return result;
   }
 
-  @Override
-  public synchronized boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
-                                                   boolean stopAfterFirstMatch,
-                                                   List<Runnable> listenerCallbacks) {
+  /**
+   * Unregisters extensions for which the specified predicate returns false and collects the runnables for listener invocation into the given list
+   * so that listeners can be called later.
+   */
+  final synchronized boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
+                                                  boolean stopAfterFirstMatch,
+                                                  @NotNull List<Runnable> listenerCallbacks) {
     boolean found = false;
     ExtensionPointListener<T>[] listeners = myListeners;
     List<ExtensionComponentAdapter> removedAdapters = listeners.length > 0 ? new SmartList<>() : null;
@@ -636,10 +650,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return found;
   }
 
-  public abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
-                                            @NotNull PluginDescriptor pluginDescriptor,
-                                            @NotNull List<Element> elements,
-                                            List<Runnable> listenerCallbacks);
+  abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
+                                     @NotNull PluginDescriptor pluginDescriptor,
+                                     @NotNull List<Element> elements,
+                                     List<Runnable> listenerCallbacks);
 
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull T extensionObject,
@@ -761,14 +775,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     removeListener(listener);
   }
 
-  @Override
-  public synchronized void reset() {
+  public final synchronized void reset() {
     List<ExtensionComponentAdapter> adapters = myAdapters;
     myAdapters = Collections.emptyList();
     if (!adapters.isEmpty()) {
       notifyListeners(ExtensionEvent.REMOVED, adapters, myListeners);
     }
     clearCache();
+    myExtensionClass = null;
   }
 
   private static @NotNull <T> T castComponentInstance(@NotNull ExtensionComponentAdapter adapter) {
@@ -795,17 +809,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return extensionClass;
   }
 
-  public void clearExtensionClass() {
-    myExtensionClass = null;
-  }
-
   @Override
-  public String toString() {
+  public final String toString() {
     return getName();
   }
 
   // private, internal only for tests
-  synchronized void addExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  final synchronized void addExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     List<ExtensionComponentAdapter> list = new ArrayList<>(myAdapters.size() + 1);
     list.addAll(myAdapters);
     list.add(adapter);
@@ -813,11 +823,18 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     clearCache();
   }
 
+  final void clearUserCache() {
+    ConcurrentMap<Function<T, ?>, Map<?, ?>> map = keyMapperToCacheRef.get();
+    if (map != null) {
+      map.clear();
+    }
+  }
+
   private void clearCache() {
     myExtensionsCache = null;
     myExtensionsCacheAsArray = null;
     adaptersIsSorted = false;
-    keyMapperToCacheRef.set(null);
+    clearUserCache();
 
     // asserted here because clearCache is called on any write action
     assertNotReadOnlyMode();
@@ -833,7 +850,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
                                                                                                         @NotNull PluginDescriptor pluginDescriptor,
                                                                                                         @NotNull ComponentManager componentManager);
 
-  synchronized void createAndRegisterAdapter(@NotNull Element extensionElement,
+  final synchronized void createAndRegisterAdapter(@NotNull Element extensionElement,
                                              @NotNull PluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager) {
     addExtensionAdapter(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, componentManager));

@@ -80,7 +80,7 @@ public class InstalledPluginsTableModel {
       }
 
       Boolean enabled = myEnabled.get(pluginId);
-      if (enabled != null && !enabled.booleanValue()) {
+      if (enabled != null && !enabled) {
         continue;
       }
 
@@ -88,24 +88,25 @@ public class InstalledPluginsTableModel {
         pluginIdMap = PluginManagerCore.buildPluginIdMap();
       }
 
-      PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, (depId, descriptor) -> {
-        if (depId.equals(pluginId)) {
-          return FileVisitResult.CONTINUE;
-        }
-
-        Boolean enabled1 = myEnabled.get(depId);
-        if ((enabled1 == null && !ourState.wasUpdated(depId)) ||
-                (enabled1 != null && !enabled1.booleanValue())) {
-          Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
-          if (required == null) {
-            required = new HashSet<>();
-            myDependentToRequiredListMap.put(pluginId, required);
+      if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
+        PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, pluginIdMap, (depId, descriptor) -> {
+          if (depId.equals(pluginId)) {
+            return FileVisitResult.CONTINUE;
           }
-          required.add(depId);
-        }
 
-        return FileVisitResult.CONTINUE;
-      });
+          Boolean enabled1 = myEnabled.get(depId);
+          if ((enabled1 == null && !ourState.wasUpdated(depId)) || (enabled1 != null && !enabled1)) {
+            Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
+            if (required == null) {
+              required = new HashSet<>();
+              myDependentToRequiredListMap.put(pluginId, required);
+            }
+            required.add(depId);
+          }
+
+          return FileVisitResult.CONTINUE;
+        });
+      }
 
       if (enabled == null && !myDependentToRequiredListMap.containsKey(pluginId) && PluginManagerCore.isCompatible(rootDescriptor)) {
         myEnabled.put(pluginId, true);
@@ -138,12 +139,12 @@ public class InstalledPluginsTableModel {
 
   public boolean isEnabled(final PluginId pluginId) {
     final Boolean enabled = myEnabled.get(pluginId);
-    return enabled != null && enabled.booleanValue();
+    return enabled != null && enabled;
   }
 
   public boolean isDisabled(@NotNull final PluginId pluginId) {
     final Boolean enabled = myEnabled.get(pluginId);
-    return enabled != null && !enabled.booleanValue();
+    return enabled != null && !enabled;
   }
 
   public Map<PluginId, Boolean> getEnabledMap() {
@@ -164,7 +165,7 @@ public class InstalledPluginsTableModel {
       for (Iterator<IdeaPluginDescriptor> iterator = descriptorsToCheckDependencies.iterator(); iterator.hasNext(); ) {
         IdeaPluginDescriptor descriptor = iterator.next();
         final Boolean enabled = enabledContainer.get(descriptor.getPluginId());
-        if (enabled == null || !enabled.booleanValue()) {
+        if (enabled == null || !enabled) {
           iterator.remove();
         }
       }
@@ -172,9 +173,14 @@ public class InstalledPluginsTableModel {
 
     Set<PluginId> deps = new HashSet<>();
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
-    for (final IdeaPluginDescriptor descriptorToCheckDependencies : descriptorsToCheckDependencies) {
-      PluginId pluginId = descriptorToCheckDependencies.getPluginId();
-      PluginManagerCore.processAllDependencies(descriptorToCheckDependencies, false, pluginIdMap, (depId, descriptor) -> {
+    for (IdeaPluginDescriptor descriptorToCheckDependencies : descriptorsToCheckDependencies) {
+      if (!(descriptorToCheckDependencies instanceof IdeaPluginDescriptorImpl)) {
+        continue;
+      }
+
+      IdeaPluginDescriptorImpl pluginDescriptor = ((IdeaPluginDescriptorImpl)descriptorToCheckDependencies);
+      PluginId pluginId = pluginDescriptor.getPluginId();
+      PluginManagerCore.processAllDependencies(pluginDescriptor, false, pluginIdMap, (depId, descriptor) -> {
         if (depId == pluginId) {
           return FileVisitResult.CONTINUE;
         }
@@ -184,7 +190,7 @@ public class InstalledPluginsTableModel {
           return FileVisitResult.TERMINATE;
         }
 
-        if (newEnabledState && !enabled.booleanValue()) {
+        if (newEnabledState && !enabled) {
           deps.add(depId);
         }
 
@@ -192,11 +198,10 @@ public class InstalledPluginsTableModel {
           return FileVisitResult.CONTINUE;
         }
 
-        if (descriptorToCheckDependencies instanceof IdeaPluginDescriptorImpl &&
-            ((IdeaPluginDescriptorImpl)descriptorToCheckDependencies).isDeleted()) {
+        if (pluginDescriptor.isDeleted()) {
           return FileVisitResult.CONTINUE;
         }
-        if (descriptorToCheckDependencies.isImplementationDetail()) {
+        if (pluginDescriptor.isImplementationDetail()) {
           return FileVisitResult.CONTINUE;
         }
 

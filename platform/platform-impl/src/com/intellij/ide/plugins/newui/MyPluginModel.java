@@ -1048,11 +1048,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (pluginId == rootId || appInfo.isEssentialPlugin(pluginId) || !plugin.isEnabled() || plugin.isImplementationDetail()) {
         continue;
       }
-      if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
+      if (!(plugin instanceof IdeaPluginDescriptorImpl) || ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
         continue;
       }
 
-      PluginManagerCore.processAllDependencies(plugin, false, PluginManagerCore.buildPluginIdMap(), (id, descriptor) -> {
+      PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)plugin, false, PluginManagerCore.buildPluginIdMap(), (id, descriptor) -> {
         if (id == rootId) {
           result.add(plugin);
           return FileVisitResult.TERMINATE;

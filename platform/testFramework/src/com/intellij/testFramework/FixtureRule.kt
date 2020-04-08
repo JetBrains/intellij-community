@@ -56,7 +56,6 @@ open class ApplicationRule : ExternalResource() {
 
   public final override fun before() {
     TestApplicationManager.getInstance()
-    TestRunnerUtil.replaceIdeEventQueueSafely()
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
 }

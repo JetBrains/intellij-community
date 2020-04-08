@@ -12,7 +12,10 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionInstantiationException;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
@@ -27,7 +30,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -344,13 +346,7 @@ public final class PluginManagerCore {
 
         PluginId pluginId = PluginId.getId(tokens.get(0));
         List<String> versions = tokens.subList(1, tokens.size());
-
-        Set<String> set = result.get(pluginId);
-        if (set == null) {
-          set = new HashSet<>();
-          result.put(pluginId, set);
-        }
-        set.addAll(versions);
+        result.computeIfAbsent(pluginId, k -> new HashSet<>()).addAll(versions);
       }
     }
     catch (IOException e) {
@@ -551,7 +547,7 @@ public final class PluginManagerCore {
    * for such plugins to avoid breaking compatibility with them.
    */
   @Nullable
-  private static IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor,
+  private static IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptorImpl descriptor,
                                                                 @Nullable IdeaPluginDescriptorImpl javaDep,
                                                                 boolean hasAllModules) {
     // skip our plugins as expected to be up-to-date whether bundled or not
@@ -567,8 +563,13 @@ public final class PluginManagerCore {
     return hasModuleDependencies(descriptor) ? null : javaDep;
   }
 
-  static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
-    for (PluginId depId : descriptor.getDependentPluginIds()) {
+  static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    if (descriptor.pluginDependencies == null) {
+      return false;
+    }
+
+    for (PluginDependency dependency : descriptor.pluginDependencies) {
+      PluginId depId = dependency.id;
       if (depId == JAVA_PLUGIN_ID || depId == JAVA_MODULE_ID || isModuleDependency(depId)) {
         return true;
       }
@@ -716,10 +717,14 @@ public final class PluginManagerCore {
     boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
-      PluginId[] dependentPluginIds = rootDescriptor.getDependentPluginIds();
+      List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
+      if (dependencies == null) {
+        dependencies = Collections.emptyList();
+      }
+
       IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
       PluginId[] optionalDependentPluginIds = withOptional ? rootDescriptor.getOptionalDependentPluginIds() : PluginId.EMPTY_ARRAY;
-      int capacity = dependentPluginIds.length - (withOptional ? 0 : optionalDependentPluginIds.length);
+      int capacity = dependencies.size() - (withOptional ? 0 : optionalDependentPluginIds.length);
       if (capacity == 0) {
         return implicitDep == null ? Collections.emptyList() : Collections.singletonList(implicitDep);
       }
@@ -737,20 +742,15 @@ public final class PluginManagerCore {
         }
       }
 
-      boolean excludeOptional = !withOptional && optionalDependentPluginIds.length > 0 && optionalDependentPluginIds.length != dependentPluginIds.length;
+      boolean excludeOptional = !withOptional && optionalDependentPluginIds.length > 0 && optionalDependentPluginIds.length != dependencies.size();
 
-      loop:
-      for (PluginId dependentPluginId : dependentPluginIds) {
-        if (excludeOptional) {
-          for (PluginId id : optionalDependentPluginIds) {
-            if (id == dependentPluginId) {
-              continue loop;
-            }
-          }
+      for (PluginDependency dependency : dependencies) {
+        if (excludeOptional && dependency.isOptional) {
+          continue;
         }
 
         // check for missing optional dependency
-        IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependentPluginId);
+        IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependency.id);
         // if 'dep' refers to a module we need to check the real plugin containing this module only if it's still enabled,
         // otherwise the graph will be inconsistent
         if (dep == null) {
@@ -813,9 +813,9 @@ public final class PluginManagerCore {
                                                                           @NotNull DescriptorLoadingContext context) {
     Path descriptorFile = file.resolve(descriptorRelativePath);
     try {
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, context.isBundled);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, descriptorFile.getParent(), context.isBundled);
       Element element = JDOMUtil.load(descriptorFile, context.parentContext.getXmlFactory());
-      descriptor.readExternal(element, descriptorFile.getParent(), context.pathResolver, context, descriptor);
+      descriptor.readExternal(element, context.pathResolver, context, descriptor);
       return descriptor;
     }
     catch (NoSuchFileException e) {
@@ -853,8 +853,8 @@ public final class PluginManagerCore {
         return null;
       }
 
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, context.isBundled);
-      if (descriptor.readExternal(element, metaInf, pathResolver, context, descriptor)) {
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, metaInf, context.isBundled);
+      if (descriptor.readExternal(element, pathResolver, context, descriptor)) {
         descriptor.jarFiles = Collections.singletonList(descriptor.getPluginPath());
       }
       return descriptor;
@@ -913,7 +913,9 @@ public final class PluginManagerCore {
                                                                             @NotNull DescriptorLoadingContext context) {
     String descriptorRelativePath = META_INF + pathName;
     IdeaPluginDescriptorImpl descriptor = loadDescriptorFromDir(file, descriptorRelativePath, null, context);
-    if (descriptor != null) return descriptor;
+    if (descriptor != null) {
+      return descriptor;
+    }
 
     List<Path> pluginJarFiles = new ArrayList<>(), dirs = new ArrayList<>();
     try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
@@ -1264,6 +1266,7 @@ public final class PluginManagerCore {
     if (isUnitTestMode) {
       flags |= DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
     }
+    flags |= DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
     if (isUnitTestMode || isRunningFromSources()) {
       flags |= DescriptorListLoadingContext.CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS;
     }
@@ -1304,76 +1307,71 @@ public final class PluginManagerCore {
     if (isRunningFromSources()) {
       // fix optional configs
       for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
-        if (!descriptor.isUseCoreClassLoader() || descriptor.optionalConfigs == null) {
+        if (!descriptor.isUseCoreClassLoader() || descriptor.pluginDependencies == null) {
           continue;
         }
 
-        descriptor.optionalConfigs.forEach((id, entries) -> {
-          IdeaPluginDescriptorImpl dependent = idMap.get(id);
-          if (dependent != null && !dependent.isUseCoreClassLoader()) {
-            entries.clear();
+        for (PluginDependency dependency : descriptor.pluginDependencies) {
+          if (dependency.subDescriptor == null) {
+            continue;
           }
-        });
+
+          IdeaPluginDescriptorImpl dependent = idMap.get(dependency.id);
+          if (dependent != null && !dependent.isUseCoreClassLoader()) {
+            dependency.subDescriptor = null;
+          }
+        }
       }
     }
 
-    for (IdeaPluginDescriptorImpl rootDescriptor : enabledPlugins) {
-      mergeOptionalDescriptors(rootDescriptor, rootDescriptor, idMap);
-    }
-
-    for (IdeaPluginDescriptorImpl descriptor : enabledPlugins) {
-      descriptor.optionalConfigs = null;
+    for (IdeaPluginDescriptorImpl mainDescriptor : enabledPlugins) {
+      List<PluginDependency> pluginDependencies = mainDescriptor.pluginDependencies;
+      if (pluginDependencies != null) {
+        mergeOptionalDescriptors(mainDescriptor, pluginDependencies, idMap);
+      }
     }
   }
 
   private static void mergeOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl mergedDescriptor,
-                                               @NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                               @NotNull List<PluginDependency> pluginDependencies,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = rootDescriptor.optionalConfigs;
-    if (optionalDescriptors == null) {
-      return;
-    }
+    loop:
+    for (PluginDependency dependency : pluginDependencies) {
+      IdeaPluginDescriptorImpl subDescriptor = dependency.subDescriptor;
+      dependency.subDescriptor = null;
 
-    optionalDescriptors.forEach((dependencyId, entries) -> {
-      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependencyId);
-      if (dependencyDescriptor == null || !dependencyDescriptor.isEnabled()) {
-        return;
+      if (subDescriptor == null || dependency.isDisabledOrBroken) {
+        continue;
       }
 
-      loop:
-      for (IdeaPluginDescriptorImpl descriptor : entries) {
-        // check that plugin doesn't depend on unavailable plugin
-        for (PluginId id : descriptor.getDependentPluginIds()) {
-          IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(id);
+      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.id);
+      if (dependencyDescriptor == null || !dependencyDescriptor.isEnabled()) {
+        continue;
+      }
+
+      // check that plugin doesn't depend on unavailable plugin
+      if (subDescriptor.pluginDependencies != null) {
+        for (PluginDependency pluginDependency : subDescriptor.pluginDependencies) {
           // ignore if optional
-          if ((dependentDescriptor == null || !dependentDescriptor.isEnabled()) && !isOptional(descriptor, id)) {
-            continue loop;
+          if (!pluginDependency.isOptional) {
+            if (pluginDependency.isDisabledOrBroken) {
+              continue loop;
+            }
+
+            IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(pluginDependency.id);
+            if (dependentDescriptor == null || !dependentDescriptor.isEnabled()) {
+              continue loop;
+            }
           }
         }
-
-        mergedDescriptor.mergeOptionalConfig(descriptor);
-        mergeOptionalDescriptors(mergedDescriptor, descriptor, idMap);
       }
-    });
-  }
 
-  private static boolean isOptional(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull PluginId id) {
-    PluginId[] optional = descriptor.getOptionalDependentPluginIds();
-    if (optional.length == 0) {
-      // all are required, so, this one also required
-      return false;
-    }
-    if (optional.length == descriptor.getDependentPluginIds().length) {
-      // all are optional, so, this one also optional
-      return true;
-    }
-
-    for (PluginId otherId : optional) {
-      if (id == otherId) {
-        return true;
+      mergedDescriptor.mergeOptionalConfig(subDescriptor);
+      List<PluginDependency> childDependencies = subDescriptor.pluginDependencies;
+      if (childDependencies != null) {
+        mergeOptionalDescriptors(mergedDescriptor, childDependencies, idMap);
       }
     }
-    return false;
   }
 
   private static @NotNull Map<String, String[]> loadAdditionalLayoutMap() {
@@ -1467,7 +1465,7 @@ public final class PluginManagerCore {
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
-    Set<IdeaPluginDescriptor> explicitlyEnabled = null;
+    Set<IdeaPluginDescriptorImpl> explicitlyEnabled = null;
     if (selectedIds != null) {
       Set<PluginId> set = new HashSet<>();
       List<String> strings = StringUtil.split(selectedIds, ",");
@@ -1486,7 +1484,7 @@ public final class PluginManagerCore {
     }
     else if (selectedCategory != null) {
       explicitlyEnabled = new LinkedHashSet<>();
-      for (IdeaPluginDescriptor descriptor : descriptors) {
+      for (IdeaPluginDescriptorImpl descriptor : descriptors) {
         if (selectedCategory.equals(descriptor.getCategory())) {
           explicitlyEnabled.add(descriptor);
         }
@@ -1495,9 +1493,9 @@ public final class PluginManagerCore {
 
     if (explicitlyEnabled != null) {
       // add all required dependencies
-      Set<IdeaPluginDescriptor> finalExplicitlyEnabled = explicitlyEnabled;
+      Set<IdeaPluginDescriptorImpl> finalExplicitlyEnabled = explicitlyEnabled;
       Set<IdeaPluginDescriptor> depProcessed = new HashSet<>();
-      for (IdeaPluginDescriptor descriptor : new ArrayList<>(explicitlyEnabled)) {
+      for (IdeaPluginDescriptorImpl descriptor : new ArrayList<>(explicitlyEnabled)) {
         processAllDependencies(descriptor, false, idMap, depProcessed, (id, dependency) -> {
           finalExplicitlyEnabled.add(dependency);
           return FileVisitResult.CONTINUE;
@@ -1750,9 +1748,12 @@ public final class PluginManagerCore {
                                                                            @NotNull PluginId id,
                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                                                            @Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateMap) {
-    if (duplicateMap != null && duplicateMap.containsKey(id)) {
-      ContainerUtilRt.putValue(id, descriptor, duplicateMap);
-      return duplicateMap;
+    if (duplicateMap != null) {
+      List<IdeaPluginDescriptorImpl> duplicates = duplicateMap.get(id);
+      if (duplicates != null) {
+        duplicates.add(descriptor);
+        return duplicateMap;
+      }
     }
 
     IdeaPluginDescriptorImpl existingDescriptor = idMap.put(id, descriptor);
@@ -1783,14 +1784,15 @@ public final class PluginManagerCore {
       return true;
     }
 
-    // no deps at all or all are optional
-    if (descriptor.getDependentPluginIds().length == descriptor.getOptionalDependentPluginIds().length) {
+    // no deps at all
+    if (descriptor.pluginDependencies == null) {
       return true;
     }
 
     boolean result = true;
-    for (PluginId depId : descriptor.getDependentPluginIds()) {
-      if (loadedIds.contains(depId) || isOptional(descriptor, depId)) {
+    for (PluginDependency dependency : descriptor.pluginDependencies) {
+      PluginId depId = dependency.id;
+      if (dependency.isOptional || loadedIds.contains(depId)) {
         continue;
       }
 
@@ -1829,7 +1831,7 @@ public final class PluginManagerCore {
    *
    * @param pluginRoot jar file or directory which contains the configuration file
    * @param fileName   name of the configuration file located in 'META-INF' directory under {@code pluginRoot}
-   * @param area       area which extension points and extensions should be registered (e.g. {@link Extensions#getRootArea()} for application-level extensions)
+   * @param area       area which extension points and extensions should be registered (e.g. {@link com.intellij.openapi.components.ComponentManager#getRootArea()} for application-level extensions)
    */
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
@@ -1895,6 +1897,7 @@ public final class PluginManagerCore {
     }
   }
 
+  @SuppressWarnings("RedundantSuppression")
   public static @NotNull Logger getLogger() {
     // do not use class reference here
     //noinspection SSBasedInspection
@@ -1905,7 +1908,7 @@ public final class PluginManagerCore {
     public final List<String> pluginIds;
 
     EssentialPluginMissingException(@NotNull List<String> ids) {
-      super("Missing essential plugins: " + StringUtil.join(ids, ", "));
+      super("Missing essential plugins: " + String.join(", ", ids));
 
       pluginIds = ids;
     }
@@ -1953,22 +1956,23 @@ public final class PluginManagerCore {
    */
   @SuppressWarnings("UnusedReturnValue")
   @ApiStatus.Internal
-  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                boolean withOptionalDeps,
                                                @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
     return processAllDependencies(rootDescriptor, withOptionalDeps, buildPluginIdMap(), consumer);
   }
 
   @ApiStatus.Internal
-  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
     return processAllDependencies(rootDescriptor, withOptionalDeps, idToMap, new HashSet<>(), (id, descriptor) -> descriptor != null ? consumer.apply(descriptor) : FileVisitResult.SKIP_SUBTREE);
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   @ApiStatus.Internal
-  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                @NotNull BiFunction<? super @NotNull PluginId, ? super @Nullable IdeaPluginDescriptor, FileVisitResult> consumer) {
@@ -1976,23 +1980,23 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  private static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+  private static boolean processAllDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                @NotNull Set<IdeaPluginDescriptor> depProcessed,
-                                               @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptor, FileVisitResult> consumer) {
-    loop:
-    for (PluginId id : rootDescriptor.getDependentPluginIds()) {
-      if (!withOptionalDeps) {
-        for (PluginId otherId : rootDescriptor.getOptionalDependentPluginIds()) {
-          if (otherId == id) {
-            continue loop;
-          }
-        }
+                                               @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
+
+    if (rootDescriptor.pluginDependencies == null) {
+      return true;
+    }
+
+    for (PluginDependency dependency : rootDescriptor.pluginDependencies) {
+      if (!withOptionalDeps && dependency.isOptional) {
+        continue;
       }
 
-      IdeaPluginDescriptorImpl descriptor = idToMap.get(id);
-      PluginId pluginId = descriptor != null ? descriptor.getPluginId() : id;
+      IdeaPluginDescriptorImpl descriptor = idToMap.get(dependency.id);
+      PluginId pluginId = descriptor == null ? dependency.id : descriptor.getPluginId();
       switch (consumer.apply(pluginId, descriptor)) {
         case TERMINATE:
           return false;

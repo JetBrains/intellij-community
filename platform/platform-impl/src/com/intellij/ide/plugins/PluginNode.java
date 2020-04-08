@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginId;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -297,11 +296,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public PluginId @NotNull [] getDependentPluginIds() {
-    return PluginId.EMPTY_ARRAY;
-  }
-
-  @Override
   public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return myOptionalDependencies != null ? myOptionalDependencies : PluginId.EMPTY_ARRAY;
   }
@@ -309,12 +303,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @Override
   @Nullable
   public String getResourceBundleBaseName() {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public List<Element> getActionDescriptionElements() {
     return null;
   }
 

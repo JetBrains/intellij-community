@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +124,7 @@ public class PluginManagerTest {
   }
 
   @Test
-  public void testModulePluginIdContract() throws Exception {
+  public void testModulePluginIdContract() {
     Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules");
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath, Collections.emptySet(), true);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = PluginManagerCore.buildPluginIdMap(Collections.singletonList(descriptorBundled));
@@ -178,11 +179,11 @@ public class PluginManagerTest {
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNotNull(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild));
+    assertNotNull(PluginManagerCore.isIncompatible(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
   }
 
   private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNull(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild));
+    assertNull(PluginManagerCore.isIncompatible(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
   }
 
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
@@ -208,8 +209,9 @@ public class PluginManagerTest {
 
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
-      descriptor.readExternal(element, Paths.get(url), context.pathResolver, context, descriptor);
+      Path pluginPath = Paths.get(Objects.requireNonNull(url));
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath, pluginPath, isBundled);
+      descriptor.readExternal(element, context.pathResolver, context, descriptor);
       parentContext.result.add(descriptor, parentContext, /* overrideUseIfCompatible = */ false);
     }
     parentContext.close();
@@ -231,21 +233,26 @@ public class PluginManagerTest {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
       PluginId[] optIds = d.getOptionalDependentPluginIds();
-      Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalConfigs = d.optionalConfigs;
+      List<PluginDependency> pluginDependencies = d.pluginDependencies;
       for (PluginId depId : d.getDependentPluginIds()) {
         if (ArrayUtil.indexOf(optIds, depId) == -1) {
           sb.append("\n    <depends>").append(escape.apply(depId.getIdString())).append("</depends>");
         }
         else {
-          List<IdeaPluginDescriptorImpl> optionalConfigPerId = optionalConfigs == null ? null : optionalConfigs.get(depId);
-          if (optionalConfigPerId == null || optionalConfigPerId.isEmpty()) {
+          IdeaPluginDescriptorImpl optionalConfigPerId;
+          if (pluginDependencies == null) {
+            optionalConfigPerId = null;
+          }
+          else {
+            PluginDependency dependency = ContainerUtil.find(pluginDependencies, it -> it.id == depId);
+            optionalConfigPerId = dependency == null ? null : dependency.subDescriptor;
+          }
+          if (optionalConfigPerId == null) {
             sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(depId.getIdString())).append("</depends>");
           }
           else {
-            for (IdeaPluginDescriptorImpl descriptor : optionalConfigPerId) {
               sb.append("\n    <depends optional=\"true\" config-file=\"")
-                .append(descriptor.getPath().getName()).append("\">").append(escape.apply(depId.getIdString())).append("</depends>");
-            }
+                .append(optionalConfigPerId.getPath().getName()).append("\">").append(escape.apply(depId.getIdString())).append("</depends>");
           }
         }
       }

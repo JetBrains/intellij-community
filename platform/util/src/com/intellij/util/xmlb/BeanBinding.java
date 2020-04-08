@@ -7,7 +7,6 @@ import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import gnu.trove.TObjectFloatHashMap;
@@ -214,7 +213,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
             if (data == null) {
               data = new LinkedHashMap<>();
             }
-            ContainerUtilRt.putValue(binding, child, data);
+            data.computeIfAbsent(binding, it -> new ArrayList<>()).add(child);
           }
           else {
             if (accessorNameTracker != null) {

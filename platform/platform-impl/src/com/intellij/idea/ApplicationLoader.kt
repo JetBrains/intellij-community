@@ -477,7 +477,8 @@ fun callAppInitialized(app: Application, executor: Executor): CompletableFuture<
   }
 
   val result = mutableListOf<CompletableFuture<Void>>()
-  val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
+  val extensionArea = app.extensionArea as ExtensionsAreaImpl
+  val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
   extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, _ ->
     CompletableFuture.runAsync(Runnable {
       LOG.runAndLogException {

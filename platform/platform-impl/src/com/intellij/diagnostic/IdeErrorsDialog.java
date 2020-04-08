@@ -684,7 +684,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         continue;
       }
 
-      if (!PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, descriptor -> {
+      if (!PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor, false, pluginIdMap, descriptor -> {
         if (!descriptor.isEnabled()) {
           // if disabled, no need to process it's dependencies
           return FileVisitResult.SKIP_SUBTREE;

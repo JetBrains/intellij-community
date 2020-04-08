@@ -10,13 +10,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.storage.HeavyProcessLatch
-import com.intellij.util.pico.AssignableToComponentAdapter
 
 internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
                                        pluginDescriptor: PluginDescriptor,
                                        componentManager: ComponentManagerImpl,
                                        implementationClass: Class<*>? = null,
-                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass), AssignableToComponentAdapter {
+                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass) {
   override val implementationClassName: String
     get() = descriptor.implementation!!
 
@@ -58,8 +57,6 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
     componentManager.initializeComponent(instance, descriptor, pluginId)
     return instance
   }
-
-  override fun getAssignableToClassName(): String = descriptor.getInterface()
 
   override fun toString() = "ServiceAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
 }

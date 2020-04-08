@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.vfs.VirtualFile
@@ -7,9 +7,13 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.Provider
+import java.security.SecureRandom
 
 object DigestUtil {
   private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
+
+  @JvmStatic
+  val random by lazy { SecureRandom() }
 
   @JvmStatic
   fun md5() = getMessageDigest("MD5")

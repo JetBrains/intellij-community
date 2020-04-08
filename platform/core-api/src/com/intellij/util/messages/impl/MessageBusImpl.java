@@ -10,9 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
@@ -25,12 +23,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance(MessageBusImpl.class);
   private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = (bus1, bus2) -> ArrayUtil.lexicographicCompare(bus1.myOrder, bus2.myOrder);
-  @SuppressWarnings("SSBasedInspection")
   private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
   /**
@@ -65,7 +63,8 @@ public class MessageBusImpl implements MessageBus {
   private Disposable myConnectionDisposable;
   private MessageDeliveryListener myMessageDeliveryListener;
 
-  private final Map<PluginDescriptor, MessageBusConnectionImpl> myLazyConnections;
+  // PluginDescriptor must be used instead of PluginId because partial plugin descriptor (optional) doesn't have id
+  private final ConcurrentMap<PluginDescriptor, MessageBusConnectionImpl> myLazyConnections;
 
   private boolean myIgnoreParentLazyListeners;
 
@@ -81,7 +80,7 @@ public class MessageBusImpl implements MessageBus {
     LOG.assertTrue(parentBus.myChildBuses.contains(this));
     myRootBus.clearSubscriberCache();
     // only for project
-    myLazyConnections = parentBus.myParentBus == null ? ConcurrentFactoryMap.createMap((key) -> connect()) : null;
+    myLazyConnections = parentBus.myParentBus == null ? new ConcurrentHashMap<>() : null;
   }
 
   private static @NotNull Disposable createConnectionDisposable(@NotNull MessageBusOwner owner) {
@@ -95,7 +94,7 @@ public class MessageBusImpl implements MessageBus {
     myConnectionDisposable = createConnectionDisposable(owner);
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
     myRootBus = (RootBus)this;
-    myLazyConnections = ConcurrentFactoryMap.createMap((key) -> connect());
+    myLazyConnections = new ConcurrentHashMap<>();
     myParentBus = null;
   }
 
@@ -166,12 +165,12 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @Override
-  public @NotNull MessageBusConnectionImpl connect() {
+  public final  @NotNull MessageBusConnectionImpl connect() {
     return connect(myConnectionDisposable);
   }
 
   @Override
-  public @NotNull MessageBusConnectionImpl connect(@NotNull Disposable parentDisposable) {
+  public final @NotNull MessageBusConnectionImpl connect(@NotNull Disposable parentDisposable) {
     checkNotDisposed();
     MessageBusConnectionImpl connection = new MessageBusConnectionImpl(this);
     Disposer.register(parentDisposable, connection);
@@ -179,7 +178,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @Override
-  public @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) {
+  public final  @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) {
     checkNotDisposed();
     @SuppressWarnings("unchecked")
     L publisher = (L)myPublishers.get(topic);
@@ -197,32 +196,45 @@ public class MessageBusImpl implements MessageBus {
 
   private <L> void subscribeLazyListeners(@NotNull Topic<L> topic) {
     List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(topic.getListenerClass().getName());
-    if (listenerDescriptors != null) {
-      MultiMap<PluginDescriptor, Object> listenerMap = new MultiMap<>();
-      for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
-        try {
-          listenerMap.putValue(listenerDescriptor.pluginDescriptor, myOwner.createListener(listenerDescriptor));
-        }
-        catch (ExtensionNotApplicableException ignore) {
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error("Cannot create listener", e);
-        }
-      }
+    if (listenerDescriptors == null) {
+      return;
+    }
 
-      if (!listenerMap.isEmpty()) {
-        for (Map.Entry<PluginDescriptor, Collection<Object>> entry : listenerMap.entrySet()) {
-          myLazyConnections.get(entry.getKey()).subscribe(topic, entry.getValue());
-        }
+    // use linked hash map for repeatable results
+    LinkedHashMap<PluginDescriptor, List<Object>> listenerMap = new LinkedHashMap<>();
+    for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
+      try {
+        listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor, pluginId -> new ArrayList<>()).add(myOwner.createListener(listenerDescriptor));
+      }
+      catch (ExtensionNotApplicableException ignore) {
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error("Cannot create listener", e);
       }
     }
+
+    listenerMap.forEach((key, listeners) -> {
+      // maybe a rare situation, when connection created in another thread and our newly created connection is discarded (see putIfAbsent behaviour)
+      // it is not a memory leak, as it will be in any case disposed once myConnectionDisposable is disposed, but a negligible waste of memory,
+      // that's why computeIfAbsent is not used here
+      MessageBusConnectionImpl connection = myLazyConnections.get(key);
+      if (connection == null) {
+        connection = connect();
+        MessageBusConnectionImpl existingConnection = myLazyConnections.putIfAbsent(key, connection);
+        if (existingConnection != null) {
+          connection.disconnect();
+          connection = existingConnection;
+        }
+      }
+      connection.subscribe(topic, listeners);
+    });
   }
 
   @ApiStatus.Internal
-  public void unsubscribePluginListeners(PluginDescriptor pluginDescriptor) {
+  public final void unsubscribePluginListeners(@NotNull PluginDescriptor pluginDescriptor) {
     MessageBusConnectionImpl connection = myLazyConnections.remove(pluginDescriptor);
     if (connection != null) {
       Disposer.dispose(connection);

@@ -17,9 +17,6 @@ import org.jetbrains.annotations.ApiStatus;
  * @author yole
  */
 public final class EditorActionHandlerBean extends AbstractExtensionPointBean {
-
-  private static final Logger LOG = Logger.getInstance(EditorActionHandlerBean.class);
-
   @ApiStatus.Internal
   public static final ExtensionPointName<EditorActionHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.editorActionHandler");
 
@@ -37,17 +34,21 @@ public final class EditorActionHandlerBean extends AbstractExtensionPointBean {
   private EditorActionHandler myHandler;
 
   public EditorActionHandler getHandler(EditorActionHandler originalHandler) {
-    if (myHandler == null) {
-      try {
-        DefaultPicoContainer container = new DefaultPicoContainer(ApplicationManager.getApplication().getPicoContainer());
-        container.registerComponentInstance(originalHandler);
-        myHandler = instantiateClass(implementationClass, container);
-      }
-      catch (Exception e) {
-        LOG.error(new PluginException(e, getPluginId()));
-        return null;
-      }
+    EditorActionHandler handler = myHandler;
+    if (handler != null) {
+      return handler;
     }
-    return myHandler;
+
+    try {
+      DefaultPicoContainer container = new DefaultPicoContainer((DefaultPicoContainer)ApplicationManager.getApplication().getPicoContainer());
+      container.registerComponentInstance(originalHandler);
+      handler = instantiateClass(implementationClass, container);
+      myHandler = handler;
+      return handler;
+    }
+    catch (Exception e) {
+      Logger.getInstance(EditorActionHandlerBean.class).error(new PluginException(e, getPluginId()));
+      return null;
+    }
   }
 }

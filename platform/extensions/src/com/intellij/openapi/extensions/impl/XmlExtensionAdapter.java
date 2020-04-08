@@ -82,12 +82,13 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return instance;
   }
 
-  boolean isLoadedFromAnyElement(List<Element> candidateElements, Map<String, String> defaultAttributes) {
+  boolean isLoadedFromAnyElement(@NotNull List<Element> candidateElements, @NotNull Map<String, String> defaultAttributes) {
     SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
     if (myExtensionElement == null && extensionInstance == null) {
       // dummy extension with no data; unload based on PluginDescriptor check in calling method
       return true;
     }
+
     Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
     Map<String, String> serializedData = getSerializedDataMap(serializedElement);
 

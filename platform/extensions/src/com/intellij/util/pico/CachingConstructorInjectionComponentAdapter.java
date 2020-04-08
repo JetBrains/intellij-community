@@ -1,48 +1,35 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.*;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
+import org.picocontainer.PicoIntrospectionException;
 import org.picocontainer.defaults.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
 
 /**
- * A drop-in replacement of {@link ConstructorInjectionComponentAdapter}
- * The same code (generified and cleaned up) but without constructor caching (hence taking up less memory).
- * This class also inlines instance caching (e.g. it doesn't need to be wrapped in a CachingComponentAdapter).
+ * @deprecated Use {@link com.intellij.openapi.components.ComponentManager#instantiateClassWithConstructorInjection}
  */
-public final class CachingConstructorInjectionComponentAdapter extends InstantiatingComponentAdapter {
-  @SuppressWarnings("SSBasedInspection")
+@Deprecated
+public final class CachingConstructorInjectionComponentAdapter extends AbstractComponentAdapter {
   private static final ThreadLocal<Set<CachingConstructorInjectionComponentAdapter>> ourGuard = new ThreadLocal<>();
   private Object myInstance;
 
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException {
-    super(componentKey, componentImplementation, parameters, allowNonPublicClasses);
-  }
-
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
-    this(componentKey, componentImplementation, parameters, false);
-  }
-
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) throws AssignabilityRegistrationException {
-    this(componentKey, componentImplementation, null);
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) {
+    super(componentKey, componentImplementation);
   }
 
   @Override
-  public Object getComponentInstance(@NotNull PicoContainer container) throws
-                                                                       PicoInitializationException,
-                                                                       PicoIntrospectionException,
-                                                                       AssignabilityRegistrationException {
+  public Object getComponentInstance(@NotNull PicoContainer container) {
     Object instance = myInstance;
     if (instance == null) {
       myInstance = instance = instantiateGuarded(container, getComponentImplementation());
@@ -82,8 +69,20 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
       e.setComponent(getComponentImplementation());
       throw e;
     }
+
     try {
-      return newInstance(constructor, getConstructorArguments(guardedContainer, constructor));
+      constructor.setAccessible(true);
+      if (constructor.getParameterCount() == 0) {
+        return constructor.newInstance();
+      }
+      else {
+        Class<?>[] parameterTypes = constructor.getParameterTypes();
+        Object[] result = new Object[parameterTypes.length];
+        for (int i = 0; i < parameterTypes.length; i++) {
+          result[i] = ComponentParameter.DEFAULT.resolveInstance(guardedContainer, this, parameterTypes[i]);
+        }
+        return constructor.newInstance(result);
+      }
     }
     catch (InvocationTargetException e) {
       ExceptionUtil.rethrowUnchecked(e.getTargetException());
@@ -95,20 +94,6 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     catch (IllegalAccessException e) {
       throw new PicoInitializationException(e);
     }
-  }
-
-  private Object @NotNull [] getConstructorArguments(PicoContainer container, @NotNull Constructor<?> ctor) {
-    if (ctor.getParameterCount() == 0) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-    Class<?>[] parameterTypes = ctor.getParameterTypes();
-    Object[] result = new Object[parameterTypes.length];
-    Parameter[] currentParameters = parameters != null ? parameters : createDefaultParameters(parameterTypes);
-
-    for (int i = 0; i < currentParameters.length; i++) {
-      result[i] = currentParameters[i].resolveInstance(container, this, parameterTypes[i]);
-    }
-    return result;
   }
 
   private @NotNull Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
@@ -127,16 +112,14 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
 
       boolean failedDependency = false;
       Class<?>[] parameterTypes = constructor.getParameterTypes();
-      Parameter[] currentParameters = parameters != null ? parameters : createDefaultParameters(parameterTypes);
-
       // remember: all constructors with less arguments than the given parameters are filtered out already
-      for (int j = 0; j < currentParameters.length; j++) {
+      for (Class<?> type : parameterTypes) {
         // check whether this constructor is satisfiable
-        if (currentParameters[j].isResolvable(container, this, parameterTypes[j])) {
+        if (ComponentParameter.DEFAULT.isResolvable(container, this, type)) {
           continue;
         }
         unsatisfiableDependencyTypes.add(Arrays.asList(parameterTypes));
-        unsatisfiedDependencyType = parameterTypes[j];
+        unsatisfiedDependencyType = type;
         failedDependency = true;
         break;
       }
@@ -187,107 +170,14 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   }
 
   private List<Constructor<?>> getSortedMatchingConstructors() {
-    List<Constructor<?>> matchingConstructors = new ArrayList<>();
     // filter out all constructors that will definitely not match
-    for (Constructor<?> constructor : getConstructors()) {
-      if ((parameters == null || constructor.getParameterCount() == parameters.length) &&
-          (allowNonPublicClasses || (constructor.getModifiers() & Modifier.PUBLIC) != 0)) {
-        matchingConstructors.add(constructor);
-      }
-    }
+    List<Constructor<?>> matchingConstructors = new ArrayList<>(Arrays.asList(getConstructors()));
     // optimize list of constructors moving the longest at the beginning
-    if (parameters == null) {
-      matchingConstructors.sort((arg0, arg1) -> arg1.getParameterCount() - arg0.getParameterCount());
-    }
+    matchingConstructors.sort((arg0, arg1) -> arg1.getParameterCount() - arg0.getParameterCount());
     return matchingConstructors;
   }
 
   private Constructor<?> @NotNull [] getConstructors() {
     return AccessController.doPrivileged((PrivilegedAction<Constructor<?>[]>)() -> getComponentImplementation().getDeclaredConstructors());
-  }
-}
-
-abstract class InstantiatingComponentAdapter extends AbstractComponentAdapter {
-  /**
-   * The parameters to use for initialization.
-   */
-  protected transient Parameter[] parameters;
-  protected boolean allowNonPublicClasses;
-
-  /**
-   * The cycle guard for the verification.
-   */
-  protected abstract static class Guard extends ThreadLocalCyclicDependencyGuard {
-    protected PicoContainer guardedContainer;
-
-    protected void setArguments(PicoContainer container) {
-      this.guardedContainer = container;
-    }
-  }
-
-  /**
-   * Constructs a new ComponentAdapter for the given key and implementation.
-   *
-   * @param componentKey            the search key for this implementation
-   * @param componentImplementation the concrete implementation
-   * @param parameters              the parameters to use for the initialization
-   * @param allowNonPublicClasses   flag to allow instantiation of non-public classes
-   */
-  protected InstantiatingComponentAdapter(Object componentKey,
-                                          Class componentImplementation,
-                                          Parameter[] parameters,
-                                          boolean allowNonPublicClasses) {
-    super(componentKey, componentImplementation);
-    checkConcrete();
-    if (parameters != null) {
-      for (int i = 0; i < parameters.length; i++) {
-        if (parameters[i] == null) {
-          throw new NullPointerException("Parameter " + i + " is null");
-        }
-      }
-    }
-    this.parameters = parameters;
-    this.allowNonPublicClasses = allowNonPublicClasses;
-  }
-
-  private void checkConcrete() {
-    // Assert that the component class is concrete.
-    Class<?> componentImplementation = getComponentImplementation();
-    boolean isAbstract = (componentImplementation.getModifiers() & Modifier.ABSTRACT) == Modifier.ABSTRACT;
-    if (componentImplementation.isInterface() || isAbstract) {
-      throw new PicoRegistrationException("Bad Access: '" + componentImplementation.getName() + "' is not instantiable");
-    }
-  }
-
-  /**
-   * Create default parameters for the given types.
-   *
-   * @param parameters the parameter types
-   * @return the array with the default parameters.
-   */
-  protected Parameter[] createDefaultParameters(Class<?>[] parameters) {
-    Parameter[] componentParameters = new Parameter[parameters.length];
-    for (int i = 0; i < parameters.length; i++) {
-      componentParameters[i] = ComponentParameter.DEFAULT;
-    }
-    return componentParameters;
-  }
-
-  /**
-   * Instantiate an object with given parameters and respect the accessible flag.
-   *
-   * @param constructor the constructor to use
-   * @param parameters  the parameters for the constructor
-   * @return the new object.
-   * @throws InstantiationException
-   * @throws IllegalAccessException
-   * @throws InvocationTargetException
-   */
-  protected Object newInstance(Constructor<?> constructor, Object[] parameters)
-    throws InstantiationException, IllegalAccessException, InvocationTargetException {
-    if (allowNonPublicClasses) {
-      constructor.setAccessible(true);
-    }
-    return constructor.newInstance(parameters);
   }
 }
