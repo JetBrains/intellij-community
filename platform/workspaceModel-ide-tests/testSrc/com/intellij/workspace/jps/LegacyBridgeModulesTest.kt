@@ -2,6 +2,7 @@ package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.idea.Bombed
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -36,6 +37,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import java.util.*
 
 class LegacyBridgeModulesTest {
   @Rule
@@ -379,6 +381,7 @@ class LegacyBridgeModulesTest {
     assertEquals(1, TestModuleExtension.commitCalled.get())
   }
 
+  @Bombed(month = Calendar.APRIL, day = 15, user = "nik")
   @Test
   @RunsInEdt
   fun `test module libraries loaded from cache`() {
