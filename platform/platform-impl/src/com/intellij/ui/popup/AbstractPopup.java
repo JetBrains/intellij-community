@@ -1930,9 +1930,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (handler != null && handler.fun(e)) {
       return true;
     }
-    if (isCloseRequest(e) && myCancelKeyEnabled && !mySpeedSearch.isHoldingFilter() &&
-        (mySpeedSearchFoundInRootComponent == null || !mySpeedSearchFoundInRootComponent.isHoldingFilter())) {
-      cancel(e);
+    if (isCloseRequest(e) && myCancelKeyEnabled && !mySpeedSearch.isHoldingFilter()) {
+      if (mySpeedSearchFoundInRootComponent != null && mySpeedSearchFoundInRootComponent.isHoldingFilter()) {
+        mySpeedSearchFoundInRootComponent.reset();
+      }
+      else {
+        cancel(e);
+      }
       return true;
     }
     return false;
