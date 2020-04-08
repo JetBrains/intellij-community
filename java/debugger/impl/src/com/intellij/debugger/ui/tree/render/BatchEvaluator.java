@@ -165,7 +165,7 @@ public class BatchEvaluator {
             int length = Bits.getInt(bytes, pos);
             boolean error = length < 0;
             length = Math.abs(length);
-            String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
+            String message = new String(bytes, pos + 4, length, StandardCharsets.UTF_8);
             if (!iterator.hasNext()) {
               return false;
             }
