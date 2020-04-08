@@ -12,23 +12,19 @@ import java.awt.*;
 public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
   private final TextAttributesKey myAttributesKey;
   private final int myThickness;
-  private final int myDeepness;
+  private final int myDepth;
   private final Position myPosition;
 
   private final Color myColor;
 
-  public DefaultLineMarkerRenderer(TextAttributesKey myAttributesKey) {
-    this(myAttributesKey, 1, 0, Position.RIGHT);
-  }
-
-  public DefaultLineMarkerRenderer(TextAttributesKey myAttributesKey, int thickness) {
+  public DefaultLineMarkerRenderer(@NotNull TextAttributesKey myAttributesKey, int thickness) {
     this(myAttributesKey, thickness, 0, Position.RIGHT);
   }
 
-  public DefaultLineMarkerRenderer(TextAttributesKey attributesKey, int thickness, int deepness, Position position) {
+  public DefaultLineMarkerRenderer(@NotNull TextAttributesKey attributesKey, int thickness, int depth, Position position) {
     myAttributesKey = attributesKey;
     myThickness = thickness;
-    myDeepness = deepness;
+    myDepth = depth;
     myPosition = position;
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -38,7 +34,8 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
 
     if (color != null) {
       myColor = ColorUtil.isDark(scheme.getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
-    } else {
+    }
+    else {
       myColor = null;
     }
   }
@@ -49,16 +46,16 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
 
     g.setColor(myColor);
     g.fillRect(r.x, r.y, myThickness, r.height);
-    g.fillRect(r.x + myThickness, r.y, myDeepness, myThickness);
-    g.fillRect(r.x + myThickness, r.y + r.height - myThickness, myDeepness, myThickness);
+    g.fillRect(r.x + myThickness, r.y, myDepth, myThickness);
+    g.fillRect(r.x + myThickness, r.y + r.height - myThickness, myDepth, myThickness);
   }
 
   public TextAttributesKey getAttributesKey() {
     return myAttributesKey;
   }
 
-  public int getDeepness() {
-    return myDeepness;
+  public int getDepth() {
+    return myDepth;
   }
 
   public int getThickness() {
