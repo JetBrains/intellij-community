@@ -21,6 +21,8 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 
 import java.lang.reflect.Type
+import java.nio.charset.StandardCharsets
+import java.util.stream.Collectors
 
 @CompileStatic
 class CompilationOutputsDownloader {
@@ -160,15 +162,15 @@ class CompilationOutputsDownloader {
   }
 
   private List<String> getLastCommits() {
-    def proc = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
-    def output = new StringBuffer()
-    proc.consumeProcessOutputStream(output)
-    proc.waitForOrKill(COMMITS_SEARCH_TIMEOUT)
-    if (proc.exitValue() != 0) {
-      throw new IllegalStateException("git log failed: ${proc.getErrorStream().getText()}")
+    def log = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
+    def output = new BufferedReader(new InputStreamReader(log.inputStream, StandardCharsets.UTF_8)).withCloseable {
+      it.lines().map { it.trim() }.collect(Collectors.toList())
     }
-
-    return output.readLines()*.trim()
+    log.waitForOrKill(COMMITS_SEARCH_TIMEOUT)
+    if (log.exitValue() != 0) {
+      throw new IllegalStateException("git log failed:\n$log.errorStream.text\n$output")
+    }
+    return output
   }
 }
 
