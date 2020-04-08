@@ -225,7 +225,7 @@ public class JavaExecutionStack extends XExecutionStack {
             }
           }
           // append agent stack after the next frame
-          relatedStack = AsyncStacksUtils.getAgentRelatedStack((JavaStackFrame)frame, suspendContext);
+          relatedStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
         }
 
         myDebugProcess.getManagerThread().schedule(

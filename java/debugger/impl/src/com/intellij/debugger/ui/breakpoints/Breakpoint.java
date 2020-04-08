@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class Breakpoint
@@ -18,6 +18,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -52,6 +53,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +62,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -192,13 +195,31 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   public abstract String getEventMessage(LocatableEvent event);
 
-  protected String getStackTrace(LocatableEvent event) {
-    StringBuilder builder = new StringBuilder(
-      JavaDebuggerBundle.message("status.line.breakpoint.reached.full.trace"));
+  protected String getStackTrace(SuspendContextImpl suspendContext) {
+    StringBuilder builder = new StringBuilder(JavaDebuggerBundle.message("status.line.breakpoint.reached.full.trace"));
     try {
-      event.thread().frames().forEach(f -> builder.append("\n\t  ").append(ThreadDumpAction.renderLocation(f.location())));
+      List<StackFrameItem> asyncStack = null;
+      for (StackFrameProxyImpl frameProxy : suspendContext.getThread().forceFrames()) {
+        Location location = frameProxy.location();
+        builder.append("\n\t  ").append(ThreadDumpAction.renderLocation(location));
+        if (Registry.is("debugger.log.async.stacks")) {
+          if (asyncStack != null) {
+            StreamEx.of(asyncStack).prepend((StackFrameItem)null).forEach(s -> {
+              builder.append("\n\t  ");
+              if (s == null) {
+                builder.append(" - ").append(StackFrameItem.getAsyncStacktraceMessage());
+              }
+              else {
+                builder.append(ThreadDumpAction.renderLocation(s.location()));
+              }
+            });
+            break;
+          }
+          asyncStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
+        }
+      }
     }
-    catch (IncompatibleThreadStateException e) {
+    catch (EvaluateException e) {
       builder.append("Stacktrace not available: ").append(e.getMessage());
     }
     return builder.toString();
@@ -296,7 +317,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       if (isLogStack()) {
-        buf.append(getStackTrace(event)).append("\n");
+        buf.append(getStackTrace(context.getSuspendContext())).append("\n");
       }
 
       if (isLogExpressionEnabled()) {
