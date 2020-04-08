@@ -907,7 +907,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected Dimension updateMinimumSize(Dimension minimumSize) {
     if (myForceMinimumSize) {
-      return getPreferredSize();
+      return updatePreferredSize(minimumSize);
     }
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       final Insets i = getInsets();
