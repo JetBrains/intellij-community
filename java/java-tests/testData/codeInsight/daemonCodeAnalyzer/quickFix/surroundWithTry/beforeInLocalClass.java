@@ -1,5 +1,4 @@
-// "Surround with try/catch" "false"
-// "Add exception to method signature" "false"
+// "Surround with try/catch" "true"
 import java.io.*;
 
 class C {
