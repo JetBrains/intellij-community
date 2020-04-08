@@ -1712,6 +1712,16 @@
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="InsertLiteralUnderscores"
+                     key="inspection.insert.literal.underscores.display.name" bundle="messages.JavaBundle"
+                     groupKey="group.names.numeric.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.numeric.InsertLiteralUnderscoresInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="RemoveLiteralUnderscores"
+                     key="inspection.remove.literal.underscores.display.name" bundle="messages.JavaBundle"
+                     groupKey="group.names.numeric.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
@@ -1743,14 +1753,6 @@
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
       <category>Java/Strings</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.InsertLiteralUnderscoresAction</className>
-      <category>Java/Numbers</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.RemoveLiteralUnderscoresAction</className>
-      <category>Java/Numbers</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>

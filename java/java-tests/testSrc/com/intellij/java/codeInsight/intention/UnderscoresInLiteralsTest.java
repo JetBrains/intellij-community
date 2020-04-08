@@ -15,32 +15,40 @@
  */
 package com.intellij.java.codeInsight.intention;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.java.JavaBundle;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.numeric.InsertLiteralUnderscoresInspection;
+import com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class UnderscoresInLiteralsTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    super.tuneFixture(moduleBuilder);
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_7);
-  }
+public class UnderscoresInLiteralsTest extends LightQuickFixTestCase {
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/underscoresInLiterals/";
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17();
   }
 
-  public void testRemove() {
-    final String removeIntention = JavaBundle.message("intention.remove.literal.underscores");
-    CodeInsightTestUtil.doIntentionTest(myFixture, removeIntention, "WithUnderscores.java", "WithoutUnderscores.java");
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/underscoresInLiterals/";
   }
 
-  public void testInsert() {
-    final String insertIntention = JavaBundle.message("intention.insert.literal.underscores");
-    CodeInsightTestUtil.doIntentionTest(myFixture, insertIntention, "WithoutUnderscores.java", "WithUnderscores.java");
+  @Override
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{new RemoveLiteralUnderscoresInspection(), new InsertLiteralUnderscoresInspection()};
+  }
+
+  public void testRemoveUnderscores() throws Throwable {
+    doTest();
+  }
+
+  public void testInsertUnderscores() throws Throwable {
+    doTest();
+  }
+
+  private void doTest() {
+    doSingleTest(getTestName(false) + ".java");
   }
 }
