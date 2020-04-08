@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Function;
 
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
@@ -193,6 +195,12 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   public static class JBHtmlFactory extends HTMLFactory {
+    private Function<String, Icon> myAdditionalIconResolver;
+
+    public void setAdditionalIconResolver(Function<String, Icon> resolver) {
+      myAdditionalIconResolver = resolver;
+    }
+
     @Override
     public View create(Element elem) {
       AttributeSet attrs = elem.getAttributes();
@@ -211,6 +219,18 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
             catch (IllegalArgumentException | IOException e) {
               LOG.debug(e);
             }
+          }
+        }
+      }
+      else if ("icon".equals(elem.getName())) {
+        Object src = attrs.getAttribute(HTML.Attribute.SRC);
+        if (src instanceof String) {
+          Icon icon = IconLoader.findIcon((String)src, false);
+          if (icon == null) {
+            icon = myAdditionalIconResolver.apply((String)src);
+          }
+          if (icon != null) {
+            return new MyIconView(elem, icon);
           }
         }
       }
@@ -338,6 +358,67 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
           return vAlign;
         }
         return super.getAlignment(axis);
+      }
+    }
+
+    private static class MyIconView extends View {
+      private final Icon myViewIcon;
+
+      private MyIconView(Element elem, Icon viewIcon) {
+        super(elem);
+        myViewIcon = viewIcon;
+      }
+
+      @Override
+      public float getPreferredSpan(int axis) {
+        switch (axis) {
+          case View.X_AXIS:
+            return myViewIcon.getIconWidth();
+          case View.Y_AXIS:
+            return myViewIcon.getIconHeight();
+          default:
+            throw new IllegalArgumentException("Invalid axis: " + axis);
+        }
+      }
+
+      @Override
+      public String getToolTipText(float x, float y, Shape allocation) {
+        return (String)super.getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
+      }
+
+      @Override
+      public void paint(Graphics g, Shape allocation) {
+        Graphics2D g2d = (Graphics2D)g;
+        Composite savedComposite = g2d.getComposite();
+        g2d.setComposite(AlphaComposite.SrcOver); // support transparency
+        myViewIcon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
+        g2d.setComposite(savedComposite);
+      }
+
+      @Override
+      public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+        int p0 = getStartOffset();
+        int p1 = getEndOffset();
+        if ((pos >= p0) && (pos <= p1)) {
+          Rectangle r = a.getBounds();
+          if (pos == p1) {
+            r.x += r.width;
+          }
+          r.width = 0;
+          return r;
+        }
+        throw new BadLocationException(pos + " not in range " + p0 + "," + p1, pos);
+      }
+
+      @Override
+      public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
+        Rectangle alloc = (Rectangle)a;
+        if (x < alloc.x + (alloc.width / 2f)) {
+          bias[0] = Position.Bias.Forward;
+          return getStartOffset();
+        }
+        bias[0] = Position.Bias.Backward;
+        return getEndOffset();
       }
     }
   }
