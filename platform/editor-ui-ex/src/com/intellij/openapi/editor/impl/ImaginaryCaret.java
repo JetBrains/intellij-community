@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +168,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void removeSelection() {
-    throw notImplemented();
+    // no-op: selection is not supported
   }
 
   @Override
