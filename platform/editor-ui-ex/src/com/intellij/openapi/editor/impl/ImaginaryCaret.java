@@ -73,12 +73,12 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
-    moveToOffset(getEditor().getDocument().getLineStartOffset(pos.line)+pos.column);
+    moveToOffset(getEditor().logicalPositionToOffset(pos));
   }
 
   @Override
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
-    throw notImplemented();
+    moveToOffset(getEditor().visualPositionToOffset(pos));
   }
 
   @Override
@@ -89,10 +89,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @NotNull
   @Override
   public LogicalPosition getLogicalPosition() {
-    Document document = getEditor().getDocument();
-    int line = document.getLineNumber(myStart);
-    int col = document.getLineStartOffset(line);
-    return new LogicalPosition(line, col);
+    return getEditor().offsetToLogicalPosition(myStart);
   }
 
   @NotNull
