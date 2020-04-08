@@ -16,15 +16,21 @@ internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : Entit
 }
 
 internal class PEntityStorage constructor(
-  entitiesByType: EntitiesBarrel,
+  override val entitiesByType: EntitiesBarrel,
   override val refs: RefsTable
-) : AbstractPEntityStorage(entitiesByType, refs)
+) : AbstractPEntityStorage() {
+  override fun assertConsistency() {
+    entitiesByType.assertConsistency()
+
+    assertConsistencyBase()
+  }
+}
 
 internal class PEntityStorageBuilder(
   private val origStorage: PEntityStorage,
   override var entitiesByType: MutableEntitiesBarrel,
   override var refs: MutableRefsTable
-) : TypedEntityStorageBuilder, AbstractPEntityStorage(entitiesByType, refs) {
+) : TypedEntityStorageBuilder, AbstractPEntityStorage() {
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
 
@@ -46,6 +52,10 @@ internal class PEntityStorageBuilder(
 
   override var modificationCount: Long = 0
     private set
+
+  override fun assertConsistency() {
+    assertConsistencyBase()
+  }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> addEntity(clazz: Class<M>,
                                                                          source: EntitySource,
@@ -72,13 +82,14 @@ internal class PEntityStorageBuilder(
 
   // modificationCount is not incremented
   // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
-  private fun <T : TypedEntity, E : TypedEntity> addEntityWithRefs(entity: PEntityData<T>,
-                                                                   clazz: Class<E>,
-                                                                   storage: AbstractPEntityStorage) {
+  private fun <T : TypedEntity, E : TypedEntity> cloneAndAddEntityWithRefs(entity: PEntityData<T>,
+                                                                           clazz: Class<E>,
+                                                                           storage: AbstractPEntityStorage): PEntityData<T> {
     clazz as Class<T>
-    entitiesByType.add(entity, clazz)
+    val cloned = entitiesByType.cloneAndAdd(entity, clazz)
 
     handleReferences(storage, entity, clazz)
+    return cloned
   }
 
   // modificationCount is not incremented
@@ -429,7 +440,7 @@ internal class PEntityStorageBuilder(
     val newData = data.clone()
     replaceMap[(newData.createEntity(this) as PTypedEntity).id] = id
     //copyEntityProperties(data, newData, replaceMap.inverse())
-    addEntityWithRefs(newData, id.clazz.java, storage)
+    cloneAndAddEntityWithRefs(newData, id.clazz.java, storage)
     //addEntity(newData, null, handleReferrers = true)
     updateChangeLog { it.add(createAddEntity(newData, id.clazz.java)) }
   }
@@ -547,16 +558,7 @@ internal class PEntityStorageBuilder(
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as PTypedEntity
-          val oldChange = changes.remove(addedEntity.id)
-
-          if (oldChange != null && oldChange.second is EntityChange.Removed) {
-            val entityChange = oldChange.second as EntityChange.Removed<*>
-            // Existing remove + new add = replace
-            changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Replaced(entityChange.entity, addedEntity)
-          }
-          else {
-            changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
-          }
+          changes[addedEntity.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
         }
         is ChangeEntry.RemoveEntity -> {
           val removedData = originalImpl.entityDataById(change.id)
@@ -600,20 +602,36 @@ internal class PEntityStorageBuilder(
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
 
+    val replaceMap = HashMap<PId<out TypedEntity>, PId<out TypedEntity>>()
     val diffLog = (diff as PEntityStorageBuilder).changeLog
-    updateChangeLog { it.addAll(diffLog) }
     for (change in diffLog) {
       when (change) {
-        is ChangeEntry.AddEntity<*> -> addEntityWithRefs(change.entityData, change.clazz, diff)
-        is ChangeEntry.RemoveEntity -> {
-          if (this.entityDataById(change.id) != null) {
-            removeEntity(change.id)
+        is ChangeEntry.AddEntity<*> -> {
+          val oldPid = change.entityData.createPid()
+          val addedEntity = cloneAndAddEntityWithRefs(change.entityData, change.clazz, diff) as PEntityData<TypedEntity>
+          val createdPid = addedEntity.createPid()
+          if (oldPid != createdPid) {
+            replaceMap[oldPid] = createdPid
           }
+          updateChangeLog { it.add(ChangeEntry.AddEntity(addedEntity, change.clazz as Class<TypedEntity>)) }
+        }
+        is ChangeEntry.RemoveEntity -> {
+          var usedPid = change.id
+          usedPid = replaceMap.getOrDefault(usedPid, usedPid)
+          if (this.entityDataById(usedPid) != null) {
+            removeEntity(usedPid)
+          }
+          updateChangeLog { it.add(ChangeEntry.RemoveEntity(usedPid)) }
         }
         is ChangeEntry.ReplaceEntity -> {
-          if (this.entityDataById(change.id) != null) {
-            replaceEntityWithRefs(change.newData, change.id.clazz.java, diff)
+          var usedPid = change.id
+          usedPid = replaceMap.getOrDefault(usedPid, usedPid)
+          val newData = change.newData.clone()
+          if (this.entityDataById(usedPid) != null) {
+            newData.id = usedPid.arrayId
+            replaceEntityWithRefs(newData, change.id.clazz.java, diff)
           }
+          updateChangeLog { it.add(ChangeEntry.ReplaceEntity(usedPid, newData)) }
         }
       }
     }
@@ -633,7 +651,7 @@ internal class PEntityStorageBuilder(
           PEntityStorageBuilder(storage, copiedBarrel, copiedRefs)
         }
         is PEntityStorageBuilder -> {
-          val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
+          val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
           PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs)
         }
@@ -692,10 +710,32 @@ internal class PEntityStorageBuilder(
   }
 }
 
-internal sealed class AbstractPEntityStorage constructor(
-  open val entitiesByType: EntitiesBarrel,
-  open val refs: AbstractRefsTable
-) : TypedEntityStorage {
+internal sealed class AbstractPEntityStorage : TypedEntityStorage {
+
+  internal abstract val entitiesByType: AbstractEntitiesBarrel
+  internal abstract val refs: AbstractRefsTable
+
+  abstract fun assertConsistency()
+
+  protected fun assertConsistencyBase() {
+    // Rules:
+    //  1) Refs should not have links without a corresponding entity
+    //  2) child entity should have only one parent --------------------------- Not Yet Implemented TODO
+    //  3) There is no child without a parent under the hard reference -------- Not Yet Implemented TODO
+
+    refs.oneToManyContainer.forEach { (connectionId, map) ->
+      map.forEachKey { childId, parentId ->
+        //  1) Refs should not have links without a corresponding entity
+        assert(entitiesByType[connectionId.parentClass.java]?.get(parentId) != null) {
+          "Reference to ${connectionId.parentClass}-:-$parentId cannot be resolved"
+        }
+        assert(entitiesByType[connectionId.childClass.java]?.get(childId) != null) {
+          "Reference to ${connectionId.childClass}-:-$childId cannot be resolved"
+        }
+      }
+    }
+  }
+
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
     return entitiesByType[entityClass]?.all()?.map { it.createEntity(this) } ?: emptySequence()
   }
@@ -745,26 +785,6 @@ internal sealed class AbstractPEntityStorage constructor(
     return refs.getOneToManyParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) }
   }
 
-  fun assertConsistency() {
-    entitiesByType.assertConsistency()
-
-    // Rules:
-    //  1) Refs should not have links without a corresponding entity
-    //  2) child entity should have only one parent --------------------------- Not Yet Implemented TODO
-    //  3) There is no child without a parent under the hard reference -------- Not Yet Implemented TODO
-
-    refs.oneToManyContainer.forEach { (connectionId, map) ->
-      map.forEachKey { childId, parentId ->
-        //  1) Refs should not have links without a corresponding entity
-        assert(entitiesByType[connectionId.parentClass.java]?.get(parentId) != null) {
-          "Reference to ${connectionId.parentClass}-:-$parentId cannot be resolved"
-        }
-        assert(entitiesByType[connectionId.childClass.java]?.get(childId) != null) {
-          "Reference to ${connectionId.childClass}-:-$childId cannot be resolved"
-        }
-      }
-    }
-  }
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     return entitiesByType.all().asSequence().map { it.value.all() }.flatten().filterNotNull()
