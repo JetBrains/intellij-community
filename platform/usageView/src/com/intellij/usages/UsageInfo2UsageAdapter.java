@@ -39,7 +39,7 @@ import java.lang.ref.Reference;
 import java.util.List;
 import java.util.*;
 
-public class UsageInfo2UsageAdapter implements UsageInModule,
+public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
                                                RenameableUsage, TypeSafeDataProvider, UsagePresentation {
@@ -246,7 +246,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return new OpenFileDescriptor(getProject(), file, range == null ? getNavigationOffset() : range.getStartOffset());
   }
 
-  int getNavigationOffset() {
+  @Override
+  public int getNavigationOffset() {
     Document document = getDocument();
     if (document == null) return -1;
     int offset = getUsageInfo().getNavigationOffset();
@@ -358,6 +359,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return getUsageInfo().getFile();
   }
 
+  @Override
+  public @NotNull String getPath() {
+    return getFile().getPath();
+  }
+
+  @Override
   public int getLine() {
     return myLineNumber;
   }
@@ -430,6 +437,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     }
   }
 
+  @Override
   public UsageInfo @NotNull [] getMergedInfos() {
     Object infos = myMergedUsageInfos;
     return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
