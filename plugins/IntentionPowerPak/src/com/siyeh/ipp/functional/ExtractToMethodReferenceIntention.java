@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
@@ -134,6 +135,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   }
 
   private static void startInplaceRename(Editor editor, PsiMethod method, PsiMethodReferenceExpression methodReference) {
+    if (editor instanceof ImaginaryEditor) return;
     PsiIdentifier nameIdentifier = method.getNameIdentifier();
     if (nameIdentifier == null) return;
     nameIdentifier = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(nameIdentifier);
