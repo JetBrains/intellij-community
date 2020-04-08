@@ -79,8 +79,8 @@ class CompilationOutputsUploader {
 
       executor.submit {
         // In case if commits history is not updated it makes no sense to upload
-        // caches archive as were going to use outputs only and not to perform any
-        // further compilations.
+        // JPS caches archive as we're going to use hot compile outputs only and
+        // not to perform any further compilations.
         if (updateCommitHistory) {
         // Upload jps caches started first because of the significant size of the output
           if (!uploadCompilationCache()) return
