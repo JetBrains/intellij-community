@@ -310,7 +310,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     indicator.pushState();
     ((CoreProgressManager)ProgressManager.getInstance()).suppressPrioritizing();
-    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task")) {
+    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task", HeavyProcessLatch.Type.Index)) {
       task.performInDumbMode(indicator);
     }
     finally {
@@ -723,7 +723,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
               action.execute((ProgressIndicatorEx)visibleIndicator);
             }
           });
-          try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks")) {
+          try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Index)) {
             runSingleTask(task, taskIndicator);
           }
         }

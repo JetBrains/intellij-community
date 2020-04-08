@@ -337,7 +337,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components", HeavyProcessLatch.Type.Load);
     try {
       if (indicator == null) {
         // no splash, no need to to use progress manager

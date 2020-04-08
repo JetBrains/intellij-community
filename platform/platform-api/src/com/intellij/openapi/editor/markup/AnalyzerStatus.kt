@@ -43,7 +43,6 @@ data class PassWrapper(val presentableName: String, val progress: Double, val fi
 enum class StandardStatus(private val bundleKey: String) {
   NONE(""),
   OFF("iw.status.off"),
-  INDEXING("iw.status.indexing"),
   ANALYZING("iw.status.analyzing");
 
   override fun toString(): String = if (bundleKey.isNotEmpty()) EditorBundle.message(bundleKey) else ""
@@ -123,7 +122,8 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
   var showNavigation : Boolean = false
   var expandedStatus: List<StatusItem> = emptyList()
   var passes : List<PassWrapper> = emptyList()
-  var standardStatus: StandardStatus = StandardStatus.NONE;
+  var analyzing : Boolean = false
+    private set
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
@@ -137,7 +137,7 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
 
   fun withStandardStatus(status: StandardStatus): AnalyzerStatus {
     expandedStatus = listOf(StatusItem(status.toString(), null))
-    standardStatus = status
+    analyzing = status == StandardStatus.ANALYZING
     return this
   }
 

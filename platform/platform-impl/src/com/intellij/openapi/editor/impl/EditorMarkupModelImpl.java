@@ -154,6 +154,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
   private AnalyzerStatus analyzerStatus;
+  private boolean hasAnalyzed;
+  private boolean isAnalyzing;
+  private boolean showNavigation;
   private InspectionPopupManager myPopupManager = new InspectionPopupManager();
   private final Disposable resourcesDisposable = Disposer.newDisposable();
 
@@ -171,7 +174,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     DefaultActionGroup navigateGroup = new DefaultActionGroup(nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(analyzerStatus != null && analyzerStatus.getShowNavigation());
+        e.getPresentation().setEnabledAndVisible(showNavigation);
       }
     };
 
@@ -435,6 +438,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
                     analyzerStatus.getController().enableToolbar();
       updateTrafficLightVisibility();
+    }
+
+    boolean analyzing = analyzerStatus.getAnalyzing();
+    hasAnalyzed = hasAnalyzed || (isAnalyzing && !analyzing);
+    isAnalyzing = analyzing;
+
+    if (!(hasAnalyzed && isAnalyzing)) {
+      showNavigation = analyzerStatus.getShowNavigation();
     }
 
     myPopupManager.updateVisiblePopup();
@@ -1664,9 +1675,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final int DELTA_Y = 6;
 
   private class StatusAction extends DumbAwareAction implements CustomComponentAction {
-    private boolean hasAnalyzed;
-    private boolean isAnalyzing;
-
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       return new StatusButton(this, presentation, new EditorToolbarButtonLook(), place, myEditor.getColorsScheme());
@@ -1683,10 +1691,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       if (analyzerStatus != null) {
         List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
         Icon newIcon = analyzerStatus.getIcon();
-
-        boolean analyzing = analyzerStatus.getStandardStatus() == StandardStatus.ANALYZING;
-        hasAnalyzed = hasAnalyzed || (isAnalyzing && !analyzing);
-        isAnalyzing = analyzing;
 
         if (!(hasAnalyzed && isAnalyzing)) {
           if (newStatus.isEmpty()) {

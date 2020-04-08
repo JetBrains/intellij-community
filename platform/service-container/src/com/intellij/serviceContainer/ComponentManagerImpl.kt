@@ -466,7 +466,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       return result
     }
 
-    HeavyProcessLatch.INSTANCE.processStarted("Creating service '${serviceClass.name}'").use {
+    HeavyProcessLatch.INSTANCE.processStarted("Creating service '${serviceClass.name}'", HeavyProcessLatch.Type.Process).use {
       if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
         result = createLightService(serviceClass)
       }
