@@ -23,7 +23,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
@@ -78,6 +77,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
    *
    * @return The newly created editor info.
    */
+  @Override
   public @NotNull LightEditorInfo createEditor() {
     LightVirtualFile file = new LightVirtualFile(getUniqueName());
     file.setFileType(PlainTextFileType.INSTANCE);
@@ -89,9 +89,6 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     LightEditFileTypeOverrider.markUnknownFileTypeAsPlainText(file);
     setImplicitSaveEnabled(file, false);
     LightEditorInfo editorInfo = doCreateEditor(file);
-    if (editorInfo == null) {
-      return null;
-    }
     Editor editor = LightEditorInfoImpl.getEditor(editorInfo);
     if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
     return editorInfo;
