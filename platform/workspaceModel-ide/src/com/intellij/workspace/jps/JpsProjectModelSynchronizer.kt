@@ -125,7 +125,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     val baseDirUrl = storagePlace.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
-    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false, true)
+    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false)
     this.serializationData.set(serializationData)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()

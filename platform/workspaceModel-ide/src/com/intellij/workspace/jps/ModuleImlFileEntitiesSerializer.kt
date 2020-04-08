@@ -26,8 +26,7 @@ private const val URL_ATTRIBUTE = "url"
 
 internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                override val fileUrl: VirtualFileUrl,
-                                               override val entitySource: JpsFileEntitySource,
-                                               private val serializeFacets: Boolean) : JpsFileEntitiesSerializer<ModuleEntity> {
+                                               override val entitySource: JpsFileEntitySource) : JpsFileEntitiesSerializer<ModuleEntity> {
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
@@ -44,9 +43,7 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
       loadRootManager(rootManagerElement, moduleEntity, builder)
     }
 
-    if (serializeFacets) {
-      FacetEntitiesSerializer(fileUrl, entitySource).loadFacetEntities(builder, moduleEntity, reader)
-    }
+    FacetEntitiesSerializer(fileUrl, entitySource).loadFacetEntities(builder, moduleEntity, reader)
   }
 
   private fun loadRootManager(rootManagerElement: Element,
@@ -254,12 +251,10 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
 
     writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, rootManagerElement)
 
-    if (serializeFacets) {
-      @Suppress("UNCHECKED_CAST")
-      val facets = entities[FacetEntity::class.java] as List<FacetEntity>? ?: emptyList()
-      if (facets.isNotEmpty()) {
-        FacetEntitiesSerializer(fileUrl, entitySource).saveFacetEntities(module, facets, writer)
-      }
+    @Suppress("UNCHECKED_CAST")
+    val facets = entities[FacetEntity::class.java] as List<FacetEntity>? ?: emptyList()
+    if (facets.isNotEmpty()) {
+      FacetEntitiesSerializer(fileUrl, entitySource).saveFacetEntities(module, facets, writer)
     }
     return savedEntities
   }
@@ -406,7 +401,7 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
 
 private const val MODULE_MANAGER_COMPONENT_NAME = "ProjectModuleManager"
 
-internal class ModuleSerializersFactory(override val fileUrl: String, private val serializeFacets: Boolean) : JpsFileSerializerFactory<ModuleEntity> {
+internal class ModuleSerializersFactory(override val fileUrl: String) : JpsFileSerializerFactory<ModuleEntity> {
   override val entityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
@@ -415,7 +410,7 @@ internal class ModuleSerializersFactory(override val fileUrl: String, private va
   }
 
   override fun createSerializer(source: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
-    return ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl,  source, serializeFacets)
+    return ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source)
   }
 
   override fun loadFileList(reader: JpsFileContentReader): List<VirtualFileUrl> {
