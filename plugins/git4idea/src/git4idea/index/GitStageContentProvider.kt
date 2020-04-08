@@ -4,6 +4,7 @@ package git4idea.index
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.util.NotNullFunction
@@ -29,7 +30,8 @@ class GitStageContentProvider(private val tracker: GitStageTracker) : ChangesVie
 
 class GitStageContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
   override fun `fun`(project: Project): Boolean {
-    return ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).isNotEmpty()
+    return Registry.`is`("git.enable.stage") &&
+           ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).isNotEmpty()
   }
 }
 
