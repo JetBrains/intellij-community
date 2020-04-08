@@ -13,7 +13,6 @@ fun main() {
   store.add("/private/var/folders/dk/T/unitTest_importModule/idea_test_/oyt.dmg", 6)
   store.add("/private/var/folders/do/T/unitTest_importModule/oyt.dmg", 8)
   println("")
-  println(store.findLatestFilePathNode("/private/var/folders/dk/T/unitTest_importModule/idea_test_/oyt.dmg")?.values)
   val values = LinkedHashSet<Int>(5)
   println(values.isEmpty())
 }
@@ -21,6 +20,26 @@ fun main() {
 class FilePathNode(val content: String, val parent: FilePathNode? = null) {
   val values: MutableSet<Int> = mutableSetOf()
   val children: MutableSet<FilePathNode> = mutableSetOf()
+
+  override fun toString(): String {
+    val buffer = StringBuilder()
+    print(buffer, "", "")
+    return buffer.toString()
+  }
+
+  private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
+    if (values.isEmpty()) buffer.append("$prefix $content\n") else buffer.append("$prefix $content => $values\n")
+    val iterator = children.iterator()
+    while (iterator.hasNext()) {
+      val next = iterator.next()
+      if (iterator.hasNext()) {
+        next.print(buffer, "$childrenPrefix |- ", "$childrenPrefix |   ")
+      }
+      else {
+        next.print(buffer, "$childrenPrefix '- ", "$childrenPrefix     ")
+      }
+    }
+  }
 }
 
 class Store {
@@ -38,6 +57,7 @@ class Store {
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == 0) {
           newNode.values.add(entityId)
+          rootNode = newNode
           return
         }
         latestNode = newNode
@@ -79,7 +99,7 @@ class Store {
   //fun remove(path: String, entity: PEntityData<out TypedEntity>) {
   fun remove(path: String, entityId: Int) {
     val node = findLatestFilePathNode(path)
-    if (node == null || node.values.remove(entityId)) {
+    if (node == null || !node.values.remove(entityId)) {
       println("File not found")
       return
     }
@@ -89,22 +109,24 @@ class Store {
     do {
       val parent = currentNode.parent
       if (parent == null) {
-        if (parent === rootNode) rootNode = null
+        if (currentNode === rootNode && currentNode.values.isEmpty() && currentNode.children.isEmpty()) rootNode = null
         return
       }
 
-      parent.children.remove(node)
+      parent.children.remove(currentNode)
       currentNode = parent
     } while (currentNode.values.isEmpty() && currentNode.children.isEmpty())
   }
 
   //fun update(oldPath: String, newPath: String, entity: PEntityData<out TypedEntity>) {
   fun update(oldPath: String, newPath: String, entityId: Int) {
+    val latestPathNode = findLatestFilePathNode(oldPath)
+    if (latestPathNode == null || !latestPathNode.values.contains(entityId)) return
     remove(oldPath, entityId)
     add(newPath, entityId)
   }
 
-  fun findLatestFilePathNode(path: String): FilePathNode? {
+  private fun findLatestFilePathNode(path: String): FilePathNode? {
     val names = splitNames(path)
     var latestNode: FilePathNode? = rootNode
     for (index in names.indices.reversed()) {
@@ -158,4 +180,6 @@ class Store {
     val i = StringUtil.lastIndexOf(path, '/', 0, length)
     return i + 1
   }
+
+  override fun toString() = "$rootNode"
 }
