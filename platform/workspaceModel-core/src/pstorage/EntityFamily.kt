@@ -46,6 +46,8 @@ internal class MutableEntityFamily<E : TypedEntity>(
     entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) }
   }
 
+  private var amountOfGapsInEntities = emptySlots.size()
+
   private val copiedToModify: TIntHashSet = TIntHashSet()
 
   fun remove(id: Int) {
@@ -53,6 +55,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
     copiedToModify.remove(id)
     entities[id] = null
+    amountOfGapsInEntities++
   }
 
   fun add(other: PEntityData<E>) {
@@ -64,6 +67,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
       val emptySlot = emptySlots.pop()
       other.id = emptySlot
       entities[emptySlot] = other
+      amountOfGapsInEntities--
     }
     copiedToModify.add(other.id)
   }
@@ -95,10 +99,10 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   fun toImmutable(): EntityFamily<E>{
     copiedToModify.clear()
-    return EntityFamily(entities.toList(), emptySlots.size())
+    return EntityFamily(entities.toList(), amountOfGapsInEntities)
   }
 
-  override fun size(): Int = entities.size - emptySlots.size()
+  override fun size(): Int = entities.size - amountOfGapsInEntities
 
   companion object {
     fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(mutableListOf())
