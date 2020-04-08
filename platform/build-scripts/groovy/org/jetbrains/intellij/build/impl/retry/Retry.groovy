@@ -7,18 +7,18 @@ import org.jetbrains.intellij.build.BuildMessages
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
-class RetriableCall {
+class Retry {
   private final int retries
   private final long delayMs
   private final BuildMessages log
 
-  RetriableCall(BuildMessages log, int retries = 10, long delayMs = 1000) {
+  Retry(BuildMessages log, int retries = 10, long delayMs = 1000) {
     this.log = log
     this.delayMs = delayMs
     this.retries = retries
   }
 
-  def <T> T retry(Closure<T> operation) {
+  def <T> T call(Closure<T> operation) {
     def delayMs = delayMs
     for (i in 1..retries) {
       try {
