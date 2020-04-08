@@ -36,7 +36,7 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
 
   @Override
   public @NlsContexts.ListItem @NotNull String getFamilyName() {
-    return JavaBundle.message("inspection.underscores.in.literals.family");
+    return getName();
   }
 
   @Override
