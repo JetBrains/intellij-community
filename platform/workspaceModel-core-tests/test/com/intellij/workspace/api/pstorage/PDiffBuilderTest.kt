@@ -1,8 +1,36 @@
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.*
+import com.intellij.workspace.api.EntitySource
+import com.intellij.workspace.api.TypedEntityStorage
+import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.pstorage.references.ManyToOne
+import com.intellij.workspace.api.pstorage.references.MutableManyToOne
 import org.junit.Assert.assertEquals
 import org.junit.Test
+
+internal class PChildSampleEntityData : PEntityData<PChildSampleEntity>() {
+  lateinit var data: String
+}
+
+internal class PChildSampleEntity(
+  val data: String
+) : PTypedEntity() {
+  val parent: PSampleEntity? by ManyToOne.HardRef.Nullable(PSampleEntity::class)
+}
+
+internal class ModifiablePChildSampleEntity : PModifiableTypedEntity<PChildSampleEntity>() {
+  var data: String by EntityDataDelegation()
+  var parent: PSampleEntity? by MutableManyToOne.HardRef.Nullable(PChildSampleEntity::class, PSampleEntity::class)
+}
+
+internal fun TypedEntityStorageBuilder.addPChildSampleEntity(stringProperty: String,
+                                                             parent: PSampleEntity,
+                                                             source: EntitySource = PSampleEntitySource("test")): PChildSampleEntity {
+  return addEntity(ModifiablePChildSampleEntity::class.java, source) {
+    this.data = stringProperty
+    this.parent = parent
+  }
+}
 
 private fun TypedEntityStorageBuilder.applyDiff(anotherBuilder: TypedEntityStorageBuilder): TypedEntityStorage {
   val builder = PEntityStorageBuilder.from(this)
@@ -88,4 +116,21 @@ class ProxyBasedDiffBuilderTest {
     assertEquals(emptyList<PSampleEntity>(), storage.entities(PSampleEntity::class.java).toList())
   }
 
+  @Test
+  fun `add entity with refs at the same slot`() {
+    val target = PEntityStorageBuilder.create()
+    val source = PEntityStorageBuilder.create()
+    source.addPSampleEntity("Another entity")
+    val parentEntity = target.addPSampleEntity("hello")
+    target.addPChildSampleEntity("data", parentEntity)
+
+    source.addDiff(target)
+    source.assertConsistency()
+
+    val resultingStorage = source.toStorage()
+    assertEquals(2, resultingStorage.entities(PSampleEntity::class.java).toList().size)
+    assertEquals(1, resultingStorage.entities(PChildSampleEntity::class.java).toList().size)
+
+    assertEquals(resultingStorage.entities(PSampleEntity::class.java).last(), resultingStorage.entities(PChildSampleEntity::class.java).single().parent)
+  }
 }

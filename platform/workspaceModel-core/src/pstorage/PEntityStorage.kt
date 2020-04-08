@@ -84,11 +84,13 @@ internal class PEntityStorageBuilder(
   // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
   private fun <T : TypedEntity, E : TypedEntity> cloneAndAddEntityWithRefs(entity: PEntityData<T>,
                                                                            clazz: Class<E>,
-                                                                           storage: AbstractPEntityStorage): PEntityData<T> {
+                                                                           storage: AbstractPEntityStorage,
+                                                                           replaceMap: MutableMap<PId<*>, PId<*>>): PEntityData<T> {
     clazz as Class<T>
     val cloned = entitiesByType.cloneAndAdd(entity, clazz)
+    replaceMap[entity.createPid()] = cloned.createPid()
 
-    handleReferences(storage, entity, clazz)
+    handleReferences(storage, entity, clazz, replaceMap)
     return cloned
   }
 
@@ -96,28 +98,34 @@ internal class PEntityStorageBuilder(
   // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
   private fun <T : TypedEntity, E : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
                                                                        clazz: Class<E>,
-                                                                       storage: AbstractPEntityStorage) {
+                                                                       storage: AbstractPEntityStorage,
+                                                                       replaceMap: MutableMap<PId<*>, PId<*>>) {
     clazz as Class<T>
 
     entitiesByType.replaceById(newEntity, clazz)
 
-    handleReferences(storage, newEntity, clazz)
+    handleReferences(storage, newEntity, clazz, replaceMap)
   }
 
   private fun <T : TypedEntity> handleReferences(storage: AbstractPEntityStorage,
                                                  newEntity: PEntityData<T>,
-                                                 clazz: Class<T>) {
-    val childrenRefsByConnectionId = storage.refs.getChildrenRefsOfParent(newEntity.createPid(), false)
+                                                 clazz: Class<T>,
+                                                 replaceMap: MutableMap<PId<out TypedEntity>, PId<out TypedEntity>>) {
+    val entityPid = newEntity.createPid()
+    val replaceToPid = replaceMap.getOrDefault(entityPid, entityPid) as PId<T>
+    val childrenRefsByConnectionId = storage.refs.getChildrenRefsOfParent(entityPid, false)
       .groupBy { storage.refs.findConnectionIdOrDie(clazz, it.clazz.java) }
     for ((connectionId, children) in childrenRefsByConnectionId) {
-      refs.updateChildrenOfParent(connectionId, newEntity.createPid(), children)
+      val replaceToChildren = children.map { replaceMap.getOrDefault(it, it) }
+      refs.updateChildrenOfParent(connectionId, replaceToPid, replaceToChildren)
     }
 
-    val parentRefs = storage.refs.getParentRefsOfChild(newEntity.createPid(), false)
+    val parentRefs = storage.refs.getParentRefsOfChild(entityPid, false)
       .groupBy { storage.refs.findConnectionIdOrDie(it.clazz.java, clazz) }
       .mapValues { it.value.single() }
     for ((connection, parent) in parentRefs) {
-      refs.updateParentOfChild(connection as ConnectionId<TypedEntity, T>, newEntity.createPid(), parent as PId<TypedEntity>)
+      val realParent = replaceMap.getOrDefault(parent, parent) as PId<TypedEntity>
+      refs.updateParentOfChild(connection as ConnectionId<TypedEntity, T>, replaceToPid, realParent)
     }
   }
 
@@ -260,7 +268,7 @@ internal class PEntityStorageBuilder(
           if (!shallowEquals(oldData, newData.first, emptyBiMap, replaceWith)) {
             val replaceWithData = newData.first.clone()
 
-            replaceEntityWithRefs(replaceWithData, newData.second, this)
+            replaceEntityWithRefs(replaceWithData, newData.second, this, HashMap())
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity((PId(oldData.id, clazz.kotlin)), replaceWithData)) }
           }
 
@@ -440,7 +448,7 @@ internal class PEntityStorageBuilder(
     val newData = data.clone()
     replaceMap[(newData.createEntity(this) as PTypedEntity).id] = id
     //copyEntityProperties(data, newData, replaceMap.inverse())
-    cloneAndAddEntityWithRefs(newData, id.clazz.java, storage)
+    cloneAndAddEntityWithRefs(newData, id.clazz.java, storage, HashMap())
     //addEntity(newData, null, handleReferrers = true)
     updateChangeLog { it.add(createAddEntity(newData, id.clazz.java)) }
   }
@@ -610,7 +618,7 @@ internal class PEntityStorageBuilder(
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val oldPid = change.entityData.createPid()
-          val addedEntity = cloneAndAddEntityWithRefs(change.entityData, change.clazz, diff) as PEntityData<TypedEntity>
+          val addedEntity = cloneAndAddEntityWithRefs(change.entityData, change.clazz, diff, replaceMap) as PEntityData<TypedEntity>
           val createdPid = addedEntity.createPid()
           if (oldPid != createdPid) {
             replaceMap[oldPid] = createdPid
@@ -631,7 +639,7 @@ internal class PEntityStorageBuilder(
           val newData = change.newData.clone()
           if (this.entityDataById(usedPid) != null) {
             newData.id = usedPid.arrayId
-            replaceEntityWithRefs(newData, change.id.clazz.java, diff)
+            replaceEntityWithRefs(newData, change.id.clazz.java, diff, HashMap())
           }
           updateChangeLog { it.add(ChangeEntry.ReplaceEntity(usedPid, newData)) }
         }
