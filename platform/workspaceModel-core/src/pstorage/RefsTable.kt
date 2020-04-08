@@ -240,7 +240,7 @@ internal sealed class AbstractRefsTable constructor(
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> findConnectionIdOrDie(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT> {
-    return findConnectionId(parentClass, childClass) ?: error("ConnectionId doesn't exists")
+    return findConnectionId(parentClass, childClass) ?: error("ConnectionId doesn't exist")
   }
 
   fun <T : TypedEntity> getParentRefsOfChild(childId: PId<T>, hardReferencesOnly: Boolean): Set<PId<out TypedEntity>> {
