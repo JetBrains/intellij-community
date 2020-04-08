@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -40,7 +41,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
@@ -748,11 +748,20 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       Future<FSRecords.NameId[]> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
       FSRecords.NameId[] children1 = f1.get();
       FSRecords.NameId[] children2 = f2.get();
-      Arrays.sort(children1, Comparator.comparingInt(o -> o.id));
-      assertEquals(Arrays.toString(children1),2, children1.length);
-      assertEquals(Arrays.toString(children2),2, children2.length);
-      assertEquals("Duplicate ids found. child1="+children1[0]+"; child2="+children2[0], children1[0].id, children2[0].id);
-      assertEquals("Duplicate ids found. child1="+children1[1]+"; child2="+children2[1], children1[1].id, children2[1].id);
+      int[] nameIds1 = Arrays.stream(children1).mapToInt(n -> n.nameId).toArray();
+      int[] nameIds2 = Arrays.stream(children2).mapToInt(n -> n.nameId).toArray();
+      
+      // there can be one or two children, depending on whether the VFS refreshed in time or not.
+      // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
+      for (int i1 = 0; i1 < nameIds1.length; i1++) {
+        int nameId1 = nameIds1[i1];
+        int i2 = ArrayUtil.find(nameIds2, nameId1);
+        if (i2 >= 0) {
+          int id1 = children1[i1].id;
+          int id2 = children2[i2].id;
+          assertEquals("Duplicate ids found. children1=" + Arrays.toString(children1) + "; children2=" + Arrays.toString(children2), id1, id2);
+        }
+      }
     }
   }
 }
