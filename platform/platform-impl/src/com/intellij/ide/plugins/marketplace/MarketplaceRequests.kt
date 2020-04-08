@@ -36,20 +36,21 @@ object MarketplaceRequests {
 
   private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 
-  private val AVAILABLE_PLUGINS_XML_IDS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
+  private val PLUGIN_MANAGER_URL = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
+
+  private val AVAILABLE_PLUGINS_XML_IDS_URL = "${PLUGIN_MANAGER_URL}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
 
   private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests())
 
   private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded(
-    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/organizations"
+    "${PLUGIN_MANAGER_URL}/api/search/aggregation/organizations"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   private val MARKETPLACE_TAGS_URL = Urls.newFromEncoded(
-    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/api/search/aggregation/tags"
+    "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
-  private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd(
-    '/')}/api/search/compatibleUpdates"
+  private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
   private val objectMapper = ObjectMapper()
 
@@ -59,12 +60,11 @@ object MarketplaceRequests {
     update.externalUpdateId + ".json")
 
   private fun getUpdateMetadataUrl(update: IdeCompatibleUpdate) =
-    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/${update.externalPluginId}/${update.externalUpdateId}/meta.json"
+    "${PLUGIN_MANAGER_URL}/files/${update.externalPluginId}/${update.externalUpdateId}/meta.json"
 
-  private fun createSearchUrl(query: String, count: Int): Url {
-    val repoUrl = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl
-    return Urls.newFromEncoded("$repoUrl/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
-  }
+  private fun createSearchUrl(query: String, count: Int): Url = Urls.newFromEncoded(
+    "$PLUGIN_MANAGER_URL/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count"
+  )
 
   @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
