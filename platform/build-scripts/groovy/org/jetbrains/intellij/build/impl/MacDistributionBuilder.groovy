@@ -66,6 +66,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void copyFilesForOsDistribution(String macDistPath) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
+    buildContext.ant.fail(message: "just failed for some reason")
     def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
     if (buildContext.productProperties.toolsJarRequired) {

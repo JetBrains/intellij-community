@@ -677,6 +677,16 @@ idea.fatal.error.notification=disabled
             }
           } as Callable<V>)
         }
+
+        //wait until all tasks finishes
+        futures.each {
+          try {
+            it.get()
+          }
+          catch (Throwable ignore) {
+          }
+        }
+
         futures.collect { it.get() }
       }
     }
