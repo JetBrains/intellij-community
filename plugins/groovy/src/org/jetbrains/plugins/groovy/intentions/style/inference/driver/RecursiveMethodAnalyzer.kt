@@ -244,18 +244,10 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
         val map: PsiClassType = createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP)
         (iterable to map)
       }
-      var detectedInIterableInterface = false
-      for (superType: PsiClassType in rightTypeParameter.extendsListTypes) {
-        if (superType == iterable) {
-          detectedInIterableInterface = true
-          processRequiredParameters(rightType, iterable)
-        }
-        else if (superType == map) {
-          detectedInIterableInterface = true
-          processRequiredParameters(rightType, map)
-        }
+      if (TypesUtil.canAssign(map, rightType, forInClause, METHOD_PARAMETER) == OK) {
+        processRequiredParameters(rightType, map)
       }
-      if (!detectedInIterableInterface) {
+      else {
         processRequiredParameters(rightType, iterable)
       }
     }
