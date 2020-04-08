@@ -621,7 +621,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  public byte @Nullable [] getContentHashIfStored(@NotNull VirtualFile file) {
+  public static byte @Nullable [] getContentHashIfStored(@NotNull VirtualFile file) {
     return FSRecords.getContentHash(getFileId(file));
   }
 
@@ -1546,7 +1546,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @TestOnly
-  public void cleanPersistedContent(int id) {
+  public static void cleanPersistedContent(int id) {
     doCleanPersistedContent(id);
   }
 

@@ -93,27 +93,27 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
     // content is not yet loaded
-    byte[] hash = fs.getContentHashIfStored(vFile);
+    byte[] hash = PersistentFSImpl.getContentHashIfStored(vFile);
     assertNull(hash);
 
     vFile.contentsToByteArray();
-    hash = fs.getContentHashIfStored(vFile);
+    hash = PersistentFSImpl.getContentHashIfStored(vFile);
     assertNotNull(hash);
 
     // different contents should have different hashes
     setFileText(vFile, "two");
-    byte[] newHash = fs.getContentHashIfStored(vFile);
+    byte[] newHash = PersistentFSImpl.getContentHashIfStored(vFile);
     assertNotNull(newHash);
     assertFalse(Arrays.equals(hash, newHash));
 
     // equal contents should have the equal hashes
     setFileText(vFile, "one");
-    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
+    assertArrayEquals(hash, PersistentFSImpl.getContentHashIfStored(vFile));
 
     // deleted files preserve content, and thus hash
     delete(vFile);
     assertNotNull(fs.contentsToByteArray(vFile));
-    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
+    assertArrayEquals(hash, PersistentFSImpl.getContentHashIfStored(vFile));
   }
 
   public void testFindRootShouldNotBeFooledByRelativePath() throws Exception {

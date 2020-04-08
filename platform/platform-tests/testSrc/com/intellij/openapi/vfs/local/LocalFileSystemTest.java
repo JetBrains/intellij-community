@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -379,7 +378,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(5, virtualFile.getLength());
 
     FileUtil.writeToFile(file, "new content");
-    ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
+    PersistentFSImpl.cleanPersistedContent(((VirtualFileWithId)virtualFile).getId());
     s = VfsUtilCore.loadText(virtualFile);
     assertEquals("new content", s);
     assertEquals(11, virtualFile.getLength());
