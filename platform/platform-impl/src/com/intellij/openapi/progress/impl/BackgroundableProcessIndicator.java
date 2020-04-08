@@ -18,8 +18,6 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
 public class BackgroundableProcessIndicator extends ProgressWindow {
   protected StatusBarEx myStatusBar;
 
@@ -58,9 +56,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     initializeStatusBar();
   }
 
+  @CalledInAwt
   private void initializeStatusBar() {
     if (myDisposed || myDidInitializeOnEdt) return;
-    assert EventQueue.isDispatchThread();
     myDidInitializeOnEdt = true;
 
     setTitle(myInfo.getTitle());

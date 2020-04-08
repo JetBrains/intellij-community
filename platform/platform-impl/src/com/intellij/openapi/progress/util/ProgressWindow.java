@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -105,10 +106,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @CalledInAwt
   protected void initializeOnEdtIfNeeded() {
-    assert EventQueue.isDispatchThread();
+    EDT.assertIsEdt();
     initializeDialog();
   }
 
+  @CalledInAwt
   private void initializeDialog() {
     Runnable initialization = myDialogInitialization;
     if (initialization == null) return;
@@ -193,8 +195,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
+  @CalledInAwt
   public void startBlocking(@NotNull Runnable init) {
-    assert EventQueue.isDispatchThread();
+    EDT.assertIsEdt();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
@@ -347,7 +350,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
-    assert EventQueue.isDispatchThread();
+    EDT.assertIsEdt();
     myDialogInitialization = null;
     stopSystemActivity();
     if (isRunning()) {
