@@ -266,6 +266,10 @@ class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testCallWithArrayParameter() {
+    doTest(true)
+  }
+
   void testDifferentCallPlaces() {
     doTest(true)
   }

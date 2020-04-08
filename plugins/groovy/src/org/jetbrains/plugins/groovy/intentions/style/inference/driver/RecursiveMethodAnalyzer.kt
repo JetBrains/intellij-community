@@ -90,10 +90,11 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
    * We need to distinguish containing and subtyping relations, so this is why there are [UPPER] and [EQUAL] bounds
    */
   private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) = with(builder.signatureInferenceContext) {
-    var currentLowerType = lowerType as? PsiClassType ?: return
+    val (unwrappedLowerType, unwrappedUpperType) = coherentDeepComponentType(lowerType, upperType)
+    var currentLowerType = unwrappedLowerType as? PsiClassType ?: return
     var firstVisit = true
-    val context = lowerType.resolve()?.context ?: return
-    upperType.accept(object : PsiTypeVisitor<Unit>() {
+    val context = currentLowerType.resolve()?.context ?: return
+    unwrappedUpperType.accept(object : PsiTypeVisitor<Unit>() {
 
       fun visitClassParameters(currentUpperType: PsiClassType) {
         val lowerTypeParameter = currentLowerType.typeParameter()
@@ -169,6 +170,14 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
       }
     })
   }
+
+  private tailrec fun coherentDeepComponentType(lowerType: PsiType, upperType: PsiType) : Pair<PsiType, PsiType> =
+    if (lowerType is PsiArrayType && upperType is PsiArrayType) {
+      coherentDeepComponentType(lowerType.componentType, upperType.componentType)
+    }
+    else {
+      lowerType to upperType
+    }
 
 
   override fun visitCallExpression(callExpression: GrCallExpression) {
