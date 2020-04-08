@@ -982,16 +982,16 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     String incompatible = PluginManagerCore.getIncompatible(pluginDescriptor);
 
     if (incompatible != null) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() +
-                " version [" + StringUtil.escapeXmlEntities(incompatible) + "].";
+      message = IdeBundle.message("plugin.manager.incompatible.version.message", ApplicationNamesInfo.getInstance().getFullProductName(),
+                                  StringUtil.escapeXmlEntities(incompatible));
     }
     else {
       Set<PluginId> requiredPlugins = filterRequiredPlugins(getRequiredPlugins(pluginDescriptor.getPluginId()));
       if (ContainerUtil.isEmpty(requiredPlugins)) {
-        message = "Loading error. Please see to startup IDE message for details.";
+        message = IdeBundle.message("plugin.manager.loading.error.message");
       }
       else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-        message = "The plugin requires IntelliJ IDEA Ultimate.";
+        message =IdeBundle.message("plugin.manager.incompatible.ultimate.tooltip");
       }
       else {
         boolean[] enable = {true};
