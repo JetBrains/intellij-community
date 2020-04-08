@@ -122,9 +122,9 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
     if (result == null) return null;
     PsiElement start, end, psi;
     try {
-      start = transferElement(target, myDescriptor.getStartElement());
-      end = transferElement(target, myDescriptor.getEndElement());
-      psi = transferElement(target, myDescriptor.getPsiElement());
+      start = findSameElementInCopy(myDescriptor.getStartElement(), target);
+      end = findSameElementInCopy(myDescriptor.getEndElement(), target);
+      psi = findSameElementInCopy(myDescriptor.getPsiElement(), target);
     }
     catch (IllegalStateException e) {
       return null;
@@ -149,11 +149,20 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
     return new QuickFixWrapper(descriptor, result);
   }
 
-  @Contract("_, null -> null")
-  private static PsiElement transferElement(@NotNull PsiFile target, @Nullable PsiElement element) {
+  /**
+   * Returns the same element in the file copy.
+   * 
+   * @param element an element to find
+   * @param copy file that must be a copy of {@code element.getContainingFile()}
+   * @return found element; null if input element is null
+   * @throws IllegalStateException if it's detected that the supplied file is not exact copy of original file. 
+   * The exception is thrown on a best-effort basis, so you cannot rely on it. 
+   */
+  @Contract("null, _ -> null; !null, _ -> !null")
+  public static PsiElement findSameElementInCopy(@Nullable PsiElement element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
     TextRange range = element.getTextRange();
-    PsiElement newElement = target.findElementAt(range.getStartOffset());
+    PsiElement newElement = copy.findElementAt(range.getStartOffset());
     while (newElement != null) {
       TextRange newRange = newElement.getTextRange();
       if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
