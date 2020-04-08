@@ -9,18 +9,27 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider.hintsEnabled;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class ProjectProblemFileSelectionListener implements FileEditorManagerListener, InlayHintsSettings.SettingsListener {
+class ProjectProblemFileSelectionListener implements FileEditorManagerListener, InlayHintsSettings.SettingsListener, BulkFileListener {
 
   private final Project myProject;
 
@@ -38,6 +47,20 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
     if (psiJavaFile == null) return;
     ProjectProblemPassUtils.removeInlays(psiJavaFile);
     FileStateUpdater.setPreviousState(psiJavaFile);
+  }
+
+  @Override
+  public void before(@NotNull List<? extends VFileEvent> events) {
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    for (VFileEvent e : events) {
+      if (!(e instanceof VFileDeleteEvent)) continue;
+      VirtualFile virtualFile = ((VFileDeleteEvent)e).getFile();
+      if (!fileIndex.isInContent(virtualFile)) continue;
+      PsiFile psiFile = psiManager.findFile(virtualFile);
+      if (psiFile == null) continue;
+      FileStateUpdater.removeState(psiFile);
+    }
   }
 
   @Override
@@ -73,6 +96,7 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
       MessageBusConnection connection = project.getMessageBus().connect();
       connection.subscribe(FILE_EDITOR_MANAGER, listener);
       connection.subscribe(InlayHintsSettings.getINLAY_SETTINGS_CHANGED(), listener);
+      connection.subscribe(VirtualFileManager.VFS_CHANGES, listener);
     }
   }
 }

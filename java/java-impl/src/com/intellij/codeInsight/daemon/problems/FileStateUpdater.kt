@@ -86,6 +86,12 @@ internal class FileStateUpdater(private val prevSnapshot: Snapshot?) : JavaEleme
       FileStateCache.SERVICE.getInstance(psiFile.project).setState(psiFile, fileState.snapshot, fileState.changes)
     }
 
+    @JvmStatic
+    @JvmName("removeState")
+    internal fun removeState(psiFile: PsiFile) {
+      FileStateCache.SERVICE.getInstance(psiFile.project).removeState(psiFile)
+    }
+
     private fun collectRelatedChanges(
       psiMember: PsiMember,
       member: ScopedMember,
