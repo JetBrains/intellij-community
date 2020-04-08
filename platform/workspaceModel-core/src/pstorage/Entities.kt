@@ -133,7 +133,7 @@ abstract class PEntityData<E : TypedEntity> {
   private fun KType.isList(): Boolean = this.classifier == List::class
 }
 
-internal class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
+class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
     return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as B
   }

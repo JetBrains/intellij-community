@@ -145,9 +145,9 @@ class MutableOneToOneParent private constructor() {
   }
 }
 
-internal sealed class MutableOneToOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT : PModifiableTypedEntity<SUBT>> : ReadWriteProperty<MODSUBT, T> {
+sealed class MutableOneToOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT : PModifiableTypedEntity<SUBT>> : ReadWriteProperty<MODSUBT, T> {
 
-  lateinit var connectionId: ConnectionId<T, SUBT>
+  internal lateinit var connectionId: ConnectionId<T, SUBT>
 
   class HardRef<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT : PModifiableTypedEntity<SUBT>>(
     private val childClass: KClass<SUBT>,
