@@ -15,6 +15,7 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.storagePlace
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
@@ -47,7 +48,7 @@ internal class LegacyBridgeModifiableModuleModel(
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,
       dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      source = object : EntitySource {}
+      source = NonPersistentEntitySource
     )
 
     val module = LegacyBridgeModuleImpl(moduleEntity.persistentId(), moduleName, project, null, entityStoreOnDiff, diff)

@@ -14,18 +14,21 @@ import java.util.concurrent.atomic.AtomicInteger
  * Represents a file/directory where IntelliJ project is stored.
  */
 sealed class JpsProjectStoragePlace {
-  abstract val baseDirectoryUrl: String
+  val baseDirectoryUrlString: String
+    get() = baseDirectoryUrl.url
+
+  abstract val baseDirectoryUrl: VirtualFileUrl
   abstract fun exists(): Boolean
 
   data class DirectoryBased(val projectDir: VirtualFileUrl) : JpsProjectStoragePlace() {
-    override val baseDirectoryUrl: String
-      get() = projectDir.url
+    override val baseDirectoryUrl: VirtualFileUrl
+      get() = projectDir
 
     override fun exists() = JpsPathUtil.urlToFile(projectDir.url).exists()
   }
   data class FileBased(val iprFile: VirtualFileUrl) : JpsProjectStoragePlace() {
-    override val baseDirectoryUrl: String
-      get() = PathUtil.getParentPath(iprFile.url)
+    override val baseDirectoryUrl: VirtualFileUrl
+      get() = iprFile.parent!!
 
     override fun exists() = JpsPathUtil.urlToFile(iprFile.url).exists()
   }
@@ -73,10 +76,9 @@ data class ExternalEntitySource(val displayName: String, val id: String) : Entit
 fun ProjectModelExternalSource.toEntitySource() = ExternalEntitySource(displayName, id)
 
 /**
- * Represents entities added by user in IDE (either via Project Structure or Settings dialog, or by invoking an action like 'Create Library from Files').
+ * Represents entities which are added to the model automatically and shouldn't be persisted
  */
-// TODO It's required to resolve conflicts on library save when the file to write library to is not determined yet
-object IdeUiEntitySource : EntitySource
+object NonPersistentEntitySource : EntitySource
 
 /**
  * Returns `null` for the default project

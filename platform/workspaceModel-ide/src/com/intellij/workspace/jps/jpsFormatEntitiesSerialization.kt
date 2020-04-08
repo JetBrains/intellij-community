@@ -11,7 +11,6 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.IdeUiEntitySource
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
 import gnu.trove.TIntObjectHashMap
@@ -221,8 +220,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
       saveEntitiesList(it, storage, writer)
     }
 
-    val allSources = fileSerializersByUrl.values().mapTo(HashSet<EntitySource>()) { it.entitySource }
-    allSources += IdeUiEntitySource
+    val allSources = storage.entitiesBySource { true }.keys
     saveEntities(storage, allSources, writer)
   }
 
@@ -322,18 +320,14 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
       }
     }
 
-    val newEntities = entitiesToSave[IdeUiEntitySource] ?: emptyMap()
     fileSerializerFactoriesByUrl.values.forEach {
-      if (it in affectedFileFactories || it.entityClass in newEntities) {
+      if (it in affectedFileFactories) {
         saveEntitiesList(it, storage, writer)
       }
     }
 
-    processNewlyAddedDirectoryEntities(newEntities)
-
     for (serializer in entityTypeSerializers) {
-      if (serializer.mainEntityClass in newEntities ||
-        entitiesToSave.any { serializer.mainEntityClass in it.value }) {
+      if (entitiesToSave.any { serializer.mainEntityClass in it.value }) {
         val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
         serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
           storage.entities(it).toList()

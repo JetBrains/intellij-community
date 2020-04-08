@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.IdeUiEntitySource
 import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
@@ -36,7 +35,8 @@ class JpsProjectSaveAllEntitiesTest {
     val builder = TypedEntityStorageBuilder.create()
     val jarUrl = VirtualFileUrlManager.fromUrl("jar://${projectDir.systemIndependentPath}/lib/foo.jar!/")
     val libraryRoot = LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
-    builder.addLibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), emptyList(), IdeUiEntitySource)
+    val source = JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(projectDir.asStoragePlace())
+    builder.addLibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), emptyList(), source)
     val storage = builder.toStorage()
     serializers.saveAllEntities(storage, projectDir)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
@@ -50,7 +50,8 @@ class JpsProjectSaveAllEntitiesTest {
     val serializers = createSerializationData(projectDir)
     val builder = TypedEntityStorageBuilder.create()
     for (libName in listOf("a lib", "my-lib", "group-id:artifact-id")) {
-      builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), IdeUiEntitySource)
+      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(projectDir.asStoragePlace())
+      builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), source)
     }
     val storage = builder.toStorage()
     serializers.saveAllEntities(storage, projectDir)
