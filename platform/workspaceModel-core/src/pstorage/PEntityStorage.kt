@@ -602,6 +602,8 @@ internal class PEntityStorageBuilder(
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
 
+    // TODO: 08.04.2020 probably we should accept only diffs based on the same or empty snapshot
+
     val replaceMap = HashMap<PId<out TypedEntity>, PId<out TypedEntity>>()
     val diffLog = (diff as PEntityStorageBuilder).changeLog
     for (change in diffLog) {
@@ -726,13 +728,31 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     refs.oneToManyContainer.forEach { (connectionId, map) ->
       map.forEachKey { childId, parentId ->
         //  1) Refs should not have links without a corresponding entity
-        assert(entitiesByType[connectionId.parentClass.java]?.get(parentId) != null) {
-          "Reference to ${connectionId.parentClass}-:-$parentId cannot be resolved"
-        }
-        assert(entitiesByType[connectionId.childClass.java]?.get(childId) != null) {
-          "Reference to ${connectionId.childClass}-:-$childId cannot be resolved"
-        }
+        assertResolvable(connectionId.parentClass, parentId)
+        assertResolvable(connectionId.childClass, childId)
       }
+    }
+
+    refs.oneToOneContainer.forEach { (connectionId, map) ->
+      map.forEachKey { childId, parentId ->
+        //  1) Refs should not have links without a corresponding entity
+        assertResolvable(connectionId.parentClass, parentId)
+        assertResolvable(connectionId.childClass, childId)
+      }
+    }
+
+    refs.oneToAbstractManyContainer.forEach { (_, map) ->
+      map.forEach { (childId, parentId) ->
+        //  1) Refs should not have links without a corresponding entity
+        assertResolvable(parentId.clazz, parentId.arrayId)
+        assertResolvable(parentId.clazz, childId.arrayId)
+      }
+    }
+  }
+
+  private fun assertResolvable(clazz: KClass<out TypedEntity>, id: Int) {
+    assert(entitiesByType[clazz.java]?.get(id) != null) {
+      "Reference to $clazz-:-$id cannot be resolved"
     }
   }
 
