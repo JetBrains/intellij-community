@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
 import com.intellij.util.ArrayUtil;
@@ -50,8 +50,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     return instance;
   }
 
-  @NotNull
-  private Object instantiateGuarded(@NotNull PicoContainer container, @NotNull Class<?> stackFrame) {
+  private @NotNull Object instantiateGuarded(@NotNull PicoContainer container, @NotNull Class<?> stackFrame) {
     Set<CachingConstructorInjectionComponentAdapter> currentStack = ourGuard.get();
     if (currentStack == null) {
       ourGuard.set(currentStack = ContainerUtil.newIdentityTroveSet());
@@ -74,8 +73,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     }
   }
 
-  @NotNull
-  private Object doGetComponentInstance(@NotNull PicoContainer guardedContainer) {
+  private @NotNull Object doGetComponentInstance(@NotNull PicoContainer guardedContainer) {
     Constructor<?> constructor;
     try {
       constructor = getGreediestSatisfiableConstructor(guardedContainer);
@@ -113,8 +111,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
     return result;
   }
 
-  @NotNull
-  private Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
+  private @NotNull Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
                                                                                     PicoIntrospectionException,
                                                                                     AssignabilityRegistrationException {
     final Set<Constructor<?>> conflicts = new HashSet<>();
@@ -220,7 +217,7 @@ abstract class InstantiatingComponentAdapter extends AbstractComponentAdapter {
   /**
    * The cycle guard for the verification.
    */
-  protected static abstract class Guard extends ThreadLocalCyclicDependencyGuard {
+  protected abstract static class Guard extends ThreadLocalCyclicDependencyGuard {
     protected PicoContainer guardedContainer;
 
     protected void setArguments(PicoContainer container) {

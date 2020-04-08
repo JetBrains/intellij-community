@@ -35,9 +35,8 @@ public class Topic<L> {
   /**
    * @return human-readable name of the current topic. Is intended to be used in informational/logging purposes only
    */
-  @NotNull
   @NonNls
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myDisplayName;
   }
 
@@ -56,8 +55,7 @@ public class Topic<L> {
    *
    * @return    class of the interface that defines contract for working with the current topic
    */
-  @NotNull
-  public Class<L> getListenerClass() {
+  public @NotNull Class<L> getListenerClass() {
     return myListenerClass;
   }
 
@@ -65,13 +63,11 @@ public class Topic<L> {
     return myDisplayName;
   }
 
-  @NotNull
-  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
     return new Topic<>(displayName, listenerClass);
   }
 
-  @NotNull
-  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
     return new Topic<>(displayName, listenerClass, direction);
   }
 
@@ -79,8 +75,7 @@ public class Topic<L> {
    * @return    broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
    * @see BroadcastDirection
    */
-  @NotNull
-  public BroadcastDirection getBroadcastDirection() {
+  public @NotNull BroadcastDirection getBroadcastDirection() {
     return myBroadcastDirection;
   }
 

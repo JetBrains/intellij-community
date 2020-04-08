@@ -13,8 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
-  @NotNull
-  private final PluginId myPluginId;
+  private final @NotNull PluginId myPluginId;
   private final ClassLoader myPluginClassLoader;
 
   public DefaultPluginDescriptor(@NotNull String pluginId) {
@@ -33,8 +32,7 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   }
 
   @Override
-  @NotNull
-  public PluginId getPluginId() {
+  public @NotNull PluginId getPluginId() {
     return myPluginId;
   }
 
@@ -53,9 +51,8 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return null;
   }
 
@@ -69,15 +66,13 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getProductCode() {
+  public @Nullable String getProductCode() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Date getReleaseDate() {
+  public @Nullable Date getReleaseDate() {
     return null;
   }
 
@@ -121,9 +116,8 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
     return null;
   }
 
-  @Nullable
   @Override
-  public List<Element> getActionDescriptionElements() {
+  public @Nullable List<Element> getActionDescriptionElements() {
     return null;
   }
 

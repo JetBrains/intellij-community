@@ -78,8 +78,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     doRegisterExtensionPoint(pointName, className, pluginDescriptor, interfaceClassName != null, dynamic);
   }
 
-  @NotNull
-  private String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginDescriptor pluginDescriptor) {
+  private @NotNull String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginDescriptor pluginDescriptor) {
     String pointName = extensionPointElement.getAttributeValue("qualifiedName");
     if (pointName == null) {
       final String name = extensionPointElement.getAttributeValue("name");
@@ -94,7 +93,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String extensionNs) {
+  public void registerExtension(final @NotNull PluginDescriptor pluginDescriptor, final @NotNull Element extensionElement, String extensionNs) {
     String epName = extractPointName(extensionElement, extensionNs);
     registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
   }
@@ -104,8 +103,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myComponentManager);
   }
 
-  @NotNull
-  public static String extractPointName(@NotNull Element extensionElement, @Nullable String ns) {
+  public static @NotNull String extractPointName(@NotNull Element extensionElement, @Nullable String ns) {
     String epName = extensionElement.getAttributeValue("point");
     if (epName == null) {
       if (ns == null) {
@@ -151,9 +149,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
                                     false);
   }
 
-  @NotNull
-  private <T> ExtensionPointImpl<T> doRegisterExtensionPoint(@NotNull String name, @NotNull String extensionClass,
-                                                             @NotNull PluginDescriptor pluginDescriptor, boolean isInterface, boolean dynamic) {
+  private @NotNull <T> ExtensionPointImpl<T> doRegisterExtensionPoint(@NotNull String name, @NotNull String extensionClass,
+                                                                      @NotNull PluginDescriptor pluginDescriptor, boolean isInterface, boolean dynamic) {
     ExtensionPointImpl<T> point;
     if (isInterface) {
       point = new InterfaceExtensionPoint<>(name, extensionClass, pluginDescriptor, dynamic);
@@ -214,15 +211,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       ExtensionPointImpl<?> old = map.put(point.getName(), point);
       if (old != null) {
         map.put(point.getName(), old);
-        throw myComponentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getPluginDescriptor() +
+        throw componentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getPluginDescriptor() +
                                              ", second in " + point.getPluginDescriptor(), point.getPluginDescriptor().getPluginId());
       }
     }
   }
 
-  @NotNull
   @Override
-  public <T> ExtensionPointImpl<T> getExtensionPoint(@NotNull String extensionPointName) {
+  public @NotNull <T> ExtensionPointImpl<T> getExtensionPoint(@NotNull String extensionPointName) {
     @SuppressWarnings("unchecked")
     ExtensionPointImpl<T> extensionPoint = (ExtensionPointImpl<T>)myExtensionPoints.get(extensionPointName);
     if (extensionPoint == null) {
@@ -246,17 +242,15 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return true;
   }
 
-  @Nullable
   @Override
-  public <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
+  public @Nullable <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
     @SuppressWarnings("unchecked")
     ExtensionPointImpl<T> extensionPoint = (ExtensionPointImpl<T>)myExtensionPoints.get(extensionPointName);
     return extensionPoint;
   }
 
-  @NotNull
   @Override
-  public <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName) {
+  public @NotNull <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName) {
     return getExtensionPoint(extensionPointName.getName());
   }
 
@@ -265,9 +259,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return myExtensionPoints.values().toArray(new ExtensionPointImpl[0]);
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public <T> T findExtensionByClass(@NotNull Class<T> aClass) {
+  public @Nullable <T> T findExtensionByClass(@NotNull Class<T> aClass) {
     // TeamCity plugin wants DefaultDebugExecutor in constructor
     if (aClass.getName().equals("com.intellij.execution.executors.DefaultDebugExecutor")) {
       //noinspection unchecked
@@ -299,7 +292,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void unregisterExtensionPoint(@NotNull final String extensionPointName) {
+  public void unregisterExtensionPoint(final @NotNull String extensionPointName) {
     ExtensionPoint<?> extensionPoint = myExtensionPoints.get(extensionPointName);
     if (extensionPoint != null) {
       extensionPoint.reset();

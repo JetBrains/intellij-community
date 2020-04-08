@@ -247,11 +247,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun findFrameFor(project: Project?): IdeFrame? {
-    if (project == null) {
-      return ProjectFrameHelper.getFrameHelper(mostRecentFocusedWindow) ?: tryToFindTheOnlyFrame()
-    }
-    else {
-      return if (project.isDefault) WelcomeFrame.getInstance() else getFrameHelper(project) ?: getFrameHelper(null)
+    return when {
+      project == null -> ProjectFrameHelper.getFrameHelper(mostRecentFocusedWindow) ?: tryToFindTheOnlyFrame()
+      project.isDefault -> WelcomeFrame.getInstance()
+      else -> getFrameHelper(project) ?: getFrameHelper(null)
     }
   }
 

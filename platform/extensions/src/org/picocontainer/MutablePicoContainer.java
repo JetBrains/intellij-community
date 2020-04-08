@@ -1,4 +1,4 @@
-/*****************************************************************************
+/*
  * Copyright (c) PicoContainer Organization. All rights reserved.            *
  * ------------------------------------------------------------------------- *
  * The software in this package is published under the terms of the BSD      *
@@ -6,7 +6,7 @@
  * the LICENSE.txt file.                                                     *
  *                                                                           *
  * Idea by Rachel Davies, Original code by various                           *
- *****************************************************************************/
+*/
 package org.picocontainer;
 
 /**

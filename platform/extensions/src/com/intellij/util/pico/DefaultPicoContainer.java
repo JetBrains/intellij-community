@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
 import com.intellij.util.ReflectionUtil;
@@ -37,8 +37,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  @Nullable
-  public final ComponentAdapter getComponentAdapter(Object componentKey) {
+  public final @Nullable ComponentAdapter getComponentAdapter(Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
     if (adapter == null && parent != null) {
       return parent.getComponentAdapter(componentKey);
@@ -53,8 +52,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     componentAdapters.clear();
   }
 
-  @Nullable
-  private ComponentAdapter getFromCache(final Object componentKey) {
+  private @Nullable ComponentAdapter getFromCache(final Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.get(componentKey);
     if (adapter != null) {
       return adapter;
@@ -68,8 +66,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  @Nullable
-  public ComponentAdapter getComponentAdapterOfType(@NotNull Class componentType) {
+  public @Nullable ComponentAdapter getComponentAdapterOfType(@NotNull Class componentType) {
     // See http://jira.codehaus.org/secure/ViewIssue.jspa?key=PICO-115
     ComponentAdapter adapterByKey = getComponentAdapter(componentType);
     if (adapterByKey != null) {
@@ -141,8 +138,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  @Nullable
-  public ComponentAdapter unregisterComponent(@NotNull Object componentKey) {
+  public @Nullable ComponentAdapter unregisterComponent(@NotNull Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
     if (adapter == null) {
       return null;
@@ -166,8 +162,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  @Nullable
-  public Object getComponentInstance(Object componentKey) {
+  public @Nullable Object getComponentInstance(Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
     if (adapter != null) {
       return adapter.getComponentInstance(this);
@@ -181,8 +176,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return null;
   }
 
-  @Nullable
-  public <T> T getService(@NotNull Class<T> serviceClass) {
+  public @Nullable <T> T getService(@NotNull Class<T> serviceClass) {
     ComponentAdapter adapter = componentKeyToAdapterCache.get(serviceClass.getName());
     if (adapter == null) {
       return null;
@@ -193,20 +187,17 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public final ComponentAdapter getServiceAdapter(@NotNull String key) {
+  public final @Nullable ComponentAdapter getServiceAdapter(@NotNull String key) {
     return componentKeyToAdapterCache.get(key);
   }
 
   @Override
-  @Nullable
-  public Object getComponentInstanceOfType(Class componentType) {
+  public @Nullable Object getComponentInstanceOfType(Class componentType) {
     final ComponentAdapter componentAdapter = getComponentAdapterOfType(componentType);
     return componentAdapter == null ? null : getInstance(componentAdapter);
   }
 
-  @Nullable
-  private Object getInstance(@NotNull ComponentAdapter componentAdapter) {
+  private @Nullable Object getInstance(@NotNull ComponentAdapter componentAdapter) {
     if (getComponentAdapters().contains(componentAdapter)) {
       return componentAdapter.getComponentInstance(this);
     }
@@ -288,8 +279,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
       }
     }
 
-    @NotNull
-    public Set<T> getImmutableSet() {
+    public @NotNull Set<T> getImmutableSet() {
       Set<T> res = immutableSet;
       if (res == null) {
         synchronized (lock) {

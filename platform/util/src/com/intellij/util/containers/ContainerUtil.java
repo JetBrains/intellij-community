@@ -648,7 +648,7 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
-  private static class ImmutableListBackedByArray<E> extends ImmutableList<E> {
+  private static final class ImmutableListBackedByArray<E> extends ImmutableList<E> {
     private final E[] myStore;
 
     private ImmutableListBackedByArray(E @NotNull [] array) {

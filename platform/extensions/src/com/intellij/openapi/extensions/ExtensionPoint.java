@@ -58,9 +58,8 @@ public interface ExtensionPoint<T> {
   /**
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
-  @Nullable
   @Deprecated
-  default T getExtension() {
+  default @Nullable T getExtension() {
     // method is deprecated and not used, ignore not efficient implementation
     return ContainerUtil.getFirstItem(getExtensionList());
   }

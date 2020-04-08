@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -10,13 +10,20 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-// separate class to keep ExtensionPointImpl class implementation clear and readable,
+// Separate class to keep ExtensionPointImpl class implementation clear and readable,
 // such simple util code better to keep separately.
+
+// getThreadSafeAdapterList can be opened to used here directly to avoid using of iterator, but it doesn't make sense
+// - if there is already cached extension list, it will be used instead of custom iterator.
+// It is not only about performance and common sense, but also supporting ability to mock extension list in tests (custom list is set).
 @ApiStatus.Internal
 public final class ExtensionProcessingHelper {
   public static <T> void forEachExtensionSafe(@NotNull Consumer<? super T> extensionConsumer, @NotNull Iterable<? extends T> iterable) {
     for (T t : iterable) {
-      if (t == null) break;
+      if (t == null) {
+        break;
+      }
+
       try {
         extensionConsumer.accept(t);
       }
@@ -29,13 +36,11 @@ public final class ExtensionProcessingHelper {
     }
   }
 
-  @Nullable
-  public static <T> T findFirstSafe(@NotNull Predicate<? super T> predicate, @NotNull Iterable<? extends T> iterable) {
+  public static @Nullable <T> T findFirstSafe(@NotNull Predicate<? super T> predicate, @NotNull Iterable<? extends T> iterable) {
     return computeSafeIfAny(o -> predicate.test(o) ? o : null, iterable);
   }
 
-  @Nullable
-  public static <T, R> R computeSafeIfAny(@NotNull Function<? super T, ? extends R> processor, @NotNull Iterable<? extends T> iterable) {
+  public static @Nullable <T, R> R computeSafeIfAny(@NotNull Function<? super T, ? extends R> processor, @NotNull Iterable<? extends T> iterable) {
     for (T t : iterable) {
       if (t == null) {
         return null;

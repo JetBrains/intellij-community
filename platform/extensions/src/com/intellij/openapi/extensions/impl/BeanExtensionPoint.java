@@ -24,19 +24,17 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
     super(name, className, pluginDescriptor, dynamic);
   }
 
-  @NotNull
   @Override
-  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+  public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
     BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
     result.setComponentManager(manager);
     return result;
   }
 
   @Override
-  @NotNull
-  protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
-                                                                                      @NotNull PluginDescriptor pluginDescriptor,
-                                                                                      @NotNull ComponentManager componentManager) {
+  protected @NotNull ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
+                                                                                               @NotNull PluginDescriptor pluginDescriptor,
+                                                                                               @NotNull ComponentManager componentManager) {
     // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
@@ -53,7 +51,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
                                    @NotNull List<Element> elements,
                                    List<Runnable> listenerCallbacks) {
     Map<String, String> defaultAttributes = new HashMap<>();
-    ClassLoader classLoader = myDescriptor.getPluginClassLoader();
+    ClassLoader classLoader = this.pluginDescriptor.getPluginClassLoader();
     if (classLoader == null) {
       classLoader = getClass().getClassLoader();
     }
