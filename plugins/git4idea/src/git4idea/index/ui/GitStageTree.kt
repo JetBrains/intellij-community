@@ -33,8 +33,8 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     val builder = MyTreeModelBuilder(myProject, groupingSupport.grouping)
     val parentNodes: MutableMap<NodeKind, ChangesBrowserKindNode> = mutableMapOf()
 
-    state.gitState.forEach { (root, statuses) ->
-      statuses.forEach { status ->
+    state.rootStates.forEach { (root, rootState) ->
+      rootState.statuses.forEach { (_, status) ->
         NodeKind.values().forEach { kind ->
           if (kind.`is`(status)) {
             val parentNode = parentNodes.getOrPut(kind) { ChangesBrowserKindNode(kind) }
@@ -43,16 +43,12 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
           }
         }
       }
-    }
-    state.unsavedIndex.forEach { (root, files) ->
-      files.forEach { file ->
+      rootState.unsavedIndex.forEach { file ->
         val parentNode = parentNodes.getOrPut(NodeKind.STAGED) { ChangesBrowserKindNode(NodeKind.STAGED) }
         val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
         builder.insertPath(fileStatusInfo, parentNode)
       }
-    }
-    state.unsavedWorkTree.forEach { (root, files) ->
-      files.forEach { file ->
+      rootState.unsavedWorkTree.forEach { file ->
         val parentNode = parentNodes.getOrPut(NodeKind.UNSTAGED) { ChangesBrowserKindNode(NodeKind.UNSTAGED) }
         val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
         builder.insertPath(fileStatusInfo, parentNode)

@@ -17,20 +17,28 @@ fun <R> List<*>.lastInstance(klass: Class<R>): R? {
   return null
 }
 
-fun <T> Collection<T>.toShortenedString(num: Int = 20): String {
-  if (size < num) return toString()
-  return "${take(num)} ... +${size - num} more"
+fun <T> Collection<T>.toShortenedString(separator: String = ", ", limit: Int = 20,
+                                        transform: ((T) -> CharSequence)? = null): String {
+  return joinToString(prefix = "[", postfix = "]",
+                      separator = separator, limit = limit, truncated = truncated(limit),
+                      transform = transform)
 }
 
-fun <K, V> Map<K, V>.toShortenedString(num: Int = 20): String {
-  if (size < num) return toString()
-  return "${asIterable().take(num).toMap()} ... +${size - num} more"
+fun <K, V> Map<K, V>.toShortenedString(separator: String = ", ",
+                                       limit: Int = 20,
+                                       transform: ((Map.Entry<K, V>) -> CharSequence)? = null): String {
+  return asIterable().joinToString(prefix = "[", postfix = "]",
+                                   separator = separator, limit = limit, truncated = truncated(size, limit),
+                                   transform = transform)
 }
 
-private fun <K, V> Iterable<Map.Entry<K, V>>.toMap(): Map<K, V> {
-  val result = mutableMapOf<K, V>()
-  for (entry in this) {
-    result[entry.key] = entry.value
+private fun truncated(size: Int, limit: Int) = " ... +${size - limit} more"
+private fun Collection<*>.truncated(limit: Int) = truncated(size, limit)
+
+fun <K, V> Iterable<Pair<K, V>>.toMapOfSets(): Map<K, Set<V>> {
+  val result = mutableMapOf<K, MutableSet<V>>()
+  for (pair in this) {
+    result.getOrPut(pair.first) { mutableSetOf() }.add(pair.second)
   }
   return result
 }
