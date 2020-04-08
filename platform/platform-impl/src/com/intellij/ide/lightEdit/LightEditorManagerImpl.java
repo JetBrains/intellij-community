@@ -86,7 +86,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   @Override
   public @Nullable LightEditorInfo createEditor(@NotNull VirtualFile file) {
     LightEditFileTypeOverrider.markUnknownFileTypeAsPlainText(file);
-    disableImplicitSave(file);
+    setImplicitSaveEnabled(file, false);
     LightEditorInfo editorInfo = doCreateEditor(file);
     if (editorInfo == null) {
       return null;
@@ -96,10 +96,10 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     return editorInfo;
   }
 
-  private static void disableImplicitSave(@NotNull VirtualFile file) {
+  public static void setImplicitSaveEnabled(@NotNull VirtualFile file, boolean isEnabled) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      document.putUserData(NO_IMPLICIT_SAVE, true);
+      document.putUserData(NO_IMPLICIT_SAVE, !isEnabled);
     }
   }
 
