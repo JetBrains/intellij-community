@@ -418,6 +418,13 @@ internal sealed class AbstractIntIntMultiMap(
       return list.toTypedArray().toIntArray()
     }
 
+    /**
+     * Please use this method only for debugging purposes.
+     * Some of implementations doesn't have any memory overhead when using [IntSequence].
+     */
+    @TestOnly
+    internal fun single(): Int = toArray().single()
+
     open fun <T> map(transformation: (Int) -> T): Sequence<T> {
       return Sequence {
         object : Iterator<T> {
