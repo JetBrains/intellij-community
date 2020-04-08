@@ -41,7 +41,9 @@ public final class InsertLiteralUnderscoresInspection extends LocalInspectionToo
 
         final String displayMessage = JavaBundle.message("inspection.insert.literal.underscores.display.name");
         final String actionText = CommonQuickFixBundle.message("fix.replace.x.with.y", text, converted);
-        final ConvertNumericLiteralQuickFix quickFix = new ConvertNumericLiteralQuickFix(converted, actionText);
+        final String familyName = JavaBundle.message("inspection.insert.literal.underscores.family.name");
+
+        final ConvertNumericLiteralQuickFix quickFix = new ConvertNumericLiteralQuickFix(converted, actionText, familyName);
 
         holder.registerProblem(literalExpression, displayMessage, quickFix);
       }

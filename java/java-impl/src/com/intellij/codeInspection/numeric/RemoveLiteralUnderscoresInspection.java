@@ -40,8 +40,10 @@ public final class RemoveLiteralUnderscoresInspection extends LocalInspectionToo
         if (converted.length() == text.length()) return;
 
         final String displayMessage = JavaBundle.message("inspection.remove.literal.underscores.display.name");
+        final String familyName = JavaBundle.message("inspection.remove.literal.underscores.family.name");
         final String actionText = CommonQuickFixBundle.message("fix.replace.x.with.y", text, converted);
-        final ConvertNumericLiteralQuickFix quickFix = new ConvertNumericLiteralQuickFix(converted, actionText);
+
+        final ConvertNumericLiteralQuickFix quickFix = new ConvertNumericLiteralQuickFix(converted, actionText, familyName);
 
         holder.registerProblem(literalExpression, displayMessage, quickFix);
       }

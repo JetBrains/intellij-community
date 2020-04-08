@@ -3,8 +3,6 @@ package com.intellij.codeInspection.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.idea.LoggerFactory;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -27,16 +25,19 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
 
   @NotNull private final String myConvertedValue;
   @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) private final String myName;
+  @NotNull private @NlsContexts.ListItem final String myFamilyName;
 
   ConvertNumericLiteralQuickFix(@NotNull final String convertedValue,
-                                @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) final String name) {
+                                @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) final String name,
+                                @NotNull final @NlsContexts.ListItem String familyName) {
     myConvertedValue = convertedValue;
     myName = name;
+    myFamilyName = familyName;
   }
 
   @Override
   public @NlsContexts.ListItem @NotNull String getFamilyName() {
-    return getName();
+    return myFamilyName;
   }
 
   @Override
