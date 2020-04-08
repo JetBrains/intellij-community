@@ -50,7 +50,7 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
 
     if (element == null) {
-      LOGGER.warn("Problem descriptor cannot be without PsiElement");
+      LOGGER.error("Problem descriptor cannot be without PsiElement");
       return;
     }
 
