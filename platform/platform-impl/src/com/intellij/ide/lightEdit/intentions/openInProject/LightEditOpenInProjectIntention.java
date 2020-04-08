@@ -57,6 +57,7 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
       }
       if (openProject != null) {
         ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
+        LightEditorManagerImpl.setImplicitSaveEnabled(currFile, true);
         OpenFileAction.openFile(currFile, openProject);
       }
     }
