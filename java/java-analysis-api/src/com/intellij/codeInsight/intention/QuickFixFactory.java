@@ -105,9 +105,6 @@ public abstract class QuickFixFactory {
                                                                                            boolean fixWholeHierarchy);
 
   @NotNull
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass);
-
-  @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass,
                                                                                           final boolean makeInterface);
 
