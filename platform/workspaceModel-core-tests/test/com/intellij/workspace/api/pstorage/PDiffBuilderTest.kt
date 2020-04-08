@@ -6,6 +6,7 @@ import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.pstorage.references.ManyToOne
 import com.intellij.workspace.api.pstorage.references.MutableManyToOne
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class PChildSampleEntityData : PEntityData<PChildSampleEntity>() {
@@ -24,7 +25,7 @@ internal class ModifiablePChildSampleEntity : PModifiableTypedEntity<PChildSampl
 }
 
 internal fun TypedEntityStorageBuilder.addPChildSampleEntity(stringProperty: String,
-                                                             parent: PSampleEntity,
+                                                             parent: PSampleEntity?,
                                                              source: EntitySource = PSampleEntitySource("test")): PChildSampleEntity {
   return addEntity(ModifiablePChildSampleEntity::class.java, source) {
     this.data = stringProperty
@@ -132,5 +133,52 @@ class ProxyBasedDiffBuilderTest {
     assertEquals(1, resultingStorage.entities(PChildSampleEntity::class.java).toList().size)
 
     assertEquals(resultingStorage.entities(PSampleEntity::class.java).last(), resultingStorage.entities(PChildSampleEntity::class.java).single().parent)
+  }
+
+  @Test
+  fun `add remove and add with refs`() {
+    val source = PEntityStorageBuilder.create()
+    val target = PEntityStorageBuilder.create()
+    val parent = source.addPSampleEntity("Another entity")
+    source.addPChildSampleEntity("String", parent)
+
+    val parentEntity = target.addPSampleEntity("hello")
+    target.addPChildSampleEntity("data", parentEntity)
+
+    source.addDiff(target)
+    source.assertConsistency()
+
+    val resultingStorage = source.toStorage()
+    assertEquals(2, resultingStorage.entities(PSampleEntity::class.java).toList().size)
+    assertEquals(2, resultingStorage.entities(PChildSampleEntity::class.java).toList().size)
+
+    assertNotNull(resultingStorage.entities(PChildSampleEntity::class.java).first().parent)
+    assertNotNull(resultingStorage.entities(PChildSampleEntity::class.java).last().parent)
+
+    assertEquals(resultingStorage.entities(PSampleEntity::class.java).first(), resultingStorage.entities(PChildSampleEntity::class.java).first().parent)
+    assertEquals(resultingStorage.entities(PSampleEntity::class.java).last(), resultingStorage.entities(PChildSampleEntity::class.java).last().parent)
+  }
+
+  @Test
+  fun `add dependency without changing entities`() {
+    val source = PEntityStorageBuilder.create()
+    val parent = source.addPSampleEntity("Another entity")
+    source.addPChildSampleEntity("String", null)
+
+    val target = PEntityStorageBuilder.from(source)
+    val pchild = target.entities(PChildSampleEntity::class.java).single()
+    val pparent = target.entities(PSampleEntity::class.java).single()
+    target.modifyEntity(ModifiablePChildSampleEntity::class.java, pchild) {
+      this.parent = pparent
+    }
+
+    source.addDiff(target)
+    source.assertConsistency()
+
+    val resultingStorage = source.toStorage()
+    assertEquals(1, resultingStorage.entities(PSampleEntity::class.java).toList().size)
+    assertEquals(1, resultingStorage.entities(PChildSampleEntity::class.java).toList().size)
+
+    assertEquals(resultingStorage.entities(PSampleEntity::class.java).single(), resultingStorage.entities(PChildSampleEntity::class.java).single().parent)
   }
 }

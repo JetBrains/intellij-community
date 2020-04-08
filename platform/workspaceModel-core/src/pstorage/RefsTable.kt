@@ -182,7 +182,7 @@ internal class MutableRefsTable(
 
   internal fun <T : TypedEntity, SUBT : TypedEntity> updateParentOfChild(connectionId: ConnectionId<T, SUBT>,
                                                                          childId: PId<SUBT>,
-                                                                         parentId: PId<T>) {
+                                                                         parentId: PId<out TypedEntity>) {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
@@ -197,7 +197,7 @@ internal class MutableRefsTable(
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
         val copiedMap = getOneToAbstractManyMutableMap(connectionId)
         copiedMap.remove(childId)
-        copiedMap.put(childId, parentId)
+        copiedMap[childId] = parentId
       }
     }
   }
@@ -239,66 +239,81 @@ internal sealed class AbstractRefsTable constructor(
       as ConnectionId<T, SUBT>?
   }
 
-  fun <T : TypedEntity, SUBT : TypedEntity> findConnectionIdOrDie(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT> {
-    return findConnectionId(parentClass, childClass) ?: error("ConnectionId doesn't exist")
-  }
-
-  fun <T : TypedEntity> getParentRefsOfChild(childId: PId<T>, hardReferencesOnly: Boolean): Set<PId<out TypedEntity>> {
+  fun <SUBT : TypedEntity> getParentRefsOfChild(childId: PId<SUBT>, hardReferencesOnly: Boolean): ParentConnectionsInfo<SUBT> {
     val childArrayId = childId.arrayId
     val childClass = childId.clazz.java
 
-    val res = HashSet<PId<out TypedEntity>>()
+    val res = HashMap<ConnectionId<out TypedEntity, SUBT>, PId<out TypedEntity>>()
 
-    val filteredOneToMany = oneToManyContainer.filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+    val filteredOneToMany = oneToManyContainer
+      .filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<out TypedEntity, SUBT>, AbstractIntIntBiMap>
     for ((connectionId, bimap) in filteredOneToMany) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      res += PId(value, connectionId.parentClass)
+      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass))
+      if (existingValue != null) error("This parent already exists")
     }
 
-    val filteredOneToOne = oneToOneContainer.filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+    val filteredOneToOne = oneToOneContainer
+      .filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<out TypedEntity, SUBT>, AbstractIntIntUniqueBiMap>
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsKey(childArrayId)) continue
       val value = bimap.get(childArrayId)
-      res += PId(value, connectionId.parentClass)
+      val existingValue = res.putIfAbsent(connectionId, PId(value, connectionId.parentClass))
+      if (existingValue != null) error("This parent already exists")
     }
 
-    val filteredOneToAbstractOne = oneToAbstractManyContainer.filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
-    for ((_, bimap) in filteredOneToAbstractOne) {
+    val filteredOneToAbstractOne = oneToAbstractManyContainer
+      .filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<out TypedEntity, SUBT>, BidirectionalMap<PId<*>, PId<*>>>
+    for ((connectionId, bimap) in filteredOneToAbstractOne) {
       if (!bimap.containsKey(childId)) continue
-      val value = bimap.get(childId) ?: continue
-      res += value
+      val value = bimap[childId] ?: continue
+      val existingValue = res.putIfAbsent(connectionId, value)
+      if (existingValue != null) error("This parent already exists")
     }
 
     return res
   }
 
-  fun <T : TypedEntity> getChildrenRefsOfParent(parentId: PId<T>, hardReferencesOnly: Boolean): Set<PId<out TypedEntity>> {
+  fun <T : TypedEntity> getChildrenRefsOfParentBy(parentId: PId<T>, hardReferencesOnly: Boolean): ChildrenConnectionsInfo<T> {
     val parentArrayId = parentId.arrayId
     val parentClass = parentId.clazz.java
 
-    val res = HashSet<PId<out TypedEntity>>()
+    val res = HashMap<ConnectionId<T, out TypedEntity>, Set<PId<out TypedEntity>>>()
 
-    val filteredOneToMany = oneToManyContainer.filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+    val filteredOneToMany = oneToManyContainer
+      .filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<T, out TypedEntity>, AbstractIntIntBiMap>
     for ((connectionId, bimap) in filteredOneToMany) {
       val keys = bimap.getKeys(parentArrayId)
       if (!keys.isEmpty()) {
-        res += keys.map { PId(it, connectionId.childClass) }
+        val children = keys.map { PId(it, connectionId.childClass) }.toSet()
+        val existingValue = res.putIfAbsent(connectionId, children)
+        if (existingValue != null) error("These children already exist")
       }
     }
 
-    val filteredOneToOne = oneToOneContainer.filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+    val filteredOneToOne = oneToOneContainer
+      .filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<T, out TypedEntity>, AbstractIntIntUniqueBiMap>
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsValue(parentArrayId)) continue
       val key = bimap.getKey(parentArrayId)
-      res += PId(key, connectionId.childClass)
+      val existingValue = res.putIfAbsent(connectionId, setOf(PId(key, connectionId.childClass)))
+      if (existingValue != null) error("These children already exist")
     }
 
-    val filteredOneToAbstractMany = oneToAbstractManyContainer.filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+    val filteredOneToAbstractMany = oneToAbstractManyContainer
+      .filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<T, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
     for ((connectionId, bimap) in filteredOneToAbstractMany) {
-      val keys = bimap.getKeysByValue(parentId) ?: continue
+      val keys: List<PId<*>> = bimap.getKeysByValue(parentId) ?: continue
       if (keys.isNotEmpty()) {
-        res += keys
+        val existingValue = res.putIfAbsent(connectionId, keys.toSet())
+        if (existingValue != null) error("These children already exist")
       }
     }
 
