@@ -1,25 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.numeric;
 
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-final class ConvertNumericLiteralQuickFix extends LocalQuickFixOnPsiElement {
+final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
 
   @NotNull private final String myConvertedValue;
-  @NotNull private final String myText;
+  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) private final String myName;
 
-  ConvertNumericLiteralQuickFix(@NotNull final PsiLiteralExpression expression,
-                                @NotNull final String convertedValue,
-                                @NotNull final String text) {
-    super(expression);
-    this.myConvertedValue = convertedValue;
-    this.myText = text;
+  ConvertNumericLiteralQuickFix(@NotNull final String convertedValue,
+                                @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) final String name) {
+    myConvertedValue = convertedValue;
+    myName = name;
   }
 
   @Override
@@ -28,16 +29,16 @@ final class ConvertNumericLiteralQuickFix extends LocalQuickFixOnPsiElement {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getText() {
-    return myText;
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
+    return myName;
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    final PsiElement element = descriptor.getPsiElement();
+    assert element != null : "Problem descriptor cannot be without PsiElement";
+
     final PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myConvertedValue, null);
-    startElement.replace(replacement);
+    element.replace(replacement);
   }
 }

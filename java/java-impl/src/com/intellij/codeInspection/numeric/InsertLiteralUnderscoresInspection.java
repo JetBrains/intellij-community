@@ -33,7 +33,8 @@ public final class InsertLiteralUnderscoresInspection extends LocalInspectionToo
         if (converted.length() == text.length()) return;
 
         final String displayMessage = JavaBundle.message("inspection.insert.literal.underscores.display.name");
-        final ConvertNumericLiteralQuickFix quickFix = new ConvertNumericLiteralQuickFix(literalExpression, converted, displayMessage);
+        final String actionText = JavaBundle.message("inspection.numeric.literal.underscores.fix.name", text, converted);
+        final ConvertNumericLiteralQuickFix quickFix = new ConvertNumericLiteralQuickFix(converted, actionText);
 
         holder.registerProblem(literalExpression, displayMessage, quickFix);
       }
