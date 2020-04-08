@@ -104,10 +104,6 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
-  @Override
-  public void afterRootsChanged(@NotNull Project project) {
-  }
-
   @Nullable
   public String getInconsistencyLanguageLevelMessage(@NotNull String message, @NotNull PsiElement element,
                                                      @NotNull LanguageLevel level, @NotNull PsiFile file) {

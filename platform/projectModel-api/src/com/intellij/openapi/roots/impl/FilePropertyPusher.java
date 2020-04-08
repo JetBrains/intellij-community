@@ -83,5 +83,5 @@ public interface FilePropertyPusher<T> {
     void pushRecursively(@NotNull VirtualFile vile, @NotNull Project project);
   }
 
-  void afterRootsChanged(@NotNull Project project);
+  default void afterRootsChanged(@NotNull Project project) {}
 }
