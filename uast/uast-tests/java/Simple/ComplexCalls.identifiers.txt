@@ -35,19 +35,19 @@ args -> UParameter (name = args) from PsiIdentifier:args
     b -> ULocalVariable (name = b) from PsiIdentifier:b
     B -> USimpleNameReferenceExpression (identifier = B) from PsiIdentifier:B
     b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
-    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
-    barR -> UQualifiedReferenceExpression from PsiIdentifier:barR
-    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
-    foo -> UQualifiedReferenceExpression from PsiIdentifier:foo
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    barR -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from PsiIdentifier:barR
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:foo
     b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
-    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
-    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
-    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
-    foo -> UQualifiedReferenceExpression from PsiIdentifier:foo
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:foo
     b -> USimpleNameReferenceExpression (identifier = b) from PsiIdentifier:b
     a -> UQualifiedReferenceExpression from PsiIdentifier:a
     a -> UQualifiedReferenceExpression from PsiIdentifier:a
     a -> UQualifiedReferenceExpression from PsiIdentifier:a
-    bar -> UQualifiedReferenceExpression from PsiIdentifier:bar
+    bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:bar
     a -> UQualifiedReferenceExpression from PsiIdentifier:a
-    foo -> UQualifiedReferenceExpression from PsiIdentifier:foo
+    foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:foo

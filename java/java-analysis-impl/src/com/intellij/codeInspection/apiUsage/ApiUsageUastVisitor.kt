@@ -253,9 +253,8 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
 
   private fun maybeProcessJavaModuleReference(node: UElement): Boolean {
     val sourcePsi = node.sourcePsi
-    val psiParent = sourcePsi?.parent
-    if (sourcePsi is PsiIdentifier && psiParent is PsiJavaModuleReferenceElement && sourcePsi == psiParent.lastChild) {
-      val reference = psiParent.reference
+    if (sourcePsi is PsiJavaModuleReferenceElement) {
+      val reference = sourcePsi.reference
       val target = reference?.resolve()
       if (target != null) {
         apiUsageProcessor.processJavaModuleReference(reference, target)
