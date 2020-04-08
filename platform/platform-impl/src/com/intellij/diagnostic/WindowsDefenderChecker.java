@@ -98,7 +98,12 @@ public class WindowsDefenderChecker {
         return new CheckResult(scanningStatus, pathStatuses);
       }
     }
-    LOG.info("Windows Defender status: real-time scanning disabled");
+    if (scanningStatus == RealtimeScanningStatus.ERROR) {
+      LOG.info("Windows Defender status: failed to detect");
+    }
+    else {
+      LOG.info("Windows Defender status: real-time scanning disabled");
+    }
     return new CheckResult(scanningStatus, Collections.emptyMap());
   }
 
