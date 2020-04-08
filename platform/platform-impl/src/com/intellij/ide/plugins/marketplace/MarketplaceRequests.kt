@@ -66,6 +66,7 @@ object MarketplaceRequests {
     return Urls.newFromEncoded("$repoUrl/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count")
   }
 
+  @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return readOrUpdateFile(
@@ -78,6 +79,7 @@ object MarketplaceRequests {
   }
 
   @JvmStatic
+  @Throws(IOException::class)
   fun getBuildForPluginRepositoryRequests(): String {
     val instance = ApplicationInfoImpl.getShadowInstance()
     val compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild()
@@ -104,6 +106,7 @@ object MarketplaceRequests {
   }
 
   @JvmStatic
+  @Throws(IOException::class)
   fun getAllPluginsVendors(): List<String> = HttpRequests
     .request(MARKETPLACE_ORGANIZATIONS_URL)
     .productNameAsUserAgent()
@@ -115,6 +118,7 @@ object MarketplaceRequests {
     }
 
   @JvmStatic
+  @Throws(IOException::class)
   fun getAllPluginsTags(): List<String> = HttpRequests
     .request(MARKETPLACE_TAGS_URL)
     .productNameAsUserAgent()
@@ -125,6 +129,7 @@ object MarketplaceRequests {
       )
     }
 
+  @Throws(IOException::class)
   fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginNode {
     return readOrUpdateFile(
       getUpdateMetadataFile(ideCompatibleUpdate),
@@ -178,6 +183,7 @@ object MarketplaceRequests {
       }
   }
 
+  @Throws(IOException::class)
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
@@ -196,12 +202,14 @@ object MarketplaceRequests {
 
   @JvmStatic
   @JvmOverloads
+  @Throws(IOException::class)
   fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null): PluginNode? {
     val data = getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
     return data?.let { loadPluginDescriptor(id, it) }
   }
 
   @JvmStatic
+  @Throws(IOException::class)
   fun parsePluginList(reader: Reader): List<PluginNode> {
     try {
       val parser = SAXParserFactory.newInstance().newSAXParser()
