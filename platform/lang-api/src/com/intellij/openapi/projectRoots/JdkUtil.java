@@ -780,9 +780,9 @@ public final class JdkUtil {
   }
 
   private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
-    TargetedCommandLineBuilder targetedCommandLineBuilder = new TargetedCommandLineBuilder();
     LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
     TargetEnvironmentRequest request = environmentFactory.createRequest();
+    TargetedCommandLineBuilder targetedCommandLineBuilder = new TargetedCommandLineBuilder(request);
     setupCommandLine(targetedCommandLineBuilder, request, javaParameters, null);
     LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
     GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(targetedCommandLineBuilder.build());
