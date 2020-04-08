@@ -552,4 +552,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testForInLoop() {
     doTest(true)
   }
+
+  void testForInLoopWithMap() {
+    doTest(true)
+  }
 }

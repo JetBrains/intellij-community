@@ -228,9 +228,27 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
 
   override fun visitForInClause(forInClause: GrForInClause) {
     val rightType: PsiType? = forInClause.iteratedExpression?.type
-    if (rightType != null && rightType.isTypeParameter()) {
-      val iterable = GroovyPsiElementFactory.getInstance(forInClause.project).createTypeByFQClassName(CommonClassNames.JAVA_LANG_ITERABLE)
-      processRequiredParameters(rightType, iterable)
+    val rightTypeParameter: PsiTypeParameter? = rightType.typeParameter()
+    if (rightType != null && rightTypeParameter != null) {
+      val (iterable: PsiClassType, map: PsiClassType) = with(GroovyPsiElementFactory.getInstance(forInClause.project)) {
+        val iterable: PsiClassType = createTypeByFQClassName(CommonClassNames.JAVA_LANG_ITERABLE)
+        val map: PsiClassType = createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP)
+        (iterable to map)
+      }
+      var detectedInIterableInterface = false
+      for (superType: PsiClassType in rightTypeParameter.extendsListTypes) {
+        if (superType == iterable) {
+          detectedInIterableInterface = true
+          processRequiredParameters(rightType, iterable)
+        }
+        else if (superType == map) {
+          detectedInIterableInterface = true
+          processRequiredParameters(rightType, map)
+        }
+      }
+      if (!detectedInIterableInterface) {
+        processRequiredParameters(rightType, iterable)
+      }
     }
     super.visitForInClause(forInClause)
   }
