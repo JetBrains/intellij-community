@@ -5,55 +5,19 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.URLUtil
 import java.util.*
 
-fun main() {
-  val store = Store()
-  store.add("/private/var/folders/dw/T/unitTest_importModule/idea_test_/oyt.dmg", 20)
-  store.add("/private/var/folders/dw/T/oyt.dmg", 15)
-  store.add("/private/var/folders/dt/idea_test_/oyt.dmg", 7)
-  store.add("/private/var/folders/dk/T/unitTest_importModule/idea_test_/oyt.dmg", 6)
-  store.add("/private/var/folders/do/T/unitTest_importModule/oyt.dmg", 8)
-  println("")
-  val values = LinkedHashSet<Int>(5)
-  println(values.isEmpty())
-}
-
-class FilePathNode(val content: String, val parent: FilePathNode? = null) {
-  val values: MutableSet<Int> = mutableSetOf()
-  val children: MutableSet<FilePathNode> = mutableSetOf()
-
-  override fun toString(): String {
-    val buffer = StringBuilder()
-    print(buffer, "", "")
-    return buffer.toString()
-  }
-
-  private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
-    if (values.isEmpty()) buffer.append("$prefix $content\n") else buffer.append("$prefix $content => $values\n")
-    val iterator = children.iterator()
-    while (iterator.hasNext()) {
-      val next = iterator.next()
-      if (iterator.hasNext()) {
-        next.print(buffer, "$childrenPrefix |- ", "$childrenPrefix |   ")
-      }
-      else {
-        next.print(buffer, "$childrenPrefix '- ", "$childrenPrefix     ")
-      }
-    }
-  }
-}
-
 class Store {
   private var rootNode: FilePathNode? = null
+  private val fileNameStore = FileNameStore()
 
   //fun add(path: String, entity: PEntityData<out TypedEntity>) {
   fun add(path: String, entityId: Int) {
     val names = splitNames(path)
     var latestNode: FilePathNode? = rootNode
     for (index in names.indices.reversed()) {
-      val name = names[index]
+      val nameId = fileNameStore.generateIdForName(names[index])
       // Latest node can be NULL only if it's root node
       if (latestNode == null) {
-        val newNode = FilePathNode(name)
+        val newNode = FilePathNode(nameId)
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == 0) {
           newNode.values.add(entityId)
@@ -66,7 +30,7 @@ class Store {
       }
 
       if (latestNode === rootNode) {
-        if (latestNode.content == name) {
+        if (latestNode.contentId == nameId) {
           if (index == 0) {
             latestNode.values.add(entityId)
             return
@@ -75,9 +39,9 @@ class Store {
         }
       }
 
-      val node = latestNode.children.find { it.content == name }
+      val node = latestNode.children.find { it.contentId == nameId }
       if (node == null) {
-        val newNode = FilePathNode(name, latestNode)
+        val newNode = FilePathNode(nameId, latestNode)
         latestNode.children.add(newNode)
         latestNode = newNode
         // If it's the latest name of folder or files, save entity Id as node value
@@ -109,11 +73,15 @@ class Store {
     do {
       val parent = currentNode.parent
       if (parent == null) {
-        if (currentNode === rootNode && currentNode.values.isEmpty() && currentNode.children.isEmpty()) rootNode = null
+        if (currentNode === rootNode && currentNode.values.isEmpty() && currentNode.children.isEmpty()) {
+          removeNameUsage(currentNode.contentId)
+          rootNode = null
+        }
         return
       }
 
       parent.children.remove(currentNode)
+      removeNameUsage(currentNode.contentId)
       currentNode = parent
     } while (currentNode.values.isEmpty() && currentNode.children.isEmpty())
   }
@@ -126,21 +94,27 @@ class Store {
     add(newPath, entityId)
   }
 
+  private fun removeNameUsage(contentId: Long) {
+    val name = fileNameStore.getNameForId(contentId)
+    assert(name != null)
+    fileNameStore.removeName(name!!)
+  }
+
   private fun findLatestFilePathNode(path: String): FilePathNode? {
     val names = splitNames(path)
     var latestNode: FilePathNode? = rootNode
     for (index in names.indices.reversed()) {
-      val name = names[index]
+      val nameId = fileNameStore.getIdForName(names[index]) ?: return null
       // Latest node can be NULL only if it's root node
       if (latestNode == null) return null
 
       if (latestNode === rootNode) {
-        if (latestNode.content == name) {
+        if (latestNode.contentId == nameId) {
           if (index == 0) return latestNode else continue
         }
       }
 
-      latestNode.children.find { it.content == name }?.let {
+      latestNode.children.find { it.contentId == nameId }?.let {
         if (index == 0) return it
         latestNode = it
       } ?: return null
@@ -182,4 +156,30 @@ class Store {
   }
 
   override fun toString() = "$rootNode"
+
+  private inner class FilePathNode(val contentId: Long, val parent: FilePathNode? = null) {
+    val values: MutableSet<Int> = mutableSetOf()
+    val children: MutableSet<FilePathNode> = mutableSetOf()
+
+    override fun toString(): String {
+      val buffer = StringBuilder()
+      print(buffer, "", "")
+      return buffer.toString()
+    }
+
+    private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
+      val name = this@Store.fileNameStore.getNameForId(contentId)
+      if (values.isEmpty()) buffer.append("$prefix $name\n") else buffer.append("$prefix $name => $values\n")
+      val iterator = children.iterator()
+      while (iterator.hasNext()) {
+        val next = iterator.next()
+        if (iterator.hasNext()) {
+          next.print(buffer, "$childrenPrefix |- ", "$childrenPrefix |   ")
+        }
+        else {
+          next.print(buffer, "$childrenPrefix '- ", "$childrenPrefix     ")
+        }
+      }
+    }
+  }
 }

@@ -2,13 +2,14 @@
 package com.intellij.workspace.api.store
 
 import com.intellij.util.containers.BidirectionalMap
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 class FileNameStore {
   private val generator = IdGenerator()
   private val nameStore = BidirectionalMap<String, IdPerCount>()
 
-  fun getIdForName(name: String): Long {
+  fun generateIdForName(name: String): Long {
     val idPerCount = nameStore[name]
     if (idPerCount != null) {
       idPerCount.usageCount++
@@ -29,13 +30,46 @@ class FileNameStore {
       idPerCount.usageCount--
     }
   }
+
+  fun getNameForId(id: Long): String? {
+    val list = nameStore.getKeysByValue(IdPerCount(id, 1)) ?: return null
+    if (list.isEmpty()) return null
+    assert(list.size == 1)
+    return list[0]
+  }
+
+  fun getIdForName(name: String) = nameStore[name]?.id
+
+  @TestOnly
+  fun clear() {
+    nameStore.clear()
+    generator.clear()
+  }
 }
 
-private data class IdPerCount(val id: Long, var usageCount: Long)
+private data class IdPerCount(val id: Long, var usageCount: Long) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as IdPerCount
+
+    if (id != other.id) return false
+    return true
+  }
+
+  override fun hashCode() = 31 * id.hashCode()
+}
 
 private class IdGenerator {
   private val freeIdsQueue: Queue<Long> = LinkedList()
   private var generator: Long = 0
   fun generateId() = freeIdsQueue.poll() ?: ++generator
   fun releaseId(id: Long) = freeIdsQueue.add(id)
+
+  @TestOnly
+  fun clear() {
+    generator = 0
+    freeIdsQueue.clear()
+  }
 }
