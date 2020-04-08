@@ -42,6 +42,7 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkLookupImpl" />
 
     <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features" />
+    <registryKey key="editor.intention.action.auto.preview" defaultValue="false" description="Show intention preview automatically" />
 
     <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
