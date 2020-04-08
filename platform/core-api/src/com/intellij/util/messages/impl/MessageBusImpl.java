@@ -53,8 +53,7 @@ public class MessageBusImpl implements MessageBus {
   private final Map<Topic<?>, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull
-  private volatile Map<String, List<ListenerDescriptor>> myTopicClassToListenerClass = Collections.emptyMap();
+  private volatile @NotNull Map<String, List<ListenerDescriptor>> myTopicClassToListenerClass = Collections.emptyMap();
 
   private static final Object NA = new Object();
   private final MessageBusImpl myParentBus;
@@ -85,8 +84,7 @@ public class MessageBusImpl implements MessageBus {
     myLazyConnections = parentBus.myParentBus == null ? ConcurrentFactoryMap.createMap((key) -> connect()) : null;
   }
 
-  @NotNull
-  private static Disposable createConnectionDisposable(@NotNull MessageBusOwner owner) {
+  private static @NotNull Disposable createConnectionDisposable(@NotNull MessageBusOwner owner) {
     // separate disposable must be used, because container will dispose bus connections in a separate step
     return Disposer.newDisposable(owner.toString());
   }
@@ -168,14 +166,12 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @Override
-  @NotNull
-  public MessageBusConnectionImpl connect() {
+  public @NotNull MessageBusConnectionImpl connect() {
     return connect(myConnectionDisposable);
   }
 
   @Override
-  @NotNull
-  public MessageBusConnectionImpl connect(@NotNull Disposable parentDisposable) {
+  public @NotNull MessageBusConnectionImpl connect(@NotNull Disposable parentDisposable) {
     checkNotDisposed();
     MessageBusConnectionImpl connection = new MessageBusConnectionImpl(this);
     Disposer.register(parentDisposable, connection);
@@ -183,8 +179,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @Override
-  @NotNull
-  public <L> L syncPublisher(@NotNull Topic<L> topic) {
+  public @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) {
     checkNotDisposed();
     @SuppressWarnings("unchecked")
     L publisher = (L)myPublishers.get(topic);
@@ -234,8 +229,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  @NotNull
-  private <L> InvocationHandler createTopicHandler(@NotNull Topic<L> topic) {
+  private @NotNull <L> InvocationHandler createTopicHandler(@NotNull Topic<L> topic) {
     return (proxy, method, args) -> {
       if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
         return EventDispatcher.handleObjectMethod(proxy, args, method.getName());
@@ -359,8 +353,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  @NotNull
-  private List<MessageBusConnectionImpl> getTopicSubscribers(@NotNull Topic<?> topic) {
+  private @NotNull List<MessageBusConnectionImpl> getTopicSubscribers(@NotNull Topic<?> topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
     if (topicSubscribers == null) {
       topicSubscribers = new ArrayList<>();
@@ -405,18 +398,19 @@ public class MessageBusImpl implements MessageBus {
   private void pumpMessages() {
     checkNotDisposed();
     Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
-    if (map != null && !map.isEmpty()) {
-      List<MessageBusImpl> liveBuses = new ArrayList<>(map.size());
-      for (MessageBusImpl bus : map.keySet()) {
-        if (ensureAlive(map, bus)) {
+    if (map == null || map.isEmpty()) {
+      return;
+    }
 
-          liveBuses.add(bus);
-        }
+    List<MessageBusImpl> liveBuses = new ArrayList<>(map.size());
+    for (MessageBusImpl bus : map.keySet()) {
+      if (ensureAlive(map, bus)) {
+        liveBuses.add(bus);
       }
+    }
 
-      if (!liveBuses.isEmpty()) {
-        pumpWaitingBuses(liveBuses);
-      }
+    if (!liveBuses.isEmpty()) {
+      pumpWaitingBuses(liveBuses);
     }
   }
 
@@ -458,8 +452,7 @@ public class MessageBusImpl implements MessageBus {
     return true;
   }
 
-  @NotNull
-  private List<Throwable> doPumpMessages() {
+  private @NotNull List<Throwable> doPumpMessages() {
     Queue<DeliveryJob> queue = myMessageQueue.get();
     List<Throwable> exceptions = Collections.emptyList();
     do {
@@ -527,8 +520,7 @@ public class MessageBusImpl implements MessageBus {
     job.connection.deliverMessage(job.message);
   }
 
-  @NotNull
-  static <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
+  static @NotNull <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
     return ThreadLocal.withInitial(ArrayDeque::new);
   }
 
