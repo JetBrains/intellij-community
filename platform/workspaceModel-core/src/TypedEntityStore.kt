@@ -141,7 +141,7 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
   companion object {
 
     private const val NEW_STORE_REGISTRY_KEY = "ide.new.project.model.newstorage"
-    private val newStoreEnabled = Registry.`is`(NEW_STORE_REGISTRY_KEY)
+    private val newStoreEnabled = Registry.`is`(NEW_STORE_REGISTRY_KEY, false)
 
     fun create(): TypedEntityStorageBuilder {
       return if (newStoreEnabled) {
