@@ -33,5 +33,4 @@ public interface ToolWindowId {
   String RUN_DASHBOARD = "Run Dashboard";
   String SERVICES = "Services";
   String ENDPOINTS = "Endpoints";
-  String PROJECT_PROBLEMS_VIEW = "Project problems";
 }
