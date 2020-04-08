@@ -73,7 +73,7 @@ Adds support for working with shell script files
     <highlightErrorFilter id="shErrorFilter" implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter id="shDaemonInfoFilter" implementation="com.intellij.sh.ShErrorFilter"/>
 
-    <statistics.counterUsagesCollector groupId="shell.script" version="1"/>
+    <statistics.counterUsagesCollector groupId="sh.shell.script" version="1"/>
 
     <highlightUsagesHandlerFactory id="shOccurrencesHighlightingFactory" implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler id="shRenameHandler" implementation="com.intellij.sh.rename.ShRenameHandler"/>
