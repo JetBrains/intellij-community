@@ -126,9 +126,10 @@ public class FSRecords {
     w = lock.writeLock();
   }
 
-  static void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
-    writeAndHandleErrors(() -> {
-      setName(id, name);
+  // return nameId>0
+  static int writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
+    return writeAndHandleErrors(() -> {
+      int nameId = setName(id, name);
 
       setTimestamp(id, attributes.lastModified);
       setLength(id, attributes.isDirectory() ? -1L : attributes.length);
@@ -139,6 +140,7 @@ public class FSRecords {
                    (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
                    (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
       setParent(id, parentId);
+      return nameId;
     });
   }
 
@@ -1058,7 +1060,7 @@ public class FSRecords {
           int childId = childInfo.getId();
           if (childId <= 0) throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; list: "+list);
           if (childId == parentId) {
-            LOG.error("Cyclic parent-child relations");
+            LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+list);
           }
           else {
             int delta = childId - prevId;
@@ -1271,10 +1273,6 @@ public class FSRecords {
     });
   }
 
-  public static int getNameId(int id) {
-    return readAndHandleErrors(() -> doGetNameId(id));
-  }
-
   private static int doGetNameId(int id) {
     return getRecordInt(id, NAME_OFFSET);
   }
@@ -1306,11 +1304,13 @@ public class FSRecords {
     return nameId == 0 ? "" : getNames().valueOf(nameId);
   }
 
-  static void setName(int id, @NotNull String name) {
-    writeAndHandleErrors(() -> {
+  // return nameId>0
+  static int setName(int id, @NotNull String name) {
+    return writeAndHandleErrors(() -> {
       incModCount(id);
       int nameId = getNames().enumerate(name);
       putRecordInt(id, NAME_OFFSET, nameId);
+      return nameId;
     });
   }
 

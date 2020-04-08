@@ -148,16 +148,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      int id = ourPersistence.getId(this, name, delegate);
-      if (id <= 0) {
+      ChildInfo childInfo = ourPersistence.getNameId(this, name, delegate);
+      if (childInfo == null) {
         myData.addAdoptedName(name, caseSensitive);
         return null;
       }
 
-      final int nameId = FSRecords.getNameId(id); // name can change if file record was created
 
       if (ensureCanonicalName) {
-        CharSequence persistedName = FileNameCache.getVFileName(nameId);
+        CharSequence persistedName = childInfo.getName();
         if (!Comparing.equal(name, persistedName)) {
           name = persistedName.toString();
           child = doFindChildInArray(name, caseSensitive);
@@ -165,6 +164,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
 
+      int nameId = childInfo.getNameId(); // name can change if file record was created
+      int id = childInfo.getId();
       FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
       boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
 
