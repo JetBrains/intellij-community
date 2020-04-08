@@ -11,11 +11,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationStarter
 import kotlin.system.exitProcess
 
-data class WhitelistField(val path: String, val value: List<String>)
-data class WhitelistEvent(val event: String, val fields: List<WhitelistField>)
-data class WhitelistGroup(val id: String, val type: String, val schema: List<WhitelistEvent>)
+private data class WhitelistField(val path: String, val value: List<String>)
+private data class WhitelistEvent(val event: String, val fields: List<WhitelistField>)
+private data class WhitelistGroup(val id: String, val type: String, val schema: List<WhitelistEvent>)
 
-fun valueSchema(field: EventField<*>): List<String> = when(field) {
+private fun valueSchema(field: EventField<*>): List<String> = when(field) {
   is StringEventField ->
     if (field.customRuleId != null)
       listOf("{util#${field.customRuleId}}")
@@ -53,7 +53,7 @@ fun valueSchema(field: EventField<*>): List<String> = when(field) {
   }
 }
 
-fun fieldSchema(field: EventField<*>): List<WhitelistField> {
+private fun fieldSchema(field: EventField<*>): List<WhitelistField> {
   if (field == EventFields.Project) {
     return listOf()  // this field is handled implicitly
   }
@@ -67,7 +67,7 @@ fun fieldSchema(field: EventField<*>): List<WhitelistField> {
   return listOf(WhitelistField(field.name, valueSchema(field)))
 }
 
-fun buildWhitelist(): List<WhitelistGroup> {
+private fun buildWhitelist(): List<WhitelistGroup> {
   val result = mutableListOf<WhitelistGroup>()
   collectWhitelistFromExtensions(result, "counter", CounterUsageCollectorEP.EP_NAME.extensions.mapNotNull { ep ->
     ep.implementationClass?.let { ep.instantiateClass<FeatureUsagesCollector>(it, ApplicationManager.getApplication().picoContainer) }

@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,10 @@ import java.util.stream.Collectors;
  * @see ProjectUsagesCollector
  * @see FUCounterUsageLogger
  */
+@ApiStatus.Internal
 public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector {
+
+  @ApiStatus.Internal
   public static final ExtensionPointName<ApplicationUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.applicationUsagesCollector");
 

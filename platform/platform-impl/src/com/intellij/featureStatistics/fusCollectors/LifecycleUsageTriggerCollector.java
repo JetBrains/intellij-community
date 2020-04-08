@@ -6,6 +6,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
@@ -13,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,7 @@ public final class LifecycleUsageTriggerCollector extends FeatureUsagesCollector
   private static final EventId2<Long, String> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"), EventFields.String("duration_grouped"));
 
   private static final EventField<String> errorField = EventFields.String("error");
-  private static final EventField<VMOptions.MemoryKind> memoryErrorKindField = EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, (kind) -> kind.name().toLowerCase());
+  private static final EventField<VMOptions.MemoryKind> memoryErrorKindField = EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, (kind) -> StringUtil.toLowerCase(kind.name()));
   private static final EventField<Integer> errorHashField = EventFields.Int("error_hash");
   private static final StringListEventField errorFramesField = EventFields.StringList("error_frames").withCustomRule("method_name");
   private static final EventField<Integer> errorSizeField = EventFields.Int("error_size");

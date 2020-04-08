@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
  * @see ApplicationUsagesCollector
  * @see ProjectUsagesCollector
  */
+@ApiStatus.Internal
 public abstract class FeatureUsagesCollector {
   @NonNls private static final String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
 
