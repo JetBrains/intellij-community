@@ -107,9 +107,8 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return methods.length != 0 ? methods[0] : null;
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final Object value = myElement.getValue();
     if (value instanceof String) {
       final String type = getMemberType(myElement);
@@ -198,9 +197,8 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
   }
 
   static class JavaLangInvokeHandleReferenceProvider extends PsiReferenceProvider {
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
       if (element instanceof PsiLiteralExpression) {
         final PsiLiteralExpression literal = (PsiLiteralExpression)element;
         if (literal.getValue() instanceof String) {

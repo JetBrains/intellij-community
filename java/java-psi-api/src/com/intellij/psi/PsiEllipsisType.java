@@ -14,7 +14,7 @@ public class PsiEllipsisType extends PsiArrayType {
     super(componentType);
   }
 
-  public PsiEllipsisType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+  public PsiEllipsisType(@NotNull PsiType componentType, PsiAnnotation @NotNull [] annotations) {
     super(componentType, annotations);
   }
 
@@ -22,21 +22,18 @@ public class PsiEllipsisType extends PsiArrayType {
     super(componentType, provider);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean annotated) {
-    return getText(getComponentType().getPresentableText(), "...", false, annotated);
+  public @NotNull String getPresentableText(boolean annotated) {
+    return getText(getComponentType().getPresentableText(annotated), "...", false, annotated);
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getText(getComponentType().getCanonicalText(annotated), "...", true, annotated);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getText(getComponentType().getInternalCanonicalText(), "...", true, true);
   }
 

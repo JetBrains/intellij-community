@@ -119,8 +119,18 @@ public class ImportSpecBuilder {
     mySpec.setReportRefreshError(isReportRefreshError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
-    mySpec.setCallback(myCallback == null ? new DefaultProjectRefreshCallback(mySpec) : myCallback);
     mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
+    ExternalProjectRefreshCallback callback;
+    if (myCallback != null) {
+      callback = myCallback;
+    }
+    else if (myProjectResolverPolicy == null || !myProjectResolverPolicy.isPartialDataResolveAllowed()) {
+      callback = new DefaultProjectRefreshCallback(mySpec);
+    }
+    else {
+      callback = null;
+    }
+    mySpec.setCallback(callback);
     return mySpec;
   }
 

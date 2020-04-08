@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,8 +93,9 @@ public final class IdeBackgroundUtil {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  private static final Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
+  private static final @NonNls Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
 
+  @NonNls
   private static String getComponentType(JComponent component) {
     return component instanceof JTree ? "tree" :
            component instanceof JList ? "list" :
@@ -103,6 +105,7 @@ public final class IdeBackgroundUtil {
            component instanceof JButton ? "button" :
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof StatusBar ? "statusbar" :
+           component instanceof JMenuBar || component instanceof JMenu? "menubar" :
            component instanceof Stripe ? "stripe" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
@@ -395,7 +398,7 @@ public final class IdeBackgroundUtil {
   private static final class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
     public Graphics2D fun(JComponent c, Graphics2D g) {
-      if (Boolean.TRUE.equals(UIUtil.getClientProperty(c, NO_BACKGROUND))) return g;
+      if (Boolean.TRUE.equals(ComponentUtil.getClientProperty(c, NO_BACKGROUND))) return g;
       String type = getComponentType(c);
       if (type == null) return g;
       if ("frame".equals(type)) return withFrameBackground(g, c);
@@ -433,10 +436,13 @@ public final class IdeBackgroundUtil {
       Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
       Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(true) :
                          view instanceof JList ? UIUtil.getListSelectionBackground(true) :
-                         view instanceof JTable ? UIUtil.getTableSelectionBackground(true) : null;
+                         view instanceof JTable ? UIUtil.getTableSelectionBackground(true) :
+                         view instanceof JMenuBar || view instanceof JMenu ? UIManager.getColor("Menu.selectionBackground") :
+                         null;
       Color selection2 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(false) :
                          view instanceof JList ? UIUtil.getListSelectionBackground(false) :
-                         view instanceof JTable ? UIUtil.getTableSelectionBackground(false) : null;
+                         view instanceof JTable ? UIUtil.getTableSelectionBackground(false) :
+                         null;
       return color -> color == selection1 || color == selection2;
     }
   }

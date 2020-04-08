@@ -97,7 +97,7 @@ public class PyClassMROTest extends PyTestCase {
               "LockableItem", "EtagSupport", "Traversable", "object", "unknown");
   }
 
-  public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
+  public void assertMRO(@NotNull PyClass cls, String @NotNull ... mro) {
     final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.deepCodeInsight(cls.getProject()));
     final List<String> classNames = new ArrayList<>();
     for (PyClassLikeType type : types) {

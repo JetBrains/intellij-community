@@ -15,9 +15,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 
-/**
- * @author nik
- */
 public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());

@@ -8,12 +8,14 @@ import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,11 +27,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final List<? extends Editor> myEditors;
   @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
 
-  @NotNull private final AnAction[] myActions;
+  private final AnAction @NotNull [] myActions;
 
   public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
                                  @NotNull List<? extends Editor> editors) {
-    super("Editor Settings", null, AllIcons.General.GearPlain);
+    super(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain);
     setPopup(true);
     myTextSettings = settings;
     myEditors = editors;
@@ -148,9 +150,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     AnAction editorSettingsGroup = ActionManager.getInstance().getAction("Diff.EditorGutterPopupMenu.EditorSettings");
 
     List<AnAction> actions = new ArrayList<>();
@@ -177,7 +178,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   }
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware, EditorSettingAction {
-    private EditorSettingToggleAction(@NotNull String actionId) {
+    private EditorSettingToggleAction(@NotNull @NonNls String actionId) {
       ActionUtil.copyFrom(this, actionId);
       getTemplatePresentation().setIcon(null);
     }
@@ -213,13 +214,12 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     private final AnAction[] myOptions;
 
     EditorHighlightingLayerGroup() {
-      super("Highlighting Level", true);
+      super(DiffBundle.message("highlighting.level"), true);
       myOptions = ContainerUtil.map(HighlightingLevel.values(), level -> new OptionAction(level), AnAction.EMPTY_ARRAY);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return myOptions;
     }
 
@@ -264,9 +264,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       setPopup(true);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return myOptions;
     }
 

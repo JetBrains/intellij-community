@@ -21,14 +21,13 @@ import java.util.List;
  */
 public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyElement, PyMemberInfo<PyElement>> {
 
-  private static final String ABSTRACT_TITLE = RefactoringBundle.message("make.abstract");
   private final boolean mySupportAbstract;
 
   public PyMemberSelectionTable(
     @NotNull final List<PyMemberInfo<PyElement>> memberInfos,
     @Nullable final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model,
     final boolean supportAbstract) {
-    super(memberInfos, model, (supportAbstract ? ABSTRACT_TITLE : null));
+    super(memberInfos, model, (supportAbstract ? getAbstractTitle() : null));
     mySupportAbstract = supportAbstract;
   }
 
@@ -56,5 +55,9 @@ public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyEleme
       overrideIcon = AllIcons.General.OverridingMethod;
     }
     return overrideIcon;
+  }
+
+  private static String getAbstractTitle() {
+    return RefactoringBundle.message("make.abstract");
   }
 }

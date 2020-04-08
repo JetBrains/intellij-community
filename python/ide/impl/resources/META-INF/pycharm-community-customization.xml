@@ -1,17 +1,12 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <idea-plugin>
+  <resource-bundle>messages.PyBundle</resource-bundle>
 
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
     </component>
   </project-components>
-
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.PythonSdkConfigurator</implementation-class>
-    </component>
-  </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
@@ -20,26 +15,35 @@
 
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
-                         displayName="Project Structure"
+                         bundle="messages.PyBundle"
+                         key="configurable.PythonContentEntriesConfigurable.display.name"
                          provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         displayName="Project Interpreter"
-                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
+                         bundle="messages.PyBundle"
+                         key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
+                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         groupWeight="5"/>
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
-                         displayName="Project Dependencies"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyDependenciesConfigurable.display.name"
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
     <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
 
-    <statusBarWidgetProvider implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetProvider"/>
+    <statusBarWidgetFactory id="pythonInterpreterWidget"
+                            implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
+                            order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
 
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
-                         displayName="Buildout Support"
+                         bundle="messages.PyBundle"
+                         key="configurable.BuildoutModulesConfigurable.display.name"
                          instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
 
+    <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
+                                  order="after PlatformProjectConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.buildout.BuildoutFacetConfigurator" id="buildout"
@@ -67,7 +71,7 @@
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <action id="PySwitchSdkAction" class="com.jetbrains.python.configuration.PySwitchSdkAction"/>
     <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction">
       <add-to-group group-id="NewProjectOrModuleGroup"/>

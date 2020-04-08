@@ -2,9 +2,9 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -54,7 +54,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
-  private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
   private static final Random RESTART_DAEMON_RANDOM = new Random();
@@ -78,7 +77,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @NotNull ProperTextRange priorityRange,
                                  @Nullable Editor editor,
                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    super(project, document, PRESENTABLE_NAME, file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
+    super(project, document, getPresentableNameText(), file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
 
@@ -108,8 +107,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
-  @NotNull
-  private HighlightVisitor[] cloneHighlightVisitors() {
+  private HighlightVisitor @NotNull [] cloneHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
     HighlightVisitor[] highlightVisitors = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(myProject);
     if (oldCount != 0) {
@@ -125,8 +123,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return highlightVisitors;
   }
 
-  @NotNull
-  private HighlightVisitor[] filterVisitors(@NotNull HighlightVisitor[] highlightVisitors, @NotNull PsiFile psiFile) {
+  private HighlightVisitor @NotNull [] filterVisitors(HighlightVisitor @NotNull [] highlightVisitors, @NotNull PsiFile psiFile) {
     final List<HighlightVisitor> visitors = new ArrayList<>(highlightVisitors.length);
     List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
     for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(list)) {
@@ -152,8 +149,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myHighlightVisitorProducer = highlightVisitorProducer;
   }
 
-  @NotNull
-  HighlightVisitor[] getHighlightVisitors(@NotNull PsiFile psiFile) {
+  HighlightVisitor @NotNull [] getHighlightVisitors(@NotNull PsiFile psiFile) {
     return filterVisitors(myHighlightVisitorProducer.produce(), psiFile);
   }
 
@@ -268,7 +264,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull final List<? extends ProperTextRange> ranges1,
                                     @NotNull final List<? extends PsiElement> elements2,
                                     @NotNull final List<? extends ProperTextRange> ranges2,
-                                    @NotNull final HighlightVisitor[] visitors,
+                                    final HighlightVisitor @NotNull [] visitors,
                                     @NotNull final List<HighlightInfo> insideResult,
                                     @NotNull final List<? super HighlightInfo> outsideResult,
                                     final boolean forceHighlightParents) {
@@ -301,7 +297,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return success;
   }
 
-  private boolean analyzeByVisitors(@NotNull final HighlightVisitor[] visitors,
+  private boolean analyzeByVisitors(final HighlightVisitor @NotNull [] visitors,
                                     @NotNull final HighlightInfoHolder holder,
                                     final int i,
                                     @NotNull final Runnable action) {
@@ -325,7 +321,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                            @NotNull List<? super HighlightInfo> insideResult,
                            @NotNull List<? super HighlightInfo> outsideResult,
                            boolean forceHighlightParents,
-                           @NotNull HighlightVisitor[] visitors,
+                           HighlightVisitor @NotNull [] visitors,
                            @NotNull Stack<TextRange> nestedRange,
                            @NotNull Stack<List<HighlightInfo>> nestedInfos) {
     boolean failed = false;
@@ -335,7 +331,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       ProgressManager.checkCanceled();
 
       PsiElement parent = element.getParent();
-      if (element != getFile() && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
+      if (element != getFile() && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)
+          && parent != null) {
         skipParentsSet.add(parent);
         continue;
       }
@@ -381,7 +378,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         result.add(info);
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
-          if (!forceHighlightParents) {
+          if (!forceHighlightParents && parent != null) {
             skipParentsSet.add(parent);
           }
           myErrorFound = true;
@@ -598,5 +595,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @Override
   public String toString() {
     return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
+  }
+
+  private static String getPresentableNameText() {
+    return AnalysisBundle.message("pass.syntax");
   }
 }

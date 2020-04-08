@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -44,7 +45,7 @@ public class NullThrownInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("null.thrown.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", new NullPointerException());
     }
 
     @Override

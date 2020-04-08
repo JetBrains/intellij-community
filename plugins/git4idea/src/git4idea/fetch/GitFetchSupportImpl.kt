@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
@@ -24,6 +24,7 @@ import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
 import git4idea.commands.GitRestrictingAuthenticationGate
 import git4idea.config.GitConfigUtil
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
@@ -196,7 +197,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   private fun <T> withIndicator(operation: () -> T): T {
     val indicator = progressManager.progressIndicator
     val prevText = indicator?.text
-    indicator?.text = "Fetching"
+    indicator?.text = GitBundle.message("git.fetch.progress")
     try {
       return operation()
     }

@@ -2,8 +2,8 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -81,18 +81,18 @@ public class NavBarPresentation {
   }
 
   @NotNull
-  protected String getPresentableText(Object object) {
-    String text = calcPresentableText(object);
+  protected String getPresentableText(Object object, boolean forPopup) {
+    String text = calcPresentableText(object, forPopup);
     return text.length() > 50 ? text.substring(0, 47) + "..." : text;
   }
 
   @NotNull
-  public static String calcPresentableText(Object object) {
+  public static String calcPresentableText(Object object, boolean forPopup) {
     if (!NavBarModel.isValid(object)) {
-      return IdeBundle.message("node.structureview.invalid");
+      return StructureViewBundle.message("node.structureview.invalid");
     }
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
-      String text = modelExtension.getPresentableText(object);
+      String text = modelExtension.getPresentableText(object, forPopup);
       if (text != null) return text;
     }
     return object.toString();

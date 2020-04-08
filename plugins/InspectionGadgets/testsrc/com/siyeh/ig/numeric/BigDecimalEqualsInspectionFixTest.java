@@ -9,9 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8;
 
 public class BigDecimalEqualsInspectionFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new BigDecimalEqualsInspection()};
   }
 

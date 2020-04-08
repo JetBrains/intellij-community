@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * For project level extension points please use {@link ProjectExtensionPointName}.
  */
 public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
-  public ExtensionPointName(@NotNull String name) {
+  public ExtensionPointName(@NotNull @NonNls String name) {
     super(name);
   }
 
@@ -33,8 +33,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Prefer to use {@link #getExtensionList()}.
    */
-  @NotNull
-  public T[] getExtensions() {
+  public T @NotNull [] getExtensions() {
     return getPointImpl(null).getExtensions();
   }
 
@@ -92,8 +91,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
    */
-  @NotNull
-  public T[] getExtensions(@Nullable AreaInstance areaInstance) {
+  public T @NotNull [] getExtensions(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance).getExtensions();
   }
 
@@ -135,12 +133,12 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
    * events will be fired during iteration and probably it will be not expected.
-   *
+   * <p>
    * Use only for interface extension points, not for bean.
-   *
+   * <p>
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
    * so, `next` may return `null` (in this case stop iteration).
-   *
+   * <p>
    * Possible use cases:
    * 1. Conditional iteration (no need to create all extensions if iteration will be stopped due to some condition).
    * 2. Iterated only once per application (no need to cache extension list internally).
@@ -154,30 +152,16 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    getPointImpl(null).processWithPluginDescriptor(consumer);
+    getPointImpl(null).processWithPluginDescriptor(/* shouldBeSorted = */ true, consumer);
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @Nullable Disposable parentDisposable) {
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
+                                        @Nullable Disposable parentDisposable) {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener<? super T> added,
-                                        @NotNull ExtensionPointChangeListener<? super T> removed,
+  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener,
                                         @Nullable Disposable parentDisposable) {
-    getPointImpl(null).addExtensionPointListener(new ExtensionPointListener<T>() {
-      @Override
-      public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
-        added.extensionChanged(extension, pluginDescriptor);
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
-        removed.extensionChanged(extension, pluginDescriptor);
-      }
-    }, false, parentDisposable);
-  }
-
-  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener<? super T> listener, @Nullable Disposable parentDisposable) {
-    addExtensionPointListener(listener, listener, parentDisposable);
+    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 }

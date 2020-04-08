@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindInProjectSettings;
+import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
@@ -63,6 +65,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
@@ -70,14 +73,19 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +101,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
 
 /**
  * This dialog is used in two ways:
@@ -117,7 +126,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
   public static final Key<Runnable> STRUCTURAL_SEARCH_ERROR_CALLBACK = Key.create("STRUCTURAL_SEARCH_ERROR_CALLBACK");
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
-  public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
   Editor myEditor;
@@ -240,58 +248,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     document.addDocumentListener(this, myDisposable);
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
-    final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
-      @Override
-      protected EditorEx createEditor() {
-        final EditorEx editor = super.createEditor();
-        editor.setHorizontalScrollbarVisible(true);
-        editor.setVerticalScrollbarVisible(true);
-        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        assert profile != null;
-        TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
-        SubstitutionShortInfoHandler.install(editor, variableName -> {
-          if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
-            variableName = trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
-            assert myConfiguration instanceof ReplaceConfiguration;
-            myFilterPanel.initFilters(UIUtil.getOrAddReplacementVariable(variableName, myConfiguration));
-          }
-          else{
-            myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-          }
-          if (isFilterPanelVisible()) {
-            myConfiguration.setCurrentVariableName(variableName);
-          }
-        }, myDisposable, replace);
-        editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-        if (profile.highlightProblemsInEditor()) {
-          document.putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
-            putClientProperty("JComponent.outline", "error");
-            repaint();
-            getOKAction().setEnabled(false);
-            removeMatchHighlights();
-          });
-        }
-        else {
-          final Project project = getProject();
-          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
-          if (file != null) {
-            DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
-          }
-        }
-
-        TextCompletionUtil.installCompletionHint(editor);
-        editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
-        editor.setEmbeddedIntoDialogWrapper(true);
-        return editor;
-      }
-
-      @Override
-      protected void updateBorder(@NotNull EditorEx editor) {
-        setupBorder(editor);
-        final JScrollPane scrollPane = editor.getScrollPane();
-        scrollPane.setBorder(new ErrorBorder(scrollPane.getBorder()));
-      }
-    };
+    final EditorTextField textField = new MyEditorTextField(document, replace);
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     textField.setFont(scheme.getFont(EditorFontType.PLAIN));
     textField.setPreferredSize(new Dimension(550, 150));
@@ -356,10 +313,10 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
   private Configuration createConfiguration(Configuration template) {
     if (myReplace) {
-      return (template == null) ? new ReplaceConfiguration(USER_DEFINED, USER_DEFINED) : new ReplaceConfiguration(template);
+      return (template == null) ? new ReplaceConfiguration(getUserDefined(), getUserDefined()) : new ReplaceConfiguration(template);
     }
     else {
-      return (template == null) ? new SearchConfiguration(USER_DEFINED, USER_DEFINED) : new SearchConfiguration(template);
+      return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
     }
   }
 
@@ -419,6 +376,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   }
 
   @NotNull
+  @Nls
+  @NlsContexts.DialogTitle
   String getDefaultTitle() {
     return myReplace ? SSRBundle.message("structural.replace.title") : SSRBundle.message("structural.search.title");
   }
@@ -546,25 +505,16 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   @Override
   protected JComponent createNorthPanel() {
     final DefaultActionGroup historyActionGroup =
-      new DefaultActionGroup(new DumbAwareAction("History", null, AllIcons.Actions.SearchWithHistory) {
+      new DefaultActionGroup(new DumbAwareAction(SSRBundle.messagePointer("history.button"),
+                                                 SSRBundle.messagePointer("history.button.description"),
+                                                 AllIcons.Actions.SearchWithHistory) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           final Object source = e.getInputEvent().getSource();
           if (!(source instanceof Component)) return;
           JBPopupFactory.getInstance()
             .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
-            .setRenderer(SimpleListCellRenderer.<Configuration>create((label, value, index) -> {
-              if (value instanceof ReplaceConfiguration) {
-                label.setIcon(AllIcons.Actions.Replace);
-                label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 49, 0, true)
-                              + " ⇒ "
-                              + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
-              }
-              else {
-                label.setIcon(AllIcons.Actions.Find);
-                label.setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 100, 0, true));
-              }
-            }))
+            .setRenderer(new ConfigurationCellRenderer())
             .setItemChosenCallback(c -> loadConfiguration(c))
             .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
             .createPopup()
@@ -627,14 +577,24 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     });
     final JLabel fileTypeLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     fileTypeLabel.setLabelFor(myFileTypesComboBox);
-    final DefaultActionGroup templateActionGroup = new DefaultActionGroup(
+    final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
+    templateActionGroup.add(
       new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
-      },
+      });
+    templateActionGroup.add(
+      new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), getProject());
+        }
+      });
+    templateActionGroup.addSeparator();
+    templateActionGroup.addAll(
       new CopyConfigurationAction(),
       new PasteConfigurationAction(),
       new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
@@ -653,10 +613,17 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       Separator.getInstance(),
       new SwitchAction()
     );
-    templateActionGroup.setPopup(true);
-    templateActionGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
 
-    final AnAction filterAction = new DumbAwareToggleAction(null, "View variable filters", AllIcons.General.Filter) {
+
+    templateActionGroup.setPopup(true);
+    final Presentation presentation = templateActionGroup.getTemplatePresentation();
+    presentation.setIcon(AllIcons.General.Settings);
+    presentation.setText(SSRBundle.message("tools.button"));
+
+
+    final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
+                                                            SSRBundle.message("filter.button.description"),
+                                                            AllIcons.General.Filter) {
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
@@ -717,7 +684,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     return panel;
   }
 
-  private Project getProject() {
+  Project getProject() {
     return mySearchContext.getProject();
   }
 
@@ -812,7 +779,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
   public Configuration getConfiguration() {
     saveConfiguration();
-    return myConfiguration;
+    return myConfiguration.copy();
   }
 
   private CompiledPattern compilePattern() {
@@ -904,7 +871,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
     try {
-      new Matcher(project).findMatches(sink, matchOptions);
+      new Matcher(project, matchOptions).findMatches(sink);
       final List<MatchResult> matches = sink.getMatches();
       removeMatchHighlights();
       addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
@@ -953,14 +920,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           }
           highlightManager.addRangeHighlight(editor, start, end, textAttributes, false, myRangeHighlighters);
         }
-        final FindManager findmanager = FindManager.getInstance(project);
-        FindModel findmodel = findmanager.getFindNextModel();
-        if (findmodel == null) {
-          findmodel = findmanager.getFindInFileModel();
-        }
-        findmodel.setSearchHighlighters(true);
-        findmanager.setFindWasPerformed();
-        findmanager.setFindNextModel(findmodel);
+        HighlightHandlerBase.setupFindModel(project);
       }
       WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
     });
@@ -970,6 +930,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   void reportMessage(@Nullable String message, boolean error, @NotNull JComponent component) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBalloon != null) myBalloon.hide();
+      //noinspection HardCodedStringLiteral
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
 
@@ -1247,6 +1208,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       if (editorTextField == null) {
         return;
       }
+      @SuppressWarnings("HardCodedStringLiteral")
       final Object object = editorTextField.getClientProperty("JComponent.outline");
       if ("error".equals(object) || "warning".equals(object)) {
         myErrorBorder.paintBorder(c, g, x, y, width, height);
@@ -1289,7 +1251,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     }
 
     private void init() {
-      getTemplatePresentation().setText(SSRBundle.message(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
+      getTemplatePresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
       final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();
@@ -1303,7 +1265,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   private class CopyConfigurationAction extends AnAction implements DumbAware {
 
     CopyConfigurationAction() {
-      super(SSRBundle.message("export.template.action"));
+      super(SSRBundle.messagePointer("export.template.action"));
     }
 
     @Override
@@ -1315,7 +1277,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   private class PasteConfigurationAction extends AnAction implements DumbAware {
 
     PasteConfigurationAction() {
-      super(SSRBundle.message("import.template.action"));
+      super(SSRBundle.messagePointer("import.template.action"));
     }
 
     @Override
@@ -1324,6 +1286,63 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       if (!loadConfiguration(contents)) {
         reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
       }
+    }
+  }
+
+  public static String getUserDefined() {
+    return SSRBundle.message("new.template.defaultname");
+  }
+
+  private class MyEditorTextField extends EditorTextField {
+    private final boolean myReplace;
+
+    MyEditorTextField(Document document, boolean replace) {
+      super(document, StructuralSearchDialog.this.getProject(), StructuralSearchDialog.this.myFileType, false, false);
+      myReplace = replace;
+    }
+
+    @Override
+    protected EditorEx createEditor() {
+      final EditorEx editor = super.createEditor();
+      editor.setHorizontalScrollbarVisible(true);
+      editor.setVerticalScrollbarVisible(true);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+      assert profile != null;
+      TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
+      SubstitutionShortInfoHandler.install(editor, variableName -> {
+        if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
+          //noinspection AssignmentToLambdaParameter
+          variableName = trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
+          assert myConfiguration instanceof ReplaceConfiguration;
+          myFilterPanel.initFilters(UIUtil.getOrAddReplacementVariable(variableName, myConfiguration));
+        }
+        else{
+          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+        }
+        if (isFilterPanelVisible()) {
+          myConfiguration.setCurrentVariableName(variableName);
+        }
+      }, myDisposable, myReplace);
+      editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+      getDocument().putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
+        //noinspection HardCodedStringLiteral
+        putClientProperty("JComponent.outline", "error");
+        repaint();
+        getOKAction().setEnabled(false);
+        removeMatchHighlights();
+      });
+
+      TextCompletionUtil.installCompletionHint(editor);
+      editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
+      editor.setEmbeddedIntoDialogWrapper(true);
+      return editor;
+    }
+
+    @Override
+    protected void updateBorder(@NotNull EditorEx editor) {
+      setupBorder(editor);
+      final JScrollPane scrollPane = editor.getScrollPane();
+      scrollPane.setBorder(new ErrorBorder(scrollPane.getBorder()));
     }
   }
 }

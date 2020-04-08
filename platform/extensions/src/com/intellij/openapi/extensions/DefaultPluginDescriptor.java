@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.Disposable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
@@ -46,6 +48,11 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
     return null;
   }
 
+  @Override
+  public Path getPluginPath() {
+    return null;
+  }
+
   @Nullable
   @Override
   public String getDescription() {
@@ -75,19 +82,22 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   }
 
   @Override
+  public boolean isLicenseOptional() {
+    return false;
+  }
+
+  @Override
   public int getReleaseVersion() {
     return 0;
   }
 
-  @NotNull
   @Override
-  public PluginId[] getDependentPluginIds() {
+  public PluginId @NotNull [] getDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PluginId[] getOptionalDependentPluginIds() {
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return PluginId.EMPTY_ARRAY;
   }
 
@@ -149,5 +159,10 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
 
   @Override
   public void setEnabled(boolean enabled) {
+  }
+
+  @Override
+  public Disposable getPluginDisposable() {
+    return null;
   }
 }

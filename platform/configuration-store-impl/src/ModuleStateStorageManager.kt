@@ -7,7 +7,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.jdom.Element
@@ -17,7 +16,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 @ApiStatus.Internal
-open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module?) : StateStorageManagerImpl("module", macroSubstitutor, module) {
+open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
 
   override fun pathRenamed(oldPath: String, newPath: String, event: VFileEvent?) {
@@ -82,7 +81,7 @@ open class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitu
                                   provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName, roamingType, pathMacroManager, provider) {
     override fun handleVirtualFileNotFound() {
       if (storageDataRef.get() == null && !storageManager.isExternalSystemStorageEnabled) {
-        throw FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", file.toString()))
+        throw FileNotFoundException(ConfigurationStoreBundle.message("module.file.does.not.exist.error", file.toString()))
       }
     }
   }

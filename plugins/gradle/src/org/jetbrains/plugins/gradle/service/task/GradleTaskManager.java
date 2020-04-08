@@ -9,10 +9,11 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.task.BaseExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -21,7 +22,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.CancellationTokenSource;
@@ -46,13 +51,15 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.BUILD_PROCESS_DEBUGGER_PORT_KEY;
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_PORT_KEY;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 /**
  * @author Denis Zhdanov
  */
-public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecutionSettings> {
+public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
   public static final Key<String> INIT_SCRIPT_PREFIX_KEY = Key.create("INIT_SCRIPT_PREFIX_KEY");
@@ -71,9 +78,13 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
                            @Nullable GradleExecutionSettings settings,
                            @Nullable final String jvmParametersSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+    final List<String> tasks = taskNames.stream()
+      .flatMap(s -> ParametersListUtil.parse(s, false, true).stream())
+      .collect(Collectors.toList());
+
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, jvmParametersSetup, listener)) {
+        if (gradleTaskManagerExtension.executeTasks(id, tasks, projectPath, settings, jvmParametersSetup, listener)) {
           return;
         }
       }
@@ -82,43 +93,19 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
     GradleExecutionSettings effectiveSettings =
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
 
-    ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmParametersSetup);
-    if (forkedDebuggerSetup != null) {
-      if (isGradleScriptDebug(settings)) {
-        effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater(effectiveSettings.getJavaHome())));
-      }
-      effectiveSettings.putUserData(GradleRunConfiguration.DEBUGGER_DISPATCH_PORT_KEY, forkedDebuggerSetup.getForkSocketPort());
-    }
-
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     myCancellationMap.put(id, cancellationTokenSource);
     Function<ProjectConnection, Void> f = connection -> {
       try {
-        appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings);
+        setupGradleScriptDebugging(effectiveSettings);
+        appendInitScriptArgument(tasks, jvmParametersSetup, effectiveSettings);
         try {
           for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
             effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
           }
 
-          List<String> args = new SmartList<>();
-          for (Iterator<String> iterator = effectiveSettings.getArguments().iterator(); iterator.hasNext(); ) {
-            String arg = iterator.next();
-            if ("--args".equals(arg) && iterator.hasNext()) {
-              args.add("--args");
-              args.add(iterator.next());
-            }
-          }
-          String[] tasksArray;
-          if (!args.isEmpty()) {
-            // todo append --args only after JavaExec tasks
-            tasksArray = taskNames.stream().flatMap(task -> concat(Collections.singletonList(task), args).stream()).toArray(String[]::new);
-          }
-          else {
-            tasksArray = ArrayUtilRt.toStringArray(taskNames);
-          }
-
           BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-          launcher.forTasks(tasksArray);
+          launcher.forTasks(ArrayUtil.toStringArray(tasks));
 
           launcher.withCancellationToken(cancellationTokenSource.token());
           launcher.run();
@@ -141,7 +128,7 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
     myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
   }
 
-  protected boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
+  protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
     return Optional.ofNullable(settings)
       .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_FLAG_KEY))
       .orElse(false);
@@ -187,7 +174,7 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
       String isTestExecution = String.valueOf(Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST));
       enhancementParameters.put(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY, isTestExecution);
 
-      Integer debugDispatchPort = effectiveSettings.getUserData(GradleRunConfiguration.DEBUGGER_DISPATCH_PORT_KEY);
+      Integer debugDispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
 
       if (debugDispatchPort != null) {
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY, String.valueOf(debugDispatchPort));
@@ -233,6 +220,15 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
     }
   }
 
+  public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
+    Integer gradleScriptDebugPort = effectiveSettings.getUserData(BUILD_PROCESS_DEBUGGER_PORT_KEY);
+    if (isGradleScriptDebug(effectiveSettings) && gradleScriptDebugPort != null && gradleScriptDebugPort > 0) {
+      boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
+      String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
+      effectiveSettings.withVmOption(jvmOpt);
+    }
+  }
+
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull String executionName,
                                    @NotNull Class<? extends Task> taskClass,
@@ -254,7 +250,7 @@ public class GradleTaskManager extends BaseExternalSystemTaskManager<GradleExecu
                                    @Nullable TaskCallback callback) {
 
     String taskName = taskClass.getSimpleName();
-    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(set(taskClass, GsonBuilder.class));
+    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(set(taskClass, GsonBuilder.class, ExternalSystemException.class));
     String initScript = "initscript {\n" +
                         "  dependencies {\n" +
                         "    classpath files(" + paths + ")\n" +

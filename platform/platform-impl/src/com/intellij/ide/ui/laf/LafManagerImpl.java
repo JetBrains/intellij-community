@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -30,11 +30,12 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.ui.scale.JBUIScale;
@@ -84,6 +85,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font",
     "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
 
+  @PropertyKey(resourceBundle = IdeBundle.BUNDLE)
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 
@@ -101,7 +103,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final UIDefaults ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
   private UIManager.LookAndFeelInfo myCurrentLaf;
-  private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
+  private final Map<LafReference, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
 
   // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
   public static final String WINDOW_ALPHA = "Window.alpha";
@@ -222,7 +224,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     updateUI();
 
     UIThemeProvider.EP_NAME.addExtensionPointListener(new UIThemeEPListener(), this);
-    LafProvider.EP_NAME.addExtensionPointListener(new LafProviderEPListener(), this);
+//    LafProvider.EP_NAME.addExtensionPointListener(new LafProviderEPListener(), this);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -317,9 +319,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return element;
   }
 
-  @NotNull
   @Override
-  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
+  public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return myLaFs.getValue().toArray(new UIManager.LookAndFeelInfo[0]);
   }
 
@@ -397,7 +398,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     for (UIManager.LookAndFeelInfo l : myLaFs.getValue()) {
-      if (!(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)) {
+      if (!(l instanceof UIThemeBasedLookAndFeelInfo) && Objects.equals(l.getClassName(), className)) {
         return l;
       }
     }
@@ -408,14 +409,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * Sets current LAF. The method doesn't update component hierarchy.
    */
   @Override
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    setCurrentLookAndFeel(lookAndFeelInfo, false);
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) {
+    setLookAndFeelImpl(lookAndFeelInfo, lockEditorScheme, false);
   }
 
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean processChangeSynchronously) {
+  private void setLookAndFeelImpl(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme, boolean processChangeSynchronously) {
     UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
 
     if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
@@ -495,7 +496,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       try {
-        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults(), processChangeSynchronously);
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults(), lockEditorScheme);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -514,11 +515,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
 
     if (!myFirstSetup) {
-      if (processChangeSynchronously) {
-        updateEditorSchemeIfNecessary(oldLaf, true);
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf, false));
+      if (!lockEditorScheme) {
+        if (processChangeSynchronously) {
+          updateEditorSchemeIfNecessary(oldLaf, true);
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf, false));
+        }
       }
     }
     myFirstSetup = false;
@@ -594,6 +597,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     patchHiDPI(uiDefaults);
 
     fixMacOSDarkThemeDecorations();
+
+    uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
+    uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue());
+    uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
+                   UISettings.FORCE_USE_FRACTIONAL_METRICS
+                   ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                   : RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
 
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
@@ -697,9 +707,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
-    patchRowHeight(defaults, "List.rowHeight", prevScale);
-    patchRowHeight(defaults, "Table.rowHeight", prevScale);
-    patchRowHeight(defaults, "Tree.rowHeight", prevScale);
+    // fix predefined row height if default system font size is not expected
+    float prevRowHeightScale = prevScaleVal != null || SystemInfo.isMac || SystemInfo.isWindows
+                               ? prevScale
+                               : JBUIScale.getFontScale(12f);
+    patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale);
+    patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale);
+    patchRowHeight(defaults, "Tree.rowHeight", prevRowHeightScale);
 
     if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
 
@@ -741,6 +755,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (rowHeight <= 0) {
       LOG.warn(key + " = " + value + " in " + UIManager.getLookAndFeel().getName() + "; it may lead to performance degradation");
     }
+    if (!SystemInfo.isMac && !SystemInfo.isWindows && Registry.is("linux.row.height.disabled")) rowHeight = 0;
     defaults.put(key, rowHeight <= 0 ? 0 : JBUIScale.scale((int)(rowHeight / prevScale)));
   }
 
@@ -822,7 +837,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
-    UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
+    LafReference lf = myCurrentLaf == null ? null : getCurrentLookAndFeelReference();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults != null) {
       for (String resource : ourPatchableFontResources) {
@@ -833,7 +848,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
-    UIManager.LookAndFeelInfo lf = getCurrentLookAndFeel();
+    LafReference lf = myCurrentLaf == null ? null : getCurrentLookAndFeelReference();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
       lfDefaults = new HashMap<>();
@@ -967,6 +982,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+        rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane, false));
         rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
         rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
@@ -1103,7 +1119,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         myLafComboBoxModel.replaceAll(getLafReferences());
       }
       if (switchLafTo != null) {
-        setCurrentLookAndFeel(switchLafTo, true);
+        setLookAndFeelImpl(switchLafTo, false, true);
         if (myLafComboBoxModel != null) {
           myLafComboBoxModel.setSelectedItem(createLafReference(switchLafTo));
         }
@@ -1177,7 +1193,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
 
       if (switchLafTo != null) {
-        setCurrentLookAndFeel(switchLafTo, true);
+        setLookAndFeelImpl(switchLafTo, false, true);
         if (myLafComboBoxModel != null) {
           myLafComboBoxModel.setSelectedItem(switchLafTo);
         }

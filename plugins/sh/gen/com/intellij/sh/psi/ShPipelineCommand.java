@@ -8,9 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface ShPipelineCommand extends ShCommand {
 
   @Nullable
-  ShPipeline getPipeline();
-
-  @Nullable
   PsiElement getBang();
 
 }

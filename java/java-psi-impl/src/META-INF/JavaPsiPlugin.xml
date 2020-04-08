@@ -33,8 +33,8 @@
     <extensionPoint qualifiedName="com.intellij.javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
     <extensionPoint qualifiedName="com.intellij.importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
     <extensionPoint qualifiedName="com.intellij.javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
-    <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.JVMElementFactoryProvider"/>
     </extensionPoint>
@@ -47,12 +47,14 @@
     <extensionPoint qualifiedName="com.intellij.annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework"/>
+    <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
-                    interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"/>
+                    interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
-                    interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"/>
+                    interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.declarationSearcher" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.jvm.source.JvmDeclarationSearcher"/>
     </extensionPoint>

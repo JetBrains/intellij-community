@@ -17,9 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
-/**
- * @author nik
- */
 public abstract class JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsLoaderBase.class);
   private static final int MAX_ATTEMPTS = 5;

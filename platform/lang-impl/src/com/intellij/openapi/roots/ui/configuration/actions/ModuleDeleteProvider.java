@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
@@ -118,7 +119,8 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
 
   @Override
   public String getActionTitle() {
-    return ProjectAttachProcessor.canAttachToProject() ? "Remove from Project View" : "Remove Module";
+    return ProjectAttachProcessor.canAttachToProject() ? ProjectBundle.message("action.text.remove.from.project.view")
+                                                       : ProjectBundle.message("action.text.remove.module");
   }
 
   public static void removeModule(@NotNull final Module moduleToRemove,

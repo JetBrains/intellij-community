@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -57,7 +58,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "{@code ...}");
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.options.BoundCompositeConfigurable
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
@@ -14,30 +15,26 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformUtils
 
-val model = GeneralSettings.getInstance()
-val myChkReopenLastProject = CheckboxDescriptor(IdeBundle.message("checkbox.reopen.last.project.on.startup", IdeUICustomization.getInstance().projectConceptName),
-                                                PropertyBinding(model::isReopenLastProject, model::setReopenLastProject))
-val myConfirmExit = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"),
-                                       PropertyBinding(model::isConfirmExit, model::setConfirmExit))
-val myShowWelcomeScreen = CheckboxDescriptor(IdeBundle.message("checkbox.show.welcome.screen"),
-                                             PropertyBinding(model::isShowWelcomeScreen, model::setShowWelcomeScreen))
-val myChkSyncOnFrameActivation = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"),
-                                                    PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
-val myChkSaveOnFrameDeactivation = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"),
-                                                      PropertyBinding(model::isSaveOnFrameDeactivation, model::setSaveOnFrameDeactivation))
-val myChkAutoSaveIfInactive = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"),
-                                                 PropertyBinding(model::isAutoSaveIfInactive, model::setAutoSaveIfInactive))
-val myChkUseSafeWrite = CheckboxDescriptor("Use \"safe write\" (save changes to a temporary file first)",
-                                           PropertyBinding(model::isUseSafeWrite, model::setUseSafeWrite))
+// @formatter:off
+private val model = GeneralSettings.getInstance()
+private val myChkReopenLastProject                get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"), PropertyBinding(model::isReopenLastProject, model::setReopenLastProject))
+private val myConfirmExit                         get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), PropertyBinding(model::isConfirmExit, model::setConfirmExit))
+private val myShowWelcomeScreen                   get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.welcome.screen"), PropertyBinding(model::isShowWelcomeScreen, model::setShowWelcomeScreen))
+private val myChkSyncOnFrameActivation            get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
+private val myChkSaveOnFrameDeactivation          get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"), PropertyBinding(model::isSaveOnFrameDeactivation, model::setSaveOnFrameDeactivation))
+private val myChkAutoSaveIfInactive               get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"), PropertyBinding(model::isAutoSaveIfInactive, model::setAutoSaveIfInactive))
+private val myChkUseSafeWrite                     get() = CheckboxDescriptor("Use \"safe write\" (save changes to a temporary file first)", PropertyBinding(model::isUseSafeWrite, model::setUseSafeWrite))
+// @formatter:on
 
-val allOptionDescriptors = listOf(
-  myChkReopenLastProject,
-  myConfirmExit,
-  myChkSyncOnFrameActivation,
-  myChkSaveOnFrameDeactivation,
-  myChkAutoSaveIfInactive,
-  myChkUseSafeWrite
-).map { it.asOptionDescriptor() }
+internal val allOptionDescriptors
+  get() = listOf(
+    myChkReopenLastProject,
+    myConfirmExit,
+    myChkSyncOnFrameActivation,
+    myChkSaveOnFrameDeactivation,
+    myChkAutoSaveIfInactive,
+    myChkUseSafeWrite
+  ).map { it.asUiOptionDescriptor() }
 
 /**
  * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:
@@ -48,17 +45,15 @@ val allOptionDescriptors = listOf(
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
-class GeneralSettingsConfigurable: BoundCompositeConfigurable<SearchableConfigurable>(
+class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<SearchableConfigurable>(
   IdeBundle.message("title.general"),
   "preferences.general"
 ), SearchableConfigurable {
   private val model = GeneralSettings.getInstance()
 
   override fun createPanel(): DialogPanel {
-    val projectConceptName = IdeUICustomization.getInstance().projectConceptName
-
     return panel {
-      titledRow("Startup/Shutdown") {
+      titledRow(IdeBundle.message("general.settings.row.startup.shutdown")) {
         row {
           checkBox(myChkReopenLastProject)
         }
@@ -72,27 +67,27 @@ class GeneralSettingsConfigurable: BoundCompositeConfigurable<SearchableConfigur
           }
         }
       }
-      titledRow(IdeBundle.message("border.title.project.opening", projectConceptName.capitalize())) {
-        row("Default directory:") {
+      titledRow(IdeUICustomization.getInstance().projectMessage("border.title.project.opening")) {
+        row(IdeBundle.message("settings.general.default.directory")) {
           textFieldWithBrowseButton(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory,
                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                                      .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) },
-                                    growPolicy = GrowPolicy.MEDIUM_TEXT)
-            .comment("This directory is preselected in \"Open...\" and \"New | Project...\" dialogs.", 80)
+                                      .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
+            .growPolicy(GrowPolicy.MEDIUM_TEXT)
+            .comment(IdeBundle.message("settings.general.directory.preselected"), 80)
         }
         buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
           row {
-            radioButton(IdeBundle.message("radio.button.open.project.in.the.new.window", projectConceptName), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
           }
           row {
-            radioButton(IdeBundle.message("radio.button.open.project.in.the.same.window", projectConceptName), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
           }
           row {
-            radioButton(IdeBundle.message("radio.button.confirm.window.to.open.project.in", projectConceptName), GeneralSettings.OPEN_PROJECT_ASK)
+            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"), GeneralSettings.OPEN_PROJECT_ASK)
           }
         }
       }
-      titledRow("Synchronization") {
+      titledRow(IdeBundle.message("settings.general.synchronization")) {
         row {
           checkBox(myChkSyncOnFrameActivation)
         }
@@ -125,9 +120,7 @@ class GeneralSettingsConfigurable: BoundCompositeConfigurable<SearchableConfigur
       }
 
       for (configurable in configurables) {
-        row {
-          configurable.createComponent()?.invoke()
-        }
+        appendDslConfigurableRow(configurable)
       }
     }
   }

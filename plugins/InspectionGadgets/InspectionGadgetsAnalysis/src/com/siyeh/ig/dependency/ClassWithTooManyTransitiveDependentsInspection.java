@@ -39,8 +39,7 @@ public class ClassWithTooManyTransitiveDependentsInspection
   public int limit = 35;
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,

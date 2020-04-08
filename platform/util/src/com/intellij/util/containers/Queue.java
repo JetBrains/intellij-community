@@ -75,13 +75,11 @@ public class Queue<T> {
     return Arrays.asList(normalize(size()));
   }
 
-  @NotNull
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     return normalize(size());
   }
 
-  @NotNull
-  public T[] toArray(T[] array) {
+  public T @NotNull [] toArray(T[] array) {
     if (array.length < size()) {
       array = ArrayUtil.newArray(ArrayUtil.getComponentType(array), size());
     }
@@ -113,14 +111,12 @@ public class Queue<T> {
     return length;
   }
 
-  @NotNull
-  private T[] normalize(int capacity) {
+  private T @NotNull [] normalize(int capacity) {
     @SuppressWarnings("unchecked") T[] result = (T[])new Object[capacity];
     return normalize(result);
   }
 
-  @NotNull
-  private T[] normalize(T[] result) {
+  private T @NotNull [] normalize(T[] result) {
     if (isWrapped) {
       int tailLength = copyFromTo(myFirst, myArray.length, result, 0);
       copyFromTo(0, myLast, result, tailLength);

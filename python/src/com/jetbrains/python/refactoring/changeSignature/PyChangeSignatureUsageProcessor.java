@@ -28,11 +28,12 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.*;
@@ -55,12 +56,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
     if (info instanceof PyChangeInfo) {
-      final List<UsageInfo> usages = PyCodeFragmentUtil.findUsages(((PyChangeInfo)info).getMethod(), true);
+      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(((PyChangeInfo)info).getMethod(), true);
       final Query<PyFunction> search = PyOverridingMethodsSearch.search(((PyChangeInfo)info).getMethod(), true);
       final Collection<PyFunction> functions = search.findAll();
       for (PyFunction function : functions) {
         usages.add(new UsageInfo(function));
-        usages.addAll(PyCodeFragmentUtil.findUsages(function, true));
+        usages.addAll(PyPsiIndexUtil.findUsages(function, true));
       }
       return usages.toArray(UsageInfo.EMPTY_ARRAY);
     }
@@ -122,7 +123,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         return true;
       }
     }
-    else if (element instanceof PyFunction) {
+    else if (element instanceof PyFunction && element != changeInfo.getMethod()) {
       processFunctionDeclaration((PyChangeInfo)changeInfo, (PyFunction)element);
     }
     return false;
@@ -165,6 +166,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     
     final int posVarargIndex = JBIterable.of(newParamInfos).indexOf(info -> isPositionalVarargName(info.getName()));
     final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos[posVarargIndex].getOldIndex()).isEmpty();
+    List<PyExpression> notInsertedVariadicKeywordArgs = ContainerUtil.filter(call.getArguments(), a -> {
+      return a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword();
+    });
+    boolean variadicKeywordArgsUsed = false;
     for (int paramIndex = 0; paramIndex < newParamInfos.length; paramIndex++) {
       PyParameterInfo info = newParamInfos[paramIndex];
       final String paramName = info.getName();
@@ -191,6 +196,9 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
       else {
         final Collection<PyExpression> existingArgs = oldParamIndexToArgs.get(oldIndex);
+        final PyCallableParameter oldParam = allOrigParams.get(oldIndex);
+        final boolean usesValueFromVariadic = mapping.getParametersMappedToVariadicKeywordArguments().contains(oldParam);
+        variadicKeywordArgsUsed |= usesValueFromVariadic;
         if (!existingArgs.isEmpty()) {
           for (PyExpression arg : existingArgs) {
             PyExpression argValue;
@@ -203,6 +211,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
               argValue = arg;
               argName = "";
             }
+            notInsertedVariadicKeywordArgs.remove(argValue);
             // Keep format of existing keyword arguments unless it's illegal in their new position
             if (!argName.isEmpty() && !(paramIndex < posVarargIndex && !posVarargEmpty)) {
               keywordArgsRequired = true;
@@ -213,7 +222,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             newArguments.add(formatArgument(newArgumentName, argValueText, keywordArgsRequired));
           }
         }
-        else if (!info.getDefaultInSignature() && !isPositionalVararg && !isKeywordVararg) {
+        else if (!info.getDefaultInSignature() && !isPositionalVararg && !isKeywordVararg && !usesValueFromVariadic) {
           // Existing ordinary parameter without default value. Perhaps, the default value was propagated to calls 
           newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
@@ -223,6 +232,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         keywordArgsRequired = true;
       }
     }
+    if (variadicKeywordArgsUsed) {
+      newArguments.addAll(ContainerUtil.map(notInsertedVariadicKeywordArgs, PsiElement::getText));
+    }
+
     return newArguments;
   }
 
@@ -236,7 +249,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @NotNull
   private static String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
-    if (keywordArgument) {
+    if (keywordArgument && !value.startsWith("*")) {
       return name + "=" + value;
     }
     else {

@@ -121,9 +121,8 @@ public class CoreJarVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     Couple<String> pair = ((CoreJarFileSystem)getFileSystem()).splitPath(getPath());
     return myHandler.contentsToByteArray(pair.second);
   }

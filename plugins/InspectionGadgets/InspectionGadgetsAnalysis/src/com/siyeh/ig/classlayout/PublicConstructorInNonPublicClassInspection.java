@@ -46,8 +46,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public InspectionGadgetsFix[] buildFixes(Object... infos) {
+  public InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiMethod constructor = (PsiMethod)infos[0];
     final PsiClass aClass = constructor.getContainingClass();
@@ -69,7 +68,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix constructor modifier";
+      return InspectionGadgetsBundle.message("set.constructor.modifier.fix.family.name");
     }
 
     @Override
@@ -106,7 +105,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
         return;
       }
       if (containingClass.isRecord() &&
-          (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isCanonicalConstructor(method))) {
+          (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method))) {
         // compact and canonical constructors in record must be public, according to spec
         return;
       }

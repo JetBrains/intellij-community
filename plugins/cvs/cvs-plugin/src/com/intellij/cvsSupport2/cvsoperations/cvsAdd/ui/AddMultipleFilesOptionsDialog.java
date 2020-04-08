@@ -21,10 +21,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ComboBoxTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -51,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.function.Supplier;
 
 /**
  * author: lesya
@@ -281,8 +279,8 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   }
 
   private abstract class SelectUnselectAllAction extends AnAction {
-    protected SelectUnselectAllAction(String text, Icon icon) {
-      super(text, null, icon);
+    protected SelectUnselectAllAction(@NotNull Supplier<String> text, Icon icon) {
+      super(text, Presentation.NULL_STRING, icon);
     }
 
     @Override
@@ -314,7 +312,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   private class SelectAllAction extends SelectUnselectAllAction {
 
     SelectAllAction() {
-      super(CvsBundle.message("action.name.select.all"), AllIcons.Actions.Selectall);
+      super(CvsBundle.messagePointer("action.name.select.all"), AllIcons.Actions.Selectall);
     }
 
     @Override
@@ -325,7 +323,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private class UnselectAllAction extends SelectUnselectAllAction {
     UnselectAllAction() {
-      super(CvsBundle.message("action.name.unselect.all"), AllIcons.Actions.Unselectall);
+      super(CvsBundle.messagePointer("action.name.unselect.all"), AllIcons.Actions.Unselectall);
     }
 
     @Override

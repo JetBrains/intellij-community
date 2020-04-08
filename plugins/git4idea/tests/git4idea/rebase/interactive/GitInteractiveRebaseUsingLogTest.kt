@@ -93,8 +93,6 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
         8()
       }
     }
-
-    repo.update()
     assertExceptionDuringEntriesGeneration(commit0, CantRebaseUsingLogException.Reason.MERGE) {
       "We shouldn't generate entries if merge commit between HEAD and Rebase Base. Generated entries: $it"
     }
@@ -144,6 +142,10 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
         return entries
       }
     }
+
+    refresh()
+    updateChangeListManager()
+
     val params = GitRebaseParams.editCommits(repo.vcs.version, commit.parents.first().asString(), editorHandler, false)
     GitRebaseUtils.rebase(repo.project, listOf(repo), params, EmptyProgressIndicator())
     return entriesGeneratedUsingGit

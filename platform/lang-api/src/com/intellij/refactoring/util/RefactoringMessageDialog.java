@@ -4,6 +4,9 @@ package com.intellij.refactoring.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +21,8 @@ public class RefactoringMessageDialog extends DialogWrapper {
   private final Icon myIcon;
   private final boolean myIsCancelButtonVisible;
 
-  public RefactoringMessageDialog(String title, String message, String helpTopic, String iconId, boolean showCancelButton, Project project) {
+  public RefactoringMessageDialog(@NlsContexts.DialogTitle String title, @Nls String message,
+                                  @NonNls String helpTopic, @NonNls String iconId, boolean showCancelButton, Project project) {
     super(project, false);
     setTitle(title);
     myMessage = message;
@@ -28,9 +32,8 @@ public class RefactoringMessageDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     if (myIsCancelButtonVisible) {

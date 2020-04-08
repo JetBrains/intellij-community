@@ -43,7 +43,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
   @NotNull
   @Override
   protected String getRefactoringName() {
-    return IntroduceFieldHandler.REFACTORING_NAME;
+    return IntroduceFieldHandler.getRefactoringNameText();
   }
 
   @NotNull
@@ -79,7 +79,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
   }
 
   @Override
-  protected void checkOccurrences(@NotNull PsiElement[] occurrences) {
+  protected void checkOccurrences(PsiElement @NotNull [] occurrences) {
     //nothing to do
   }
 
@@ -108,9 +108,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
     return new GrInplaceFieldIntroducer(contextRef.get(), choice);
   }
 
-  @NotNull
   @Override
-  protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
+  protected PsiElement @NotNull [] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
     final PsiElement[] occurrences = super.findOccurrences(expression, scope);
     if (shouldBeStatic(expression, scope)) return occurrences;
 

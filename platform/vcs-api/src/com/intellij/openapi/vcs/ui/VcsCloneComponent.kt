@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 /**
@@ -24,10 +26,12 @@ interface VcsCloneComponent : Disposable {
 
   fun doValidateAll(): List<ValidationInfo>
 
-  fun getOkButtonText(): String = "Clone"
+  @Nls
+  fun getOkButtonText(): String = VcsBundle.getString("clone.dialog.clone.button")
 
   fun getPreferredFocusedComponent(): JComponent?
 
   @CalledInAwt
-  fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {}
+  fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
+  }
 }

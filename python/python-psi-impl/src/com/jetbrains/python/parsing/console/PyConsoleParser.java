@@ -24,9 +24,6 @@ import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * @author traff
- */
 public class PyConsoleParser extends PyParser {
 
   private static final ImmutableSet<IElementType> IPYTHON_START_SYMBOLS = new ImmutableSet.Builder<IElementType>().add(

@@ -18,9 +18,6 @@ package com.intellij.util.descriptors;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author nik
- */
 public class ConfigFileVersion {
   private final String myName;
   private @NonNls final String myTemplateName;

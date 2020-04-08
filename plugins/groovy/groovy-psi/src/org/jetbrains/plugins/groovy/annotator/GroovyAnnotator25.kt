@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -26,7 +27,7 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
       val duplicatingParameters = parameters.drop(1).map { (_, parameter) -> parameter }
       for (parameter in duplicatingParameters) {
         val nameIdentifier = parameter.nameIdentifier ?: continue
-        holder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("duplicating.named.parameter", name, parametersList))
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("duplicating.named.parameter", name, parametersList)).range(nameIdentifier).create()
       }
     }
     super.visitMethod(method)
@@ -40,7 +41,7 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
   private fun immutableCheck(field: GrField) {
     val containingClass = field.containingClass ?: return
     if (!field.hasModifierProperty(PsiModifier.STATIC) && hasImmutableAnnotation(containingClass) && !isImmutable(field)) {
-      holder.createErrorAnnotation(field.nameIdentifierGroovy, GroovyBundle.message("field.should.be.immutable", field.name))
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("field.should.be.immutable", field.name)).range(field.nameIdentifierGroovy).create()
     }
   }
 
@@ -66,7 +67,7 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
     for (namedParam in requiredNamedParams) {
       if (!namedArguments.contains(namedParam.name)) {
         val message = GroovyBundle.message("missing.required.named.parameter", namedParam.name)
-        holder.createErrorAnnotation(callExpression, message)
+        holder.newAnnotation(HighlightSeverity.ERROR, message).create()
       }
     }
   }

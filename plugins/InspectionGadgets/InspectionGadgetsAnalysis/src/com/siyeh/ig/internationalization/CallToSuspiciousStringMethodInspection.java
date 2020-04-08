@@ -46,8 +46,7 @@ public class CallToSuspiciousStringMethodInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final List<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();

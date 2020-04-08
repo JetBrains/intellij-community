@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.actions.CustomizeUIAction;
 import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
@@ -18,11 +16,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
@@ -60,8 +56,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private final boolean myGlassPaneInitialized;
 
-  private MemoryUsagePanel myMemoryWidget;
-
   private boolean myFullScreen;
 
   private MainFrameHeader myCustomFrameTitlePane;
@@ -83,7 +77,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    IdeMenuBar menu = IdeMenuBar.createMenuBar();
+    IdeMenuBar menu = createMenuBar();
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive();
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
@@ -93,7 +87,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (isDecoratedMenu()) {
         JdkEx.setHasCustomDecoration(frame);
 
-        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame);
+        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame, menu);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }
@@ -121,6 +115,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateMainMenuVisibility();
 
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
+  }
+
+  @NotNull
+  protected IdeMenuBar createMenuBar() {
+    return IdeMenuBar.createMenuBar();
   }
 
   @NotNull
@@ -251,31 +250,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myStatusBar = createStatusBar(frame);
     Disposer.register(parentDisposable, myStatusBar);
 
-    setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
-    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
-
     updateStatusBarVisibility();
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
   }
 
   @NotNull
   protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    return new IdeStatusBarImpl(frame);
-  }
-
-  private void setMemoryIndicatorVisible(boolean visible) {
-    if (myMemoryWidget == null) {
-      if (!visible) {
-        myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
-        return;
-      }
-
-      myMemoryWidget = new MemoryUsagePanel();
-      myStatusBar.addWidget(myMemoryWidget);
-    }
-
-    myMemoryWidget.setShowing(visible);
-    myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, visible ? 0 : 6));
+    return new IdeStatusBarImpl(frame, true);
   }
 
   @Nullable
@@ -308,7 +289,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     boolean globalMenuVisible = SystemInfo.isLinux && GlobalMenuLinux.isPresented();
     // don't show swing-menu when global (system) menu presented
-    boolean visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && uiSettings.getShowMainMenu();
+    boolean visible = SystemInfo.isMacSystemMenu || (!globalMenuVisible && uiSettings.getShowMainMenu());
     if (visible != menuBar.isVisible()) {
       menuBar.setVisible(visible);
     }
@@ -340,8 +321,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
 
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      if (!Disposer.isDisposed(northComponent)) {
-        Disposer.dispose(northComponent);
+      if (northComponent instanceof Disposable && !Disposer.isDisposed((Disposable)northComponent)) {
+        Disposer.dispose((Disposable)northComponent);
       }
     }
     myNorthComponents.clear();
@@ -360,7 +341,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
-    setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();

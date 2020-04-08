@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -18,14 +19,14 @@ import static com.intellij.sh.ShTypes.SHEBANG;
 
 public class ShShebangCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String SHEBANG_PREFIX = "#!";
-  private static final List<String> ACCEPTABLE_SHELLS = Arrays.asList("/usr/bin/env bash",
-                                                                      "/usr/bin/env sh",
-                                                                      "/usr/bin/env zsh",
-                                                                      "/usr/bin/env csh",
-                                                                      "/usr/bin/env ksh",
-                                                                      "/usr/bin/env tcsh");
+  @NonNls private static final List<String> ACCEPTABLE_SHELLS = Arrays.asList("/usr/bin/env bash",
+                                                                              "/usr/bin/env sh",
+                                                                              "/usr/bin/env zsh",
+                                                                              "/usr/bin/env csh",
+                                                                              "/usr/bin/env ksh",
+                                                                              "/usr/bin/env tcsh");
 
-  private static final CompletionProvider<CompletionParameters> SHEBANG_COMPLETION_PROVIDER = new CompletionProvider<CompletionParameters>() {
+  @NonNls private static final CompletionProvider<CompletionParameters> SHEBANG_COMPLETION_PROVIDER = new CompletionProvider<CompletionParameters>() {
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
       PsiElement original = parameters.getOriginalPosition();

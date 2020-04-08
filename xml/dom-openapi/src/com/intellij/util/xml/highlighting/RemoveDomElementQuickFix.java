@@ -19,11 +19,11 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.xml.DomBundle;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,13 +42,13 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return DomBundle.message(myIsTag ? "remove.element.fix.name" : "remove.attribute.fix.name", myName);
+    return XmlDomBundle.message(myIsTag ? "remove.element.fix.name" : "remove.attribute.fix.name", myName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return DomBundle.message("remove.element.fix.family");
+    return XmlDomBundle.message("remove.element.fix.family");
   }
 
   @Override

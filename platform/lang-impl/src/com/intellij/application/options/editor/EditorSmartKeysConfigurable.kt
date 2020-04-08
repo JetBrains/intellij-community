@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.codeInsight.CodeInsightSettings.*
@@ -16,55 +16,47 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import javax.swing.DefaultComboBoxModel
 
-val editorSettings = EditorSettingsExternalizable.getInstance()
-val codeInsightSettings = getInstance()
+// @formatter:off
+private val editorSettings = EditorSettingsExternalizable.getInstance()
+private val codeInsightSettings = getInstance()
 
-val myCbSmartHome = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.home"),
-                                       PropertyBinding(editorSettings::isSmartHome, editorSettings::setSmartHome))
-val myCbSmartEnd = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.end.on.blank.line"), codeInsightSettings::SMART_END_ACTION.toBinding())
-val myCbInsertPairBracket = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.bracket"),
-                                               codeInsightSettings::AUTOINSERT_PAIR_BRACKET.toBinding())
-val myCbInsertPairQuote = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.quote"),
-                                             codeInsightSettings::AUTOINSERT_PAIR_QUOTE.toBinding())
-val myCbReformatBlockOnTypingRBrace = CheckboxDescriptor(ApplicationBundle.message("checkbox.reformat.on.typing.rbrace"),
-                                                         codeInsightSettings::REFORMAT_BLOCK_ON_RBRACE.toBinding())
-val myCbCamelWords = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.camelhumps.words"),
-                                        PropertyBinding(editorSettings::isCamelWords, editorSettings::setCamelWords))
-val myCbSurroundSelectionOnTyping = CheckboxDescriptor("Surround selection on typing quote or brace",
-                                                       codeInsightSettings::SURROUND_SELECTION_ON_QUOTE_TYPED.toBinding())
-val myCbTabExistsBracketsAndQuotes = CheckboxDescriptor(ApplicationBundle.message("checkbox.tab.exists.brackets.and.quotes"),
-                                                        codeInsightSettings::TAB_EXITS_BRACKETS_AND_QUOTES.toBinding())
-val myCbEnableAddingCaretsOnDoubleCtrlArrows = CheckboxDescriptor(ApplicationBundle.message("checkbox.enable.double.ctrl", KeyEvent.getKeyText(ModifierKeyDoubleClickHandler.getMultiCaretActionModifier())),
-                                                                  PropertyBinding(editorSettings::addCaretsOnDoubleCtrl, editorSettings::setAddCaretsOnDoubleCtrl))
-val myCbSmartIndentOnEnter = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.indent"),
-                                                codeInsightSettings::SMART_INDENT_ON_ENTER.toBinding())
-val myCbInsertPairCurlyBraceOnEnter = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.curly.brace"),
-                                                         codeInsightSettings::INSERT_BRACE_ON_ENTER.toBinding())
-val myCbInsertJavadocStubOnEnter = CheckboxDescriptor(ApplicationBundle.message("checkbox.javadoc.stub.after.slash.star.star"),
-                                                      codeInsightSettings::JAVADOC_STUB_ON_ENTER.toBinding())
+private val myCbSmartHome                                      get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.home"), PropertyBinding(editorSettings::isSmartHome, editorSettings::setSmartHome))
+private val myCbSmartEnd                                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.end.on.blank.line"), codeInsightSettings::SMART_END_ACTION.toBinding())
+private val myCbInsertPairBracket                              get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.bracket"), codeInsightSettings::AUTOINSERT_PAIR_BRACKET.toBinding())
+private val myCbInsertPairQuote                                get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.quote"), codeInsightSettings::AUTOINSERT_PAIR_QUOTE.toBinding())
+private val myCbReformatBlockOnTypingRBrace                    get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.reformat.on.typing.rbrace"), codeInsightSettings::REFORMAT_BLOCK_ON_RBRACE.toBinding())
+private val myCbCamelWords                                     get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.camelhumps.words"), PropertyBinding(editorSettings::isCamelWords, editorSettings::setCamelWords))
+private val myCbSurroundSelectionOnTyping                      get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.surround.selection.on.typing.quote.or.brace"), codeInsightSettings::SURROUND_SELECTION_ON_QUOTE_TYPED.toBinding())
+private val myCbTabExistsBracketsAndQuotes                     get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.tab.exists.brackets.and.quotes"), codeInsightSettings::TAB_EXITS_BRACKETS_AND_QUOTES.toBinding())
+private val myCbEnableAddingCaretsOnDoubleCtrlArrows           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.enable.double.ctrl", KeyEvent.getKeyText(ModifierKeyDoubleClickHandler.getMultiCaretActionModifier())), PropertyBinding(editorSettings::addCaretsOnDoubleCtrl, editorSettings::setAddCaretsOnDoubleCtrl))
+private val myCbSmartIndentOnEnter                             get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.indent"), codeInsightSettings::SMART_INDENT_ON_ENTER.toBinding())
+private val myCbInsertPairCurlyBraceOnEnter                    get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.curly.brace"), codeInsightSettings::INSERT_BRACE_ON_ENTER.toBinding())
+private val myCbInsertJavadocStubOnEnter                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.javadoc.stub.after.slash.star.star"), codeInsightSettings::JAVADOC_STUB_ON_ENTER.toBinding())
+internal val myCbHonorCamelHumpsWhenSelectingByClicking        get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.honor.camelhumps.words.settings.on.double.click"), PropertyBinding(editorSettings::isMouseClickSelectionHonorsCamelWords, editorSettings::setMouseClickSelectionHonorsCamelWords))
+// @formatter:on
 
-val childOptions = EditorSmartKeysConfigurable().configurables
-  .map { c -> if (c is ConfigurableWrapper) c.configurable else c }
-  .flatMap { c -> if (c is ConfigurableWithOptionDescriptors) c.getOptionDescriptors(ID, { s -> s }) else emptyList() }
+internal val editorSmartKeysOptionDescriptors
+  get() = listOf(
+    myCbSmartHome,
+    myCbSmartEnd,
+    myCbInsertPairBracket,
+    myCbInsertPairQuote,
+    myCbReformatBlockOnTypingRBrace,
+    myCbCamelWords,
+    myCbSurroundSelectionOnTyping,
+    myCbTabExistsBracketsAndQuotes,
+    myCbEnableAddingCaretsOnDoubleCtrlArrows,
+    myCbSmartIndentOnEnter,
+    myCbInsertPairCurlyBraceOnEnter,
+    myCbInsertJavadocStubOnEnter,
+    myCbHonorCamelHumpsWhenSelectingByClicking
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
-val editorSmartKeysOptionDescriptors = listOf(
-      myCbSmartHome
-    , myCbSmartEnd
-    , myCbInsertPairBracket
-    , myCbInsertPairQuote
-    , myCbReformatBlockOnTypingRBrace
-    , myCbCamelWords
-    , myCbSurroundSelectionOnTyping
-    , myCbTabExistsBracketsAndQuotes
-    , myCbEnableAddingCaretsOnDoubleCtrlArrows
-    , myCbSmartIndentOnEnter
-    , myCbInsertPairCurlyBraceOnEnter
-    , myCbInsertJavadocStubOnEnter
-).map(CheckboxDescriptor::asOptionDescriptor) + childOptions
-
+@NonNls
 const val ID = "editor.preferences.smartKeys"
 
 /**
@@ -78,10 +70,11 @@ const val ID = "editor.preferences.smartKeys"
  *
  * @author yole
  */
-class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompositeConfigurable<UnnamedConfigurable>(
-  "Smart Keys",
-  "reference.settingsdialog.IDE.editor.smartkey"
-), SearchableConfigurable, SearchableConfigurable.Parent {
+class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
+  ApplicationBundle.message("group.smart.keys"),
+  "reference.settingsdialog.IDE.editor.smartkey",
+  ID
+), SearchableConfigurable.Parent {
   override fun createPanel(): DialogPanel {
     return panel {
       row {
@@ -103,6 +96,9 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
         checkBox(myCbCamelWords)
       }
       row {
+        checkBox(myCbHonorCamelHumpsWhenSelectingByClicking)
+      }
+      row {
         checkBox(myCbSurroundSelectionOnTyping)
       }
       row {
@@ -111,7 +107,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
       row {
         checkBox(myCbTabExistsBracketsAndQuotes)
       }
-      titledRow("Enter") {
+      titledRow(ApplicationBundle.message("group.enter.title")) {
         row {
           checkBox(myCbSmartIndentOnEnter)
         }
@@ -153,9 +149,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
         )
       }
       for (configurable in configurables) {
-        row {
-          configurable.createComponent()?.invoke(growX)
-        }
+        appendDslConfigurableRow(configurable)
       }
     }
   }
@@ -183,7 +177,6 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
 
   override fun hasOwnContent() = true
 
-  override fun getId() = ID
   override fun getDependencies() = listOf(EP_NAME)
   
   companion object {

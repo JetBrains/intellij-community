@@ -26,9 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/nonAsciiCharacters";
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     NonAsciiCharactersInspection inspection = new NonAsciiCharactersInspection();
     inspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
     inspection.CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME = true;

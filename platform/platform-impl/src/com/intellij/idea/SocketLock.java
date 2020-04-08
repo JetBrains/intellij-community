@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -23,6 +23,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
@@ -130,8 +131,7 @@ public final class SocketLock {
     }
   }
 
-  @Nullable
-  BuiltInServer getServer() {
+  @Nullable BuiltInServer getServer() {
     Future<BuiltInServer> future = myBuiltinServerFuture;
     if (future != null) {
       try {
@@ -147,13 +147,11 @@ public final class SocketLock {
     return null;
   }
 
-  @Nullable
-  CompletableFuture<BuiltInServer> getServerFuture() {
+  @Nullable CompletableFuture<BuiltInServer> getServerFuture() {
     return myBuiltinServerFuture;
   }
 
-  @NotNull
-  public Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String[] args) throws Exception {
+  public @NotNull Pair<ActivationStatus, CliResult> lockAndTryActivate(@NotNull String @NotNull [] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     lockPortFiles();
@@ -352,9 +350,7 @@ public final class SocketLock {
     private final String myToken;
     private State myState = State.HEADER;
 
-    MyChannelInboundHandler(@NotNull String[] lockedPaths,
-                            @NotNull AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef,
-                            @NotNull String token) {
+    MyChannelInboundHandler(String[] lockedPaths, AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef, String token) {
       myLockedPaths = lockedPaths;
       myCommandProcessorRef = commandProcessorRef;
       myToken = token;
@@ -484,7 +480,7 @@ public final class SocketLock {
     Logger.getInstance(SocketLock.class).warn(e);
   }
 
-  private static void log(String format, Object... args) {
+  private static void log(@NonNls String format, Object... args) {
     Logger logger = Logger.getInstance(SocketLock.class);
     if (logger.isDebugEnabled()) {
       logger.debug(String.format(format, args));

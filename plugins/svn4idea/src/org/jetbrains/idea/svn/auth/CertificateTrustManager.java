@@ -44,7 +44,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   }
 
   @Override
-  public void checkServerTrusted(@Nullable X509Certificate[] chain, String authType) throws CertificateException {
+  public void checkServerTrusted(X509Certificate @Nullable [] chain, String authType) throws CertificateException {
     if (chain != null && chain.length > 0 && chain[0] != null) {
       X509Certificate certificate = chain[0];
 
@@ -65,7 +65,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
     return certificate.equals(cachedData);
   }
 
-  private static boolean isAcceptedByIdea(@NotNull X509Certificate[] chain, String authType) {
+  private static boolean isAcceptedByIdea(X509Certificate @NotNull [] chain, String authType) {
     boolean result;
 
     try {

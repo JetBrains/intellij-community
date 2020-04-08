@@ -2,6 +2,7 @@
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,14 +16,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class BaseAnalysisAction extends AnAction {
   private static final String DIMENSION_KEY_PREFIX = "ANALYSIS_DLG_";
 
-  private final String myTitle;
-  private final String myAnalysisNoon;
+  private final Supplier<String> myTitle;
+  private final Supplier<String> myAnalysisNoon;
 
-  protected BaseAnalysisAction(@Nls(capitalization = Nls.Capitalization.Title) String title, String analysisNoon) {
+  protected BaseAnalysisAction(@Nls(capitalization = Nls.Capitalization.Title) String title,
+                               @Nls(capitalization = Nls.Capitalization.Title) String analysisNoon) {
+    myTitle = () -> title;
+    myAnalysisNoon = () -> analysisNoon;
+  }
+
+  protected BaseAnalysisAction(Supplier<String> title, Supplier<String> analysisNoon) {
     myTitle = title;
     myAnalysisNoon = analysisNoon;
   }
@@ -42,7 +50,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     if (scope == null) return;
 
     String title = getDialogTitle();
-    String noon = AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon);
+    String noon = CodeInsightBundle.message("analysis.scope.title", myAnalysisNoon.get());
     Module module = getModuleFromContext(dataContext);
     boolean rememberScope = ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
@@ -81,7 +89,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   protected @NotNull String getDialogTitle() {
-    return AnalysisScopeBundle.message("specify.analysis.scope", myTitle);
+    return CodeInsightBundle.message("specify.analysis.scope", myTitle.get());
   }
 
   protected String getHelpTopic() {

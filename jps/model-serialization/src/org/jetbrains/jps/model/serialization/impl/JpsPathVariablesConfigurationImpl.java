@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsPathVariablesConfigurationImpl extends JpsElementBase<JpsPathVariablesConfigurationImpl> implements JpsPathVariablesConfiguration {
   private final Map<String, String> myPathVariables;
 

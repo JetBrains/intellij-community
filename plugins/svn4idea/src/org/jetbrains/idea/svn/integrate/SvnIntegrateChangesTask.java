@@ -116,17 +116,17 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   @NotNull
-  private static VcsException createError(@NotNull String... messages) {
+  private static VcsException createError(String @NotNull ... messages) {
     return createException(false, messages);
   }
 
   @NotNull
-  private static VcsException createWarning(@NotNull String... messages) {
+  private static VcsException createWarning(String @NotNull ... messages) {
     return createException(true, messages);
   }
 
   @NotNull
-  private static VcsException createException(boolean isWarning, @NotNull String... messages) {
+  private static VcsException createException(boolean isWarning, String @NotNull ... messages) {
     Collection<String> notEmptyMessages = ContainerUtil.mapNotNull(messages, message -> StringUtil.nullize(message, true));
 
     return new VcsException(notEmptyMessages).setIsWarning(isWarning);

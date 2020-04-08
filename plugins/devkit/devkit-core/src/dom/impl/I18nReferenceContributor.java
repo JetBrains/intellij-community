@@ -67,9 +67,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static void registerBundleNameProviders(PsiReferenceRegistrar registrar) {
     final PsiReferenceProvider bundleReferenceProvider = new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         return new PsiReference[]{new MyResourceBundleReference(element)};
       }
     };
@@ -120,9 +119,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
       super(element, false);
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final Project project = myElement.getProject();
       PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(project);
       final List<LookupElement> variants = new ArrayList<>();

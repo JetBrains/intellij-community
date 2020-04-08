@@ -40,21 +40,21 @@ public class OpenSourceUtil {
   /**
    * Invokes {@link #navigate(boolean, Navigatable...)} that always requests focus.
    */
-  public static void navigate(@Nullable Navigatable... navigatables) {
+  public static void navigate(Navigatable @Nullable ... navigatables) {
     navigate(true, navigatables);
   }
 
   /**
    * Invokes {@link #navigate(boolean, boolean, Navigatable...)} that does not try to preserve a state of a corresponding editor.
    */
-  public static void navigate(boolean requestFocus, @Nullable Navigatable... navigatables) {
+  public static void navigate(boolean requestFocus, Navigatable @Nullable ... navigatables) {
     navigate(requestFocus, false, navigatables);
   }
 
   /**
    * Invokes {@link #navigate(boolean, boolean, Iterable)} if at least one navigatable exists
    */
-  public static void navigate(boolean requestFocus, boolean tryNotToScroll, @Nullable Navigatable... navigatables) {
+  public static void navigate(boolean requestFocus, boolean tryNotToScroll, Navigatable @Nullable ... navigatables) {
     if (navigatables != null && navigatables.length > 0) navigate(requestFocus, tryNotToScroll, asList(navigatables));
   }
 

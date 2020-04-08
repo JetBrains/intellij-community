@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -188,5 +188,15 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     String s2 = "<p '_a{0,0}=\"'_t:[ regex( 11 ) ]\"> '_content? </p>";
 
     assertEquals(5, findMatchesCount(s1, s2, StdFileTypes.XML));
+  }
+
+  public void testErroneousPatterns() {
+    try {
+      findMatchesCount("", "<H", StdFileTypes.HTML);
+      fail();
+    } catch (MalformedPatternException ignore) {}
+
+    findMatchesCount("", "<H>", StdFileTypes.HTML); // although invalid HTML, should not report an error
+    findMatchesCount("", "<A href>", StdFileTypes.XML); // although missing attribute value, should not report an error
   }
 }

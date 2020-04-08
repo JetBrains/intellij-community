@@ -36,9 +36,9 @@ class ArgumentListGenerator {
   }
 
   public void generate(@Nullable GrSignature signature,
-                       @NotNull GrExpression[] exprs,
-                       @NotNull GrNamedArgument[] namedArgs,
-                       @NotNull GrClosableBlock[] clArgs,
+                       GrExpression @NotNull [] exprs,
+                       GrNamedArgument @NotNull [] namedArgs,
+                       GrClosableBlock @NotNull [] clArgs,
                        @NotNull GroovyPsiElement context) {
     GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
       signature == null ? null : GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, clArgs, context, false, false);

@@ -16,6 +16,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -38,7 +39,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 
 public class VcsCommitInfoBalloon {
-  private static final String EMPTY_COMMIT_INFO = "<i style='color:gray;'>No commit information found</i>";
 
   @NotNull private final JTree myTree;
   @NotNull private final Wrapper myWrapper;
@@ -77,8 +77,9 @@ public class VcsCommitInfoBalloon {
       else {
         Object node = selectionPaths[0].getLastPathComponent();
         myEditorPane.setText(
-          XmlStringUtil.wrapInHtml(node instanceof TooltipNode ? ((TooltipNode)node).getTooltip().replaceAll("\n", "<br>") :
-                                   EMPTY_COMMIT_INFO));
+          XmlStringUtil.wrapInHtml(node instanceof TooltipNode
+                                   ? ((TooltipNode)node).getTooltip().replaceAll("\n", "<br>") //NON-NLS
+                                   : "<i style='color:gray;'>" + DvcsBundle.getString("push.no.commit.message.found") + "</i>")); //NON-NLS
         //workaround: fix initial size for JEditorPane
         RepaintManager rp = RepaintManager.currentManager(myEditorPane);
         rp.markCompletelyDirty(myEditorPane);

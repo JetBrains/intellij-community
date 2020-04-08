@@ -4,9 +4,10 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
@@ -86,7 +87,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
 
   @Override
   public String getBannerSlogan() {
-    return ProjectBundle.message("project.roots.module.banner.text", myModuleName);
+    return JavaUiBundle.message("project.roots.module.banner.text", myModuleName);
   }
 
   @Override

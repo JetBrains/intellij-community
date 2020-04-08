@@ -13,9 +13,6 @@ import com.intellij.testFramework.PsiTestUtil;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author nik
- */
 public class ConvertingOldDetectionExcludesTest extends HeavyPlatformTestCase {
   public static final String FRAMEWORK_ID = "my-framework";
 

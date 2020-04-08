@@ -9,9 +9,24 @@ import org.jetbrains.annotations.ApiStatus
 interface ExternalSystemProjectTracker {
 
   /**
+   * Enables/disables auto reload external changes for all projects
+   */
+  var isAutoReloadExternalChanges: Boolean
+
+  /**
    * Starts tracking of project settings that will be defined by [projectAware]
+   *
+   * Auto reloads will be activated after first project refresh
+   * @see [ExternalSystemProjectTracker.activate] for details
    */
   fun register(projectAware: ExternalSystemProjectAware)
+
+  /**
+   * Activates auto reload for project with [id]
+   *
+   * Allows to detect project that loaded from local cashes but previously didn't register here
+   */
+  fun activate(id: ExternalSystemProjectId)
 
   /**
    * Stops tracking of project settings that were defined by [ExternalSystemProjectAware] with [id]

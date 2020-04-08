@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.icons.AllIcons;
@@ -20,8 +20,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -55,6 +55,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
   private static final String RECORDED = "Recorded: ";
+  public static final String NO_NAME_NAME = "<noname>";
 
   private boolean myIsRecording;
   private ActionMacro myLastMacro;
@@ -163,7 +164,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       myPresentation = new WidgetPresentation() {
         @Override
         public String getTooltipText() {
-          return "Macro is being recorded now";
+          return IdeBundle.message("tooltip.macro.is.being.recorded.now");
         }
 
         @Override
@@ -193,7 +194,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       myText = new JLabel(RECORDED + "..." + TYPING_SAMPLE, SwingConstants.LEFT);
       final Dimension preferredSize = myText.getPreferredSize();
       myText.setPreferredSize(preferredSize);
-      myText.setText("Macro recording started...");
+      myText.setText(IdeBundle.message("label.macro.recording.started"));
       myLastTyping = "";
       top.add(myText, BorderLayout.CENTER);
       myBalloonComponent.add(top, BorderLayout.CENTER);
@@ -223,7 +224,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
         }
       });
 
-      myBalloon.addListener(new JBPopupAdapter() {
+      myBalloon.addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (myBalloon != null) {
@@ -326,7 +327,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     else {
       for (int i = 0; i < myMacros.size(); i++) {
         ActionMacro macro = myMacros.get(i);
-        if (IdeBundle.message("macro.noname").equals(macro.getName())) {
+        if (NO_NAME_NAME.equals(macro.getName())) {
           myMacros.set(i, myRecordingMacro);
           myRecordingMacro = null;
           break;
@@ -514,7 +515,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       if (modifierKeyIsPressed) return;
 
       final boolean ready = IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
-      final boolean isChar = e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && UIUtil.isReallyTypedEvent(e);
+      final boolean isChar = UIUtil.isReallyTypedEvent(e);
       final boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
       final boolean plainType = isChar && !hasActionModifiers;
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;

@@ -43,9 +43,8 @@ public class SPIFile extends PsiFileBase {
       .compute(() -> ClassUtil.findPsiClass(getManager(), getName(), null, true, getResolveScope())));
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReadAction.compute(() -> {
 
       final List<PsiReference> refs = new ArrayList<>();

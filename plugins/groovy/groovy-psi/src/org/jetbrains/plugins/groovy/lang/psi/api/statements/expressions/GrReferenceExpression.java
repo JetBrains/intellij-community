@@ -50,8 +50,7 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement<
   
   void replaceDotToken(PsiElement newDotToken);
 
-  @NotNull
-  default GroovyResolveResult[] getSameNameVariants() {
+  default GroovyResolveResult @NotNull [] getSameNameVariants() {
     return multiResolve(true);
   }
 

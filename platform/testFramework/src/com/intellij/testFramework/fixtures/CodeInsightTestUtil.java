@@ -278,7 +278,7 @@ public class CodeInsightTestUtil {
     resultChecker.accept(result);
     AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile));
     ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
-
+    annotationHolder.assertAllAnnotationsCreated();
     return ContainerUtil.immutableList(annotationHolder);
   }
 }

@@ -18,6 +18,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,23 +30,9 @@ class MethodCallChainPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
-    if (parent instanceof PsiExpressionStatement || parent instanceof PsiField || parent instanceof PsiReturnStatement 
-        || parent instanceof PsiLambdaExpression || parent instanceof PsiBreakStatement) {
-      return true;
-    }
-    if (parent instanceof PsiLocalVariable) {
-      final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiDeclarationStatement)) {
-        return false;
-      }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)grandParent;
-      return declarationStatement.getDeclaredElements().length == 1;
-    }
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiElement grandParent = parent.getParent();
-      return grandParent instanceof PsiExpressionStatement;
-    }
-    return false;
+    return (parent instanceof PsiStatement || parent instanceof PsiVariable || 
+            parent instanceof PsiAssignmentExpression || parent instanceof PsiLambdaExpression) &&
+           (element instanceof PsiExpression && CodeBlockSurrounder.canSurround((PsiExpression)element));
   }
 
   /**

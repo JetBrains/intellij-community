@@ -22,6 +22,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +92,7 @@ public class GitResetOperation {
                                                                                  "reset", "&Hard Reset");
     if (choice == GitSmartOperationDialog.Choice.SMART) {
       final Ref<GitCommandResult> result = Ref.create();
-      GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
+      GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
       new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()), "reset", target,
                                saveMethod, myIndicator,
                                () -> result.set(myGit.reset(repository, myMode, target))).execute();
@@ -126,7 +127,7 @@ public class GitResetOperation {
                                         + "<br/>but failed for " + joinRepos(errors.keySet()) + ": <br/>" + formErrorReport(errors));
     }
     else {
-      myNotifier.notifyError("Reset Failed", formErrorReport(errors));
+      myNotifier.notifyError("Reset Failed", formErrorReport(errors), true);
     }
   }
 

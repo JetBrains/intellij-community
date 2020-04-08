@@ -9,9 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.JBTextField
+import com.intellij.ui.TextFieldWithHistory
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
@@ -23,9 +24,9 @@ import javax.swing.event.DocumentEvent
 
 abstract class DvcsCloneDialogComponent(var project: Project,
                                         private var vcsDirectoryName: String,
-                                        rememberedInputs: DvcsRememberedInputs) : VcsCloneComponent {
+                                        protected val rememberedInputs: DvcsRememberedInputs) : VcsCloneComponent {
   protected val mainPanel: JPanel
-  private val urlEditor = JBTextField()
+  private val urlEditor = TextFieldWithHistory()
   private val directoryField = SelectChildTextFieldWithBrowseButton(
     ClonePathProvider.defaultParentDirectoryPath(project, rememberedInputs))
 
@@ -40,8 +41,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
                                            project,
                                            fcd)
     mainPanel = panel {
-      row("URL:") { urlEditor(growX) }
-      row("Directory:") { directoryField(growX) }
+      row(VcsBundle.getString("vcs.common.labels.url")) { urlEditor(growX) }
+      row(VcsBundle.getString("vcs.common.labels.directory")) { directoryField(growX) }
         .largeGapAfter()
       row {
         errorComponent = BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0)
@@ -52,7 +53,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
     val insets = UIUtil.PANEL_REGULAR_INSETS
     mainPanel.border = JBEmptyBorder(insets.top / 2, insets.left, insets.bottom, insets.right)
 
-    urlEditor.document.addDocumentListener(object : DocumentAdapter() {
+    urlEditor.history = rememberedInputs.visitedUrls
+    urlEditor.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         directoryField.trySetChildPath(defaultDirectoryPath(urlEditor.text.trim()))
       }
@@ -75,7 +77,6 @@ abstract class DvcsCloneDialogComponent(var project: Project,
     val list = ArrayList<ValidationInfo>()
     ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
     ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkRepositoryURL(urlEditor, urlEditor.text.trim()))
-    ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.createDestination(directoryField.text))
     return list
   }
 

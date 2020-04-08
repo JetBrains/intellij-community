@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceAllDotInspection extends BaseInspection {
+
+  private static final String REGEX_META_CHARS = ".$|()[{^?*+\\";
 
   @Override
   @NotNull
@@ -81,13 +85,21 @@ public class ReplaceAllDotInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiExpression)) {
+      if (!(element instanceof PsiLiteralExpression)) {
         return;
       }
-      final PsiExpression expression = (PsiExpression)element;
+      final PsiLiteralExpression expression = (PsiLiteralExpression)element;
       final String text = expression.getText();
-
-      PsiReplacementUtil.replaceExpression(expression, text.substring(0, 1) + "\\\\" + text.substring(1));
+      final StringBuilder newExpression = new StringBuilder();
+      int length = text.length();
+      for (int i = 0; i < length; i++) {
+        char c = text.charAt(i);
+        if (StringUtil.containsChar(REGEX_META_CHARS, c)) {
+          newExpression.append("\\\\");
+        }
+        newExpression.append(c);
+      }
+      PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
     }
   }
 
@@ -106,19 +118,19 @@ public class ReplaceAllDotInspection extends BaseInspection {
       if (!MATCHER.test(expression)) {
         return;
       }
-      final PsiExpression argument = expression.getArgumentList().getExpressions()[0];
+      final PsiExpression argument = ArrayUtil.getFirstElement(expression.getArgumentList().getExpressions());
       if (!PsiUtil.isConstantExpression(argument) || !ExpressionUtils.hasStringType(argument)) {
         return;
       }
       final String value = (String)ExpressionUtils.computeConstantExpression(argument);
-      if (!isRegexMetaChar(value)) {
+      if (!isRegexMetaChar(value, !isOnTheFly())) {
         return;
       }
       registerError(argument, expression, argument);
     }
 
-    private static boolean isRegexMetaChar(String s) {
-      return s != null && s.length() == 1 && ".$|()[{^?*+\\".contains(s);
+    private static boolean isRegexMetaChar(String s, boolean includeErrors) {
+      return s != null && s.length() == 1 && (includeErrors ? REGEX_META_CHARS : ".$|^").contains(s);
     }
   }
 }

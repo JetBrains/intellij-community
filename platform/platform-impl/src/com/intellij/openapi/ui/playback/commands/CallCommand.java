@@ -50,7 +50,7 @@ public class CallCommand extends AbstractCommand {
 
     final AsyncPromise<Object> cmdResult = new AsyncPromise<>();
     try {
-      Pair<Method, Class> methodClass = findMethod(context, methodName, types);
+      Pair<Method, Class<?>> methodClass = findMethod(context, methodName, types);
       if (methodClass == null) {
         context.error("No method \"" + methodName + "\" with parameters ["
                       + StringUtil.join(types, type -> type.getName(), ", ")
@@ -97,9 +97,9 @@ public class CallCommand extends AbstractCommand {
     return cmdResult;
   }
 
-  private static Pair<Method, Class> findMethod(PlaybackContext context, String methodName, Class[] types) {
-    Set<Class> classes = context.getCallClasses();
-    for (Class eachClass : classes) {
+  private static Pair<Method, Class<?>> findMethod(PlaybackContext context, String methodName, Class[] types) {
+    Set<Class<?>> classes = context.getCallClasses();
+    for (Class<?> eachClass : classes) {
       try {
         Method method = eachClass.getMethod(methodName, types);
         return Pair.create(method, eachClass);

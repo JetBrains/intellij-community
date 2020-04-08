@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
+import com.intellij.core.CoreBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
@@ -13,8 +15,8 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsBundle
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
@@ -30,27 +32,39 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   private val notificationAware get() = ProjectNotificationAware.getInstance(myProject)
   private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject).also { it.enableAutoImportInTests() }
 
-  private fun doRecursive(relativePath: String, stepInto: VirtualFile.(String) -> VirtualFile) = runWriteAction {
-    var file = myProjectRoot!!
-    for (part in relativePath.split("/")) {
-      file = file.stepInto(part)
-    }
-    file
+  private fun ensureExistsParentDirectory(relativePath: String): VirtualFile {
+    return relativePath.split("/").dropLast(1)
+      .fold(myProjectRoot!!) { file, name -> file.findOrCreateChildDirectory(name) }
   }
 
-  protected fun createVirtualFile(relativePath: String) =
-    doRecursive(relativePath) { createChildData(null, it) }
+  private fun VirtualFile.findOrCreateChildDirectory(name: String): VirtualFile {
+    val file = findChild(name) ?: createChildDirectory(null, name)
+    if (!file.isDirectory) throw IOException(IdeBundle.message("new.directory.failed.error", name))
+    return file
+  }
 
-  private fun findOrCreateVirtualFile(relativePath: String) =
-    doRecursive(relativePath) { findOrCreateChildData(null, it) }
+  private fun VirtualFile.findOrCreateChildFile(name: String): VirtualFile {
+    val file = findChild(name) ?: createChildData(null, name)
+    if (file.isDirectory) throw IOException(IdeBundle.message("new.file.failed.error", name))
+    return file
+  }
 
+  protected fun createVirtualFile(relativePath: String) = runWriteAction {
+    val directory = ensureExistsParentDirectory(relativePath)
+    directory.createChildData(null, relativePath.split("/").last())
+  }
+
+  protected fun findOrCreateVirtualFile(relativePath: String) = runWriteAction {
+    val directory = ensureExistsParentDirectory(relativePath)
+    directory.findOrCreateChildFile(relativePath.split("/").last())
+  }
 
   protected fun createIoFile(relativePath: String): VirtualFile {
     val file = File(projectPath, relativePath)
     FileUtil.ensureExists(file.parentFile)
     FileUtil.ensureCanCreateFile(file)
     if (!file.createNewFile()) {
-      throw IOException(VfsBundle.message("file.create.already.exists.error", parentPath, relativePath))
+      throw IOException(CoreBundle.message("file.create.already.exists.error", parentPath, relativePath))
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
   }
@@ -146,7 +160,14 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       replaceString(startOffset, endOffset, new)
     }
 
-  protected fun register(projectAware: ExternalSystemProjectAware) = projectTracker.register(projectAware)
+  protected fun register(projectAware: ExternalSystemProjectAware, activate: Boolean = true) {
+    projectTracker.register(projectAware)
+    if (activate) activate(projectAware.projectId)
+  }
+
+  protected fun activate(projectId: ExternalSystemProjectId) {
+    projectTracker.activate(projectId)
+  }
 
   protected fun remove(projectId: ExternalSystemProjectId) = projectTracker.remove(projectId)
 
@@ -158,6 +179,14 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   }
 
   private fun loadState(state: AutoImportProjectTracker.State) = projectTracker.loadState(state)
+
+  protected fun enableAutoReloadExternalChanges() {
+    projectTracker.isAutoReloadExternalChanges = true
+  }
+
+  protected fun disableAutoReloadExternalChanges() {
+    projectTracker.isAutoReloadExternalChanges = false
+  }
 
   protected fun initialize() = projectTracker.initializeComponent()
 
@@ -182,11 +211,26 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     assertEquals("$message on $event", expected, actual)
   }
 
+  protected fun assertProjectTracker(isAutoReload: Boolean, event: String) {
+    val message = when (isAutoReload) {
+      true -> "Auto reload must be enabled"
+      false -> "Auto reload must be disabled"
+    }
+    assertEquals("$message on $event", isAutoReload, projectTracker.isAutoReloadExternalChanges)
+  }
+
+  protected fun assertActivationStatus(vararg projects: ExternalSystemProjectId, event: String) {
+    val message = when (projects.isEmpty()) {
+      true -> "Auto reload must be activated"
+      false -> "Auto reload must be deactivated"
+    }
+    assertEquals("$message on $event", projects.toSet(), projectTracker.getActivatedProjects())
+  }
 
   protected fun assertNotificationAware(vararg projects: ExternalSystemProjectId, event: String) {
     val message = when (projects.isEmpty()) {
       true -> "Notification must be expired"
-      else -> "Notification must be notified for $projects"
+      else -> "Notification must be notified"
     }
     assertEquals("$message on $event", projects.toSet(), notificationAware.getProjectsWithNotification())
   }
@@ -198,13 +242,9 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   }
 
   private fun <S : Any, R> ComponentManager.replaceService(aClass: Class<S>, service: S, action: () -> R): R {
-    val temporaryDisposable = Disposer.newDisposable()
-    try {
-      replaceService(aClass, service, temporaryDisposable)
+    Disposer.newDisposable().use {
+      replaceService(aClass, service, it)
       return action()
-    }
-    finally {
-      Disposer.dispose(temporaryDisposable)
     }
   }
 
@@ -254,12 +294,24 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       projectAware.refreshStatus = status
     }
 
+    fun withLinkedProject(fileRelativePath: String, test: SimpleTestBench.(VirtualFile) -> Unit) {
+      val projectId = ExternalSystemProjectId(projectAware.projectId.systemId, "$projectPath/$name")
+      val projectAware = MockProjectAware(projectId)
+      register(projectAware)
+      val file = findOrCreateVirtualFile("$name/$fileRelativePath")
+      projectAware.settingsFiles.add(file.path)
+      SimpleTestBench(projectAware).test(file)
+      remove(projectId)
+    }
+
     fun assertState(refresh: Int? = null,
                     subscribe: Int? = null,
                     unsubscribe: Int? = null,
+                    enabled: Boolean = true,
                     notified: Boolean,
                     event: String) {
       assertProjectAware(projectAware, refresh, subscribe, unsubscribe, event)
+      assertProjectTracker(enabled, event = event)
       when (notified) {
         true -> assertNotificationAware(projectAware.projectId, event = event)
         else -> assertNotificationAware(event = event)

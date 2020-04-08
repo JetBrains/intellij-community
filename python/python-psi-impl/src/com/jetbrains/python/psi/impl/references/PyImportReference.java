@@ -74,9 +74,8 @@ public class PyImportReference extends PyReferenceImpl {
     return qname == null ? Collections.emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     // no completion in invalid import statements
     PyImportElement importElement = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class);
     if (importElement != null) {
@@ -263,7 +262,7 @@ public class PyImportReference extends PyReferenceImpl {
         .forEach(directory -> fillFromDir(directory, insertHandler));
     }
 
-    private void addImportedNames(@NotNull PyImportElement[] importElements) {
+    private void addImportedNames(PyImportElement @NotNull [] importElements) {
       for (PyImportElement element : importElements) {
         PyReferenceExpression ref = element.getImportReferenceExpression();
         if (ref != null) {

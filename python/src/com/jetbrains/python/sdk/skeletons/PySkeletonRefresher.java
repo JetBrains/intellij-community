@@ -18,7 +18,6 @@ package com.jetbrains.python.sdk.skeletons;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -51,6 +50,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Handles a refresh of SDK's skeletons.
@@ -256,7 +256,7 @@ public class PySkeletonRefresher {
   @NotNull
   public String getSkeletonsPath() throws InvalidSdkException {
     if (mySkeletonsPath == null) {
-      mySkeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), mySdk.getHomePath());
+      mySkeletonsPath = Objects.requireNonNull(PythonSdkUtil.getSkeletonsPath(mySdk));
       final File skeletonsDir = new File(mySkeletonsPath);
       if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
         throw new InvalidSdkException("Can't create skeleton dir " + mySkeletonsPath);

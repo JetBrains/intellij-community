@@ -1,7 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -19,6 +19,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +36,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
+    return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
   @Override
@@ -99,7 +100,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   @Nullable
-  public static PsiExpression canBeMethodReferenceProblem(@NotNull PsiVariable[] parameters,
+  public static PsiExpression canBeMethodReferenceProblem(PsiVariable @NotNull [] parameters,
                                                           @Nullable PsiType functionalInterfaceType,
                                                           @Nullable PsiElement context,
                                                           final PsiExpression methodRefCandidate) {
@@ -366,7 +367,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
            TypeConversionUtil.areTypesConvertible(nonReceiverCandidateParams[0].getType(), receiverType);
   }
 
-  private static boolean isSoleParameter(@NotNull PsiVariable[] parameters, @Nullable PsiExpression expression) {
+  private static boolean isSoleParameter(PsiVariable @NotNull [] parameters, @Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     return parameters.length == 1 &&
            expression instanceof PsiReferenceExpression &&
@@ -589,7 +590,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace lambda with method reference";
+      return InspectionGadgetsBundle.message("replace.with.method.ref.fix.family.name");
     }
 
     @Override
@@ -621,6 +622,12 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambda);
       final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(denotableFunctionalInterfaceType);
       PsiExpression replace = (PsiExpression)new CommentTracker().replaceAndRestoreComments(lambda, psiExpression);
+      if (!(replace instanceof PsiMethodReferenceExpression)) {
+        LOG.error("Generated code is not method reference: "+replace.getClass(), 
+                  new Attachment("replacement.txt", replace.getText()),
+                  new Attachment("origtext.txt", methodRefText));
+        return lambda;
+      }
       final PsiType functionalTypeAfterReplacement = GenericsUtil.getVariableTypeByExpressionType(((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType());
       functionalInterfaceType = typePointer.getType();
       if (functionalInterfaceType != null && (functionalTypeAfterReplacement == null ||

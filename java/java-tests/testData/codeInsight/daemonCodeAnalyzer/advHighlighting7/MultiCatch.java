@@ -86,3 +86,20 @@ class D {
     }
   }
 }
+class AssignFinal {
+  private final String value;
+
+  public AssignFinal() {
+    try {
+      value = create();
+    } catch (ClassNotFoundException | IllegalAccessException e) {
+      <error descr="Variable 'value' might already have been assigned to">value</error> = "";
+    }
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public static native <T> T create() throws ClassNotFoundException, IllegalAccessException;
+}

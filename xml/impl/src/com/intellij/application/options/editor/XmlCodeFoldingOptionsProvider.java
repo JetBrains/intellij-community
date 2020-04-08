@@ -16,16 +16,16 @@
 
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.xml.XmlBundle;
 
 public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSettings.State> implements CodeFoldingOptionsProvider {
   public XmlCodeFoldingOptionsProvider() {
     super(XmlFoldingSettings.getInstance().getState(), "XML");
     XmlFoldingSettings settings = XmlFoldingSettings.getInstance();
-    checkBox(ApplicationBundle.message("checkbox.collapse.xml.tags"), settings::isCollapseXmlTags, value->settings.getState().COLLAPSE_XML_TAGS=value);
-    checkBox(ApplicationBundle.message("checkbox.collapse.html.style.attribute"),settings::isCollapseHtmlStyleAttribute, value->settings.getState().COLLAPSE_HTML_STYLE_ATTRIBUTE=value);
-    checkBox(ApplicationBundle.message("checkbox.collapse.entities"),settings::isCollapseEntities, value->settings.getState().COLLAPSE_ENTITIES=value);
-    checkBox(ApplicationBundle.message("checkbox.collapse.data.uri"),settings::isCollapseDataUri, value->settings.getState().COLLAPSE_DATA_URI=value);
+    checkBox(XmlBundle.message("checkbox.collapse.xml.tags"), settings::isCollapseXmlTags, value->settings.getState().COLLAPSE_XML_TAGS=value);
+    checkBox(XmlBundle.message("checkbox.collapse.html.style.attribute"),settings::isCollapseHtmlStyleAttribute, value->settings.getState().COLLAPSE_HTML_STYLE_ATTRIBUTE=value);
+    checkBox(XmlBundle.message("checkbox.collapse.entities"),settings::isCollapseEntities, value->settings.getState().COLLAPSE_ENTITIES=value);
+    checkBox(XmlBundle.message("checkbox.collapse.data.uri"),settings::isCollapseDataUri, value->settings.getState().COLLAPSE_DATA_URI=value);
   }
 }

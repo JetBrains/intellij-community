@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.colors.impl;
 
@@ -8,7 +8,15 @@ import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontCache;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -16,23 +24,30 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
+import java.awt.Color;
+import java.awt.Font;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
@@ -136,6 +151,13 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public String getName() {
     return mySchemeName;
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    String name = StringUtil.trimStart(getName(), EDITABLE_COPY_PREFIX);
+    return DEFAULT_SCHEME_NAME.equals(name) ? DEFAULT_SCHEME_ALIAS : name;
   }
 
   @Override
@@ -694,6 +716,15 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private void writeColor(@NotNull Element colorElements, @NotNull ColorKey key) {
     Color color = myColorsMap.get(key);
     if (color == INHERITED_COLOR_MARKER) {
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      Color parentFallback = myParentScheme instanceof AbstractColorsScheme ?
+                             ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key) : null;
+      boolean parentOverwritingInheritance = parentFallback != null && parentFallback != INHERITED_COLOR_MARKER;
+      if (fallbackKey != null && parentOverwritingInheritance) {
+        colorElements.addContent(new Element(OPTION_ELEMENT)
+                                  .setAttribute(NAME_ATTR, key.getExternalName())
+                                  .setAttribute(BASE_ATTRIBUTES_ATTR, fallbackKey.getExternalName()));
+      }
       return;
     }
 
@@ -820,9 +851,17 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Nullable
   protected Color getFallbackColor(@NotNull ColorKey fallbackKey) {
-    Color color = getDirectlyDefinedColor(fallbackKey);
-    if (color == NULL_COLOR_MARKER) return null;
-    return color;
+    ColorKey cur = fallbackKey;
+    while (true) {
+      Color color = getDirectlyDefinedColor(cur);
+      if (color == NULL_COLOR_MARKER) return null;
+      ColorKey next = cur.getFallbackColorKey();
+      if (color != null && (color != INHERITED_COLOR_MARKER || next == null)) {
+        return color;
+      }
+      if (next == null) return null;
+      cur = next;
+    }
   }
 
   /**
@@ -932,7 +971,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         continue;
       }
 
-      if (!Comparing.equal(myMetaInfo.getProperty(propertyName), otherScheme.myMetaInfo.getProperty(propertyName))) {
+      if (!Objects.equals(myMetaInfo.getProperty(propertyName), otherScheme.myMetaInfo.getProperty(propertyName))) {
         return false;
       }
     }

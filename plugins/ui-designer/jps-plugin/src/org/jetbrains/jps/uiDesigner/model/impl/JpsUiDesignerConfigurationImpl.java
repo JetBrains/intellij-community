@@ -6,9 +6,6 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 
-/**
- * @author nik
- */
 public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesignerConfigurationImpl> implements JpsUiDesignerConfiguration {
   public static final JpsElementChildRole<JpsUiDesignerConfiguration> ROLE = JpsElementChildRoleBase.create("ui designer configuration");
   private final UiDesignerConfigurationState myState = new UiDesignerConfigurationState();
@@ -19,6 +16,7 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   public JpsUiDesignerConfigurationImpl(final UiDesignerConfigurationState state) {
     myState.INSTRUMENT_CLASSES = state.INSTRUMENT_CLASSES;
     myState.COPY_FORMS_RUNTIME_TO_OUTPUT = state.COPY_FORMS_RUNTIME_TO_OUTPUT;
+    myState.USE_DYNAMIC_BUNDLES = state.USE_DYNAMIC_BUNDLES;
   }
 
   public UiDesignerConfigurationState getState() {
@@ -58,13 +56,25 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   }
 
   @Override
+  public void setUseDynamicBundles(boolean value) {
+    myState.USE_DYNAMIC_BUNDLES = value;
+  }
+
+  @Override
+  public boolean isUseDynamicBundles() {
+    return myState.USE_DYNAMIC_BUNDLES;
+  }
+
+  @Override
   public void applyChanges(@NotNull JpsUiDesignerConfigurationImpl modified) {
     setCopyFormsRuntimeToOutput(modified.isCopyFormsRuntimeToOutput());
     setInstrumentClasses(modified.isInstrumentClasses());
+    setUseDynamicBundles(modified.isUseDynamicBundles());
   }
 
   public static class UiDesignerConfigurationState {
     public boolean INSTRUMENT_CLASSES = true;
     public boolean COPY_FORMS_RUNTIME_TO_OUTPUT = true;
+    public boolean USE_DYNAMIC_BUNDLES = false;
   }
 }

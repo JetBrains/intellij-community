@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +26,7 @@ public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction,
   private final String myMessage;
   private final boolean myValue;
 
-  public SetInspectionOptionFix(LocalInspectionTool inspection, String property, String message, boolean value) {
+  public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @Nls String message, boolean value) {
     myID = inspection.getID();
     myProperty = property;
     myMessage = message;
@@ -42,7 +44,7 @@ public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction,
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Set inspection option";
+    return QuickFixBundle.message("set.inspection.option.fix");
   }
 
   @Override

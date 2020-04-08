@@ -3,20 +3,20 @@ import java.util.stream.*;
 
 public class StreamKnownSource {
   void testFlatMap(List<String> list) {
-    long count = list.stream().<String>flatMap(s -> Stream.empty()).count();
+    long count = <warning descr="Result of 'list.stream().<String>flatMap(s -> Stream.empty()).count()' is always '0'">list.stream().<String>flatMap(s -> Stream.empty()).count()</warning>;
     if(<warning descr="Condition 'count > 0' is always 'false'">count > 0</warning>) {
       System.out.println("Impossible");
     }
   }
 
   void testEmptyStream(List<String> list) {
-    long result = Stream.empty().count();
+    long result = <warning descr="Result of 'Stream.empty().count()' is always '0'">Stream.empty().count()</warning>;
 
     if (<warning descr="Condition 'result > 0' is always 'false'">result > 0</warning>) {
       System.out.println("Never");
     }
 
-    int sum = list.stream().filter(Objects::isNull).filter(<warning descr="Method reference result is always 'false'">Objects::nonNull</warning>).mapToInt(String::length).sum();
+    int sum = <warning descr="Result of 'list.stream().filter(Objects::isNull).filter(Objects::nonNull).mapToInt(String::length).sum()' is always '0'">list.stream().filter(Objects::isNull).filter(<warning descr="Method reference result is always 'false'">Objects::nonNull</warning>).mapToInt(String::length).sum()</warning>;
     if (<warning descr="Condition 'sum == 0' is always 'true'">sum == 0</warning>) {
       System.out.println("Always");
     }

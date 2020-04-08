@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +25,6 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -207,7 +207,7 @@ public final class TreeUtil {
     return true;
   }
 
-  private static boolean isDescendants(@NotNull final TreePath path, @NotNull final TreePath[] paths) {
+  private static boolean isDescendants(@NotNull final TreePath path, final TreePath @NotNull [] paths) {
     for (final TreePath ancestor : paths) {
       if (isAncestor(ancestor, path)) return true;
     }
@@ -220,8 +220,7 @@ public final class TreeUtil {
     return new TreePath(path);
   }
 
-  @NotNull
-  private static TreeNode[] getPathFromRootTo(@Nullable TreeNode root, @NotNull TreeNode node, boolean includeRoot) {
+  private static TreeNode @NotNull [] getPathFromRootTo(@Nullable TreeNode root, @NotNull TreeNode node, boolean includeRoot) {
     int height = 0;
     for (TreeNode n = node; n != root; n = n.getParent()) {
       height++;
@@ -289,7 +288,7 @@ public final class TreeUtil {
   @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath findCommonPath(@NotNull final TreePath[] treePaths) {
+  public static TreePath findCommonPath(final TreePath @NotNull [] treePaths) {
     LOG.assertTrue(areComponentsEqual(treePaths, 0));
     TreePath result = new TreePath(treePaths[0].getPathComponent(0));
     int pathIndex = 1;
@@ -349,7 +348,7 @@ public final class TreeUtil {
   }
 
 
-  private static boolean areComponentsEqual(@NotNull final TreePath[] paths, final int componentIndex) {
+  private static boolean areComponentsEqual(final TreePath @NotNull [] paths, final int componentIndex) {
     if (paths[0].getPathCount() <= componentIndex) return false;
     final Object pathComponent = paths[0].getPathComponent(componentIndex);
     for (final TreePath treePath : paths) {
@@ -359,8 +358,7 @@ public final class TreeUtil {
     return true;
   }
 
-  @NotNull
-  private static TreePath[] removeDuplicates(@NotNull final TreePath[] paths) {
+  private static TreePath @NotNull [] removeDuplicates(final TreePath @NotNull [] paths) {
     final ArrayList<TreePath> result = new ArrayList<>();
     for (final TreePath path : paths) {
       if (!result.contains(path)) result.add(path);
@@ -371,10 +369,9 @@ public final class TreeUtil {
   /**
    * @deprecated use TreeCollector.TreePathRoots#collect(TreePath...) instead
    */
-  @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath[] selectMaximals(@Nullable final TreePath[] paths) {
+  public static TreePath @NotNull [] selectMaximals(final TreePath @Nullable [] paths) {
     if (paths == null) return EMPTY_TREE_PATH;
     final TreePath[] noDuplicates = removeDuplicates(paths);
     final ArrayList<TreePath> result = new ArrayList<>();
@@ -405,7 +402,7 @@ public final class TreeUtil {
   public static <T extends MutableTreeNode> void sortChildren(@NotNull T node, @Nullable Comparator<? super T> comparator) {
     //noinspection unchecked
     final List<T> children = (List)listChildren(node);
-    Collections.sort(children, comparator);
+    children.sort(comparator);
     for (int i = node.getChildCount() - 1; i >= 0; i--) {
       node.remove(i);
     }
@@ -431,18 +428,46 @@ public final class TreeUtil {
     return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
 
-  public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
-    if (paths.isEmpty()) return;
-    selectPaths(tree, paths.toArray(EMPTY_TREE_PATH));
+  /**
+   * Makes visible the specified tree row and selects it.
+   * It does not clear selection if there is nothing to select.
+   *
+   * @param tree  a tree to select in
+   * @param index an index of a viewable node in the given tree
+   * @see JTree#getRowCount
+   * @see JTree#clearSelection
+   */
+  public static void selectRow(@NotNull JTree tree, int index) {
+    TreePath path = tree.getPathForRow(index);
+    if (path != null) internalSelect(tree, path);
   }
 
-  public static void selectPaths(@NotNull JTree tree, @NotNull TreePath... paths) {
+  /**
+   * Makes visible specified tree paths and select them.
+   * It does not clear selection if there are no paths to select.
+   *
+   * @param tree  a tree to select in
+   * @param paths a collection of paths to select
+   * @see JTree#clearSelection
+   */
+  @ApiStatus.Internal
+  public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
+    if (!paths.isEmpty()) selectPaths(tree, paths.toArray(EMPTY_TREE_PATH));
+  }
+
+  /**
+   * Makes visible specified tree paths and select them.
+   * It does not clear selection if there are no paths to select.
+   *
+   * @param tree  a tree to select in
+   * @param paths an array of paths to select
+   * @see JTree#clearSelection
+   */
+  @ApiStatus.Internal
+  public static void selectPaths(@NotNull JTree tree, @NotNull TreePath @NotNull ... paths) {
     if (paths.length == 0) return;
-    for (TreePath path : paths) {
-      tree.makeVisible(path);
-    }
-    tree.setSelectionPaths(paths);
-    tree.scrollPathToVisible(paths[0]);
+    for (TreePath path : paths) tree.makeVisible(path);
+    internalSelect(tree, paths);
   }
 
   @NotNull
@@ -453,6 +478,14 @@ public final class TreeUtil {
   @NotNull
   public static ActionCallback selectPath(@NotNull final JTree tree, final TreePath path, boolean center) {
     tree.makeVisible(path);
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds == null) return ActionCallback.REJECTED;
+    if (center) {
+      Rectangle visible = tree.getVisibleRect();
+      if (visible.y < bounds.y + bounds.height && bounds.y < visible.y + visible.height) {
+        center = false; // disable centering if the given path is already visible
+      }
+    }
     if (center) {
       return showRowCentred(tree, tree.getRowForPath(path));
     } else {
@@ -793,25 +826,74 @@ public final class TreeUtil {
     }
   }
 
+  /**
+   * @param tree               a tree, which nodes should be collapsed
+   * @param keepSelectionLevel a minimal path count of a lead selection path or {@code -1} to restore old selection
+   */
   public static void collapseAll(@NotNull JTree tree, final int keepSelectionLevel) {
+    collapseAll(tree, false, keepSelectionLevel);
+  }
+
+  /**
+   * @param tree               a tree, which nodes should be collapsed
+   * @param strict             use {@code false} if a single top level node should not be collapsed
+   * @param keepSelectionLevel a minimal path count of a lead selection path or {@code -1} to restore old selection
+   */
+  public static void collapseAll(@NotNull JTree tree, boolean strict, int keepSelectionLevel) {
+    assert EventQueue.isDispatchThread();
+    int row = tree.getRowCount();
+    if (row <= 1) return; // nothing to collapse
+
     final TreePath leadSelectionPath = tree.getLeadSelectionPath();
+
+    int minCount = 1; // allowed path count to collapse
+    if (!tree.isRootVisible()) minCount++;
+    if (!tree.getShowsRootHandles()) {
+      minCount++;
+      strict = true;
+    }
+
+    // use the parent path of the normalized selection path to prohibit its collapsing
+    TreePath prohibited = leadSelectionPath == null ? null : normalize(leadSelectionPath, minCount, keepSelectionLevel).getParentPath();
     // Collapse all
-    int row = tree.getRowCount() - 1;
-    while (row >= 0) {
-      tree.collapseRow(row);
-      row--;
+    while (0 < row--) {
+      if (!strict && row == 0) break;
+      TreePath path = tree.getPathForRow(row);
+      assert path != null : "path is not found at row " + row;
+      int pathCount = path.getPathCount();
+      if (pathCount < minCount) continue;
+      if (pathCount == minCount && row > 0) strict = true;
+      if (!isAlwaysExpand(path) && !path.isDescendant(prohibited)) tree.collapsePath(path);
     }
-    Object root = tree.getModel().getRoot();
-    if (root != null && !tree.isRootVisible()) {
-      tree.expandPath(new TreePath(root));
-    }
-    if (leadSelectionPath != null) {
-      final Object[] path = leadSelectionPath.getPath();
-      final Object[] pathToSelect = new Object[path.length > keepSelectionLevel && keepSelectionLevel >= 0 ? keepSelectionLevel : path.length];
-      System.arraycopy(path, 0, pathToSelect, 0, pathToSelect.length);
-      if (pathToSelect.length == 0) return;
-      selectPath(tree, new TreePath(pathToSelect));
-    }
+    if (leadSelectionPath == null) return; // no selection to restore
+    if (!strict) minCount++; // top level node is not collapsed
+    internalSelect(tree, normalize(leadSelectionPath, minCount, keepSelectionLevel));
+  }
+
+  /**
+   * @param path               a path to normalize
+   * @param minCount           a minimal number of elements in the resulting path
+   * @param keepSelectionLevel a maximal number of elements in the selection path or negative value to preserve the given path
+   * @return a parent path with the specified number of elements, or the given {@code path} if it does not have enough elements
+   */
+  @NotNull
+  private static TreePath normalize(@NotNull TreePath path, int minCount, int keepSelectionLevel) {
+    if (keepSelectionLevel < 0) return path;
+    if (keepSelectionLevel > minCount) minCount = keepSelectionLevel;
+    int pathCount = path.getPathCount();
+    while (minCount < pathCount--) path = path.getParentPath();
+    assert path != null : "unexpected minCount: " + minCount;
+    return path;
+  }
+
+  /**
+   * @param path a path to expand (or to collapse)
+   * @return {@code true} if node should be expanded (or should not be collapsed) automatically
+   * @see AbstractTreeNode#isAlwaysExpand
+   */
+  private static boolean isAlwaysExpand(@NotNull TreePath path) {
+    AbstractTreeNode<?> node = getLastUserObject(AbstractTreeNode.class, path);
+    return node != null && node.isAlwaysExpand();
   }
 
   public static void selectNode(@NotNull final JTree tree, final TreeNode node) {
@@ -1464,7 +1546,7 @@ public final class TreeUtil {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseMakeVisibleOne(tree, visitor, path -> {
-      internalSelectPath(tree, path);
+      internalSelect(tree, path);
       consumer.accept(path);
     });
   }
@@ -1481,13 +1563,7 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
-    return promiseMakeVisibleOne(tree, visitor, path -> internalSelectPath(tree, path));
-  }
-
-  private static void internalSelectPath(@NotNull JTree tree, @NotNull TreePath path) {
-    assert EventQueue.isDispatchThread();
-    tree.setSelectionPath(path);
-    scrollToVisible(tree, path, true);
+    return promiseMakeVisibleOne(tree, visitor, path -> internalSelect(tree, path));
   }
 
   /**
@@ -1502,13 +1578,13 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
-    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelectPaths(tree, paths));
+    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelect(tree, paths.toArray(EMPTY_TREE_PATH)));
   }
 
-  private static void internalSelectPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
+  private static void internalSelect(@NotNull JTree tree, @NotNull TreePath @NotNull ... paths) {
     assert EventQueue.isDispatchThread();
-    if (paths.isEmpty()) return;
-    tree.setSelectionPaths(paths.toArray(EMPTY_TREE_PATH));
+    if (paths.length == 0) return;
+    tree.setSelectionPaths(paths);
     for (TreePath path : paths) {
       if (scrollToVisible(tree, path, true)) {
         break;
@@ -1519,10 +1595,9 @@ public final class TreeUtil {
   /**
    * @param tree     a tree to scroll
    * @param path     a visible tree path to scroll
-   * @param centered {@code true} to show the specified path
+   * @param centered {@code true} to show the specified path in the center
    * @return {@code false} if a path is hidden (under a collapsed parent)
    */
-  @Contract("_, null, _ -> false")
   public static boolean scrollToVisible(@NotNull JTree tree, @NotNull TreePath path, boolean centered) {
     assert EventQueue.isDispatchThread();
     Rectangle bounds = tree.getPathBounds(path);
@@ -1532,6 +1607,11 @@ public final class TreeUtil {
     }
     Container parent = tree.getParent();
     if (parent instanceof JViewport) {
+      if (centered) {
+        Rectangle visible = tree.getVisibleRect();
+        centered = bounds.y < visible.y || bounds.y > visible.y + visible.height - bounds.height;
+        // disable centering if the given path is already visible
+      }
       int width = parent.getWidth();
       if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
         bounds.x = -tree.getX();
@@ -1609,7 +1689,7 @@ public final class TreeUtil {
     promiseMakeVisible(tree, path -> {
       TreePath parent = reference.getAndSet(path);
       if (getPathCount(parent) == getPathCount(path.getParentPath())) return TreeVisitor.Action.CONTINUE;
-      internalSelectPath(tree, parent);
+      internalSelect(tree, parent);
       promise.setResult(parent);
       return TreeVisitor.Action.INTERRUPT;
     }, promise)
@@ -1621,7 +1701,7 @@ public final class TreeUtil {
             promise.cancel();
           }
           else {
-            internalSelectPath(tree, tail);
+            internalSelect(tree, tail);
             promise.setResult(tail);
           }
         }

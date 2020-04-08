@@ -284,7 +284,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       else {
         final FilterRenderer renderer = inlay.getRenderer();
         renderer.setText(labelText);
-        inlay.updateSize();
+        inlay.update();
       }
     }
     final NamedScriptableDefinition contextVariable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
@@ -300,7 +300,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       else {
         final FilterRenderer renderer = inlay.getRenderer();
         renderer.setText("whole template: " + labelText);
-        inlay.updateSize();
+        inlay.update();
       }
     }
     for (String variable : variables) {

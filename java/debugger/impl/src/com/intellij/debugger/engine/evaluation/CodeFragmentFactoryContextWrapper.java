@@ -120,7 +120,8 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
         continue;
       }
       try {
-        final String typeName = objectRef.type().name();
+        // TODO: we probably need something more complicated for type name generation, but not in EDT
+        final String typeName = objectRef.type().name().replace('$', '.');
         labelName += DEBUG_LABEL_SUFFIX;
         if (buffer.length() > 0) {
           buffer.append("\n");

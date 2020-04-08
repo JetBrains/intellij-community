@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -66,7 +67,7 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
         if (InheritanceUtil.isInheritor(varArgExpression.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) {
           fix = new AddToArrayFix(className);
         }
-        holder.registerProblem(varArgExpression, InspectionsBundle.message("inspection.collection.used.as.vararg.message"), fix);
+        holder.registerProblem(varArgExpression, JavaBundle.message("inspection.collection.used.as.vararg.message"), fix);
       }
     };
   }

@@ -9,15 +9,18 @@ import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
-import com.intellij.idea.Bombed
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mock.MockProgressIndicator
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.ObjectUtils
 import com.intellij.util.indexing.FindSymbolParameters
-import org.jetbrains.annotations.Nullable
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
@@ -306,14 +309,6 @@ class Intf {
     assert gotoClass('goo.baz.Bar') == [bar2]
   }
 
-  @Bombed(user = "Mikhail.Sokolov", year=2020, month = Calendar.FEBRUARY, day = 1, description = "Should be handled by SE UI, not Contributor")
-  void "test try lowercase pattern if nothing matches"() {
-    def match = myFixture.addClass("class IPRoi { }")
-    def nonMatch = myFixture.addClass("class InspectionProfileImpl { }")
-    assert gotoClass('IPRoi') == [match]
-    assert gotoClass('IproImpl') == [nonMatch]
-  }
-
   private static filterJavaItems(List<Object> items) {
     return items.findAll { it instanceof PsiElement && it.language == JavaLanguage.INSTANCE }
   }
@@ -388,7 +383,7 @@ class Intf {
     def foo = myFixture.addClass('package foo; class List {}')
     def bar = myFixture.addClass('package bar; class List {}')
 
-    def contributor = createClassContributor(project, myFixture.addClass('class Context {}'))
+    def contributor = createClassContributor(project, myFixture.addClass('class Context {}').containingFile)
     assert calcContributorElements(contributor, "List") == [bar, foo]
 
     JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
@@ -432,11 +427,10 @@ class Intf {
     assert gotoFile('samplecontrol', false) == [enumControl, control]
   }
 
-  @Bombed(user = "Mikhail.Sokolov", year=2020, month = Calendar.FEBRUARY, day = 1, description = "Should be handled by SE UI, not Contributor")
   void "test show longer suffix matches from jdk and shorter from project"() {
     def seq = addEmptyFile("langc/Sequence.java")
     def charSeq = myFixture.findClass(CharSequence.name)
-    assert gotoFile('langcsequence', false) == [charSeq.containingFile, seq]
+    assert gotoFile('langcsequence', true) == [charSeq.containingFile, seq]
   }
 
   void "test show no matches from jdk when there are in project"() {
@@ -554,33 +548,37 @@ class Intf {
   }
 
   static List<Object> calcContributorElements(SearchEverywhereContributor<?> contributor, String text) {
-    def res = new LinkedHashSet<Object>()
-    invokeAndWait({ -> res.addAll(contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items) })
-    return res.collect()
+    return contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items
   }
 
   static SearchEverywhereContributor<Object> createClassContributor(Project project, PsiElement context = null, boolean everywhere = false) {
-    def res = new TestClassContributor(project, context)
+    def res = new TestClassContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
     return res
   }
 
   static SearchEverywhereContributor<Object> createFileContributor(Project project, PsiElement context = null, boolean everywhere = false) {
-    def res = new TestFileContributor(project, context)
+    def res = new TestFileContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
     return res
   }
 
   static SearchEverywhereContributor<Object> createSymbolContributor(Project project, PsiElement context = null, boolean everywhere = false) {
-    def res = new TestSymbolContributor(project, context)
+    def res = new TestSymbolContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
     return res
   }
 
+  static AnActionEvent createEvent(Project project, PsiElement context = null) {
+    def dataContext = SimpleDataContext.getSimpleContext(
+      CommonDataKeys.PSI_FILE.name, ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(project))
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
+  }
+
   private static class TestClassContributor extends ClassSearchEverywhereContributor {
 
-    TestClassContributor(@Nullable Project project, @Nullable PsiElement context) {
-      super(project, context)
+    TestClassContributor(@NotNull AnActionEvent event) {
+      super(event)
     }
 
     void setEverywhere(boolean state) {
@@ -590,8 +588,8 @@ class Intf {
 
   private static class TestFileContributor extends FileSearchEverywhereContributor {
 
-    TestFileContributor(@Nullable Project project, @Nullable PsiElement context) {
-      super(project, context)
+    TestFileContributor(@NotNull AnActionEvent event) {
+      super(event)
     }
 
     void setEverywhere(boolean state) {
@@ -601,16 +599,12 @@ class Intf {
 
   private static class TestSymbolContributor extends SymbolSearchEverywhereContributor {
 
-    TestSymbolContributor(@Nullable Project project, @Nullable PsiElement context) {
-      super(project, context)
+    TestSymbolContributor(@NotNull AnActionEvent event) {
+      super(event)
     }
 
     void setEverywhere(boolean state) {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
-  }
-
-  private static void invokeAndWait(Runnable runnable) {
-    ApplicationManager.application.executeOnPooledThread(runnable).get()
   }
 }

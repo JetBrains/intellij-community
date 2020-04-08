@@ -291,7 +291,7 @@ public final class DiscoveredTestDataHolder {
     return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
   }
 
-  private boolean consumeDiscoveredTest(int testId, byte frameworkId, @NotNull MultiMap<String, String> result, @NotNull IOException[] exceptionRef) {
+  private boolean consumeDiscoveredTest(int testId, byte frameworkId, @NotNull MultiMap<String, String> result, IOException @NotNull [] exceptionRef) {
     try {
       TestId test = myTestEnumerator.valueOf(testId);
       if (test.getFrameworkId() == frameworkId) {

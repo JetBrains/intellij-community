@@ -21,9 +21,6 @@ import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.jps.idea.IdeaProjectLoader
-/**
- * @author nik
- */
 @CompileStatic
 abstract class BuildTasks {
   /**
@@ -49,6 +46,12 @@ abstract class BuildTasks {
    * directory.
    */
   abstract void buildNonBundledPlugins(List<String> mainPluginModules)
+
+  /**
+   * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
+   * @see org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+   */
+  abstract void generateProjectStructureMapping(File targetFile)
 
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
@@ -108,6 +111,7 @@ abstract class BuildTasks {
       BuildUtils.addToClassPath("$projectHome/$it", binding.ant)
     }
     ProductProperties productProperties = (ProductProperties) Class.forName(productPropertiesClassName).constructors[0].newInstance(projectHome)
+
     BuildContext context = BuildContext.createContext("$projectHome/$communityHomeRelativePath", projectHome,
                                                       productProperties, proprietaryBuildTools)
     return context

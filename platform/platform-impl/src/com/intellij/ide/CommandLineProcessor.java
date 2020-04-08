@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.application.*;
@@ -10,10 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -21,29 +20,25 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
+import com.intellij.pom.Navigatable;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Future;
 
-import static com.intellij.ide.CliResult.error;
-import static com.intellij.openapi.util.Pair.pair;
-
-/**
- * @author yole
- */
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
   private static final String OPTION_WAIT = "--wait";
 
   private CommandLineProcessor() { }
 
-  private static @NotNull Pair<Project, Future<CliResult>> doOpenFileOrProject(Path file, boolean shouldWait) {
+  private static @NotNull CommandLineProcessorResult doOpenFileOrProject(Path file, boolean shouldWait) {
     OpenProjectTask openProjectOptions = new OpenProjectTask();
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
@@ -52,39 +47,59 @@ public final class CommandLineProcessor {
       return doOpenFile(file, -1, -1, false, shouldWait);
     }
     else {
-      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : CliResult.OK_FUTURE);
     }
   }
 
-  private static @NotNull Pair<Project, Future<CliResult>> doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
+  private static @NotNull CommandLineProcessorResult doOpenFile(@NotNull Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     assert file != null;
 
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    if (projects.length == 0 || tempProject) {
+    Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
+    if (PlatformUtils.isDataGrip() && !tempProject && projects.length == 0) {
+      RecentProjectsManager recentProjectsManager = RecentProjectsManager.getInstance();
+      if (recentProjectsManager.willReopenProjectOnStart() &&
+          recentProjectsManager.reopenLastProjectsOnStart()) {
+        projects = ProjectUtil.getOpenProjects();
+      }
+    }
+    if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, column, tempProject);
       if (project == null) {
-        final String message = "No project found to open file in";
-        Messages.showErrorDialog(message, "Cannot Open File");
-        return pair(null, error(1, message));
+        return CommandLineProcessorResult.createError("No project found to open file in");
       }
 
-      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
-      (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
+      if (LightEdit.owns(project)) {
+        LightEdit.openFile(file);
+      }
+      else {
+        Navigatable navigatable = line > 0
+                                  ? new OpenFileDescriptor(project, file, line - 1, Math.max(column, 0))
+                                  : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1);
+        AppUIExecutor.onUiThread().expireWith(project).execute(() -> {
+          navigatable.navigate(true);
+        });
+      }
 
-      return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
     }
   }
 
-  private static @NotNull Project findBestProject(VirtualFile file, Project[] projects) {
+  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
     for (Project project : projects) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+      if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
         return project;
       }
+    }
+
+    if (LightEditUtil.isLightEditEnabled()) {
+      return LightEditUtil.getProject();
     }
 
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
@@ -98,28 +113,31 @@ public final class CommandLineProcessor {
     return projects[0];
   }
 
-  public static @NotNull Pair<Project, Future<CliResult>> processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
-    LOG.info("External command line:");
-    LOG.info("Dir: " + currentDirectory);
-    for (String arg : args) LOG.info(arg);
-    LOG.info("-----");
-    if (args.isEmpty()) return pair(null, CliResult.OK_FUTURE);
+  public static @NotNull CommandLineProcessorResult processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
+    StringBuilder logMessage = new StringBuilder();
+    logMessage.append("External command line:").append('\n');
+    logMessage.append("Dir: ").append(currentDirectory).append('\n');
+    for (String arg : args) {
+      logMessage.append(arg).append('\n');
+    }
+    logMessage.append("-----");
+    LOG.info(logMessage.toString());
+    if (args.isEmpty()) {
+      return new CommandLineProcessorResult(null, CliResult.OK_FUTURE);
+    }
 
     String command = args.get(0);
-    Pair<Project, Future<CliResult>> result = ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
+    CommandLineProcessorResult result = ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
       if (!command.equals(starter.getCommandName())) {
         return null;
       }
 
       if (starter.canProcessExternalCommandLine()) {
         LOG.info("Processing command with " + starter);
-        return pair(null, starter.processExternalCommandLineAsync(args, currentDirectory));
+        return new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory));
       }
       else {
-        String title = "Cannot execute command '" + command + "'";
-        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
-        Messages.showErrorDialog(message, title);
-        return pair(null, error(1, message));
+        return CommandLineProcessorResult.createError("Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.");
       }
     });
     if (result != null) {
@@ -129,10 +147,10 @@ public final class CommandLineProcessor {
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
       ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      return pair(null, CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(null, CliResult.OK_FUTURE);
     }
 
-    Pair<Project, Future<CliResult>> projectAndCallback = null;
+    CommandLineProcessorResult projectAndCallback = null;
     int line = -1;
     int column = -1;
     boolean tempProject = false;
@@ -169,15 +187,18 @@ public final class CommandLineProcessor {
         arg = StringUtil.unquoteString(arg);
       }
 
-      Path file = Paths.get(arg);
-      if (!file.isAbsolute()) {
-        file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+      Path file = null;
+      try {
+        file = Paths.get(arg);
+        if (!file.isAbsolute()) {
+          file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
+        }
       }
-
-      if (!Files.exists(file)) {
-        String message = "Cannot find file '" + file + "'";
-        Messages.showErrorDialog(message, "Cannot Find File");
-        return pair(null, error(1, message));
+      catch (InvalidPathException e) {
+        LOG.warn(e);
+      }
+      if (file == null || !Files.exists(file)) {
+        return CommandLineProcessorResult.createError("Cannot find file '" + arg + "'");
       }
 
       if (line != -1 || tempProject) {
@@ -196,9 +217,9 @@ public final class CommandLineProcessor {
     }
 
     if (shouldWait && projectAndCallback == null) {
-      return pair(null, error(1, "--wait must be supplied with file or project to wait for"));
+      return new CommandLineProcessorResult(null, CliResult.error(1, "--wait must be supplied with file or project to wait for"));
     }
 
-    return projectAndCallback == null ? pair(null, CliResult.OK_FUTURE) : projectAndCallback;
+    return projectAndCallback == null ? new CommandLineProcessorResult(null, CliResult.OK_FUTURE) : projectAndCallback;
   }
 }

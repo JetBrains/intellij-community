@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
@@ -20,7 +21,7 @@ interface VcsCloneDialogExtension {
   /**
    * Visible name of extension (e.g. "Repository URL", "GitHub", etc)
    */
-  fun getName(): String
+  @Nls fun getName(): String
 
   /**
    * Visible icon of extension
@@ -35,7 +36,7 @@ interface VcsCloneDialogExtension {
   /**
    * Optional tooltip for extension item
    */
-  fun getTooltip(): String? = null
+  @Nls fun getTooltip(): String? = null
 
   @Deprecated(message = "Implement createMainComponent(Project, ModalityState)")
   fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent

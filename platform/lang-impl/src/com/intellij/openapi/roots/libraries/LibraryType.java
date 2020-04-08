@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
@@ -40,7 +41,6 @@ import java.util.List;
  * &lt;/extensions&gt;
  *
  * @see LibraryPresentationProvider
- * @author nik
  */
 public abstract class LibraryType<P extends LibraryProperties> extends LibraryPresentationProvider<P> {
   public static final ExtensionPointName<LibraryType<?>> EP_NAME = ExtensionPointName.create("com.intellij.library.type");
@@ -98,8 +98,7 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
    * @return Root types to collect library files which do not belong to the project and therefore
    *         indicate that the library is external.
    */
-  @NotNull
-  public OrderRootType[] getExternalRootTypes() {
+  public OrderRootType @NotNull [] getExternalRootTypes() {
     return DEFAULT_EXTERNAL_ROOT_TYPES;
   }
 
@@ -109,6 +108,9 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
       if (type.getKind() == kind) {
         return type;
       }
+    }
+    if (kind instanceof UnknownLibraryKind) {
+      return new UnknownLibraryType((UnknownLibraryKind)kind);
     }
     throw new IllegalArgumentException("Library with kind " + kind + " is not registered");
   }

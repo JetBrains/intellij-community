@@ -3,8 +3,10 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -12,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -22,6 +25,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
@@ -65,7 +69,18 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Dispos
             }
           }
         }
-      }, myProject);
+      }, this);
+
+    ExtensionPointChangeListener listener = () -> {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+        if (fileEditor instanceof TextEditor) {
+          FoldingUpdate.clearFoldingCache(((TextEditor)fileEditor).getEditor());
+        }
+      }
+    };
+    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(listener, false, this);
+    LanguageInjector.EXTENSION_POINT_NAME.addExtensionPointListener(listener, this);
+    CustomFoldingProvider.EP_NAME.addExtensionPointListener(listener, this);
   }
 
   @Override
@@ -80,14 +95,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Dispos
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Project project = editor.getProject();
-    if (project != null && (!project.equals(myProject) || !project.isOpen())) return;
-
-    Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (file == null || !file.getViewProvider().isPhysical() || !file.isValid()) return;
-
-    EditorFoldingInfo.get(editor).dispose();
+    EditorFoldingInfo.disposeForEditor(editor);
   }
 
   @Override

@@ -15,21 +15,16 @@
  */
 package org.intellij.images.options.impl;
 
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.util.JdomKt;
 import org.intellij.images.options.ZoomOptions;
-import org.jdom.Element;
 
 import java.awt.*;
 import java.beans.PropertyChangeSupport;
+import java.util.Objects;
 
 /**
  * Zoom options implementation.
  */
-final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
-  private boolean wheelZooming = true;
-  private boolean smartZooming = true;
+final class ZoomOptionsImpl implements ZoomOptions {
   private int prefferedWidth = DEFAULT_PREFFERED_SIZE.width;
   private int prefferedHeight = DEFAULT_PREFFERED_SIZE.height;
   private final PropertyChangeSupport propertyChangeSupport;
@@ -39,34 +34,8 @@ final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
   }
 
   @Override
-  public boolean isWheelZooming() {
-    return wheelZooming;
-  }
-
-  @Override
-  public boolean isSmartZooming() {
-    return smartZooming;
-  }
-
-  @Override
   public Dimension getPrefferedSize() {
     return new Dimension(prefferedWidth, prefferedHeight);
-  }
-
-  void setWheelZooming(boolean wheelZooming) {
-    boolean oldValue = this.wheelZooming;
-    if (oldValue != wheelZooming) {
-      this.wheelZooming = wheelZooming;
-      propertyChangeSupport.firePropertyChange(ATTR_WHEEL_ZOOMING, oldValue, this.wheelZooming);
-    }
-  }
-
-  void setSmartZooming(boolean smartZooming) {
-    boolean oldValue = this.smartZooming;
-    if (oldValue != smartZooming) {
-      this.smartZooming = smartZooming;
-      propertyChangeSupport.firePropertyChange(ATTR_SMART_ZOOMING, oldValue, this.smartZooming);
-    }
   }
 
   void setPrefferedSize(Dimension prefferedSize) {
@@ -95,45 +64,12 @@ final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
 
   @Override
   public void inject(ZoomOptions options) {
-    setWheelZooming(options.isWheelZooming());
-    setSmartZooming(options.isSmartZooming());
     setPrefferedSize(options.getPrefferedSize());
   }
 
   @Override
   public boolean setOption(String name, Object value) {
-    if (ATTR_WHEEL_ZOOMING.equals(name)) {
-      setWheelZooming((Boolean)value);
-    }
-    else if (ATTR_SMART_ZOOMING.equals(name)) {
-      setSmartZooming((Boolean)value);
-    }
-    else if (ATTR_PREFFERED_WIDTH.equals(name)) {
-      setPrefferedWidth((Integer)value);
-    }
-    else if (ATTR_PREFFERED_HEIGHT.equals(name)) {
-      setPrefferedHeight((Integer)value);
-    }
-    else {
-      return false;
-    }
     return true;
-  }
-
-  @Override
-  public void readExternal(Element element) {
-    setWheelZooming(JDOMExternalizer.readBoolean(element, ATTR_WHEEL_ZOOMING));
-    setSmartZooming(JDOMExternalizer.readBoolean(element, ATTR_SMART_ZOOMING));
-    setPrefferedWidth(JDOMExternalizer.readInteger(element, ATTR_PREFFERED_WIDTH, DEFAULT_PREFFERED_SIZE.width));
-    setPrefferedHeight(JDOMExternalizer.readInteger(element, ATTR_PREFFERED_HEIGHT, DEFAULT_PREFFERED_SIZE.height));
-  }
-
-  @Override
-  public void writeExternal(Element element) {
-    JdomKt.addOptionTag(element, ATTR_WHEEL_ZOOMING, Boolean.toString(wheelZooming), "setting");
-    JdomKt.addOptionTag(element, ATTR_SMART_ZOOMING, Boolean.toString(smartZooming), "setting");
-    JdomKt.addOptionTag(element, ATTR_PREFFERED_WIDTH, Integer.toString(prefferedWidth), "setting");
-    JdomKt.addOptionTag(element, ATTR_PREFFERED_HEIGHT, Integer.toString(prefferedHeight), "setting");
   }
 
   public boolean equals(Object obj) {
@@ -148,17 +84,11 @@ final class ZoomOptionsImpl implements ZoomOptions, JDOMExternalizable {
 
     Dimension prefferedSize = otherOptions.getPrefferedSize();
     return prefferedSize != null && prefferedHeight == prefferedSize.height &&
-           prefferedWidth == prefferedSize.width &&
-           smartZooming == otherOptions.isSmartZooming() &&
-           wheelZooming == otherOptions.isWheelZooming();
+           prefferedWidth == prefferedSize.width;
   }
 
+  @Override
   public int hashCode() {
-    int result;
-    result = (wheelZooming ? 1 : 0);
-    result = 29 * result + (smartZooming ? 1 : 0);
-    result = 29 * result + prefferedWidth;
-    result = 29 * result + prefferedHeight;
-    return result;
+    return Objects.hash(prefferedWidth, prefferedHeight, propertyChangeSupport);
   }
 }

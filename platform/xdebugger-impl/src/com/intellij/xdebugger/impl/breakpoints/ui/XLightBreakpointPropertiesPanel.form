@@ -151,7 +151,7 @@
             </constraints>
             <properties>
               <font style="1"/>
-              <text value="Breakpoint name"/>
+              <text resource-bundle="messages/XDebuggerBundle" key="xbreakpoints.breakpoint.name"/>
             </properties>
           </component>
           <component id="17177" class="com.intellij.ui.components.labels.LinkLabel" binding="myRestoreLink" custom-create="true">

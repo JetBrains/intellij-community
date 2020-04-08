@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,19 +41,19 @@ public class SdkConfigurationUtil {
   private SdkConfigurationUtil() { }
 
   public static void createSdk(@Nullable final Project project,
-                               @NotNull Sdk[] existingSdks,
+                               Sdk @NotNull [] existingSdks,
                                @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
-                               @NotNull SdkType... sdkTypes) {
+                               SdkType @NotNull ... sdkTypes) {
     createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
   }
 
   public static void createSdk(@Nullable final Project project,
-                               @NotNull Sdk[] existingSdks,
+                               Sdk @NotNull [] existingSdks,
                                @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                final boolean followSymLinks,
-                               @NotNull SdkType... sdkTypes) {
+                               SdkType @NotNull ... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
       return;
@@ -112,17 +98,17 @@ public class SdkConfigurationUtil {
   }
 
   public static void createSdk(@Nullable final Project project,
-                               @NotNull Sdk[] existingSdks,
+                               Sdk @NotNull [] existingSdks,
                                @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
-                               @NotNull SdkType... sdkTypes) {
+                               SdkType @NotNull ... sdkTypes) {
     createSdk(project, existingSdks, onSdkCreatedCallBack, true, sdkTypes);
   }
 
   @NotNull
-  private static FileChooserDescriptor createCompositeDescriptor(@NotNull SdkType... sdkTypes) {
+  private static FileChooserDescriptor createCompositeDescriptor(SdkType @NotNull ... sdkTypes) {
     return new FileChooserDescriptor(sdkTypes[0].getHomeChooserDescriptor()) {
       @Override
-      public void validateSelectedFiles(@NotNull final VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(final VirtualFile @NotNull [] files) throws Exception {
         if (files.length > 0) {
           for (SdkType type : sdkTypes) {
             if (type.isValidSdkHome(files[0].getPath())) {
@@ -145,7 +131,7 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk setupSdk(@NotNull Sdk[] allSdks,
+  public static Sdk setupSdk(Sdk @NotNull [] allSdks,
                              @NotNull VirtualFile homeDir,
                              @NotNull SdkType sdkType,
                              final boolean silent,
@@ -164,11 +150,8 @@ public class SdkConfigurationUtil {
                "customSdkSuggestedName=[" + customSdkSuggestedName + "]; " +
                "sdk=[" + sdk + "]", e);
       if (!silent) {
-        Messages.showErrorDialog("Error configuring SDK: " +
-                                 e.getMessage() +
-                                 ".\nPlease make sure that " +
-                                 FileUtil.toSystemDependentName(homeDir.getPath()) +
-                                 " is a valid home path for this SDK type.", "Error Configuring SDK");
+        Messages.showErrorDialog(ProjectBundle.message("dialog.message.error.configuring.sdk.0.please.make.sure.that.1.is.a.valid.home.path.for.this.sdk.type", e.getMessage(),
+                                                       FileUtil.toSystemDependentName(homeDir.getPath())), ProjectBundle.message("dialog.title.error.configuring.sdk"));
       }
       return null;
     }
@@ -219,7 +202,7 @@ public class SdkConfigurationUtil {
 
   public static void configureDirectoryProjectSdk(@NotNull Project project,
                                                   @Nullable Comparator<? super Sdk> preferredSdkComparator,
-                                                  @NotNull SdkType... sdkTypes) {
+                                                  SdkType @NotNull ... sdkTypes) {
     Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (existingSdk != null && ArrayUtil.contains(existingSdk.getSdkType(), sdkTypes)) {
       return;
@@ -232,7 +215,7 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, @NotNull SdkType... sdkTypes) {
+  public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, SdkType @NotNull ... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (sdk != null) {
@@ -246,16 +229,17 @@ public class SdkConfigurationUtil {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
       if (!sdks.isEmpty()) {
         if (comparator != null) {
-          Collections.sort(sdks, comparator);
+          sdks.sort(comparator);
         }
         return sdks.get(0);
       }
     }
     for (SdkType sdkType : sdkTypes) {
-      final String suggestedHomePath = sdkType.suggestHomePath();
-      if (suggestedHomePath != null && sdkType.isValidSdkHome(suggestedHomePath)) {
-        Sdk an_sdk = createAndAddSDK(suggestedHomePath, sdkType);
-        if (an_sdk != null) return an_sdk;
+      for(String suggestedHomePath : sdkType.suggestHomePaths()) {
+        if (sdkType.isValidSdkHome(suggestedHomePath)) {
+          Sdk an_sdk = createAndAddSDK(suggestedHomePath, sdkType);
+          if (an_sdk != null) return an_sdk;
+        }
       }
     }
     return null;
@@ -344,7 +328,7 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  private static Sdk findByPath(@NotNull SdkType sdkType, @NotNull Sdk[] sdks, @NotNull String sdkHome) {
+  private static Sdk findByPath(@NotNull SdkType sdkType, Sdk @NotNull [] sdks, @NotNull String sdkHome) {
     for (Sdk sdk : sdks) {
       final String path = sdk.getHomePath();
       if (sdk.getSdkType() == sdkType && path != null &&

@@ -8,6 +8,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PyDictLiteralExpression extends PySequenceExpression {
   @Override
-  @NotNull
-  PyKeyValueExpression[] getElements();
+  PyKeyValueExpression @NotNull [] getElements();
 }

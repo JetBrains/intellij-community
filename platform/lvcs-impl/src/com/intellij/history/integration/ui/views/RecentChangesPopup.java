@@ -34,7 +34,7 @@ public class RecentChangesPopup {
       .showCenteredInCurrentWindow(project);
   }
 
-  private static class RecentChangesListCellRenderer implements ListCellRenderer {
+  private static class RecentChangesListCellRenderer implements ListCellRenderer<RecentChange> {
     private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,UIUtil.DEFAULT_HGAP,2));
     private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
     private final JLabel myDateLabel = new JLabel("", JLabel.LEFT);
@@ -52,10 +52,13 @@ public class RecentChangesPopup {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList l, Object val, int i, boolean isSelected, boolean cellHasFocus) {
-      RecentChange c = (RecentChange)val;
-      myActionLabel.setText(c.getChangeName());
-      myDateLabel.setText(DateFormatUtil.formatDateTime(c.getTimestamp()));
+    public Component getListCellRendererComponent(JList<? extends RecentChange> list,
+                                                  RecentChange value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      myActionLabel.setText(value.getChangeName());
+      myDateLabel.setText(DateFormatUtil.formatDateTime(value.getTimestamp()));
 
       updateColors(isSelected);
       return myPanel;

@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 
-/**
- * @author nik
- */
 public interface WatchNode extends TreeNode, Obsolescent {
   @NotNull
   XExpression getExpression();

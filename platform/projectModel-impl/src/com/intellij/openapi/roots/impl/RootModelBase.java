@@ -14,14 +14,10 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 @ApiStatus.Internal
 public abstract class RootModelBase implements ModuleRootModel {
   @Override
-  @NotNull
-  public VirtualFile[] getContentRoots() {
+  public VirtualFile @NotNull [] getContentRoots() {
     Collection<ContentEntry> content = getContent();
     List<VirtualFile> result = new ArrayList<>(content.size());
     for (ContentEntry contentEntry : content) {
@@ -34,8 +30,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   @Override
-  @NotNull
-  public String[] getContentRootUrls() {
+  public String @NotNull [] getContentRootUrls() {
     Collection<ContentEntry> content = getContent();
     if (content.isEmpty()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     List<String> result = new ArrayList<>(content.size());
@@ -48,8 +43,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   @Override
-  @NotNull
-  public String[] getExcludeRootUrls() {
+  public String @NotNull [] getExcludeRootUrls() {
     final List<String> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       result.addAll(contentEntry.getExcludeFolderUrls());
@@ -58,8 +52,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getExcludeRoots() {
+  public VirtualFile @NotNull [] getExcludeRoots() {
     final List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       Collections.addAll(result, contentEntry.getExcludeFolderFiles());
@@ -68,14 +61,12 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   @Override
-  @NotNull
-  public String[] getSourceRootUrls() {
+  public String @NotNull [] getSourceRootUrls() {
     return getSourceRootUrls(true);
   }
 
   @Override
-  @NotNull
-  public String[] getSourceRootUrls(boolean includingTests) {
+  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
     List<String> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
@@ -89,14 +80,12 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSourceRoots() {
+  public VirtualFile @NotNull [] getSourceRoots() {
     return getSourceRoots(true);
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSourceRoots(final boolean includingTests) {
+  public VirtualFile @NotNull [] getSourceRoots(final boolean includingTests) {
     List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
@@ -132,9 +121,8 @@ public abstract class RootModelBase implements ModuleRootModel {
     return result;
   }
 
-  @NotNull
   @Override
-  public ContentEntry[] getContentEntries() {
+  public ContentEntry @NotNull [] getContentEntries() {
     final Collection<ContentEntry> content = getContent();
     return content.toArray(new ContentEntry[0]);
   }
@@ -177,22 +165,19 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   @Override
-  @NotNull
-  public String[] getDependencyModuleNames() {
+  public String @NotNull [] getDependencyModuleNames() {
     List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries()
       .process(new CollectDependentModules(), new ArrayList<>());
     return ArrayUtilRt.toStringArray(result);
   }
 
   @Override
-  @NotNull
-  public Module[] getModuleDependencies() {
+  public Module @NotNull [] getModuleDependencies() {
     return getModuleDependencies(true);
   }
 
   @Override
-  @NotNull
-  public Module[] getModuleDependencies(boolean includeTests) {
+  public Module @NotNull [] getModuleDependencies(boolean includeTests) {
     OrderEntry[] entries = getOrderEntries();
     List<Module> result = null;
 

@@ -5,7 +5,9 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.xml.impl.DomInvocationHandler;
@@ -28,21 +30,9 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
 
   static {
     Application app = ApplicationManager.getApplication();
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<DomExtenderEP>() {
-      @Override
-      public void extensionAdded(@NotNull DomExtenderEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        extensionsChanged();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull DomExtenderEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        extensionsChanged();
-      }
-
-      private void extensionsChanged() {
+    EP_NAME.addExtensionPointListener(() -> {
         Throwable trace = new Throwable();
         app.invokeLater(() -> StubIndex.getInstance().forceRebuild(trace), app.getDisposed());
-      }
     }, app);
   }
 

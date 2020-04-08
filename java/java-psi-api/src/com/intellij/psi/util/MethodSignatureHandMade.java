@@ -34,8 +34,8 @@ public class MethodSignatureHandMade extends MethodSignatureBase {
   }
 
   MethodSignatureHandMade(@NotNull String name,
-                          @NotNull PsiType[] parameterTypes,
-                          @NotNull PsiTypeParameter[] typeParameters,
+                          PsiType @NotNull [] parameterTypes,
+                          PsiTypeParameter @NotNull [] typeParameters,
                           @NotNull PsiSubstitutor substitutor,
                           boolean isConstructor) {
     super(substitutor, parameterTypes, typeParameters);

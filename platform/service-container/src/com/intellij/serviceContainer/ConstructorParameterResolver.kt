@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
@@ -27,14 +27,14 @@ private val badAppLevelClasses = setOf(
 )
 
 internal class ConstructorParameterResolver {
-  fun isResolvable(componentManager: PlatformComponentManagerImpl,
+  fun isResolvable(componentManager: ComponentManagerImpl,
                    requestorKey: Any,
                    requestorClass: Class<*>,
                    requestorConstructor: Constructor<*>,
                    expectedType: Class<*>,
                    pluginId: PluginId,
                    isExtensionSupported: Boolean): Boolean {
-    if (isLightService(expectedType) ||
+    if (ComponentManagerImpl.isLightService(expectedType) ||
         expectedType === ComponentManager::class.java ||
         findTargetAdapter(componentManager, expectedType, requestorKey, requestorClass, requestorConstructor, pluginId) != null) {
       return true
@@ -42,7 +42,7 @@ internal class ConstructorParameterResolver {
     return isExtensionSupported && componentManager.extensionArea.findExtensionByClass(expectedType) != null
   }
 
-  fun resolveInstance(componentManager: PlatformComponentManagerImpl,
+  fun resolveInstance(componentManager: ComponentManagerImpl,
                       requestorKey: Any,
                       requestorClass: Class<*>,
                       requestorConstructor: Constructor<*>,
@@ -52,7 +52,7 @@ internal class ConstructorParameterResolver {
       return componentManager
     }
 
-    if (isLightService(expectedType)) {
+    if (ComponentManagerImpl.isLightService(expectedType)) {
       return componentManager.getLightService(expectedType, true)
     }
 
@@ -68,7 +68,7 @@ internal class ConstructorParameterResolver {
     }
   }
 
-  private fun handleUnsatisfiedDependency(componentManager: PlatformComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>, pluginId: PluginId): Any? {
+  private fun handleUnsatisfiedDependency(componentManager: ComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>, pluginId: PluginId): Any? {
     val extension = componentManager.extensionArea.findExtensionByClass(expectedType) ?: return null
     val message = "Do not use constructor injection to get extension instance (requestorClass=${requestorClass.name}, extensionClass=${expectedType.name})"
     val app = componentManager.getApplication()
@@ -82,7 +82,7 @@ internal class ConstructorParameterResolver {
     return extension
   }
 
-  private fun findTargetAdapter(componentManager: PlatformComponentManagerImpl,
+  private fun findTargetAdapter(componentManager: ComponentManagerImpl,
                                 expectedType: Class<*>,
                                 requestorKey: Any,
                                 requestorClass: Class<*>,

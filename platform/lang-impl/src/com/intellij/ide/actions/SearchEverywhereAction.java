@@ -18,14 +18,13 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
@@ -210,18 +209,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
 
+        String classesTabName = String.join("/",GotoClassPresentationUpdater.getActionTitlePluralized());
         if (Registry.is("ide.helptooltip.enabled")) {
           HelpTooltip.dispose(this);
 
           new HelpTooltip()
             .setTitle(myPresentation.getText())
             .setShortcut(shortcutText)
-            .setDescription("Searches for:<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings")
+            .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
             .installOn(this);
         }
         else {
-          setToolTipText("<html><body>Search Everywhere<br/>Press <b>" + shortcutText +
-                         "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
+          setToolTipText(IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName));
         }
       }
     };
@@ -562,6 +561,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    if (LightEdit.owns(e.getProject())) return;
+
     if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
       if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_SHIFT) {
         return;
@@ -711,7 +712,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                             UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
 
       StringBuilder cbText = new StringBuilder("<html>");
-      cbText.append(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
+      cbText.append(IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items"));
       cbText.append(" ");
       if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
       cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
@@ -1331,7 +1332,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
-          myList.getEmptyText().setText("Searching...");
+          myList.getEmptyText().setText(IdeBundle.message("label.choosebyname.searching"));
 
           if (myList.getModel() instanceof SearchListModel) {
             myAlarm.cancelAllRequests();
@@ -1390,7 +1391,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       finally {
         if (!isCanceled()) {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT));
+          SwingUtilities.invokeLater(() -> myList.getEmptyText().setText(StatusText.getDefaultEmptyText()));
           updatePopup();
         }
         if (!myDone.isProcessed()) {
@@ -2363,7 +2364,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     TitleIndex() {
       String gotoClass = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoClass"));
-      String classesStr = StringUtil.capitalize(StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), StringUtil::pluralize, "/"));
+      String classesStr = StringUtil.capitalize(StringUtil.join(GotoClassPresentationUpdater.getElementKindsPluralized(),"/"));
       gotoClassTitle = StringUtil.isEmpty(gotoClass) ? classesStr : classesStr + " (" + gotoClass + ")";
       String gotoFile = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoFile"));
       gotoFileTitle = StringUtil.isEmpty(gotoFile) ? "Files" : "Files (" + gotoFile + ")";
@@ -2490,7 +2491,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   static class More extends JPanel {
     static final More instance = new More();
-    final JLabel label = new JLabel("    ... more   ");
+    final JLabel label = new JLabel(IdeBundle.message("search.everywhere.points.spaces.more"));
 
     private More() {
       super(new BorderLayout());

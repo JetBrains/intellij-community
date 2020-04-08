@@ -16,7 +16,7 @@
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,7 @@ import java.util.Objects;
 
 public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
   RefImplicitConstructorImpl(@NotNull RefClass ownerClass) {
-    super(InspectionsBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName()), ownerClass);
+    super(JavaAnalysisBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName()), ownerClass);
   }
 
   @Override
@@ -45,7 +45,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   @NotNull
   @Override
   public String getName() {
-    return InspectionsBundle.message("inspection.reference.implicit.constructor.name", getOwnerClass().getName());
+    return JavaAnalysisBundle.message("inspection.reference.implicit.constructor.name", getOwnerClass().getName());
   }
 
   @Override

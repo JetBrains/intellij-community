@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 
@@ -10,7 +8,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
@@ -312,7 +309,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
       //todo honor package prefixes
       File correctRoot = new File(srcTargetOutput);
-      File correctOutput = new File(correctRoot, ObjectUtils.assertNotNull(FileUtil.getRelativePath(new File(compilerOutput), output)));
+      File correctOutput = new File(correctRoot, Objects.requireNonNull(FileUtil.getRelativePath(new File(compilerOutput), output)));
 
       FileUtil.rename(output, correctOutput);
       return correctOutput.getPath();
@@ -428,7 +425,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   private Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<T, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<>();
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(
       context.getProjectDescriptor().getProject());
     for (T target : getTargets(chunk)) {
       String moduleOutputPath = finalOutputs.get(target);

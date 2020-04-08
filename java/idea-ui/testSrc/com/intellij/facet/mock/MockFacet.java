@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
-*/
 public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRootsProvider {
   private boolean myInitialized;
   private boolean myDisposed;
@@ -60,7 +57,7 @@ public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRoo
   }
 
   private void fireFacetChangedEvent() {
-    getModule().getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(this);
+    FacetManager.getInstance(getModule()).facetConfigurationChanged(this);
   }
 
   public void removeRoot(VirtualFile root) {

@@ -15,16 +15,16 @@ public abstract class PyStatementSurrounder implements Surrounder {
   private static final Logger LOG = Logger.getInstance(PyStatementSurrounder.class);
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     return true;
   }
 
   @Nullable
-  protected abstract TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+  protected abstract TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException;
 
   @Override
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException {
     return surroundStatement(project, editor, elements);
   }

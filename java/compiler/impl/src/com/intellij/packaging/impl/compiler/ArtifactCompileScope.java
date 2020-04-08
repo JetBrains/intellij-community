@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ArtifactCompileScope {
   private static final Key<Boolean> FORCE_ARTIFACT_BUILD = Key.create("force_artifact_build");
   private static final Key<Artifact[]> ARTIFACTS_KEY = Key.create("artifacts");
@@ -105,8 +102,7 @@ public class ArtifactCompileScope {
     return result;
   }
 
-  @Nullable
-  public static Artifact[] getArtifacts(CompileScope compileScope) {
+  public static Artifact @Nullable [] getArtifacts(CompileScope compileScope) {
     return compileScope.getUserData(ARTIFACTS_KEY);
   }
 

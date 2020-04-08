@@ -220,9 +220,8 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
 
   private static abstract class TestFoldingBuilder implements FoldingBuilder {
-    @NotNull
     @Override
-    public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+    public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
       int pos = document.getText().indexOf("value");
       if (pos >= 0) {
         return new FoldingDescriptor[] {new FoldingDescriptor(node, new TextRange(pos, pos + 5), null,

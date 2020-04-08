@@ -35,8 +35,7 @@ public interface MergeSession {
    *
    * @return the list of columns, or an empty list if no additional columns should be displayed.
    */
-  @NotNull
-  ColumnInfo[] getMergeInfoColumns();
+  ColumnInfo @NotNull [] getMergeInfoColumns();
 
   /**
    * Returns true if the given virtual file can be merged by its content.

@@ -23,7 +23,7 @@ public abstract class StateSplitterEx implements StateSplitter {
   }
 
   @Override
-  public final void mergeStatesInto(@NotNull Element target, @NotNull Element[] elements) {
+  public final void mergeStatesInto(@NotNull Element target, Element @NotNull [] elements) {
     throw new IllegalStateException();
   }
 

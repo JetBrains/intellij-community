@@ -10,6 +10,7 @@ import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.DetectRetinaKit;
+import com.intellij.util.ui.JBScalableIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ public final class JBUIScale {
   public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
   public static final String USER_SCALE_FACTOR_PROPERTY = "JBUIScale.userScaleFactor";
 
+  @SuppressWarnings("InstantiationOfUtilityClass")
   private static final PropertyChangeSupport PROPERTY_CHANGE_SUPPORT = new PropertyChangeSupport(new JBUIScale());
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
 
@@ -41,6 +43,8 @@ public final class JBUIScale {
   public static void removeUserScaleChangeListener(@NotNull PropertyChangeListener listener) {
     PROPERTY_CHANGE_SUPPORT.removePropertyChangeListener(listener);
   }
+
+  private JBUIScale() {}
 
   private static final AtomicNotNullLazyValue<Pair<String, Integer>> systemFontData = AtomicNotNullLazyValue.createValue(() -> {
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
@@ -84,7 +88,6 @@ public final class JBUIScale {
       }
     }
     else if (SystemInfo.isWindows) {
-      //noinspection HardCodedStringLiteral
       @SuppressWarnings("SpellCheckingInspection")
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
@@ -125,7 +128,7 @@ public final class JBUIScale {
   @NotNull
   // cannot be static because logging maybe not configured yet
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.util.ui.JBUIScale");
+    return Logger.getInstance(JBUIScale.class);
   }
 
   /**
@@ -292,6 +295,17 @@ public final class JBUIScale {
    */
   public static int scale(int i) {
     return Math.round(userScaleFactor.get() * i);
+  }
+
+  /**
+   * Scales the passed {@code icon} according to the user scale factor.
+   *
+   * @see ScaleType#USR_SCALE
+   */
+  @NotNull
+  public static <T extends JBScalableIcon> T scaleIcon(@NotNull T icon) {
+    //noinspection unchecked
+    return (T)icon.withIconPreScaled(false);
   }
 
   public static int scaleFontSize(float fontSize) {

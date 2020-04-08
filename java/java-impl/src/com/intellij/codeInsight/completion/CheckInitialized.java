@@ -104,6 +104,7 @@ class CheckInitialized implements ElementFilter {
       return true;
     });
 
+    Set<PsiField> assigned = new HashSet<>();
     method.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
@@ -112,9 +113,10 @@ class CheckInitialized implements ElementFilter {
           PsiElement target = ((PsiReferenceExpression)lExpression).resolve();
           if (target instanceof PsiField) {
             if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
+              assigned.add((PsiField)target);
               fields.remove(target);
             }
-            else if (ref == PsiUtil.deparenthesizeExpression(expression.getRExpression())) {
+            else if (ref == PsiUtil.deparenthesizeExpression(expression.getRExpression()) && !assigned.contains(target)) {
               fields.add((PsiField)target);
             }
           }

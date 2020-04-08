@@ -34,8 +34,7 @@ import java.util.Set;
 public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity,
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,

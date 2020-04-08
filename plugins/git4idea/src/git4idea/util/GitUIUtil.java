@@ -12,6 +12,7 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,10 @@ import java.util.List;
 public class GitUIUtil {
   /**
    * Text containing in the label when there is no current branch
+   * @deprecated Use {@link #getNoCurrentBranch()} instead
    */
-  public static final String NO_CURRENT_BRANCH = GitBundle.getString("common.no.active.branch");
+  @Deprecated
+  public static final String NO_CURRENT_BRANCH = "<no active branch>";
 
   /**
    * A private constructor for utility class
@@ -41,8 +44,8 @@ public class GitUIUtil {
   }
 
   public static void notifyMessages(@NotNull Project project,
-                                    @NotNull String title,
-                                    @Nullable String description,
+                                    @Nls @NotNull String title,
+                                    @Nls @Nullable String description,
                                     boolean important,
                                     @Nullable Collection<String> messages) {
     String desc = (description != null ? description.replace("\n", "<br/>") : "");
@@ -59,8 +62,8 @@ public class GitUIUtil {
   }
 
   public static void notifyMessage(Project project,
-                                   @NotNull String title,
-                                   @Nullable String description,
+                                   @Nls @NotNull String title,
+                                   @Nls @Nullable String description,
                                    boolean important,
                                    @Nullable Collection<? extends Exception> errors) {
     Collection<String> errorMessages;
@@ -83,7 +86,11 @@ public class GitUIUtil {
     notifyMessages(project, title, description, important, errorMessages);
   }
 
-  public static void notifyError(Project project, String title, String description, boolean important, @Nullable Exception error) {
+  public static void notifyError(Project project,
+                                 @Nls @NotNull String title,
+                                 @Nls @Nullable String description,
+                                 boolean important,
+                                 @Nullable Exception error) {
     notifyMessage(project, title, description, important, error == null ? null : Collections.singleton(error));
   }
 
@@ -105,7 +112,7 @@ public class GitUIUtil {
     return content.toString();
   }
 
-  public static void notifyImportantError(Project project, String title, String description) {
+  public static void notifyImportantError(Project project, @Nls @NotNull String title, @Nls @Nullable String description) {
     notifyMessage(project, title, description, true, null);
   }
 
@@ -144,11 +151,11 @@ public class GitUIUtil {
         public void actionPerformed(final ActionEvent e) {
           VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
           assert root != null : "The root must not be null";
-          GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+          GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root);
           assert repo != null : "The repository must not be null";
           GitBranch current = repo.getCurrentBranch();
           if (current == null) {
-            currentBranchLabel.setText(NO_CURRENT_BRANCH);
+            currentBranchLabel.setText(getNoCurrentBranch());
           }
           else {
             currentBranchLabel.setText(current.getName());
@@ -330,5 +337,9 @@ public class GitUIUtil {
 
   private static String surround(String s, String tag) {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
+  }
+
+  public static String getNoCurrentBranch() {
+    return GitBundle.getString("common.no.active.branch");
   }
 }

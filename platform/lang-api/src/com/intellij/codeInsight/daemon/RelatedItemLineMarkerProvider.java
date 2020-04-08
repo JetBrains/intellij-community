@@ -11,8 +11,6 @@ import java.util.List;
 /**
  * Override this class and register the implementation as {@code codeInsight.lineMarkerProvider} extension to provide both line marker and
  * 'Go to related symbol' targets.
- *
- * @author nik
  */
 public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
@@ -21,12 +19,12 @@ public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDe
   }
 
   @Override
-  public final void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  public final void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     collectNavigationMarkers(elements, result, false);
   }
 
-  public void collectNavigationMarkers(@NotNull List<PsiElement> elements,
-                                       @NotNull Collection<? super RelatedItemLineMarkerInfo> result,
+  public void collectNavigationMarkers(@NotNull List<? extends PsiElement> elements,
+                                       @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result,
                                        boolean forNavigation) {
     for (int i = 0, size = elements.size(); i < size; i++) {
       PsiElement element = elements.get(i);
@@ -40,7 +38,7 @@ public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDe
     }
   }
 
-  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
   }
 
   @Override

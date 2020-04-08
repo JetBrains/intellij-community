@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -45,7 +45,7 @@ public final class MasterDetailsStateService implements PersistentStateComponent
   public States getState() {
     States states = new States();
     states.myStates.addAll(myStates.values());
-    Collections.sort(states.getStates(), Comparator.comparing(o -> o.myKey));
+    states.getStates().sort(Comparator.comparing(o -> o.myKey));
     return states;
   }
 

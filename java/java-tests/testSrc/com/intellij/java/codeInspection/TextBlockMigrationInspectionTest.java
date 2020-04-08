@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @see TextBlockMigrationInspection
  */
 public class TextBlockMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     TextBlockMigrationInspection inspection = new TextBlockMigrationInspection();
     inspection.mySuggestLiteralReplacement = true;
     return new LocalInspectionTool[]{inspection};
@@ -26,6 +25,6 @@ public class TextBlockMigrationInspectionTest extends LightQuickFixParameterized
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_13_PREVIEW;
+    return LanguageLevel.JDK_14_PREVIEW;
   }
 }

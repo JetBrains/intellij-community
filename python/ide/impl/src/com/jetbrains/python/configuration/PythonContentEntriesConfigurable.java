@@ -22,6 +22,7 @@ import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.PlatformContentEntriesConfigurable;
 import com.intellij.util.PlatformUtils;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -30,7 +31,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
  */
 public class PythonContentEntriesConfigurable extends ModuleAwareProjectConfigurable implements NonDefaultProjectConfigurable {
   public PythonContentEntriesConfigurable(final Project project) {
-    super(project, "Project Structure", "reference.settingsdialog.project.structure");
+    super(project, PyBundle.message("configurable.PythonContentEntriesConfigurable.display.name"), "reference.settingsdialog.project.structure");
   }
 
   @NotNull

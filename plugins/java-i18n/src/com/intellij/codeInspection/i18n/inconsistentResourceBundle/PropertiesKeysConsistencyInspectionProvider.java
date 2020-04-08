@@ -17,6 +17,7 @@ package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.util.containers.BidirectionalMap;
@@ -40,7 +41,7 @@ public class PropertiesKeysConsistencyInspectionProvider implements Inconsistent
   @NotNull
   @Override
   public String getPresentableName() {
-    return InspectionsBundle.message("inconsistent.bundle.report.inconsistent.properties");
+    return JavaI18nBundle.message("inconsistent.bundle.report.inconsistent.properties");
   }
 
   @Override
@@ -68,8 +69,8 @@ public class PropertiesKeysConsistencyInspectionProvider implements Inconsistent
       keys.removeAll(parentKeys);
       for (String inconsistentKey : keys) {
         IProperty property = file.findPropertyByKey(inconsistentKey);
-        assert property != null;
-        String message = InspectionsBundle.message("inconsistent.bundle.property.error", inconsistentKey, parent.getName());
+        if (property == null) continue;
+        String message = JavaI18nBundle.message("inconsistent.bundle.property.error", inconsistentKey, parent.getName());
         ProblemDescriptor descriptor = manager.createProblemDescriptor(property.getPsiElement(), message, false, LocalQuickFix.EMPTY_ARRAY,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         processor.addProblemElement(refManager.getReference(file.getContainingFile()), descriptor);

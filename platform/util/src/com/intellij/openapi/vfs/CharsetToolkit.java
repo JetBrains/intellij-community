@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
@@ -45,7 +45,7 @@ import java.util.Map;
  *
  * @author Guillaume LAFORGE
  */
-public class CharsetToolkit {
+public final class CharsetToolkit {
   public static final String UTF8 = "UTF-8";
 
   public static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
@@ -89,7 +89,7 @@ public class CharsetToolkit {
    *
    * @param buffer the byte buffer of which we want to know the encoding.
    */
-  public CharsetToolkit(@NotNull byte[] buffer) {
+  public CharsetToolkit(byte @NotNull [] buffer) {
     this.buffer = buffer;
     defaultCharset = getDefaultSystemCharset();
   }
@@ -100,13 +100,12 @@ public class CharsetToolkit {
    * @param buffer the byte buffer of which we want to know the encoding.
    * @param defaultCharset the default Charset to use in case an 8-bit charset is recognized.
    */
-  public CharsetToolkit(@NotNull byte[] buffer, @NotNull Charset defaultCharset) {
+  public CharsetToolkit(byte @NotNull [] buffer, @NotNull Charset defaultCharset) {
     this.buffer = buffer;
     this.defaultCharset = defaultCharset;
   }
 
-  @NotNull
-  public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
+  public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
     if (!stream.markSupported()) {
       stream = new BufferedInputStream(stream);
     }
@@ -210,8 +209,7 @@ public class CharsetToolkit {
   /**
    * Retrieves the default Charset
    */
-  @NotNull
-  public Charset getDefaultCharset() {
+  public @NotNull Charset getDefaultCharset() {
     return defaultCharset;
   }
 
@@ -262,22 +260,19 @@ public class CharsetToolkit {
     return null;
   }
 
-  @NotNull
-  public static String bytesToString(@NotNull byte[] bytes, @NotNull final Charset defaultCharset) {
+  public static @NotNull String bytesToString(byte @NotNull [] bytes, final @NotNull Charset defaultCharset) {
     Charset charset = new CharsetToolkit(bytes, defaultCharset).guessEncoding(bytes.length);
     if (charset == null) charset = defaultCharset; // binary content. This is silly but method contract says to return something anyway
     return decodeString(bytes, charset);
   }
 
-  @NotNull
-  public static String decodeString(@NotNull byte[] bytes, @NotNull final Charset charset) {
+  public static @NotNull String decodeString(byte @NotNull [] bytes, final @NotNull Charset charset) {
     int bomLength = getBOMLength(bytes, charset);
     final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
     return charBuffer.toString();
   }
 
-  @Nullable
-  public static String tryDecodeString(@NotNull byte[] bytes, @NotNull final Charset charset) {
+  public static @Nullable String tryDecodeString(byte @NotNull [] bytes, final @NotNull Charset charset) {
     try {
       int bomLength = getBOMLength(bytes, charset);
       ByteBuffer buffer = ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength);
@@ -298,13 +293,11 @@ public class CharsetToolkit {
     BINARY         // binary: char with code < BINARY_THRESHOLD(9) was found
   }
 
-  @NotNull
-  public GuessedEncoding guessFromContent(int guess_length) {
+  public @NotNull GuessedEncoding guessFromContent(int guess_length) {
     return guessFromContent(0, guess_length);
   }
 
-  @NotNull
-  public GuessedEncoding guessFromContent(int startOffset, int endOffset) {
+  public @NotNull GuessedEncoding guessFromContent(int startOffset, int endOffset) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
     boolean highOrderBit = false;
@@ -412,13 +405,11 @@ public class CharsetToolkit {
     return GuessedEncoding.VALID_UTF8;
   }
 
-  @Nullable
-  public Charset guessFromBOM() {
+  public @Nullable Charset guessFromBOM() {
     return guessFromBOM(buffer);
   }
 
-  @Nullable
-  public static Charset guessFromBOM(@NotNull byte[] buffer) {
+  public static @Nullable Charset guessFromBOM(byte @NotNull [] buffer) {
     if (hasUTF8Bom(buffer)) return StandardCharsets.UTF_8;
     if (hasUTF32BEBom(buffer)) return UTF_32BE_CHARSET;
     if (hasUTF32LEBom(buffer)) return UTF_32LE_CHARSET;
@@ -487,16 +478,14 @@ public class CharsetToolkit {
   /**
    * Retrieve the default charset of the system.
    */
-  @NotNull
-  public static Charset getDefaultSystemCharset() {
+  public static @NotNull Charset getDefaultSystemCharset() {
     return Charset.defaultCharset();
   }
 
   /**
    * Retrieve the platform charset of the system (determined by "sun.jnu.encoding" property)
    */
-  @NotNull
-  public static Charset getPlatformCharset() {
+  public static @NotNull Charset getPlatformCharset() {
     String name = System.getProperty("sun.jnu.encoding");
     return ObjectUtils.notNull(forName(name), getDefaultSystemCharset());
   }
@@ -504,45 +493,43 @@ public class CharsetToolkit {
   /**
    * Has a Byte Order Marker for UTF-8 (Used by Microsoft's Notepad and other editors).
    */
-  public static boolean hasUTF8Bom(@NotNull byte[] bom) {
+  public static boolean hasUTF8Bom(byte @NotNull [] bom) {
     return ArrayUtil.startsWith(bom, UTF8_BOM);
   }
 
   /**
    * Has a Byte Order Marker for UTF-16 Low Endian (ucs-2le, ucs-4le, and ucs-16le).
    */
-  public static boolean hasUTF16LEBom(@NotNull byte[] bom) {
+  public static boolean hasUTF16LEBom(byte @NotNull [] bom) {
     return ArrayUtil.startsWith(bom, UTF16LE_BOM);
   }
 
   /**
    * Has a Byte Order Marker for UTF-16 Big Endian (utf-16 and ucs-2).
    */
-  public static boolean hasUTF16BEBom(@NotNull byte[] bom) {
+  public static boolean hasUTF16BEBom(byte @NotNull [] bom) {
     return ArrayUtil.startsWith(bom, UTF16BE_BOM);
   }
-  public static boolean hasUTF32BEBom(@NotNull byte[] bom) {
+  public static boolean hasUTF32BEBom(byte @NotNull [] bom) {
     return ArrayUtil.startsWith(bom, UTF32BE_BOM);
   }
-  public static boolean hasUTF32LEBom(@NotNull byte[] bom) {
+  public static boolean hasUTF32LEBom(byte @NotNull [] bom) {
     return ArrayUtil.startsWith(bom, UTF32LE_BOM);
   }
 
   /**
    * Retrieves all the available {@code Charset}s on the platform, among which the default {@code charset}.
    */
-  @NotNull
-  public static Charset[] getAvailableCharsets() {
+  public static Charset @NotNull [] getAvailableCharsets() {
     Collection<Charset> collection = Charset.availableCharsets().values();
     return collection.toArray(new Charset[0]);
   }
 
-  @NotNull
-  public static byte[] getUtf8Bytes(@NotNull String s) {
+  public static byte @NotNull [] getUtf8Bytes(@NotNull String s) {
     return s.getBytes(StandardCharsets.UTF_8);
   }
 
-  public static int getBOMLength(@NotNull byte[] content, @NotNull Charset charset) {
+  public static int getBOMLength(byte @NotNull [] content, @NotNull Charset charset) {
     if (charset.name().contains(UTF8) && hasUTF8Bom(content)) {
       return UTF8_BOM.length;
     }
@@ -566,8 +553,7 @@ public class CharsetToolkit {
    *         Currently, these are UTF-16xx and UTF-32xx families.
    *         UTF-8, on the other hand, might have BOM {@link #UTF8_BOM} which is optional, thus it won't be returned in this method.
    */
-  @Nullable
-  public static byte[] getMandatoryBom(@NotNull Charset charset) {
+  public static byte @Nullable [] getMandatoryBom(@NotNull Charset charset) {
     return CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
@@ -575,20 +561,18 @@ public class CharsetToolkit {
    * @return BOM which can be associated with this charset, or null otherwise.
    *         Currently, these are UTF-16xx, UTF-32xx and UTF-8.
    */
-  @Nullable
-  public static byte[] getPossibleBom(@NotNull Charset charset) {
+  public static byte @Nullable [] getPossibleBom(@NotNull Charset charset) {
     if (charset.equals(StandardCharsets.UTF_8)) return UTF8_BOM;
     return CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM
-  public static boolean canHaveBom(@NotNull Charset charset, @NotNull byte[] bom) {
+  public static boolean canHaveBom(@NotNull Charset charset, byte @NotNull [] bom) {
     return charset.equals(StandardCharsets.UTF_8) && Arrays.equals(bom, UTF8_BOM)
            || Arrays.equals(getMandatoryBom(charset), bom);
   }
 
-  @Nullable
-  public static Charset forName(@Nullable String name) {
+  public static @Nullable Charset forName(@Nullable String name) {
     Charset charset = null;
     if (name != null) {
       try {

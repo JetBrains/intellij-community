@@ -155,16 +155,18 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 
-  @NotNull
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[]{BRANCH_COLUMN, ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 
   @Override
   @NotNull
   public VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
-    AnAction copyHashAction = new DumbAwareAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
+    AnAction copyHashAction = new DumbAwareAction(
+      HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.text.copy.hash"),
+      HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.description.copy.hash.to.clipboard"),
+      PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
@@ -255,7 +257,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
     @Override
     public String getTitle() {
-      return HgVcsMessages.message("hg4idea.changelist.column.branch");
+      return HgBundle.message("hg4idea.changelist.column.branch");
     }
 
     @Override

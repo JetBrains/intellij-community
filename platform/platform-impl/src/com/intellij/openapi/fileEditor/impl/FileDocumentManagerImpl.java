@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -75,6 +75,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
 
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
+  public static final Key<Object> NOT_RELOADABLE_DOCUMENT_KEY = new Key<>("NOT_RELOADABLE_DOCUMENT_KEY");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
@@ -276,7 +277,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!myUnsavedDocuments.isEmpty()) {
       myUnsavedDocuments.clear();
-      fireUnsavedDocumentsDropped();
+      myMultiCaster.unsavedDocumentsDropped();
     }
   }
 
@@ -470,7 +471,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private void removeFromUnsaved(@NotNull Document document) {
     myUnsavedDocuments.remove(document);
-    fireUnsavedDocumentsDropped();
+    myMultiCaster.unsavedDocumentDropped(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
@@ -492,7 +493,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   @NotNull
   public static String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
-    String lineSeparator = LoadTextUtil.getDetectedLineSeparator(file);
+    String lineSeparator = file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
       assert lineSeparator != null : document;
@@ -503,7 +504,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   @Override
   @NotNull
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
-    String lineSeparator = file == null ? null : LoadTextUtil.getDetectedLineSeparator(file);
+    String lineSeparator = file == null ? null : file.getDetectedLineSeparator();
     if (lineSeparator == null) {
       lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
     }
@@ -526,7 +527,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       if (writableStatus.hasReadonlyFiles()) {
         return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
       }
-      assert file.isWritable();
+      assert file.isWritable() : file;
     }
     if (document.isWritable()) {
       return WriteAccessStatus.WRITABLE;
@@ -536,7 +537,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   @Override
-  public void reloadFiles(@NotNull final VirtualFile... files) {
+  public void reloadFiles(final VirtualFile @NotNull ... files) {
     for (VirtualFile file : files) {
       if (file.exists()) {
         final Document doc = getCachedDocument(file);
@@ -548,8 +549,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   @Override
-  @NotNull
-  public Document[] getUnsavedDocuments() {
+  public Document @NotNull [] getUnsavedDocuments() {
     if (myUnsavedDocuments.isEmpty()) {
       return Document.EMPTY_ARRAY;
     }
@@ -748,7 +748,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
     PsiFile cachedPsiFile = project == null ? null : PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     return !(FileUtilRt.isTooLarge(file.getLength()) && file.getFileType().isBinary()) &&
-           (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl || isBinaryWithDecompiler(file));
+           (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl || isBinaryWithDecompiler(file)) &&
+           document.getUserData(NOT_RELOADABLE_DOCUMENT_KEY) == null;
   }
 
   @TestOnly
@@ -772,10 +773,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       return true;
     }
     return false;
-  }
-
-  private void fireUnsavedDocumentsDropped() {
-    myMultiCaster.unsavedDocumentsDropped();
   }
 
   private boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
@@ -808,13 +805,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       IOException ioException = ContainerUtil.getFirstItem(failures.values());
-      if (ioException != null) {
-        throw new RuntimeException(ioException);
-      }
+      if (ioException != null) throw new RuntimeException(ioException);
       return;
     }
-    for (IOException exception : failures.values()) {
-      LOG.warn(exception);
+
+    for (Map.Entry<Document, IOException> entry : failures.entrySet()) {
+      LOG.warn("file: " + getFile(entry.getKey()), entry.getValue());
     }
 
     final String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
@@ -863,7 +859,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
 
-  //temp setter for Rider 2017.1
+  /** @deprecated another dirty Rider hack; don't use */
+  @Deprecated
+  @SuppressWarnings("ALL")
   public static boolean ourConflictsSolverEnabled = true;
 
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

@@ -5,12 +5,17 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.io.hostName
 import com.intellij.util.io.isLocalHost
 import com.intellij.util.io.isLocalOrigin
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpMethod
-import io.netty.handler.codec.http.HttpRequest
-import io.netty.handler.codec.http.QueryStringDecoder
+import io.netty.handler.codec.http.*
+import io.netty.handler.stream.ChunkedStream
+import org.jetbrains.io.FileResponses
+import org.jetbrains.io.addCommonHeaders
+import org.jetbrains.io.addKeepAliveIfNeed
+import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.util.*
 
 abstract class HttpRequestHandler {
   companion object {
@@ -52,4 +57,33 @@ abstract class HttpRequestHandler {
    */
   @Throws(IOException::class)
   abstract fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean
+
+  protected fun sendData(content: ByteArray, name: String, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders): Boolean {
+
+    val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
+    response.headers().set(HttpHeaderNames.CONTENT_TYPE, FileResponses.getContentType(name))
+    response.addCommonHeaders()
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
+    response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
+    response.headers().add(extraHeaders)
+
+    val keepAlive = response.addKeepAliveIfNeed(request)
+    if (request.method() != HttpMethod.HEAD) {
+      HttpUtil.setContentLength(response, content.size.toLong())
+    }
+
+    channel.write(response)
+
+    if (request.method() != HttpMethod.HEAD) {
+      val stream = ByteArrayInputStream(content)
+      channel.write(ChunkedStream(stream))
+      stream.close()
+    }
+
+    val future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
+    if (!keepAlive) {
+      future.addListener(ChannelFutureListener.CLOSE)
+    }
+    return true
+  }
 }

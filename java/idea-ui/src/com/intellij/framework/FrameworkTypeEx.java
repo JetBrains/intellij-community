@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyDumbAware {
   public static final ExtensionPointName<FrameworkTypeEx> EP_NAME = ExtensionPointName.create("com.intellij.framework.type");
 

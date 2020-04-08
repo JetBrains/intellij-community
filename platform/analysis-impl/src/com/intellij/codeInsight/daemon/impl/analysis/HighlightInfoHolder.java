@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -32,15 +31,13 @@ import java.util.Collection;
 import java.util.List;
 
 public class HighlightInfoHolder {
-  private static final Logger LOG = Logger.getInstance(HighlightInfoHolder.class);
-
   private final PsiFile myContextFile;
   private final HighlightInfoFilter[] myFilters;
   private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
   private final List<HighlightInfo> myInfos = new ArrayList<>(5);
 
-  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, HighlightInfoFilter @NotNull ... filters) {
     myContextFile = contextFile;
     myAnnotationSession = new AnnotationSession(contextFile);
     myFilters = filters;
@@ -72,7 +69,6 @@ public class HighlightInfoHolder {
   }
 
   public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
-    LOG.assertTrue(highlightInfos != this);
     boolean added = false;
     for (final HighlightInfo highlightInfo : highlightInfos) {
       added |= add(highlightInfo);

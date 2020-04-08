@@ -70,10 +70,11 @@ public class ApplyPatchMergeTool implements MergeTool {
             int unresolved = getUnresolvedCount();
             if (unresolved != 0 &&
                 Messages.showConfirmationDialog(getComponent().getRootPane(),
-                                                DiffBundle.message("apply.patch.partially.resolved.changes.confirmation.message", unresolved),
+                                                DiffBundle
+                                                  .message("apply.patch.partially.resolved.changes.confirmation.message", unresolved),
                                                 DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                                "Save Changes and Finish",
-                                                "Continue Resolve") != Messages.YES) {
+                                                DiffBundle.message("merge.save.and.finish.button"),
+                                                DiffBundle.message("merge.continue.button")) != Messages.YES) {
               return;
             }
           }

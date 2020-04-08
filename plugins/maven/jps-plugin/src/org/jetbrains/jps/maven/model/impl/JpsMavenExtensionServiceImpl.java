@@ -38,9 +38,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
   private static final Logger LOG = Logger.getInstance(JpsMavenExtensionServiceImpl.class);
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("maven production on test");

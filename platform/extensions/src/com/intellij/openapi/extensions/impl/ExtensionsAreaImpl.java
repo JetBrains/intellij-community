@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -181,7 +181,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       return;
     }
 
-    PluginId id1 = getExtensionPoint(pointName).getDescriptor().getPluginId();
+    PluginId id1 = getExtensionPoint(pointName).getPluginDescriptor().getPluginId();
     PluginId id2 = pluginDescriptor.getPluginId();
     String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
@@ -192,7 +192,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private void registerExtensionPoint(@NotNull ExtensionPointImpl<?> point) {
     String name = point.getName();
-    checkThatPointNotDuplicated(name, point.getDescriptor());
+    checkThatPointNotDuplicated(name, point.getPluginDescriptor());
     myExtensionPoints.put(name, point);
     if (DEBUG_REGISTRATION) {
       myEPTraces.put(name, new Throwable("Original registration for " + name));
@@ -214,8 +214,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       ExtensionPointImpl<?> old = map.put(point.getName(), point);
       if (old != null) {
         map.put(point.getName(), old);
-        throw myComponentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getDescriptor() +
-                                             ", second in " + point.getDescriptor(), point.getDescriptor().getPluginId());
+        throw myComponentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getPluginDescriptor() +
+                                             ", second in " + point.getPluginDescriptor(), point.getPluginDescriptor().getPluginId());
       }
     }
   }
@@ -236,13 +236,13 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
                                     @NotNull List<? extends Element> extensions,
                                     @NotNull IdeaPluginDescriptor pluginDescriptor,
                                     @NotNull ComponentManager componentManager,
-                                    boolean notifyListeners)  {
+                                    @Nullable List<Runnable> listenerCallbacks)  {
     ExtensionPointImpl<?> point = myExtensionPoints.get(pointName);
     if (point == null) {
       return false;
     }
 
-    point.registerExtensions(extensions, pluginDescriptor, componentManager, notifyListeners);
+    point.registerExtensions(extensions, pluginDescriptor, componentManager, listenerCallbacks);
     return true;
   }
 
@@ -260,9 +260,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return getExtensionPoint(extensionPointName.getName());
   }
 
-  @NotNull
   @Override
-  public ExtensionPointImpl<?>[] getExtensionPoints() {
+  public ExtensionPointImpl<?> @NotNull [] getExtensionPoints() {
     return myExtensionPoints.values().toArray(new ExtensionPointImpl[0]);
   }
 

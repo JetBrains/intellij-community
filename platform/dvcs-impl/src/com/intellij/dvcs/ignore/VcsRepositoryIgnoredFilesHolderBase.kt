@@ -6,7 +6,6 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListListener
@@ -14,14 +13,19 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.ComparableObject
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsFileUtilKt.isUnder
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -163,28 +167,26 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private fun queueIgnoreUpdate(isFullRescan: Boolean, doAfterRescan: Runnable? = null, action: () -> Set<FilePath>) {
     //full rescan should have the same update identity, so multiple full rescans can be swallowed instead of spawning new threads
     updateQueue.queue(MyUpdate(repository, isFullRescan) {
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(repository.project, Runnable {
-        if (inUpdateMode.compareAndSet(false, true)) {
-          fireUpdateStarted()
-          val ignored = action()
-          inUpdateMode.set(false)
-          fireUpdateFinished(ignored, isFullRescan)
-          doAfterRescan?.run()
-        }
-      })
+      if (inUpdateMode.compareAndSet(false, true)) {
+        fireUpdateStarted()
+        val ignored = action()
+        inUpdateMode.set(false)
+        fireUpdateFinished(ignored, isFullRescan)
+        doAfterRescan?.run()
+      }
     })
   }
 
   private class MyUpdate(val repository: Repository,
                          val isFullRescan: Boolean,
                          val action: () -> Unit)
-    : Update(ComparableObject.Impl(repository, isFullRescan)) {
+    : DisposableUpdate(repository, ComparableObject.Impl(repository, isFullRescan)) {
 
     override fun canEat(update: Update) = update is MyUpdate &&
                                           update.repository == repository &&
                                           isFullRescan
 
-    override fun run() = action()
+    override fun doRun() = action()
   }
 
   private fun doCheckIgnored(paths: Collection<FilePath>): Set<FilePath> {
@@ -240,6 +242,19 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       awaitLatch.await()
       listeners.removeListener(this)
     }
+  }
+
+  @TestOnly
+  fun startRescanAndWait() {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+    updateQueue.flush()
+    while (updateQueue.isFlushing) {
+      TimeoutUtil.sleep(100)
+    }
+    val waiter = createWaiter()
+    AppExecutorUtil.getAppScheduledExecutorService().schedule({ startRescan() }, 1, TimeUnit.SECONDS)
+    waiter.waitFor()
   }
 
   @TestOnly

@@ -11,13 +11,12 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class XDebuggerUIConstants {
-  public static final String COLLECTING_DATA_MESSAGE = XDebuggerBundle.message("xdebugger.building.tree.node.message");
-  public static final String EVALUATING_EXPRESSION_MESSAGE = XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
-  public static final String MODIFYING_VALUE_MESSAGE = XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
+  /**
+   * @deprecated Use {@link #getCollectingDataMessage()} instead
+   */
+  @Deprecated
+  public static final String COLLECTING_DATA_MESSAGE = "Collecting data…";
 
   public static final Icon ERROR_MESSAGE_ICON = AllIcons.General.Error;
   public static final Icon INFORMATION_MESSAGE_ICON = AllIcons.General.Information;
@@ -46,5 +45,17 @@ public class XDebuggerUIConstants {
   }
 
   private XDebuggerUIConstants() {
+  }
+
+  public static String getCollectingDataMessage() {
+    return XDebuggerBundle.message("xdebugger.building.tree.node.message");
+  }
+
+  public static String getEvaluatingExpressionMessage() {
+    return XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
+  }
+
+  public static String getModifyingValueMessage() {
+    return XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
   }
 }

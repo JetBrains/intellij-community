@@ -5,10 +5,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts.ProgressText;
+import com.intellij.openapi.util.NlsContexts.ProgressDetails;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,11 +60,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @Override
   public abstract ProgressIndicator getProgressIndicator();
 
-  public static void progress(@NotNull String text) throws ProcessCanceledException {
+  public static void progress(@NotNull @ProgressText String text) throws ProcessCanceledException {
     progress(text, "");
   }
 
-  public static void progress2(@NotNull final String text) throws ProcessCanceledException {
+  public static void progress2(@NotNull @ProgressDetails String text) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -70,7 +72,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
-  public static void progress(@NotNull String text, @Nullable String text2) throws ProcessCanceledException {
+  public static void progress(@NotNull @ProgressText String text,
+                              @Nullable @ProgressDetails String text2) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -79,7 +82,21 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
+  /**
+   * Runs the specified operation in non-cancellable manner synchronously on the same thread were it was called.
+   *
+   * @see ProgressManager#computeInNonCancelableSection(ThrowableComputable)
+   * @param runnable the operation to execute
+   */
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
+
+  /**
+   * Runs the specified operation and return its result in non-cancellable manner synchronously on the same thread were it was called.
+   *
+   * @see ProgressManager#executeNonCancelableSection(Runnable)
+   * @param computable the operation to execute
+   */
+  public abstract <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E;
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
@@ -94,7 +111,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                                              @NotNull @ProgressTitle String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project);
 
@@ -112,7 +129,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @throws E exception thrown by process
    */
   public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
-                                                                                 @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                                                                 @NotNull @ProgressTitle String progressTitle,
                                                                                  boolean canBeCanceled,
                                                                                  @Nullable Project project) throws E;
 
@@ -130,7 +147,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                                              @NotNull @ProgressTitle String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project,
                                                               @Nullable JComponent parentComponent);
@@ -150,7 +167,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls String progressTitle,
+                                                            @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
@@ -170,7 +187,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls String progressTitle,
+                                                            @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable,

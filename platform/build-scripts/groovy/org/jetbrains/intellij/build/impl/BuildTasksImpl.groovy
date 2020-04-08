@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
@@ -21,9 +21,6 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
-/**
- * @author nik
- */
 class BuildTasksImpl extends BuildTasks {
   final BuildContext buildContext
 
@@ -264,8 +261,9 @@ idea.fatal.error.notification=disabled
   private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
     def moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
+    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
-                   productLayout.mainModules + buildContext.productProperties.mavenArtifacts.additionalModules,
+                   productLayout.mainModules + mavenArtifacts.additionalModules + mavenArtifacts.proprietaryModules,
                    buildContext.productProperties.modulesToCompileTests)
 
     def pluginsToPublish = new LinkedHashSet<>(
@@ -348,17 +346,23 @@ idea.fatal.error.notification=disabled
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
-      List<BuildTaskRunnable<String>> tasks = [
-        createDistributionForOsTask("win", { BuildContext context ->
-          context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
-        }),
-        createDistributionForOsTask("linux", { BuildContext context ->
+      List<BuildTaskRunnable<String>> tasks = new ArrayList<>()
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_WINDOWS)) {
+        tasks.add(createDistributionForOsTask("win", { BuildContext context ->
+          context.windowsDistributionCustomizer?.
+            with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
+        }))
+      }
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_LINUX)) {
+        tasks.add(createDistributionForOsTask("linux", { BuildContext context ->
           context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
-        }),
-        createDistributionForOsTask("mac", { BuildContext context ->
+        }))
+      }
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_MAC)) {
+        tasks.add(createDistributionForOsTask("mac", { BuildContext context ->
           context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
-        })
-      ]
+        }))
+      }
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
 
@@ -416,13 +420,19 @@ idea.fatal.error.notification=disabled
   @Override
   void buildNonBundledPlugins(List<String> mainPluginModules) {
     checkProductProperties()
-    checkPluginModules(mainPluginModules, "mainPluginModules", [] as Set<String>)
+    checkPluginModules(mainPluginModules, "mainPluginModules")
     copyDependenciesFile()
     def pluginsToPublish = new LinkedHashSet<PluginLayout>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
     def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
     distributionJARsBuilder.buildSearchableOptions()
     distributionJARsBuilder.buildNonBundledPlugins()
+  }
+
+  @Override
+  void generateProjectStructureMapping(File targetFile) {
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
+    jarsBuilder.generateProjectStructureMapping(targetFile)
   }
 
   private void setupJBre() {
@@ -437,14 +447,6 @@ idea.fatal.error.notification=disabled
     }
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
-    }
-    [
-      'intellij.build.bundle.second.jre',
-      'intellij.build.bundled.second.jre.build'
-    ].each { prop ->
-      System.getProperty(prop)?.with {
-        args += "-D$prop=$it"
-      }
     }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")
@@ -549,16 +551,15 @@ idea.fatal.error.notification=disabled
     }
 
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
-    def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
-    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
-    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
+    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules")
+    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish")
 
     if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
                                     "layout.compatiblePluginsToIgnore property will be ignored ($layout.compatiblePluginsToIgnore)")
     }
     if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
-      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
+      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore")
     }
 
     if (!buildContext.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
@@ -578,7 +579,7 @@ idea.fatal.error.notification=disabled
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     def allBundledPlugins = layout.bundledPluginModules as Set<String>
     nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->
-      checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
+      checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries.collect {it.libraryName}, "'$plugin.mainModule' plugin")
       checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
@@ -608,12 +609,12 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
+  private void checkPluginModules(List<String> pluginModules, String fieldName) {
     if (pluginModules == null) {
       return
     }
     checkModules(pluginModules, fieldName)
-    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
+    def unknownBundledPluginModules = pluginModules.findAll { buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +

@@ -31,13 +31,15 @@ package com.intellij.vcs.log.ui.actions;
  * limitations under the License.
  */
 
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class CompactReferencesViewAction extends BooleanPropertyToggleAction {
 
   public CompactReferencesViewAction() {
-    super("Compact References View", "Show Only First Reference for a Commit in the Table", null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.compact.references.view"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.compact.references.view"), null);
   }
 
   @Override

@@ -6,6 +6,8 @@
     <importer implementation="org.jetbrains.idea.maven.plugins.groovy.GroovyGmavenPlusImporter"/>
     <importer implementation="org.jetbrains.idea.maven.plugins.groovy.GroovyEclipseCompilerImporter"/>
 
+    <compiler implementation="org.jetbrains.idea.maven.plugins.groovy.MavenCompilerGrEclipseExtension"/>
+
     <pluginDescriptor mavenId="org.codehaus.groovy.maven:gmaven-plugin">
       <param name="source" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
     </pluginDescriptor>

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -46,6 +47,10 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final Collection<PluginDownloader> myDownloaders;
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
+    @Override
+    public void runRestartButton(@NotNull Component component) {
+      doOKAction();
+    }
   };
   private final PluginsGroupComponent myPluginsPanel;
   private final PluginsGroup myGroup;
@@ -55,7 +60,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   public PluginUpdateDialog(@NotNull Collection<PluginDownloader> uploadedPlugins) {
     super(true);
-    setTitle("Plugin Updates");
+    setTitle(IdeBundle.message("dialog.title.plugin.updates"));
 
     myDownloaders = uploadedPlugins;
 
@@ -106,7 +111,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
     });
 
-    myGroup = new PluginsGroup("Plugin updates available");
+    myGroup = new PluginsGroup(IdeBundle.message("title.plugin.updates.available"));
     for (PluginDownloader plugin : uploadedPlugins) {
       myGroup.descriptors.add(plugin.getDescriptor());
     }
@@ -147,11 +152,11 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   private void setOKButtonText(boolean restart, boolean close) {
     if (close) {
-      setOKButtonText("Close");
+      setOKButtonText(CommonBundle.getCloseButtonText());
     }
     else {
       String action = ApplicationManager.getApplication().isRestartCapable() ? "Restart" : "Shutdown";
-      setOKButtonText(restart ? action + " IDE" : "Update All and " + action);
+      setOKButtonText(restart ? action + " IDE" : IdeBundle.message("button.update.all.and.0", action));
     }
   }
 
@@ -187,16 +192,25 @@ public class PluginUpdateDialog extends DialogWrapper {
       return;
     }
 
+    runUpdateAll(toDownloads, getContentPanel());
+  }
+
+  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownloads, @Nullable JComponent ownerComponent) {
     new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
+        List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
         if (!downloaders.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            final PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, getContentPanel(), true);
+            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
             if (result.getPluginsInstalled().size() > 0) {
               if (result.getRestartRequired()) {
-                PluginManagerMain.notifyPluginsUpdated(null);
+                if (WelcomeFrame.getInstance() == null) {
+                  PluginManagerMain.notifyPluginsUpdated(null);
+                }
+                else {
+                  PluginManagerConfigurable.shutdownOrRestartApp();
+                }
               }
               else {
                 String message;
@@ -218,7 +232,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    super.doCancelAction();
+    close(CANCEL_EXIT_CODE);
 
     if (myPluginModel.toBackground()) {
       return;
@@ -232,9 +246,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return ContainerUtil.ar(myIgnoreAction);
   }
 
@@ -252,7 +265,7 @@ public class PluginUpdateDialog extends DialogWrapper {
   @NotNull
   private ListPluginComponent createListComponent(IdeaPluginDescriptor updateDescriptor) {
     IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(updateDescriptor.getPluginId());
-    assert descriptor != null;
+    assert descriptor != null : updateDescriptor;
     ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, emptyListener(), false) {
       @Override
       public void updateErrors() {
@@ -287,7 +300,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     titlePanel.setBorder(JBUI.Borders.empty(6, 10));
     leftPanel.add(titlePanel, BorderLayout.SOUTH);
 
-    JLabel titleComponent = new JLabel("Plugins can be updated later in " + CommonBundle.settingsTitle() + " | Plugins");
+    JLabel titleComponent = new JLabel(IdeBundle.message("label.plugins.can.be.updated.later.in.0.plugins", CommonBundle.settingsTitle()));
     titleComponent.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
     titlePanel.add(titleComponent);
 
@@ -300,11 +313,10 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   private static Set<String> myIgnoredPluginsWithVersions;
-  private static final String DISABLED_UPDATE = "plugin_disabled_updates.txt";
 
   @NotNull
   private static File getDisabledUpdateFile() {
-    return new File(PathManager.getConfigPath(), DISABLED_UPDATE);
+    return new File(PathManager.getConfigPath(), "plugin_disabled_updates.txt");
   }
 
   @NotNull
@@ -327,7 +339,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     return myIgnoredPluginsWithVersions;
   }
 
-  private static void ignorePlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
+  static void ignorePlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     Set<String> ignoredPlugins = getIgnoredPlugins();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {

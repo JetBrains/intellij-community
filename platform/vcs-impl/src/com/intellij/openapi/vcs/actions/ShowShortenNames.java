@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class ShowShortenNames extends ActionGroup implements DumbAware {
   private final AnAction[] myChildren;
 
   public ShowShortenNames() {
-    super("Names", true);
+    super(VcsBundle.messagePointer("annotations.short.name.type.group.names"), true);
     final ArrayList<AnAction> kids = new ArrayList<>(ShortNameType.values().length);
     for (ShortNameType type : ShortNameType.values()) {
       kids.add(new SetShortNameTypeAction(type));
@@ -40,9 +41,8 @@ public class ShowShortenNames extends ActionGroup implements DumbAware {
     myChildren = kids.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myChildren;
   }
 

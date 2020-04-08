@@ -20,7 +20,7 @@ import java.util.Set;
 
 public class SchemeImportUtil {
   @Nullable
-  public static VirtualFile selectImportSource(@NotNull final String[] sourceExtensions,
+  public static VirtualFile selectImportSource(final String @NotNull [] sourceExtensions,
                                                @NotNull Component parent,
                                                @Nullable VirtualFile preselect,
                                                @Nullable String description) {
@@ -57,7 +57,7 @@ public class SchemeImportUtil {
     return virtualFiles[0];
   }
 
-  private static boolean canSelectJarFile(@NotNull String[] sourceExtensions) {
+  private static boolean canSelectJarFile(String @NotNull [] sourceExtensions) {
     for (String ext : sourceExtensions) {
       if ("jar".equals(ext)) return true;
     }

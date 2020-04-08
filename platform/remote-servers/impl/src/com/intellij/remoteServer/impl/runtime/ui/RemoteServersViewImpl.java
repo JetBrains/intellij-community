@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * @author nik
- */
 public class RemoteServersViewImpl extends RemoteServersView {
   private final List<Pair<ServersTreeNodeSelector, Condition<ServerConnection<?>>>> mySelectors = new CopyOnWriteArrayList<>();
 

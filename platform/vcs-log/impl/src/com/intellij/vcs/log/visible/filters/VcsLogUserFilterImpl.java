@@ -8,16 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @ApiStatus.Internal
 class VcsLogUserFilterImpl implements VcsLogUserFilter {
@@ -88,6 +86,15 @@ class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @Override
   public Collection<String> getValuesAsText() {
     return myUsers;
+  }
+
+  @Override
+  public @NotNull String getDisplayText() {
+    List<String> users = ContainerUtil.map(myUsers, user -> {
+      String me = VcsLogBundle.message("vcs.log.user.filter.me");
+      return user.equals(VcsLogFilterObject.ME) ? me : user;
+    });
+    return StringUtil.join(users, ", ");
   }
 
   @Override

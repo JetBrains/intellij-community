@@ -26,13 +26,15 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class ChangeEditorFontSizeAction extends AnAction implements DumbAware {
   private final int myStep;
 
-  protected ChangeEditorFontSizeAction(@Nullable String text, int increaseStep) {
+  protected ChangeEditorFontSizeAction(@NotNull Supplier<String> text, int increaseStep) {
     super(text);
     myStep = increaseStep;
   }
@@ -64,13 +66,13 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
 
   public static class IncreaseEditorFontSize extends ChangeEditorFontSizeAction {
     protected IncreaseEditorFontSize() {
-      super(EditorBundle.message("increase.editor.font"), 1);
+      super(EditorBundle.messagePointer("increase.editor.font"), 1);
     }
   }
 
   public static class DecreaseEditorFontSize extends ChangeEditorFontSizeAction {
     protected DecreaseEditorFontSize() {
-      super(EditorBundle.message("decrease.editor.font"), -1);
+      super(EditorBundle.messagePointer("decrease.editor.font"), -1);
     }
   }
 }

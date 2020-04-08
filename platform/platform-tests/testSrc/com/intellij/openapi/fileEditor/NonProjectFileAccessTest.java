@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -49,7 +49,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     super.setUp();
 
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
-    ServiceContainerUtil.registerComponentInstance(getProject(), EditorNotifications.class, notifications, getTestRootDisposable());
+    ServiceContainerUtil.replaceService(getProject(), EditorNotifications.class, notifications, getTestRootDisposable());
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
     StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
   }

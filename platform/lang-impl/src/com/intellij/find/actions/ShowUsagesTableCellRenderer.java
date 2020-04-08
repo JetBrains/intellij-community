@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
@@ -50,6 +51,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
   private static final int FILE_GROUP_COL = 1;
   private static final int LINE_NUMBER_COL = 2;
   private static final int USAGE_TEXT_COL = 3;
+  @DirtyUI
   @Override
   public Component getTableCellRendererComponent(JTable list, Object value, boolean isSelected, boolean hasFocus, int row,
                                                  @MagicConstant(intValues = {CURRENT_ASTERISK_COL, FILE_GROUP_COL, LINE_NUMBER_COL, USAGE_TEXT_COL}) int column) {
@@ -67,19 +69,27 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       textChunks.append(ObjectUtils.notNull(value, "").toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
     }
-    if (usage == ShowUsagesTable.MORE_USAGES_SEPARATOR) {
+    if (usage == ((ShowUsagesTable)list).MORE_USAGES_SEPARATOR) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append("...<");
       textChunks.append("more usages", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
     }
-    if (usage == ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+    if (usage == ((ShowUsagesTable)list).USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append("...<");
       textChunks.append(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
+    }
+    if (usage == ((ShowUsagesTable)list).USAGES_FILTERED_OUT_SEPARATOR) {
+      ShowUsagesAction.FilteredOutUsagesNode filtered = (ShowUsagesAction.FilteredOutUsagesNode)usageNode;
+      SimpleColoredComponent textChunks = new SimpleColoredComponent();
+      textChunks.append(filtered.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      JComponent component = textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
+      component.setToolTipText(filtered.getTooltip());
+      return component;
     }
 
     // want to be able to right-align the "current" word
@@ -182,7 +192,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
   }
 
   @NotNull
-  private static Component textComponentSpanningWholeRow(@NotNull SimpleColoredComponent chunks,
+  private static JComponent textComponentSpanningWholeRow(@NotNull SimpleColoredComponent chunks,
                                                          Color rowBackground,
                                                          Color rowForeground,
                                                          final int column,

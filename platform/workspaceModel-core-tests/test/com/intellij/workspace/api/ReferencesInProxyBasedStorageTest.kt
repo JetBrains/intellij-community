@@ -10,6 +10,11 @@ internal interface ChildEntity : TypedEntity {
   val dataClass: DataClass?
 }
 
+internal interface NoDataChildEntity : TypedEntity {
+  val parent: ParentEntity
+  val childProperty: String
+}
+
 internal interface ChildChildEntity : TypedEntity {
   val parent1: ParentEntity
   val parent2: ChildEntity
@@ -21,6 +26,14 @@ internal interface ParentEntity : ReferableTypedEntity {
   @JvmDefault
   val children
     get() = referrers(ChildEntity::parent)
+
+  @JvmDefault
+  val noDataChildren
+    get() = referrers(NoDataChildEntity::parent)
+
+  @JvmDefault
+  val optionalChildren
+    get() = referrers(ChildWithOptionalParentEntity::optionalParent)
 }
 
 internal interface ChildWithOptionalParentEntity : TypedEntity {
@@ -34,6 +47,11 @@ private interface ModifiableChildEntity : ChildEntity, ModifiableTypedEntity<Chi
   override var parent: ParentEntity
   override var childProperty: String
   override var dataClass: DataClass?
+}
+
+private interface ModifiableNoDataChildEntity : NoDataChildEntity, ModifiableTypedEntity<NoDataChildEntity> {
+  override var parent: ParentEntity
+  override var childProperty: String
 }
 
 private interface ModifiableChildChildEntity : ChildChildEntity, ModifiableTypedEntity<ChildChildEntity> {
@@ -51,18 +69,28 @@ private interface ModifiableChildWithOptionalParentEntity : ChildWithOptionalPar
 }
 
 
-private fun TypedEntityStorageBuilder.addParentEntity(parentProperty: String = "parent") =
-  addEntity(ModifiableParentEntity::class.java, SampleEntitySource("test")) {
+internal fun TypedEntityStorageBuilder.addParentEntity(parentProperty: String = "parent",
+                                                       source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiableParentEntity::class.java, source) {
     this.parentProperty = parentProperty
   }
 
-private fun TypedEntityStorageBuilder.addChildEntity(parentEntity: ParentEntity = addParentEntity(),
-                                                     childProperty: String = "child",
-                                                     dataClass: DataClass? = null) =
-  addEntity(ModifiableChildEntity::class.java, SampleEntitySource("test")) {
+internal fun TypedEntityStorageBuilder.addChildEntity(parentEntity: ParentEntity = addParentEntity(),
+                                                      childProperty: String = "child",
+                                                      dataClass: DataClass? = null,
+                                                      source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiableChildEntity::class.java, source) {
     this.parent = parentEntity
     this.childProperty = childProperty
     this.dataClass = dataClass
+  }
+
+internal fun TypedEntityStorageBuilder.addNoDataChildEntity(parentEntity: ParentEntity = addParentEntity(),
+                                                      childProperty: String = "child",
+                                                      source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiableNoDataChildEntity::class.java, source) {
+    this.parent = parentEntity
+    this.childProperty = childProperty
   }
 
 private fun TypedEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity, parent2: ChildEntity) =
@@ -71,9 +99,10 @@ private fun TypedEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity,
     this.parent2 = parent2
   }
 
-private fun TypedEntityStorageBuilder.addChildWithOptionalEntity(parentEntity: ParentEntity?,
-                                                                 childProperty: String = "child") =
-  addEntity(ModifiableChildWithOptionalParentEntity::class.java, SampleEntitySource("test")) {
+internal fun TypedEntityStorageBuilder.addChildWithOptionalParentEntity(parentEntity: ParentEntity?,
+                                                                        childProperty: String = "child",
+                                                                        source: SampleEntitySource = SampleEntitySource("test")) =
+  addEntity(ModifiableChildWithOptionalParentEntity::class.java, source) {
     this.optionalParent = parentEntity
     this.childProperty = childProperty
   }
@@ -223,19 +252,22 @@ class ReferencesInProxyBasedStorageTest {
   @Test
   fun `modify optional parent property`() {
     val builder = TypedEntityStorageBuilder.create()
-    val child = builder.addChildWithOptionalEntity(null)
+    val child = builder.addChildWithOptionalParentEntity(null)
     assertNull(child.optionalParent)
     val newParent = builder.addParentEntity()
+    assertEquals(emptyList<ChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
     val newChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, child) {
       optionalParent = newParent
     }
     builder.checkConsistency()
     assertEquals(newParent, newChild.optionalParent)
+    assertEquals(newChild, newParent.optionalChildren.single())
 
     val veryNewChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, newChild) {
       optionalParent = null
     }
     assertNull(veryNewChild.optionalParent)
+    assertEquals(emptyList<ChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
   }
 
   @Test

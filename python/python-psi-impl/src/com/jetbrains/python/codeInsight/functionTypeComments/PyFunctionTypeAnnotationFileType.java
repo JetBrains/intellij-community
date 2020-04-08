@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.codeInsight.functionTypeComments;
 
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +32,7 @@ public class PyFunctionTypeAnnotationFileType extends PythonFileType {
 
   @NotNull
   @Override
+  @NonNls
   public String getName() {
     return "PythonFunctionTypeComment";
   }
@@ -37,7 +40,7 @@ public class PyFunctionTypeAnnotationFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "Python PEP-484 function type comment";
+    return PyPsiBundle.message("python.function.type.annotation.file.type.description");
   }
 
   @NotNull

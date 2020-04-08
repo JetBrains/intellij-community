@@ -29,10 +29,9 @@ import java.util.stream.Collectors;
 
 public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                               @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                         @NotNull ProcessingContext context) {
     final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)element;
     final String value = xmlAttributeValue.getValue();
     if (JavaFxPsiUtil.isIncorrectExpressionBinding(value)) {
@@ -60,11 +59,10 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     return new PsiReference[]{new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, acceptableIds, value)};
   }
 
-  @NotNull
-  private static PsiReference[] getExpressionReferences(@NotNull PsiElement element,
-                                                        @NotNull XmlAttributeValue xmlAttributeValue,
-                                                        @NotNull String value,
-                                                        @NotNull Map<String, XmlAttributeValue> fileIds) {
+  private static PsiReference @NotNull [] getExpressionReferences(@NotNull PsiElement element,
+                                                                  @NotNull XmlAttributeValue xmlAttributeValue,
+                                                                  @NotNull String value,
+                                                                  @NotNull Map<String, XmlAttributeValue> fileIds) {
     if (FxmlConstants.NULL_EXPRESSION.equals(value)) return PsiReference.EMPTY_ARRAY;
     final String expressionBody = value.substring(2, value.length() - 1);
     final List<String> propertyNames = StringUtil.split(expressionBody, ".", true, false);
@@ -96,19 +94,17 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static PsiReference[] getSinglePropertyReferences(@NotNull XmlAttributeValue xmlAttributeValue,
-                                                            @NotNull String value,
-                                                            @NotNull Map<String, XmlAttributeValue> fileIds) {
+  private static PsiReference @NotNull [] getSinglePropertyReferences(@NotNull XmlAttributeValue xmlAttributeValue,
+                                                                      @NotNull String value,
+                                                                      @NotNull Map<String, XmlAttributeValue> fileIds) {
     if (FxmlConstants.isNullValue(value)) return PsiReference.EMPTY_ARRAY;
     return getSinglePropertyReferences(xmlAttributeValue, fileIds, value.substring(1), 1);
   }
 
-  @NotNull
-  private static PsiReference[] getSinglePropertyReferences(@NotNull XmlAttributeValue xmlAttributeValue,
-                                                            @NotNull Map<String, XmlAttributeValue> fileIds,
-                                                            @NotNull String propertyName,
-                                                            int positionInExpression) {
+  private static PsiReference @NotNull [] getSinglePropertyReferences(@NotNull XmlAttributeValue xmlAttributeValue,
+                                                                      @NotNull Map<String, XmlAttributeValue> fileIds,
+                                                                      @NotNull String propertyName,
+                                                                      int positionInExpression) {
     final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(xmlAttributeValue.getContainingFile());
     final Map<String, TypeMatch> typeMatches = getTypeMatches(xmlAttributeValue, fileIds);
     final PsiReferenceBase reference = getIdReferenceBase(xmlAttributeValue, propertyName, fileIds, typeMatches, controllerClass);
@@ -210,9 +206,8 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       return myFileIds.get(myReferencesId);
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       return myAcceptableIds.stream()
         .map(id -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(id), TypeMatch.getPriority(myTypeMatches.get(id))))
         .toArray(LookupElement[]::new);
@@ -237,9 +232,8 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       return JavaFxPsiUtil.getReadableProperties(myPsiClass).get(myFieldName);
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final XmlAttributeValue xmlAttributeValue = getElement();
       final PsiElement declaration = JavaFxPsiUtil.getAttributeDeclaration(xmlAttributeValue);
       final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myPsiClass, declaration);

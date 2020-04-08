@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
@@ -47,9 +47,6 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author traff
- */
 public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUnitTestProcessRunner> {
 
   @Test(expected = RuntimeConfigurationWarning.class)
@@ -243,7 +240,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+        PythonTestConfigurationsModel.getPythonsUnittestName(),
         PyUnitTestConfiguration.class));
   }
 
@@ -664,7 +661,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // PY-24407
   @Test
   public void testWorkingDirectoryDependsOnRelativeImport() {
-    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
                                                                            PyUnitTestConfiguration.class) {
       @NotNull
       @Override
@@ -829,14 +826,15 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerOnDirectory() {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                                     PyUnitTestConfiguration.class));
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(
+        PythonTestConfigurationsModel.getPythonsUnittestName(),
+        PyUnitTestConfiguration.class));
   }
 
 
   @Test
   public void testConfigurationProducer() {
-    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class));
+    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(), PyUnitTestConfiguration.class));
   }
 
   /**
@@ -845,7 +843,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerObeysDefaultDir() {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
                                                                  PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 

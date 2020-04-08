@@ -39,9 +39,10 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   protected String myRevision;
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
+  @NotNull
   private final VirtualFileSystem myFileSystem;
 
-  protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
+  protected AbstractVcsVirtualFile(String path, @NotNull VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
     myPath = path;
     File file = new File(myPath);
@@ -54,7 +55,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     OutsidersPsiFileSupport.markFile(this);
   }
 
-  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, VirtualFileSystem fileSystem) {
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
     myPath = parent != null && !StringUtil.isEmpty(parent.getPath()) ? parent.getPath() + "/" + name : name;
     myName = name;
@@ -121,12 +122,11 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
-    throw new RuntimeException(VcsFileSystem.COULD_NOT_IMPLEMENT_MESSAGE);
+    throw new RuntimeException(VcsFileSystem.getCouldNotImplementMessage());
   }
 
   @Override
-  @NotNull
-  public abstract byte[] contentsToByteArray() throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray() throws IOException;
 
   @Override
   public long getModificationStamp() {

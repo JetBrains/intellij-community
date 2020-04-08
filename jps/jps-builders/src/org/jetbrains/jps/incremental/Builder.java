@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @see ModuleLevelBuilder
  * @see TargetBuilder
- *
- * @author nik
  */
 public abstract class Builder {
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
@@ -14,13 +14,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -30,16 +28,23 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import kotlin.Lazy;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
 
 @State(
   name = "TemplateSettings",
@@ -130,7 +135,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
-  public static class TemplateKey {
+  public static final class TemplateKey {
     private String groupName;
     private String key;
 
@@ -151,7 +156,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       if (o == null || getClass() != o.getClass()) return false;
 
       TemplateKey that = (TemplateKey)o;
-      return Comparing.equal(groupName, that.groupName) && Comparing.equal(key, that.key);
+      return Objects.equals(groupName, that.groupName) && Objects.equals(key, that.key);
     }
 
     public int hashCode() {
@@ -276,21 +281,17 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
     doLoadTemplates(mySchemeManager.loadSchemes());
 
-    Macro.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<Macro>() {
-      @Override
-      public void extensionListChanged() {
-        for (TemplateImpl template : myTemplates.values()) {
-          template.dropParsedData();
-        }
-        for (TemplateImpl template : myDefaultTemplates.values()) {
-          template.dropParsedData();
-        }
+    Macro.EP_NAME.addExtensionPointListener(() -> {
+      for (TemplateImpl template : myTemplates.values()) {
+        template.dropParsedData();
+      }
+      for (TemplateImpl template : myDefaultTemplates.values()) {
+        template.dropParsedData();
       }
     }, ApplicationManager.getApplication());
 
-    DefaultLiveTemplateEP.EP_NAME.addExtensionPointListener((a,b) -> {
-      mySchemeManager.reload();
-    }, ApplicationManager.getApplication());
+    DefaultLiveTemplateEP.EP_NAME.addExtensionPointListener(mySchemeManager::reload,
+                                                            ApplicationManager.getApplication());
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
@@ -528,23 +529,27 @@ public final class TemplateSettings implements PersistentStateComponent<Template
                                @NotNull String defTemplate,
                                boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(requestor, defTemplate);
-    if (inputStream != null) {
-      Element element = JDOMUtil.load(inputStream);
-      TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
-      if (defGroup != null) {
-        for (TemplateImpl template : defGroup.getElements()) {
-          String key = template.getKey();
-          String groupName = template.getGroupName();
-          if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
-            myPredefinedTemplates.put(Pair.create(key, groupName), info);
-          }
+    if (inputStream == null) {
+      LOG.error("Unable to find template resource: " + defTemplate +
+                "; classLoader: " + loader +
+                "; plugin: " + info);
+      return;
+    }
+    Element element = JDOMUtil.load(inputStream);
+    TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
+    if (defGroup != null) {
+      for (TemplateImpl template : defGroup.getElements()) {
+        String key = template.getKey();
+        String groupName = template.getGroupName();
+        if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
+          myPredefinedTemplates.put(Pair.create(key, groupName), info);
         }
+      }
 
-        TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
-        if (group != null && group.getReplace() != null) {
-          for (TemplateImpl template : myTemplates.get(group.getReplace())) {
-            removeTemplate(template);
-          }
+      TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
+      if (group != null && group.getReplace() != null) {
+        for (TemplateImpl template : myTemplates.get(group.getReplace())) {
+          removeTemplate(template);
         }
       }
     }

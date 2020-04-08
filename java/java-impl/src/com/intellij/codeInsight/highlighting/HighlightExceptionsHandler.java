@@ -15,9 +15,8 @@
  */
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.lang.LangBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -30,16 +29,17 @@ import java.util.List;
 class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   private final PsiElement myTarget;
   private final PsiClassType[] myClassTypes;
-  private final PsiElement myPlace, myOtherPlace;
+  private final PsiElement myPlace;
+  private final PsiElement myOtherPlace;
   private final Condition<? super PsiType> myTypeFilter;
 
-  HighlightExceptionsHandler(Editor editor,
-                                    PsiFile file,
-                                    PsiElement target,
-                                    PsiClassType[] classTypes,
-                                    PsiElement place,
-                                    PsiElement otherPlace,
-                                    Condition<? super PsiType> typeFilter) {
+  HighlightExceptionsHandler(@NotNull Editor editor,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement target,
+                             PsiClassType @NotNull [] classTypes,
+                             @NotNull PsiElement place,
+                             PsiElement otherPlace,
+                             @NotNull Condition<? super PsiType> typeFilter) {
     super(editor, file);
     myTarget = target;
     myClassTypes = classTypes;
@@ -49,25 +49,25 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   }
 
   @Override
-  public List<PsiClass> getTargets() {
+  public @NotNull List<PsiClass> getTargets() {
     return ChooseClassAndDoHighlightRunnable.resolveClasses(myClassTypes);
   }
 
   @Override
-  protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
-    new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
+  protected void selectTargets(final @NotNull List<? extends PsiClass> targets, final @NotNull Consumer<? super List<? extends PsiClass>> selectionConsumer) {
+    new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, JavaBundle.message("highlight.exceptions.thrown.chooser.title")) {
       @Override
-      protected void selected(@NotNull PsiClass... classes) {
+      protected void selected(PsiClass @NotNull ... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();
   }
 
   @Override
-  public void computeUsages(final List<PsiClass> targets) {
+  public void computeUsages(final @NotNull List<? extends PsiClass> targets) {
     addUsage(myTarget);
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myEditor.getProject());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myFile.getProject());
     for (PsiClass aClass : targets) {
       addExceptionThrowPlaces(factory.createType(aClass), myPlace);
       if (myOtherPlace != null) {
@@ -75,10 +75,10 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
     }
 
-    buildStatusText(LangBundle.message("java.terms.exception"), myReadUsages.size() - 1 /* exclude target */);
+    buildStatusText(JavaBundle.message("java.terms.exception"), myReadUsages.size() - 1 /* exclude target */);
   }
 
-  private void addExceptionThrowPlaces(PsiClassType type, PsiElement place) {
+  private void addExceptionThrowPlaces(@NotNull PsiClassType type, @NotNull PsiElement place) {
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -170,7 +170,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
     });
   }
 
-  private void addUsage(PsiElement element) {
+  private void addUsage(@NotNull PsiElement element) {
     addOccurrence(element);
   }
 }

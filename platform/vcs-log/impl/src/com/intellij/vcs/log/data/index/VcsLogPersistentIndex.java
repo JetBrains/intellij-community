@@ -9,12 +9,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -32,11 +34,11 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,8 +50,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
-import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
+import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
 
+@NonNls
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
   private static final int VERSION = 14;
@@ -71,6 +74,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = new HashMap<>();
   @NotNull private final Map<VirtualFile, AtomicLong> myIndexingTime = new HashMap<>();
   @NotNull private final Map<VirtualFile, AtomicInteger> myIndexingLimit = new HashMap<>();
+  @NotNull private final Map<VirtualFile, ConcurrentIntObjectMap<Integer>> myIndexingErrors = new HashMap<>();
 
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -94,7 +98,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     VcsUserRegistry userRegistry = ServiceManager.getService(myProject, VcsUserRegistry.class);
 
-    myIndexStorage = createIndexStorage(fatalErrorsConsumer, calcLogId(myProject, providers), userRegistry);
+    myIndexStorage = createIndexStorage(fatalErrorsConsumer, myProject.getName(), calcIndexId(myProject, myIndexers), userRegistry);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myFatalErrorsConsumer);
     }
@@ -106,6 +110,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myNumberOfTasks.put(root, new AtomicInteger());
       myIndexingTime.put(root, new AtomicLong());
       myIndexingLimit.put(root, new AtomicInteger(getIndexingLimit()));
+      myIndexingErrors.put(root, ContainerUtil.createConcurrentIntObjectMap());
     }
 
     mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
@@ -118,10 +123,11 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   }
 
   protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler,
-                                            @NotNull String logId, @NotNull VcsUserRegistry registry) {
+                                            @NotNull String projectName, @NotNull String logId, @NotNull VcsUserRegistry registry) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myStorage, registry, fatalErrorHandler, this),
-                                           () -> IndexStorage.cleanup(logId));
+      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(projectName, logId, myStorage, registry,
+                                                                  myRoots, fatalErrorHandler, this),
+                                           () -> IndexStorage.cleanup(projectName, logId));
     }
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
@@ -301,17 +307,18 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     private volatile boolean myIsFresh;
 
-    IndexStorage(@NotNull String logId,
+    IndexStorage(@NotNull String projectName,
+                 @NotNull String logId,
                  @NotNull VcsLogStorage storage,
                  @NotNull VcsUserRegistry userRegistry,
+                 @NotNull Set<VirtualFile> roots,
                  @NotNull FatalErrorHandler fatalErrorHandler,
                  @NotNull Disposable parentDisposable)
       throws IOException {
       Disposer.register(parentDisposable, this);
 
       try {
-        boolean forwardIndexRequired = VcsLogPathsIndex.isPathsForwardIndexRequired();
-        StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{forwardIndexRequired});
+        StorageId storageId = new StorageId(projectName, INDEX, logId, getVersion());
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);
@@ -319,14 +326,15 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                           storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
-        Path messagesStorage = new StorageId(INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
+        Path messagesStorage = new StorageId(projectName, INDEX, logId,
+                                             VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
         messages = new PersistentHashMap<>(messagesStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE,
                                            Page.PAGE_SIZE);
         Disposer.register(this, () -> catchAndWarn(messages::close));
 
         trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
         users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(storageId, storage, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, storage, roots, fatalErrorHandler, this);
 
         Path parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
@@ -362,10 +370,10 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
 
-    private static void cleanup(@NotNull String logId) {
-      StorageId storageId = new StorageId(INDEX, logId, getVersion());
+    private static void cleanup(@NotNull String projectName, @NotNull String logId) {
+      StorageId storageId = new StorageId(projectName, INDEX, logId, getVersion());
       if (!storageId.cleanupAllStorageFiles()) {
-        LOG.error("Could not clean up storage files in " + storageId.subdir() + " starting with " + logId);
+        LOG.error("Could not clean up storage files in " + storageId.getSubdir());
       }
     }
 
@@ -444,6 +452,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   private class IndexingRequest {
     private static final int BATCH_SIZE = 20000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
+    private static final int LOGGED_ERRORS_COUNT = 10;
+    private static final int STOPPING_ERROR_COUNT = 100;
     @NotNull private final VirtualFile myRoot;
     @NotNull private final TIntHashSet myCommits;
     @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;
@@ -502,7 +512,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
           throw e;
         }
         catch (VcsException e) {
-          LOG.error(e);
+          processException(e);
           scheduleReindex();
         }
       }
@@ -519,6 +529,20 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         report();
 
         flush();
+      }
+    }
+
+    private void processException(@NotNull VcsException e) {
+      int errorHash = ThrowableInterner.computeTraceHashCode(e);
+      int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
+      myIndexingErrors.get(myRoot).put(errorHash, errors + 1);
+
+      if (errors <= LOGGED_ERRORS_COUNT) {
+        LOG.error(e);
+      }
+      else if (errors >= STOPPING_ERROR_COUNT) {
+        myBigRepositoriesList.addRepository(myRoot);
+        LOG.error("Stopping indexing of " + myRoot.getName() + " due to the large amount of exceptions.", e);
       }
     }
 

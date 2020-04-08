@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
@@ -14,10 +12,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -82,7 +77,7 @@ public class MavenArtifactUtil {
       }
     }
 
-    return Comparing.equal(groupId1, groupId2);
+    return Objects.equals(groupId1, groupId2);
   }
 
   @NotNull

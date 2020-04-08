@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,11 +37,11 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     boolean canRestart = app.isRestartCapable();
 
     String[] options = new String[canRestart ? 4 : 3];
-    options[0] = canRestart ? "Invalidate and &Restart" : "Invalidate and &Exit";
-    options[1] = mac ? "Cancel" : "&Invalidate";
-    options[2] = mac ? "&Invalidate" : "Cancel";
+    options[0] = canRestart ? IdeBundle.message("button.invalidate.and.restart") : IdeBundle.message("button.invalidate.and.exit");
+    options[1] = mac ? IdeBundle.message("button.cancel.without.mnemonic") : IdeBundle.message("button.invalidate");
+    options[2] = mac ? IdeBundle.message("button.invalidate") : IdeBundle.message("button.cancel.without.mnemonic");
     if (canRestart) {
-      options[3] = "&Just Restart";
+      options[3] = IdeBundle.message("button.just.restart");
     }
 
     List<String> descriptions = new SmartList<>();
@@ -53,21 +54,19 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     }
     Collections.sort(descriptions);
 
-    String warnings = "WARNING: ";
+    String warnings = IdeBundle.message("dialog.message.warning");
     if (descriptions.size() == 1) {
-      warnings += descriptions.get(0) + " will be also cleared.";
+      warnings += descriptions.get(0) + IdeBundle.message("dialog.message.will.be.also.cleared");
     }
     else if (!descriptions.isEmpty()) {
-      warnings += "The following items will also be cleared:\n"
+      warnings += IdeBundle.message("dialog.message.the.following.items")
                   + StringUtil.join(descriptions, s -> "  " + s, "\n");
     }
 
-    String message = "The caches will be invalidated and rebuilt on the next startup.\n\n" +
-                     (descriptions.isEmpty() ? "" :  warnings + "\n\n") +
-                     "Would you like to continue?\n";
+    String message = IdeBundle.message("dialog.message.caches.will.be.invalidated", descriptions.isEmpty() ? "" : warnings + "\n\n");
     int result = Messages.showDialog(e.getData(CommonDataKeys.PROJECT),
                                      message,
-                                     "Invalidate Caches",
+                                     IdeBundle.message("dialog.title.invalidate.caches"),
                                      options, 0,
                                      Messages.getWarningIcon());
 

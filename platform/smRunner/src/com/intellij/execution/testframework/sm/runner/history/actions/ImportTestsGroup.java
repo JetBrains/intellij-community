@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.icons.AllIcons;
@@ -34,7 +35,8 @@ import java.util.stream.Collectors;
 public class ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
-    super("Test History", "Open recent test session", AllIcons.Vcs.History);
+    super(() -> SmRunnerBundle.message("sm.test.runner.import.test.group.history"),
+          () -> SmRunnerBundle.message("sm.test.runner.import.test.group.open.recent.session"), AllIcons.Vcs.History);
     setPopup(true);
   }
 
@@ -43,9 +45,8 @@ public class ImportTestsGroup extends ActionGroup {
     myProperties = properties;
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     final Project project = e.getProject();
     if (project == null) return EMPTY_ARRAY;

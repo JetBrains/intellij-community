@@ -81,6 +81,6 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
 
   @Override
   public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
-    ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyBrowserBase.METHOD_TYPE);
+    ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyBrowserBase.getMethodType());
   }
 }

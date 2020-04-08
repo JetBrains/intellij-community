@@ -11,7 +11,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +23,7 @@ import java.text.MessageFormat;
 /**
  * @author Dmitry Avdeev
  */
-public class InspectionMappingConsistencyInspection extends BasicDomElementsInspection<IdeaPlugin> {
-
-  public InspectionMappingConsistencyInspection() {
-    super(IdeaPlugin.class);
-  }
-
+public class InspectionMappingConsistencyInspection extends DevKitPluginXmlInspectionBase {
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     if (!(element instanceof Extension)) {
@@ -63,7 +57,7 @@ public class InspectionMappingConsistencyInspection extends BasicDomElementsInsp
   }
 
   private static boolean hasDefinedAttribute(DomElement element, String attributeName) {
-    final GenericAttributeValue attribute = PluginXmlDomInspection.getAttribute(element, attributeName);
+    final GenericAttributeValue attribute = DevKitPluginXmlInspectionBase.getAttribute(element, attributeName);
     return attribute != null && DomUtil.hasXml(attribute);
   }
 

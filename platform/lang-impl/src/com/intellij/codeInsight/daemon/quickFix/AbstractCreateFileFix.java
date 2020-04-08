@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -9,11 +9,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,12 +26,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.util.List;
 
 import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 
 public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
@@ -45,8 +46,8 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected final String myNewFileName;
   protected final List<TargetDirectory> myDirectories;
   protected final String[] mySubPath;
-  @NotNull
-  protected final String myKey;
+  @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE)
+  protected final @NotNull String myKey;
 
   protected boolean myIsAvailable;
   protected long myIsAvailableTimeStamp;
@@ -171,7 +172,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     String filePath = myNewFileName;
     if (mySubPath.length > 0) {
       filePath = toSystemDependentName(
-        StringUtil.join(mySubPath, Character.toString(VFS_SEPARATOR_CHAR))
+        StringUtil.join(mySubPath, VFS_SEPARATOR)
         + VFS_SEPARATOR_CHAR + myNewFileName
       );
     }
@@ -196,7 +197,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
           .withName(CodeInsightBundle.message("create.file.text", myNewFileName))
           .run(() -> apply(project, chosenValue.getTarget(), editor));
       })
-      .addListener(new JBPopupAdapter() {
+      .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           // rerun code-insight after popup close
@@ -228,7 +229,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     VirtualFile file = directory.getVirtualFile();
 
     Project project = directory.getProject();
-    ProjectFileIndexImpl projectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     SourceFolder sourceFolder = projectFileIndex.getSourceFolder(file);
     if (sourceFolder != null && sourceFolder.getFile() != null) {
       return IconUtil.getIcon(sourceFolder.getFile(), 0, project);
@@ -239,13 +240,13 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
 
   @NotNull
   private static String getPresentableContentRootPath(@NotNull PsiDirectory directory,
-                                                      @NotNull String[] pathToCreate) {
+                                                      String @NotNull [] pathToCreate) {
     VirtualFile f = directory.getVirtualFile();
     Project project = directory.getProject();
 
     String path = f.getPath();
     if (pathToCreate.length > 0) {
-      path += VFS_SEPARATOR_CHAR + StringUtil.join(pathToCreate, VFS_SEPARATOR_CHAR + "");
+      path += VFS_SEPARATOR_CHAR + StringUtil.join(pathToCreate, VFS_SEPARATOR);
     }
     String presentablePath = f.getFileSystem().extractPresentableUrl(path);
 

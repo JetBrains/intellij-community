@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -38,10 +40,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.FocusUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +52,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+
+import static com.intellij.platform.PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static java.util.Collections.singletonList;
 
 public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
@@ -131,7 +134,7 @@ public final class ProjectUtil {
         }
 
         if (provider.canOpenProject(virtualFile)) {
-          return provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+          return chooseProcessorAndOpen(singletonList(provider), virtualFile, options);
         }
       }
     }
@@ -158,12 +161,12 @@ public final class ProjectUtil {
       return null;
     }
 
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile, /* onlyIfExistingProjectFile = */ false);
-    if (provider == null) {
+    List<ProjectOpenProcessor> processors = ProjectOpenProcessor.getOpenProcessors(virtualFile, /* onlyIfExistingProjectFile = */ false);
+    if (processors.isEmpty()) {
       return null;
     }
 
-    Project project = provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+    Project project = chooseProcessorAndOpen(processors, virtualFile, options);
     if (project == null) {
       return null;
     }
@@ -177,6 +180,40 @@ public final class ProjectUtil {
       }, ModalityState.NON_MODAL, project.getDisposed());
     });
     return project;
+  }
+
+  @Nullable
+  private static Project chooseProcessorAndOpen(@NotNull List<ProjectOpenProcessor> processors,
+                                                @NotNull VirtualFile virtualFile,
+                                                @NotNull OpenProjectTask options) {
+    Ref<Project> result = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ProjectOpenProcessor processor = selectOpenProcessor(processors, virtualFile);
+
+      if (processor != null) {
+        Project project = processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+
+        if (project != null && processor instanceof PlatformProjectOpenProcessor) {
+          project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
+        }
+
+        result.set(project);
+      }
+    });
+    return result.get();
+  }
+
+  @CalledInAwt
+  @Nullable
+  private static ProjectOpenProcessor selectOpenProcessor(@NotNull List<ProjectOpenProcessor> processors, @NotNull VirtualFile file) {
+    if (processors.size() == 1) {
+      return processors.get(0);
+    }
+    List<ProjectOpenProcessor> notDefaultProcessors = filter(processors, p -> !(p instanceof PlatformProjectOpenProcessor));
+    if (notDefaultProcessors.size() == 1) {
+      return notDefaultProcessors.get(0);
+    }
+    return new SelectProjectOpenProcessorDialog(notDefaultProcessors, file).showAndGetChoice();
   }
 
   @Nullable
@@ -261,8 +298,7 @@ public final class ProjectUtil {
     return path.contains("://") || path.contains("\\\\");
   }
 
-  @NotNull
-  public static Project[] getOpenProjects() {
+  public static Project @NotNull [] getOpenProjects() {
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
   }
@@ -301,6 +337,7 @@ public final class ProjectUtil {
                                                 IdeBundle.message("button.new.frame"),
                                                 Messages.getQuestionIcon(),
                                                 new ProjectNewWindowDoNotAskOption());
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
         return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
       }
       else {
@@ -311,6 +348,7 @@ public final class ProjectUtil {
                                                       CommonBundle.getCancelButtonText(),
                                                       Messages.getQuestionIcon(),
                                                       new ProjectNewWindowDoNotAskOption());
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
         return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
                exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
       }
@@ -326,10 +364,18 @@ public final class ProjectUtil {
    */
   public static int confirmOpenOrAttachProject() {
     final String mode = PropertiesComponent.getInstance().getValue(MODE_PROPERTY);
-    int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.or.attach"), "Open Project",
-                                       new String[]{"&This Window", "New &Window", "&Attach", CommonBundle.getCancelButtonText()},
-                                       MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
-                                       Messages.getQuestionIcon());
+    int exitCode = Messages.showDialog(
+      IdeBundle.message("prompt.open.project.or.attach"),
+      IdeBundle.message("prompt.open.project.or.attach.title"),
+      new String[]{
+        IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
+        IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
+        IdeBundle.message("prompt.open.project.or.attach.button.attach"),
+        CommonBundle.getCancelButtonText()
+      },
+      MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
+      Messages.getQuestionIcon());
+    LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
     return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
            exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
            exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
@@ -351,6 +397,7 @@ public final class ProjectUtil {
     }
 
     File parent = projectFile.getParentFile();
+    if (parent == null) return false;
     if (parent.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
       parent = parent.getParentFile();
       return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath);
@@ -360,25 +407,33 @@ public final class ProjectUtil {
            ProjectFileType.DEFAULT_EXTENSION.equals(FileUtilRt.getExtension(projectFile.getName()));
   }
 
-  public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
-    JFrame f = WindowManager.getInstance().getFrame(p);
-    if (f != null) {
-      Component mostRecentFocusOwner = f.getMostRecentFocusOwner();
-      if (executeIfAppInactive) {
-        AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
-        f.toFront();
-        if (!SystemInfo.isMac && !f.isAutoRequestFocus()) {
-          IdeFocusManager.getInstance(p).requestFocus(mostRecentFocusOwner, true);
+  public static void focusProjectWindow(@Nullable Project project, boolean executeIfAppInactive) {
+    JFrame frame = WindowManager.getInstance().getFrame(project);
+    if (frame == null) {
+      return;
+    }
+
+    Component mostRecentFocusOwner = frame.getMostRecentFocusOwner();
+    if (executeIfAppInactive) {
+      AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(project));
+      frame.toFront();
+      if (!SystemInfo.isMac && !frame.isAutoRequestFocus()) {
+        if (mostRecentFocusOwner != null) {
+          IdeFocusManager.getInstance(project).requestFocus(mostRecentFocusOwner, true);
+        }
+        else {
+          LOG.warn("frame.getMostRecentFocusOwner() is null");
         }
       }
+    }
+    else {
+      if (mostRecentFocusOwner != null) {
+        IdeFocusManager.getInstance(project).requestFocusInProject(mostRecentFocusOwner, project);
+      }
       else {
-        if (mostRecentFocusOwner != null) {
-          IdeFocusManager.getInstance(p).requestFocusInProject(mostRecentFocusOwner, p);
-        } else {
-          Component defaultFocusComponentInPanel = FocusUtil.getDefaultComponentInPanel(f.getFocusCycleRootAncestor());
-          if (defaultFocusComponentInPanel != null) {
-            IdeFocusManager.getInstance(p).requestFocusInProject(defaultFocusComponentInPanel, p);
-          }
+        Component defaultFocusComponentInPanel = FocusUtil.getDefaultComponentInPanel(frame.getFocusCycleRootAncestor());
+        if (defaultFocusComponentInPanel != null) {
+          IdeFocusManager.getInstance(project).requestFocusInProject(defaultFocusComponentInPanel, project);
         }
       }
     }

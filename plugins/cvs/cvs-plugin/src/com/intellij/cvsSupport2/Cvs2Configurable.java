@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
@@ -32,9 +33,10 @@ class Cvs2Configurable implements Configurable {
     myProject = project;
   }
 
+  @NonNls
   @Override
-  @NonNls public String getDisplayName() {
-    return "CVS2";
+  public String getDisplayName() {
+    return CvsBundle.message("configurable.Cvs2Configurable.display.name");
   }
 
   @Override

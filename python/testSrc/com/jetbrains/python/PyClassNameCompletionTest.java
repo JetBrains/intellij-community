@@ -166,7 +166,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
     myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py", true);
   }
 
-  private void doTestCompletionOrder(@NotNull String... expected) {
+  private void doTestCompletionOrder(String @NotNull ... expected) {
     myFixture.copyDirectoryToProject("/completion/className/" + getTestName(true), "");
     myFixture.configureByFile("main.py");
     myFixture.complete(CompletionType.BASIC, 2);

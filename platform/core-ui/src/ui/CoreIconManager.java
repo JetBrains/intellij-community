@@ -60,7 +60,7 @@ public final class CoreIconManager implements IconManager {
 
   @NotNull
   @Override
-  public com.intellij.ui.icons.RowIcon createRowIcon(@NotNull Icon... icons) {
+  public com.intellij.ui.icons.RowIcon createRowIcon(Icon @NotNull ... icons) {
     return new RowIcon(icons);
   }
 
@@ -110,7 +110,7 @@ public final class CoreIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon createLayered(@NotNull Icon... icons) {
+  public Icon createLayered(Icon @NotNull ... icons) {
     return new LayeredIcon(icons);
   }
 

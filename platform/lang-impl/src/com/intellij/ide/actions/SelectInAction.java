@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -14,13 +14,13 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.DirtyUI;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public final class SelectInAction extends AnAction implements DumbAware {
@@ -106,6 +106,7 @@ public final class SelectInAction extends AnAction implements DumbAware {
       return numberingText(n, text);
     }
 
+    @DirtyUI
     @Override
     public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
@@ -116,7 +117,7 @@ public final class SelectInAction extends AnAction implements DumbAware {
       if (target instanceof CompositeSelectInTarget) {
         final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
         if (subTargets.size() > 0) {
-          Collections.sort(subTargets, new SelectInManager.SelectInTargetComparator());
+          subTargets.sort(new SelectInManager.SelectInTargetComparator());
           return new SelectInActionsStep(subTargets, mySelectInContext);
         }
       }
@@ -129,6 +130,7 @@ public final class SelectInAction extends AnAction implements DumbAware {
              ((CompositeSelectInTarget)selectedValue).getSubTargets(mySelectInContext).size() > 1;
     }
 
+    @DirtyUI
     @Override
     public boolean isSelectable(final SelectInTarget target) {
       if (DumbService.isDumb(mySelectInContext.getProject()) && !DumbService.isDumbAware(target)) {
@@ -158,7 +160,7 @@ public final class SelectInAction extends AnAction implements DumbAware {
 
   private static final class NoTargetsAction extends AnAction {
     NoTargetsAction() {
-      super(IdeBundle.message("message.no.targets.available"));
+      super(IdeBundle.messagePointer("message.no.targets.available"));
     }
 
     @Override

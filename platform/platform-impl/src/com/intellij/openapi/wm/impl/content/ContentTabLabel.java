@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.DataManager;
@@ -23,7 +23,6 @@ import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtilities;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -71,7 +70,7 @@ class ContentTabLabel extends BaseLabel {
     @Override
     public Runnable getAction() {
       return () -> {
-        ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+        ContentManager contentManager = myUi.window.getContentManagerIfCreated();
         if (contentManager != null) {
           contentManager.removeContent(getContent(), true);
         }
@@ -105,7 +104,6 @@ class ContentTabLabel extends BaseLabel {
       }
 
       String toolText = icon.getTooltip();
-
       if (toolText != null && !toolText.isEmpty()) {
         IdeTooltip tooltip = new IdeTooltip(this, icon.getCenterPoint(), new JLabel(toolText));
         currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), icon);
@@ -118,7 +116,6 @@ class ContentTabLabel extends BaseLabel {
       IdeTooltip tooltip = new IdeTooltip(this, getMousePosition(), new JLabel(myText));
       currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), null);
     }
-
   }
 
   private void hideCurrentTooltip() {
@@ -130,15 +127,12 @@ class ContentTabLabel extends BaseLabel {
 
   private final BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
     @Override
-    protected void execute(final MouseEvent e) {
-
-      Optional<Runnable> first = myAdditionalIcons.stream()
-                                                  .filter(icon -> mouseOverIcon(icon))
-                                                  .map(icon -> icon.getAction()).findFirst();
-
-      if (first.isPresent()) {
-        first.get().run();
-        return;
+    protected void execute(@NotNull MouseEvent e) {
+      for (AdditionalIcon icon : myAdditionalIcons) {
+        if (mouseOverIcon(icon)) {
+          icon.getAction().run();
+          return;
+        }
       }
 
       selectContent();
@@ -240,7 +234,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public final boolean canBeClosed() {
-    return myContent.isCloseable() && myUi.myWindow.canCloseContents();
+    return myContent.isCloseable() && myUi.window.canCloseContents();
   }
 
   protected void selectContent() {
@@ -302,12 +296,12 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected boolean allowEngravement() {
-    return isSelected() || myUi != null && myUi.myWindow.isActive();
+    return isSelected() || myUi != null && myUi.window.isActive();
   }
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
     if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
@@ -317,7 +311,7 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getPassiveFg(boolean selected) {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
     if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
@@ -340,7 +334,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public boolean isSelected() {
-    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    ContentManager contentManager = myUi.window.getContentManagerIfCreated();
     return contentManager != null && contentManager.isSelected(myContent);
   }
 
@@ -351,17 +345,17 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Graphics _getGraphics(Graphics2D g) {
     if (isSelected() && getContentManager().getContentCount() > 1) {
-      return new EngravedTextGraphics(g, 1, 1, Gray._0.withAlpha(myUi.myWindow.isActive() ? 120 : 130));
+      return new EngravedTextGraphics(g, 1, 1, Gray._0.withAlpha(myUi.window.isActive() ? 120 : 130));
     }
     return super._getGraphics(g);
   }
 
   @NotNull
   private ContentManager getContentManager() {
-    return myUi.myWindow.getContentManager();
+    return myUi.getContentManager();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Content getContent() {
     return myContent;

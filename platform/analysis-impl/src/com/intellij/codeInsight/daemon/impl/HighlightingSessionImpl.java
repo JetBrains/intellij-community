@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,11 +52,11 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    myDocument = psiFile.getOriginalFile().getViewProvider().getDocument();
     myEDTQueue = new TransferToEDTQueue<Runnable>("Apply highlighting results", runnable -> {
       runnable.run();
       return true;
-    }, o -> myProject.isDisposed() || getProgressIndicator().isCanceled()) {
+    }, __ -> myProject.isDisposed() || getProgressIndicator().isCanceled()) {
       @Override
       protected void schedule(@NotNull Runnable updateRunnable) {
         ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.any());

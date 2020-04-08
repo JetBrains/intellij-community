@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ConversionResultImpl implements ConversionResult {
   public static final ConversionResultImpl CONVERSION_NOT_NEEDED = new ConversionResultImpl(false, false, false);
   public static final ConversionResultImpl CONVERSION_CANCELED = new ConversionResultImpl(true, true, false);

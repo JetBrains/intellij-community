@@ -29,7 +29,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,13 +52,13 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
   @Override
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(XmlBundle.message("html5.outline.mode"), null, AllIcons.Xml.Html5);
+    return new ActionPresentationData(XmlPsiBundle.message("html5.outline.mode"), null, AllIcons.Xml.Html5);
   }
 
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return XmlBundle.message("html5.outline.mode");
+    return XmlPsiBundle.message("html5.outline.mode");
   }
 
   @NotNull
@@ -67,9 +67,8 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
     return "FileStructurePopup";
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     throw new IncorrectOperationException("see getActionIdForShortcut()");
   }
 

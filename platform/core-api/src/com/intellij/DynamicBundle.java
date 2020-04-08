@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.application.Application;
@@ -8,10 +8,13 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.util.Enumeration;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public abstract class DynamicBundle extends AbstractBundle {
@@ -72,5 +75,43 @@ public abstract class DynamicBundle extends AbstractBundle {
 
   public static class LanguageBundleEP extends AbstractExtensionPointBean {
     public static final ExtensionPointName<LanguageBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.languageBundle");
+  }
+
+  private static final Map<String, DynamicBundle> ourBundlesForForms = ContainerUtil.createConcurrentSoftValueMap();
+
+  /**
+   * @deprecated used only dy GUI form builder
+   */
+  @Deprecated
+  public static ResourceBundle getBundle(@NotNull String baseName) {
+    Class<?> callerClass = ReflectionUtil.findCallerClass(2);
+    return getBundle(baseName, callerClass == null ? DynamicBundle.class : callerClass);
+  }
+
+  /**
+   * @deprecated used only dy GUI form builder
+   */
+  @Deprecated
+  public static ResourceBundle getBundle(@NotNull String baseName, @NotNull Class<?> formClass) {
+    DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {});
+    ResourceBundle rb = dynamic.getResourceBundle(formClass.getClassLoader());
+
+    if (BundleBase.SHOW_LOCALIZED_MESSAGES) {
+      return new ResourceBundle() {
+        @Override
+        protected Object handleGetObject(@NotNull String key) {
+          Object get = rb.getObject(key);
+          assert get instanceof String : "Language bundles should contain only strings";
+          return BundleBase.appendLocalizationMarker((String)get);
+        }
+
+        @NotNull
+        @Override
+        public Enumeration<String> getKeys() {
+          return rb.getKeys();
+        }
+      };
+    }
+    return rb;
   }
 }

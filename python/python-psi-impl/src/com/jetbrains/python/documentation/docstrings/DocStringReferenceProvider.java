@@ -38,9 +38,8 @@ import java.util.*;
  * @author yole
  */
 public class DocStringReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     if (element == DocStringUtil.getParentDefinitionDocString(element)) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       final List<TextRange> ranges = expr.getStringValueTextRanges();

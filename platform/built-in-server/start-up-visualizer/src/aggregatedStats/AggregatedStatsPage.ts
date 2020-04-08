@@ -1,16 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Component, Vue, Watch} from "vue-property-decorator"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {DataRequest, InfoResponse, MachineGroup} from "@/aggregatedStats/model"
+import {DataRequest, expandMachineAsFilterValue, InfoResponse, MachineGroup} from "@/aggregatedStats/model"
 import {debounce} from "debounce"
 import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
 import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
+import {Location} from "vue-router"
+import {Notification} from "element-ui"
 
 export const projectNameToTitle = new Map<string, string>()
+
 projectNameToTitle.set("/q9N7EHxr8F1NHjbNQnpqb0Q0fs", "joda-time")
 projectNameToTitle.set("73YWaW9bytiPDGuKvwNIYMK5CKI", "simple for IJ")
+projectNameToTitle.set("1PbxeQ044EEghMOG9hNEFee05kM", "light edit (IJ)")
+
 projectNameToTitle.set("j1a8nhKJexyL/zyuOXJ5CFOHYzU", "simple for PS")
 projectNameToTitle.set("JeNLJFVa04IA+Wasc+Hjj3z64R0", "simple for WS")
 projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
@@ -78,26 +83,45 @@ export default class AggregatedStatsPage extends Vue {
       })
   }
 
+  @Watch("$route")
+  onRouteChanged(location: Location, _oldLocation: Location): void {
+    this.setProductFromQuery(location.query?.product)
+    this.setProjectFromQuery(location.query?.project)
+  }
+
   @Watch("chartSettings.selectedProduct")
-  selectedProductChanged(product: string | null, _oldV: string): void {
-    console.log("product changed", product, _oldV)
+  selectedProductChanged(product: string | null, oldProduct: string | undefined): void {
+    console.info(`product changed (${oldProduct} => ${product})`)
 
     const infoResponse = this.lastInfoResponse
     if (infoResponse != null) {
       this.applyChangedProduct(product, infoResponse)
     }
 
-    this.dataModule.updateChartSettings(this.chartSettings)
+    const currentQuery = this.$route.query
+    if (currentQuery.product !== product && product != null && product.length > 0) {
+      // noinspection JSIgnoredPromiseFromCall
+      this.$router.push({
+        query: {
+          ...currentQuery,
+          product,
+        },
+      })
+    }
   }
 
   private applyChangedProduct(product: string | null, info: InfoResponse) {
     if (product != null && product.length > 0) {
       // later maybe will be more info for machine, so, do not use string instead of Machine
       this.machines = info.productToMachine[product] || []
+      if (this.machines.length === 0) {
+        Notification.error(`No machines for product ${product}. Please check that product code is valid.`)
+      }
+
       const projects = info.productToProjects[product] || []
       projects.sort((a, b) => {
-        const t1 = projectNameToTitle.get(a)!!
-        const t2 = projectNameToTitle.get(b)!!
+        const t1 = projectNameToTitle.get(a) || a
+        const t2 = projectNameToTitle.get(b) || b
         if (t1.startsWith("simple ") && !t2.startsWith("simple ")) {
           return -1
         }
@@ -109,6 +133,7 @@ export default class AggregatedStatsPage extends Vue {
       this.projects = projects
     }
     else {
+      console.error(`set machines to empty list because no product (${product})`)
       this.machines = []
       this.projects = []
     }
@@ -145,7 +170,7 @@ export default class AggregatedStatsPage extends Vue {
 
     if (isArrayContentTheSame(this.chartSettings.selectedMachine, selectedMachine)) {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
-      if (product != null && selectedMachine != null && selectedMachine.length > 0 && this.chartSettings.selectedProject !== selectedProject) {
+      if (product != null && selectedMachine.length > 0 && this.chartSettings.selectedProject !== selectedProject) {
         this.requestDataReloading(product, selectedMachine, selectedProject)
       }
     }
@@ -155,17 +180,21 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   private requestDataReloading(product: string, machine: Array<string>, project: string) {
-    this.dataRequest = Object.seal({product, machine, project, infoResponse: this.lastInfoResponse!!})
+    this.dataRequest = Object.seal({product, machine: expandMachineAsFilterValue(product, machine, this.lastInfoResponse!!), project})
   }
 
   @Watch("chartSettings.selectedMachine")
-  selectedMachineChanged(machine: Array<string> | string, _oldV: Array<string>): void {
+  selectedMachineChanged(machine: Array<string> | string, oldMachine: Array<string>): void {
     if (typeof machine === "string") {
       machine = [machine]
       this.chartSettings.selectedMachine = machine
     }
 
-    console.log("machine changed", machine, _oldV)
+    if (oldMachine === machine) {
+      return
+    }
+
+    console.log(`machine changed (${oldMachine?.join()} => ${machine?.join()})`)
     if (machine == null) {
       return
     }
@@ -180,8 +209,8 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   @Watch("chartSettings.selectedProject")
-  selectedProjectChanged(project: string, _oldV: Array<string>): void {
-    console.log("project changed", project, _oldV)
+  selectedProjectChanged(project: string, oldProject: Array<string>): void {
+    console.log(`project changed (${oldProject} => ${project})`)
     if (project == null) {
       return
     }
@@ -193,6 +222,17 @@ export default class AggregatedStatsPage extends Vue {
     }
 
     this.requestDataReloading(product, machine, this.chartSettings.selectedProject)
+
+    const currentQuery = this.$route.query
+    if (currentQuery.project !== project && project != null && project.length > 0) {
+      // noinspection JSIgnoredPromiseFromCall
+      this.$router.push({
+        query: {
+          ...currentQuery,
+          project,
+        },
+      })
+    }
   }
 
   @Watch("chartSettings.serverUrl")
@@ -204,13 +244,31 @@ export default class AggregatedStatsPage extends Vue {
 
   @Watch("chartSettings", {deep: true})
   chartSettingsChanged(_newV: string | null, _oldV: string) {
+    console.log("chartSettings changed (deep watcher)")
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
-  mounted() {
+  beforeMount() {
     const serverUrl = this.chartSettings.serverUrl
     if (!isEmpty(serverUrl)) {
+      const query = this.$route.query
+      this.setProductFromQuery(query.product)
+      this.setProjectFromQuery(query.project)
       this.loadData()
+    }
+  }
+
+  private setProductFromQuery(product: string | undefined | null | (string | undefined | null)[]) {
+    if (product != null && product.length == 2) {
+      console.log(`product specified in query: ${product}`)
+      this.chartSettings.selectedProduct = (product as string).toUpperCase()
+    }
+  }
+
+  private setProjectFromQuery(project: string | undefined | null | (string | undefined | null)[]) {
+    if (project != null && project.length > 0) {
+      console.log(`project specified in query: ${project}`)
+      this.chartSettings.selectedProject = project as string
     }
   }
 }

@@ -196,11 +196,10 @@ public class AnnotationUtilEx {
    * String and as a Set. This is done for performance reasons because the Set is required by the
    * {@link AnnotationUtil} utility class and allows to avoid unnecessary object constructions.
    */
-  @NotNull
-  public static PsiAnnotation[] getAnnotationFrom(PsiModifierListOwner owner,
-                                                  Pair<String, ? extends Set<String>> annotationName,
-                                                  boolean allowIndirect,
-                                                  boolean inHierarchy) {
+  public static PsiAnnotation @NotNull [] getAnnotationFrom(PsiModifierListOwner owner,
+                                                            Pair<String, ? extends Set<String>> annotationName,
+                                                            boolean allowIndirect,
+                                                            boolean inHierarchy) {
     if (owner instanceof PsiField || owner instanceof PsiLocalVariable) {
       PsiAnnotation[] annotations = getAnnotationsFromImpl(owner, annotationName, allowIndirect, false);
       if (annotations.length == 0 || !PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;

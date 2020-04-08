@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -12,12 +12,15 @@ import java.awt.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/**
+ * Opens Settings dialog or specific {@link Configurable}.
+ */
 public abstract class ShowSettingsUtil {
   public static ShowSettingsUtil getInstance() {
     return ServiceManager.getService(ShowSettingsUtil.class);
   }
 
-  public abstract void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... groups);
+  public abstract void showSettingsDialog(@NotNull Project project, ConfigurableGroup @NotNull ... groups);
 
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> toSelect);
 
@@ -51,6 +54,9 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(Component parent, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
 
+  /**
+   * OS-specific name.
+   */
   public static String getSettingsMenuName() {
     return SystemInfo.isMac ? "Preferences" : "Settings";
   }

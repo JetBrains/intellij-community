@@ -50,7 +50,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
 
     @Property(surroundWithTag = false, flat = true)
-    public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
+    public DvcsBranchSettings BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
   @Override
@@ -104,7 +104,11 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
-    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+    Boolean oldValue = myState.CHECK_INCOMING_OUTGOING;
+    if (oldValue == null || oldValue != checkIncomingOutgoing) {
+      myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).updateVisibility();
+    }
   }
 
   @NotNull
@@ -140,7 +144,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   @NotNull
-  public DvcsBranchSettings getFavoriteBranchSettings() {
-    return myState.FAVORITE_BRANCH_SETTINGS;
+  public DvcsBranchSettings getBranchSettings() {
+    return myState.BRANCH_SETTINGS;
   }
 }

@@ -1,38 +1,48 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-/**
- * @author Sergey.Malenkov
- */
-public abstract class ConfigurableVisitor {
-  public static final ConfigurableVisitor ALL = new ConfigurableVisitor() {
-    @Override
-    protected boolean accept(@NotNull Configurable configurable) {
-      return true;
-    }
-  };
+public abstract class ConfigurableVisitor implements Predicate<Configurable> {
+  public static final Predicate<Configurable> ALL = configurable -> true;
+
+  @Override
+  public boolean test(Configurable configurable) {
+    return accept(configurable);
+  }
 
   protected abstract boolean accept(@NotNull Configurable configurable);
 
   @Nullable
-  public final Configurable find(@NotNull ConfigurableGroup... groups) {
-    return find(Arrays.asList(groups));
+  public final Configurable find(ConfigurableGroup @NotNull ... groups) {
+    return find(this, Arrays.asList(groups));
   }
 
   @Nullable
-  public final Configurable find(@NotNull List<? extends ConfigurableGroup> groups) {
+  public static Configurable findById(@NotNull String id, @NotNull List<? extends ConfigurableGroup> groups) {
+    return find(configurable -> id.equals(getId(configurable)), groups);
+  }
+
+  @Nullable
+  public static Configurable findByType(@NotNull Class<? extends Configurable> type, @NotNull List<? extends ConfigurableGroup> groups) {
+    return find(configurable -> ConfigurableWrapper.cast(type, configurable) != null, groups);
+  }
+
+  @Nullable
+  public static Configurable find(@NotNull Predicate<Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     for (ConfigurableGroup group : groups) {
-      Configurable result = find(group.getConfigurables());
+      Configurable result = find(visitor, group.getConfigurables());
       if (result != null) {
         return result;
       }
@@ -40,16 +50,18 @@ public abstract class ConfigurableVisitor {
     return null;
   }
 
-  public final Configurable find(@NotNull Configurable... configurables) {
+  @Nullable
+  public static Configurable find(@NotNull Predicate<Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
-      if (accept(configurable)) {
+      if (visitor.test(configurable)) {
         return configurable;
       }
     }
+
     for (Configurable configurable : configurables) {
       if (configurable instanceof Configurable.Composite) {
         Configurable.Composite composite = (Configurable.Composite)configurable;
-        Configurable result = find(composite.getConfigurables());
+        Configurable result = find(visitor, composite.getConfigurables());
         if (result != null) {
           return result;
         }
@@ -58,74 +70,56 @@ public abstract class ConfigurableVisitor {
     return null;
   }
 
-  public final List<Configurable> findAll(@NotNull List<? extends ConfigurableGroup> groups) {
+  @NotNull
+  public static List<Configurable> findAll(@NotNull Predicate<Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     List<Configurable> list = new ArrayList<>();
-    for (ConfigurableGroup group : groups) {
-      add(list, group.getConfigurables());
-    }
-    return list;
-  }
-
-  public final List<Configurable> findAll(@NotNull Configurable... configurables) {
-    List<Configurable> list = new ArrayList<>();
-    add(list, configurables);
-    return list;
-  }
-
-  private void add(List<? super Configurable> list, Configurable... configurables) {
-    for (Configurable configurable : configurables) {
-      if (accept(configurable)) {
+    Consumer<Configurable> consumer = configurable -> {
+      if (visitor.test(configurable)) {
         list.add(configurable);
       }
+    };
+    for (ConfigurableGroup group : groups) {
+      collect(consumer, group.getConfigurables());
+    }
+    return list;
+  }
+
+  @ApiStatus.Internal
+  public static void collect(@NotNull Consumer<Configurable> visitor, Configurable @NotNull [] configurables) {
+    for (Configurable configurable : configurables) {
+      visitor.accept(configurable);
       if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite)configurable;
-        add(list, composite.getConfigurables());
+        collect(visitor, ((Configurable.Composite)configurable).getConfigurables());
       }
     }
   }
 
+  /**
+   * @deprecated Use {@link #findById}
+   */
+  @Deprecated
   public static final class ByID extends ConfigurableVisitor {
-    private final String myID;
+    private final String id;
 
     public ByID(@NotNull String id) {
-      myID = id;
+      this.id = id;
     }
 
     @Override
     protected boolean accept(@NotNull Configurable configurable) {
-      return myID.equals(getID(configurable));
+      return id.equals(getId(configurable));
     }
 
-    public static String getID(Configurable configurable) {
-      return configurable instanceof SearchableConfigurable
-             ? ((SearchableConfigurable)configurable).getId()
-             : configurable.getClass().getName();
+    @Nullable
+    public Configurable find(@NotNull List<? extends ConfigurableGroup> groups) {
+      return find(this, groups);
     }
   }
 
-  public static final class ByName extends ConfigurableVisitor {
-    private final String myName;
-
-    public ByName(@NotNull String name) {
-      myName = name;
-    }
-
-    @Override
-    protected boolean accept(@NotNull Configurable configurable) {
-      return myName.equals(configurable.getDisplayName());
-    }
-  }
-
-  public static final class ByType extends ConfigurableVisitor {
-    private final Class<? extends Configurable> myType;
-
-    public ByType(@NotNull Class<? extends Configurable> type) {
-      myType = type;
-    }
-
-    @Override
-    protected boolean accept(@NotNull Configurable configurable) {
-      return ConfigurableWrapper.cast(myType, configurable) != null;
-    }
+  @NotNull
+  public static String getId(@NotNull Configurable configurable) {
+    return configurable instanceof SearchableConfigurable
+           ? ((SearchableConfigurable)configurable).getId()
+           : configurable.getClass().getName();
   }
 }

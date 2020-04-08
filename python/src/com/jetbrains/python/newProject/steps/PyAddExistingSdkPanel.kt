@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PyProjectSynchronizerProvider
@@ -35,7 +36,7 @@ class PyAddExistingSdkPanel(project: Project?,
                             newProjectPath: String?,
                             preferredSdk: Sdk?) : PyAddSdkPanel() {
 
-  override val panelName: String = "Existing interpreter"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.interpreter")
 
   /**
    * Path mappings of current synchronizer.
@@ -79,7 +80,7 @@ class PyAddExistingSdkPanel(project: Project?,
       }
     }
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Interpreter:", sdkChooserCombo)
+      .addLabeledComponent(PyBundle.message("interpreter"), sdkChooserCombo)
       .addComponent(remotePathField.mainPanel)
       .panel
     add(formPanel, BorderLayout.NORTH)
@@ -99,8 +100,8 @@ class PyAddExistingSdkPanel(project: Project?,
   private fun validateSdkChooserField(): ValidationInfo? {
     val selectedSdk = sdk
     val message = when {
-      selectedSdk == null -> "No Python interpreter selected"
-      PythonSdkUtil.isInvalid(selectedSdk) -> "Choose valid Python interpreter"
+      selectedSdk == null -> PyBundle.message("python.sdk.no.interpreter.selection")
+      PythonSdkUtil.isInvalid(selectedSdk) -> PyBundle.message("python.sdk.choose.valid.interpreter")
       else -> return null
     }
     return ValidationInfo(message, sdkChooserCombo)
@@ -109,7 +110,7 @@ class PyAddExistingSdkPanel(project: Project?,
   private fun validateRemotePathField(): ValidationInfo? {
     val path = remotePath
     return when {
-      path != null && path.isBlank() -> ValidationInfo("Remote path not provided")
+      path != null && path.isBlank() -> ValidationInfo(PyBundle.message("python.new.project.remote.path.not.provided"))
       else -> null
     }
   }
@@ -167,7 +168,7 @@ class PyAddExistingSdkPanel(project: Project?,
           is ExecutionException, is InterruptedException -> {
             Logger.getInstance(PyAddExistingSdkPanel::class.java).warn("Failed to create server browse button", e)
             JBPopupFactory.getInstance()
-              .createMessage("Failed to browse remote server. Make sure you have permissions.")
+              .createMessage(PyBundle.message("remote.interpreter.remote.server.permissions"))
               .show(owner)
             return null
           }

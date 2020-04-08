@@ -13,8 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
  */
 public interface GrEnumDefinitionBody extends GrTypeDefinitionBody {
 
-  @NotNull
-  GrEnumConstant[] getEnumConstants();
+  GrEnumConstant @NotNull [] getEnumConstants();
 
   @Nullable
   GrEnumConstantList getEnumConstantList();

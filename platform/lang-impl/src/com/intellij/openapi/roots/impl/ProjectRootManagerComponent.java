@@ -2,14 +2,13 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -25,6 +24,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -119,6 +119,16 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         myFileTypesChanged.levelDown();
       }
     });
+    AdditionalLibraryRootsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
+      @Override
+      public void extensionListChanged() {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          WriteAction.run(() -> {
+            makeRootsChange(EmptyRunnable.getInstance(), false, true);
+          });
+        });
+      }
+    }, project);
   }
 
   @Override
@@ -135,7 +145,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   @CalledInAwt
   private void addRootsToWatch() {
     if (myProject.isDefault()) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     Disposable oldDisposable = myRootPointersDisposable;
     Disposable newDisposable = Disposer.newDisposable();
 
@@ -166,7 +176,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (ApplicationManager.getApplication().isUnitTestMode() && (!myStartupActivityPerformed || myProject.isDisposed())) {
       return; // in test mode suppress addition to a queue unless project is properly initialized
     }
-    if (myProject.isDefault()) {
+    if (myProject.isDefault() || LightEdit.owns(myProject)) {
       return;
     }
 
@@ -208,6 +218,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   @NotNull
   private Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+
     Set<String> recursivePaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     Set<String> flatPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
@@ -233,7 +244,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         recursivePaths.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
       }
     }
-
 
     List<String> recursiveUrls = ContainerUtil.map(recursivePaths, VfsUtilCore::pathToUrl);
     Set<String> excludedUrls = new THashSet<>();
@@ -293,8 +303,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private void synchronizeRoots() {
     if (!myStartupActivityPerformed) return;
 
-    if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
-      LOG.debug(new Throwable("sync roots"));
+    if (LOG_CACHES_UPDATE || LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("sync roots"));
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("project roots have changed");
@@ -343,7 +353,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   public void dispose() {
     myCollectWatchRootsFuture.cancel(false);
     myExecutor.shutdownNow();
-    assertListenersAreDisposed();
   }
 
   private class AppListener implements ApplicationListener {
@@ -368,29 +377,29 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private final VirtualFilePointerListener myRootsChangedListener = new VirtualFilePointerListener() {
     @Override
-    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(VirtualFilePointer @NotNull [] pointers) {
       if (myProject.isDisposed()) {
         return;
       }
 
       if (myInsideRefresh == 0) {
         beforeRootsChange(false);
-        if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
-          LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
+        if (LOG_CACHES_UPDATE || LOG.isTraceEnabled()) {
+          LOG.trace(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
         }
       }
       else if (!myPointerChangesDetected) {
         //this is the first pointer changing validity
         myPointerChangesDetected = true;
         myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
-        if (LOG_CACHES_UPDATE || LOG.isDebugEnabled()) {
-          LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl() : ""));
+        if (LOG_CACHES_UPDATE || LOG.isTraceEnabled()) {
+          LOG.trace(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl() : ""));
         }
       }
     }
 
     @Override
-    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+    public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
       if (myProject.isDisposed()) {
         return;
       }

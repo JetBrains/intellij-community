@@ -25,9 +25,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class JpsSerializationManager {
   public static JpsSerializationManager getInstance() {
     return JpsServiceManager.getInstance().getService(JpsSerializationManager.class);

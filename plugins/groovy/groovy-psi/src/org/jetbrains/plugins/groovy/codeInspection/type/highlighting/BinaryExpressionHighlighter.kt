@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHe
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.isFake
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 
@@ -24,8 +23,7 @@ class BinaryExpressionHighlighter(
 
   override val highlightElement: PsiElement get() = expression.operationToken
 
-  override fun buildFix(argument: Argument, expectedType: PsiType): GrCastFix? {
-    if (argument !is ExpressionArgument) return null
+  override fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): GrCastFix? {
     val arguments = reference.arguments ?: return null
     if (argument !in arguments) return null
 

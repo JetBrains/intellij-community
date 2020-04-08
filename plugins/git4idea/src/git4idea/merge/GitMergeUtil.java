@@ -52,11 +52,6 @@ public class GitMergeUtil {
   static final int THEIRS_REVISION_NUM = 3; // remote file content: "Theirs"
 
   /**
-   * The item representing default strategy
-   */
-  public static final String DEFAULT_STRATEGY = GitBundle.getString("merge.default.strategy");
-
-  /**
    * A private constructor for utility class
    */
   private GitMergeUtil() {
@@ -76,11 +71,11 @@ public class GitMergeUtil {
     }
     switch (branchCount) {
       case 0:
-        return new String[]{DEFAULT_STRATEGY};
+        return new String[]{getDefaultStrategy()};
       case 1:
-        return new String[]{DEFAULT_STRATEGY, "resolve", "recursive", "octopus", "ours", "subtree"};
+        return new String[]{getDefaultStrategy(), "resolve", "recursive", "octopus", "ours", "subtree"};
       default:
-        return new String[]{DEFAULT_STRATEGY, "octopus", "ours"};
+        return new String[]{getDefaultStrategy(), "octopus", "ours"};
     }
   }
 
@@ -97,7 +92,7 @@ public class GitMergeUtil {
         for (String s : getMergeStrategies(elements.size())) {
           strategy.addItem(s);
         }
-        strategy.setSelectedItem(DEFAULT_STRATEGY);
+        strategy.setSelectedItem(getDefaultStrategy());
       }
 
       @Override
@@ -221,10 +216,9 @@ public class GitMergeUtil {
     }
   }
 
-  @NotNull
-  private static byte[] loadOriginalContent(@NotNull Project project,
-                                            @NotNull VirtualFile root,
-                                            @NotNull FilePath path) {
+  private static byte @NotNull [] loadOriginalContent(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      @NotNull FilePath path) {
     try {
       return loadRevisionContent(project, root, path, ORIGINAL_REVISION_NUM);
     }
@@ -243,17 +237,16 @@ public class GitMergeUtil {
         });
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.warn(e);
         return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       }
     }
   }
 
-  @NotNull
-  private static byte[] loadRevisionCatchingErrors(@NotNull Project project,
-                                                   @NotNull VirtualFile root,
-                                                   @NotNull FilePath path,
-                                                   int stageNum) throws VcsException {
+  private static byte @NotNull [] loadRevisionCatchingErrors(@NotNull Project project,
+                                                             @NotNull VirtualFile root,
+                                                             @NotNull FilePath path,
+                                                             int stageNum) throws VcsException {
     try {
       return loadRevisionContent(project, root, path, stageNum);
     }
@@ -272,11 +265,10 @@ public class GitMergeUtil {
     }
   }
 
-  @NotNull
-  private static byte[] loadRevisionContent(@NotNull Project project,
-                                            @NotNull VirtualFile root,
-                                            @NotNull FilePath path,
-                                            int stageNum) throws VcsException {
+  private static byte @NotNull [] loadRevisionContent(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      @NotNull FilePath path,
+                                                      int stageNum) throws VcsException {
     return GitFileUtils.getFileContent(project, root, ":" + stageNum, VcsFileUtil.relativePath(root, path));
   }
 
@@ -447,5 +439,9 @@ public class GitMergeUtil {
 
   public static boolean isReverseRoot(@NotNull GitRepository repository) {
     return repository.getState().equals(GitRepository.State.REBASING);
+  }
+
+  public static String getDefaultStrategy() {
+    return GitBundle.getString("merge.default.strategy");
   }
 }

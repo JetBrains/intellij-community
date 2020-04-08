@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.project.Project;
@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
 public interface ProjectLifecycleListener {
   Topic<ProjectLifecycleListener> TOPIC = Topic.create("Various stages of project lifecycle notifications", ProjectLifecycleListener.class);
 
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
   default void projectComponentsInitialized(@NotNull Project project) {
   }
 

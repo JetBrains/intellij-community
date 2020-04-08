@@ -177,11 +177,12 @@ public class OptionalChainInliner implements CallInliner {
         .push(SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), result)) // stack: ...value opt opt.value
         .splice(3, 1, 0, 2)
         .assign()
-        .pop();
+        .pop()
+        .resultOf(call);
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {
-      builder.push(DfaOptionalSupport.getOptionalValue(false));
+      builder.push(DfaOptionalSupport.getOptionalValue(false), call);
       return true;
     }
     return false;

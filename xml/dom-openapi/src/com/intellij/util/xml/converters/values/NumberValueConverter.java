@@ -17,8 +17,8 @@
 package com.intellij.util.xml.converters.values;
 
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomBundle;
 import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +63,8 @@ public class NumberValueConverter<T extends Number> extends ResolvingConverter<T
     if (isEmpty && myAllowEmpty) return null;
 
     return isEmpty ?
-           DomBundle.message("value.converter.format.exception.empty.string", myNumberClass.getName()) :
-           DomBundle.message("value.converter.format.exception", s, myNumberClass.getName());
+           XmlDomBundle.message("value.converter.format.exception.empty.string", myNumberClass.getName()) :
+           XmlDomBundle.message("value.converter.format.exception", s, myNumberClass.getName());
   }
 
   @NotNull

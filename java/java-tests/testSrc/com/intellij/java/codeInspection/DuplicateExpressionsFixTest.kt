@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection
+import com.intellij.java.JavaBundle
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -52,11 +53,11 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun introduce(expr: String) =
-    InspectionsBundle.message("inspection.duplicate.expressions.introduce.variable.fix.name", expr)!!
+    JavaBundle.message("inspection.duplicate.expressions.introduce.variable.fix.name", expr)
 
   private fun reuse(name: String, expr: String) =
-    InspectionsBundle.message("inspection.duplicate.expressions.reuse.variable.fix.name", name, expr)!!
+    JavaBundle.message("inspection.duplicate.expressions.reuse.variable.fix.name", name, expr)
 
   private fun replace(name: String, expr: String) =
-    InspectionsBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.name", name, expr)!!
+    JavaBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.name", name, expr)
 }

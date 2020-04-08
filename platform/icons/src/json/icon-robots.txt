@@ -1,2 +1,0 @@
-deprecated: property_braces.png -> /json/object.svg; to be removed in IDEA 2020 - use AllIcons.Json.Object
-deprecated: property_brackets.png -> /json/array.svg; to be removed in IDEA 2020 - use AllIcons.Json.Array

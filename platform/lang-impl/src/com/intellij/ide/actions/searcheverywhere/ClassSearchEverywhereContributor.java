@@ -2,19 +2,13 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.GotoClassAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
-import com.intellij.lang.DependentLanguage;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.ide.util.gotoByName.LanguageRef;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,11 +19,9 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -39,31 +31,28 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   private static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
-  private final PersistentSearchEverywhereContributorFilter<Language> myFilter;
+  private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
 
-  public ClassSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
-    super(project, context);
-    myFilter = project == null ? null : createLanguageFilter(project);
+  public ClassSearchEverywhereContributor(@NotNull AnActionEvent event) {
+    super(event);
+    myFilter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
   }
 
   @NotNull
   @Override
   public String getGroupName() {
-    return GotoClassPresentationUpdater.getTabTitle(true);
+    return GotoClassPresentationUpdater.getTabTitlePluralized();
   }
 
   @NotNull
   @Override
   public String getFullGroupName() {
-    String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
-    return Arrays.stream(split)
-      .map(StringUtil::pluralize)
-      .collect(Collectors.joining("/"));
+    return String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
   }
 
   @NotNull
   public String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.classes", IdeUICustomization.getInstance().getProjectConceptName());
+    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
   }
 
   @Override
@@ -73,7 +62,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
 
   @NotNull
   @Override
-  protected FilteringGotoByModel<Language> createModel(@NotNull Project project) {
+  protected FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
     GotoClassModel2 model = new GotoClassModel2(project);
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
@@ -187,21 +176,19 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new ClassSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
+      return new ClassSearchEverywhereContributor(initEvent);
+    }
+
+    @Override
+    public @Nullable KeyboardShortcut getShortcut() {
+      return ActionManager.getInstance().getKeyboardShortcut("GotoClass");
     }
   }
 
   @NotNull
-  static PersistentSearchEverywhereContributorFilter<Language> createLanguageFilter(@NotNull Project project) {
-    List<Language> items = Language.getRegisteredLanguages()
-      .stream()
-      .filter(lang -> lang != Language.ANY && !(lang instanceof DependentLanguage))
-      .sorted(LanguageUtil.LANGUAGE_COMPARATOR)
-      .collect(Collectors.toList());
+  static PersistentSearchEverywhereContributorFilter<LanguageRef> createLanguageFilter(@NotNull Project project) {
+    List<LanguageRef> items = LanguageRef.forAllLanguages();
     GotoClassSymbolConfiguration persistentConfig = GotoClassSymbolConfiguration.getInstance(project);
-    return new PersistentSearchEverywhereContributorFilter<>(items, persistentConfig, Language::getDisplayName, language -> {
-      final LanguageFileType fileType = language.getAssociatedFileType();
-      return fileType != null ? fileType.getIcon() : null;
-    });
+    return new PersistentSearchEverywhereContributorFilter<>(items, persistentConfig, LanguageRef::getDisplayName, LanguageRef::getIcon);
   }
 }

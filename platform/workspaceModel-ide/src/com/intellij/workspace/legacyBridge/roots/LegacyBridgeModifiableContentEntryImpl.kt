@@ -31,6 +31,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
   private val modifiableRootModel: LegacyBridgeModifiableRootModel,
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
+  private val LOG = Logger.getInstance(javaClass)
 
   private val currentContentEntry = CachedValueImpl<ContentEntryViaTypedEntity> {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryViaTypedEntity
@@ -41,6 +42,12 @@ internal class LegacyBridgeModifiableContentEntryImpl(
   private fun <P : JpsElement?> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     if (!contentEntryUrl.isEqualOrParentOf(sourceFolderUrl)) {
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
+    }
+
+    val duplicate = findDuplicate(sourceFolderUrl, type, properties)
+    if (duplicate != null) {
+      LOG.debug("Source folder for '$sourceFolderUrl' and type '$type' already exist")
+      return duplicate
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -91,6 +98,24 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type
     } ?: error("Source folder for '$sourceFolderUrl' and type '$type' was not found after adding")
+  }
+
+  private fun <P : JpsElement?> findDuplicate(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>,
+                                              properties: P): SourceFolder? {
+    val propertiesFilter: (SourceFolder) -> Boolean = when (properties) {
+      is JavaSourceRootProperties -> label@{ sourceFolder: SourceFolder ->
+        val javaSourceRoot = (sourceFolder as SourceFolderViaTypedEntity).sourceRootEntity.asJavaSourceRoot()
+        return@label javaSourceRoot != null && javaSourceRoot.generated == properties.isForGeneratedSources
+                     && javaSourceRoot.packagePrefix == properties.packagePrefix
+      }
+      is JavaResourceRootProperties -> label@{ sourceFolder: SourceFolder ->
+        val javaResourceRoot = (sourceFolder as SourceFolderViaTypedEntity).sourceRootEntity.asJavaResourceRoot()
+        return@label javaResourceRoot != null && javaResourceRoot.generated == properties.isForGeneratedSources
+                     && javaResourceRoot.relativeOutputPath == properties.relativeOutputPath
+      }
+      else -> { _ -> true }
+    }
+    return sourceFolders.filter { it.url == sourceFolderUrl.url && it.rootType == type }.find { propertiesFilter.invoke(it) }
   }
 
   override fun removeSourceFolder(sourceFolder: SourceFolder) {
@@ -203,7 +228,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     addSourceFolder(VirtualFileUrlManager.fromUrl(url), type, properties)
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file
-  override fun getUrl(): String = currentContentEntry.value.url
+  override fun getUrl(): String = contentEntryUrl.url
   override fun getSourceFolders(): Array<SourceFolder> = currentContentEntry.value.sourceFolders
   override fun getSourceFolders(rootType: JpsModuleSourceRootType<*>): List<SourceFolder> =
     currentContentEntry.value.getSourceFolders(rootType)

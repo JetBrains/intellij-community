@@ -45,7 +45,7 @@ public abstract class MacMessages {
    *
    * @return number of button pressed: from 0 up to buttons.length-1 inclusive, or -1 for Cancel
    */
-  public abstract int showMessageDialog(@NotNull String title, String message, @NotNull String[] buttons, boolean errorStyle,
+  public abstract int showMessageDialog(@NotNull String title, String message, String @NotNull [] buttons, boolean errorStyle,
                                         @Nullable Window window, int defaultOptionIndex, int focusedOptionIndex,
                                         @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 

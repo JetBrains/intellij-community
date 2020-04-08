@@ -10,6 +10,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
+import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -19,11 +20,14 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -90,8 +94,7 @@ public abstract class XmlExtension {
     return new TagNameReference(nameElement, startTagFlag);
   }
 
-  @Nullable
-  public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
+  public String[] @Nullable [] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
     return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
   }
 
@@ -129,9 +132,11 @@ public abstract class XmlExtension {
   }
 
   @NotNull
-  public XmlNSDescriptor wrapNSDescriptor(@NotNull XmlTag element, @NotNull XmlNSDescriptor descriptor) {
+  public XmlNSDescriptor wrapNSDescriptor(@NotNull XmlTag element, @NotNull String namespacePrefix, @NotNull XmlNSDescriptor descriptor) {
     if (element instanceof HtmlTag && !(descriptor instanceof HtmlNSDescriptorImpl)) {
-      return new HtmlNSDescriptorImpl(descriptor);
+      XmlNSDescriptor result = doIfNotNull(descriptor.getDescriptorFile(),
+                                           file -> XmlDocumentImpl.getCachedHtmlNsDescriptor(file, namespacePrefix));
+      return ObjectUtils.notNull(result, () -> new HtmlNSDescriptorImpl(descriptor));
     }
     return descriptor;
   }
@@ -164,6 +169,10 @@ public abstract class XmlExtension {
 
   public boolean shouldBeInserted(final XmlAttributeDescriptor descriptor) {
     return descriptor.isRequired();
+  }
+
+  public boolean shouldCompleteTag(XmlTag context) {
+    return true;
   }
   
   @NotNull
@@ -202,6 +211,10 @@ public abstract class XmlExtension {
   }
 
   public boolean isSingleTagException(@NotNull XmlTag tag) { return false; }
+
+  public boolean isValidTagNameChar(final char c) {
+    return false;
+  }
 
   public static boolean shouldIgnoreSelfClosingTag(@NotNull XmlTag tag) {
     final XmlExtension extension = getExtensionByElement(tag);

@@ -13,13 +13,13 @@ public class SetUtil {
   /**
    * Intersects two sets
    */
-  public static <T> Set<T> intersect(final Set<T> set1, final Set<T> set2) {
+  public static <T> Set<T> intersect(final Set<? extends T> set1, final Set<? extends T> set2) {
     if (set1.equals(set2)){
-      return set1;
+      return (Set<T>)set1;
     }
-    final HashSet<T> result = new HashSet<>();
-    Set<T> minSet;
-    Set<T> otherSet;
+    Set<T> result = new HashSet<>();
+    Set<? extends T> minSet;
+    Set<? extends T> otherSet;
     if (set1.size() < set2.size()){
       minSet = set1;
       otherSet = set2;

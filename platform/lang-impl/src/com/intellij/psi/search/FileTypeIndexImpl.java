@@ -2,7 +2,6 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.io.KeyDescriptor;
@@ -14,12 +13,10 @@ import java.util.Collections;
 public final class FileTypeIndexImpl
         extends ScalarIndexExtension<FileType>
         implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
-  static final ID<FileType, Void> NAME = FileTypeIndex.NAME;
-
   @NotNull
   @Override
   public ID<FileType, Void> getName() {
-    return NAME;
+    return FileTypeIndex.NAME;
   }
 
   @NotNull
@@ -31,7 +28,7 @@ public final class FileTypeIndexImpl
   @NotNull
   @Override
   public KeyDescriptor<FileType> getKeyDescriptor() {
-    return new FileTypeKeyDescriptor();
+    return FileTypeKeyDescriptor.INSTANCE;
   }
 
   @NotNull
@@ -47,21 +44,7 @@ public final class FileTypeIndexImpl
 
   @Override
   public int getVersion() {
-    int version = 2;
-
-    if (!InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
-      FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
-      for (FileType type : types) {
-        version += type.getName().hashCode();
-      }
-
-      version *= 31;
-      for (FileTypeRegistry.FileTypeDetector detector : FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList()) {
-        version += detector.getVersion();
-      }
-    }
-
-    return version;
+    return 2;
   }
 
   @NotNull

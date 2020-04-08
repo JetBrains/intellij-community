@@ -15,89 +15,85 @@
  */
 package com.jetbrains.python.findUsages;
 
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesHandlerFactory;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.find.findUsages.*;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 /**
- * @author yole
+ * @author traff
  */
-public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
+public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
+
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
-    return element instanceof PyClass ||
-           (element instanceof PyFile && PyUtil.isPackage((PyFile)element)) ||
-           element instanceof PyImportedModule ||
-           element instanceof PyFunction ||
-           element instanceof PyTargetExpression;
+    return PyPsiFindUsagesHandlerFactory.super.canFindUsages(element);
   }
 
-  @Nullable
-  @Override
-  public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    if (element instanceof PyImportedModule) {
-      final PsiElement resolved = ((PyImportedModule)element).resolve();
-      if (resolved != null) {
-        element = resolved;
-      }
+  private static FindUsagesHandler proxy(final FindUsagesHandlerBase base) {
+    if (base instanceof FindUsagesHandler) {
+      return (FindUsagesHandler)base;
     }
-    if (element instanceof PsiFileSystemItem) {
-      return new PyModuleFindUsagesHandler((PsiFileSystemItem)element);
-    }
-    if (element instanceof PyFunction) {
-      if (!forHighlightUsages) {
-        TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
-        final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
-        if (superMethods.size() > 0) {
-          final PsiElement next = superMethods.iterator().next();
-          // TODO should do this for Jython functions overriding Java methods too
-          if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
-            int rc = Messages.showYesNoDialog(element.getProject(), "Method " +
-                                                                          ((PyFunction)element).getName() +
-                                                                          " overrides method of class " +
-                                                                          ((PyFunction)next).getContainingClass().getName() +
-                                                                          ".\nDo you want to find usages of the base method?",  "Find Usages", Messages.getQuestionIcon());
-            if (rc == Messages.YES) {
-              List<PsiElement> allMethods = new ArrayList<>();
-              allMethods.add(element);
-              allMethods.addAll(superMethods);
-              return new PyFunctionFindUsagesHandler(element, allMethods);
-            }
-            else {
-              return new PyFunctionFindUsagesHandler(element);
-            }
-          }
+    else if (base instanceof PyFindUsagesHandler) {
+      return new FindUsagesHandler(base.getPsiElement()) {
+        @Override
+        public @NotNull FindUsagesOptions getFindUsagesOptions() {
+          return base.getFindUsagesOptions();
         }
 
-      }
-      return new PyFunctionFindUsagesHandler(element);
+        @Override
+        protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+          return ((PyFindUsagesHandler)base).isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
+        }
+
+        @Override
+        public PsiElement @NotNull [] getPrimaryElements() {
+          return base.getPrimaryElements();
+        }
+      };
     }
-    if (element instanceof PyClass) {
-      return new PyClassFindUsagesHandler((PyClass)element);
+    else {
+      @NonNls String msg = base.toString() + " is of unexpected type.";
+      throw new IllegalArgumentException(msg);
     }
-    if (element instanceof PyTargetExpression) {
-      return new PyTargetExpressionFindUsagesHandler(((PyTargetExpression)element));
-    }
-    return null;
   }
 
-  private static boolean isInObject(PyFunction fun) {
-    final PyClass containingClass = fun.getContainingClass();
-    if (containingClass == null) {
-      return false;
+  @Override
+  public @Nullable FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+    return proxy(PyPsiFindUsagesHandlerFactory.super.createFindUsagesHandler(element, forHighlightUsages));
+  }
+
+  @Override
+  public @NotNull PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
+    return new PyModuleFindUsagesHandlerUi(element);
+  }
+
+  static class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
+    protected PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
+      super(file);
     }
-    return PyUtil.isObjectClass(containingClass);
+
+    @NotNull
+    @Override
+    public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+      return new CommonFindUsagesDialog(myElement,
+                                        getProject(),
+                                        getFindUsagesOptions(),
+                                        toShowInNewTab,
+                                        mustOpenInNewTab,
+                                        isSingleFile,
+                                        this) {
+        @Override
+        public void configureLabelComponent(@NonNls @NotNull final SimpleColoredComponent coloredComponent) {
+          coloredComponent.append(myElement instanceof PsiDirectory ? "Package " : "Module ");
+          coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+      };
+    }
   }
 }

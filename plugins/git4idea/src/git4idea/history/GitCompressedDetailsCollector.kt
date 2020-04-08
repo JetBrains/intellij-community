@@ -2,7 +2,6 @@
 package git4idea.history
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -28,50 +27,44 @@ internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile
   }
 }
 
-internal class CompressedRecordBuilder(root: VirtualFile,
+internal class CompressedRecordBuilder(private val root: VirtualFile,
                                        private val pathsEncoder: VcsLogIndexer.PathsEncoder) : GitLogRecordBuilder<GitCompressedRecord> {
-  private val rootPath = root.path
   private var changes = TIntObjectHashMap<Change.Type>()
   private var parents = TIntHashSet()
   private var renames = TIntIntHashMap()
 
   override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
     if (secondPath != null) {
-      val beforeAbsolutePath = absolutePath(firstPath)
-      val afterAbsolutePath = absolutePath(secondPath)
-      val beforeId = pathsEncoder.encode(beforeAbsolutePath, false)
-      val afterId = pathsEncoder.encode(afterAbsolutePath, false)
-      addPath(beforeAbsolutePath, beforeId, Change.Type.DELETED)
-      addPath(afterAbsolutePath, afterId, Change.Type.NEW)
+      val beforeId = pathsEncoder.encode(root, firstPath, false)
+      val afterId = pathsEncoder.encode(root, secondPath, false)
+      addPath(firstPath, beforeId, Change.Type.DELETED)
+      addPath(secondPath, afterId, Change.Type.NEW)
       renames.put(beforeId, afterId)
     }
     else {
-      val absolutePath = absolutePath(firstPath)
-      val pathId = pathsEncoder.encode(absolutePath, false)
-      addPath(absolutePath, pathId, type)
+      val pathId = pathsEncoder.encode(root, firstPath, false)
+      addPath(firstPath, pathId, type)
     }
   }
 
-  private fun addPath(absolutePath: String, pathId: Int, type: Change.Type) {
+  private fun addPath(relativePath: String, pathId: Int, type: Change.Type) {
     changes.put(pathId, type)
-    addParents(absolutePath)
+    addParents(relativePath)
   }
 
   private fun addParents(path: String) {
     var parentPath = PathUtil.getParentPath(path)
-    var parentPathId = pathsEncoder.encode(parentPath, true)
+    var parentPathId = pathsEncoder.encode(root, parentPath, true)
 
     while (!parents.contains(parentPathId)) {
-      if (FileUtil.PATH_HASHING_STRATEGY.equals(rootPath, parentPath)) break
+      if (parentPath.isEmpty()) break
 
       parents.add(parentPathId)
 
       parentPath = PathUtil.getParentPath(parentPath)
-      parentPathId = pathsEncoder.encode(parentPath, true)
+      parentPathId = pathsEncoder.encode(root, parentPath, true)
     }
   }
-
-  private fun absolutePath(path: String) = "$rootPath/$path"
 
   override fun build(options: MutableMap<GitLogParser.GitLogOption, String>, supportsRawBody: Boolean): GitCompressedRecord {
     parents.forEach {

@@ -5,9 +5,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ProductProperties
 
-/**
- * @author nik
- */
 @CompileStatic
 class VmOptionsGenerator {
   static final List<String> COMMON_VM_OPTIONS =
@@ -15,7 +12,7 @@ class VmOptionsGenerator {
       '-XX:+UseConcMarkSweepGC', '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-ea',
       '-XX:CICompilerCount=2',
-      '-Dsun.io.useCanonPrefixCache=false', '-Djava.net.preferIPv4Stack=true',
+      '-Dsun.io.useCanonPrefixCache=false',
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',

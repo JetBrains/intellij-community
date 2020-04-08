@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn.branchConfig;
@@ -30,10 +30,10 @@ import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 
 import java.io.File;
+import java.util.Objects;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.ObjectUtils.notNull;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class CreateBranchOrTagAction extends BasicAction {
@@ -52,9 +52,9 @@ public class CreateBranchOrTagAction extends BasicAction {
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs, virtualToIoFile(file));
     if (dialog.showAndGet()) {
-      Target source = notNull(dialog.getSource());
+      Target source = Objects.requireNonNull(dialog.getSource());
       File sourceFile = dialog.getSourceFile();
-      Url destination = notNull(dialog.getDestination());
+      Url destination = Objects.requireNonNull(dialog.getDestination());
       Revision revision = dialog.getRevision();
       String comment = dialog.getComment();
       Url parentUrl = removePathTail(destination);
@@ -139,7 +139,7 @@ public class CreateBranchOrTagAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) {
   }
 
   @Override

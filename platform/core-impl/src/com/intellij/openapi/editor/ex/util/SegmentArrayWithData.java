@@ -86,8 +86,7 @@ public class SegmentArrayWithData extends SegmentArray {
     return myStorage.getData(index);
   }
 
-  @NotNull
-  protected static int[] reallocateArray(@NotNull int[] array, int index) {
+  protected static int @NotNull [] reallocateArray(int @NotNull [] array, int index) {
     if (index < array.length) return array;
     return ArrayUtil.realloc(array, calcCapacity(array.length, index));
   }

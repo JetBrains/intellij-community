@@ -3,7 +3,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,6 +12,8 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.caches.IndexUpdateRunner;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -104,8 +105,8 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
-      CacheUpdateRunner.processFiles(new EmptyProgressIndicator(), files, getProject(),
-                                     content -> index.indexFileContent(getProject(), content));
+      new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, UnindexedFilesUpdater.getNumberOfIndexingThreads())
+        .indexFiles(getProject(), files, new EmptyProgressIndicator());
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());

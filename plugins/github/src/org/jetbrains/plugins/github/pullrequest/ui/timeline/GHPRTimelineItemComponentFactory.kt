@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
@@ -25,21 +23,16 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.*
 import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val project: Project,
-                                       private val reviewService: GHPRReviewServiceAdapter,
+class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
@@ -78,7 +71,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           border = JBUI.Borders.emptyBottom(12)
         })
       }
-      add(GHPRReviewThreadsPanel(reviewThreadsModel, ::createReviewThread))
+      add(GHPRReviewThreadsPanel(reviewThreadsModel) {
+        GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
+      })
     }
 
     val icon = when (review.state) {
@@ -92,29 +87,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val actionText = when (review.state) {
       APPROVED -> "approved these changes"
       CHANGES_REQUESTED -> "rejected these changes"
-      COMMENTED, DISMISSED, PENDING -> "reviewed"
+      PENDING -> "started a review"
+      COMMENTED, DISMISSED -> "reviewed"
     }
 
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)
-  }
-
-  private fun createReviewThread(thread: GHPRReviewThreadModel): JComponent {
-    val panel = VerticalBox().apply {
-      isOpaque = false
-      add(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      add(Box.createRigidArea(JBDimension(0, 12)))
-      add(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
-    }
-
-    if (reviewService.canComment()) {
-      panel.add(Box.createRigidArea(JBDimension(0, 12)))
-      panel.add(GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
-        reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
-        }
-      })
-    }
-    return panel
   }
 
   private fun userAvatar(user: GHActor?): JLabel {

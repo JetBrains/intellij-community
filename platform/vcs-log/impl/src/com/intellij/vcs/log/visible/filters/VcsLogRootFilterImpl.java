@@ -23,7 +23,7 @@ class VcsLogRootFilterImpl implements VcsLogRootFilter {
 
   @Override
   public String toString() {
-    return "roots:" + myRoots;
+    return "roots:" + myRoots; // NON-NLS
   }
 
   @Override

@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ public class ShowAnnotationColorsAction extends ActionGroup implements DumbAware
   private final AnAction[] myChildren;
 
   public ShowAnnotationColorsAction() {
-    super("Colors", true);
+    super(VcsBundle.messagePointer("annotations.color.mode.group.colors"), true);
 
     final ArrayList<AnAction> kids = new ArrayList<>(ShortNameType.values().length);
     for (ColorMode type : ColorMode.values()) {
@@ -38,9 +39,8 @@ public class ShowAnnotationColorsAction extends ActionGroup implements DumbAware
     myChildren = kids.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myChildren;
   }
 

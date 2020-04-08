@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -28,11 +28,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsCommitStyleFactory;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
-import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.graph.DefaultColorGenerator;
@@ -54,6 +51,7 @@ import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +69,6 @@ import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
@@ -85,9 +82,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int ROOT_NAME_MAX_WIDTH = 300;
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
-
-  public static final String LOADING_COMMITS_TEXT = "Loading commits...";
-  public static final String CHANGES_LOG_TEXT = "Changes log";
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final String myId;
@@ -126,7 +120,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this);
     myStringCellRenderer = new StringCellRenderer();
 
-    getEmptyText().setText(CHANGES_LOG_TEXT);
+    getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), disposable);
 
     initColumns();
@@ -180,16 +174,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   protected void updateEmptyText() {
-    getEmptyText().setText(CHANGES_LOG_TEXT);
+    getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
   }
 
-  protected void setErrorEmptyText(@NotNull Throwable error, @NotNull String defaultText) {
+  protected void setErrorEmptyText(@NotNull Throwable error, @Nls @NotNull String defaultText) {
     String message = ObjectUtils.chooseNotNull(error.getMessage(), defaultText);
     message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
     getEmptyText().setText(message);
   }
 
-  protected void appendActionToEmptyText(@NotNull String text, @NotNull Runnable action) {
+  protected void appendActionToEmptyText(@Nls @NotNull String text, @NotNull Runnable action) {
     getEmptyText().appendSecondaryText(text, VcsLogUiUtil.getLinkAttributes(), e -> action.run());
   }
 
@@ -203,7 +197,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       highlighter.update(visiblePack, permGraphChanged);
     }
 
-    if (!getEmptyText().getText().equals(LOADING_COMMITS_TEXT)) {
+    if (!getEmptyText().getText().equals(VcsLogBundle.message("vcs.log.loading.status"))) {
       updateEmptyText();
     }
 
@@ -459,11 +453,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (column == VcsLogColumn.ROOT) {
       Object path = getValueAt(row, column.ordinal());
       if (path instanceof FilePath) {
-        return "<html><b>" +
-               myColorManager.getLongName((FilePath)path) +
-               "</b><br/>Click to " +
-               (isShowRootNames() ? "collapse" : "expand") +
-               "</html>";
+        String clickMessage = isShowRootNames()
+                              ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
+                              : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
+        return "<html><b>" + myColorManager.getLongName((FilePath)path) + "</b><br/>" + clickMessage + "</html>"; // NON-NLS
       }
     }
     return null;
@@ -493,7 +486,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
         Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRootAtRow(row));
         if (roots.size() == 1) {
-          return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
+          return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getSupportedVcs();
         }
         return null;
       })
@@ -653,7 +646,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return mySelection;
   }
 
-  public void handleAnswer(@Nullable GraphAnswer<Integer> answer) {
+  public void handleAnswer(@NotNull GraphAnswer<Integer> answer) {
     GraphCommitCellController controller = (GraphCommitCellController)Objects.requireNonNull(getController(VcsLogColumn.COMMIT));
     Cursor cursor = controller.handleGraphAnswer(answer, true, null, null);
     myMouseAdapter.handleCursor(cursor);
@@ -757,9 +750,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private class StringCellRenderer extends ColoredTableCellRenderer {
+    private StringCellRenderer() {
+      setCellState(new GraphCommitCellRenderer.BorderlessTableCellState());
+    }
+
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setBorder(null);
       if (value == null) {
         return;
       }
@@ -957,7 +953,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
       if (VcsLogUiUtil.isProgressVisible(keys, myId)) {
-        getEmptyText().setText(LOADING_COMMITS_TEXT);
+        getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.status"));
       }
       else {
         updateEmptyText();

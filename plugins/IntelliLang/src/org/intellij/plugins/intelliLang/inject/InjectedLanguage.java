@@ -83,8 +83,7 @@ public final class InjectedLanguage {
     }
   }
 
-  @NotNull
-  public static String[] getAvailableLanguageIDs() {
+  public static String @NotNull [] getAvailableLanguageIDs() {
     synchronized (InjectedLanguage.class) {
       if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
         initLanguageCache();
@@ -94,8 +93,7 @@ public final class InjectedLanguage {
     }
   }
 
-  @NotNull
-  public static Language[] getAvailableLanguages() {
+  public static Language @NotNull [] getAvailableLanguages() {
     synchronized (InjectedLanguage.class) {
       if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
         initLanguageCache();

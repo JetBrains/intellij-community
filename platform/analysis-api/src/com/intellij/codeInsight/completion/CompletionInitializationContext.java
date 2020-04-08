@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
@@ -6,9 +6,10 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author peter
@@ -52,7 +53,7 @@ public class CompletionInitializationContext {
     myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, calcSelectionEnd(caret)));
   }
 
-  private static int calcSelectionEnd(Caret caret) {
+  public static int calcSelectionEnd(Caret caret) {
     return caret.hasSelection() ? caret.getSelectionEnd() : caret.getOffset();
   }
 
@@ -60,7 +61,7 @@ public class CompletionInitializationContext {
     return caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset();
   }
 
-  static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
+  public static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
     final CharSequence text = editor.getDocument().getCharsSequence();
     int idEnd = startFrom;
     while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
@@ -75,7 +76,7 @@ public class CompletionInitializationContext {
 
   @NotNull
   public Language getPositionLanguage() {
-    return ObjectUtils.assertNotNull(myPositionLanguage);
+    return Objects.requireNonNull(myPositionLanguage);
   }
 
   public String getDummyIdentifier() {

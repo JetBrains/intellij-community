@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,7 +83,7 @@ public class TypeMigrationLabeler {
 
   public TypeMigrationLabeler(TypeMigrationRules rules,
                               Function<PsiElement, PsiType> migrationRootTypeFunction,
-                              @Nullable("any root accepted if null") PsiElement[] allowedRoots,
+                              PsiElement @Nullable("any root accepted if null") [] allowedRoots,
                               Project project) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
@@ -131,8 +132,7 @@ public class TypeMigrationLabeler {
     return map2Usages(myFailedConversions.keySet());
   }
 
-  @NotNull
-  private static UsageInfo[] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
+  private static UsageInfo @NotNull [] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
     return ContainerUtil
       .map2Array(usages, new UsageInfo[usages.size()], pair -> {
         final PsiExpression expr = pair.getFirst().getElement();
@@ -799,14 +799,14 @@ public class TypeMigrationLabeler {
   public void clearStopException() {
     myException = null;
   }
-  
+
   boolean addRoot(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, boolean alreadyProcessed) {
     if (myShowWarning && myMigrationRoots.size() > 10 && !ApplicationManager.getApplication().isUnitTestMode()) {
       myShowWarning = false;
       myDialogSemaphore.down();
       try {
         final Runnable checkTimeToStopRunnable = () -> {
-          if (Messages.showYesNoCancelDialog("Found more than 10 roots to migrate. Do you want to preview?", "Type Migration",
+          if (Messages.showYesNoCancelDialog(JavaRefactoringBundle.message("type.migration.preview.warning.text"), JavaRefactoringBundle.message("type.migration.action.name"),
                                              Messages.getWarningIcon()) == Messages.YES) {
             myException = new MigrateException();
           }
@@ -863,7 +863,7 @@ public class TypeMigrationLabeler {
       usages.add(place);
     }
   }
-  
+
   public void setTypeUsage(final PsiElement element, final PsiElement place) {
     setTypeUsage(new TypeMigrationUsageInfo(element), place);
   }
@@ -918,7 +918,7 @@ public class TypeMigrationLabeler {
       validReferences.add(ref1);
     }
 
-    Collections.sort(validReferences, Comparator.comparingInt(o -> o.getElement().getTextOffset()));
+    validReferences.sort(Comparator.comparingInt(o -> o.getElement().getTextOffset()));
 
     return validReferences.toArray(PsiReference.EMPTY_ARRAY);
   }
@@ -1182,7 +1182,7 @@ public class TypeMigrationLabeler {
 
     final ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>
       failsList = new ArrayList<>(myFailedConversions.keySet());
-    Collections.sort(failsList, (o1, o2) -> {
+    failsList.sort((o1, o2) -> {
       final PsiElement element1 = o1.getFirst().getElement();
       final PsiElement element2 = o2.getFirst().getElement();
       if (element1 == null || element2 == null) return 0;

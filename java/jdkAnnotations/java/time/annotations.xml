@@ -173,4 +173,86 @@
             <val name="to" val="366"/>
         </annotation>
     </item>
+    <item name='java.time.ZoneId SHORT_IDS'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.lang.String getDisplayName(java.time.format.TextStyle, java.util.Locale)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.time.ZoneId java.lang.String getDisplayName(java.time.format.TextStyle, java.util.Locale) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.lang.String getDisplayName(java.time.format.TextStyle, java.util.Locale) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.lang.String getId()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId from(java.time.temporal.TemporalAccessor)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId normalized()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId of(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId of(java.lang.String, java.util.Map&lt;java.lang.String,java.lang.String&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId of(java.lang.String, java.util.Map&lt;java.lang.String,java.lang.String&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId of(java.lang.String, java.util.Map&lt;java.lang.String,java.lang.String&gt;) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId ofOffset(java.lang.String, java.time.ZoneOffset)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId ofOffset(java.lang.String, java.time.ZoneOffset) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId ofOffset(java.lang.String, java.time.ZoneOffset) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.time.ZoneId systemDefault()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.time.ZoneId java.time.zone.ZoneRules getRules()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.time.ZoneId java.util.Set&lt;java.lang.String&gt; getAvailableZoneIds()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
 </root>

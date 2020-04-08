@@ -82,8 +82,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   /**
    * @return error info for the current {@link #myComponent} state.
    */
-  @NotNull
-  protected abstract ErrorInfo[] getErrorInfos();
+  protected abstract ErrorInfo @NotNull [] getErrorInfos();
 
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents

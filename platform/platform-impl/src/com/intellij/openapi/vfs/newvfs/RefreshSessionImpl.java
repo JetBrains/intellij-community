@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
@@ -23,9 +23,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author max
- */
 class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
@@ -50,7 +47,7 @@ class RefreshSessionImpl extends RefreshSession {
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
     myModality = modality;
-    LOG.assertTrue(modality == ModalityState.NON_MODAL || modality != ModalityState.any(), "Refresh session should have a specific modality");
+    TransactionGuard.getInstance().assertWriteSafeContext(modality);
     myStartTrace = rememberStartTrace();
   }
 

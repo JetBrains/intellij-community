@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.documentation;
 
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -41,7 +40,6 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
@@ -59,10 +57,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
@@ -82,8 +81,6 @@ import org.jetbrains.ide.BuiltInServerManager;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.TextUI;
@@ -127,16 +124,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private SmartPsiElementPointer<PsiElement> myElement;
   private long myModificationCount;
 
-  private static final String QUICK_DOC_FONT_SIZE_OLD_PROPERTY = "quick.doc.font.size";
-  private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size.v2";
+  private static final String QUICK_DOC_FONT_SIZE_V1_PROPERTY = "quick.doc.font.size"; // 2019.3 or earlier versions
+  private static final String QUICK_DOC_FONT_SIZE_V2_PROPERTY = "quick.doc.font.size.v2"; // 2020.1 EAP
+  private static final String QUICK_DOC_FONT_SIZE_V3_PROPERTY = "quick.doc.font.size.v3"; // 2020.1 or later versions
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
   private final ActionToolbarImpl myToolBar;
   private volatile boolean myIsEmpty;
   private boolean mySizeTrackerRegistered;
-  private JSlider myFontSizeSlider;
-  private final JComponent mySettingsPanel;
   private boolean myIgnoreFontSizeSliderChange;
   private String myExternalUrl;
   private DocumentationProvider myProvider;
@@ -187,7 +183,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = true;
     myStoreSize = storeSize;
 
-    myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
+    myEditorPane = new JEditorPane() {
       {
         enableEvents(AWTEvent.KEY_EVENT_MASK);
       }
@@ -282,7 +278,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    HTMLEditorKit editorKit = new JBHtmlEditorKit(true) {
+    HTMLEditorKit editorKit = new JBHtmlEditorKit(true, true) {
       @Override
       public ViewFactory getViewFactory() {
         return new JBHtmlFactory() {
@@ -337,7 +333,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     setLayout(new BorderLayout());
 
-    mySettingsPanel = createSettingsPanel();
     //add(myScrollPane, BorderLayout.CENTER);
     setOpaque(true);
     myScrollPane.setBorder(JBUI.Borders.empty());
@@ -391,6 +386,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(actions);
     toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ToggleShowDocsOnHoverAction()).setAsSecondary(true);
     toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
@@ -451,6 +447,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup gearActions = new MyGearActionGroup();
     ShowAsToolwindowAction showAsToolwindowAction = new ShowAsToolwindowAction();
     gearActions.add(showAsToolwindowAction);
+    gearActions.add(new ToggleShowDocsOnHoverAction());
     gearActions.add(new MyShowSettingsAction(false));
     gearActions.add(new ShowToolbarAction());
     gearActions.add(new RestoreDefaultSizeAction());
@@ -561,7 +558,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
   }
 
-  private static void prepareCSS(HTMLEditorKit editorKit) {
+  private static void prepareCSS(@NotNull HTMLEditorKit editorKit) {
     boolean newLayout = Registry.is("editor.new.mouse.hover.popups");
     Color documentationColor = EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(COLOR_KEY);
     Color borderColor = newLayout ? UIUtil.getTooltipSeparatorColor() : ColorUtil.mix(documentationColor, BORDER_COLOR, 0.5);
@@ -569,6 +566,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     int definitionTopPadding = newLayout ? 4 : 3;
     int htmlBottomPadding = newLayout ? 8 : 5;
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
+    editorKit.getStyleSheet().addRule("tt {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule(".pre {font-family:\"" + editorFontName + "\"}");
@@ -603,7 +601,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
     }
     editorKit.getStyleSheet().addRule("th { text-align: left; }");
-    editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px}");
+    editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px; white-space:nowrap;}");
   }
 
   private static Color getLinkColor() {
@@ -622,61 +620,40 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return null;
   }
 
-  private JComponent createSettingsPanel() {
-    JPanel result = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
-    result.add(new JLabel(ApplicationBundle.message("label.font.size")));
-    myFontSizeSlider = new JSlider(SwingConstants.HORIZONTAL, 0, FontSize.values().length - 1, 3);
-    myFontSizeSlider.setMinorTickSpacing(1);
-    myFontSizeSlider.setPaintTicks(true);
-    myFontSizeSlider.setPaintTrack(true);
-    myFontSizeSlider.setSnapToTicks(true);
-    UIUtil.setSliderIsFilled(myFontSizeSlider, true);
-    result.add(myFontSizeSlider);
-    result.setBorder(BorderFactory.createLineBorder(JBColor.border(), 1));
-
-    myFontSizeSlider.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        if (myIgnoreFontSizeSliderChange) {
-          return;
-        }
-        setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
-        applyFontProps();
-        // resize popup according to new font size, if user didn't set popup size manually
-        if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
-      }
-    });
-
-    String tooltipText = ApplicationBundle.message("quickdoc.tooltip.font.size.by.wheel");
-    result.setToolTipText(tooltipText);
-    myFontSizeSlider.setToolTipText(tooltipText);
-    result.setVisible(false);
-    result.setOpaque(true);
-    myFontSizeSlider.setOpaque(true);
-    return result;
-  }
-
   @NotNull
   public static FontSize getQuickDocFontSize() {
-    FontSize fontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_PROPERTY);
-    if (fontSize != null) return fontSize;
-    FontSize oldFontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
-    if (oldFontSize != null) {
-      // migrate old-scale setting
-      PropertiesComponent.getInstance().unsetValue(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
-      FontSize newFontSize = oldFontSize == FontSize.X_LARGE ? FontSize.XX_LARGE
-                                                             : oldFontSize == FontSize.LARGE ? FontSize.X_LARGE
-                                                                                             : oldFontSize;
-      setQuickDocFontSize(newFontSize);
-      return newFontSize;
+    FontSize v1 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V1_PROPERTY, true);
+    FontSize v2 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V2_PROPERTY, true);
+    FontSize v3 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V3_PROPERTY, false);
+    if (v3 != null) {
+      return v3;
+    }
+    if (v2 != null) {
+      v3 = migrateV2ToV3(v2);
+      setQuickDocFontSize(v3);
+      return v3;
+    }
+    if (v1 != null) {
+      v3 = migrateV2ToV3(migrateV1ToV2(v1));
+      setQuickDocFontSize(v3);
+      return v3;
     }
     return FontSize.SMALL;
   }
 
+  private static @NotNull FontSize migrateV1ToV2(@NotNull FontSize size) {
+    return size == FontSize.X_LARGE ? FontSize.XX_LARGE : size == FontSize.LARGE ? FontSize.X_LARGE : size;
+  }
+
+  private static @NotNull FontSize migrateV2ToV3(@NotNull FontSize size) {
+    return size == FontSize.X_SMALL ? FontSize.XX_SMALL : size == FontSize.SMALL ? FontSize.X_SMALL : size;
+  }
+
   @Nullable
-  private static FontSize readFontSizeFromSettings(@NotNull String propertyName) {
+  private static FontSize readFontSizeFromSettings(@NotNull String propertyName, boolean unsetAfterReading) {
     String strValue = PropertiesComponent.getInstance().getValue(propertyName);
     if (strValue != null) {
+      if (unsetAfterReading) PropertiesComponent.getInstance().unsetValue(propertyName);
       try {
         return FontSize.valueOf(strValue);
       }
@@ -686,23 +663,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public static void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_PROPERTY, fontSize.toString());
-  }
-
-  private void setFontSizeSliderSize(FontSize fontSize) {
-    myIgnoreFontSizeSliderChange = true;
-    try {
-      FontSize[] sizes = FontSize.values();
-      for (int i = 0; i < sizes.length; i++) {
-        if (fontSize == sizes[i]) {
-          myFontSizeSlider.setValue(i);
-          break;
-        }
-      }
-    }
-    finally {
-      myIgnoreFontSizeSliderChange = false;
-    }
+    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_V3_PROPERTY, fontSize.toString());
   }
 
   public boolean isEmpty() {
@@ -796,6 +757,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myText = text;
     setElement(element);
+    if (element != null && element.getElement() != null) {
+      myManager.updateToolWindowTabName(element.getElement());
+    }
     myDecoratedText = decorate(text);
 
     showHint(viewRect, ref);
@@ -1134,6 +1098,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
       if (vfile == null) return null;
 
+      SearchScope scope = element.getUseScope();
+      if (scope instanceof LocalSearchScope) {
+        return null;
+      }
+
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
       Module module = fileIndex.getModuleForFile(vfile);
 
@@ -1290,7 +1259,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
-    MyGearActionGroup(@NotNull AnAction... actions) {
+    MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
       setPopup(true);
     }
@@ -1298,7 +1267,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
-      super(CodeInsightBundle.message("javadoc.action.back"), null, AllIcons.Actions.Back);
+      super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
 
     @Override
@@ -1318,7 +1287,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
-      super(CodeInsightBundle.message("javadoc.action.forward"), null, AllIcons.Actions.Forward);
+      super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
 
     @Override
@@ -1341,7 +1310,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     private EditDocumentationSourceAction() {
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
-      getTemplatePresentation().setText("Edit Source");
+      getTemplatePresentation().setText(CodeInsightBundle.messagePointer("action.presentation.DocumentationComponent.text"));
     }
 
     @Override
@@ -1353,9 +1322,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     }
 
-    @Nullable
     @Override
-    protected Navigatable[] getNavigatables(DataContext dataContext) {
+    protected Navigatable @Nullable [] getNavigatables(DataContext dataContext) {
       SmartPsiElementPointer<PsiElement> element = myElement;
       if (element != null) {
         PsiElement psiElement = element.getElement();
@@ -1613,7 +1581,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     private final boolean myOnToolbar;
 
     MyShowSettingsAction(boolean onToolbar) {
-      super("Adjust font size...");
+      super(CodeInsightBundle.message("javadoc.adjust.font.size"));
       myOnToolbar = onToolbar;
     }
 
@@ -1626,12 +1594,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mySettingsPanel, myFontSizeSlider).createPopup();
-      setFontSizeSliderSize(getQuickDocFontSize());
-      mySettingsPanel.setVisible(true);
-      Point location = MouseInfo.getPointerInfo().getLocation();
-      popup.show(new RelativePoint(new Point(location.x - mySettingsPanel.getPreferredSize().width / 2,
-                                             location.y - mySettingsPanel.getPreferredSize().height / 2)));
+      DocFontSizePopup.show(() -> {
+        if (myIgnoreFontSizeSliderChange) {
+          return;
+        }
+        applyFontProps();
+        // resize popup according to new font size, if user didn't set popup size manually
+        if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
+      }, DocumentationComponent.this);
     }
   }
 
@@ -1717,7 +1687,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
-      super("Show Toolbar");
+      super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
 
     @Override
@@ -1794,13 +1764,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
       setQuickDocFontSize(newFontSize);
       applyFontProps();
-      setFontSizeSliderSize(newFontSize);
+      myIgnoreFontSizeSliderChange = true;
+      try {
+        DocFontSizePopup.update();
+      }
+      finally {
+        myIgnoreFontSizeSliderChange = false;
+      }
     }
   }
 
   private class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
-      super("Open as Tool Window");
+      super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
 
     @Override
@@ -1823,7 +1799,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
-      super("Restore Size");
+      super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }
 
     @Override

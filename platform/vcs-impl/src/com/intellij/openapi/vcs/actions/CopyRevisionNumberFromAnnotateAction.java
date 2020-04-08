@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -18,7 +19,7 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
   private int myLineNumber = -1;
 
   public CopyRevisionNumberFromAnnotateAction(FileAnnotation annotation) {
-    super("Copy Revision Number");
+    super(VcsBundle.messagePointer("copy.revision.number.action"));
     myAnnotation = annotation;
   }
 

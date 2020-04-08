@@ -22,9 +22,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author nik
- */
 public class AppEngineTemplateGroupDescriptorFactory implements FileTemplateGroupDescriptorFactory {
   @NonNls public static final String APP_ENGINE_WEB_XML_TEMPLATE = "AppEngineWeb.xml";
   @NonNls public static final String APP_ENGINE_APPLICATION_XML_TEMPLATE = "AppEngineApplication.xml";

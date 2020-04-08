@@ -33,8 +33,7 @@ class AttributeReference extends SimpleAttributeReference {
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
         return ResolveUtil.collect(myMatcher.variantMatcher());
     }
 

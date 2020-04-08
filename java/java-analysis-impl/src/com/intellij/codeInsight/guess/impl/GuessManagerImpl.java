@@ -84,9 +84,8 @@ public class GuessManagerImpl extends GuessManager {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
+  public PsiType @NotNull [] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore) {
     HashSet<PsiType> typesSet = new HashSet<>();
 
     PsiType type = containerExpr.getType();
@@ -123,9 +122,8 @@ public class GuessManagerImpl extends GuessManager {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiType[] guessTypeToCast(PsiExpression expr) {
+  public PsiType @NotNull [] guessTypeToCast(PsiExpression expr) {
     LinkedHashSet<PsiType> types = new LinkedHashSet<>(getControlFlowExpressionTypeConjuncts(expr));
     addExprTypesWhenContainerElement(types, expr);
     addExprTypesByDerivedClasses(types, expr);

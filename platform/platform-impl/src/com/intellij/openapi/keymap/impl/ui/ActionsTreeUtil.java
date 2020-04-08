@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -37,19 +37,14 @@ import java.util.*;
 public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
-  public static final String MAIN_MENU_TITLE = KeyMapBundle.message("main.menu.action.title");
-  public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");
-  public static final String EDITOR_POPUP = KeyMapBundle.message("editor.popup.menu.title");
-
-  public static final String EDITOR_TAB_POPUP = KeyMapBundle.message("editor.tab.popup.menu.title");
-  public static final String FAVORITES_POPUP = KeyMapBundle.message("favorites.popup.title");
-  public static final String PROJECT_VIEW_POPUP = KeyMapBundle.message("project.view.popup.menu.title");
-  public static final String COMMANDER_POPUP = KeyMapBundle.message("commender.view.popup.menu.title");
-  public static final String J2EE_POPUP = KeyMapBundle.message("j2ee.view.popup.menu.title");
+  /**
+   * @deprecated Use {@link #getMainMenuTitle()} instead
+   */
+  @Deprecated
+  public static final String MAIN_MENU_TITLE = "Main menu";
 
   @NonNls
   private static final String EDITOR_PREFIX = "Editor";
-  @NonNls private static final String TOOL_ACTION_PREFIX = "Tool_";
 
   private ActionsTreeUtil() {
   }
@@ -82,7 +77,7 @@ public class ActionsTreeUtil {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<>();
     Collections.addAll(plugins, PluginManagerCore.getPlugins());
-    Collections.sort(plugins, Comparator.comparing(IdeaPluginDescriptor::getName));
+    plugins.sort(Comparator.comparing(IdeaPluginDescriptor::getName));
 
     List<PluginId> collected = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : plugins) {
@@ -134,7 +129,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createMainMenuGroup(Condition<? super AnAction> filtered) {
-    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
+    Group group = new Group(getMainMenuTitle(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
     return group;
@@ -249,7 +244,6 @@ public class ActionsTreeUtil {
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          if (id.startsWith(TOOL_ACTION_PREFIX)) continue;
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
           }
@@ -307,9 +301,7 @@ public class ActionsTreeUtil {
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          if (!id.startsWith(TOOL_ACTION_PREFIX)) {
-            group.addActionId(id);
-          }
+          group.addActionId(id);
         }
       }
     }
@@ -637,7 +629,7 @@ public class ActionsTreeUtil {
     }
   }
 
-  public static AnAction[] getActions(String actionGroup) {
+  public static AnAction[] getActions(@NonNls String actionGroup) {
     return getActions((ActionGroup)ActionManager.getInstance().getActionOrStub(actionGroup));
   }
 
@@ -654,5 +646,53 @@ public class ActionsTreeUtil {
       if (newAction != null) return newAction;
     }
     return action;
+  }
+
+  public static String getMainMenuTitle() {
+    return KeyMapBundle.message("main.menu.action.title");
+  }
+
+  public static String getMainToolbar() {
+    return KeyMapBundle.message("main.toolbar.title");
+  }
+
+  public static String getEditorPopup() {
+    return KeyMapBundle.message("editor.popup.menu.title");
+  }
+
+  public static String getEditorGutterPopupMenu() {
+    return KeyMapBundle.message("editor.gutter.popup.menu");
+  }
+
+  public static String getScopeViewPopupMenu() {
+    return KeyMapBundle.message("scope.view.popup.menu");
+  }
+
+  public static String getNavigationBarPopupMenu() {
+    return KeyMapBundle.message("navigation.bar.popup.menu");
+  }
+
+  public static String getNavigationBarToolbar() {
+    return KeyMapBundle.message("navigation.bar.toolbar");
+  }
+
+  public static String getEditorTabPopup() {
+    return KeyMapBundle.message("editor.tab.popup.menu.title");
+  }
+
+  public static String getFavoritesPopup() {
+    return KeyMapBundle.message("favorites.popup.title");
+  }
+
+  public static String getProjectViewPopup() {
+    return KeyMapBundle.message("project.view.popup.menu.title");
+  }
+
+  public static String getCommanderPopup() {
+    return KeyMapBundle.message("commender.view.popup.menu.title");
+  }
+
+  public static String getJ2EEPopup() {
+    return KeyMapBundle.message("j2ee.view.popup.menu.title");
   }
 }

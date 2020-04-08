@@ -1,16 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author egor
- */
 public class GeneratedLocation implements Location {
   private final VirtualMachine myVirtualMachine;
   private final int myLineNumber;
@@ -21,7 +18,7 @@ public class GeneratedLocation implements Location {
     myVirtualMachine = debugProcess.getVirtualMachineProxy().getVirtualMachine();
     myLineNumber = lineNumber;
     myReferenceType = type;
-    myMethod = ContainerUtil.getFirstItem(myReferenceType.methodsByName(methodName));
+    myMethod = DebuggerUtils.findMethod(myReferenceType, methodName, null);
   }
 
   @Override

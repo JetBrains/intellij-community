@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -33,9 +32,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
+import org.junit.Assume;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -52,19 +52,10 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     public Sdk getSdk() {
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
-      if (jdk.getVersionString().matches("java version \"1\\.8\\..+\"")) {
-        String home = jdk.getHomeDirectory().getPath();
-        VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
-        String toolsPath = home + "/lib/tools.jar!/";
-        VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
-        assertNotNull("tools.jar not found: " + toolsPath, toolsJar);
-
-        sdk = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
-      }
 
       Collection<String> utilClassPath = PathManager.getUtilClassPath();
       VirtualFile[] files = StreamEx.of(utilClassPath)
-        .append(PathManager.getJarPathForClass(Unmodifiable.class))
+        .append(PathManager.getJarPathForClass(XmlElement.class))
         .map(path -> path.endsWith(".jar") ?
                      JarFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
                      LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)))
@@ -83,13 +74,15 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
   };
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return myDescriptor;
   }
 
   public void testBundledAnnotationXmlSyntax() {
+    String version = getProjectDescriptor().getSdk().getVersionString();
+    Assume.assumeTrue("This test requires boot JDK 11; actual: "+version,
+                       version.startsWith("java version \"11"));
     String root = PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations";
     findAnnotationsXmlAndCheckSyntax(root);
   }
@@ -157,6 +150,9 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     String unescaped = StringUtil.unescapeXmlEntities(externalName);
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
+    if (words.size() == 1 && JavaPsiFacade.getInstance(getProject()).findPackage(className) != null) {
+      return;
+    }
     PsiClass aClass = assertClassFqn(className, psiFile, externalName, assumedPackage);
     if (words.size() == 1) return;
 

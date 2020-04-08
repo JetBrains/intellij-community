@@ -18,9 +18,8 @@ class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJav
     myReference = myParent instanceof PsiJavaModule ? null : new PsiJavaModuleReferenceImpl(this);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return EMPTY_ARRAY;
   }
 

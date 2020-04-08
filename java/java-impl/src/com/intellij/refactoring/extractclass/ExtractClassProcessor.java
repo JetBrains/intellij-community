@@ -261,12 +261,12 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
     return new ExtractClassUsageViewDescriptor(sourceClass);
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
     final PsiClass psiClass = buildClass(true);
     if (psiClass == null) return;
     if (delegationRequired) {

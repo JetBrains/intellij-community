@@ -12,6 +12,9 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
+import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +23,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ServerType<C extends ServerConfiguration> {
   public static final ExtensionPointName<ServerType> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.type");
   private final String myId;
@@ -36,11 +36,23 @@ public abstract class ServerType<C extends ServerConfiguration> {
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getPresentableName();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getDeploymentConfigurationTypePresentableName() {
-    return getPresentableName() + " Deployment";
+    return CloudBundle.message("server.type.deployment.configuration.typ.presentable.name.0.deployment", getPresentableName());
+  }
+
+  /**
+   * This method must be overriden and a proper ID must be returned from it (it'll be used as a key in run configuration file).
+   */
+  @NotNull @NonNls
+  public String getDeploymentConfigurationFactoryId() {
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getDeploymentConfigurationFactoryId",
+      "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized but return value of this method must not be localized.");
+    return getDeploymentConfigurationTypePresentableName();
   }
 
   @NotNull

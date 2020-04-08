@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -77,7 +77,8 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
       if (classLoader == null) {
         classLoader = getClass().getClassLoader();
       }
-      myImplementationClassOrName = implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
+      implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
+      myImplementationClassOrName = implementationClassOrName;
     }
     //noinspection unchecked
     return (Class<T>)implementationClassOrName;

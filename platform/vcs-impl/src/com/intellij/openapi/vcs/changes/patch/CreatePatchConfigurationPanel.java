@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -21,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -33,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Objects;
 
 public class CreatePatchConfigurationPanel {
   private static final int TEXT_FIELD_WIDTH = 70;
@@ -57,7 +58,7 @@ public class CreatePatchConfigurationPanel {
       public void actionPerformed(ActionEvent e) {
         final FileSaverDialog dialog =
           FileChooserFactory.getInstance().createSaveFileDialog(
-            new FileSaverDescriptor("Save Patch to", ""), myMainPanel);
+            new FileSaverDescriptor(VcsBundle.message("patch.creation.save.to.title"), ""), myMainPanel);
         final String path = FileUtil.toSystemIndependentName(getFileName());
         final int idx = path.lastIndexOf("/");
         VirtualFile baseDir = idx == -1 ? project.getBaseDir() :
@@ -76,7 +77,7 @@ public class CreatePatchConfigurationPanel {
     myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
     myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
     myWarningLabel.setForeground(JBColor.RED);
-    selectBasePath(ObjectUtils.assertNotNull(myProject.getBaseDir()));
+    selectBasePath(Objects.requireNonNull(myProject.getBaseDir()));
     initEncodingCombo();
   }
 
@@ -118,7 +119,7 @@ public class CreatePatchConfigurationPanel {
       .addComponent(toFilePanel)
       .addComponent(myToClipboardButton)
       .addVerticalGap(5)
-      .addLabeledComponent("&Base path:", myBasePathField)
+      .addLabeledComponent(VcsBundle.message("patch.creation.base.path.field"), myBasePathField)
       .addComponent(myReversePatchCheckbox)
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
       .addComponent(myWarningLabel)
@@ -130,7 +131,8 @@ public class CreatePatchConfigurationPanel {
   }
 
   private void checkExist() {
-    myWarningLabel.setText(new File(getFileName()).exists() ? "File with the same name already exists" : "");
+    String fileName = getFileName();
+    myWarningLabel.setText(new File(fileName).exists() ? IdeBundle.message("error.file.with.name.already.exists", fileName) : "");
   }
 
   public JComponent getPanel() {
@@ -158,6 +160,11 @@ public class CreatePatchConfigurationPanel {
     myReversePatchCheckbox.setSelected(reverse);
   }
 
+  public void setReverseEnabledAndVisible(boolean isAvailable) {
+    myReversePatchCheckbox.setVisible(isAvailable);
+    myReversePatchCheckbox.setEnabled(isAvailable);
+  }
+
   public boolean isToClipboard() {
     return myToClipboardButton.isSelected();
   }
@@ -173,11 +180,14 @@ public class CreatePatchConfigurationPanel {
   @Nullable
   private ValidationInfo verifyBaseDirPath() {
     String baseDirName = getBaseDirName();
-    if (StringUtil.isEmptyOrSpaces(baseDirName)) return new ValidationInfo("Base path can't be empty!", myBasePathField);
+    if (StringUtil.isEmptyOrSpaces(baseDirName)) {
+      return new ValidationInfo(
+        VcsBundle.message("patch.creation.empty.base.path.error"), myBasePathField);
+    }
     File baseFile = new File(baseDirName);
-    if (!baseFile.exists()) return new ValidationInfo("Base dir doesn't exist", myBasePathField);
+    if (!baseFile.exists()) return new ValidationInfo(VcsBundle.message("patch.creation.base.dir.does.not.exist.error"), myBasePathField);
     if (myCommonParentDir != null && !FileUtil.isAncestor(baseFile, myCommonParentDir, false)) {
-      return new ValidationInfo(String.format("Base path doesn't contain all selected changes (use %s)", myCommonParentDir.getPath()),
+      return new ValidationInfo(VcsBundle.message("patch.creation.wrong.base.path.for.changes.error", myCommonParentDir.getPath()),
                                 myBasePathField);
     }
     return null;

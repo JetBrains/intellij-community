@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="870a1"/>
-          <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.name.title"/>
+          <text resource-bundle="messages/JavaUiBundle" key="project.new.wizard.module.name.title"/>
         </properties>
       </component>
       <component id="870a1" class="javax.swing.JTextField" binding="myModuleName">
@@ -33,7 +33,7 @@
         </constraints>
         <properties>
           <labelFor value="58947"/>
-          <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.root.title"/>
+          <text resource-bundle="messages/JavaUiBundle" key="project.new.wizard.module.root.title"/>
         </properties>
       </component>
       <component id="58947" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myModuleContentRoot">
@@ -50,7 +50,7 @@
         </constraints>
         <properties>
           <labelFor value="85d66"/>
-          <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.file.title"/>
+          <text resource-bundle="messages/JavaUiBundle" key="project.new.wizard.module.file.title"/>
         </properties>
       </component>
       <component id="85d66" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myModuleFileLocation">

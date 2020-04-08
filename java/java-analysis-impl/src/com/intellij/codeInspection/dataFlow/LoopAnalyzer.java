@@ -100,8 +100,7 @@ class LoopAnalyzer {
     return loop;
   }
 
-  @NotNull
-  static int[] getSuccessorIndices(int i, Instruction[] myInstructions) {
+  static int @NotNull [] getSuccessorIndices(int i, Instruction[] myInstructions) {
     Instruction instruction = myInstructions[i];
     if (instruction instanceof GotoInstruction) {
       return new int[]{((GotoInstruction)instruction).getOffset()};

@@ -365,7 +365,6 @@ public class RecursionManager {
 
   private static final String[] toleratedFrames = {
     "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
-    "org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy.getAncestorsCaching(", // RUBY-25487
     "com.intellij.lang.aspectj.psi.impl.PsiInterTypeReferenceImpl.", // IDEA-228779
     "com.intellij.psi.impl.search.JavaDirectInheritorsSearcher.processConcurrentlyIfTooMany(", // IDEA-229003
 
@@ -380,14 +379,8 @@ public class RecursionManager {
     "org.jetbrains.plugins.groovy.intentions.style.inference.InferenceProcessKt.runInferenceProcess(",
 
     // IDEA-228814
-    // resolve & inference
     "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
-    "com.intellij.psi.util.PsiUtil.getApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
-    "com.intellij.psi.impl.source.tree.java.MethodReferenceResolver.resolve(",
-    "com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil.isPolyExpression(",
-    // inner class imports
-    "com.intellij.psi.impl.source.PsiJavaFileBaseImpl.processOnDemandStaticImports(",
 
     // IDEA-212671
     "com.intellij.xml.impl.schema.XmlNSDescriptorImpl.getRedefinedElementDescriptor(",

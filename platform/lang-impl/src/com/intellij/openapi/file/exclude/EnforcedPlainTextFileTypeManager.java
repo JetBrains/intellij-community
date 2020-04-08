@@ -77,22 +77,23 @@ public final class EnforcedPlainTextFileTypeManager {
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }
 
-  public void markAsPlainText(@NotNull Project project, @NotNull VirtualFile... files) {
+  public void markAsPlainText(@NotNull Project project, VirtualFile @NotNull ... files) {
     setPlainTextStatus(project, true, files);
   }
 
-  public void resetOriginalFileType(@NotNull Project project, @NotNull VirtualFile... files) {
+  public void resetOriginalFileType(@NotNull Project project, VirtualFile @NotNull ... files) {
     setPlainTextStatus(project, false, files);
   }
 
-  private void setPlainTextStatus(@NotNull final Project project, final boolean toAdd, @NotNull final VirtualFile... files) {
+  private void setPlainTextStatus(@NotNull final Project project, final boolean toAdd, final VirtualFile @NotNull ... files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+      ProjectPlainTextFileTypeManager plainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
       for (VirtualFile file : files) {
         if (fileIndex.isInContent(file) || fileIndex.isInLibrarySource(file) || fileIndex.isExcluded(file)) {
           boolean changed = toAdd ?
-                            ProjectPlainTextFileTypeManager.getInstance(project).addFile(file) :
-                            ProjectPlainTextFileTypeManager.getInstance(project).removeFile(file);
+                            plainTextFileTypeManager.addFile(file) :
+                            plainTextFileTypeManager.removeFile(file);
           if (changed) {
             ensureProjectFileUpToDate(project);
           }

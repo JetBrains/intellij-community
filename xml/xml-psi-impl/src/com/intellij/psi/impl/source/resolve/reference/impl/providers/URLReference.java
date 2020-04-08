@@ -2,13 +2,15 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
@@ -17,6 +19,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,8 +106,11 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
 
       final String url = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getProject());
       if (!url.equals(canonicalText)) {
-        myIncorrectResourceMapped = true;
-        return null;
+        PsiFile file = XmlUtil.findRelativeFile(canonicalText, myElement.getContainingFile());
+        if (file == null) {
+          myIncorrectResourceMapped = true;
+        }
+        return file;
       }
 
       if (tag == rootTag && (tag.getNamespace().equals(XmlUtil.XML_SCHEMA_URI) || tag.getNamespace().equals(XmlUtil.WSDL_SCHEMA_URI))) {
@@ -188,7 +194,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return XmlErrorMessages.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized":"uri.is.not.registered");
+    return XmlPsiBundle.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized" : "uri.is.not.registered");
   }
 
   public static void processWsdlSchemas(final XmlTag rootTag, Processor<? super XmlTag> processor) {

@@ -1,0 +1,54 @@
+<keymap name="Visual Assist" parent="Visual Studio" version="1" disable-mnemonics="false">
+  <action id="GotoFile">
+    <keyboard-shortcut first-keystroke="shift alt O"/>
+  </action>
+  <action id="GotoSymbol">
+    <keyboard-shortcut first-keystroke="shift alt S"/>
+  </action>
+  <action id="FileStructurePopup">
+    <keyboard-shortcut first-keystroke="alt BACK_SLASH"/>
+    <keyboard-shortcut first-keystroke="alt M"/>
+  </action>
+  <action id="FindUsages">
+    <keyboard-shortcut first-keystroke="shift alt F"/>
+  </action>
+  <action id="GotoImplementation">
+    <keyboard-shortcut first-keystroke="alt G"/>
+    <mouse-shortcut keystroke="ctrl alt button1"/>
+  </action>
+  <action id="GotoRelated">
+    <keyboard-shortcut first-keystroke="shift alt G"/>
+  </action>
+  <action id="EditorSelectWord">
+    <keyboard-shortcut first-keystroke="ctrl alt right" />
+    <keyboard-shortcut first-keystroke="ctrl w" />
+    <keyboard-shortcut first-keystroke="alt close_bracket" />
+  </action>
+  <action id="EditorUnSelectWord">
+    <keyboard-shortcut first-keystroke="ctrl alt left" />
+    <keyboard-shortcut first-keystroke="shift ctrl w" />
+    <keyboard-shortcut first-keystroke="alt open_bracket" />
+  </action>
+  <action id="Refactorings.QuickListPopupAction">
+    <keyboard-shortcut first-keystroke="control shift R"/>
+    <keyboard-shortcut first-keystroke="shift alt q" />
+  </action>
+  <action id="Back">
+    <keyboard-shortcut first-keystroke="control MINUS"/>
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+    <mouse-shortcut keystroke="button4" />
+    <keyboard-shortcut first-keystroke="alt left" />
+  </action>
+  <action id="Forward">
+    <keyboard-shortcut first-keystroke="control shift MINUS"/>
+    <keyboard-shortcut first-keystroke="control shift SUBTRACT"/>
+    <mouse-shortcut keystroke="button5" />
+    <keyboard-shortcut first-keystroke="alt right" />
+  </action>
+  <action id="NextTab" />
+  <action id="PreviousTab" />
+  <action id="Diff.NextChange" />
+  <action id="Diff.PrevChange" />
+  <action id="WD.UploadCurrentRemoteFileAction" />
+  <action id="AddToFavoritesPopup" />
+</keymap>

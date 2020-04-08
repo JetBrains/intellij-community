@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +115,10 @@ import java.util.List;
  * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.<p>
  *
  * Q: How can I trigger showing completion popup programmatically?<br>
- * A: See {@link com.intellij.codeInsight.AutoPopupController}.
+ * A: See {@link com.intellij.codeInsight.AutoPopupController}.<p>
+ *
+ * Q: The suggestion popup hides when I type some exotic character but I want completion keep going matching against typed character.<br>
+ * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  *
  * @author peter
  */
@@ -176,6 +180,7 @@ public abstract class CompletionContributor {
    */
   @Deprecated
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String advertise(@NotNull CompletionParameters parameters) {
     return null;
   }

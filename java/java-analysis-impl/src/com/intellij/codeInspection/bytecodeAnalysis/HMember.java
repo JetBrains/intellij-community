@@ -25,14 +25,13 @@ public final class HMember implements MemberDescriptor {
     myMethod = StringHash.murmur(method.methodName, 37) * 31 + StringHash.murmur(method.methodDesc, 41);
   }
 
-  public HMember(@NotNull byte[] bytes) {
+  public HMember(byte @NotNull [] bytes) {
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
     myClass = buffer.getLong();
     myMethod = buffer.getInt();
   }
 
-  @NotNull
-  byte[] asBytes() {
+  byte @NotNull [] asBytes() {
     ByteBuffer bytes = ByteBuffer.allocate(HASH_SIZE);
     bytes.putLong(myClass).putInt(myMethod);
     return bytes.array();

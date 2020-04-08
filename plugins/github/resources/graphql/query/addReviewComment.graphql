@@ -1,0 +1,12 @@
+mutation ($pullRequestId: ID!, $reviewId: ID,
+    $body: String!, $commit: GitObjectID!, $file: String!, $position: Int!) {
+    addPullRequestReviewComment(input: {pullRequestId: $pullRequestId, pullRequestReviewId: $reviewId,
+        body: $body, commitOID: $commit, path: $file, position: $position}) {
+        comment {
+            ...pullRequestReviewComment
+            pullRequestReview {
+                ...pullRequestPendingReview
+            }
+        }
+    }
+}

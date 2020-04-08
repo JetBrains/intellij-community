@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.util;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -73,7 +74,7 @@ public class ConflictsUtil {
     if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)) {
       if (aClass.equals(method.getContainingClass())) {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
-                                  RefactoringBundle.message("current.class") :
+                                  JavaRefactoringBundle.message("current.class") :
                                   RefactoringUIUtil.getDescription(aClass, false);
         conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
                                                 protoMethodInfo,
@@ -86,12 +87,12 @@ public class ConflictsUtil {
             boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
             boolean isMyMethodAbstract = refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.ABSTRACT);
             final String conflict = isMethodAbstract != isMyMethodAbstract ?
-                                    RefactoringBundle.message("method.0.will.implement.method.of.the.base.class", protoMethodInfo, className) :
-                                    RefactoringBundle.message("method.0.will.override.a.method.of.the.base.class", protoMethodInfo, className);
+                                    JavaRefactoringBundle.message("method.0.will.implement.method.of.the.base.class", protoMethodInfo, className) :
+                                    JavaRefactoringBundle.message("method.0.will.override.a.method.of.the.base.class", protoMethodInfo, className);
             conflicts.putValue(method, conflict);
           }
           else { // prototype is private, will be compile-error
-            conflicts.putValue(method, RefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
+            conflicts.putValue(method, JavaRefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
                                                     protoMethodInfo, className));
           }
         }
@@ -127,9 +128,9 @@ public class ConflictsUtil {
     if (existingField != null) {
       if (aClass.equals(existingField.getContainingClass())) {
         String className = aClass instanceof PsiAnonymousClass ?
-                           RefactoringBundle.message("current.class") :
+                           JavaRefactoringBundle.message("current.class") :
                            RefactoringUIUtil.getDescription(aClass, false);
-        final String conflict = RefactoringBundle.message("field.0.is.already.defined.in.the.1",
+        final String conflict = JavaRefactoringBundle.message("field.0.is.already.defined.in.the.1",
                                                           existingField.getName(), className);
         conflicts.putValue(existingField, conflict);
       }
@@ -137,7 +138,7 @@ public class ConflictsUtil {
         if (!existingField.hasModifierProperty(PsiModifier.PRIVATE)) {
           String fieldInfo = PsiFormatUtil.formatVariable(existingField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER, PsiSubstitutor.EMPTY);
           String className = RefactoringUIUtil.getDescription(existingField.getContainingClass(), false);
-          final String descr = RefactoringBundle.message("field.0.will.hide.field.1.of.the.base.class",
+          final String descr = JavaRefactoringBundle.message("field.0.will.hide.field.1.of.the.base.class",
                                                          newName, fieldInfo, className);
           conflicts.putValue(existingField, descr);
         }

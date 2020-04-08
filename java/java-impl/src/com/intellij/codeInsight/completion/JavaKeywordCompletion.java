@@ -6,7 +6,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
@@ -443,7 +443,7 @@ public class JavaKeywordCompletion {
       if (PsiTreeUtil.getParentOfType(myPosition, PsiAnnotation.class) == null) {
         if (!statementPosition) {
           addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.NEW), TailType.INSERT_SPACE));
-          if (HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(myPosition)) {
+          if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(myPosition)) {
             addKeyword(new OverridableSpace(createKeyword(PsiKeyword.SWITCH), TailTypes.SWITCH_LPARENTH));
           }
         }
@@ -521,24 +521,33 @@ public class JavaKeywordCompletion {
     if (isInstanceofPlace(myPosition)) {
       addKeyword(LookupElementDecorator.withInsertHandler(
         createKeyword(PsiKeyword.INSTANCEOF),
-        new InsertHandler<LookupElementDecorator<LookupElement>>() {
-          @Override
-          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
-            TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
-            if (tailType.isApplicable(context)) {
-              tailType.processTail(context.getEditor(), context.getTailOffset());
-            }
+        (context, item) -> {
+          TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
+          if (tailType.isApplicable(context)) {
+            tailType.processTail(context.getEditor(), context.getTailOffset());
+          }
 
-            if ('!' == context.getCompletionChar()) {
-              context.setAddCompletionChar(false);
-              context.commitDocument();
-              PsiInstanceOfExpression expr =
-                PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiInstanceOfExpression.class, false);
-              if (expr != null) {
+          if ('!' == context.getCompletionChar()) {
+            context.setAddCompletionChar(false);
+          }
+          context.commitDocument();
+          PsiInstanceOfExpression expr =
+            PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiInstanceOfExpression.class, false);
+          if (expr != null) {
+            PsiExpression operand = expr.getOperand();
+            if (operand instanceof PsiPrefixExpression && 
+                ((PsiPrefixExpression)operand).getOperationTokenType().equals(JavaTokenType.EXCL)) {
+              PsiExpression negated = ((PsiPrefixExpression)operand).getOperand();
+              if (negated != null) {
                 String space = CompletionStyleUtil.getCodeStyleSettings(context).SPACE_WITHIN_PARENTHESES ? " " : "";
-                context.getDocument().insertString(expr.getTextRange().getStartOffset(), "!(" + space);
+                context.getDocument().insertString(negated.getTextRange().getStartOffset(), "(" + space);
                 context.getDocument().insertString(context.getTailOffset(), space + ")");
               }
+            }
+            else if ('!' == context.getCompletionChar()) {
+              String space = CompletionStyleUtil.getCodeStyleSettings(context).SPACE_WITHIN_PARENTHESES ? " " : "";
+              context.getDocument().insertString(expr.getTextRange().getStartOffset(), "!(" + space);
+              context.getDocument().insertString(context.getTailOffset(), space + ")");
             }
           }
         }));
@@ -553,12 +562,15 @@ public class JavaKeywordCompletion {
 
       if (psiElement().insideStarting(psiElement(PsiLocalVariable.class, PsiExpressionStatement.class)).accepts(myPosition)) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        if (HighlightingFeature.RECORDS.isAvailable(myPosition)) {
+          addKeyword(new OverridableSpace(createKeyword(PsiKeyword.RECORD), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        }
       }
       if (PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class) == null &&
           PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-        if (PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_14_PREVIEW)) {
+        if (HighlightingFeature.RECORDS.isAvailable(myPosition)) {
           addKeyword(new OverridableSpace(createKeyword(PsiKeyword.RECORD), TailType.HUMBLE_SPACE_BEFORE_WORD));
         }
         if (PsiUtil.isLanguageLevel5OrHigher(myPosition)) {
@@ -623,9 +635,16 @@ public class JavaKeywordCompletion {
     if (psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position)) return true;
 
     PsiElement parent = position.getParent();
-    return parent instanceof PsiReferenceExpression &&
-           !((PsiReferenceExpression)parent).isQualified() &&
-           !JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position);
+    if (!(parent instanceof PsiReferenceExpression) ||
+        ((PsiReferenceExpression)parent).isQualified() ||
+        JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
+      return false;
+    }
+    if (parent.getParent() instanceof PsiExpressionStatement) {
+      PsiElement previous = PsiTreeUtil.skipWhitespacesBackward(parent.getParent());
+      return previous == null || !(previous.getLastChild() instanceof PsiErrorElement);
+    }
+    return true;
   }
 
   public static boolean isInstanceofPlace(PsiElement position) {

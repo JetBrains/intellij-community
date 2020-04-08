@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.ui.panel.ProgressPanel;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -25,7 +27,6 @@ import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -49,10 +50,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
@@ -728,8 +727,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                                  resize().
         createPanel());
 
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb2)).setCommentText("Short text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb2)).setCommentText("Short text");
 
       JProgressBar pb3 = new JProgressBar(0, 100);
       JProgressBar pb4 = new JProgressBar(0, 100);
@@ -745,8 +744,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                                  resize().
         createPanel());
 
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
-      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb4)).setCommentText("Short text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
+      Objects.requireNonNull(ProgressPanel.getProgressPanel(pb4)).setCommentText("Short text");
 
       panel.add(UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(new JProgressBar(0, 100)).
@@ -799,10 +798,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      DefaultActionGroup actions = new DefaultActionGroup("Simple group", false);
+      DefaultActionGroup actions = DefaultActionGroup.createFlatGroup(() -> "Simple group");
       actions.addAll(actionsArray);
 
-      DefaultActionGroup subActions = new DefaultActionGroup("Ratings", true);
+      DefaultActionGroup subActions = DefaultActionGroup.createPopupGroup(() -> "Ratings");
       subActions.getTemplatePresentation().setIcon(AllIcons.Ide.Rating);
       subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1).withDefaultDescription(),
                         new MyAction("Rating two", AllIcons.Ide.Rating2).withDefaultDescription(),
@@ -867,11 +866,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         final String myText;
         final ImmutableList<Item> myChildren;
 
-        Item(@NotNull Icon icon, @NotNull String text) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text) {
           this(icon, text, ImmutableList.of());
         }
 
-        Item(@NotNull Icon icon, @NotNull String text, @NotNull List<Item> myChildren) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
           this.myChildren = ImmutableList.copyOf(myChildren);
@@ -969,7 +968,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   private static class MyAction extends DumbAwareAction {
-    private MyAction(@Nullable String name, @Nullable Icon icon) {
+    private MyAction(@Nullable @NlsActions.ActionText String name, @Nullable Icon icon) {
       super(name, null, icon);
     }
 
@@ -983,7 +982,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return this;
     }
 
-    public MyAction withDescription(@Nullable String description) {
+    public MyAction withDescription(@Nullable @NlsActions.ActionDescription String description) {
       getTemplatePresentation().setDescription(description);
       return this;
     }

@@ -1,7 +1,7 @@
 <idea-plugin>
   <name>Subversion</name>
   <id>Subversion</id>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <description>
     <![CDATA[
       Provides integration with Subversion VCS.<br/>
@@ -11,7 +11,7 @@
   </description>
   <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
-  <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
+  <resource-bundle>messages.SvnBundle</resource-bundle>
 
   <actions>
 
@@ -22,7 +22,7 @@
     <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction">
       <add-to-group group-id="Vcs.Browse"/>
     </action>
-    <action id="Subversion.ShareWholeProject" text="Share Project (Subversion)..." class="org.jetbrains.idea.svn.actions.ShareWholeProject">
+    <action id="Subversion.ShareWholeProject" class="org.jetbrains.idea.svn.actions.ShareWholeProject">
       <add-to-group group-id="Vcs.Import"/>
     </action>
 
@@ -41,8 +41,7 @@
             icon="AllIcons.Actions.Preview"/>
 
     <action id="EditCommitMessage" class="org.jetbrains.idea.svn.history.SvnEditCommitMessageAction" popup="true"
-            icon="AllIcons.Actions.Edit"
-            text="Edit Revision Comment" description="Edit revision comment. Previous message is rewritten.">
+            icon="AllIcons.Actions.Edit">
       <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
     </action>
 
@@ -104,8 +103,7 @@
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.IntegrateProject"/>
     </action>
 
-    <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" text="Show Working Copies"
-            description="Shows working copies information: working copy formats and URLs">
+    <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
   </actions>
@@ -120,7 +118,6 @@
     <projectService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"/>
-    <projectService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"
@@ -156,5 +153,6 @@
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnPhantomChangeDiffRequestProvider$SvnPhantomDiffTool"/>
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider$SvnTreeConflictDiffTool"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
+    <notificationWhitelist groupIds="Svn Roots Detection Errors"/>
   </extensions>
 </idea-plugin>

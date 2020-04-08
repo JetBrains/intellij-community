@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CreateModuleLibraryFromFilesTest extends ModuleRootManagerTestCase {
   private LibraryTable.ModifiableModel myModifiableModel;
   private ModifiableRootModel myModifiableRootModel;

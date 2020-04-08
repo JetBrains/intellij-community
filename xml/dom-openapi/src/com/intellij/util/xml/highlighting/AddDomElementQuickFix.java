@@ -23,8 +23,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.xml.DomBundle;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,7 +48,7 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
 
   private String computeName() {
     final String name = myElement.getXmlElementName();
-    return DomBundle.message(isTag() ? "add.element.fix.name" : "add.attribute.fix.name", name);
+    return XmlDomBundle.message(isTag() ? "add.element.fix.name" : "add.attribute.fix.name", name);
   }
 
   private boolean isTag() {
@@ -58,7 +58,7 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
   @Override
   @NotNull
   public String getFamilyName() {
-    return DomBundle.message("add.element.fix.family");
+    return XmlDomBundle.message("add.element.fix.family");
   }
 
   @Override

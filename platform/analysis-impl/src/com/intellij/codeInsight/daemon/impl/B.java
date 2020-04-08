@@ -12,19 +12,20 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class B implements AnnotationBuilder {
-  private static final Logger LOG = Logger.getInstance(B.class);
   @NotNull
   private final AnnotationHolderImpl myHolder;
   private final String message;
@@ -44,18 +45,27 @@ class B implements AnnotationBuilder {
   private String tooltip;
   private List<FixB> fixes;
   private boolean created;
+  private final Throwable myDebugCreationPlace;
 
   B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, String message, @NotNull PsiElement currentElement) {
     myHolder = holder;
     this.severity = severity;
     this.message = message;
     myCurrentElement = currentElement;
+    holder.annotationBuilderCreated(this);
+    myDebugCreationPlace = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal() ?
+                           ThrowableInterner.intern(new Throwable()) : null;
   }
 
-  private static void assertNotSet(Object o, String description) {
+  private void assertNotSet(Object o, String description) {
     if (o != null) {
+      markNotAbandoned(); // it crashed, not abandoned
       throw new IllegalStateException(description + " was set already");
     }
+  }
+
+  private void markNotAbandoned() {
+    created = true;
   }
 
   class FixB implements FixBuilder {
@@ -98,6 +108,7 @@ class B implements AnnotationBuilder {
 
     private void assertLQF() {
       if (!(fix instanceof LocalQuickFix || fix instanceof LocalQuickFixAsIntentionAdapter)) {
+        markNotAbandoned();
         throw new IllegalArgumentException("Fix " + fix + " must be instance of LocalQuickFix to be registered as batch");
       }
     }
@@ -120,6 +131,11 @@ class B implements AnnotationBuilder {
       }
       fixes.add(this);
       return B.this;
+    }
+
+    @Override
+    public String toString() {
+      return fix+(range==null?"":" at "+range)+(batch == null ? "" : " batch")+(universal == null ? "" : " universal");
     }
   }
 
@@ -147,6 +163,7 @@ class B implements AnnotationBuilder {
     assertNotSet(this.range, "range");
     TextRange currentElementRange = myCurrentElement.getTextRange();
     if (!currentElementRange.contains(range)) {
+      markNotAbandoned();
       //LOG.warn("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range, new IllegalArgumentException());
       throw new IllegalArgumentException("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range);
     }
@@ -254,6 +271,9 @@ class B implements AnnotationBuilder {
     if (range == null) {
       range = myCurrentElement.getTextRange();
     }
+    if (tooltip == null && message != null) {
+      tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    }
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     if (needsUpdateOnTyping != null) {
       annotation.setNeedsUpdateOnTyping(needsUpdateOnTyping);
@@ -297,11 +317,42 @@ class B implements AnnotationBuilder {
     }
     myHolder.add(annotation);
     myHolder.queueToUpdateIncrementally();
+    myHolder.annotationCreatedFrom(this);
   }
 
   private static <T extends IntentionAction & LocalQuickFix>
   void registerBatchFix(@NotNull Annotation annotation, @NotNull Object fix, @NotNull TextRange range, HighlightDisplayKey key) {
     //noinspection unchecked
     annotation.registerBatchFix((T)fix, range, key);
+  }
+
+  void assertAnnotationCreated() {
+    if (!created) {
+      throw new IllegalStateException("Abandoned AnnotationBuilder - its 'create()' method was never called: "+this
+                                      +(myDebugCreationPlace == null ? "" : "\nSee cause for the AnnotationBuilder creation stacktrace"), myDebugCreationPlace);
+    }
+  }
+
+  private static String omitIfEmpty(Object o, String name) {
+    return o == null ? "" : ", " + name + "=" + o;
+  }
+  @Override
+  public String toString() {
+    return "Builder{" +
+           "message='" + message + '\'' +
+           ", myCurrentElement=" + myCurrentElement +
+           ", severity=" + severity +
+           ", range=" + (range == null ? "(implicit)"+myCurrentElement.getTextRange() : range) +
+           omitIfEmpty(afterEndOfLine, "afterEndOfLine") +
+           omitIfEmpty(fileLevel, "fileLevel") +
+           omitIfEmpty(gutterIconRenderer, "gutterIconRenderer") +
+           omitIfEmpty(problemGroup, "problemGroup") +
+           omitIfEmpty(enforcedAttributes, "enforcedAttributes") +
+           omitIfEmpty(textAttributes, "textAttributes") +
+           omitIfEmpty(highlightType, "highlightType") +
+           omitIfEmpty(needsUpdateOnTyping, "needsUpdateOnTyping") +
+           omitIfEmpty(tooltip, "tooltip") +
+           omitIfEmpty(fixes, "fixes") +
+           '}';
   }
 }

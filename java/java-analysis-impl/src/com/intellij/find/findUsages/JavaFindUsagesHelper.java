@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -239,7 +239,7 @@ public class JavaFindUsagesHelper {
       for (final PsiClass aClass : classes) {
         if (progress != null) {
           String name = ReadAction.compute(aClass::getName);
-          progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", name));
+          progress.setText(JavaAnalysisBundle.message("find.searching.for.references.to.class.progress", name));
         }
         ProgressManager.checkCanceled();
         boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {

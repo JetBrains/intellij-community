@@ -1,11 +1,10 @@
 <idea-plugin>
   <extensions defaultExtensionNs="Pythonid">
-    <pythonSdkTypeComparator implementation="com.jetbrains.python.sdk.PyPreferringCondaSdkTypeComparator"/>
+    <condaSdkCustomizer implementation="com.jetbrains.python.sdk.conda.PyPreferringCondaSdkCustomizer" order="first"/>
   </extensions>
 
   <actions>
-    <action id="InstallMiniconda" class="com.jetbrains.python.actions.InstallCondaAction"
-            text="Install Miniconda 3...">
+    <action id="InstallMiniconda" class="com.jetbrains.python.actions.InstallCondaAction">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>

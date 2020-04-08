@@ -12,9 +12,8 @@ import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
+import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
-import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
-import org.jetbrains.plugins.groovy.intentions.style.inference.runInferenceProcess
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -35,7 +34,8 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    val virtualMethod = runInferenceProcess(method, GlobalSearchScope.allScope(project))
+    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), DefaultInferenceContext, lazy { unreachable() })
+    val virtualMethod = runInferenceProcess(method, options)
     substituteMethodSignature(virtualMethod, method)
   }
 
@@ -63,7 +63,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     for ((actual, inferred) in sinkMethod.parameters.zip(sourceMethod.parameters)) {
       actual.setType(inferred.type)
       actual.modifierList.setModifierProperty("def", false)
-      if (actual.isVarArgs && !inferred.isVarArgs) {
+      if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
       val currentAnnotations = actual.annotations.map { it.text }

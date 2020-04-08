@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.refactoring.typeMigration.rules.LongAdderConversionRule;
 import com.intellij.util.IncorrectOperationException;
@@ -92,6 +93,6 @@ public class ConvertAtomicToLongAdderIntention extends PsiElementBaseIntentionAc
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert to LongAdder";
+    return TypeMigrationBundle.message("convert.to.longadder.family.name");
   }
 }

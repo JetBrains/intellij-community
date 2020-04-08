@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiClass;
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
 
   @Override
   public String getOptionName() {
-    return RefactoringBundle.message("rename.tests");
+    return JavaRefactoringBundle.message("rename.tests");
   }
 
   @Override
@@ -78,17 +78,17 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return RefactoringBundle.message("rename.tests.title");
+      return JavaRefactoringBundle.message("rename.tests.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return RefactoringBundle.message("rename.tests.with.the.following.names.to");
+      return JavaRefactoringBundle.message("rename.tests.with.the.following.names.to");
     }
 
     @Override
     public String entityName() {
-      return RefactoringBundle.message("entity.name.test");
+      return JavaRefactoringBundle.message("entity.name.test");
     }
   }
 }

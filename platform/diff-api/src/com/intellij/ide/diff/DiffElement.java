@@ -77,8 +77,7 @@ public abstract class DiffElement<T> {
    * @return content byte array
    * @throws java.io.IOException when reading
    */
-  @Nullable
-  public abstract byte[] getContent() throws IOException;
+  public abstract byte @Nullable [] getContent() throws IOException;
 
   @Nullable
   public InputStream getContentStream() throws IOException {

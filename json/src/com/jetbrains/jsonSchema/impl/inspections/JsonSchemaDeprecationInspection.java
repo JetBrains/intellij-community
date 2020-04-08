@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonProperty;
@@ -42,7 +43,7 @@ public class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBa
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {
-            holder.registerProblem(o.getNameElement(), "Property '" + o.getName() + "' is deprecated: " + message);
+            holder.registerProblem(o.getNameElement(), JsonBundle.message("property.0.is.deprecated.1", o.getName(), message));
             return;
           }
         }

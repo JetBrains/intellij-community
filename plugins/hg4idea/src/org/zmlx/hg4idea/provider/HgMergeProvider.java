@@ -12,10 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -82,18 +82,18 @@ public class HgMergeProvider implements MergeProvider {
         if (parts.size() < 2) {
           LOG.info("Couldn't parse result of debugancestor command execution " + arguments);
           new HgCommandResultNotifier(myProject)
-            .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
-                         HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
+            .notifyError(null, HgBundle.message("hg4idea.error.debugancestor.command.execution"),
+                         HgBundle.message("hg4idea.error.debugancestor.command.description"));
         }
         else {
           baseRevisionNumber = HgRevisionNumber.getInstance(parts.get(0), parts.get(1));
         }
       }
       else {
-        LOG.info(HgVcsMessages.message("hg4idea.error.debugancestor.command.execution") + arguments);
+        LOG.info(HgBundle.message("hg4idea.error.debugancestor.command.execution") + arguments);
         new HgCommandResultNotifier(myProject)
-          .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
-                       HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
+          .notifyError(null, HgBundle.message("hg4idea.error.debugancestor.command.execution"),
+                       HgBundle.message("hg4idea.error.debugancestor.command.description"));
       }
     }
     else {

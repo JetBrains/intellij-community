@@ -36,8 +36,7 @@ public class CompletionProcessor extends ResolverProcessorImpl {
   }
 
   @Override
-  @NotNull
-  public GroovyResolveResult[] getCandidates() {
+  public GroovyResolveResult @NotNull [] getCandidates() {
     if (!super.hasCandidates()) return GroovyResolveResult.EMPTY_ARRAY;
     return ResolveUtil.filterSameSignatureCandidates(getCandidatesInternal());
   }

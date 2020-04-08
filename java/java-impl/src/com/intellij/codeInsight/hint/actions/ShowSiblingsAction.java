@@ -77,8 +77,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     return false;
   }
 
-  @NotNull
-  private static PsiElement[] findSuperElements(final PsiElement element) {
+  private static PsiElement @NotNull [] findSuperElements(final PsiElement element) {
     PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     if (parent == null) {
       return PsiElement.EMPTY_ARRAY;

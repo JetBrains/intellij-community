@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
+import com.jetbrains.python.PyBundle;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public final class CreateTestDialog extends DialogWrapper {
     init();
     myClassRequired = StringUtil.isNotEmpty(model.getClassName());
     myModel = model;
-    myTargetDir.addBrowseFolderListener("Select target directory", null, project,
+    myTargetDir.addBrowseFolderListener(PyBundle.message("code.insight.select.target.directory"), null, project,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myTargetDir.setEditable(false);
 
@@ -51,7 +52,7 @@ public final class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    setTitle("Create test");
+    setTitle(PyBundle.message("code.insight.create.test"));
 
     addUpdater(myFileName);
     addUpdater(myClassName);
@@ -94,8 +95,9 @@ public final class CreateTestDialog extends DialogWrapper {
     myModel.setClassName(myClassName.getText());
     myModel.setFileName(myFileName.getText());
     myModel.setTargetDir(myTargetDir.getText());
-    @SuppressWarnings("unchecked")
-    StreamEx<Vector<Object>> methods = StreamEx.of(myTableModel.getDataVector().stream());
+    @SuppressWarnings({"unchecked", "rawtypes", "UseOfObsoleteCollectionType"})
+    Vector<Vector<Object>> dataVector = (Vector)myTableModel.getDataVector();
+    StreamEx<Vector<Object>> methods = StreamEx.of(dataVector.stream());
     myModel.setMethods(new ArrayList<>(methods.map(v -> (v.get(0) == Boolean.TRUE) ? v.get(1).toString() : null).nonNull().toList()));
   }
 

@@ -24,9 +24,8 @@ public class FsRoot extends VirtualDirectoryImpl {
     VfsData.initFile(id, mySegment, nameId, myData);
   }
 
-  @NotNull
   @Override
-  protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
+  protected char @NotNull [] appendPathOnFileSystem(int pathLength, int[] position) {
     int myLength = myPathWithOneSlash.length() - 1;
     char[] chars = new char[pathLength + myLength];
     CharArrayUtil.getChars(myPathWithOneSlash, chars, 0, position[0], myLength);

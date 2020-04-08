@@ -146,8 +146,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     return PsiTreeUtil.isAncestor(decorator.getCallee(), elementInCall, false);
   }
 
-  @NotNull
-  public LookupElement[] getResult() {
+  public LookupElement @NotNull [] getResult() {
     final Collection<LookupElement> variants = myVariants.values();
     return variants.toArray(LookupElement.EMPTY_ARRAY);
   }

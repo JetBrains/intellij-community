@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SimpleWordsScanner extends VersionedWordsScanner {
   @Override
-  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<? super WordOccurrence> processor) {
     int index = 0;
     WordOccurrence occurrence = null;
     final char[] fileTextArray = CharArrayUtil.fromSequenceWithoutCopying(fileText);

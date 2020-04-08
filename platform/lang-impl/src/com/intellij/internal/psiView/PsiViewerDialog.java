@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -540,7 +540,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final Language baseLang = ((LanguageFileType)source).getLanguage();
       items.add(baseLang);
       List<Language> dialects = new ArrayList<>(baseLang.getDialects());
-      Collections.sort(dialects, LanguageUtil.LANGUAGE_COMPARATOR);
+      dialects.sort(LanguageUtil.LANGUAGE_COMPARATOR);
       items.addAll(dialects);
     }
     myDialectComboBox.setModel(new CollectionComboBoxModel<>(items));
@@ -562,7 +562,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       List<String> extensions = getAllExtensions((LanguageFileType)source);
       if (extensions.size() > 1) {
         ExtensionComparator comp = new ExtensionComparator(extensions.get(0));
-        Collections.sort(extensions, comp);
+        extensions.sort(comp);
         SortedComboBoxModel<String> model = new SortedComboBoxModel<>(comp);
         model.setAll(extensions);
         myExtensionComboBox.setModel(model);
@@ -614,9 +614,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     return null;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     AbstractAction copyPsi = new AbstractAction("Cop&y PSI") {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
@@ -665,7 +664,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @NotNull
   private ViewerTreeStructure getTreeStructure() {
-    return ObjectUtils.notNull((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure());
+    return Objects.requireNonNull((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure());
   }
 
   private PsiElement parseText(String text) {

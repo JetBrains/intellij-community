@@ -111,8 +111,7 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     PsiElement psiChild = getFirstChild();
     if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 

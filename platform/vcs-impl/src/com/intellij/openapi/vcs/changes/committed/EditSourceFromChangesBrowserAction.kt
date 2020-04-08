@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ModalityState.NON_MODAL
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.SELECTED_CHANGES
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFiles
 import com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray
@@ -22,7 +23,7 @@ internal class EditSourceFromChangesBrowserAction : EditSourceAction() {
 
     e.presentation.apply {
       icon = AllIcons.Actions.EditSource
-      text = "Edit Source"
+      text = VcsBundle.message("edit.source.action.text")
 
       val changesBrowser = e.getData(ChangesBrowserBase.DATA_KEY)
       isVisible = isVisible && changesBrowser != null

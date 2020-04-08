@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.todo;
 
@@ -48,8 +48,8 @@ import java.util.*;
  */
 public abstract class TodoTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance(TodoTreeBuilder.class);
-  public static final Comparator<NodeDescriptor> NODE_DESCRIPTOR_COMPARATOR =
-      Comparator.<NodeDescriptor>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);  
+  public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =
+      Comparator.<NodeDescriptor<?>>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);
   protected final Project myProject;
 
   /**
@@ -146,7 +146,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     if (myUpdatable != updatable) {
       myUpdatable = updatable;
       if (updatable) {
-        DumbService.getInstance(myProject).runWhenSmart(this::updateTree);
+        updateTree();
       }
     }
   }
@@ -290,7 +290,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    *         It means that file is in "dirty" file set or in "current" file set.
    */
   private boolean canContainTodoItems(PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     return myFileTree.contains(vFile) || myDirtyFileSet.contains(vFile);
   }
@@ -302,7 +302,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    * have happened.
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile != null && !(vFile instanceof LightVirtualFile)) { // If PSI file isn't valid then its VirtualFile can be null
       myDirtyFileSet.add(vFile);
@@ -310,7 +310,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   void rebuildCache(){
-    Set<VirtualFile> files = new HashSet<>(); 
+    Set<VirtualFile> files = new HashSet<>();
     collectFiles(virtualFile -> {
       files.add(virtualFile);
       return true;
@@ -329,7 +329,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
@@ -423,13 +423,13 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public final Promise<?> updateTree() {
     if (myUpdatable) {
-      return myModel.getInvoker().invoke(() -> DumbService.getInstance(myProject).runWhenSmart(() -> {
+      return myModel.getInvoker().invoke(() -> ApplicationManager.getApplication().invokeLater(() -> {
         if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
           validateCache();
           getTodoTreeStructure().validateCache();
         }
         myModel.invalidate();
-      }));
+      }, myProject.getDisposed()));
     }
     return Promises.resolvedPromise();
   }
@@ -491,7 +491,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     getTodoTreeStructure().setFlattenPackages(state);
     rebuildTreeOnSettingChange();
   }
-  
+
   void setShowModules(boolean state) {
     getTodoTreeStructure().setShownModules(state);
     rebuildTreeOnSettingChange();
@@ -740,9 +740,11 @@ public abstract class TodoTreeBuilder implements Disposable {
       String propertyName = e.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) { // rebuild all tree when source roots were changed
         myModel.getInvoker().invoke(
-          () -> DumbService.getInstance(myProject).runWhenSmart(() -> rebuildCache())
+          () -> ApplicationManager.getApplication().invokeLater(() -> {
+            rebuildCache();
+            updateTree();
+          })
         );
-        updateTree();
       }
       else if (PsiTreeChangeEvent.PROP_WRITABLE.equals(propertyName) || PsiTreeChangeEvent.PROP_FILE_NAME.equals(propertyName)) {
         PsiFile psiFile = (PsiFile)e.getElement();

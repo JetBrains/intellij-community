@@ -38,19 +38,19 @@ import java.util.Collection;
 
 public class StringConcatenationInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreAsserts = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreSystemOuts = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreSystemErrs = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreThrowableArguments = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreConstantInitializers = false;
 
   @SuppressWarnings({"PublicField", "UnusedDeclaration"})
@@ -66,8 +66,7 @@ public class StringConcatenationInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[0];
     final Collection<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);
@@ -141,8 +140,9 @@ public class StringConcatenationInspection extends BaseInspection {
       return null;
     }
     final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    if (!TypeUtils.isJavaLangString(referenceExpression.getType())) return null;
     final PsiElement element = referenceExpression.resolve();
-    if (!(element instanceof PsiModifierListOwner)) {
+    if (!(element instanceof PsiModifierListOwner) || !element.isPhysical()) {
       return null;
     }
     return (PsiModifierListOwner)element;

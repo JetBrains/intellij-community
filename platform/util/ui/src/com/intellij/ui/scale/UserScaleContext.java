@@ -43,7 +43,7 @@ public class UserScaleContext {
    * Creates a context with the provided scale factors (system scale is ignored)
    */
   @NotNull
-  public static UserScaleContext create(@NotNull Scale... scales) {
+  public static UserScaleContext create(Scale @NotNull ... scales) {
     UserScaleContext ctx = create();
     for (Scale s : scales) ctx.setScale(s);
     return ctx;
@@ -74,7 +74,7 @@ public class UserScaleContext {
   /**
    * Permanently overrides the provided scale (the scale won't be changed on subsequent {@link #update()}).
    * Can be used to make a UI object user scale independent:
-   * <p>
+   * <p></p>
    * <code>
    * ((ScaleContextAware)uiObject).getScaleContext().overrideScale(USR_SCALE.of(1.0));
    * </code>

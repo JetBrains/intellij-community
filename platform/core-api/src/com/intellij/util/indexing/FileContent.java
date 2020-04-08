@@ -20,8 +20,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileContent extends IndexedFile {
-  @NotNull
-  byte[] getContent();
+  byte @NotNull [] getContent();
 
   @NotNull
   CharSequence getContentAsText();

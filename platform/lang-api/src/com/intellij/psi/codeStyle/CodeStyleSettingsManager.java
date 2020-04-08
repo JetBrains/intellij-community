@@ -5,7 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
+public class CodeStyleSettingsManager implements PersistentStateComponentWithModificationTracker<Element> {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   /**
@@ -43,6 +43,13 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private volatile CodeStyleSettings myTemporarySettings;
 
   private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  @Override
+  public long getStateModificationCount() {
+    return enumSettings().stream()
+                         .mapToLong(settings -> settings.getModificationTracker().getModificationCount())
+                         .sum();
+  }
 
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
     if (project == null || project.isDefault()) {
@@ -61,20 +68,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
 
   protected void registerExtensionPointListeners(@NotNull Disposable disposable) {
-    FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<FileIndentOptionsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull FileIndentOptionsProvider extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
-          notifyCodeStyleSettingsChanged();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull FileIndentOptionsProvider extension,
-                                     @NotNull PluginDescriptor pluginDescriptor) {
-          notifyCodeStyleSettingsChanged();
-        }
-      }, disposable);
+    FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(this::notifyCodeStyleSettingsChanged, disposable);
     FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(
       new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
         @Override
@@ -93,12 +87,31 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
         @Override
         public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          LanguageCodeStyleSettingsProvider.registerSettingsPageProvider(extension);
           registerLanguageSettings(enumSettings(), extension);
+          registerCustomSettings(enumSettings(), extension);
         }
 
         @Override
         public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          LanguageCodeStyleSettingsProvider.unregisterSettingsPageProvider(extension);
           unregisterLanguageSettings(enumSettings(), extension);
+          unregisterCustomSettings(enumSettings(), extension);
+        }
+      }, disposable
+    );
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
+      new ExtensionPointListener<CodeStyleSettingsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          registerCustomSettings(enumSettings(), extension);
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          unregisterCustomSettings(enumSettings(), extension);
         }
       }, disposable
     );
@@ -131,6 +144,20 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   @ApiStatus.Internal
   public final void unregisterLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
                                                @NotNull LanguageCodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.removeSettings(provider));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void registerCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                           @NotNull CodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.registerSettings(provider));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void unregisterCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                             @NotNull CodeStyleSettingsProvider provider) {
     allSettings.forEach(settings -> settings.removeSettings(provider));
     notifyCodeStyleSettingsChanged();
   }

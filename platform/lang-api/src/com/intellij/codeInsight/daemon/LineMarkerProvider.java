@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -74,9 +73,8 @@ public interface LineMarkerProvider {
    * }
    * </pre>
    */
-  @Nullable
-  LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element);
+  LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
 
-  default void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  default void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
   }
 }

@@ -13,7 +13,7 @@ public class NewInstanceFactory<T> implements Factory<T> {
   private final Constructor<? extends T> myConstructor;
   private final Object[] myArgs;
 
-  private NewInstanceFactory(@NotNull Constructor<? extends T> constructor, @NotNull Object[] args) {
+  private NewInstanceFactory(@NotNull Constructor<? extends T> constructor, Object @NotNull [] args) {
     myConstructor = constructor;
     myArgs = args;
   }

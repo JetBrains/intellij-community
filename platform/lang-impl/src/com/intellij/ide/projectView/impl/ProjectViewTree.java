@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -15,6 +15,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
@@ -28,7 +29,6 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayDeque;
 
 /**
  * @author Konstantin Bulenkov
@@ -103,6 +103,7 @@ public class ProjectViewTree extends DnDAwareTree {
     return enabled;
   }
 
+  @DirtyUI
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
@@ -161,23 +162,5 @@ public class ProjectViewTree extends DnDAwareTree {
       }
     }
     return color;
-  }
-
-  @Override
-  public void collapsePath(TreePath path) {
-    int row = Registry.is("async.project.view.collapse.tree.path.recursively") ? getRowForPath(path) : -1;
-    if (row < 0) {
-      super.collapsePath(path);
-    }
-    else {
-      ArrayDeque<TreePath> deque = new ArrayDeque<>();
-      deque.addFirst(path);
-      while (++row < getRowCount()) {
-        TreePath next = getPathForRow(row);
-        if (!path.isDescendant(next)) break;
-        if (isExpanded(next)) deque.addFirst(next);
-      }
-      deque.forEach(super::collapsePath);
-    }
   }
 }

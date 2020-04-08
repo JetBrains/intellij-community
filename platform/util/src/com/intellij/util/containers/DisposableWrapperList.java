@@ -167,8 +167,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  @NotNull
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     Object[] elements = myWrappedList.toArray();
     if (elements.length == 0) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
@@ -180,8 +179,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  @NotNull
-  public <T> T[] toArray(@NotNull T[] array) {
+  public <T> T @NotNull [] toArray(T @NotNull [] array) {
     Object[] elements = myWrappedList.toArray();
     int len = elements.length;
     if (array.length < len) {

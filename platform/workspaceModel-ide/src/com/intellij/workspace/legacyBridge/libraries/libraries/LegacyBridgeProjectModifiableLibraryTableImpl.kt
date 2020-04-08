@@ -2,15 +2,16 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.ExternalEntitySource
 import com.intellij.workspace.ide.IdeUiEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.toEntitySource
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 
 internal class LegacyBridgeProjectModifiableLibraryTableImpl(
@@ -64,7 +65,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
       tableId = LibraryTableId.ProjectLibraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = if (externalSource != null) ExternalEntitySource(externalSource.displayName, externalSource.id) else IdeUiEntitySource
+      source = if (externalSource != null) externalSource.toEntitySource() else IdeUiEntitySource
     )
 
     if (type != null) {
@@ -118,6 +119,15 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
   override fun commit() {
     assertModelIsLive()
     modelIsCommittedOrDisposed = true
+
+    myLibrariesToAdd.forEach { library ->
+      val componentAsString = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
+      library.libraryEntity?.getCustomProperties()?.let { property ->
+        diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
+          propertiesXmlTag = componentAsString
+        }
+      }
+    }
 
     libraryTable.setNewLibraryInstances(myLibrariesToAdd)
     WorkspaceModel.getInstance(project).updateProjectModel {

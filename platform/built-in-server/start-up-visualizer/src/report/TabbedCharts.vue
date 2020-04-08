@@ -1,4 +1,4 @@
-<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<!-- Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
   <el-tabs v-model="activeName" @tab-click="navigate">
     <!--  use v-once because `charts` is not going to be changed  -->
@@ -15,6 +15,7 @@
   import ActivityChart from "@/report/ActivityChart.vue"
   import {Location} from "vue-router"
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
+  import {Dictionary} from "vue-router/types/router"
 
   @Component({components: {ActivityChart}})
   export default class TabbedCharts extends Vue {
@@ -31,7 +32,7 @@
       this.updateLocation(location)
     }
 
-    private updateLocation(location: Location): void {
+    private updateLocation(location: { query?: Dictionary<string | (string | null)[] | null | undefined> }): void {
       const tab = location.query == null ? null : location.query.tab
       // do not check `location.path === "/"` because if component displayed, so, active
       if (tab == null) {

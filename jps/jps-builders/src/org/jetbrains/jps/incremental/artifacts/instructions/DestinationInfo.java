@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see JarDestinationInfo
  * @see ExplodedDestinationInfo
- * @author nik
  */
 public abstract class DestinationInfo {
   private final String myOutputPath;

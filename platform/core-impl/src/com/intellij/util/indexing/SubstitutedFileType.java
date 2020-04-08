@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.lang.Language;
@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author traff
- */
 public class SubstitutedFileType extends LanguageFileType{
   @NotNull private final FileType myOriginalFileType;
   @NotNull private final FileType myFileType;
@@ -68,7 +65,7 @@ public class SubstitutedFileType extends LanguageFileType{
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return myFileType.getCharset(file, content);
   }
 

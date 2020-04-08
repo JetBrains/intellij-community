@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
@@ -28,6 +28,8 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -35,8 +37,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -59,13 +62,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-/**
- * @author egor
- */
 public class JavaDebugProcess extends XDebugProcess {
   private final DebuggerSession myJavaSession;
   private final JavaDebuggerEditorsProvider myEditorsProvider;
-  private final XBreakpointHandler<?>[] myBreakpointHandlers;
+  private volatile XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
   private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
 
@@ -93,6 +93,14 @@ public class JavaDebugProcess extends XDebugProcess {
       .append(JavaBreakpointHandlerFactory.EP_NAME.extensions())
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
+
+    JavaBreakpointHandlerFactory.EP_NAME.addExtensionPointListener(new ExtensionPointListener<JavaBreakpointHandlerFactory>() {
+      @Override
+      public void extensionAdded(@NotNull JavaBreakpointHandlerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
+        //noinspection NonAtomicOperationOnVolatileField
+        myBreakpointHandlers = ArrayUtil.append(myBreakpointHandlers, extension.createHandler(myJavaSession.getProcess()));
+      }
+    }, process.myDisposable);
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
@@ -187,8 +195,8 @@ public class JavaDebugProcess extends XDebugProcess {
     if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
       ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
     }
-    if (Registry.is("debugger.show.values.from.dfa")) {
-      DfaAssist.installDfaAssist(myJavaSession);
+    if (!DebuggerUtilsImpl.isRemote(process)) {
+      DfaAssist.installDfaAssist(myJavaSession, session);
     }
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
@@ -273,9 +281,8 @@ public class JavaDebugProcess extends XDebugProcess {
     myJavaSession.runToCursor(position, false);
   }
 
-  @NotNull
   @Override
-  public XBreakpointHandler<?>[] getBreakpointHandlers() {
+  public XBreakpointHandler<?> @NotNull [] getBreakpointHandlers() {
     return myBreakpointHandlers;
   }
 
@@ -330,7 +337,7 @@ public class JavaDebugProcess extends XDebugProcess {
           null, panel.getDefaultFocusedComponent());
         threadsContent.setCloseable(false);
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
-        ui.addListener(new ContentManagerAdapter() {
+        ui.addListener(new ContentManagerListener() {
           @Override
           public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event.getContent() == threadsContent) {
@@ -358,7 +365,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, process, tracker);
 
         final Content memoryViewContent =
-          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory",
+          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, JavaDebuggerBundle.message("memory.toolwindow.title"),
                            null, classesFilteredView.getDefaultFocusedComponent());
 
         memoryViewContent.setCloseable(false);
@@ -376,7 +383,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
         ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
         final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
-        ui.addListener(new ContentManagerAdapter() {
+        ui.addListener(new ContentManagerListener() {
           @Override
           public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (event.getContent() == memoryViewContent) {
@@ -391,7 +398,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
         DebugProcessImpl process = myJavaSession.getProcess();
         OverheadView monitor = new OverheadView(process);
-        Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", null, monitor.getDefaultFocusedComponent());
+        Content overheadContent = ui.createContent("OverheadMonitor", monitor, JavaDebuggerBundle.message("overhead.toolwindow.title"), null, monitor.getDefaultFocusedComponent());
 
         monitor.setBouncer(() -> ui.setBouncing(overheadContent, true));
 
@@ -421,7 +428,7 @@ public class JavaDebugProcess extends XDebugProcess {
     private volatile boolean myAutoModeEnabled;
 
     AutoVarsSwitchAction() {
-      super(DebuggerBundle.message("action.auto.variables.mode"), DebuggerBundle.message("action.auto.variables.mode.description"), null);
+      super(JavaDebuggerBundle.message("action.auto.variables.mode"), JavaDebuggerBundle.message("action.auto.variables.mode.description"), null);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     }
 
@@ -443,9 +450,9 @@ public class JavaDebugProcess extends XDebugProcess {
     private final String myTextUnavailable;
 
     WatchLastMethodReturnValueAction() {
-      super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
-      myText = DebuggerBundle.message("action.watches.method.return.value.enable");
-      myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
+      super("", JavaDebuggerBundle.message("action.watch.method.return.value.description"), null);
+      myText = JavaDebuggerBundle.message("action.watches.method.return.value.enable");
+      myTextUnavailable = JavaDebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
     }
 
     @Override

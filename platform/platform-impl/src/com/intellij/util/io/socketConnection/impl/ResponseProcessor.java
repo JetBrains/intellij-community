@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ResponseProcessor<R extends AbstractResponse> {
   private static final Logger LOG = Logger.getInstance(ResponseProcessor.class);
   private final TIntObjectHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new TIntObjectHashMap<>();

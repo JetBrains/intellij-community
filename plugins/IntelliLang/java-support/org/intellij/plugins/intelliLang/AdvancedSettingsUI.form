@@ -17,14 +17,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Annotation Classes"/>
+        <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="settings.annotation.classes"/>
         <children>
           <component id="f36cc" class="javax.swing.JLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Language annotation class"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.language.annotation.class"/>
             </properties>
           </component>
           <grid id="617e1" binding="myLanguageAnnotationPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -40,7 +40,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Pattern annotation class"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.pattern.annotation.class"/>
             </properties>
           </component>
           <grid id="865f0" binding="myPatternAnnotationPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -56,7 +56,7 @@
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Substitution annotation class"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.substitution.annotation.class"/>
             </properties>
           </component>
           <grid id="82f75" binding="mySubstAnnotationPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -85,14 +85,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Runtime Pattern Validation"/>
+        <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="settings.runtime.pattern.validation"/>
         <children>
           <component id="633b5" class="javax.swing.JRadioButton" binding="myNoInstrumentation">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;No runtime instrumentation"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.no.runtime.instrumentation"/>
             </properties>
           </component>
           <component id="a7682" class="javax.swing.JRadioButton" binding="myAssertInstrumentation">
@@ -100,7 +100,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Instrument with assertions"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.instrument.with.assertions"/>
             </properties>
           </component>
           <component id="a7ed5" class="javax.swing.JRadioButton" binding="myExceptionInstrumentation">
@@ -108,7 +108,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Instrument &amp;with IllegalArgumentException"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.instrument.with.illegal.argument.exception"/>
             </properties>
           </component>
         </children>
@@ -122,14 +122,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Performance"/>
+        <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="settings.performance"/>
         <children>
           <component id="8aa19" class="javax.swing.JRadioButton" binding="myDfaOff">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Do not analyze anything (fast)"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.do.not.analyze.anything"/>
             </properties>
           </component>
           <component id="8aa20" class="javax.swing.JRadioButton" binding="myAnalyzeReferences">
@@ -137,7 +137,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Analyze &amp;references"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.analyze.references"/>
             </properties>
           </component>
           <component id="a0eca" class="javax.swing.JRadioButton" binding="myLookForAssignments">
@@ -145,7 +145,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Look for &amp;variable assignments"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.look.for.variable.assignments"/>
             </properties>
           </component>
           <component id="1c9a1" class="javax.swing.JRadioButton" binding="myUseDfa">
@@ -154,7 +154,7 @@
             </constraints>
             <properties>
               <selected value="false"/>
-              <text value="&amp;Use dataflow analysis (slow) "/>
+              <text resource-bundle="messages/IntelliLangBundle" key="settings.use.dataflow.analysis"/>
             </properties>
           </component>
         </children>
@@ -164,7 +164,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Convert undefined operands to &amp;text in concatenations"/>
+          <text resource-bundle="messages/IntelliLangBundle" key="settings.convert.undefined.operands.to.text"/>
         </properties>
       </component>
       <component id="c2199" class="javax.swing.JCheckBox" binding="mySourceModificationAllowedCheckBox">
@@ -172,7 +172,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Add @Language annotation or comment if needed"/>
+          <text resource-bundle="messages/IntelliLangBundle" key="settings.add.language.annotation.or.comment"/>
         </properties>
       </component>
       <vspacer id="5c670">

@@ -3,7 +3,6 @@ package com.jetbrains.python.defaultProjectAwareService;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ public final class PyDefaultProjectAwareServiceClasses<
   }
 
   public MODULE_SERVICE getModuleService(@NotNull Module module) {
-    return ModuleServiceManager.getService(module, myModuleServiceClass);
+    return module.getService(myModuleServiceClass);
   }
 
   void copyFromAppToModule(@NotNull Module module) {

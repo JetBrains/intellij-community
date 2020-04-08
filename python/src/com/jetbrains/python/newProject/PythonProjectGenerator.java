@@ -37,6 +37,7 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackageManagementService.ErrorDescription;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -195,7 +196,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
                                              syncError);
         if (Messages.showYesNoDialog(project,
                                      message,
-                                     "Synchronization not Configured",
+                                     PyBundle.message("python.new.project.synchronization.not.configured"),
                                      General.WarningDialog) == Messages.YES) {
           break;
         }

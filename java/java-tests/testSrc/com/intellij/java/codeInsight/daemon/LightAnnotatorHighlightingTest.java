@@ -116,8 +116,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators()
-    );
+    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, this::runMyAnnotators);
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
@@ -275,10 +274,9 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         return null;
       }
 
-      @Nullable
       @Override
-      public QuickFix[] getFixes() {
-        return new QuickFix[0];
+      public QuickFix @Nullable [] getFixes() {
+        return QuickFix.EMPTY_ARRAY;
       }
     };
     try {
@@ -433,7 +431,8 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         });
 
 
-        HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME, UnusedDeclarationInspectionBase.SHORT_NAME);
+        HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME,
+                                                                               UnusedDeclarationInspectionBase.getDisplayNameText(), UnusedDeclarationInspectionBase.SHORT_NAME);
         checkThrowsWhenCalledTwiceOnFixBuilder(holder, stubIntention, fixBuilder -> fixBuilder.key(myDeadCodeKey));
         checkThrowsWhenCalledTwiceOnFixBuilder(holder, stubIntention, fixBuilder -> fixBuilder.range(new TextRange(0, 0)));
 

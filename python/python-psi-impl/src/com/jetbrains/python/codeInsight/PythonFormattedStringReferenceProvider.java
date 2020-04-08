@@ -27,9 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     if (PythonFormattedStringReferenceContributor.Holder.FORMAT_STRING_PATTERN.accepts(element)) {
       return getReferencesFromFormatString((PyStringLiteralExpression)element);
     }
@@ -50,9 +49,8 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
     return getReferencesFromChunks(element, chunks);
   }
 
-  @NotNull
-  public static PySubstitutionChunkReference[] getReferencesFromChunks(@NotNull final PyStringLiteralExpression element,
-                                                                       @NotNull final List<? extends PyStringFormatParser.SubstitutionChunk> chunks) {
+  public static PySubstitutionChunkReference @NotNull [] getReferencesFromChunks(@NotNull final PyStringLiteralExpression element,
+                                                                                 @NotNull final List<? extends PyStringFormatParser.SubstitutionChunk> chunks) {
     return ContainerUtil.map2Array(chunks, PySubstitutionChunkReference.class, chunk -> new PySubstitutionChunkReference(element, chunk));
   }
 }

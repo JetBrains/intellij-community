@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -30,6 +29,8 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
 public class FileTypeUsageCounterCollector {
   private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
@@ -71,7 +72,7 @@ public class FileTypeUsageCounterCollector {
       }
 
       if (instance.describes(file)) {
-        data.addData("schema", StatisticsUtilKt.getPluginType(instance.getClass()).isSafeToReport() ? ext.schema : "third.party");
+        data.addData("schema", getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party");
         break;
       }
     }
@@ -113,7 +114,7 @@ public class FileTypeUsageCounterCollector {
 
       for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
         if (StringUtil.equals(ext.schema, data)) {
-          return StatisticsUtilKt.getPluginType(ext.getInstance().getClass()).isSafeToReport() ?
+          return getPluginInfo(ext.getInstance().getClass()).isSafeToReport() ?
                  ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }

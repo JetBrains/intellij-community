@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.util.ObjectUtils
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
@@ -56,36 +55,23 @@ private fun <R> buildLayer(progress: ProgressIndicator, project: Project, querie
   queue.addAll(queries)
 
   val queryRequests = SmartList<QueryRequest<*, R>>()
-  val subQueryQueryRequests = SmartList<QueryRequest<*, Query<out R>>>()
   val wordRequests = SmartList<WordRequest<R>>()
-  val subQueryWordRequests = SmartList<WordRequest<Query<out R>>>()
 
   while (queue.isNotEmpty()) {
     progress.checkCanceled()
     val query: Query<out R> = queue.remove()
-    val primitives: PrimitiveRequests<R> = decompose(query)
-
-    val resultRequests: Requests<R> = primitives.resultRequests
-    queryRequests.addAll(resultRequests.queryRequests)
-    wordRequests.addAll(resultRequests.wordRequests)
-    for (parametersRequest: ParametersRequest<*, R> in resultRequests.parametersRequests) {
+    val primitives: Requests<R> = decompose(query)
+    queryRequests.addAll(primitives.queryRequests)
+    wordRequests.addAll(primitives.wordRequests)
+    for (parametersRequest in primitives.parametersRequests) {
       progress.checkCanceled()
       handleParamRequest(progress, parametersRequest) {
         queue.offer(it)
       }
     }
-
-    val subQueryRequests: Requests<Query<out R>> = primitives.subQueryRequests
-    subQueryQueryRequests.addAll(subQueryRequests.queryRequests)
-    subQueryWordRequests.addAll(subQueryRequests.wordRequests)
-    for (parametersRequest: ParametersRequest<*, Query<out R>> in subQueryRequests.parametersRequests) {
-      progress.checkCanceled()
-      handleSubQueryParamRequest(progress, parametersRequest) {
-        queue.offer(it)
-      }
-    }
   }
-  return Layer(project, progress, queryRequests, wordRequests, subQueryQueryRequests, subQueryWordRequests)
+
+  return Layer(project, progress, queryRequests, wordRequests)
 }
 
 private fun <B, R> handleParamRequest(progress: ProgressIndicator,
@@ -94,17 +80,7 @@ private fun <B, R> handleParamRequest(progress: ProgressIndicator,
   val searchRequests: Collection<Query<out B>> = collectSearchRequests(request.params)
   for (query: Query<out B> in searchRequests) {
     progress.checkCanceled()
-    queue(transformingQuery(query, request.transformation))
-  }
-}
-
-private fun <B, R> handleSubQueryParamRequest(progress: ProgressIndicator,
-                                              request: ParametersRequest<B, Query<out R>>,
-                                              queue: (Query<out R>) -> Unit) {
-  val searchRequests: Collection<Query<out B>> = collectSearchRequests(request.params)
-  for (query: Query<out B> in searchRequests) {
-    progress.checkCanceled()
-    queue(LayeredQuery(query, request.transformation))
+    queue(XQuery(query, request.transformation))
   }
 }
 
@@ -121,6 +97,7 @@ private fun <R> collectSearchRequests(parameters: SearchParameters<R>): Collecti
 
 private fun <R> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   val queries = ArrayList<Query<out R>>()
+
   @Suppress("UNCHECKED_CAST")
   val searchers = searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
   for (searcher: Searcher<SearchParameters<R>, R> in searchers) {
@@ -139,31 +116,36 @@ private class Layer<T>(
   private val project: Project,
   private val progress: ProgressIndicator,
   private val queryRequests: Collection<QueryRequest<*, T>>,
-  private val wordRequests: Collection<WordRequest<T>>,
-  private val subQueryQueryRequests: Collection<QueryRequest<*, Query<out T>>>,
-  private val subQueryWordRequests: Collection<WordRequest<Query<out T>>>
+  private val wordRequests: Collection<WordRequest<T>>
 ) {
 
   private val myHelper = PsiSearchHelper.getInstance(project) as PsiSearchHelperImpl
 
   fun runLayer(processor: Processor<in T>): LayerResult<T> {
-    if (!processQueryRequests(progress, queryRequests, processor)) {
+    val subQueries = Collections.synchronizedList(ArrayList<Query<out T>>())
+    val xProcessor = Processor<XResult<T>> { result ->
+      when (result) {
+        is ValueResult -> processor.process(result.value)
+        is QueryResult -> {
+          subQueries.add(result.query)
+          true
+        }
+      }
+    }
+    if (!processQueryRequests(progress, queryRequests, xProcessor)) {
       return LayerResult.Stop
     }
-    val subQueries = ArrayList<Query<out T>>()
-    val subQueryProcessor: Processor<Query<out T>> = synchronizedCollectProcessor(subQueries)
-    if (!processWordRequests(processor, subQueryProcessor)) {
+    if (!processWordRequests(xProcessor)) {
       return LayerResult.Stop
     }
-    processQueryRequests(progress, subQueryQueryRequests, subQueryProcessor)
     return LayerResult.Ok(subQueries)
   }
 
-  private fun processWordRequests(processor: Processor<in T>, subQueryProcessor: Processor<in Query<out T>>): Boolean {
-    if (wordRequests.isEmpty() && subQueryWordRequests.isEmpty()) {
+  private fun processWordRequests(processor: Processor<in XResult<T>>): Boolean {
+    if (wordRequests.isEmpty()) {
       return true
     }
-    val allRequests: Collection<RequestAndProcessors> = distributeWordRequests(processor, subQueryProcessor)
+    val allRequests: Collection<RequestAndProcessors> = distributeWordRequests(processor)
     val globals = SmartList<RequestAndProcessors>()
     val locals = SmartList<RequestAndProcessors>()
     for (requestAndProcessor: RequestAndProcessors in allRequests) {
@@ -178,8 +160,7 @@ private class Layer<T>(
            && processLocalRequests(locals)
   }
 
-  private fun distributeWordRequests(processor: Processor<in T>,
-                                     subQueryProcessor: Processor<in Query<out T>>): Collection<RequestAndProcessors> {
+  private fun distributeWordRequests(processor: Processor<in XResult<T>>): Collection<RequestAndProcessors> {
     val theMap = LinkedHashMap<
       WordRequestInfo,
       Pair<
@@ -188,24 +169,19 @@ private class Layer<T>(
         >
       >()
 
-    fun <X> distribute(requests: Collection<WordRequest<X>>, processor: Processor<in X>) {
-      for (wordRequest: WordRequest<X> in requests) {
-        progress.checkCanceled()
-        val byRequest = theMap.getOrPut(wordRequest.searchWordRequest) {
-          Pair(SmartList(), LinkedHashMap())
-        }
-        val occurrenceProcessors: MutableCollection<OccurrenceProcessor> = when (val injectionInfo = wordRequest.injectionInfo) {
-          InjectionInfo.NoInjection -> byRequest.first
-          is InjectionInfo.InInjection -> byRequest.second.getOrPut(injectionInfo.languageInfo) {
-            SmartList()
-          }
-        }
-        occurrenceProcessors += wordRequest.occurrenceProcessor(processor)
+    for (wordRequest: WordRequest<T> in wordRequests) {
+      progress.checkCanceled()
+      val byRequest = theMap.getOrPut(wordRequest.searchWordRequest) {
+        Pair(SmartList(), LinkedHashMap())
       }
+      val occurrenceProcessors: MutableCollection<OccurrenceProcessor> = when (val injectionInfo = wordRequest.injectionInfo) {
+        InjectionInfo.NoInjection -> byRequest.first
+        is InjectionInfo.InInjection -> byRequest.second.getOrPut(injectionInfo.languageInfo) {
+          SmartList()
+        }
+      }
+      occurrenceProcessors += wordRequest.occurrenceProcessor(processor)
     }
-
-    distribute(wordRequests, processor)
-    distribute(subQueryWordRequests, subQueryProcessor)
 
     return theMap.map { (wordRequest: WordRequestInfo, byRequest) ->
       progress.checkCanceled()
@@ -274,15 +250,15 @@ private class Layer<T>(
 
 private fun <R> processQueryRequests(progress: ProgressIndicator,
                                      requests: Collection<QueryRequest<*, R>>,
-                                     processor: Processor<in R>): Boolean {
+                                     processor: Processor<in XResult<R>>): Boolean {
   if (requests.isEmpty()) {
     return true
   }
-  val map: Map<Query<*>, List<Transformation<*, R>>> = requests.groupBy({ it.query }, { it.transformation })
-  for ((query: Query<*>, transforms: List<Transformation<*, R>>) in map.iterator()) {
+  val map: Map<Query<*>, List<XTransformation<*, R>>> = requests.groupBy({ it.query }, { it.transformation })
+  for ((query: Query<*>, transforms: List<XTransformation<*, R>>) in map.iterator()) {
     progress.checkCanceled()
     @Suppress("UNCHECKED_CAST")
-    if (!runQueryRequest(query as Query<Any>, transforms as Collection<Transformation<Any, R>>, processor)) {
+    if (!runQueryRequest(query as Query<Any>, transforms as Collection<XTransformation<Any, R>>, processor)) {
       return false
     }
   }
@@ -302,16 +278,6 @@ private fun <B, R> runQueryRequest(query: Query<out B>,
     }
     return true
   })
-}
-
-private fun <T> synchronizedCollectProcessor(subQueries: MutableCollection<in T>): Processor<T> {
-  val lock = ObjectUtils.sentinel("synchronizedCollectProcessor")
-  return Processor {
-    synchronized(lock) {
-      subQueries += it
-    }
-    true
-  }
 }
 
 private data class RequestAndProcessors(

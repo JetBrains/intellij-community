@@ -41,7 +41,8 @@ import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGIN
  */
 public class HtmlDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider {
   public static final ExtensionPointName<DocumentationProvider> SCRIPT_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.html.scriptDocumentationProvider");
-
+  public static final String ATTR_PREFIX = "#attr-";
+  
   private final boolean myUseStyleProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
@@ -91,7 +92,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
     }
     final DocEntity entity = ReadAction.compute(() -> findDocumentationEntity(element, tag));
     for (String url : docUrls) {
-      if (url.contains("#attr-")) return null;
+      if (url.contains(ATTR_PREFIX)) return null;
     }
 
     String mdnDoc = MdnDocumentationUtil.fetchExternalDocumentation(docUrls, () -> null);
@@ -123,7 +124,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
 
     EntityDescriptor descriptor = findDocumentationDescriptor(entity, context);
     if (descriptor instanceof HtmlAttributeDescriptor && context != null) {
-      return "https://developer.mozilla.org/docs/Web/HTML/Element/" + context.getName() + "#attr-" + descriptor.getName();
+      return "https://developer.mozilla.org/docs/Web/HTML/Element/" + context.getName() + ATTR_PREFIX + descriptor.getName();
     }
 
     return descriptor != null ? descriptor.getHelpRef() : null;
@@ -137,7 +138,8 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
 
     if (element instanceof FakePsiElement) {
       nameElement = element.getNavigationElement();
-      isTag = nameElement != null && nameElement.getParent().getText().startsWith("element");
+      PsiElement parent = nameElement == null ? null : nameElement.getParent();
+      isTag = parent != null && parent.getText().startsWith("element");
     } else if (element instanceof XmlElementDecl) {
       nameElement = ((XmlElementDecl)element).getNameElement();
     } else if (element instanceof XmlAttributeDecl) {

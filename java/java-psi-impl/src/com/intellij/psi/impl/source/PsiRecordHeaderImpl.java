@@ -40,9 +40,8 @@ public class PsiRecordHeaderImpl extends JavaStubPsiElement<PsiRecordHeaderStub>
     return "PsiRecordHeader";
   }
 
-  @NotNull
   @Override
-  public PsiRecordComponent[] getRecordComponents() {
+  public PsiRecordComponent @NotNull [] getRecordComponents() {
     return getStubOrPsiChildren(JavaStubElementTypes.RECORD_COMPONENT, PsiRecordComponent.EMPTY_ARRAY);
   }
 }

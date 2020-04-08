@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +50,7 @@ public class UnknownLanguageID extends LocalInspectionTool {
                 if (id instanceof String) {
                   Language language = InjectorUtils.getLanguageByString((String)id);
                   if (language == null) {
-                    holder.registerProblem(expression, "Unknown language '" + id + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                    holder.registerProblem(expression, IntelliLangBundle.message("inspection.unknown.language.ID.description", id), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
                   }
                 }
               }

@@ -265,11 +265,11 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
     assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
   }
 
-  private static void assertStrictOrderedPaths(@NotNull Comparator<FilePath> comparator, @NotNull String... paths) {
+  private static void assertStrictOrderedPaths(@NotNull Comparator<FilePath> comparator, String @NotNull ... paths) {
     assertOrderedPaths(Arrays.asList(paths), comparator, true);
   }
 
-  private static void assertOrderedPaths(@NotNull Comparator<FilePath> comparator, @NotNull String... paths) {
+  private static void assertOrderedPaths(@NotNull Comparator<FilePath> comparator, String @NotNull ... paths) {
     assertOrderedPaths(Arrays.asList(paths), comparator, false);
   }
 

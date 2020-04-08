@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author oleg
- */
 public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> {
   // Use this its own map, because check in PyReachingDefsDfaSemilattice is important
   public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<>();

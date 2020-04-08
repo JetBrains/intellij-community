@@ -234,7 +234,7 @@ public class LinePainter2D {
    */
   @ApiStatus.Experimental
   public static void fillPolygon(@NotNull final Graphics2D g,
-                                 @NotNull double[] xPoints, @NotNull double[] yPoints,
+                                 double @NotNull [] xPoints, double @NotNull [] yPoints,
                                  int nPoints,
                                  @NotNull StrokeType strokeType, double strokeWidth,
                                  @NotNull Object valueAA) {
@@ -262,7 +262,7 @@ public class LinePainter2D {
    */
   @ApiStatus.Experimental
   public static void paintPolygon(@NotNull Graphics2D g,
-                                  @NotNull double[] xPoints, @NotNull double[] yPoints,
+                                  double @NotNull [] xPoints, double @NotNull [] yPoints,
                                   int nPoints,
                                   @NotNull StrokeType strokeType, double strokeWidth,
                                   @NotNull Object valueAA) {
@@ -291,7 +291,7 @@ public class LinePainter2D {
     }
   }
 
-  private static boolean isStraightLine(@NotNull double[] xPoints, @NotNull double[] yPoints, int nLine, int nPoints) {
+  private static boolean isStraightLine(double @NotNull [] xPoints, double @NotNull [] yPoints, int nLine, int nPoints) {
     double x1 = xPoints[nLine % nPoints];
     double y1 = yPoints[nLine % nPoints];
     double x2 = xPoints[(nLine + 1) % nPoints];
@@ -363,10 +363,9 @@ public class LinePainter2D {
    * 1) new x (y), aligned along the provided center x (y)
    * 2) new size with adjusted parity
    */
-  @NotNull
-  static double[] alignSizeXY(@NotNull Graphics2D g,
-                              double xy, double prefSize,
-                              @NotNull StrokeType strokeType, double strokeWidth, boolean rectangle) {
+  static double @NotNull [] alignSizeXY(@NotNull Graphics2D g,
+                                        double xy, double prefSize,
+                                        @NotNull StrokeType strokeType, double strokeWidth, boolean rectangle) {
     prefSize = PaintUtil.alignToInt(prefSize, g);
     // if xy is (close to) dev int the resulting size should be EVEN, otherwise ODD - to compensate the middle dev pixel
     double _xy = PaintUtil.alignToInt(xy + 0.000001, g, RoundingMode.FLOOR);
@@ -417,8 +416,7 @@ public class LinePainter2D {
   /**
    * @see #getStrokeSplit(ScaleContext, StrokeType, double, boolean)
    */
-  @NotNull
-  private static double[] getStrokeSplit(@NotNull ScaleContext ctx, @NotNull StrokeType strokeType, double strokeWidth) {
+  private static double @NotNull [] getStrokeSplit(@NotNull ScaleContext ctx, @NotNull StrokeType strokeType, double strokeWidth) {
     return getStrokeSplit(ctx, strokeType, strokeWidth, true);
   }
 
@@ -431,8 +429,7 @@ public class LinePainter2D {
    * @param includeLinePixel should the line pixel (in user space) be included in the right (bottom) part of the split
    * @return two-element array with the stroke split
    */
-  @NotNull
-  static double[] getStrokeSplit(@NotNull ScaleContext ctx, @NotNull StrokeType strokeType, double strokeWidth, boolean includeLinePixel) {
+  static double @NotNull [] getStrokeSplit(@NotNull ScaleContext ctx, @NotNull StrokeType strokeType, double strokeWidth, boolean includeLinePixel) {
     if (strokeType == StrokeType.OUTSIDE) {
       return new double[]{strokeWidth, strokeWidth};
     }

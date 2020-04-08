@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -122,15 +123,13 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     PsiJavaModule module = getModuleDeclaration();
     return module != null ? new PsiElement[]{module} : getClasses();
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClasses() {
+  public PsiClass @NotNull [] getClasses() {
     return getStub().getClasses();
   }
 
@@ -196,20 +195,17 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
+  public PsiElement @NotNull [] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getSingleClassImports(boolean checkIncludes) {
+  public PsiClass @NotNull [] getSingleClassImports(boolean checkIncludes) {
     return PsiClass.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public String[] getImplicitlyImportedPackages() {
+  public String @NotNull [] getImplicitlyImportedPackages() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -219,8 +215,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
+  public PsiJavaCodeReferenceElement @NotNull [] getImplicitlyImportedPackageReferences() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
@@ -448,8 +443,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return getMirror().textToCharArray();
   }
 
@@ -553,7 +547,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Nullable
-  public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, @NotNull byte[] bytes) throws ClsFormatException {
+  public static PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, byte @NotNull [] bytes) throws ClsFormatException {
     try {
       if (ClassFileViewProvider.isInnerClass(file, bytes)) {
         return null;
@@ -587,6 +581,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
       return null;
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new ClsFormatException(file.getPath() + ": " + e.getMessage(), e);
     }
@@ -598,12 +595,11 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   static class FileContentPair extends Pair<VirtualFile, byte[]> {
-    FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
+    FileContentPair(@NotNull VirtualFile file, byte @NotNull [] content) {
       super(file, content);
     }
 
-    @NotNull
-    public byte[] getContent() {
+    public byte @NotNull [] getContent() {
       return second;
     }
 

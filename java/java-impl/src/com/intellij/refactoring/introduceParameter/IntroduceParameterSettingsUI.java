@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
@@ -100,16 +101,16 @@ public abstract class IntroduceParameterSettingsUI {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.anchor = GridBagConstraints.WEST;
     radioButtonPanel.add(
-            new JLabel(RefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters")), gbConstraints);
+            new JLabel(JavaRefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters")), gbConstraints);
 
     myReplaceFieldsWithGettersNoneRadio = new JRadioButton();
-    myReplaceFieldsWithGettersNoneRadio.setText(RefactoringBundle.message("do.not.replace"));
+    myReplaceFieldsWithGettersNoneRadio.setText(JavaRefactoringBundle.message("do.not.replace"));
 
     myReplaceFieldsWithGettersInaccessibleRadio = new JRadioButton();
-    myReplaceFieldsWithGettersInaccessibleRadio.setText(RefactoringBundle.message("replace.fields.inaccessible.in.usage.context"));
+    myReplaceFieldsWithGettersInaccessibleRadio.setText(JavaRefactoringBundle.message("replace.fields.inaccessible.in.usage.context"));
 
     myReplaceFieldsWithGettersAllRadio = new JRadioButton();
-    myReplaceFieldsWithGettersAllRadio.setText(RefactoringBundle.message("replace.all.fields"));
+    myReplaceFieldsWithGettersAllRadio.setText(JavaRefactoringBundle.message("replace.all.fields"));
 
     gbConstraints.gridy++;
     radioButtonPanel.add(myReplaceFieldsWithGettersNoneRadio, gbConstraints);
@@ -195,7 +196,7 @@ public abstract class IntroduceParameterSettingsUI {
     for (int i = 0; i < myParametersToRemove.length; i++) {
       PsiParameter parameter = myParametersToRemove[i];
       if (parameter == null) continue;
-      final NonFocusableCheckBox cb = new NonFocusableCheckBox(RefactoringBundle.message("remove.parameter.0.no.longer.used",
+      final NonFocusableCheckBox cb = new NonFocusableCheckBox(JavaRefactoringBundle.message("remove.parameter.0.no.longer.used",
                                                                                          parameter.getName()));
       removeParamsCb[i] = cb;
       cb.setSelected(true);
@@ -238,7 +239,7 @@ public abstract class IntroduceParameterSettingsUI {
   protected void createLocalVariablePanel(GridBagConstraints gbConstraints, JPanel panel, JavaRefactoringSettings settings) {
     if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
       myCbDeleteLocalVariable = new StateRestoringCheckBox();
-      myCbDeleteLocalVariable.setText(RefactoringBundle.message("delete.variable.declaration"));
+      myCbDeleteLocalVariable.setText(JavaRefactoringBundle.message("delete.variable.declaration"));
       myCbDeleteLocalVariable.setFocusable(false);
 
       gbConstraints.gridy++;
@@ -248,7 +249,7 @@ public abstract class IntroduceParameterSettingsUI {
       gbConstraints.insets = JBUI.insets(0, 0, 4, 8);
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox();
-        myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));
+        myCbUseInitializer.setText(JavaRefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));
         myCbUseInitializer.setSelected(settings.INTRODUCE_PARAMETER_USE_INITIALIZER);
         myCbUseInitializer.setFocusable(false);
 

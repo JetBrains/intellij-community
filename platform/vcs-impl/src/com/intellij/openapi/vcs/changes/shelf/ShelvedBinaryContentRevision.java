@@ -32,9 +32,8 @@ public class ShelvedBinaryContentRevision extends SimpleBinaryContentRevision {
     myShelvedContentPath = shelvedContentPath;
   }
 
-  @NotNull
   @Override
-  public byte[] getBinaryContent() throws VcsException {
+  public byte @NotNull [] getBinaryContent() throws VcsException {
     try {
       return FileUtil.loadFileBytes(new File(myShelvedContentPath));
     }

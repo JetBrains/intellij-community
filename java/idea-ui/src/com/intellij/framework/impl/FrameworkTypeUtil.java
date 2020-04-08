@@ -22,9 +22,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class FrameworkTypeUtil {
   public static final Comparator<FrameworkType> FRAMEWORK_TYPE_COMPARATOR =
     (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());

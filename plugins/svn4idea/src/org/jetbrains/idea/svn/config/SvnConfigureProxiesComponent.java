@@ -53,7 +53,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   @Override
   public String getDisplayName() {
-    return "HTTP Proxies Configuration";
+    return SvnBundle.message("configurable.SvnConfigureProxiesComponent.display.name");
   }
 
   @Override
@@ -135,7 +135,9 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   @Override
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
+    result.add(new DumbAwareAction(SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.text.add"),
+                                   SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.description.add"),
+                                   IconUtil.getAddIcon()) {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
@@ -173,7 +175,9 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       }
     });
 
-    result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
+    result.add(new DumbAwareAction(SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.text.copy"),
+                                   SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.description.copy"),
+      PlatformIcons.COPY_ICON) {
         {
             registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
         }

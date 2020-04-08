@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration
 
 import com.intellij.ProjectTopics
@@ -6,32 +6,42 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
-import com.intellij.openapi.wm.StatusBarWidgetProvider
+import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
-import com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidget
-import com.intellij.util.text.trimMiddle
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.descriptionInPopup
-import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.nameInPopup
+import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.shortenNameInPopup
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
 
-class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
-  override fun getWidget(project: Project): StatusBarWidget? =
-    if (PythonIdeLanguageCustomization.isMainlyPythonIde()) PySdkStatusBar(project) else null
+private const val pySdkWidgetId: String = "pythonInterpreterWidget"
 
-  override fun getAnchor(): String = StatusBar.Anchors.after(CodeStyleStatusBarWidget.WIDGET_ID)
+class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
+
+  override fun getId(): String = pySdkWidgetId
+
+  override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
+
+  override fun isAvailable(project: Project): Boolean = PythonIdeLanguageCustomization.isMainlyPythonIde()
+
+  override fun createWidget(project: Project): StatusBarWidget = PySdkStatusBar(project)
+
+  override fun disposeWidget(widget: StatusBarWidget) = Disposer.dispose(widget)
+
+  override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }
 
 class PySwitchSdkAction : DumbAwareAction("Switch Project Interpreter", null, null) {
@@ -55,18 +65,18 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
   private var module: Module? = null
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (file == null) return WidgetState.HIDDEN
-
-    module = ModuleUtil.findModuleForFile(file, project) ?: return WidgetState.HIDDEN
+    module = findModule(file) ?: return WidgetState.HIDDEN
 
     val sdk = PythonSdkUtil.findPythonSdk(module)
     return if (sdk == null) {
       WidgetState("", noInterpreterMarker, true)
     }
     else {
-      WidgetState("Current Interpreter: ${descriptionInPopup(sdk)}]", shortenNameInBar(sdk), true)
+      WidgetState(PyBundle.message("current.interpreter", descriptionInPopup(sdk)), shortenNameInPopup(sdk, 50), true)
     }
   }
+
+  override fun isEnabledForFile(file: VirtualFile?): Boolean = true
 
   override fun registerCustomListeners() {
     project
@@ -82,11 +92,16 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
 
   override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project, it).createPopup(context) }
 
-  override fun ID(): String = "PythonInterpreter"
-
-  override fun requiresWritableFile(): Boolean = false
+  override fun ID(): String = pySdkWidgetId
 
   override fun createInstance(project: Project): StatusBarWidget = PySdkStatusBar(project)
 
-  private fun shortenNameInBar(sdk: Sdk) = nameInPopup(sdk).trimMiddle(50)
+  private fun findModule(file: VirtualFile?): Module? {
+    if (file != null) {
+      val module = ModuleUtil.findModuleForFile(file, project)
+      if (module != null) return module
+    }
+
+    return ModuleManager.getInstance(project).modules.singleOrNull()
+  }
 }

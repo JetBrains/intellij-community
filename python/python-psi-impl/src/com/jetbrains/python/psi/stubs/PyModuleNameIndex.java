@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.stubs;
 
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,25 +26,6 @@ import java.util.*;
 public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("Py.module.name");
 
-  private final DataIndexer<String, Void, FileContent> myDataIndexer = new DataIndexer<String, Void, FileContent>() {
-    @NotNull
-    @Override
-    public Map<String, Void> map(@NotNull FileContent inputData) {
-      final VirtualFile file = inputData.getFile();
-      final String name = file.getName();
-      if (PyNames.INIT_DOT_PY.equals(name)) {
-        final VirtualFile parent = file.getParent();
-        if (parent != null && parent.isDirectory()) {
-          return Collections.singletonMap(parent.getName(), null);
-        }
-      }
-      else {
-        return Collections.singletonMap(FileUtilRt.getNameWithoutExtension(name), null);
-      }
-      return Collections.emptyMap();
-    }
-  };
-
   @NotNull
   @Override
   public ID<String, Void> getName() {
@@ -53,7 +35,24 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
-    return myDataIndexer;
+    return new DataIndexer<String, Void, FileContent>() {
+      @NotNull
+      @Override
+      public Map<String, Void> map(@NotNull FileContent inputData) {
+        final VirtualFile file = inputData.getFile();
+        final String name = file.getName();
+        if (PyNames.INIT_DOT_PY.equals(name)) {
+          final VirtualFile parent = file.getParent();
+          if (parent != null && parent.isDirectory()) {
+            return Collections.singletonMap(parent.getName(), null);
+          }
+        }
+        else {
+          return Collections.singletonMap(FileUtilRt.getNameWithoutExtension(name), null);
+        }
+        return Collections.emptyMap();
+      }
+    };
   }
 
   @NotNull
@@ -65,12 +64,13 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(PythonFileType.INSTANCE);
+    // TODO support DefaultFileTypeSpecificInputFilter for content-less indexes (IDEA-235426)
+    return file -> FileTypeRegistry.getInstance().isFileOfType(file, PythonFileType.INSTANCE);
   }
 
   @Override
   public boolean dependsOnFileContent() {
-    return true;
+    return false;
   }
 
   @Override

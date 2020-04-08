@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
@@ -8,18 +8,16 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import kotlin.math.max
 import kotlin.math.min
 
-class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
-                                                reviewThreadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>,
+class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
+                                                commentableRangesModel: SingleValueModel<List<Range>?>,
+                                                reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: UnifiedDiffViewer,
-                                                private val linesMapper: GHPRChangedFileLinesMapper,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
   : GHPRDiffViewerBaseReviewThreadsHandler<UnifiedDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
@@ -32,12 +30,15 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
 
-    GHPREditorCommentableRangesController(commentableRanges, componentsFactory, inlaysManager) { fileLine ->
+    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManager,
+                                                                                componentsFactory) { fileLine ->
       val (indices, side) = viewer.transferLineFromOneside(fileLine)
-      val line = side.select(indices).takeIf { it >= 0 } ?: return@GHPREditorCommentableRangesController null
+      val line = side.select(indices).takeIf { it >= 0 } ?: return@GHPRDiffEditorGutterIconRendererFactoryImpl null
 
-      linesMapper.findDiffLine(side, line)
+      side to line
     }
+
+    GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)
     GHPREditorReviewThreadsController(editorThreads, componentsFactory, inlaysManager)
   }
 
@@ -64,9 +65,9 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
     commentableRanges.value = transferredRanges
   }
 
-  override fun showThreads(threads: List<GHPullRequestReviewThread>?) {
-    editorThreads.update(threads?.let { GHPRCommentsUtil.mapThreadsToLines(linesMapper, it) }
-                           ?.mapKeys { viewer.transferLineToOneside(it.key.first, it.key.second) }
+  override fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?) {
+    editorThreads.update(threads
+                           ?.groupBy({ viewer.transferLineToOneside(it.diffSide, it.fileLineIndex) }, { it.thread })
                            ?.filterKeys { it >= 0 }.orEmpty())
   }
 }

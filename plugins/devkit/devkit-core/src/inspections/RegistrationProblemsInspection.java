@@ -92,8 +92,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (CHECK_PLUGIN_XML && DescriptorUtil.isPluginXml(file)) {
       return checkPluginXml((XmlFile)file, manager, isOnTheFly);
     }
@@ -101,8 +100,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
 
     if (CHECK_JAVA_CODE &&
@@ -151,8 +149,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
-  @Nullable
-  private static ProblemDescriptor[] checkPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
+  private static ProblemDescriptor @Nullable [] checkPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
     final XmlDocument document = xmlFile.getDocument();
     if (document == null) {
       return null;
@@ -356,8 +353,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, type));
     }
 
-    @Nullable
-    public ProblemDescriptor[] getProblems() {
+    public ProblemDescriptor @Nullable [] getProblems() {
       return myList != null ? myList.toArray(ProblemDescriptor.EMPTY_ARRAY) : null;
     }
   }

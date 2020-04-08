@@ -24,9 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   private final XWatchesView myWatchesView;
   private final List<WatchNodeImpl> myChildren;
@@ -35,7 +32,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   // required for com.google.gct.core
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
-                         @NotNull XExpression[] expressions) {
+                         XExpression @NotNull [] expressions) {
     this(tree, watchesView, Arrays.asList(expressions), null, false);
   }
 

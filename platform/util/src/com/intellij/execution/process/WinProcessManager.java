@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -10,14 +11,12 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.Objects;
 
 /**
  * Do not call this class directly - use {@link OSProcessUtil} instead.
- *
- * @author Alexey.Ushakov
  */
-public class WinProcessManager {
+public final class WinProcessManager {
   private static final Logger LOG = Logger.getInstance(WinProcessManager.class);
 
   private WinProcessManager() { }
@@ -26,12 +25,12 @@ public class WinProcessManager {
     String processClassName = process.getClass().getName();
     if (processClassName.equals("java.lang.Win32Process") || processClassName.equals("java.lang.ProcessImpl")) {
       try {
-        if (SystemInfo.IS_AT_LEAST_JAVA9) {
+        if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
           //noinspection JavaReflectionMemberAccess
           return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
         }
 
-        long handle = assertNotNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
+        long handle = Objects.requireNonNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
         return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
       }
       catch (Throwable t) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -39,13 +39,12 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -97,6 +96,9 @@ public abstract class DialogWrapper {
   }
 
   public enum DialogStyle {NO_STYLE, COMPACT}
+
+  @ApiStatus.Internal
+  public static final @NotNull String IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY = "isVisualPaddingCompensatedOnComponentLevel";
 
   /**
    * The default exit code for "OK" action.
@@ -172,6 +174,7 @@ public abstract class DialogWrapper {
   private JComponent myPreferredFocusedComponentFromPanel;
   private Computable<? extends Point> myInitialLocationCallback;
   private Dimension  myActualSize;
+  @NotNull
   private List<ValidationInfo> myInfo = Collections.emptyList();
   private @Nullable DoNotAskOption myDoNotAsk;
   private Action myYesAction;
@@ -179,7 +182,7 @@ public abstract class DialogWrapper {
   private int myCurrentOptionsButtonIndex = -1;
   private boolean myResizeInProgress;
   private ComponentAdapter myResizeListener;
-  private DialogPanel myDialogPanel = null;
+  private DialogPanel myDialogPanel;
   private ErrorText myErrorText;
   private int myValidationDelay = 300;
   private boolean myValidationStarted;
@@ -307,6 +310,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
+  @NlsContexts.Checkbox
   protected String getDoNotShowMessage() {
     return UIBundle.message("dialog.options.do.not.show");
   }
@@ -383,12 +387,12 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
   }
 
-  @SuppressWarnings({"WeakerAccess", "SSBasedInspection"})
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
     boolean updateNeeded = Registry.is("ide.inplace.validation.tooltip") ?
                            !myInfo.equals(info) : !myErrorText.isTextSet(info);
 
     if (updateNeeded) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
         setErrorInfoAll(info);
@@ -544,7 +548,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  protected JButton createHelpButton(Insets insets) {
+  protected JButton createHelpButton(@NotNull Insets insets) {
     JButton helpButton = new JButton(getHelpAction());
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
@@ -558,7 +562,7 @@ public abstract class DialogWrapper {
     return helpButton;
   }
 
-  protected void setHelpTooltip(JButton helpButton) {
+  protected void setHelpTooltip(@NotNull JButton helpButton) {
     helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
   }
 
@@ -587,8 +591,12 @@ public abstract class DialogWrapper {
     return !myCheckBoxDoNotShowDialog.isSelected();
   }
 
+  /**
+   * @deprecated Do not use. Always returns false
+   */
+  @Deprecated
   public boolean isTypeAheadEnabled() {
-    return false;
+      return false;
   }
 
   @NotNull
@@ -1085,16 +1093,14 @@ public abstract class DialogWrapper {
    * @see #createSouthPanel
    * @see #createJButtonForAction
    */
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action helpAction = getHelpAction();
     return helpAction == myHelpAction && getHelpId() == null ?
            new Action[]{getOKAction(), getCancelAction()} :
            new Action[]{getOKAction(), getCancelAction(), helpAction};
   }
 
-  @NotNull
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[0];
   }
 
@@ -1167,7 +1173,7 @@ public abstract class DialogWrapper {
    *
    * @return dimension service key
    */
-  @Nullable
+  @Nullable @NonNls
   protected String getDimensionServiceKey() {
     return null;
   }
@@ -1327,7 +1333,7 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
-        dialogPanel.registerValidators(myDisposable, (map) -> {
+        dialogPanel.registerValidators(myDisposable, map -> {
           setOKActionEnabled(map.isEmpty());
           return Unit.INSTANCE;
         });
@@ -1335,7 +1341,8 @@ public abstract class DialogWrapper {
       }
     }
 
-    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    boolean isVisualPaddingCompensatedOnComponentLevel =
+      centerPanel == null || centerPanel.getClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY) == null;
     if (isVisualPaddingCompensatedOnComponentLevel) {
       // see comment about visual paddings in the MigLayoutBuilder.build
       root.setBorder(createContentPaneBorder());
@@ -1441,33 +1448,6 @@ public abstract class DialogWrapper {
     }
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("SpellCheckingInspection")
-  protected boolean isNorthStrictedToPreferredSize() {
-    return true;
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("SpellCheckingInspection")
-  protected boolean isCenterStrictedToPreferredSize() {
-    return false;
-  }
-
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  @SuppressWarnings("SpellCheckingInspection")
-  protected boolean isSouthStrictedToPreferredSize() {
-    return true;
-  }
-
   @NotNull
   protected JComponent createContentPane() {
     return new JPanel();
@@ -1511,7 +1491,7 @@ public abstract class DialogWrapper {
   @Deprecated
   protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
-  protected final void setCancelButtonText(@NotNull String text) {
+  protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
 
@@ -1540,7 +1520,7 @@ public abstract class DialogWrapper {
    *             {@link AbstractButton#setText(String)}
    *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
    */
-  protected final void setOKButtonText(@NotNull String text) {
+  protected final void setOKButtonText(@NlsContexts.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
   }
 
@@ -1548,11 +1528,12 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
   }
 
-  protected final void setOKButtonTooltip(String text) {
+  protected final void setOKButtonTooltip(@Nls String text) {
     myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
   }
 
   /** Returns the help identifier, or {@code null} if no help is available. */
+  @NonNls
   @Nullable
   protected String getHelpId() {
     return null;
@@ -1560,6 +1541,7 @@ public abstract class DialogWrapper {
 
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
+      logClickOnHelpDialogEvent();
       String helpId = getHelpId();
       if (helpId != null) {
         HelpManager.getInstance().invokeHelp(helpId);
@@ -1603,7 +1585,7 @@ public abstract class DialogWrapper {
    * @param title title
    * @see JDialog#setTitle
    */
-  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     myPeer.setTitle(title);
   }
 
@@ -1778,16 +1760,6 @@ public abstract class DialogWrapper {
       .findFirst();
   }
 
-  public long getTypeAheadTimeoutMs() {
-    return 0L;
-  }
-
-  /** @deprecated unused (equals {@link #isOK}) */
-  @Deprecated
-  public boolean isToDispatchTypeAhead() {
-    return isOK();
-  }
-
   private void logCloseDialogEvent(int exitCode) {
     final boolean canRecord = canRecordDialogId();
     if (canRecord) {
@@ -1805,6 +1777,14 @@ public abstract class DialogWrapper {
       if (StringUtil.isNotEmpty(dialogId)) {
         FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
       }
+    }
+  }
+
+  private void logClickOnHelpDialogEvent() {
+    if (!canRecordDialogId()) return;
+    final String dialogId = getClass().getName();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(dialogId, getClass());
     }
   }
 
@@ -1889,7 +1869,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private void recordAction(String name, AWTEvent event) {
+  private void recordAction(@NonNls String name, AWTEvent event) {
     if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       ActionsCollector.getInstance().record(name, (KeyEvent)event, getClass());
     }
@@ -1955,11 +1935,11 @@ public abstract class DialogWrapper {
    * <code>{@link #setErrorText(String, JComponent)}</code> method.
    * @param text the error text to display
    */
-  protected void setErrorText(@Nullable final String text) {
+  protected void setErrorText(@Nls @Nullable final String text) {
     setErrorText(text, null);
   }
 
-  protected void setErrorText(@Nullable final String text, @Nullable final JComponent component) {
+  protected void setErrorText(@Nls @Nullable final String text, @Nullable final JComponent component) {
     setErrorInfoAll(text == null ?
                     Collections.emptyList() :
                     Collections.singletonList(new ValidationInfo(text, component)));
@@ -2007,13 +1987,13 @@ public abstract class DialogWrapper {
         }
 
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
+        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
       });
     }
     else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
-          myErrorText.appendError(vi.message);
+          myErrorText.appendError(vi);
         }
       };
       if (headless) {
@@ -2057,7 +2037,7 @@ public abstract class DialogWrapper {
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private final List<String> errors = new ArrayList<>();
+    private final List<ValidationInfo> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
@@ -2072,7 +2052,7 @@ public abstract class DialogWrapper {
       add(pane, BorderLayout.CENTER);
     }
 
-    private Border createErrorTextBorder() {
+    private @NotNull Border createErrorTextBorder() {
       Border border = createContentPaneBorder();
       Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
       Insets baseInsets = JBInsets.create(16, 13);
@@ -2094,26 +2074,28 @@ public abstract class DialogWrapper {
       }
     }
 
-    private void appendError(String text) {
-      errors.add(text);
-      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(ERROR_FOREGROUND_COLOR) + "'>");
-      errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
-      sb.append("</font></html>");
+    private void appendError(@NotNull ValidationInfo info) {
+      errors.add(info);
+
+      StringBuilder sb = new StringBuilder("<html>");
+      errors.forEach(
+        vi -> {
+          Color color = vi.warning ? MessageType.WARNING.getTitleForeground() : ERROR_FOREGROUND_COLOR;
+          sb.append("<font color='#").append(ColorUtil.toHex(color)).append("'>")
+            .append("<left>")
+            .append(vi.message)
+            .append("</left></font><br/>");
+        }
+      );
+      sb.append("</html>");
+
       myLabel.setText(sb.toString());
       setVisible(true);
       updateSize();
     }
 
     private boolean isTextSet(@NotNull List<ValidationInfo> info) {
-      if (info.isEmpty()) {
-        return errors.isEmpty();
-      }
-      else if (errors.size() == info.size()) {
-        return errors.equals(ContainerUtil.map(info, i -> i.message));
-      }
-      else {
-        return false;
-      }
+      return errors.equals(info);
     }
   }
 
@@ -2221,6 +2203,7 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     @NotNull
+    @NlsContexts.Checkbox
     String getDoNotShowMessage();
   }
 

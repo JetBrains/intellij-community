@@ -18,6 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
  * <li> If the exception comes from within Java's findClass call, and the IDE is currently performing a user-initiated action or a
  * task when skipping findClass would lead to very negative consequences (e.g. not stopping at a breakpoint), then it might be possible
  * to avoid index query by using alternative resolve (and findClass) strategy, which is significantly slower and might return null. To do this,
- * use {@link DumbService#setAlternativeResolveEnabled(boolean)}.
+ * use {@link DumbService#runWithAlternativeResolveEnabled(ThrowableRunnable)} or similar.
  *
  * <li> If you're performing a long modal operation which leads to a root change in the middle (or otherwise causes indexing),
  * but you need indices after that, you can call {@link DumbService#completeJustSubmittedTasks()} before performing
@@ -63,9 +64,8 @@ public class IndexNotReadyException extends RuntimeException implements Exceptio
     myStartTrace = startTrace;
   }
 
-  @NotNull
   @Override
-  public Attachment[] getAttachments() {
+  public Attachment @NotNull [] getAttachments() {
     return myStartTrace == null
            ? Attachment.EMPTY_ARRAY
            : new Attachment[]{new Attachment("indexingStart", myStartTrace)};

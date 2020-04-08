@@ -130,7 +130,7 @@ public class StorageDumper {
         final File parent = new File(oath == null ? "" : oath);
         final File dataStorageRoot = new File(dataPath, "mappings");
 
-        final Mappings mappings = new Mappings(dataStorageRoot, new PathRelativizerService(), true);
+        final Mappings mappings = new Mappings(dataStorageRoot, new PathRelativizerService());
         try {
           //final File outputPath = new File(parent, "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh-mm-ss)").format(new Date()) + ".log");
           //FileUtil.createIfDoesntExist(outputPath);

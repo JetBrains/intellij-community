@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import junit.framework.TestCase;
@@ -6,9 +7,6 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.util.Locale;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class FontInfoTest extends TestCase {
   private static void check(String name, boolean exist) {
     if (GraphicsEnvironment.isHeadless()) return;

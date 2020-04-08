@@ -17,9 +17,6 @@ package com.intellij.xdebugger.impl.actions;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author nik
- */
 public interface XDebuggerActions {
   @NonNls String VIEW_BREAKPOINTS = "ViewBreakpoints";
 
@@ -52,6 +49,7 @@ public interface XDebuggerActions {
   @NonNls String WATCHES_TREE_POPUP_GROUP = "XDebugger.Watches.Tree.Popup";
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
   @NonNls String FRAMES_TREE_POPUP_GROUP = "XDebugger.Frames.Tree.Popup";
+  @NonNls String THREADS_TREE_POPUP_GROUP = "XDebugger.Threads.Tree.Popup";
   @NonNls String FRAMES_TOP_TOOLBAR_GROUP = "XDebugger.Frames.TopToolbar";
 
   @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";

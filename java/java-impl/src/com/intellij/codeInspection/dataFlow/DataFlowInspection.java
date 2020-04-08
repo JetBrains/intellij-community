@@ -29,15 +29,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInspection.InspectionsBundle.message;
+import static com.intellij.java.JavaBundle.message;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static javax.swing.SwingConstants.TOP;
 
@@ -144,7 +141,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     PsiExpression operand = castExpression.getOperand();
     PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null) {
-      if (!alwaysFails && !SideEffectChecker.mayHaveSideEffects(operand)) {
+      if (!alwaysFails && !SideEffectChecker.mayHaveSideEffects(operand) && CodeBlockSurrounder.canSurround(castExpression)) {
         String suffix = " instanceof " + typeElement.getText();
         fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
         if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
@@ -187,8 +184,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       }
       else if (!ExpressionUtils.isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
         String suffix = " != null";
-        if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4) &&
-            RefactoringUtil.getParentStatement(expression, false) != null) {
+        if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4) && CodeBlockSurrounder.canSurround(expression)) {
           String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + suffix;
           fixes.add(new AddAssertStatementFix(replacement));
         }

@@ -74,7 +74,7 @@ public class SwitchStatementGenerator {
   private static void generateIfs(@NotNull StringBuilder builder,
                                   @NotNull ExpressionContext context,
                                   @NotNull GrExpression condition,
-                                  @NotNull GrCaseSection[] caseSections) {
+                                  GrCaseSection @NotNull [] caseSections) {
     final GrExpression ref;
     if (condition instanceof GrReferenceExpression) {
       ref = condition;
@@ -89,9 +89,9 @@ public class SwitchStatementGenerator {
 
   private static void generateIfFromCaseSection(@NotNull StringBuilder builder,
                                                 @NotNull ExpressionContext context,
-                                                @NotNull final GrCaseSection[] caseSections,
+                                                final GrCaseSection @NotNull [] caseSections,
                                                 final int i,
-                                                @NotNull final GrExpression[] args) {
+                                                final GrExpression @NotNull [] args) {
 
     GenerationUtil.writeStatement(builder, context, null, new StatementWriter() {
       @Override
@@ -131,7 +131,7 @@ public class SwitchStatementGenerator {
   private static void writeCaseBody(@NotNull StringBuilder builder,
                                     @NotNull ExpressionContext context,
                                     int i,
-                                    @NotNull GrCaseSection[] caseSections) {
+                                    GrCaseSection @NotNull [] caseSections) {
     builder.append("{\n");
 
     final ExpressionContext extended = context.extend();
@@ -205,7 +205,7 @@ public class SwitchStatementGenerator {
   private static void generateSwitch(@NotNull StringBuilder builder,
                                      @NotNull ExpressionContext context,
                                      @Nullable GrExpression condition,
-                                     @NotNull GrCaseSection[] caseSections) {
+                                     GrCaseSection @NotNull [] caseSections) {
     builder.append("switch (");
     if (condition != null) {
       condition.accept(new ExpressionGenerator(builder, context));

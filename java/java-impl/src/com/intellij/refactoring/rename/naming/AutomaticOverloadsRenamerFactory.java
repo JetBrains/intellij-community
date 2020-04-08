@@ -16,12 +16,12 @@
 
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +40,7 @@ public class AutomaticOverloadsRenamerFactory implements AutomaticRenamerFactory
 
   @Override
   public String getOptionName() {
-    return RefactoringBundle.message("rename.overloads");
+    return JavaRefactoringBundle.message("rename.overloads");
   }
 
   @Override

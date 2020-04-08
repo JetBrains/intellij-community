@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -21,11 +21,11 @@ public class ComponentTypeOfMacro extends Macro {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.component.type.of.array");
+    return JavaBundle.message("macro.component.type.of.array");
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length != 1) return null;
     LookupElement[] lookupItems = params[0].calculateLookupItems(context);
     if (lookupItems == null) return null;
@@ -45,7 +45,7 @@ public class ComponentTypeOfMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);
     if (result == null) return null;

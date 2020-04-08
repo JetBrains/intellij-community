@@ -48,9 +48,8 @@ public class ObviousNullCheckInspectionTest extends LightJavaInspectionTestCase 
   }
 
   public static class ObviousNullCheckInspectionFixTest extends LightQuickFixParameterizedTestCase {
-    @NotNull
     @Override
-    protected LocalInspectionTool[] configureLocalInspectionTools() {
+    protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
       return new LocalInspectionTool[]{new ObviousNullCheckInspection()};
     }
 

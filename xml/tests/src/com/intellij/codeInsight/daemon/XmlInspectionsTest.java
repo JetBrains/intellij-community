@@ -22,6 +22,7 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 
 import java.io.File;
 
@@ -35,13 +36,13 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
     myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" elementFormDefault=<warning descr=\"Redundant default attribute value assignment\">\"unqua<caret>lified\"</warning>>\n" +
                                                     "</schema>");
     myFixture.checkHighlighting();
-    IntentionAction action = myFixture.findSingleIntention(XmlErrorMessages.message("remove.attribute.quickfix.family") + " e");
+    IntentionAction action = myFixture.findSingleIntention(XmlAnalysisBundle.message("remove.attribute.quickfix.family") + " e");
     myFixture.launchAction(action);
     myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
                           "</schema>");
   }
 
-  public void _testHtmlFromRncSchema() {
+  public void testHtmlFromRncSchema() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.configureByText(HtmlFileType.INSTANCE, "<!DOCTYPE html>\n" +
                                                      "<html lang=\"en\">\n" +
@@ -54,7 +55,7 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
                                                      "    <input type=\"hidden\" name=\"name_1\" value=\"val_1\">\n" +
                                                      "    <input type=\"hidden\" name=\"name_2\" value=\"val_2\">\n" +
                                                      "    <button type=\"button\">Proper js button</button>\n" +
-                                                     "    <button type=<warning descr=\"Redundant default attribute value assignment\">\"submit\"</warning>>Proper submit button</button>\n" +
+                                                     "    <button type=\"submit\">Proper submit button</button>\n" +
                                                      "    <button>Behave as submit when missing type=\"button\"</button>\n" +
                                                      "</form>\n" +
                                                      "</body>\n" +

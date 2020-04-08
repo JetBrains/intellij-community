@@ -27,6 +27,5 @@ public interface FileStructureNodeProvider<T extends TreeElement> extends NodePr
   @NotNull
   String getCheckBoxText();
 
-  @NotNull
-  Shortcut[] getShortcut();
+  Shortcut @NotNull [] getShortcut();
 }

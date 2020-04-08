@@ -1,12 +1,11 @@
-from collections import namedtuple
-from typing import Any, Optional, Text
+from typing import Any, NamedTuple, Optional, Text
 
-
-_URLTuple = namedtuple(
-    '_URLTuple',
-    ['scheme', 'netloc', 'path', 'query', 'fragment']
-)
-
+class _URLTuple(NamedTuple):
+    scheme: Any
+    netloc: Any
+    path: Any
+    query: Any
+    fragment: Any
 
 class BaseURL(_URLTuple):
     def replace(self, **kwargs): ...

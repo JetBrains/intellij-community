@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Collections.singletonList;
@@ -139,10 +140,10 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
   public void testClosedByUpdateWithExternals() throws Exception {
     prepareExternal();
 
-    VirtualFile sourceDir = notNull(myWorkingCopyDir.findChild("source"));
-    VirtualFile externalDir = notNull(sourceDir.findChild("external"));
-    final VirtualFile vf1 = notNull(sourceDir.findChild("s1.txt"));
-    final VirtualFile vf2 = notNull(externalDir.findChild("t12.txt"));
+    VirtualFile sourceDir = Objects.requireNonNull(myWorkingCopyDir.findChild("source"));
+    VirtualFile externalDir = Objects.requireNonNull(sourceDir.findChild("external"));
+    final VirtualFile vf1 = Objects.requireNonNull(sourceDir.findChild("s1.txt"));
+    final VirtualFile vf2 = Objects.requireNonNull(externalDir.findChild("t12.txt"));
     editFileInCommand(vf1, "test externals 123" + System.currentTimeMillis());
     editFileInCommand(vf2, "test externals 123" + System.currentTimeMillis());
 

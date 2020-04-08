@@ -31,8 +31,7 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    * Note that tuple parameters are flattened by this method.
    * @return a possibly empty array of named paramaters.
    */
-  @NotNull
-  PyParameter[] getParameters();
+  PyParameter @NotNull [] getParameters();
 
   @Nullable
   PyNamedParameter findParameterByName(@NotNull String name);

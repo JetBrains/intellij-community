@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Lists;
@@ -7,15 +7,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll{
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE = "reference.project.settings.console";
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON = "reference.project.settings.console.python";
@@ -41,7 +39,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     List<Configurable> result = Lists.newArrayList();
 
     PyConsoleSpecificOptionsPanel pythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
-    result.add(createConsoleChildConfigurable("Python Console", pythonConsoleOptionsPanel,
+    result.add(createConsoleChildConfigurable(PyBundle.message("configurable.PyConsoleOptionsConfigurable.child.display.name"), pythonConsoleOptionsPanel,
                                               myOptionsProvider.getPythonConsoleSettings(), CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON));
 
     for (PyConsoleOptionsProvider provider : PyConsoleOptionsProvider.EP_NAME.getExtensionList()) {
@@ -56,7 +54,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     return result.toArray(new Configurable[0]);
   }
 
-  private static Configurable createConsoleChildConfigurable(final String name,
+  private static Configurable createConsoleChildConfigurable(@Nls final String name,
                                                              final PyConsoleSpecificOptionsPanel panel,
                                                              final PyConsoleOptions.PyConsoleSettings settings, final String helpReference) {
     return new SearchableConfigurable() {
@@ -107,7 +105,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   @Nls
   @Override
   public String getDisplayName() {
-    return "Console";
+    return PyBundle.message("configurable.PyConsoleOptionsConfigurable.display.name");
   }
 
   @Override

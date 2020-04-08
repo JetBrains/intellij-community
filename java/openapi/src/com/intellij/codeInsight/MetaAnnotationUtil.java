@@ -1,16 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
@@ -18,7 +6,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +45,7 @@ public abstract class MetaAnnotationUtil {
 
     @Override
     public boolean equals(PsiClass o1, PsiClass o2) {
-      return Comparing.equal(o1.getQualifiedName(), o2.getQualifiedName());
+      return Objects.equals(o1.getQualifiedName(), o2.getQualifiedName());
     }
   };
 
@@ -229,6 +216,12 @@ public abstract class MetaAnnotationUtil {
   public static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
                                                    @NotNull Collection<String> annotations) {
     return isMetaAnnotatedInHierarchy(listOwner, annotations, new HashSet<>());
+  }
+
+  public static boolean hasMetaAnnotatedMethods(@NotNull PsiClass psiClass,
+                                                @NotNull Collection<String> annotations) {
+    return Stream.of(psiClass.getMethods())
+        .anyMatch(psiMethod -> isMetaAnnotated(psiMethod, annotations));
   }
 
   private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,

@@ -43,6 +43,9 @@ internal class KWalletCredentialStore private constructor(private val connection
       catch (e: DBusException) {
         LOG.warn("Failed to connect to D-Bus", e)
       }
+      catch (e: RuntimeException) {
+        LOG.warn("Failed to connect to D-Bus", e)
+      }
       return null
     }
   }

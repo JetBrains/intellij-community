@@ -39,7 +39,7 @@ public abstract class CopyPasteManager {
 
   public abstract void removeContentChangedListener(@NotNull ContentChangedListener listener);
 
-  public abstract boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors);
+  public abstract boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors);
 
   @Nullable
   public abstract Transferable getContents();
@@ -47,8 +47,7 @@ public abstract class CopyPasteManager {
   @Nullable
   public abstract <T> T getContents(@NotNull DataFlavor flavor);
 
-  @NotNull
-  public abstract Transferable[] getAllContents();
+  public abstract Transferable @NotNull [] getAllContents();
 
   public abstract void setContents(@NotNull Transferable content);
 

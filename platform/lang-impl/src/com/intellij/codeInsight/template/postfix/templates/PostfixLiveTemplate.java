@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.google.common.collect.Sets;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.OffsetTranslator;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -16,11 +17,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoConstants;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
@@ -241,7 +242,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
                                                                                .executeCommand(context.getProject(),
                                                                                                () -> template.expand(context, editor),
-                                                                                               "Expand postfix template",
+                                                                                               CodeInsightBundle.message("command.expand.postfix.template"),
                                                                                                POSTFIX_TEMPLATE_ID));
     }
     else {
@@ -304,7 +305,13 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;
-    return template -> template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
+    return template -> template != null && isDumbEnough(template, context) &&
+                       template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
+  }
+
+  private static boolean isDumbEnough(@NotNull PostfixTemplate template, @NotNull PsiElement context) {
+    DumbService dumbService = DumbService.getInstance(context.getProject());
+    return !dumbService.isDumb() || DumbService.isDumbAware(template);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -42,25 +42,29 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
 
   public static void suggestRestartIfNecessary(@Nullable JComponent parentComponent) {
     if (Registry.getInstance().isRestartNeeded()) {
-      ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+      suggestRestart(parentComponent);
+    }
+  }
 
-      String title = "Restart Required";
-      String message = ApplicationNamesInfo.getInstance().getFullProductName() + " must be restarted for the changes to take effect";
-      String action = app.isRestartCapable() ? "Restart" : "Shutdown";
-      String okText = action + " Now";
-      String cancelText = action + " Later";
+  public static void suggestRestart(@Nullable JComponent parentComponent) {
+    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
 
-      int result;
-      if (parentComponent != null) {
-        result = Messages.showOkCancelDialog(parentComponent, message, title, okText, cancelText, Messages.getQuestionIcon());
-      }
-      else {
-        result = Messages.showOkCancelDialog(message, title, okText, cancelText, Messages.getQuestionIcon());
-      }
+    String title = "Restart Required";
+    String message = ApplicationNamesInfo.getInstance().getFullProductName() + " must be restarted for the changes to take effect";
+    String action = app.isRestartCapable() ? "Restart" : "Shutdown";
+    String okText = action + " Now";
+    String cancelText = action + " Later";
 
-      if (result == Messages.OK) {
-        ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.NON_MODAL);
-      }
+    int result;
+    if (parentComponent != null) {
+      result = Messages.showOkCancelDialog(parentComponent, message, title, okText, cancelText, Messages.getQuestionIcon());
+    }
+    else {
+      result = Messages.showOkCancelDialog(message, title, okText, cancelText, Messages.getQuestionIcon());
+    }
+
+    if (result == Messages.OK) {
+      ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.NON_MODAL);
     }
   }
 }

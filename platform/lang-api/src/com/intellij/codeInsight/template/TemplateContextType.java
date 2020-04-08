@@ -9,10 +9,9 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
+
+import static com.intellij.openapi.util.NlsContexts.Label;
 
 /**
  * @author yole
@@ -26,12 +25,12 @@ public abstract class TemplateContextType {
   private final String myPresentableName;
   private final VolatileNullableLazyValue<TemplateContextType> myBaseContextType;
 
-  protected TemplateContextType(@NotNull @NonNls String id, @NotNull String presentableName) {
+  protected TemplateContextType(@NotNull @NonNls String id, @Label @NotNull String presentableName) {
     this(id, presentableName, EverywhereContextType.class);
   }
 
   protected TemplateContextType(@NotNull @NonNls String id,
-                                @NotNull String presentableName,
+                                @Label @NotNull String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;

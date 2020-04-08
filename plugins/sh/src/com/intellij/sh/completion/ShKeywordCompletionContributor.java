@@ -6,14 +6,15 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.sh.completion.ShCompletionUtil.*;
 
 public class ShKeywordCompletionContributor extends CompletionContributor implements DumbAware {
-  private static final String BASE_KEYWORD_COMPLETION_ACTION = "BaseKeywordCompletionUsed";
-  private static final String CONDITION_KEYWORD_COMPLETION_ACTION = "ConditionKeywordCompletionUsed";
+  @NonNls private static final String BASE_KEYWORD_COMPLETION_ACTION = "BaseKeywordCompletionUsed";
+  @NonNls private static final String CONDITION_KEYWORD_COMPLETION_ACTION = "ConditionKeywordCompletionUsed";
 
   public ShKeywordCompletionContributor() {
     extend(CompletionType.BASIC, keywordElementPattern(), new ShKeywordCompletionProvider(BASE_KEYWORD_COMPLETION_ACTION,

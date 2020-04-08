@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
@@ -82,7 +82,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     scrollPane.setBorder(JBUI.Borders.empty());
 
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
-         isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
+         isResizable(), aStep.getTitle(), null, true, Collections.emptySet(), false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, null, true, null);
 
@@ -228,6 +228,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     myLastOwnerPoint = newOwnerPoint;
 
     final Window wnd = SwingUtilities.getWindowAncestor(getContent());
+    if (!wnd.isShowing()) return;
+
     final Point current = wnd.getLocationOnScreen();
 
     setLocation(new Point(current.x - deltaX, current.y - deltaY));
@@ -280,7 +282,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   @Override
   @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final PopupBorder border, final boolean isToDrawMacCorner) {
+  protected MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(border);
   }
 
@@ -289,7 +291,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   private static class MyContainer extends MyContentPanel {
-    private MyContainer(PopupBorder border) {
+    private MyContainer(@NotNull PopupBorder border) {
       super(border);
       setOpaque(true);
       setFocusCycleRoot(true);

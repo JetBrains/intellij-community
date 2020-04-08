@@ -43,6 +43,6 @@ public interface HgPromptHandler {
    * @return
    */
   HgPromptChoice promptUser(@NotNull final String message,
-                            @NotNull final HgPromptChoice[] choices,
+                            final HgPromptChoice @NotNull [] choices,
                             @NotNull final HgPromptChoice defaultChoice);
 }

@@ -52,23 +52,4 @@ public interface BulkAwareDocumentListener extends DocumentListener {
     default void beforeDocumentChange(@NotNull Document document) {}
     default void afterDocumentChange(@NotNull Document document) {}
   }
-
-  /**
-   * Simple specialization of {@link BulkAwareDocumentListener} for the case when the listener doesn't need the details of the changes
-   * (offsets and changed text), needs only 'after' notification, and is fine with receiving only one notification for changes done in bulk
-   * mode. Trivial changes (such as replacing part of document text with equal text) are not reported.
-   */
-  interface NonTrivial extends BulkAwareDocumentListener {
-    @Override
-    default void documentChangedNonBulk(@NotNull DocumentEvent event) {
-      if (event.getOldLength() != 0 || event.getNewLength() != 0) documentChanged(event.getDocument());
-    }
-
-    @Override
-    default void bulkUpdateFinished(@NotNull Document document) {
-      documentChanged(document);
-    }
-
-    void documentChanged(@NotNull Document document);
-  }
 }

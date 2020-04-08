@@ -43,8 +43,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getDescriptionElements() {
+  public PsiElement @NotNull [] getDescriptionElements() {
     List<PsiElement> array = new ArrayList<>();
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
@@ -57,8 +56,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
-  @NotNull
-  public PsiDocTag[] getTags() {
+  public PsiDocTag @NotNull [] getTags() {
     return getChildrenAsPsiElements(TAG_BIT_SET, ARRAY_FACTORY);
   }
 
@@ -82,8 +80,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
-  @NotNull
-  public PsiDocTag[] findTagsByName(String name) {
+  public PsiDocTag @NotNull [] findTagsByName(String name) {
     List<PsiDocTag> array = new ArrayList<>();
     name = "@" + name;
     for (PsiDocTag tag : getTags()) {

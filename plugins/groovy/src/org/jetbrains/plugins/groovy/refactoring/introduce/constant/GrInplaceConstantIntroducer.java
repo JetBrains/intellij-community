@@ -29,7 +29,7 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
   private final String[] mySuggestedNames;
 
   public GrInplaceConstantIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(IntroduceConstantHandler.REFACTORING_NAME, choice, context);
+    super(IntroduceConstantHandler.getRefactoringNameText(), choice, context);
 
     myContext = context;
 
@@ -57,9 +57,8 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
     return GrIntroduceConstantHandler.REFACTORING_NAME;
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return mySuggestedNames;
   }
 

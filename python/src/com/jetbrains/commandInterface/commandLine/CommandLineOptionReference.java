@@ -41,9 +41,8 @@ public final class CommandLineOptionReference extends CommandLineElementReferenc
   }
 
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final LookupWithIndentsBuilder builder = new LookupWithIndentsBuilder();
 
     final ValidationResult validationResult = getValidationResult();

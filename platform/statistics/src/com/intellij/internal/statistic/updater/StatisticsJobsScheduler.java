@@ -7,7 +7,9 @@ import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
@@ -33,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 1;
+  private static final int CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN = 3;
 
   public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 15;
   public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
@@ -54,6 +57,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
       notificationManager.showNotificationIfNeeded();
     }
 
+    checkPreviousExternalUploadResult();
     runEventLogStatisticsService();
     runStatesLogging();
     runLegacyDataCleanupService();
@@ -66,11 +70,21 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
         final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
         for (StatisticsEventLoggerProvider provider : providers) {
           if (provider.isRecordEnabled()) {
-            WhitelistStorageProvider.getInstance(provider.getRecorderId()).update();
+            SensitiveDataValidator.getInstance(provider.getRecorderId()).update();
           }
         }
       }, 3, 180, TimeUnit.MINUTES);
   }
+
+  private static void checkPreviousExternalUploadResult() {
+    JobScheduler.getScheduler().schedule(() -> {
+      StatisticsEventLoggerProvider config = FeatureUsageLogger.INSTANCE.getConfig();
+      if (config.isRecordEnabled()) {
+        EventLogExternalUploader.INSTANCE.logPreviousExternalUploadResult(config.getRecorderId());
+      }
+    }, CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN, TimeUnit.MINUTES);
+  }
+
 
   private static void runEventLogStatisticsService() {
     JobScheduler.getScheduler().schedule(() -> {

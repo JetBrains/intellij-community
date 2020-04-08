@@ -6,7 +6,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,10 +57,10 @@ public class TextMateHighlightingLexer extends LexerBase {
    */
   private int lastSuccessStateOccursCount;
 
-  public TextMateHighlightingLexer(CharSequence scopeName, SyntaxNodeDescriptor languageRootSyntaxNode) {
+  public TextMateHighlightingLexer(CharSequence scopeName, SyntaxNodeDescriptor languageRootSyntaxNode, int lineLimit) {
     languageScopeName = scopeName;
     myLanguageInitialState = TextMateLexerState.notMatched(languageRootSyntaxNode);
-    myLineLimit = Registry.get("textmate.line.highlighting.limit").asInteger();
+    myLineLimit = lineLimit;
   }
 
   @Override

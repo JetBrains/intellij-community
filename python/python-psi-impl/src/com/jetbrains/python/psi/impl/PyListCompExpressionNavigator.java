@@ -22,9 +22,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListCompExpression;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class PyListCompExpressionNavigator {
   private PyListCompExpressionNavigator() {
   }

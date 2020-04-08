@@ -315,7 +315,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    *         (start > end) || (end > this.length())}
    */
   @Override
-  public void getChars(int start, int end, @NotNull char[] dest, int destPos) {
+  public void getChars(int start, int end, char @NotNull [] dest, int destPos) {
     myNode.getChars(start, end, dest, destPos);
   }
 
@@ -331,7 +331,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   }
 
   abstract static class Node implements CharSequence {
-    abstract void getChars(int start, int end, @NotNull char[] dest, int destPos);
+    abstract void getChars(int start, int end, char @NotNull [] dest, int destPos);
     abstract Node subNode(int start, int end);
     @NotNull
     @Override
@@ -396,7 +396,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   private static class WideLeafNode extends LeafNode {
     private final char[] data;
 
-    WideLeafNode(@NotNull char[] data) {
+    WideLeafNode(char @NotNull [] data) {
       this.data = data;
     }
 
@@ -406,7 +406,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
 
     @Override
-    void getChars(int start, int end, @NotNull char[] dest, int destPos) {
+    void getChars(int start, int end, char @NotNull [] dest, int destPos) {
       if (start < 0 || end > length() || start > end) {
         throw new IndexOutOfBoundsException();
       }
@@ -435,7 +435,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
 
   private static class Leaf8BitNode extends LeafNode {
     private final byte[] data;
-    Leaf8BitNode(@NotNull byte[] data) {
+    Leaf8BitNode(byte @NotNull [] data) {
       this.data = data;
     }
 
@@ -445,7 +445,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
 
     @Override
-    void getChars(int start, int end, @NotNull char[] dest, int destPos) {
+    void getChars(int start, int end, char @NotNull [] dest, int destPos) {
       if (start < 0 || end > length() || start > end) {
         throw new IndexOutOfBoundsException();
       }
@@ -522,7 +522,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
 
     @Override
-    void getChars(int start, int end, @NotNull char[] dest, int destPos) {
+    void getChars(int start, int end, char @NotNull [] dest, int destPos) {
       final int cesure = head.length();
       if (end <= cesure) {
         head.getChars(start, end, dest, destPos);

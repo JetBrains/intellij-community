@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -23,18 +24,16 @@ import java.net.URL;
 import java.util.*;
 import java.util.jar.JarFile;
 
-/**
- * @author nik
- */
 public class BuildProcessClasspathManager {
   private static final Logger LOG = Logger.getInstance(BuildProcessClasspathManager.class);
 
   private volatile List<String> myCompileServerPluginsClasspath;
 
-  public BuildProcessClasspathManager(Disposable parentDisposable) {
-    CompileServerPlugin.EP_NAME.addExtensionPointListener((e, pd) -> { myCompileServerPluginsClasspath = null; }, parentDisposable);
+  public BuildProcessClasspathManager(@NotNull Disposable parentDisposable) {
+    CompileServerPlugin.EP_NAME.addExtensionPointListener(() -> myCompileServerPluginsClasspath = null, parentDisposable);
   }
 
+  @NotNull
   public List<String> getBuildProcessPluginsClasspath(Project project) {
     List<String> staticClasspath = getStaticClasspath();
     List<String> dynamicClasspath = getDynamicClasspath(project);
@@ -48,6 +47,7 @@ public class BuildProcessClasspathManager {
     }
   }
 
+  @NotNull
   private List<String> getStaticClasspath() {
     List<String> cp = myCompileServerPluginsClasspath;
     if (cp == null) {
@@ -56,6 +56,7 @@ public class BuildProcessClasspathManager {
     return cp;
   }
 
+  @NotNull
   private static List<String> computeCompileServerPluginsClasspath() {
     final List<String> classpath = new ArrayList<>();
 
@@ -132,7 +133,7 @@ public class BuildProcessClasspathManager {
   }
 
   @Nullable
-  private static File getPluginDir(IdeaPluginDescriptor plugin) {
+  private static File getPluginDir(@NotNull IdeaPluginDescriptor plugin) {
     String pluginDirName = StringUtil.getShortName(plugin.getPluginId().getIdString());
     String extraDir = System.getProperty("idea.external.build.development.plugins.dir");
     if (extraDir != null) {
@@ -148,6 +149,7 @@ public class BuildProcessClasspathManager {
     return pluginHome.isDirectory() ? pluginHome : null;
   }
 
+  @NotNull
   private static List<String> getDynamicClasspath(Project project) {
     final List<String> classpath = new ArrayList<>();
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {
@@ -156,6 +158,7 @@ public class BuildProcessClasspathManager {
     return classpath;
   }
 
+  @NotNull
   public static List<String> getLauncherClasspath(Project project) {
     final List<String> classpath = new ArrayList<>();
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {

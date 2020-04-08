@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.Pair;
@@ -37,9 +23,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author max
- */
 public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   private final LightEmptyImplementsList myLightEmptyImplementsList;
 
@@ -69,14 +52,12 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  @NotNull
-  public PsiField[] getFields() {
+  public PsiField @NotNull [] getFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -86,8 +67,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
@@ -97,8 +77,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
@@ -166,8 +145,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getConstructors() {
+  public PsiMethod @NotNull [] getConstructors() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
@@ -193,50 +171,42 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType @NotNull [] getExtendsListTypes() {
     return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getImplementsListTypes() {
+  public PsiClassType @NotNull [] getImplementsListTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getInnerClasses() {
+  public PsiClass @NotNull [] getInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiField[] getAllFields() {
+  public PsiField @NotNull [] getAllFields() {
     return PsiField.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] getAllMethods() {
+  public PsiMethod @NotNull [] getAllMethods() {
     return PsiMethod.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getAllInnerClasses() {
+  public PsiClass @NotNull [] getAllInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClassInitializer[] getInitializers() {
+  public PsiClassInitializer @NotNull [] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
@@ -245,21 +215,18 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
     return PsiClassImplUtil.getSuperClass(this);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInterfaces() {
+  public PsiClass @NotNull [] getInterfaces() {
     return PsiClassImplUtil.getInterfaces(this);
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getSupers() {
+  public PsiClass @NotNull [] getSupers() {
     return PsiClassImplUtil.getSupers(this);
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getSuperTypes() {
+  public PsiClassType @NotNull [] getSuperTypes() {
     return PsiClassImplUtil.getSuperTypes(this);
   }
 
@@ -331,8 +298,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -365,8 +331,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
 
   //todo parse annotataions
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
@@ -382,8 +347,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getAnnotations();
   }
 }

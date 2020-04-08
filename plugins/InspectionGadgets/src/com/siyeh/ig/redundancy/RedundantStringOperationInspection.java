@@ -345,14 +345,14 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return "Use '" + myBindCallName + "' and remove redundant 'substring()' call";
+      return InspectionGadgetsBundle.message("remove.redundant.substring.fix.text", myBindCallName);
     }
     
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove redundant 'substring()' call";
+      return InspectionGadgetsBundle.message("remove.redundant.substring.fix.family.name");
     }
 
     @Override

@@ -1,0 +1,48 @@
+---
+receipt:     Oz-Ware Purchase Invoice
+date:        2012-08-06
+customer:
+  first_name:   Dorothyer
+  family_name:  Gale
+
+items:
+  - part_no:   A4786
+    descrip:   Water Bucket (Filled)
+    price:     1.47
+    quantity:  4
+
+  - part_no:   E1628
+    'it are error here':   It <warning descr="IT_VBZ">are</warning> error here
+    size:      8
+    price:     133.7
+    quantity:
+      - It <warning descr="IT_VBZ">are</warning> error here
+      - xcvxcv
+
+bill-to:  &id001
+  street: |
+    В большой коробке лежало <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.
+    А <warning descr="grammar_vse_li_noun">все ли ошибка</warning> найдены?
+    Это случилось <warning descr="INVALID_DATE">31 ноября</warning> 2014 г.
+    За весь вечер она <warning descr="ne_proronila_ni">не проронила и слово</warning>.
+    Собрание состоится в <warning descr="RU_COMPOUNDS">конференц зале</warning>.
+    БОЛЬШИЕ БУКВЫ.
+    Актуальный плагин.
+    На конференции работали советы по секциям: химия, история.
+  city:   "It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>"
+  state:  '<warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> error too'
+
+ship-to:  *id001
+
+'Chapter 1': [Introduction, Event Types, It <warning descr="IT_VBZ">are</warning> error]
+'Chapter 2': [Introduction, Helpers]
+
+'symfony 1.0': { PHP: 5.0, Propel: 1.2 }
+'symfony 1.2': { PHP: 5.2, Propel: 1.3 }
+
+# it <warning descr="IT_VBZ">are</warning> bad <TYPO descr="Typo: In word 'eror'">eror</TYPO> in comments
+specialDelivery:  >
+  Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
+  das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
+  das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
+

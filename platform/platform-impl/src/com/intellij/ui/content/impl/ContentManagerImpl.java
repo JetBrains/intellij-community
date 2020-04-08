@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.DataManager;
@@ -12,11 +12,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Anton Katilin
@@ -41,7 +43,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final List<Content> mySelection = new ArrayList<>();
   private final boolean myCanCloseContents;
 
-  private MyNonOpaquePanel myComponent;
+  private JPanel myComponent;
 
   private final Set<Content> myContentWithChangedComponent = new HashSet<>();
 
@@ -60,18 +62,36 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable) {
+    this(canCloseContents, project, parentDisposable, (contentManager, componentGetter) -> {
+      // if some contentUI expects that myUI will be set before setManager (as it was before introducing ContentUiProducer)
+      ((ContentManagerImpl)contentManager).myUI = contentUI;
+      contentUI.setManager(contentManager);
+      return contentUI;
+    });
+  }
+
+  public interface ContentUiProducer {
+    ContentUI createContent(@NotNull ContentManager contentManager, @NotNull Supplier<@NotNull JPanel> componentGetter);
+  }
+
+  @ApiStatus.Experimental
+  public ContentManagerImpl(boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable, @NotNull ContentUiProducer contentUiProducer) {
     myProject = project;
     myCanCloseContents = canCloseContents;
-    myUI = contentUI;
-    myUI.setManager(this);
+    ContentUI ui = contentUiProducer.createContent(this, () -> {
+      LOG.assertTrue(myComponent == null);
+      myComponent = new MyNonOpaquePanel();
+      return myComponent;
+    });
+    myUI = ui;
 
     // register on project (will be disposed before services) because before Content disposal
     // the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored
     // for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work
     // for which the findFile() must access fileManager for which it must be alive
     Disposer.register(parentDisposable, this);
-    if (contentUI instanceof Disposable) {
-      Disposer.register(this, (Disposable)contentUI);
+    if (ui instanceof Disposable) {
+      Disposer.register(this, (Disposable)ui);
     }
   }
 
@@ -85,11 +105,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public JComponent getComponent() {
     if (myComponent == null) {
       myComponent = new MyNonOpaquePanel();
-
-      NonOpaquePanel contentComponent = new NonOpaquePanel();
-      contentComponent.setContent(myUI.getComponent());
-
-      myComponent.add(contentComponent, BorderLayout.CENTER);
+      myComponent.add(myUI.getComponent(), BorderLayout.CENTER);
     }
     return myComponent;
   }
@@ -103,9 +119,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return busyObject != null ? busyObject.getReady(requestor) : ActionCallback.DONE;
   }
 
-  private class MyNonOpaquePanel extends NonOpaquePanel implements DataProvider {
+  private final class MyNonOpaquePanel extends JPanel implements DataProvider {
     MyNonOpaquePanel() {
       super(new BorderLayout());
+
+      setOpaque(false);
     }
 
     @Override
@@ -168,7 +186,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public boolean removeContent(@NotNull Content content, boolean dispose) {
-    boolean wasFocused = content.getComponent() != null && UIUtil.isFocusAncestor(content.getComponent());
+    boolean wasFocused = UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
 
@@ -183,6 +201,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
           setSelectedContent(current, true, true, !forcedFocus).notify(result);
         }
         else {
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
           result.setDone();
         }
       }
@@ -198,16 +217,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private ActionCallback doRemoveContent(@NotNull Content content, boolean dispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
-    if (indexToBeRemoved == -1) return ActionCallback.REJECTED;
+    if (indexToBeRemoved == -1) {
+      return ActionCallback.REJECTED;
+    }
 
     try {
       Content selection = mySelection.isEmpty() ? null : mySelection.get(mySelection.size() - 1);
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
 
-      if (!fireContentRemoveQuery(content, indexToBeRemoved)) {
-        return ActionCallback.REJECTED;
-      }
-      if (!content.isValid()) {
+      if (!fireContentRemoveQuery(content, indexToBeRemoved) || !content.isValid()) {
         return ActionCallback.REJECTED;
       }
 
@@ -231,6 +249,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       mySelectionHistory.remove(content);
+      myContentWithChangedComponent.remove(content);
       myContents.remove(content);
       content.removePropertyChangeListener(this);
 
@@ -263,13 +282,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return ActionCallback.DONE;
     }
     finally {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        if (!myDisposed && myContents.isEmpty()) {
-          // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
-          // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
-          // at at the same time.
-          myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
-        }
+      if (ApplicationManager.getApplication().isDispatchThread() && !myDisposed && myContents.isEmpty()) {
+        // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
+        // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
+        // at at the same time.
+        myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
       }
     }
   }
@@ -291,8 +308,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @NotNull
-  public Content[] getContents() {
+  public Content @NotNull [] getContents() {
     return myContents.toArray(new Content[0]);
   }
 
@@ -407,8 +423,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  @NotNull
-  public Content[] getSelectedContents() {
+  public Content @NotNull [] getSelectedContents() {
     return mySelection.toArray(new Content[0]);
   }
 

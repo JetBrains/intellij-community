@@ -12,6 +12,7 @@ import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SimpleRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.branch.HgBranchManager;
@@ -183,8 +184,9 @@ public class HgRefManager implements VcsLogRefManager {
   }
 
   @Nullable
+  @CalledInAny
   private HgRepository getRepository(@NotNull VcsRef reference) {
-    return myRepositoryManager.getRepositoryForRoot(reference.getRoot());
+    return myRepositoryManager.getRepositoryForRootQuick(reference.getRoot());
   }
 
   @Override

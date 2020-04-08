@@ -26,9 +26,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,6 @@ import javax.swing.*;
 import java.util.Collections;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
-  private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
 
   @NotNull private final TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
@@ -206,7 +205,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Nullable
   private DiffGutterOperation createResolveOperation() {
     return createOperation(ThreeSide.BASE, (ctrlPressed, shiftPressed, altPressed) -> {
-      if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
       return createResolveRenderer();
     });
   }
@@ -230,20 +228,30 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), () -> myViewer.executeMergeCommand("Accept change", Collections.singletonList(this), () -> myViewer.replaceChange(this, side, modifier)));
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), icon, isConflict(), () -> {
+      myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.accept.change.command"),
+                                   Collections.singletonList(this),
+                                   () -> myViewer.replaceChange(this, side, modifier));
+    });
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), () -> myViewer.executeMergeCommand("Ignore change", Collections.singletonList(this), () -> myViewer.ignoreChange(this, side, modifier)));
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, isConflict(), () -> {
+      myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.ignore.change.command"), Collections.singletonList(this),
+                                   () -> myViewer.ignoreChange(this, side, modifier));
+    });
   }
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
     if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null;
 
-    return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> myViewer.resolveChangeAutomatically(this, ThreeSide.BASE)));
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.resolve.text"), AllIcons.Diff.MagicResolve, false, () -> {
+      myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.resolve.conflict.command"), Collections.singletonList(this),
+                                   () -> myViewer.resolveChangeAutomatically(this, ThreeSide.BASE));
+    });
   }
 
   @NotNull
@@ -251,7 +259,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
                                                        @NotNull final Icon icon,
                                                        boolean ctrlClickVisible,
                                                        @NotNull final Runnable perform) {
-    final String tooltipText = DiffUtil.createTooltipText(text, ctrlClickVisible ? CTRL_CLICK_TO_RESOLVE : null);
+    @Nls String appendix = ctrlClickVisible ? DiffBundle.message("tooltip.merge.ctrl.click.to.resolve.conflict") : null;
+    final String tooltipText = DiffUtil.createTooltipText(text, appendix);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
       protected void handleMouseClick() {

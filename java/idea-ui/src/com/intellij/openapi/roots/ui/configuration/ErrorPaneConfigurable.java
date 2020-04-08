@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -182,7 +183,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   @Nls
   @Override
   public String getDisplayName() {
-    return "Problems";
+    return JavaUiBundle.message("configurable.ErrorPaneConfigurable.display.name");
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -8,18 +8,13 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit.testDiscovery.TestsByChanges;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -407,20 +402,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getScopeForJUnit(configuration.getConfigurationModule().getModule(), configuration.getProject());
   }
 
-  @Override
-  @NotNull
-  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
-    appendForkInfo(executor);
-    appendRepeatMode();
-
-    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(createCommandLine());
-    ProcessTerminatedListener.attach(processHandler);
-    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
-    if (searchForTestsTask != null) {
-      searchForTestsTask.attachTaskToProcess(processHandler);
-    }
-    return processHandler;
-  }
 
   @Override
   public void appendRepeatMode() throws ExecutionException {
@@ -483,7 +464,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (JUnitConfiguration.BY_SOURCE_CHANGES.equals(id)) {
       return new TestsByChanges(configuration, environment);
     }
-    LOG.info(ExecutionBundle.message("configuration.not.specified.message", id));
+    LOG.info(JUnitBundle.message("configuration.not.specified.message", id));
     return null;
   }
 
@@ -554,7 +535,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected String getRunner() {
     if (myRunner == null) {
-      myRunner = getRunnerInner();
+      myRunner = ReadAction.compute(this::getRunnerInner);
     }
     return myRunner;
   }
@@ -562,7 +543,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   private String getRunnerInner() {
     Project project = myConfiguration.getProject();
-    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
     final GlobalSearchScope globalSearchScope = getScopeForJUnit(myConfiguration);
     JUnitConfiguration.Data data = myConfiguration.getPersistentData();

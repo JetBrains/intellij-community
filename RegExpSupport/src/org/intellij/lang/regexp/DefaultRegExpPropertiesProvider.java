@@ -164,18 +164,15 @@ public final class DefaultRegExpPropertiesProvider {
     return null;
   }
 
-  @NotNull
-  public String[][] getAllKnownProperties() {
+  public String[] @NotNull [] getAllKnownProperties() {
     return myPropertyNames;
   }
 
-  @NotNull
-  public String[][] getKnownCharacterClasses() {
+  public String[] @NotNull [] getKnownCharacterClasses() {
     return myCharacterClasses;
   }
 
-  @NotNull
-  public String[][] getPosixCharacterClasses() {
+  public String[] @NotNull [] getPosixCharacterClasses() {
     return myPosixCharacterClasses;
   }
 }

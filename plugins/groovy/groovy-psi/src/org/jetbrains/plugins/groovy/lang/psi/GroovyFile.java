@@ -49,6 +49,5 @@ public interface GroovyFile extends GroovyFileBase {
    * @see org.jetbrains.plugins.groovy.transformations.impl.BaseScriptTransformationSupport
    * @see org.jetbrains.plugins.groovy.transformations.impl.FieldScriptTransformationSupport
    */
-  @NotNull
-  GrVariableDeclaration[] getScriptDeclarations(boolean topLevelOnly);
+  GrVariableDeclaration @NotNull [] getScriptDeclarations(boolean topLevelOnly);
 }

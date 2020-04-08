@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.ex;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -69,7 +69,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @TestOnly
   public abstract boolean isDefaultProjectInitialized();
 
-  public abstract boolean isProjectOpened(Project project);
+  public abstract boolean isProjectOpened(@NotNull Project project);
 
   public abstract boolean canClose(@NotNull Project project);
 
@@ -117,7 +117,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
-  @NotNull
   @ApiStatus.Internal
-  public abstract String[] getAllExcludedUrls();
+  public abstract String @NotNull [] getAllExcludedUrls();
 }

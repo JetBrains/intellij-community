@@ -31,9 +31,8 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
   public ClsReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
     super(stub);
     myRefs = new AtomicNotNullLazyValue<ClsJavaCodeReferenceElementImpl[]>() {
-      @NotNull
       @Override
-      protected ClsJavaCodeReferenceElementImpl[] compute() {
+      protected ClsJavaCodeReferenceElementImpl @NotNull [] compute() {
         String[] strings = getStub().getReferencedNames();
         if (strings.length > 0) {
           ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[strings.length];
@@ -50,20 +49,17 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return myRefs.getValue();
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return getReferenceElements();
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     return getStub().getReferencedTypes();
   }
 

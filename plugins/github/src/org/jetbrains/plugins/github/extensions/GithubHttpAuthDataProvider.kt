@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github.extensions
 
@@ -13,7 +13,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
-import java.io.IOException
 
 private val LOG = logger<GithubHttpAuthDataProvider>()
 
@@ -27,12 +26,14 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
                                                                  account).login
         GithubAccountAuthData(account, username, token)
       }
-      catch (e: IOException) {
+      catch (e: Exception) {
         LOG.info("Cannot load username for $account", e)
         null
       }
     }
   }
+
+  override fun isSilent(): Boolean = true
 
   override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
     return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
@@ -60,7 +61,7 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
                                                     DumbProgressIndicator(),
                                                     it).login == login
         }
-        catch (e: IOException) {
+        catch (e: Exception) {
           LOG.info("Cannot load username for $it", e)
           false
         }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -44,7 +45,7 @@ public class ResizeableMappedFile implements Forceable {
   private int myRoundFactor = DEFAULT_ALLOCATION_ROUND_FACTOR;
 
   public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
-                              boolean valuesAreBufferAligned) throws IOException {
+                              boolean valuesAreBufferAligned) {
     this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
   }
 
@@ -53,18 +54,10 @@ public class ResizeableMappedFile implements Forceable {
                               @Nullable PagedFileStorage.StorageLockContext lockContext,
                               int pageSize,
                               boolean valuesAreBufferAligned,
-                              boolean nativeBytesOrder) throws IOException {
+                              boolean nativeBytesOrder) {
     myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
     myInitialSize = initialSize;
     myLastWrittenLogicalSize = myLogicalSize = readLength();
-  }
-
-  public ResizeableMappedFile(Path file, int initialSize, PagedFileStorage.StorageLock lock, int pageSize, boolean valuesAreBufferAligned) throws IOException {
-    this(file, initialSize, lock.myDefaultStorageLockContext, pageSize, valuesAreBufferAligned);
-  }
-
-  public ResizeableMappedFile(Path file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {
-    this(file, initialSize, lock, -1, false);
   }
 
   public long length() {
@@ -141,12 +134,11 @@ public class ResizeableMappedFile implements Forceable {
           try {
             return new DataOutputStream(Files.newOutputStream(lengthFile));
           }
-          catch (FileNotFoundException ex) {
-            final File parentFile = lengthFile.getParent().toFile();
-            
-            if (!parentFile.exists()) {
+          catch (NoSuchFileException ex) {
+            Path parent = lengthFile.getParent();
+            if (!Files.exists(parent)) {
               if (!parentWasCreated) {
-                parentFile.mkdirs();
+                Files.createDirectories(parent);
                 parentWasCreated = true;
               }
               else {

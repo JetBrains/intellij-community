@@ -70,7 +70,7 @@ public class DirectoryChooser extends DialogWrapper {
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     myFilterExisting = propertiesComponent.isTrueValue(FILTER_NON_EXISTING);
     myTabbedPaneWrapper = new TabbedPaneWrapper(getDisposable());
-    String gotoClassText = GotoClassPresentationUpdater.getTabTitle(false);
+    String gotoClassText = GotoClassPresentationUpdater.getTabTitle();
     myByClassPanel = gotoClassText.startsWith("Class") ? createChooserPanel(project, true) : null;
     myByFilePanel = createChooserPanel(project, false);
     init();
@@ -531,8 +531,8 @@ public class DirectoryChooser extends DialogWrapper {
 
   private class FilterExistentAction extends ToggleAction {
     FilterExistentAction() {
-      super(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
-            UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
+      super(RefactoringBundle.messagePointer("directory.chooser.hide.non.existent.checkBox.text"),
+            () -> UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
             AllIcons.General.Filter);
     }
 

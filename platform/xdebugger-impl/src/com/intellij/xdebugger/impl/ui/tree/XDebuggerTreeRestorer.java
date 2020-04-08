@@ -1,40 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.xdebugger.XNamedTreeNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelectionListener {
   public static final String SELECTION_PATH_PROPERTY = "selection.path";
   private final XDebuggerTree myTree;
@@ -86,7 +68,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
 
   private void doRestoreNode(final RestorableStateNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
     if (nodeInfo != null) {
-      if (!checkExtendedModified(treeNode) && !(Comparing.equal(nodeInfo.getValue(), treeNode.getRawValue()))) {
+      if (!checkExtendedModified(treeNode) && !(Objects.equals(nodeInfo.getValue(), treeNode.getRawValue()))) {
         treeNode.markChanged();
       }
       if (!myStopRestoringSelection && nodeInfo.isSelected() && mySelectionPath == null) {
@@ -122,7 +104,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
       Object component1 = path1.getLastPathComponent();
       Object component2 = path2.getLastPathComponent();
       if (component1 instanceof XNamedTreeNode && component2 instanceof XNamedTreeNode) {
-        if (!Comparing.equal(((XNamedTreeNode)component1).getName(), ((XNamedTreeNode)component2).getName())) {
+        if (!Objects.equals(((XNamedTreeNode)component1).getName(), ((XNamedTreeNode)component2).getName())) {
           return false;
         }
       }

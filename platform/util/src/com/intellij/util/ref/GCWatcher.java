@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ref;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -20,8 +20,8 @@ import java.util.Set;
 
 /**
  * A utility to garbage-collect specified objects in tests. Create a GCWatcher using {@link #tracking} or {@link #fromClearedRef}
- * and then call {@link #tryGc()}. Please ensure that your test doesn't hold references to objects passed to {@link #tracking},
- * so, if you pass fields or local variables there, nullify them before calling {@link #tryGc()}.
+ * and then call {@link #ensureCollected()}. Please ensure that your test doesn't hold references to objects passed to {@link #tracking},
+ * so, if you pass fields or local variables there, nullify them before calling {@link #ensureCollected()}.
  *
  */
 public class GCWatcher {
@@ -81,7 +81,7 @@ public class GCWatcher {
    * this method gives up after some time.
    */
   @TestOnly
-  public void tryGc() {
+  public void ensureCollected() {
     StringBuilder log = new StringBuilder();
     if (!GCUtil.allocateTonsOfMemory(log, this::isEverythingCollected)) {
       String message = "Couldn't garbage-collect some objects, they might still be reachable from GC roots: " +

@@ -21,6 +21,9 @@ public class SslKeyStore extends DelegateKeyStore {
 
   public static void setDefault() {
     System.setProperty("javax.net.ssl.keyStoreType", NAME);
+    if (System.getProperty("javax.net.ssl.keyStore") == null) {
+      System.setProperty("javax.net.ssl.keyStore", getDefaultKeyStorePath());
+    }
   }
 
   private void appendUserCert() {

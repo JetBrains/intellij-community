@@ -12,7 +12,7 @@ import java.io.File;
  */
 public interface ChangeListClient extends SvnClient {
 
-  void add(@NotNull String changeList, @NotNull File path, @Nullable String[] changeListsToOperate) throws VcsException;
+  void add(@NotNull String changeList, @NotNull File path, String @Nullable [] changeListsToOperate) throws VcsException;
 
   void remove(@NotNull File path) throws VcsException;
 }

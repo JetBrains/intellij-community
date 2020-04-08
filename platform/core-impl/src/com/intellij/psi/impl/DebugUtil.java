@@ -647,7 +647,7 @@ public class DebugUtil {
     FileViewProvider viewProvider = file.getViewProvider();
     PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
 
-    Document actualDocument = manager.getDocument(file);
+    Document actualDocument = viewProvider.getDocument();
     String fileDiagnostics = "File[" + file + " " + file.getName() + ", " + file.getLanguage() + ", " + viewProvider + "]";
     if (actualDocument != document) {
       return "wrong document for " + fileDiagnostics + "; expected " + document + "; actual " + actualDocument;

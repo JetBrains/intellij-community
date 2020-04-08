@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
@@ -23,6 +23,10 @@ import java.awt.event.InputEvent;
  */
 public interface ToolWindow extends BusyObject {
   Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
+
+  @NonNls
+  @NotNull
+  String getId();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -51,6 +55,10 @@ public interface ToolWindow extends BusyObject {
    */
   void show(@Nullable Runnable runnable);
 
+  default void show() {
+    show(null);
+  }
+
   /**
    * Hides tool window. If the window is active, then the method deactivates it.
    * Does nothing if tool window isn't visible.
@@ -60,9 +68,14 @@ public interface ToolWindow extends BusyObject {
    */
   void hide(@Nullable Runnable runnable);
 
+  default void hide() {
+    hide(null);
+  }
+
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
+  @NotNull
   ToolWindowAnchor getAnchor();
 
   /**
@@ -92,14 +105,12 @@ public interface ToolWindow extends BusyObject {
    */
   boolean isAutoHide();
 
-  /**
-   * @throws IllegalStateException if tool window isn't installed.
-   */
-  void setAutoHide(boolean state);
+  void setAutoHide(boolean value);
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
    */
+  @NotNull
   ToolWindowType getType();
 
   /**
@@ -151,7 +162,9 @@ public interface ToolWindow extends BusyObject {
    *
    * @throws IllegalStateException if tool window isn't installed.
    */
-  void setAvailable(boolean available, @Nullable Runnable runnable);
+  void setAvailable(boolean value, @Nullable Runnable runnable);
+
+  void setAvailable(boolean value);
 
   void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable);
 
@@ -168,7 +181,11 @@ public interface ToolWindow extends BusyObject {
   @NotNull
   JComponent getComponent();
 
+  @NotNull
   ContentManager getContentManager();
+
+  @Nullable
+  ContentManager getContentManagerIfCreated();
 
   void addContentManagerListener(@NotNull ContentManagerListener listener);
 
@@ -177,9 +194,9 @@ public interface ToolWindow extends BusyObject {
   void setToHideOnEmptyContent(boolean hideOnEmpty);
 
   /**
-   * @param show if {@code false} stripe button should be hidden.
+   * @param value if {@code false} stripe button should be hidden.
    */
-  void setShowStripeButton(boolean show);
+  void setShowStripeButton(boolean value);
 
   boolean isShowStripeButton();
 
@@ -190,10 +207,9 @@ public interface ToolWindow extends BusyObject {
   @NotNull
   Disposable getDisposable();
 
-  default void setHelpId(@NonNls String helpId) {
+  default void setHelpId(@NotNull @NonNls String helpId) {
   }
 
-  @Nullable
   default String getHelpId() {
     return null;
   }

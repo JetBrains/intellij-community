@@ -1,17 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public final class ContentFactoryImpl implements ContentFactory {
   @NotNull
   @Override
-  public ContentImpl createContent(JComponent component, String displayName, boolean isLockable) {
+  public ContentImpl createContent(JComponent component, @Nullable String displayName, boolean isLockable) {
     return new ContentImpl(component, displayName, isLockable);
   }
 

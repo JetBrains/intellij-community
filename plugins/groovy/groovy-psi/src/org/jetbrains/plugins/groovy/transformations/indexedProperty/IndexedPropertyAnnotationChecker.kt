@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.transformations.indexedProperty
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -31,7 +32,7 @@ class IndexedPropertyAnnotationChecker : CustomAnnotationChecker() {
     val field = parent.variables.singleOrNull() as? GrField ?: return true
 
     if (!field.isProperty) {
-      holder.createErrorAnnotation(annotation, "@IndexedProperty is applicable to properties only")
+      holder.newAnnotation(HighlightSeverity.ERROR, "@IndexedProperty is applicable to properties only").range(annotation).create()
       return true
     }
 

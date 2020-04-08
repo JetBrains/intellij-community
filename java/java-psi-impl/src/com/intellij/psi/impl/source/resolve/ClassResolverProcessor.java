@@ -60,8 +60,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     myResolveHelper = JavaPsiFacade.getInstance(containingFile.getProject()).getResolveHelper();
   }
 
-  @NotNull
-  public JavaResolveResult[] getResult() {
+  public JavaResolveResult @NotNull [] getResult() {
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
     if (myHasAccessibleCandidate && myHasInaccessibleCandidate) {

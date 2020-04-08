@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -12,8 +13,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
-
   private final PsiJavaCodeReferenceElement myReferenceElement;
   private final Editor myEditor;
   private final boolean myAllowInlineThisOnly;
@@ -29,7 +28,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     myInvokedOnReference = ref != null;
     myOccurrencesNumber = getNumberOfOccurrences(method);
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
     init();
   }
 
@@ -64,7 +63,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getKeepTheDeclarationText() {
-    if (myMethod.isWritable()) return RefactoringBundle.message("all.invocations.keep.the.method");
+    if (myMethod.isWritable()) return JavaRefactoringBundle.message("all.invocations.keep.the.method");
     return super.getKeepTheDeclarationText();
   }
 
@@ -118,5 +117,9 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   @Override
   protected void saveSearchInTextOccurrences(boolean searchInTextOccurrences) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = searchInTextOccurrences;
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("inline.method.title");
   }
 }

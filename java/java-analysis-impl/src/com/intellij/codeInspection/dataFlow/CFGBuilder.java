@@ -300,6 +300,22 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to perform an instanceof operation
+   * <p>
+   * Stack before: ... object cast_type
+   * <p>
+   * Stack after: ... result
+   *
+   * @param anchor element to bind this instruction to
+   * @param operand operand expression (pushed before)
+   * @param castType cast type (pushed before)
+   * @return this builder
+   */
+  public CFGBuilder isInstance(PsiExpression anchor, @Nullable PsiExpression operand, @NotNull PsiType castType) {
+    return add(new InstanceofInstruction(anchor, operand, castType));
+  }
+
+  /**
    * Generate instructions to compare two values on top of stack with given relation operation (e.g. {@link JavaTokenType#GT}).
    * <p>
    * Stack before: ... val1 val2
@@ -568,6 +584,21 @@ public class CFGBuilder {
    */
   public CFGBuilder doThrow(@NotNull PsiType exceptionType) {
     myAnalyzer.throwException(exceptionType, null);
+    return this;
+  }
+
+  /**
+   * Generate instructions to perform a method call without inlining
+   * <p>
+   * Stack before: ... qualifier arg1 ... argN
+   * <p>
+   * Stack after: ... method result
+   * 
+   * @param call call to add
+   * @return this builder
+   */
+  public CFGBuilder call(PsiMethodCallExpression call) {
+    myAnalyzer.addBareCall(call, call.getMethodExpression());
     return this;
   }
 

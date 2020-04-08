@@ -15,9 +15,6 @@
  */
 package org.jetbrains.groovy.compiler.rt;
 
-/**
- * @author nik
- */
 public class GroovyRtConstants {
   public static final String PATCHERS = "patchers";
   public static final String ENCODING = "encoding";

@@ -4,6 +4,8 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
@@ -40,7 +42,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.map.foreach.option.no.loops"), this,
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.map.foreach.option.no.loops"), this,
                                           "DO_NOT_HIGHLIGHT_LOOP");
   }
 
@@ -63,7 +65,8 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
         PsiParameter entry = lambdaParameters[0];
         if (!allUsagesAllowed(entry)) return;
         PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-        holder.registerProblem(nameElement, InspectionsBundle.message("inspection.map.foreach.message"), new ReplaceWithMapForEachFix());
+        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
+                               new ReplaceWithMapForEachFix());
       }
 
       private boolean allUsagesAllowed(@NotNull PsiParameter entry) {
@@ -98,7 +101,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
             toHighlight = firstChild;
             range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(toHighlight, InspectionsBundle.message("inspection.map.foreach.message"),
+          holder.registerProblem(toHighlight, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "Map.forEach()"),
                                  type, range, new ReplaceWithMapForEachFix());
         }
       }
@@ -110,7 +113,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.map.foreach.fix.name");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()");
     }
 
     @Override

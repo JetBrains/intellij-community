@@ -30,9 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class PackagingTreeNodeFactory {
   private PackagingTreeNodeFactory() {
   }

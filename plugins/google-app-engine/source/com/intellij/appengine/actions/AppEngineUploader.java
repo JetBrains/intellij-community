@@ -53,9 +53,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class AppEngineUploader {
   private static final Logger LOG = Logger.getInstance(AppEngineUploader.class);
   private final Project myProject;

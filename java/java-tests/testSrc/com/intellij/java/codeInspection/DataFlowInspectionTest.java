@@ -40,6 +40,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testLocalClass() { doTest(); }
 
   public void testNotNullOnSuperParameter() { doTest(); }
+  public void testNullableOnSuperParameter() { doTest(); }
 
   public void testFieldInAnonymous() { doTest(); }
   public void testFieldInitializerInAnonymous() { doTest(); }
@@ -617,6 +618,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullFlushed() { doTest(); }
   public void testBooleanMergeInLoop() { doTest(); }
   public void testVoidIsAlwaysNull() { doTest(); }
+  public void testImpossibleType() { doTest(); }
   public void testStringEquality() { doTest(); }
   public void testAssignmentFieldAliasing() { doTest(); }
   public void testNewBoxedNumberEquality() { doTest(); }
@@ -665,4 +667,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testCompareEqualObjectWithNull() { doTest(); }
   public void testNullabilityAfterCastAndInstanceOf() { doTest(); }
   public void testInstanceOfTernary() { doTest(); }
+  public void testStringContains() { doTest(); }
+  public void testSwitchLabelNull() { doTest(); }
 }

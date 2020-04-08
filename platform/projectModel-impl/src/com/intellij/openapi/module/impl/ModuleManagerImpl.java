@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -11,14 +10,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
@@ -29,9 +28,11 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -45,10 +46,14 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -56,9 +61,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.module.impl.ExternalModuleListStorageKt.getFilteredModuleList;
 
-/**
- * @author max
- */
 public abstract class ModuleManagerImpl extends ModuleManagerEx implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
   public static final String COMPONENT_NAME = "ProjectModuleManager";
 
@@ -75,6 +77,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
   protected final Project myProject;
   protected final MessageBus myMessageBus;
+  private final ProjectRootManagerEx myProjectRootManager;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
   private Set<ModulePath> myModulePathsToLoad;
@@ -89,6 +92,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   public ModuleManagerImpl(@NotNull Project project) {
     myProject = project;
     myMessageBus = project.getMessageBus();
+    myProjectRootManager = ProjectRootManagerEx.getInstanceEx(project);
   }
 
   @Override
@@ -117,6 +121,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   @Override
   public void dispose() {
     myModuleModel.disposeModel();
+    myProjectRootManager.assertListenersAreDisposed();
   }
 
   @Override
@@ -126,7 +131,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     return e;
   }
 
-  private static class ModuleGroupInterner {
+  private static final class ModuleGroupInterner {
     private final Interner<String> groups = new StringInterner();
     private final Map<String[], String[]> paths = new THashMap<>(new TObjectHashingStrategy<String[]>() {
       @Override
@@ -140,7 +145,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
     });
 
-    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, @NotNull Module module, @Nullable String[] group) {
+    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, @NotNull Module module, String @Nullable [] group) {
       String[] cached = group == null ? null : paths.get(group);
       if (cached == null && group != null) {
         cached = new String[group.length];
@@ -272,10 +277,9 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     progressIndicator.setText2("");
 
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
-    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
     boolean isParallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
-    ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
+    ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", Math.min(2, Runtime.getRuntime().availableProcessors()))
                                          : ConcurrencyUtil.newSameThreadExecutorService();
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
@@ -283,13 +287,17 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       if (progressIndicator.isCanceled()) {
         break;
       }
+
       String path = modulePath.getPath();
-      if (!paths.add(path)) continue;
-      tasks.add(Pair.create(service.submit(() -> {
+      if (!paths.add(path)) {
+        continue;
+      }
+
+      tasks.add(new Pair<>(service.submit(() -> {
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
           try {
-            return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
+            return myProject.isDisposed() ? null : loadModuleInternal(path, this);
           }
           catch (IOException e) {
             reportError(errors, modulePath, e);
@@ -304,19 +312,26 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }), modulePath));
     }
 
+    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
     List<Module> modulesWithUnknownTypes = new SmartList<>();
     for (Pair<Future<Module>, ModulePath> task : tasks) {
       if (progressIndicator.isCanceled()) {
         break;
       }
+
       try {
         Module module = task.first.get();
-        if (module == null) continue;
+        if (module == null) {
+          continue;
+        }
+
+        moduleModel.addModule(module);
+
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
         }
         ModulePath modulePath = task.second;
-        final String groupPathString = modulePath.getGroup();
+        String groupPathString = modulePath.getGroup();
         if (groupPathString != null) {
           // model should be updated too
           groupInterner.setModuleGroupPath(moduleModel, module, groupPathString.split(MODULE_GROUP_SEPARATOR));
@@ -340,9 +355,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
           Module oldModule = track.put(url, module);
           if (oldModule != null) {
-            //Map<String, VirtualFilePointer> track1 = ContentEntryImpl.track;
-            //VirtualFilePointer pointer = track1.get(url);
-            LOG.error("Module '" + module.getName() + "' and module '" + oldModule.getName() + "' have the same content root: " + url);
+            LOG.warn("Module '" + module.getName() + "' and module '" + oldModule.getName() + "' have the same content root: " + url);
           }
         }
       }
@@ -353,8 +366,32 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
 
+  private static @NotNull Module loadModuleInternal(@NotNull String filePath, @NotNull ModuleManagerImpl manager) throws IOException {
+    // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(filePath);
+    if (virtualFile != null) {
+      // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
+      virtualFile.setCharset(StandardCharsets.UTF_8, null, false);
+    }
+    return ReadAction.compute(() -> {
+      ModuleEx module = manager.createAndLoadModule(filePath);
+      initModule(module, () -> ((ModuleStore)module.getService(IComponentStore.class)).setPath(filePath, virtualFile, false));
+      return module;
+    });
+  }
+
+  private static void initModule(@NotNull ModuleEx module, @NotNull Runnable beforeComponentCreation) {
+    try {
+      module.init(beforeComponentCreation);
+    }
+    catch (Throwable e) {
+      disposeModuleLater(module);
+      throw e;
+    }
+  }
+
   private void reportError(@NotNull List<? super ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
-    errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
+    errors.add(new ModuleLoadingErrorDescription(ProjectModelBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
   }
 
   public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }
@@ -422,7 +459,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     fireModuleLoadErrors(errors);
   }
 
-  private static void disposeModuleLater(Module module) {
+  private static void disposeModuleLater(@NotNull Module module) {
     ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
   }
 
@@ -520,6 +557,16 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
   @Override
   @NotNull
+  public Module newNonPersistentModule(@NotNull String moduleName, @NotNull String id) {
+    incModificationCount();
+    final ModifiableModuleModel modifiableModel = getModifiableModel();
+    final Module module = modifiableModel.newNonPersistentModule(moduleName, id);
+    modifiableModel.commit();
+    return module;
+  }
+
+  @Override
+  @NotNull
   public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
     incModificationCount();
     final ModifiableModuleModel modifiableModel = getModifiableModel();
@@ -538,8 +585,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     ModuleModelImpl model = myModuleModel;
     if (model.myIsWritable) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -552,8 +598,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   private volatile Graph<Module> myCachedModuleTestGraph;
 
   @Override
-  @NotNull
-  public Module[] getSortedModules() {
+  public Module @NotNull [] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     deliverPendingEvents();
     Module[] sortedModules = myCachedSortedModules;
@@ -654,6 +699,10 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   @NotNull
   protected abstract ModuleEx createModule(@NotNull String filePath);
 
+  protected ModuleEx createNonPersistentModule(@NotNull String name) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
@@ -691,8 +740,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
 
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       Module[] cache = myModulesCache;
       if (cache == null) {
         Collection<Module> modules = myModules.values();
@@ -701,8 +749,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       return cache;
     }
 
-    @NotNull
-    private Module[] getSortedModules() {
+    private Module @NotNull [] getSortedModules() {
       Module[] allModules = getModules().clone();
       Arrays.sort(allModules, moduleDependencyComparator());
       return allModules;
@@ -721,7 +768,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       }
 
       if (oldModule != null) {
-        throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName);
+        throw new ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName);
       }
     }
 
@@ -758,6 +805,19 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     @Override
     @NotNull
+    public Module newNonPersistentModule(@NotNull String moduleName, @NotNull final String moduleTypeId) {
+      assertWritable();
+
+      ModuleEx module = myManager.createNonPersistentModule(moduleName);
+      initModule(module, () -> {
+        module.setModuleType(moduleTypeId);
+      });
+      addModule(module);
+      return module;
+    }
+
+    @Override
+    @NotNull
     public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId, @Nullable final Map<String, String> options) {
       assertWritable();
       filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
@@ -771,7 +831,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       final ModuleEx newModule = module;
       String finalFilePath = filePath;
       initModule(module, () -> {
-        ((ModuleStore)ServiceKt.getStateStore(newModule)).setPath(finalFilePath, true);
+        ((ModuleStore)newModule.getService(IComponentStore.class)).setPath(finalFilePath, null, true);
 
         newModule.setModuleType(moduleTypeId);
         if (options != null) {
@@ -781,6 +841,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
           }
         }
       });
+      addModule(module);
       return module;
     }
 
@@ -805,41 +866,26 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
 
     @Override
-    @NotNull
-    public Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException {
+    public @NotNull Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException {
       assertWritable();
       String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
         Module module = getModuleByFilePath(resolvedPath);
-        return module == null ? loadModuleInternal(resolvedPath) : module;
+        if (module == null) {
+          module = loadModuleInternal(resolvedPath, myManager);
+          addModule(module);
+        }
+        return module;
       }
       catch (FileNotFoundException e) {
         throw e;
       }
       catch (IOException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtilRt.toSystemDependentName(resolvedPath), e.getMessage()), e);
+        throw new IOException(ProjectModelBundle.message("module.corrupted.file.error", FileUtilRt.toSystemDependentName(resolvedPath), e.getMessage()), e);
       }
     }
 
-    @NotNull
-    private Module loadModuleInternal(@NotNull String filePath) throws IOException {
-      // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
-      StandardFileSystems.local().refreshAndFindFileByPath(filePath);
-      return ReadAction.compute(() -> {
-        ModuleEx module = myManager.createAndLoadModule(filePath);
-        initModule(module, () -> ((ModuleStore)ServiceKt.getStateStore(module)).setPath(filePath, false));
-        return module;
-      });
-    }
-
-    private void initModule(@NotNull ModuleEx module, @NotNull Runnable beforeComponentCreation) {
-      try {
-        module.init(beforeComponentCreation);
-      }
-      catch (Throwable e) {
-        disposeModuleLater(module);
-        throw e;
-      }
+    private void addModule(@NotNull Module module) {
       myModulesCache = null;
       myModules.put(module.getName(), module);
     }
@@ -955,7 +1001,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     }
 
     @Override
-    public void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath) {
+    public void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath) {
       if (myModuleGroupPath == null) {
         myModuleGroupPath = new THashMap<>();
       }
@@ -995,7 +1041,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       removedModules.removeAll(newModules);
     }
 
-    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(() -> {
+    myProjectRootManager.makeRootsChange(() -> {
       for (Module removedModule : removedModules) {
         fireBeforeModuleRemoved(removedModule);
         cleanCachedStuff();
@@ -1058,7 +1104,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     myModuleModel.myModules.put(module.getName(), module);
     incModificationCount();
 
-    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
+    myProjectRootManager.makeRootsChange(
       () -> fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName)), false, true);
   }
 
@@ -1161,7 +1207,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
   }
 
-  public void setModuleGroupPath(@NotNull Module module, @Nullable String[] groupPath) {
+  public void setModuleGroupPath(@NotNull Module module, String @Nullable [] groupPath) {
     myModuleModel.setModuleGroupPath(module, groupPath);
   }
 }

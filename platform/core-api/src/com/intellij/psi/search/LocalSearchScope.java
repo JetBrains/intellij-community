@@ -47,15 +47,15 @@ public class LocalSearchScope extends SearchScope {
     this(new PsiElement[]{scope}, displayName);
   }
 
-  public LocalSearchScope(@NotNull PsiElement[] scope) {
+  public LocalSearchScope(PsiElement @NotNull [] scope) {
     this(scope, null);
   }
 
-  public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable String displayName) {
+  public LocalSearchScope(PsiElement @NotNull [] scope, @Nullable String displayName) {
     this(scope, displayName, false);
   }
 
-  public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable String displayName, boolean ignoreInjectedPsi) {
+  public LocalSearchScope(PsiElement @NotNull [] scope, @Nullable String displayName, boolean ignoreInjectedPsi) {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
     Set<PsiElement> localScope = new LinkedHashSet<>(scope.length);
@@ -92,13 +92,11 @@ public class LocalSearchScope extends SearchScope {
     return myDisplayName == null ? super.getDisplayName() : myDisplayName;
   }
 
-  @NotNull
-  public PsiElement[] getScope() {
+  public PsiElement @NotNull [] getScope() {
     return myScope;
   }
 
-  @NotNull
-  public VirtualFile[] getVirtualFiles() {
+  public VirtualFile @NotNull [] getVirtualFiles() {
     return myVirtualFiles;
   }
 
@@ -257,7 +255,7 @@ public class LocalSearchScope extends SearchScope {
 
   @NotNull
   @Contract(pure = true)
-  public static LocalSearchScope getScopeRestrictedByFileTypes(@NotNull LocalSearchScope scope, @NotNull FileType... fileTypes) {
+  public static LocalSearchScope getScopeRestrictedByFileTypes(@NotNull LocalSearchScope scope, FileType @NotNull ... fileTypes) {
     if (fileTypes.length == 0) throw new IllegalArgumentException("empty fileTypes");
     if (scope == EMPTY) {
       return EMPTY;

@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class CustomLibraryDescriptionImpl extends CustomLibraryDescriptionBase {
   private final DownloadableLibraryType myLibraryType;
 

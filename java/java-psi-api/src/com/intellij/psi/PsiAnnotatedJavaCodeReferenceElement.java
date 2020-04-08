@@ -20,5 +20,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PsiAnnotatedJavaCodeReferenceElement extends PsiJavaCodeReferenceElement {
   @NotNull
-  String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations);
+  String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations);
 }

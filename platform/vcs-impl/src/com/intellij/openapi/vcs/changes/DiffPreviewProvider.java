@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface DiffPreviewProvider {
@@ -11,5 +12,6 @@ public interface DiffPreviewProvider {
   @NotNull
   Object getOwner();
 
+  @Nls
   String getEditorTabName();
 }

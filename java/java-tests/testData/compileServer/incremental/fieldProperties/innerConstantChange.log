@@ -7,10 +7,7 @@ src/Server.java
 End of files
 Cleaning output files:
 out/production/InnerConstantChange/Client.class
-out/production/InnerConstantChange/Server$Inner.class
-out/production/InnerConstantChange/Server.class
 End of files
 Compiling files:
 src/Client.java
-src/Server.java
 End of files

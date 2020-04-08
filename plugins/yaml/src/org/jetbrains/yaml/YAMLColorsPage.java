@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -13,9 +13,6 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author oleg
- */
 public class YAMLColorsPage implements ColorSettingsPage {
 
   private static final String DEMO_TEXT = "---\n" +
@@ -71,14 +68,12 @@ public class YAMLColorsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATTRS;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 

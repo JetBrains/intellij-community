@@ -88,23 +88,23 @@ public enum Side {
     return isLeft() ? left : right;
   }
 
-  public boolean select(@NotNull boolean[] array) {
+  public boolean select(boolean @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
-  public int select(@NotNull int[] array) {
+  public int select(int @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
-  public <T> T select(@NotNull T[] array) {
+  public <T> T select(T @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }
 
   @NotNull
-  public <T> T selectNotNull(@NotNull T[] array) {
+  public <T> T selectNotNull(T @NotNull [] array) {
     assert array.length == 2;
     return array[myIndex];
   }

@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -23,6 +22,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+
+import static com.intellij.openapi.vcs.Executor.append;
 
 public class HgCopyTest extends HgSingleUserTest {
   @Test
@@ -37,7 +38,8 @@ public class HgCopyTest extends HgSingleUserTest {
   public void testCopyModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
     runHgOnProjectRepo("commit", "-m", "added file");
-    VcsTestUtil.editFileInCommand(myProject, file, "newer content");
+    append(new File(file.getPath()), "newer content");
+    file.refresh(false, true);
     verifyStatus(HgTestOutputParser.modified("a.txt"));
     copyFileInCommand(file, "b.txt");
     verifyStatus(HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));

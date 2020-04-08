@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.memory.filtering.FilteringResult;
@@ -20,7 +20,7 @@ class FilteringProgressView extends BorderLayoutPanel {
   private final JProgressBar myProgressBar = new JProgressBar();
   private final BorderLayoutPanel myProgressPanel = new BorderLayoutPanel();
   private final JBLabel myStopButton = new JBLabel(StartupUiUtil.isUnderDarcula()
-                                                   ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight);
+                                                   ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close);
   private final JBLabel myProgressText = new JBLabel();
 
   private int myProceedCount = 0;

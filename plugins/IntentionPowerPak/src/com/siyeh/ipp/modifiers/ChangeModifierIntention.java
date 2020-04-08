@@ -2,6 +2,7 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -38,16 +39,15 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -63,14 +63,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
-  private static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(AccessModifier.values());
-  private static final List<AccessModifier> PUBLIC_PRIVATE = ContainerUtil.immutableList(AccessModifier.PUBLIC, AccessModifier.PRIVATE);
-  private static final List<AccessModifier> PUBLIC_PACKAGE =
-    ContainerUtil.immutableList(AccessModifier.PUBLIC, AccessModifier.PACKAGE_LOCAL);
 
   private final boolean myErrorFix;
   private AccessModifier myTarget;
@@ -92,7 +87,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (!(member instanceof PsiNameIdentifierOwner)) return false;
     PsiElement identifier = ((PsiNameIdentifierOwner)member).getNameIdentifier();
     if (identifier == null || identifier.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) return false;
-    List<AccessModifier> modifiers = new ArrayList<>(getAvailableModifiers(member));
+    List<AccessModifier> modifiers = new ArrayList<>(AccessModifier.getAvailableModifiers(member));
     if (modifiers.isEmpty()) return false;
     if (!myErrorFix && modifiers.stream().noneMatch(mod -> mod.hasModifier(member))) return false;
     modifiers.removeIf(mod -> mod.hasModifier(member));
@@ -100,7 +95,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (modifiers.isEmpty()) return false;
     if (modifiers.size() == 1) {
       target = modifiers.get(0);
-      setText("Make '" + identifier.getText() + "' " + target);
+      setText(IntentionPowerPackBundle.message("change.modifier.text", identifier.getText(), target));
     }
     else {
       setText(getFamilyName());
@@ -120,61 +115,6 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     }
   }
 
-  @NotNull
-  private static List<AccessModifier> getAvailableModifiers(PsiMember member) {
-    if (member == null) return Collections.emptyList();
-    PsiClass containingClass = member.getContainingClass();
-    if (member instanceof PsiField) {
-      if (member instanceof PsiEnumConstant || containingClass == null || containingClass.isInterface()) return Collections.emptyList();
-      return ALL_MODIFIERS;
-    }
-    if (member instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)member;
-      if (containingClass == null || containingClass.isEnum() && method.isConstructor()) return Collections.emptyList();
-      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null ||
-          JavaPsiRecordUtil.isCompactConstructor(method) ||
-          JavaPsiRecordUtil.isCanonicalConstructor(method)) {
-        return Collections.singletonList(AccessModifier.PUBLIC);
-      }
-      if (containingClass.isInterface()) {
-        if (PsiUtil.isLanguageLevel9OrHigher(member)) {
-          return PUBLIC_PRIVATE;
-        }
-        return Collections.singletonList(AccessModifier.PUBLIC);
-      }
-      AccessModifier minAccess = getMinAccess(method);
-      if (minAccess != AccessModifier.PRIVATE) {
-        return ContainerUtil.filter(ALL_MODIFIERS, mod -> mod.compareTo(minAccess) <= 0);
-      }
-      return ALL_MODIFIERS;
-    }
-    if (member instanceof PsiClass) {
-      if (PsiUtil.isLocalOrAnonymousClass((PsiClass)member)) return Collections.emptyList();
-      if (containingClass == null) return PUBLIC_PACKAGE;
-      return ALL_MODIFIERS;
-    }
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  private static AccessModifier getMinAccess(PsiMethod method) {
-    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) return AccessModifier.PRIVATE;
-    HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-    AccessModifier lowest = AccessModifier.PRIVATE;
-    for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
-      PsiMethod superMethod = superSignature.getMethod();
-      AccessModifier current = AccessModifier.fromModifierList(superMethod.getModifierList());
-      if (!current.isWeaker(lowest)) continue;
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
-      if (!PsiUtil.isAccessible(method.getProject(), superMethod, method, null)) continue;
-      lowest = current;
-      if (lowest == AccessModifier.PUBLIC) {
-        break;
-      }
-    }
-    return lowest;
-  }
-
   @Nullable
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
@@ -192,7 +132,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (member == null) return;
     PsiFile file = member.getContainingFile();
     if (file == null) return;
-    List<AccessModifier> modifiers = getAvailableModifiers(member);
+    List<AccessModifier> modifiers = AccessModifier.getAvailableModifiers(member);
     if (modifiers.isEmpty()) return;
     AccessModifier target = myTarget;
     if (modifiers.contains(target)) {
@@ -356,7 +296,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   @Nullable
   private static PsiKeyword getAnchorKeyword(PsiModifierList modifierList) {
     for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (ALL_MODIFIERS.contains(AccessModifier.fromKeyword(ObjectUtils.tryCast(child, PsiKeyword.class)))) {
+      if (AccessModifier.ALL_MODIFIERS.contains(AccessModifier.fromKeyword(ObjectUtils.tryCast(child, PsiKeyword.class)))) {
         return (PsiKeyword)child;
       }
     }
@@ -405,11 +345,12 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   private static void changeModifier(PsiModifierList modifierList, AccessModifier modifier, boolean hasConflicts) {
+    Project project = modifierList.getProject();
     PsiElement parent = modifierList.getParent();
     if (parent instanceof PsiMethod && hasConflicts) {
       PsiMethod method = (PsiMethod)parent;
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
-      new ChangeSignatureProcessor(parent.getProject(),
+      new ChangeSignatureProcessor(project,
                                    method,
                                    false,
                                    modifier.toPsiModifier(),
@@ -421,21 +362,21 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return;
     }
     PsiFile file = modifierList.getContainingFile();
-    WriteCommandAction.writeCommandAction(file.getProject(), file)
+    WriteCommandAction.writeCommandAction(project, file)
       .withName(IntentionPowerPackBundle.message("change.modifier.intention.name"))
       .run(() -> {
-      modifierList.setModifierProperty(modifier.toPsiModifier(), true);
-      if (modifier != AccessModifier.PACKAGE_LOCAL) {
-        final Project project = modifierList.getProject();
-        final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
-        final PsiElement sibling = modifierList.getNextSibling();
-        if (sibling instanceof PsiWhiteSpace) {
-          sibling.replace(whitespace);
-          CodeStyleManager.getInstance(project).reformatRange(parent, modifierList.getTextOffset(),
-                                                              modifierList.getNextSibling().getTextOffset());
+        modifierList.setModifierProperty(modifier.toPsiModifier(), true);
+        if (modifier != AccessModifier.PACKAGE_LOCAL) {
+          final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
+          final PsiElement sibling = modifierList.getNextSibling();
+          if (sibling instanceof PsiWhiteSpace) {
+            sibling.replace(whitespace);
+            CodeStyleManager.getInstance(project).reformatRange(parent, modifierList.getTextOffset(),
+                                                                modifierList.getNextSibling().getTextOffset());
+          }
         }
-      }
-    });
+        SuggestedRefactoringProvider.getInstance(project).reset();
+      });
   }
 
   @Nullable
@@ -485,7 +426,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         }
         conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                               RefactoringUIUtil.getDescription(member, false),
-                                                              PsiBundle.visibilityPresentation(modifier.toPsiModifier()),
+                                                              JavaPsiBundle.visibilityPresentation(modifier.toPsiModifier()),
                                                               RefactoringUIUtil.getDescription(context, true)));
         return true;
       });

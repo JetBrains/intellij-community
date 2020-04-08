@@ -24,8 +24,7 @@ public interface PairedBraceMatcher {
    *
    * @return the array of brace pair definitions.
    */
-  @NotNull
-  BracePair[] getPairs();
+  BracePair @NotNull [] getPairs();
 
   /**
    * Returns {@code true} if paired rbrace should be inserted after lbrace of given type when lbrace is encountered before contextType token.

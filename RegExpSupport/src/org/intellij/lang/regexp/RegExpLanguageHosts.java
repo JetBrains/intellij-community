@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.util.ClassExtension;
@@ -118,8 +118,8 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null && host.supportsPerl5EmbeddedComments();
   }
 
-  public boolean supportsPythonConditionalRefs(@Nullable final RegExpPyCondRef condRef) {
-    final RegExpLanguageHost host = findRegExpHost(condRef);
+  public boolean supportsConditionals(@Nullable final RegExpConditional conditional) {
+    final RegExpLanguageHost host = findRegExpHost(conditional);
     return host != null && host.supportsPythonConditionalRefs();
   }
 
@@ -180,14 +180,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.getQuantifierValue(valueElement);
   }
 
-  @NotNull
-  public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
+  public String[] @NotNull [] getAllKnownProperties(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllKnownProperties() : myDefaultProvider.getAllKnownProperties();
   }
 
-  @NotNull
-  public String[][] getAllPropertyValues(@NotNull PsiElement element, @NotNull String propertyName) {
+  public String[] @NotNull [] getAllPropertyValues(@NotNull PsiElement element, @NotNull String propertyName) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllPropertyValues(propertyName) : RegExpLanguageHost.EMPTY_COMPLETION_ITEMS_ARRAY;
   }
@@ -198,8 +196,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null ?  host.getPropertyDescription(name) : myDefaultProvider.getPropertyDescription(name);
   }
 
-  @NotNull
-  String[][] getKnownCharacterClasses(@NotNull final PsiElement element) {
+  String[] @NotNull [] getKnownCharacterClasses(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getKnownCharacterClasses() : myDefaultProvider.getKnownCharacterClasses();
   }

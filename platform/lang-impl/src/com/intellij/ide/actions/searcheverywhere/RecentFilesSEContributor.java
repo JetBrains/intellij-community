@@ -2,14 +2,14 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -17,7 +17,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +26,8 @@ import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
-  public RecentFilesSEContributor(@Nullable Project project, @Nullable PsiElement context) {
-    super(project, context);
+  public RecentFilesSEContributor(@NotNull AnActionEvent event) {
+    super(event);
   }
 
   @NotNull
@@ -40,7 +39,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   @NotNull
   @Override
   public String getGroupName() {
-    return "Recent Files";
+    return IdeBundle.message("search.everywhere.group.name.recent.files");
   }
 
   @Override

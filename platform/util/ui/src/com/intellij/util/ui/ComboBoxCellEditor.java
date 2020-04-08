@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.Comparing;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
+import java.util.Objects;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
+import javax.swing.JTable;
 
 /**
  * @author peter
@@ -43,7 +44,7 @@ public abstract class ComboBoxCellEditor extends DefaultCellEditor {
     for (int i = 0; i < items.size(); i++) {
       final String item = items.get(i);
       component.addItem(item);
-      if (Comparing.equal(item, currentValue)) {
+      if (Objects.equals(item, currentValue)) {
         selected = i;
       }
     }

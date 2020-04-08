@@ -26,6 +26,6 @@ public class RealPrefixMatchingWeigher extends LookupElementWeigher {
     for (String lookupString : element.getAllLookupStrings()) {
       max = Math.max(max, matcher.matchingDegree(lookupString));
     }
-    return -max;
+    return max == Integer.MIN_VALUE ? Integer.MAX_VALUE : -max;
   }
 }

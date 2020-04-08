@@ -40,7 +40,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @Nullable
   protected String getInheritedFontTitle() {
-    return "default";
+    return ApplicationBundle.message("settings.editor.font.default");
   }
 
   protected String getOverwriteFontTitle() {

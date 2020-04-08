@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -64,7 +65,7 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     @Override
     public JComponent getComponent() {
       JLabel label = new JLabel(
-        "Binary file " + myFile.getPath() + " is too large (" + StringUtil.formatFileSize(myFile.getLength()) + ")");
+        IdeBundle.message("label.binary.file.0.is.too.large.1", myFile.getPath(), StringUtil.formatFileSize(myFile.getLength())));
       label.setHorizontalAlignment(SwingConstants.CENTER);
       return label;
     }

@@ -18,13 +18,14 @@ package com.intellij.refactoring.typeCook.deductive;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeVisitorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author db
  */
 public abstract class PsiExtendedTypeVisitor<X> extends PsiTypeVisitorEx<X> {
   @Override
-  public X visitClassType(final PsiClassType classType) {
+  public X visitClassType(@NotNull final PsiClassType classType) {
     super.visitClassType(classType);
     final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
 

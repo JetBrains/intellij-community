@@ -33,9 +33,8 @@ public class XmlPropertiesReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("key"),
                                         new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(element.getContainingFile());
         if (propertiesFile == null) return PsiReference.EMPTY_ARRAY;
         XmlProperty property = new XmlProperty(PsiTreeUtil.getParentOfType(element, XmlTag.class), (XmlPropertiesFileImpl)propertiesFile);

@@ -57,8 +57,6 @@ import java.util.Set;
 /**
  * Describes step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module. These
  * targets are built by {@link ModuleLevelBuilder} and they are the only targets which can have circular dependencies on each other.
- *
- * @author nik
  */
 public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
   private static final Logger LOG = Logger.getInstance(ModuleBuildTarget.class);
@@ -87,7 +85,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       result.add(outputDir);
     }
     final JpsModule module = getModule();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(module.getProject());
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
     final ProcessorConfigProfile profile = configuration.getAnnotationProcessingProfile(module);
     if (profile.isEnabled()) {
       final File annotationOut = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, isTests(), profile);
@@ -152,7 +150,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     List<JavaSourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myModule.getProject());
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myModule.getProject());
 
     roots_loop:
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
@@ -214,7 +212,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       fingerprint += level.name().hashCode();
     }
 
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(module.getProject());
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
     final String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
     if (bytecodeTarget != null) {
       if (logBuilder != null) {

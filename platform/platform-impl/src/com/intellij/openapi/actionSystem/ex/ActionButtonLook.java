@@ -136,14 +136,24 @@ public abstract class ActionButtonLook {
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
-    int width = icon.getIconWidth();
-    int height = icon.getIconHeight();
-    int x = (actionButton.getWidth() - width) / 2;
-    int y = (actionButton.getHeight() - height) / 2;
+    Rectangle rect = new Rectangle(actionButton.getWidth(), actionButton.getHeight());
+    Insets i = actionButton.getInsets();
+    JBInsets.removeFrom(rect, i);
+
+    int x = i.left + (rect.width - icon.getIconWidth()) / 2;
+    int y = i.top + (rect.height - icon.getIconHeight()) / 2;
     paintIcon(g, actionButton, icon, x, y);
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
     icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
+  }
+
+  /**
+   * @deprecated Use {@link ActionButtonLook#paintIcon(Graphics, ActionButtonComponent, Icon, int, int)}
+   */
+  @Deprecated
+  public void paintIconAt(Graphics g, Icon icon, int x, int y) {
+    icon.paintIcon(null, g, x, y);
   }
 }

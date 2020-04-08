@@ -30,7 +30,7 @@ public final class MetaRegistry extends MetaDataRegistrar {
   }
 
   static {
-    MetaDataContributor.EP_NAME.addExtensionPointListener((e, pd) -> {clearBindings();}, ApplicationManager.getApplication());
+    MetaDataContributor.EP_NAME.addExtensionPointListener(MetaRegistry::clearBindings, ApplicationManager.getApplication());
   }
 
   private static void clearBindings() {

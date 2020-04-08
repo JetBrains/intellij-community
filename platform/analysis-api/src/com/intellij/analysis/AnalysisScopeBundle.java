@@ -20,6 +20,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
+/**
+ * @deprecated use other bundles ({@link AnalysisBundle}, {@link com.intellij.codeInsight.CodeInsightBundle}) instead
+ */
+@Deprecated
 public class AnalysisScopeBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.AnalysisScopeBundle";
   private static final AnalysisScopeBundle INSTANCE = new AnalysisScopeBundle();
@@ -27,7 +33,12 @@ public class AnalysisScopeBundle extends DynamicBundle {
   private AnalysisScopeBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

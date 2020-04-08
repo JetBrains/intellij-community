@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.themes
 
 import com.intellij.openapi.editor.colors.EditorColors
@@ -78,7 +78,7 @@ class EditorTabTheme : TabTheme {
     get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
 }
 
-class ToolWindowTabTheme : DefaultTabTheme() {
+internal class ToolWindowTabTheme : DefaultTabTheme() {
   override val background: Color?
     get() = null
   override val borderColor: Color
@@ -104,7 +104,7 @@ class ToolWindowTabTheme : DefaultTabTheme() {
     get() = JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground()
 }
 
-class DebuggerTabTheme : DefaultTabTheme() {
+internal class DebuggerTabTheme : DefaultTabTheme() {
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.DebuggerTabs.underlineHeight()
   override val underlinedTabBackground: Color?

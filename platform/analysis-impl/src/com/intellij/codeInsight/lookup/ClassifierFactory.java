@@ -15,13 +15,15 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author peter
  */
 public abstract class ClassifierFactory<T> {
   private final String myId;
 
-  protected ClassifierFactory(String id) {
+  protected ClassifierFactory(@NonNls String id) {
     myId = id;
   }
 

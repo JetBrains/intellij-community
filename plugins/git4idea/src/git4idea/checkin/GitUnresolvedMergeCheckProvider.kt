@@ -46,11 +46,11 @@ class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
     val changeListManager = ChangeListManager.getInstance(project)
 
     val selectedChanges = panel.selectedChanges.toSet()
-    val repositories = selectedChanges.mapNotNull { repositoryManager.getRepositoryForFile(ChangesUtil.getFilePath(it)) }.toSet()
+    val repositories = selectedChanges.mapNotNull { repositoryManager.getRepositoryForFileQuick(ChangesUtil.getFilePath(it)) }.toSet()
 
     val groupedChanges = MultiMap<GitRepository, Change>()
     for (change in changeListManager.allChanges) {
-      val repo = repositoryManager.getRepositoryForFile(ChangesUtil.getFilePath(change))
+      val repo = repositoryManager.getRepositoryForFileQuick(ChangesUtil.getFilePath(change))
       if (repositories.contains(repo)) groupedChanges.putValue(repo, change)
     }
 

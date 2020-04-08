@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -35,11 +35,7 @@ public final class SplashManager {
   private static JFrame PROJECT_FRAME;
   private static Splash SPLASH_WINDOW;
 
-  public static void show(@NotNull String[] args) {
-    if (Boolean.getBoolean(NO_SPLASH)) {
-      return;
-    }
-
+  public static void show(String @NotNull [] args, Boolean visible) {
     for (String arg : args) {
       if (NO_SPLASH.equals(arg)) {
         System.setProperty(NO_SPLASH, "true");
@@ -70,14 +66,13 @@ public final class SplashManager {
       Splash splash = SPLASH_WINDOW;
       // can be cancelled if app was started very fast
       if (splash != null) {
-        splash.initAndShow();
+        splash.initAndShow(visible);
       }
       activity.end();
     });
   }
 
-  @Nullable
-  private static IdeFrameImpl createFrameIfPossible() throws IOException {
+  private static @Nullable IdeFrameImpl createFrameIfPossible() throws IOException {
     Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
@@ -160,8 +155,7 @@ public final class SplashManager {
     }
   }
 
-  @Nullable
-  public static ProgressIndicator getProgressIndicator() {
+  public static @Nullable ProgressIndicator createProgressIndicator() {
     if (SPLASH_WINDOW == null) {
       return null;
     }
@@ -174,8 +168,7 @@ public final class SplashManager {
     };
   }
 
-  @Nullable
-  public static JFrame getAndUnsetProjectFrame() {
+  public static @Nullable JFrame getAndUnsetProjectFrame() {
     JFrame frame = PROJECT_FRAME;
     PROJECT_FRAME = null;
     return frame;
@@ -194,8 +187,7 @@ public final class SplashManager {
     }
   }
 
-  @Nullable
-  public static Runnable getHideTask() {
+  public static @Nullable Runnable getHideTask() {
     Window window = SPLASH_WINDOW;
     if (window == null) {
       window = PROJECT_FRAME;

@@ -4,7 +4,6 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
@@ -82,8 +81,7 @@ public class IdeaTextPatchBuilder {
                                         convertRevision(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive,
-                                       () -> ProgressManager.checkCanceled());
+    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, () -> ProgressManager.checkCanceled());
   }
 
   @Nullable

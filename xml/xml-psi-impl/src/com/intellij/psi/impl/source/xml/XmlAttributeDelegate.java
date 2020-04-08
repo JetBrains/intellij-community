@@ -116,13 +116,13 @@ public abstract class XmlAttributeDelegate {
 
   static class VolatileState {
     @NotNull final String myDisplayText;
-    @NotNull final int[] myGapDisplayStarts;
-    @NotNull final int[] myGapPhysicalStarts;
+    final int @NotNull [] myGapDisplayStarts;
+    final int @NotNull [] myGapPhysicalStarts;
     @NotNull final TextRange myValueTextRange; // text inside quotes, if there are any
 
     VolatileState(@NotNull final String displayText,
-                  @NotNull int[] gapDisplayStarts,
-                  @NotNull int[] gapPhysicalStarts,
+                  int @NotNull [] gapDisplayStarts,
+                  int @NotNull [] gapPhysicalStarts,
                   @NotNull TextRange valueTextRange) {
       myDisplayText = displayText;
       myGapDisplayStarts = gapDisplayStarts;
@@ -212,8 +212,7 @@ public abstract class XmlAttributeDelegate {
     return entityRef.getText();
   }
 
-  @NotNull
-  PsiReference[] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
+  PsiReference @NotNull [] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
     if (hints.offsetInElement != null) {
       XmlElement nameElement = myAttribute.getNameElement();
       if (nameElement == null || hints.offsetInElement > nameElement.getStartOffsetInParent() + nameElement.getTextLength()) {
@@ -235,7 +234,9 @@ public abstract class XmlAttributeDelegate {
       final String prefix = myAttribute.getNamespacePrefix();
       if (!prefix.isEmpty() && !myAttribute.getLocalName().isEmpty()) {
         refs = new PsiReference[referencesFromProviders.length + 2];
-        refs[0] = new SchemaPrefixReference(myAttribute, TextRange.from(0, prefix.length()), prefix, null);
+        XmlElement nameElement = myAttribute.getNameElement();
+        TextRange prefixRange = TextRange.from(nameElement == null ? 0 : nameElement.getStartOffsetInParent(), prefix.length());
+        refs[0] = new SchemaPrefixReference(myAttribute, prefixRange, prefix, null);
         refs[1] = new XmlAttributeReference(myAttribute);
       }
       else {

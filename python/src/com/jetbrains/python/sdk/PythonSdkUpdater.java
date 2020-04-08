@@ -22,7 +22,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -40,6 +43,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.BlockingSet;
@@ -84,7 +88,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     if (application.isUnitTestMode()) return;
     if (project.isDisposed()) return;
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("python.sdk.updating.python.paths"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (Sdk sdk : getPythonSdks(project)) {
@@ -122,7 +126,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     String sdkHome = sdk.getHomePath();
     if (sdkHome != null && (PythonSdkUtil.isVirtualEnv(sdkHome) || PythonSdkUtil.isConda(sdk))) {
       final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
-        PythonSdkType.activateVirtualEnv(sdk); // pre-cache virtualenv activated environment
+        PySdkUtil.activateVirtualEnv(sdk); // pre-cache virtualenv activated environment
       });
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak
@@ -151,10 +155,13 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       return true;
     }
 
-    final Throwable methodCallStacktrace = new Throwable();
+    final Throwable methodCallStacktrace = new Throwable("SDK update trace");
     application.invokeLater(() -> {
       synchronized (ourLock) {
         if (!ourScheduledToRefresh.contains(key)) {
+          if (Trigger.LOG.isDebugEnabled()) {
+            Trigger.LOG.debug("Dropping simultaneous SDK update triggered by " + Trigger.getCauseByTrace(methodCallStacktrace));
+          }
           return;
         }
         ourScheduledToRefresh.remove(key);
@@ -173,19 +180,22 @@ public class PythonSdkUpdater implements StartupActivity.Background {
           if (sdkInsideTask != null) {
             ourUnderRefresh.put(key);
             try {
-              final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
+              final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
               try {
                 if (PythonSdkUtil.isRemote(sdkInsideTask) && project1 == null && ownerComponent == null) {
                   LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
                 }
                 final String sdkPresentableName = getSdkPresentableName(sdk);
                 LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
-                indicator.setText("Updating skeletons...");
+                indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
                 try {
+                  if (Trigger.LOG.isDebugEnabled()) {
+                    Trigger.LOG.debug("Performing skeletons update triggered by " + Trigger.getCauseByTrace(methodCallStacktrace));
+                  }
                   PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdkInsideTask);
                   updateRemoteSdkPaths(sdkInsideTask, getProject());
                   indicator.setIndeterminate(true);
-                  indicator.setText("Scanning installed packages...");
+                  indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
                   indicator.setText2("");
                   LOG.info("Performing background scan of packages for SDK " + sdkPresentableName);
                   PyPackageManager.getInstance(sdkInsideTask).refreshAndGetPackages(true);
@@ -311,7 +321,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   private static boolean ensureBinarySkeletonsDirectoryExists(Sdk sdk) {
-    final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
+    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
     if (skeletonsPath != null) {
       if (new File(skeletonsPath).mkdirs()) {
         return true;
@@ -418,7 +428,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   @NotNull
   private static List<VirtualFile> getSkeletonsPaths(@NotNull Sdk sdk) {
     final List<VirtualFile> results = Lists.newArrayList();
-    final String skeletonsPath = getBinarySkeletonsPath(sdk.getHomePath());
+    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
     if (skeletonsPath != null) {
       final VirtualFile skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(skeletonsPath);
       if (skeletonsDir != null) {
@@ -439,11 +449,6 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     final String homePath = sdk.getHomePath();
     final String name = sdk.getName();
     return homePath != null ? name + " (" + homePath + ")" : name;
-  }
-
-  @Nullable
-  private static String getBinarySkeletonsPath(@Nullable String path) {
-    return path != null ? PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), path) : null;
   }
 
   /**
@@ -517,4 +522,37 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
     return pythonSdks;
   }
-}
+
+  private enum Trigger {
+    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdater$1.run"),
+    CHANGE_UNDER_INTERPRETER_ROOTS("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$subscribeToLocalChanges"),
+    REFRESH_AFTER_PACKAGING_OPERATION("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$refresh");
+
+    private static final Logger LOG = Logger.getInstance(Trigger.class);
+
+    private final String myFrameMarker;
+
+    Trigger(@NotNull String frameMarker) {
+      myFrameMarker = frameMarker;
+    }
+
+    @NotNull
+    public static String getCauseByTrace(@NotNull Throwable trace) {
+      final Trigger trigger = findTriggerByTrace(trace);
+      if (trigger != null) {
+        return trigger.name();
+      }
+      return "Unknown trigger:\n" + ExceptionUtil.getThrowableText(trace);
+    }
+
+    @Nullable
+    public static Trigger findTriggerByTrace(@NotNull Throwable trace) {
+      final String traceText = ExceptionUtil.getThrowableText(trace);
+      for (Trigger value : values()) {
+        if (traceText.contains(value.myFrameMarker)) {
+          return value;
+        }
+      }
+      return null;
+    }
+  }}

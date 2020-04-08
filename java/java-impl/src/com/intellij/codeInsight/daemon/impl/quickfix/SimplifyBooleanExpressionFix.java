@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,7 +18,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -38,7 +41,6 @@ import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
-  public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
 
   private final boolean mySubExpressionValue;
 
@@ -57,14 +59,23 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       return getFamilyName();
     }
     String suffix = "";
-    if (SideEffectChecker.mayHaveSideEffects(subExpression)) {
-      suffix = canExtractSideEffect(subExpression) ? " extracting side effects" : " (may change semantics)";
+    if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
+      suffix = canExtractSideEffect(subExpression) ? QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects")
+                                                   : JavaBundle.message("quickfix.text.suffix.may.change.semantics");
     }
     return getIntentionText(subExpression, mySubExpressionValue) + suffix;
   }
 
+  private boolean shouldIgnore(PsiElement e, PsiExpression subExpression) {
+    return e instanceof PsiInstanceOfExpression &&
+           JavaPsiPatternUtil.getExposedPatternVariables(((PsiInstanceOfExpression)e))
+             .stream()
+             .map(var -> PatternResolveState.stateAtParent(var, subExpression))
+             .noneMatch(PatternResolveState.fromBoolean(mySubExpressionValue)::equals);
+  }
+
   private boolean canExtractSideEffect(PsiExpression subExpression) {
-    if (ControlFlowUtils.canExtractStatement(subExpression)) return true;
+    if (CodeBlockSurrounder.canSurround(subExpression)) return true;
     if (!mySubExpressionValue) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
       if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
@@ -100,7 +111,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getFamilyName() {
-    return FAMILY_NAME;
+    return getFamilyNameText();
   }
 
   @Override
@@ -147,7 +158,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         LOG.error("anchor is null", new Attachment("subExpression.txt", subExpression.getText()));
         return;
       }
-      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(subExpression);
+      PsiExpression finalSubExpression = subExpression;
+      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(
+        subExpression, e -> shouldIgnore(e, finalSubExpression));
       sideEffects.forEach(ct::markUnchanged);
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, subExpression);
       if (statements.length > 0) {
@@ -165,7 +178,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     simplifyExpression(expression);
   }
 
-  public PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
+  private PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
     if (!mySubExpressionValue) {
       // Prevent extracting while condition to internal 'if'
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
@@ -189,7 +202,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         }
       }
     }
-    return RefactoringUtil.ensureCodeBlock(subExpression);
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(subExpression);
+    return surrounder == null ? null : surrounder.surround().getExpression();
   }
 
   @Nullable
@@ -325,9 +339,12 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
   private static void removeFollowingStatements(@NotNull PsiStatement anchor, @NotNull PsiCodeBlock parentBlock) {
     PsiStatement[] siblingStatements = parentBlock.getStatements();
-    int ifIndex = Arrays.asList(siblingStatements).indexOf(anchor);
+    List<PsiStatement> statements = Arrays.asList(siblingStatements);
+    int ifIndex = statements.indexOf(anchor);
     if (ifIndex >= 0 && ifIndex < siblingStatements.length - 1) {
-      parentBlock.deleteChildRange(siblingStatements[ifIndex + 1], siblingStatements[siblingStatements.length - 1]);
+      int labelIndex = ContainerUtil.indexOf(statements.subList(ifIndex, statements.size()), st -> st instanceof PsiSwitchLabelStatement);
+      int limit = labelIndex != -1 ? labelIndex + ifIndex : siblingStatements.length;
+      parentBlock.deleteChildRange(siblingStatements[ifIndex + 1], siblingStatements[limit - 1]);
     }
   }
 
@@ -624,5 +641,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (operand == null) return null;
     String text = operand.getText();
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
+  }
+
+  public static String getFamilyNameText() {
+    return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 }

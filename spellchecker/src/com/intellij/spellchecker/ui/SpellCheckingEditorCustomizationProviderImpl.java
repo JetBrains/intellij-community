@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
 final class SpellCheckingEditorCustomizationProviderImpl extends SpellCheckingEditorCustomizationProvider {
   private static final NotNullLazyValue<SpellCheckingEditorCustomization> ENABLED = NotNullLazyValue.createValue(() -> new SpellCheckingEditorCustomization(true));
   private static final NotNullLazyValue<SpellCheckingEditorCustomization> DISABLED = NotNullLazyValue.createValue(() -> new SpellCheckingEditorCustomization(false));

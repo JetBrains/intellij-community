@@ -32,11 +32,10 @@ public abstract class PatternCompilerFactory {
    * @param alias or null
    * @return pattern classes
    */
-  @NotNull
-  public abstract Class[] getPatternClasses(@Nullable final String alias);
+  public abstract Class @NotNull [] getPatternClasses(@Nullable final String alias);
 
   @NotNull
-  public abstract <T> PatternCompiler<T> getPatternCompiler(@NotNull Class[] patternClasses);
+  public abstract <T> PatternCompiler<T> getPatternCompiler(Class @NotNull [] patternClasses);
 
   @NotNull
   public <T> PatternCompiler<T> getPatternCompiler(@Nullable final String alias) {

@@ -36,9 +36,9 @@ public class MapGetterSetterInvocator extends CustomMethodInvocator {
   protected boolean invoke(@NotNull ExpressionGenerator generator,
                            @NotNull PsiMethod method,
                            @Nullable GrExpression caller,
-                           @NotNull GrExpression[] exprs,
-                           @NotNull GrNamedArgument[] namedArgs,
-                           @NotNull GrClosableBlock[] closures,
+                           GrExpression @NotNull [] exprs,
+                           GrNamedArgument @NotNull [] namedArgs,
+                           GrClosableBlock @NotNull [] closures,
                            @NotNull PsiSubstitutor substitutor,
                            @NotNull GroovyPsiElement context) {
     if (!method.getName().equals("putAt") && !method.getName().equals("getAt")) return false;

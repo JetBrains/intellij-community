@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
   private static final Logger LOG = Logger.getInstance(JavaDebuggerLauncherImpl.class);
 

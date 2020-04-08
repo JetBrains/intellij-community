@@ -18,8 +18,8 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
 
   @Override
   public PsiType inferTypeForMethodTypeParameter(@NotNull PsiTypeParameter typeParameter,
-                                                 @NotNull PsiParameter[] parameters,
-                                                 @NotNull PsiExpression[] arguments,
+                                                 PsiParameter @NotNull [] parameters,
+                                                 PsiExpression @NotNull [] arguments,
                                                  @NotNull PsiSubstitutor partialSubstitutor,
                                                  @Nullable PsiElement parent,
                                                  @NotNull ParameterTypeInferencePolicy policy) {
@@ -44,9 +44,9 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
 
   @NotNull
   @Override
-  public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                           @NotNull PsiParameter[] parameters,
-                                           @NotNull PsiExpression[] arguments,
+  public PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                           PsiParameter @NotNull [] parameters,
+                                           PsiExpression @NotNull [] arguments,
                                            @Nullable MethodCandidateInfo currentMethod, @NotNull PsiSubstitutor partialSubstitutor,
                                            @NotNull PsiElement parent,
                                            @NotNull ParameterTypeInferencePolicy policy,
@@ -58,18 +58,18 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
 
   @NotNull
   @Override
-  public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                           @NotNull PsiType[] leftTypes,
-                                           @NotNull PsiType[] rightTypes,
+  public PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                           PsiType @NotNull [] leftTypes,
+                                           PsiType @NotNull [] rightTypes,
                                            @NotNull LanguageLevel languageLevel) {
     return inferTypeArguments(typeParameters, leftTypes, rightTypes, PsiSubstitutor.EMPTY, languageLevel);
   }
 
   @NotNull
   @Override
-  public PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                           @NotNull PsiType[] leftTypes,
-                                           @NotNull PsiType[] rightTypes,
+  public PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                           PsiType @NotNull [] leftTypes,
+                                           PsiType @NotNull [] rightTypes,
                                            @NotNull PsiSubstitutor partialSubstitutor,
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return PsiSubstitutor.EMPTY;

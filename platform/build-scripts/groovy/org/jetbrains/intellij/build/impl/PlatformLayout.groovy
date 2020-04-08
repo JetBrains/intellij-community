@@ -16,8 +16,6 @@ import java.util.function.Consumer
  * or 'Runtime') of plugin modules for plugins which are {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundled}
  * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish published}) with the product (except
  * project libraries which are explicitly included into layouts of all plugins depending on them by {@link BaseLayoutSpec#withProjectLibrary}).
- *
- * @author nik
  */
 class PlatformLayout extends BaseLayout {
   List<String> excludedProjectLibraries = []

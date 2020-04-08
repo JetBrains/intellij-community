@@ -15,9 +15,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-/**
- * @author nik
- */
 public class ServerSocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnectionBase<Request,Response> {
   private static final Logger LOG = Logger.getInstance(ServerSocketConnectionImpl.class);
   private ServerSocket myServerSocket;

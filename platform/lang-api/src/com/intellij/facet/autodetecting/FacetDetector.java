@@ -29,8 +29,6 @@ import java.util.Collection;
 
 /**
  * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
- *
- * @author nik
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")

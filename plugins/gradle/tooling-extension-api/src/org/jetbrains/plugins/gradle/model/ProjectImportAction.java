@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.ProjectModelConsumer;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
+import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.Exceptions;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
@@ -55,7 +56,7 @@ import java.util.*;
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
   private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new THashSet<ProjectImportModelProvider>();
   private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new THashSet<ProjectImportModelProvider>();
-  private final Set<Class> myTargetTypes = new THashSet<Class>();
+  private final Set<Class<?>> myTargetTypes = new THashSet<Class<?>>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private final boolean myUseCustomSerialization;
@@ -90,7 +91,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  public void addTargetTypes(@NotNull Set<Class> targetTypes) {
+  public void addTargetTypes(@NotNull Set<Class<?>> targetTypes) {
     myTargetTypes.addAll(targetTypes);
   }
 
@@ -138,6 +139,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         }
         addBuildModels(mySerializer, controller, myAllModels, includedBuild, isProjectsLoadedAction);
       }
+    }
+    if (isProjectsLoadedAction) {
+      controller.getModel(TurnOffDefaultTasks.class);
     }
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
@@ -494,10 +498,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private final static class MyBuildController implements BuildController {
     private final BuildController myDelegate;
     private final GradleBuild myMainGradleBuild;
+    private final Model myMyMainGradleBuildRootProject;
 
     private MyBuildController(@NotNull BuildController buildController, @NotNull GradleBuild mainGradleBuild) {
       myDelegate = buildController;
       myMainGradleBuild = mainGradleBuild;
+      myMyMainGradleBuildRootProject = myMainGradleBuild.getRootProject();
     }
 
     @Override
@@ -506,7 +512,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         //noinspection unchecked
         return (T)myMainGradleBuild;
       }
-      return myDelegate.getModel(aClass);
+      return myDelegate.getModel(myMyMainGradleBuildRootProject, aClass);
     }
 
     @Override
@@ -515,7 +521,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         //noinspection unchecked
         return (T)myMainGradleBuild;
       }
-      return myDelegate.findModel(aClass);
+      return myDelegate.findModel(myMyMainGradleBuildRootProject, aClass);
     }
 
     @Override
@@ -546,12 +552,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @Override
     public <T, P> T getModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action)
       throws UnsupportedVersionException {
-      return myDelegate.getModel(aClass, aClass1, action);
+      return myDelegate.getModel(myMyMainGradleBuildRootProject, aClass, aClass1, action);
     }
 
     @Override
     public <T, P> T findModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action) {
-      return myDelegate.findModel(aClass, aClass1, action);
+      return myDelegate.findModel(myMyMainGradleBuildRootProject, aClass, aClass1, action);
     }
 
     @Override

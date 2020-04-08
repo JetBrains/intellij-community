@@ -91,7 +91,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
 
   @Override
   protected void showErrorMessage(final Project project, Editor editor, String message) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INTRODUCE_VARIABLE);
   }
 
   @Override

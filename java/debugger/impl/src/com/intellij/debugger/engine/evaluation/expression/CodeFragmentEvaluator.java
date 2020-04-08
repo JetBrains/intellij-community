@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
@@ -35,7 +35,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
       if(myParentFragmentEvaluator != null){
         return myParentFragmentEvaluator.getValue(localName, vm);
       } else {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.not.declared", localName));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }
     Object value = mySyntheticLocals.get(localName);
@@ -94,7 +94,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
     LOG.assertTrue(!(value instanceof Value), "use setValue for jdi values");
     if(hasValue(localName)) {
       throw new EvaluateRuntimeException(
-        EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.already.declared", localName)));
+        EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.already.declared", localName)));
     }
     mySyntheticLocals.put(localName, value);
   }
@@ -104,7 +104,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
       if(myParentFragmentEvaluator != null){
         myParentFragmentEvaluator.setValue(localName, value);
       } else {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.not.declared", localName));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.variable.not.declared", localName));
       }
     }
     else {

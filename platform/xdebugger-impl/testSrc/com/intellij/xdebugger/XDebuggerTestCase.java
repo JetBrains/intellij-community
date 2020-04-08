@@ -10,9 +10,6 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerTestCase extends HeavyPlatformTestCase {
   public static final MyLineBreakpointType MY_LINE_BREAKPOINT_TYPE = new MyLineBreakpointType();
   protected static final MySimpleBreakpointType MY_SIMPLE_BREAKPOINT_TYPE = new MySimpleBreakpointType();

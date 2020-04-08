@@ -5,9 +5,6 @@ import com.intellij.xdebugger.XExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class XValueModifier {
 
   /**

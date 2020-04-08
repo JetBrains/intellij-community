@@ -5,13 +5,13 @@ import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.application.Topics;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -73,7 +73,7 @@ public final class PsiVFSListener implements BulkFileListener {
       
       ExtensionPoint<KeyedLazyInstance<LanguageSubstitutor>> point = LanguageSubstitutors.getInstance().getPoint();
       if (point != null) {
-        point.addExtensionPointListener((e, pd) -> {
+        point.addExtensionPointListener(() -> {
           if (project.isDisposed()) return;
 
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
@@ -90,6 +90,20 @@ public final class PsiVFSListener implements BulkFileListener {
         }
       });
       connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerListener(project));
+
+      connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
+        }
+
+        @Override
+        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
+        }
+      });
 
       installGlobalListener();
     }

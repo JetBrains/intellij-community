@@ -8,5 +8,5 @@ def a = A::new
 a()
 a(1)
 a("")
-a<warning descr="'a' cannot be applied to '(null, null)'">(null, null)</warning>
+a<warning descr="'call' cannot be applied to '(null, null)'">(null, null)</warning>
 a(1, 2, 3)

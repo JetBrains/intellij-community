@@ -81,7 +81,7 @@ public abstract class AbstractModelBuilderTest {
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
     {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
     {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"},
-    {"6.0"}
+    {"6.0"}, /* {"6.0.1"}, */ { "6.1" }
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -194,8 +194,8 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @NotNull
-  private Set<Class> getToolingExtensionClasses() {
-    final Set<Class> classes = set(
+  private Set<Class<?>> getToolingExtensionClasses() {
+    final Set<Class<?>> classes = set(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
@@ -217,7 +217,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @NotNull
-  protected Set<Class> doGetToolingExtensionClasses() {
+  protected Set<Class<?>> doGetToolingExtensionClasses() {
     return Collections.emptySet();
   }
 
@@ -228,7 +228,7 @@ public abstract class AbstractModelBuilderTest {
     }
   }
 
-  protected abstract Set<Class> getModels();
+  protected abstract Set<Class<?>> getModels();
 
 
   protected <T> Map<String, T> getModulesMap(final Class<T> aClass) {

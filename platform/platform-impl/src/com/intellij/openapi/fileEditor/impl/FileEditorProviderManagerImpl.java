@@ -36,8 +36,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
 
   @Override
-  @NotNull
-  public FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditorProvider @NotNull [] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
     boolean hideDefaultEditor = false;

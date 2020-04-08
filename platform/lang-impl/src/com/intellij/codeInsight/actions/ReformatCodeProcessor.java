@@ -26,55 +26,51 @@ import java.util.Collection;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
-  
-  public static final String COMMAND_NAME = CodeInsightBundle.message("process.reformat.code");
-
   private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
 
-  private static final String PROGRESS_TEXT = CodeInsightBundle.message("reformat.progress.common.text");
   private final Collection<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
 
   public ReformatCodeProcessor(Project project, boolean processChangedTextOnly) {
-    super(project, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
+    super(project, getCommandName(), getProgressText(), processChangedTextOnly);
   }
 
   public ReformatCodeProcessor(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
-    super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, false);
+    super(file.getProject(), file, getProgressText(), getCommandName(), false);
     mySelectionModel = selectionModel;
   }
 
   public ReformatCodeProcessor(AbstractLayoutCodeProcessor processor, @NotNull SelectionModel selectionModel) {
-    super(processor, COMMAND_NAME, PROGRESS_TEXT);
+    super(processor, getCommandName(), getProgressText());
     mySelectionModel = selectionModel;
   }
 
   public ReformatCodeProcessor(AbstractLayoutCodeProcessor processor, boolean processChangedTextOnly) {
-    super(processor, COMMAND_NAME, PROGRESS_TEXT);
+    super(processor, getCommandName(), getProgressText());
     setProcessChangedTextOnly(processChangedTextOnly);
   }
 
   public ReformatCodeProcessor(Project project, Module module, boolean processChangedTextOnly) {
-    super(project, module, COMMAND_NAME, PROGRESS_TEXT, processChangedTextOnly);
+    super(project, module, getCommandName(), getProgressText(), processChangedTextOnly);
   }
 
   public ReformatCodeProcessor(Project project, PsiDirectory directory, boolean includeSubdirs, boolean processChangedTextOnly) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
+    super(project, directory, includeSubdirs, getProgressText(), getCommandName(), processChangedTextOnly);
   }
 
   public ReformatCodeProcessor(Project project, PsiFile file, @Nullable TextRange range, boolean processChangedTextOnly) {
-    super(project, file, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
+    super(project, file, getProgressText(), getCommandName(), processChangedTextOnly);
     if (range != null) {
       myRanges.add(range);
     }
   }
 
   public ReformatCodeProcessor(@NotNull PsiFile file, boolean processChangedTextOnly) {
-    super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, processChangedTextOnly);
+    super(file.getProject(), file, getProgressText(), getCommandName(), processChangedTextOnly);
   }
 
   public ReformatCodeProcessor(Project project, PsiFile[] files, @Nullable Runnable postRunnable, boolean processChangedTextOnly) {
-    this(project, files, COMMAND_NAME, postRunnable, processChangedTextOnly);
+    this(project, files, getCommandName(), postRunnable, processChangedTextOnly);
   }
 
   public ReformatCodeProcessor(Project project,
@@ -83,7 +79,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
                                @Nullable Runnable postRunnable,
                                boolean processChangedTextOnly)
   {
-    super(project, files, PROGRESS_TEXT, commandName, postRunnable, processChangedTextOnly);
+    super(project, files, getProgressText(), commandName, postRunnable, processChangedTextOnly);
   }
 
   @Override
@@ -173,5 +169,13 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
     
     return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
+  }
+
+  private static String getProgressText() {
+    return CodeInsightBundle.message("reformat.progress.common.text");
+  }
+
+  public static String getCommandName() {
+    return CodeInsightBundle.message("process.reformat.code");
   }
 }

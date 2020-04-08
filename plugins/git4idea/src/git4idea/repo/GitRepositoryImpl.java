@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -30,10 +29,9 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.concurrent.ExecutorService;
+import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
@@ -104,7 +102,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                                              @NotNull Project project,
                                              @NotNull Disposable parentDisposable,
                                              boolean listenToRepoChanges) {
-    return createInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
+    return createInstance(root, Objects.requireNonNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
   }
 
   @ApiStatus.Internal
@@ -245,11 +243,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   @Override
-  public boolean isFresh() {
-    return getCurrentRevision() == null;
-  }
-
-  @Override
   public void update() {
     if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error("Reading Git repository information should not be done on the EDT");
@@ -271,7 +264,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-    sw.report();
+    sw.report(LOG);
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
                            new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
                            new LinkedHashSet<>(trackInfos),

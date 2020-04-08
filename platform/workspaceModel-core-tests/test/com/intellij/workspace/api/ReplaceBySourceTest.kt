@@ -16,6 +16,35 @@ class ReplaceBySourceTest {
   }
 
   @Test
+  fun `add parent and child entities`() {
+    val builder = TypedEntityStorageBuilder.create()
+    builder.addParentEntity("parent2", SampleEntitySource("2"))
+    val original = builder.toStorage()
+    val replacement = TypedEntityStorageBuilder.create()
+    val parent = replacement.addParentEntity("parent", SampleEntitySource("1"))
+    replacement.addChildWithOptionalParentEntity(parentEntity = parent, childProperty = "child", source = SampleEntitySource("1"))
+    builder.replaceBySource({it == SampleEntitySource("1")}, replacement)
+    builder.checkConsistency()
+    assertEquals("parent", builder.entities(ChildWithOptionalParentEntity::class.java).single().optionalParent!!.parentProperty)
+    val changes = builder.collectChanges(original)
+    @Suppress("UNCHECKED_CAST")
+    val childFromLog = (changes.getValue(ChildWithOptionalParentEntity::class.java).single() as EntityChange.Added<ChildWithOptionalParentEntity>).entity
+    assertEquals("child", childFromLog.childProperty)
+    assertEquals("parent", childFromLog.optionalParent!!.parentProperty)
+  }
+
+  @Test
+  fun `modify entity with optional reference`() {
+    val builder = TypedEntityStorageBuilder.create()
+    builder.addChildWithOptionalParentEntity(null, "hello", SampleEntitySource("1"))
+    val replacement = TypedEntityStorageBuilder.create()
+    replacement.addChildWithOptionalParentEntity(null, "hello2", SampleEntitySource("1"))
+    builder.replaceBySource({it == SampleEntitySource("1")}, replacement)
+    builder.checkConsistency()
+    assertEquals("hello2", builder.entities(ChildWithOptionalParentEntity::class.java).single().childProperty)
+  }
+
+  @Test
   fun `remove entity`() {
     val builder = TypedEntityStorageBuilder.create()
     val source1 = SampleEntitySource("1")
@@ -52,6 +81,20 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ it is SampleEntitySource && it.name.startsWith("a") }, replacement)
     builder.checkConsistency()
     assertEquals(setOf("b", "new"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+  }
+
+  @Test
+  fun `work with different entity sources`() {
+    val builder = TypedEntityStorageBuilder.create()
+    val sourceA1 = SampleEntitySource("a1")
+    val sourceA2 = SampleEntitySource("a2")
+    val parentEntity = builder.addParentEntity(source = sourceA1)
+    val replacement = TypedEntityStorageBuilder.from(builder)
+    replacement.addNoDataChildEntity(parentEntity = parentEntity, source = sourceA2)
+    builder.replaceBySource({ it == sourceA2}, replacement)
+    builder.checkConsistency()
+    assertEquals(1, builder.toStorage().entities(ParentEntity::class.java).toList().size)
+    assertEquals(1, builder.toStorage().entities(NoDataChildEntity::class.java).toList().size)
   }
 
   @Test

@@ -1,16 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.ui.LayeredIcon
-
-private val ICON = LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown)
 
 class ShowCommitOptionsAction : AnAction() {
   init {
-    templatePresentation.icon = ICON
+    templatePresentation.icon = AllIcons.Ide.Notification.Gear
+    templatePresentation.hoveredIcon = AllIcons.Ide.Notification.GearHover
   }
 
   override fun update(e: AnActionEvent) {

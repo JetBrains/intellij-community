@@ -180,7 +180,7 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--no-ff");
     }
     String strategy = (String)myStrategy.getSelectedItem();
-    if (!GitMergeUtil.DEFAULT_STRATEGY.equals(strategy)) {
+    if (!GitMergeUtil.getDefaultStrategy().equals(strategy)) {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");
@@ -271,7 +271,7 @@ public class GitPullDialog extends DialogWrapper {
   @Nullable
   private GitRepository getRepository() {
     VirtualFile root = gitRoot();
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(root);
     if (repository == null) {
       LOG.error("Repository is null for " + root);
       return null;

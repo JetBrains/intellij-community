@@ -262,6 +262,26 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  void "test navigable settings options appear in results"() {
+    def contributor = createActionContributor(project)
+    def patterns = [
+      "support screen readers",
+      "show line numbers",
+      "tab placement"
+    ]
+
+    patterns.forEach { String pattern ->
+      def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
+      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue) matchedValue).value)
+      }
+    }
+  }
+
+  private static boolean isNavigableOption(Object o) {
+    return o instanceof OptionDescription && !(o instanceof BooleanOptionDescription)
+  }
+
+
   private static List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
     def wrappers = getActionsFromPopup(project, pattern)
     wrappers.every { it.getPresentation() } // update best group name

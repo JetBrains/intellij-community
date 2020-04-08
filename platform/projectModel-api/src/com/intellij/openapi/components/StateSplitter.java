@@ -29,5 +29,5 @@ public interface StateSplitter {
   @NotNull
   List<Pair<Element, String>> splitState(@NotNull Element e);
 
-  void mergeStatesInto(@NotNull Element target, @NotNull Element[] elements);
+  void mergeStatesInto(@NotNull Element target, Element @NotNull [] elements);
 }

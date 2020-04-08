@@ -145,17 +145,21 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                          boolean isSelected) {
     g2.setColor(color);
 
-    int length = (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.hypot(x1 - x2, y1 - y2));
-    setStroke(g2, isUsual || hasArrow, isSelected, length);
+    if (isUsual || hasArrow) {
+      setUsualStroke(g2, isSelected);
+    }
+    else {
+      setDashedStroke(g2, isSelected, (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.hypot(x1 - x2, y1 - y2)));
+    }
 
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
-      Pair<Integer, Integer> rotate1 =
-        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2),
-               ARROW_LENGTH * getRowHeight());
-      Pair<Integer, Integer> rotate2 =
-        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2),
-               ARROW_LENGTH * getRowHeight());
+      Pair<Integer, Integer> rotate1 = rotate(x1, y1, startArrowX, startArrowY,
+                                              Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2),
+                                              ARROW_LENGTH * getRowHeight());
+      Pair<Integer, Integer> rotate2 = rotate(x1, y1, startArrowX, startArrowY,
+                                              Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2),
+                                              ARROW_LENGTH * getRowHeight());
       g2.drawLine(startArrowX, startArrowY, rotate1.first, rotate1.second);
       g2.drawLine(startArrowX, startArrowY, rotate2.first, rotate2.second);
     }
@@ -198,23 +202,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.fill(circle);
   }
 
-  private void setStroke(@NotNull Graphics2D g2, boolean usual, boolean select, int edgeLength) {
-    if (usual) {
-      if (select) {
-        g2.setStroke(getSelectedStroke());
-      }
-      else {
-        g2.setStroke(getOrdinaryStroke());
-      }
-    }
-    else {
-      if (select) {
-        g2.setStroke(getSelectedDashedStroke(getDashLength(edgeLength)));
-      }
-      else {
-        g2.setStroke(getDashedStroke(getDashLength(edgeLength)));
-      }
-    }
+  private void setUsualStroke(@NotNull Graphics2D g2, boolean select) {
+    g2.setStroke(select ? getSelectedStroke() : getOrdinaryStroke());
+  }
+
+  private void setDashedStroke(@NotNull Graphics2D g2, boolean select, int edgeLength) {
+    float[] length = getDashLength(edgeLength);
+    g2.setStroke(select ? getSelectedDashedStroke(length) : getDashedStroke(length));
   }
 
   @NotNull
@@ -306,16 +300,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
         float lineThickness = PaintParameters.getLineThickness(getRowHeight());
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-          if (PositionUtil
-            .overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight(),
-                          nodeWidth, lineThickness)) {
+          if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(),
+                                        x, y, getRowHeight(), nodeWidth, lineThickness)) {
             return printElement;
           }
         }
         else {
-          if (PositionUtil
-            .overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y, getRowHeight(),
-                        nodeWidth, lineThickness)) {
+          if (PositionUtil.overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(),
+                                      x, y, getRowHeight(), nodeWidth, lineThickness)) {
             return printElement;
           }
         }

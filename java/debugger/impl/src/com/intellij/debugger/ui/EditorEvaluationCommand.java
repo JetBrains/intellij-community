@@ -16,7 +16,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -53,7 +53,7 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
   protected abstract T evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException;
 
   public T evaluate() throws EvaluateException {
-    myProgressIndicator.setText(DebuggerBundle.message("progress.evaluating", ReadAction.compute(myElement::getText)));
+    myProgressIndicator.setText(JavaDebuggerBundle.message("progress.evaluating", ReadAction.compute(myElement::getText)));
 
     try {
       T result = evaluate(getDebuggerContext().createEvaluationContext());

@@ -21,6 +21,7 @@ import com.intellij.sh.psi.ShLiteral;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ import java.util.regex.Matcher;
 public class ShDocumentationProvider implements DocumentationProvider {
   private static final int TIMEOUT_IN_MILLISECONDS = 3 * 1000;
   private final static Logger LOG = Logger.getInstance(ShDocumentationProvider.class);
-  private static final String FEATURE_ACTION_ID = "DocumentationProviderUsed";
+  @NonNls private static final String FEATURE_ACTION_ID = "DocumentationProviderUsed";
 
   private static final NullableLazyValue<String> myManExecutable = new AtomicNullableLazyValue<String>() {
     @Nullable
@@ -102,9 +103,9 @@ public class ShDocumentationProvider implements DocumentationProvider {
   private static String wrapIntoHtml(@Nullable String s) {
     if (s == null) return null;
 
-    StringBuffer sb = new StringBuffer("<html><body><pre>");
+    @NonNls StringBuffer sb = new StringBuffer("<html><body><pre>");
     try {
-      Matcher m = URLUtil.URL_PATTERN.matcher(StringUtil.escapeXmlEntities(s));
+      @NonNls Matcher m = URLUtil.URL_PATTERN.matcher(StringUtil.escapeXmlEntities(s));
       while (m.find()) {
         if (m.groupCount() > 0) {
           String url = m.group(0);

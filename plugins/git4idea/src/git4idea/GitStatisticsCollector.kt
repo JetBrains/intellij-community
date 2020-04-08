@@ -1,18 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea
 
 import com.google.common.collect.HashMultiset
-import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.addBoolIfDiffers
-import com.intellij.internal.statistic.beans.addEnumIfDiffers
-import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
 import com.intellij.util.io.URLUtil
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
+import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.VcsLogUiImpl
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRemote
+import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import java.util.*
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
@@ -34,7 +36,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     addEnumIfDiffers(set, settings, defaultSettings, { it.syncSetting }, "repo.sync")
     addEnumIfDiffers(set, settings, defaultSettings, { it.updateMethod }, "update.type")
     addEnumIfDiffers(set, settings, defaultSettings, { it.saveChangesPolicy }, "save.policy")
-    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isUseIdeaSsh }, "use.builtin.ssh")
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, "push.autoupdate")
     addBoolIfDiffers(set, settings, defaultSettings, { it.shouldUpdateAllRootsIfPushRejected() }, "push.update.all.roots")
@@ -61,7 +62,29 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(metric)
     }
 
+    addGitLogMetrics(project, set)
+
     return set
+  }
+
+  private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
+    val projectLog = VcsProjectLog.getInstance(project) ?: return
+    val ui = projectLog.mainLogUi ?: return
+
+    addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, "showGitBranchesInLog")
+  }
+
+  private fun addPropertyMetricIfDiffers(metrics: MutableSet<MetricEvent>,
+                                         ui: VcsLogUiImpl,
+                                         property: VcsLogProjectTabsProperties.CustomBooleanTabProperty,
+                                         eventId: String) {
+    val properties = ui.properties
+    val defaultValue = property.defaultValue(ui.id)
+    val value = if (properties.exists(property)) properties[property] else defaultValue
+
+    if (!Comparing.equal(value, defaultValue)) {
+      metrics.add(newBooleanMetric(eventId, value))
+    }
   }
 
   companion object {

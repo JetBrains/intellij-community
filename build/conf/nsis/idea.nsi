@@ -428,14 +428,12 @@ get_installation_options_positions:
   inetc::head /SILENT /TOSTACK /CONNECTTIMEOUT 2 ${LINK_TO_JRE} "" /END
   Pop $0
   ${If} $0 == "OK"
-    ; download jre x86: optional if OS is not 32-bit
+    ; download x86 runtime: optional if OS is not 32-bit
     ${If} ${RunningX64}
       StrCpy $downloadJreX86 "0"
     ${Else}
-      ; download jre32
       StrCpy $downloadJreX86 "1"
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Flags" "DISABLED"
-
       ; create shortcut for launcher 32
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" "1"
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Flags" "DISABLED"
@@ -491,22 +489,22 @@ FunctionEnd
 Function downloadJre
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $downloadJRE" "State"
   ${If} $R0 == 1
-    inetc::get ${LINK_TO_JRE} "$TEMP\jre.tar.gz" /END
+    inetc::get ${LINK_TO_JRE} "$TEMP\jbr-x86.tar.gz" /END
     Pop $0
     ${If} $0 == "OK"
-      untgz::extract "-d" "$INSTDIR\jre32" "$TEMP\jre.tar.gz"
+      untgz::extract "-d" "$INSTDIR\jbr-x86" "$TEMP\jbr-x86.tar.gz"
       StrCmp $R0 "success" remove_temp_jre
-      ${LogText} "ERROR: jre32: Failed to extract"
-      DetailPrint "Failed to extract jre.tar.gz"
-      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"
+      ${LogText} "ERROR: Failed to unpack x86 runtime"
+      DetailPrint "Failed to unpack jbr-x86.tar.gz"
+      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to unpack $TEMP\jbr-x86.tar.gz"
       Goto clean
 remove_temp_jre:
-      ${LogText} "jre32: extracted"
+      ${LogText} "Unpacked x86 runtime"
 clean:
-      IfFileExists "$TEMP\jre.tar.gz" 0 done
-      Delete "$TEMP\jre.tar.gz"
+      IfFileExists "$TEMP\jbr-x86.tar.gz" 0 done
+      Delete "$TEMP\jbr-x86.tar.gz"
     ${Else}
-      ${LogText} "ERROR: jre32: download ${LINK_TO_JRE} is failed: $0"
+      ${LogText} "ERROR: Failed to download x86 runtime from ${LINK_TO_JRE}: $0"
       MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE} download is failed: $0"
     ${EndIf}
   ${EndIf}
@@ -653,15 +651,15 @@ update_PATH:
 update_context_menu:
   ClearErrors
   ${ConfigRead} "$R1" "updateContextMenu=" $R3
-  IfErrors download_jre32
+  IfErrors download_jbr_x86
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "State" $R3
 
-download_jre32:
+download_jbr_x86:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
   IfErrors regeneration_shared_archive
-  ${LogText} "  download jre32: $R3"
+  ${LogText} "  download x86 runtime: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
@@ -1769,7 +1767,7 @@ read_line:
   IntOp $6 $6 + $5
   ${unStrStr} $7 $4 "#" ;check if the property has been customized
   StrCmp $7 "" custom
-  StrCpy $2 "$PROFILE/${PRODUCT_SETTINGS_DIR}/$0" ;no. use the default value.
+  StrCpy $2 $0 ;no. use the default value.
   goto complete
 custom:
   StrCpy $2 $4 "" $6
@@ -1777,7 +1775,7 @@ custom:
 complete:
   FileClose $3
   ${UnStrRep} $2 $2 "/" "\"
-  DetailPrint "path to config/system: $2"
+  DetailPrint "App directory: $2"
 FunctionEnd
 
 Function un.isIDEInUse
@@ -1859,50 +1857,50 @@ remove_link:
   RMDir  "$SMPROGRAMS\$3"
 
 delete_caches:
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
-  DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
-  StrCmp $R2 1 0 skip_delete_caches
-; find the path to caches (system) folder
-   StrCpy $0 "system"
-   StrCpy $1 "idea.system.path="
-   Call un.getPath
-   StrCmp $2 "" skip_delete_caches
-   StrCpy $system_path $2
-   RmDir /r "$system_path"
-   RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
-
-skip_delete_caches:
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
-  StrCmp $R3 1 "" skip_delete_settings
-; find the path to settings (config) folder
-    StrCpy $0 "config"
-    StrCpy $1 "idea.config.path="
-    Call un.getPath
-    StrCmp $2 "" skip_delete_settings
-    StrCpy $config_path $2
-    RmDir /r "$config_path"
-    Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
-    Delete "$INSTDIR\bin\idea.properties"
-    StrCmp $R2 1 "" skip_delete_settings
-    RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
-
-skip_delete_settings:
-  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
-  StrCmp $R0 "${MUI_PRODUCT}" 0 skip_delete_tools
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
-  StrCmp $R3 1 "" skip_delete_tools
+  ${If} $baseRegKey == "HKLM"
     SetShellVarContext current
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 delete_downloaded_jdk8
-    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
-delete_downloaded_jdk8:
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 continue_uninstall
-    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
+  ${EndIf}
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
+  StrCmp $R2 1 0 delete_settings
+  ; find the path to caches (system) folder
+  StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+  StrCpy $1 "idea.system.path="
+  Call un.getPath
+  StrCmp $2 "" delete_settings
+  StrCpy $system_path $2
+  RmDir /r "$system_path"
+  RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
+
+delete_settings:
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
+  StrCmp $R3 1 0 delete_rider_tools
+  ; find the path to settings (config) folder
+  StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+  StrCpy $1 "idea.config.path="
+  Call un.getPath
+  StrCmp $2 "" delete_rider_tools
+  StrCpy $config_path $2
+  RmDir /r "$config_path"
+  Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
+  Delete "$INSTDIR\bin\idea.properties"
+  StrCmp $R2 1 "" delete_rider_tools
+  RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
+
+delete_rider_tools:
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
+  StrCmp $R0 "${MUI_PRODUCT}" 0 continue_uninstall
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
+  StrCmp $R3 1 "" continue_uninstall
+  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 +2
+  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
+  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 +2
+  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
 
 continue_uninstall:
-  StrCmp $baseRegKey "HKLM" 0 skip_delete_tools
-  SetShellVarContext all
-skip_delete_tools:
-; Delete uninstaller itself
+  ${If} $baseRegKey == "HKLM"
+    SetShellVarContext all
+  ${EndIf}
+  ; delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
   Delete "$INSTDIR\jbr\bin\server\classes.jsa"
@@ -1918,11 +1916,6 @@ skip_delete_tools:
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
-  IfFileExists "$INSTDIR\jre32\*.*" 0 no_jre32
-    Delete "$INSTDIR\jre32\bin\server\classes.jsa"
-    StrCpy $0 "$INSTDIR\jre32\lib\applet"
-    Call un.deleteDirIfEmpty
-no_jre32:
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR\bin"
   Call un.deleteDirIfEmpty

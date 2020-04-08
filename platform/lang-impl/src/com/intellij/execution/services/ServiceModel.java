@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Comparing;
@@ -32,14 +35,15 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 class ServiceModel implements Disposable, InvokerSupplier {
-  private static final ExtensionPointName<ServiceViewContributor<?>> EP_NAME =
+  static final ExtensionPointName<ServiceViewContributor<?>> CONTRIBUTOR_EP_NAME =
     ExtensionPointName.create("com.intellij.serviceViewContributor");
   private static final Logger LOG = Logger.getInstance(ServiceModel.class);
 
   private final Project myProject;
-  private final Invoker myInvoker = new Invoker.Background(this);
+  private final Invoker myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final List<ServiceViewItem> myRoots = new CopyOnWriteArrayList<>();
   private volatile boolean myRootsInitialized;
+  private final List<ServiceModelEventListener> myListeners = new CopyOnWriteArrayList<>();
 
   ServiceModel(@NotNull Project project) {
     myProject = project;
@@ -53,6 +57,14 @@ class ServiceModel implements Disposable, InvokerSupplier {
   @Override
   public Invoker getInvoker() {
     return myInvoker;
+  }
+
+  void addEventListener(@NotNull ServiceModelEventListener listener) {
+    myListeners.add(listener);
+  }
+
+  void removeEventListener(@NotNull ServiceModelEventListener listener) {
+    myListeners.remove(listener);
   }
 
   @NotNull
@@ -71,13 +83,16 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
   private List<? extends ServiceViewItem> doGetRoots() {
     List<ServiceViewItem> result = new ArrayList<>();
-    for (ServiceViewContributor<?> contributor : getContributors()) {
+    for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
       try {
         ContributorNode root = new ContributorNode(myProject, contributor);
         root.loadChildren();
         if (!root.getChildren().isEmpty()) {
           result.add(root);
         }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         PluginException.logPluginError(LOG, "Failed to init service view contributor " + contributor.getClass(), e, contributor.getClass());
@@ -157,6 +172,9 @@ class ServiceModel implements Disposable, InvokerSupplier {
         default:
           reset(e.contributorClass);
       }
+      for (ServiceModelEventListener listener : myListeners) {
+        listener.eventProcessed(e);
+      }
     });
   }
 
@@ -185,7 +203,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
 
     ContributorNode newRoot = null;
-    for (ServiceViewContributor<?> contributor : getContributors()) {
+    for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
       if (contributorClass.isInstance(contributor)) {
         newRoot = new ContributorNode(myProject, contributor);
         newRoot.loadChildren();
@@ -202,10 +220,10 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
   private int getContributorNodeIndex(Class<?> contributorClass) {
     int index = -1;
-    ServiceViewContributor<?>[] contributors = getContributors();
+    List<ServiceViewContributor<?>> contributors = CONTRIBUTOR_EP_NAME.getExtensionList();
     List<ServiceViewContributor<?>> existingContributors = ContainerUtil.map(myRoots, ServiceViewItem::getContributor);
-    for (int i = contributors.length - 1; i >= 0; i--) {
-      ServiceViewContributor<?> contributor = contributors[i];
+    for (int i = contributors.size() - 1; i >= 0; i--) {
+      ServiceViewContributor<?> contributor = contributors.get(i);
       if (!contributorClass.isInstance(contributor)) {
         index = existingContributors.indexOf(contributor);
         if (index == 0) {
@@ -244,7 +262,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
     if (contributorNode == null) {
       int index = getContributorNodeIndex(e.contributorClass);
-      for (ServiceViewContributor<?> contributor : getContributors()) {
+      for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
         if (e.contributorClass.isInstance(contributor)) {
           contributorNode = new ContributorNode(myProject, contributor);
           myRoots.add(index, contributorNode);
@@ -265,6 +283,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
     ServiceViewItem parent = item.getParent();
     while (parent instanceof ServiceGroupNode) {
+      item.markRemoved();
       parent.getChildren().remove(item);
       if (!parent.getChildren().isEmpty()) return;
 
@@ -272,12 +291,14 @@ class ServiceModel implements Disposable, InvokerSupplier {
       parent = parent.getParent();
     }
     if (parent instanceof ContributorNode) {
+      item.markRemoved();
       parent.getChildren().remove(item);
       if (!parent.getChildren().isEmpty()) return;
 
       item = parent;
       parent = parent.getParent();
     }
+    item.markRemoved();
     if (parent == null) {
       myRoots.remove(item);
     }
@@ -374,17 +395,21 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  @NotNull
-  static ServiceViewContributor<?>[] getContributors() {
-    return EP_NAME.getExtensions();
-  }
-
   private static <T> List<ServiceViewItem> getContributorChildren(Project project,
                                                                   ServiceViewItem parent,
                                                                   ServiceViewContributor<T> contributor) {
     List<ServiceViewItem> children = new ArrayList<>();
-    for (T service : contributor.getServices(project)) {
-      addService(service, children, project, parent, contributor);
+    try {
+      for (T service : contributor.getServices(project)) {
+        addService(service, children, project, parent, contributor);
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      PluginException
+        .logPluginError(LOG, "Failed to retrieve service view contributor children " + contributor.getClass(), e, contributor.getClass());
     }
     return children;
   }
@@ -511,6 +536,8 @@ class ServiceModel implements Disposable, InvokerSupplier {
     private ServiceViewDescriptor myViewDescriptor;
     private final List<ServiceViewItem> myChildren = new CopyOnWriteArrayList<>();
     private volatile boolean myPresentationUpdated;
+    private volatile boolean myRemoved;
+    private PresentationData myPresentation;
 
     protected ServiceViewItem(@NotNull Object value, @Nullable ServiceViewItem parent, @NotNull ServiceViewContributor<?> contributor,
                               @NotNull ServiceViewDescriptor viewDescriptor) {
@@ -572,6 +599,28 @@ class ServiceModel implements Disposable, InvokerSupplier {
     public Color getColor() {
       ServiceViewDescriptor descriptor = getViewDescriptor();
       return descriptor instanceof ColoredItem ? ((ColoredItem)descriptor).getColor() : null;
+    }
+
+    private void markRemoved() {
+      myRemoved = true;
+    }
+
+    boolean isRemoved() {
+      return myRemoved || myParent != null && myParent.isRemoved();
+    }
+
+    ItemPresentation getItemPresentation(@Nullable ServiceViewOptions viewOptions) {
+      if (isRemoved()) return myPresentation;
+
+      ItemPresentation presentation =
+        viewOptions == null ? getViewDescriptor().getPresentation() : getViewDescriptor().getCustomPresentation(viewOptions);
+      myPresentation = presentation instanceof PresentationData ?
+                       (PresentationData)presentation :
+                       new PresentationData(presentation.getPresentableText(),
+                                            presentation.getLocationString(),
+                                            presentation.getIcon(false),
+                                            null);
+      return myPresentation;
     }
 
     @Override
@@ -690,5 +739,9 @@ class ServiceModel implements Disposable, InvokerSupplier {
       result = 31 * result + (parent != null ? parent.hashCode() : 0);
       return result;
     }
+  }
+
+  interface ServiceModelEventListener {
+    void eventProcessed(ServiceEvent e);
   }
 }

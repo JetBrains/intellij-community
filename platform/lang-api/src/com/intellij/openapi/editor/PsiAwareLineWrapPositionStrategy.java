@@ -49,7 +49,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
    * @param nonVirtualOnly  defines if current PSI-aware logic should be exploited only for 'real wrap' position requests
    * @param enabledTypes    target element/token types where line wrapping is allowed
    */
-  public PsiAwareLineWrapPositionStrategy(boolean nonVirtualOnly, @NotNull IElementType ... enabledTypes) {
+  public PsiAwareLineWrapPositionStrategy(boolean nonVirtualOnly, IElementType @NotNull ... enabledTypes) {
     myEnabledTypes = TokenSet.create(enabledTypes);
     myNonVirtualOnly = nonVirtualOnly;
     if (enabledTypes.length <= 0) {

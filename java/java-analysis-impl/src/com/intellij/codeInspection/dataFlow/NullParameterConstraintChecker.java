@@ -46,8 +46,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     myUsedParameters = new THashSet<>();
   }
 
-  @NotNull
-  static PsiParameter[] checkMethodParameters(PsiMethod method) {
+  static PsiParameter @NotNull [] checkMethodParameters(PsiMethod method) {
     if (method.getBody() == null) return PsiParameter.EMPTY_ARRAY;
 
     final Collection<PsiParameter> nullableParameters = new SmartList<>();
@@ -72,9 +71,8 @@ class NullParameterConstraintChecker extends DataFlowRunner {
       .toArray(PsiParameter[]::new);
   }
 
-  @NotNull
   @Override
-  protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+  protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     if (instruction instanceof PushInstruction) {
       final DfaValue var = ((PushInstruction)instruction).getValue();

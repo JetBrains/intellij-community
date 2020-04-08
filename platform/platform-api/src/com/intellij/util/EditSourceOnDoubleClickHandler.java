@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
@@ -45,7 +31,7 @@ public class EditSourceOnDoubleClickHandler {
   public static void install(final TreeTable treeTable) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return false;
         if (treeTable.getTree().getPathForLocation(e.getX(), e.getY()) == null) return false;
         DataContext dataContext = DataManager.getInstance().getDataContext(treeTable);
@@ -60,7 +46,7 @@ public class EditSourceOnDoubleClickHandler {
   public static void install(final JTable table) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return false;
         if (table.columnAtPoint(e.getPoint()) < 0) return false;
         if (table.rowAtPoint(e.getPoint()) < 0) return false;
@@ -76,7 +62,7 @@ public class EditSourceOnDoubleClickHandler {
   public static void install(final JList list, final Runnable whenPerformed) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         Point point = e.getPoint();
         int index = list.locationToIndex(point);
         if (index == -1) return false;
@@ -87,6 +73,13 @@ public class EditSourceOnDoubleClickHandler {
         return true;
       }
     }.installOn(list);
+  }
+
+  public static boolean isToggleEvent(@NotNull JTree tree, @NotNull MouseEvent e) {
+    TreePath selectionPath = tree.getSelectionPath();
+    if (selectionPath == null) return false;
+
+    return !tree.getModel().isLeaf(selectionPath.getLastPathComponent()) && tree.getToggleClickCount() == e.getClickCount();
   }
 
   public static class TreeMouseListener extends DoubleClickListener {
@@ -103,7 +96,7 @@ public class EditSourceOnDoubleClickHandler {
     }
 
     @Override
-    public boolean onDoubleClick(MouseEvent e) {
+    public boolean onDoubleClick(@NotNull MouseEvent e) {
       TreePath clickPath = WideSelectionTreeUI.isWideSelection(myTree)
                            ? myTree.getClosestPathForLocation(e.getX(), e.getY())
                            : myTree.getPathForLocation(e.getX(), e.getY());
@@ -114,14 +107,13 @@ public class EditSourceOnDoubleClickHandler {
       if (project == null) return false;
 
       TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath == null || !clickPath.equals(selectionPath)) return false;
-      Object last = selectionPath.getLastPathComponent();
-      if (myTree.getModel().isLeaf(last) || myTree.getToggleClickCount() != e.getClickCount()) {
-        //Node expansion for non-leafs has a higher priority
-        processDoubleClick(e, dataContext, selectionPath);
-        return true;
-      }
-      return false;
+      if (!clickPath.equals(selectionPath)) return false;
+
+      //Node expansion for non-leafs has a higher priority
+      if (isToggleEvent(myTree, e)) return false;
+
+      processDoubleClick(e, dataContext, selectionPath);
+      return true;
     }
 
     @SuppressWarnings("UnusedParameters")
@@ -129,6 +121,5 @@ public class EditSourceOnDoubleClickHandler {
       OpenSourceUtil.openSourcesFrom(dataContext, true);
       if (myWhenPerformed != null) myWhenPerformed.run();
     }
-
   }
 }

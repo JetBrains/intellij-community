@@ -56,15 +56,13 @@ public class GrClassImplUtil {
 
   private static final Condition<PsiMethod> CONSTRUCTOR_CONDITION = PsiMethod::isConstructor;
 
-  @NotNull
-  public static GrMethod[] getCodeConstructors(@NotNull GrTypeDefinition definition) {
+  public static GrMethod @NotNull [] getCodeConstructors(@NotNull GrTypeDefinition definition) {
     GrMethod[] methods = definition.getCodeMethods();
     List<GrMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
     return result.toArray(GrMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiMethod[] getConstructors(@NotNull GrTypeDefinition definition) {
+  public static PsiMethod @NotNull [] getConstructors(@NotNull GrTypeDefinition definition) {
     PsiMethod[] methods = definition.getMethods();
     List<PsiMethod> result = ContainerUtil.filter(methods, CONSTRUCTOR_CONDITION);
     return result.toArray(PsiMethod.EMPTY_ARRAY);
@@ -91,7 +89,7 @@ public class GrClassImplUtil {
   }
 
   @Nullable
-  public static PsiClass getSuperClass(@NotNull GrTypeDefinition grType, @NotNull PsiClassType[] extendsListTypes) {
+  public static PsiClass getSuperClass(@NotNull GrTypeDefinition grType, PsiClassType @NotNull [] extendsListTypes) {
     if (extendsListTypes.length == 0) return getBaseClass(grType);
     final PsiClass superClass = extendsListTypes[0].resolve();
     return superClass != null ? superClass : getBaseClass(grType);
@@ -107,8 +105,7 @@ public class GrClassImplUtil {
     }
   }
 
-  @NotNull
-  public static PsiClassType[] getSuperTypes(GrTypeDefinition grType, boolean includeSynthetic) {
+  public static PsiClassType @NotNull [] getSuperTypes(GrTypeDefinition grType, boolean includeSynthetic) {
     PsiClassType[] extendsList = grType.getExtendsListTypes(includeSynthetic);
     if (extendsList.length == 0) {
       extendsList = new PsiClassType[]{createBaseClassType(grType)};
@@ -124,8 +121,7 @@ public class GrClassImplUtil {
     return TypesUtil.getJavaLangObject(grType);
   }
 
-  @NotNull
-  public static PsiMethod[] getAllMethods(final GrTypeDefinition grType) {
+  public static PsiMethod @NotNull [] getAllMethods(final GrTypeDefinition grType) {
     return CachedValuesManager.getCachedValue(grType, () -> {
       List<PsiMethod> list = new ArrayList<>();
       getAllMethodsInner(grType, list, new HashSet<>());
@@ -163,13 +159,11 @@ public class GrClassImplUtil {
     return list.getReferencedTypes();
   }
 
-  @NotNull
-  public static PsiClass[] getInterfaces(GrTypeDefinition grType) {
+  public static PsiClass @NotNull [] getInterfaces(GrTypeDefinition grType) {
     return getInterfaces(grType, true);
   }
 
-  @NotNull
-  public static PsiClass[] getInterfaces(GrTypeDefinition grType, boolean includeSynthetic) {
+  public static PsiClass @NotNull [] getInterfaces(GrTypeDefinition grType, boolean includeSynthetic) {
     final PsiClassType[] implementsListTypes = grType.getImplementsListTypes(includeSynthetic);
     List<PsiClass> result = new ArrayList<>(implementsListTypes.length);
     for (PsiClassType type : implementsListTypes) {
@@ -179,8 +173,7 @@ public class GrClassImplUtil {
     return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiClass[] getSupers(GrTypeDefinition grType, boolean includeSynthetic) {
+  public static PsiClass @NotNull [] getSupers(GrTypeDefinition grType, boolean includeSynthetic) {
     PsiClassType[] superTypes = grType.getSuperTypes(includeSynthetic);
     List<PsiClass> result = new ArrayList<>();
     for (PsiClassType superType : superTypes) {
@@ -423,18 +416,15 @@ public class GrClassImplUtil {
     return PsiImplUtil.mapToMethods(methodsMap.get(name));
   }
 
-  @NotNull
-  public static PsiMethod[] findMethodsBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
+  public static PsiMethod @NotNull [] findMethodsBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
     return findMethodsBySignature(grType, patternMethod, checkBases, true);
   }
 
-  @NotNull
-  public static PsiMethod[] findCodeMethodsBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
+  public static PsiMethod @NotNull [] findCodeMethodsBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
     return findMethodsBySignature(grType, patternMethod, checkBases, false);
   }
 
-  @NotNull
-  public static PsiMethod[] findMethodsByName(GrTypeDefinition grType, @NonNls String name, boolean checkBases) {
+  public static PsiMethod @NotNull [] findMethodsByName(GrTypeDefinition grType, @NonNls String name, boolean checkBases) {
     return findMethodsByName(grType, name, checkBases, true);
   }
 
@@ -464,8 +454,7 @@ public class GrClassImplUtil {
   }
 
 
-  @NotNull
-  public static PsiMethod[] findCodeMethodsByName(GrTypeDefinition grType, @NonNls String name, boolean checkBases) {
+  public static PsiMethod @NotNull [] findCodeMethodsByName(GrTypeDefinition grType, @NonNls String name, boolean checkBases) {
     return findMethodsByName(grType, name, checkBases, false);
   }
 
@@ -593,8 +582,7 @@ public class GrClassImplUtil {
     ));
   }
 
-  @NotNull
-  private static GrAccessorMethod[] doGetGetters(GrField field) {
+  private static GrAccessorMethod @NotNull [] doGetGetters(GrField field) {
     PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) return GrAccessorMethod.EMPTY_ARRAY;
 

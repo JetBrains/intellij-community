@@ -30,6 +30,7 @@ import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Image viewer implementation.
@@ -43,10 +44,17 @@ public final class ImageEditorImpl implements ImageEditor {
   private boolean disposed;
 
   public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
+    this(project, file, false);
+  }
+
+    /**
+     * @param isEmbedded if it's true the toolbar and the image info are disabled and an image is left-side aligned
+     */
+  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded) {
     this.project = project;
     this.file = file;
 
-    editorUI = new ImageEditorUI(this);
+    editorUI = new ImageEditorUI(this, isEmbedded);
     Disposer.register(this, editorUI);
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
@@ -128,6 +136,16 @@ public final class ImageEditorImpl implements ImageEditor {
   public void setGridVisible(boolean visible) {
     editorUI.getImageComponent().setGridVisible(visible);
     editorUI.repaint();
+  }
+
+  @Override
+  public void setEditorBackground(Color color) {
+    editorUI.getImageComponent().getParent().setBackground(color);
+  }
+
+  @Override
+  public void setBorderVisible(boolean visible) {
+    editorUI.getImageComponent().setBorderVisible(visible);
   }
 
   @Override

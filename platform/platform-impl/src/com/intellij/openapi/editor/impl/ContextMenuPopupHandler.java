@@ -12,7 +12,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -33,17 +32,15 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
       MouseEvent e = event.getMouseEvent();
       final Component c = e.getComponent();
       if (c != null && c.isShowing()) {
-        JPopupMenu popupComponent = popupMenu.getComponent();
-        EditorMouseHoverPopupControl.disablePopupsWhileShowing(event.getEditor(), popupComponent);
-        popupComponent.show(c, e.getX(), e.getY());
-        event.consume();
+        popupMenu.getComponent().show(c, e.getX(), e.getY());
       }
+      event.consume();
     }
     return true;
   }
 
   @Nullable
-  private static ActionGroup getGroupForId(@Nullable String groupId) {
+  static ActionGroup getGroupForId(@Nullable String groupId) {
     return groupId == null ? null : ObjectUtils.tryCast(CustomActionsSchema.getInstance().getCorrectedAction(groupId), ActionGroup.class);
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.openapi.Disposable;
@@ -25,8 +11,12 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import git4idea.DialogManager;
+import git4idea.config.GitSaveChangesPolicy;
+import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.ui.ChangesBrowserWithRollback;
 import git4idea.util.GitSimplePathsBrowser;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +55,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @NotNull private final JComponent myFileBrowser;
   @NotNull private final String myOperationTitle;
+  @NotNull private final GitSaveChangesPolicy mySaveMethod;
   @Nullable private final String myForceButton;
 
   /**
@@ -74,8 +65,8 @@ public class GitSmartOperationDialog extends DialogWrapper {
   static Choice show(@NotNull Project project,
                      @NotNull List<? extends Change> changes,
                      @NotNull Collection<String> paths,
-                     @NotNull String operationTitle,
-                     @Nullable String forceButtonTitle) {
+                     @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle,
+                     @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle) {
     JComponent fileBrowser = !changes.isEmpty()
                              ? new ChangesBrowserWithRollback(project, changes)
                              : new GitSimplePathsBrowser(project, paths);
@@ -85,25 +76,31 @@ public class GitSmartOperationDialog extends DialogWrapper {
     return Choice.fromDialogExitCode(dialog.getExitCode());
   }
 
-  private GitSmartOperationDialog(@NotNull Project project, @NotNull JComponent fileBrowser, @NotNull String operationTitle,
-                                  @Nullable String forceButton) {
+  private GitSmartOperationDialog(@NotNull Project project,
+                                  @NotNull JComponent fileBrowser,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle,
+                                  @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButton) {
     super(project);
     myFileBrowser = fileBrowser;
     myOperationTitle = operationTitle;
     myForceButton = forceButton;
+    mySaveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
     String capitalizedOperation = capitalize(myOperationTitle);
-    setTitle("Git " + capitalizedOperation + " Problem");
+    setTitle(GitBundle.message("smart.operation.dialog.git.operation.name.problem", capitalizedOperation));
 
-    setOKButtonText("Smart " + capitalizedOperation);
-    getOKAction().putValue(Action.SHORT_DESCRIPTION, "Stash local changes, " + operationTitle + ", unstash");
-    setCancelButtonText("Don't " + capitalizedOperation);
+    setOKButtonText(GitBundle.message("smart.operation.dialog.smart.operation.name", capitalizedOperation));
+    String description = mySaveMethod.selectBundleMessage(
+      GitBundle.message("smart.operation.dialog.ok.action.stash.description", operationTitle),
+      GitBundle.message("smart.operation.dialog.ok.action.shelf.description", operationTitle)
+    );
+    getOKAction().putValue(Action.SHORT_DESCRIPTION, description);
+    setCancelButtonText(GitBundle.message("smart.operation.dialog.don.t.operation.name", capitalizedOperation));
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     if (myForceButton != null) {
       return new Action[]{new ForceCheckoutAction(myForceButton, myOperationTitle)};
     }
@@ -112,11 +109,19 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
-    JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by " + myOperationTitle +
-                                      ".<br/>" + ApplicationNamesInfo.getInstance().getFullProductName() + " can stash the changes, "
-                                      + myOperationTitle + " and unstash them after that.</html>");
-    description.setBorder(JBUI.Borders.emptyBottom(10));
-    return description;
+    String labelText = mySaveMethod.selectBundleMessage(
+      GitBundle.message(
+        "smart.operation.dialog.north.panel.label.stash.text",
+        myOperationTitle,
+        ApplicationNamesInfo.getInstance().getFullProductName()
+      ),
+      GitBundle.message(
+        "smart.operation.dialog.north.panel.label.shelf.text",
+        myOperationTitle,
+        ApplicationNamesInfo.getInstance().getFullProductName()
+      )
+    );
+    return new JBLabel(labelText).withBorder(JBUI.Borders.emptyBottom(10));
   }
 
   @Override
@@ -131,12 +136,15 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
 
   private class ForceCheckoutAction extends AbstractAction {
-    
-    ForceCheckoutAction(@NotNull String buttonTitle, @NotNull String operationTitle) {
+
+    ForceCheckoutAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String buttonTitle,
+                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle) {
       super(buttonTitle);
-      putValue(Action.SHORT_DESCRIPTION, capitalize(operationTitle) + " and overwrite local changes");
+      String description = GitBundle.message("smart.operation.dialog.operation.name.and.overwrite.local.changes",
+                                             capitalize(operationTitle));
+      putValue(Action.SHORT_DESCRIPTION, description);
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
       close(FORCE_EXIT_CODE);

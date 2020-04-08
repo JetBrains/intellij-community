@@ -327,6 +327,9 @@
     <keyboard-shortcut first-keystroke="control Q"/>
     <mouse-shortcut keystroke="alt button2"/>
   </action>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
+  </action>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="shift F11"/>
   </action>
@@ -913,11 +916,10 @@
   </action>
   <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
-    <keyboard-shortcut first-keystroke="alt shift 9"/>
   </action>
   <action id="NewElement">
-     <keyboard-shortcut first-keystroke="alt INSERT"/>
-   </action>
+    <keyboard-shortcut first-keystroke="alt INSERT"/>
+  </action>
   <action id="NewElementSamePlace">
     <keyboard-shortcut first-keystroke="control alt INSERT"/>
   </action>
@@ -1111,6 +1113,11 @@
   </action>
 
   <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="F2" />
+    <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
+  <action id="Git.Rename.Local.Branch">
     <keyboard-shortcut first-keystroke="F2" />
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>

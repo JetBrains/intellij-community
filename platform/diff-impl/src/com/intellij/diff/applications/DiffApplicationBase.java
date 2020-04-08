@@ -28,8 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
 
   protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 
-  protected DiffApplicationBase(@NotNull String commandName, int... possibleArgumentsCount) {
+  protected DiffApplicationBase(@NotNull @NonNls String commandName, int... possibleArgumentsCount) {
     super(commandName, possibleArgumentsCount);
   }
 
@@ -101,8 +101,8 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
   }
 
   @NotNull
-  public List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends VirtualFile> contents) {
-    return ContainerUtil.map(contents, file -> ObjectUtils.notNull(file, () -> new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, "")));
+  public static List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends VirtualFile> contents) {
+    return ContainerUtil.map(contents, file -> file != null ? file : new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
   }
 
 

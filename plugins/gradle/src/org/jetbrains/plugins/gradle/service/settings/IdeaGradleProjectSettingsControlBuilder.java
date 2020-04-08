@@ -17,9 +17,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
@@ -40,6 +38,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -66,17 +65,14 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBoxUtil.getSelectedJdkReference;
 import static com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBoxUtil.setSelectedJdkReference;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil.INSETS;
-import static com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.createSdkComboBoxModel;
+import static com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil.createUniqueSdkName;
+import static com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.createJdkComboBoxModel;
 
 /**
  * @author Vladislav.Soroka
@@ -325,9 +321,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       }
 
       if (!dropResolveExternalAnnotationsCheckBox) {
-      panel.add(
-        myResolveExternalAnnotationsCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.download.annotations")),
-        ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+        panel.add(
+          myResolveExternalAnnotationsCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.download.annotations")),
+          ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
       }
     });
   }
@@ -525,7 +521,6 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       else {
         finalGradleHomePath = myInstallationManager.suggestBetterGradleHomePath(gradleHomePath);
         if (finalGradleHomePath != null) {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             myGradleHomePathField.setText(finalGradleHomePath);
           });
@@ -541,12 +536,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
 
     if (myGradleJdkComboBox != null) {
-      try {
-        myGradleJdkComboBox.getModel().getSdksModel().apply();
-      }
-      catch (ConfigurationException e) {
-        throw new IllegalStateException(e);
-      }
+      wrapExceptions(() -> myGradleJdkComboBox.getModel().getSdksModel().apply());
       final String gradleJvm = FileUtil.toCanonicalPath(getSelectedJdkReference(myGradleJdkComboBox));
       settings.setGradleJvm(StringUtil.isEmpty(gradleJvm) ? null : gradleJvm);
     }
@@ -609,9 +599,13 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return true;
     }
 
-    if (myGradleJdkComboBox != null &&
-        !StringUtil.equals(getSelectedJdkReference(myGradleJdkComboBox), myInitialSettings.getGradleJvm())) {
-      return true;
+    if (myGradleJdkComboBox != null) {
+      if (!StringUtil.equals(getSelectedJdkReference(myGradleJdkComboBox), myInitialSettings.getGradleJvm())) {
+        return true;
+      }
+      if (myGradleJdkComboBox.getModel().getSdksModel().isModified()) {
+        return true;
+      }
     }
 
     if (myGradleHomePathField == null) return false;
@@ -708,26 +702,38 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     @NotNull ProjectSdksModel sdksModel
   ) {
     if (myGradleJdkComboBox == null) return;
-    Sdk projectSdk = wizardContext != null ? wizardContext.getProjectJdk() : null;
     project = project == null || project.isDisposed() ? ProjectManager.getInstance().getDefaultProject() : project;
-    sdksModel.reset(project);
-    if (projectSdk != null) {
-      // see ProjectSdksModel#getProjectSdk for details
-      sdksModel.setProjectSdk(sdksModel.findSdk(projectSdk.getName()));
-    }
+    Sdk projectSdk = wizardContext != null ? wizardContext.getProjectJdk() : null;
+    setupProjectSdksModel(sdksModel, project, projectSdk);
     recreateGradleJdkComboBox(project, sdksModel);
     setSelectedJdkReference(myGradleJdkComboBox, settings.getGradleJvm());
+  }
+
+  private static void setupProjectSdksModel(@NotNull ProjectSdksModel sdksModel, @NotNull Project project, @Nullable Sdk projectSdk) {
+    sdksModel.reset(project);
+    deduplicateSdkNames(sdksModel);
+    if (projectSdk == null) {
+      projectSdk = sdksModel.getProjectSdk();
+      // Find real sdk
+      // see ProjectSdksModel#getProjectSdk for details
+      projectSdk = sdksModel.findSdk(projectSdk);
+    }
+    if (projectSdk != null) {
+      // resolves executable JDK
+      // e.g: for Android projects
+      projectSdk = ExternalSystemJdkUtil.resolveDependentJdk(projectSdk);
+      // Find editable sdk
+      // see ProjectSdksModel#getProjectSdk for details
+      projectSdk = sdksModel.findSdk(projectSdk.getName());
+    }
+    sdksModel.setProjectSdk(projectSdk);
   }
 
   private void recreateGradleJdkComboBox(@NotNull Project project, @NotNull ProjectSdksModel sdksModel) {
     if (myGradleJdkComboBox != null) {
       myGradleJdkComboBoxWrapper.remove(myGradleJdkComboBox);
     }
-    Predicate<SdkTypeId> sdkTypeFilter = it -> ExternalSystemJdkUtil.getJavaSdkType().equals(it);
-    Supplier<Boolean> allIsSimpleSdk = () -> Arrays.stream(SdkType.getAllTypes()).allMatch(it -> it instanceof SimpleJavaSdkType);
-    Predicate<SdkTypeId> sdkTypeCreationFilter = it -> !(it instanceof SimpleJavaSdkType) || allIsSimpleSdk.get();
-    Predicate<Sdk> sdkFilter = it -> ExternalSystemJdkUtil.isValidJdk(it);
-    myGradleJdkComboBox = new SdkComboBox(createSdkComboBoxModel(project, sdksModel, sdkTypeFilter, sdkTypeCreationFilter, sdkFilter));
+    myGradleJdkComboBox = new SdkComboBox(createJdkComboBoxModel(project, sdksModel));
     myGradleJdkComboBoxWrapper.add(myGradleJdkComboBox, BorderLayout.CENTER);
   }
 
@@ -747,7 +753,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (myGradleDistributionHint != null && !dropUseWrapperButton) {
       final boolean isGradleDefaultWrapperFilesExist = GradleUtil.isGradleDefaultWrapperFilesExist(linkedProjectPath);
       boolean showError = !isGradleDefaultWrapperFilesExist && !isDefaultModuleCreation;
-      myGradleDistributionHint.setText(showError ? "'gradle-wrapper.properties' not found" : null);
+      myGradleDistributionHint.setText(showError ? GradleBundle.message("gradle.settings.wrapper.not.found") : null);
       myGradleDistributionHint.setIcon(showError ? AllIcons.General.Error : null);
     }
 
@@ -868,6 +874,32 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       Disposer.register(project, myProjectRefDisposable);
     }
     myProjectRef.set(project);
+  }
+
+  private static void wrapExceptions(ThrowableRunnable<Throwable> runnable) {
+    try {
+      runnable.run();
+    }
+    catch (Throwable ex) {
+      throw new IllegalStateException(ex);
+    }
+  }
+
+  /**
+   * Deduplicates sdks name in corrupted sdks model
+   */
+  private static void deduplicateSdkNames(@NotNull ProjectSdksModel projectSdksModel) {
+    Set<String> processedNames = new HashSet<>();
+    Collection<Sdk> editableSdks = projectSdksModel.getProjectSdks().values();
+    for (Sdk sdk : editableSdks) {
+      if (processedNames.contains(sdk.getName())) {
+        SdkModificator sdkModificator = sdk.getSdkModificator();
+        String name = createUniqueSdkName(sdk.getName(), editableSdks);
+        sdkModificator.setName(name);
+        sdkModificator.commitChanges();
+      }
+      processedNames.add(sdk.getName());
+    }
   }
 
   private class DelayedBalloonInfo implements Runnable {

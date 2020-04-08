@@ -116,7 +116,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public final Self withRoots(@Nullable T... roots) {
+  public final Self withRoots(T @Nullable ... roots) {
     return newInstance(myMeta.withRoots(JBIterable.of(roots)));
   }
 
@@ -503,7 +503,11 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     Cond<T> append(Condition<? super T> impl) {
-      return new Cond<>(impl, this);
+      Cond<T> result = new Cond<>(impl, null);
+      for (Condition<? super T> o : ContainerUtil.reverse(JBIterable.generate(this, o -> o.next).map(o -> o.impl).toList())) {
+        result = new Cond<>(o, result);
+      }
+      return result;
     }
 
     boolean valueAnd(T t) {
@@ -582,7 +586,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         TreeTraversal adjusted = meta == null ? this : (TreeTraversal)meta.interceptor.fun(original);
 
         tree = new MappedTree(tree, ((MappedTraversal)adjusted).map, meta);
-        roots = JBIterable.from(roots).map(((MappedTree)tree)::map);
+        // Must be a separate variable, otherwise javac 8u201 crashes when compiling this code
+        Function fn = ((MappedTree)tree)::map;
+        roots = JBIterable.from(roots).map(fn);
 
         Function tree0 = tree;
         Condition filter0 = filter;

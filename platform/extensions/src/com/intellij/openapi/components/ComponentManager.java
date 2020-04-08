@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.Disposable;
@@ -69,13 +69,11 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
    */
   @Deprecated
-  @NotNull
-  default <T> T[] getComponents(@NotNull Class<T> baseClass) {
+  default <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
     return ArrayUtil.toObjectArray(getComponentInstancesOfType(baseClass, false), baseClass);
   }
 
-  @NotNull
-  PicoContainer getPicoContainer();
+  @NotNull PicoContainer getPicoContainer();
 
   /**
    * @see com.intellij.application.Topics#subscribe
@@ -103,9 +101,8 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * @deprecated Use {@link ExtensionPointName#getExtensionList(AreaInstance)}
    */
-  @NotNull
   @Deprecated
-  default <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
+  default <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return getExtensionArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 

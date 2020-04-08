@@ -4,17 +4,17 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * An action allowed to be performed in dumb mode.
- *
- * @author nik
  */
 public abstract class DumbAwareAction extends AnAction implements DumbAware {
 
@@ -24,22 +24,39 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static DumbAwareAction create(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
+  public static DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
                                        @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new SimpleDumbAwareAction(text, actionPerformed);
   }
 
   protected DumbAwareAction() {
+    super((Icon)null);
   }
 
-  protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
+  protected DumbAwareAction(@Nullable Icon icon) {
+    super(icon);
+  }
+
+  protected DumbAwareAction(@Nullable @NlsActions.ActionText String text) {
     super(text);
   }
 
-  protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                            @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
+  protected DumbAwareAction(@Nullable @NlsActions.ActionText String text,
+                            @Nullable @NlsActions.ActionDescription String description,
                             @Nullable Icon icon) {
     super(text, description, icon);
+  }
+
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Icon icon) {
+    super(dynamicText, icon);
   }
 
   private static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
@@ -49,7 +66,8 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
       myActionPerformed = actionPerformed;
     }
 
-    private SimpleDumbAwareAction(@Nls(capitalization = Nls.Capitalization.Title) String text, Consumer<? super AnActionEvent> actionPerformed) {
+    private SimpleDumbAwareAction(@NlsActions.ActionText String text,
+                                  Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;
     }

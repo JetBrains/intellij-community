@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
@@ -299,23 +299,28 @@ public class SearchUtil {
     }
     else if (rootComponent instanceof JTabbedPane) {
       final JTabbedPane tabbedPane = (JTabbedPane)rootComponent;
-      final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
-      if (path != null) {
-        final int index = getSelection(path, tabbedPane.getTabCount(), i -> tabbedPane.getTitleAt(i));
-        if (index > -1 && index < tabbedPane.getTabCount()) {
-          if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
-            highlightComponent((JComponent)tabbedPane.getTabComponentAt(index), option);
+
+      final Set<String> paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option);
+      for (String path : paths) {
+        if (path != null) {
+          final int index = getSelection(path, tabbedPane.getTabCount(), i -> tabbedPane.getTitleAt(i));
+          if (index > -1 && index < tabbedPane.getTabCount()) {
+            if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
+              highlightComponent((JComponent)tabbedPane.getTabComponentAt(index), option);
+            }
           }
         }
       }
     }
     else if (rootComponent instanceof TabbedPaneWrapper.TabbedPaneHolder) {
       final TabbedPaneWrapper tabbedPaneWrapper = ((TabbedPaneWrapper.TabbedPaneHolder)rootComponent).getTabbedPaneWrapper();
-      final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
-      if (path != null) {
-        final int index = getSelection(path, tabbedPaneWrapper.getTabCount(), i -> tabbedPaneWrapper.getTitleAt(i));
-        if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
-          highlightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
+      final Set<String> paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option);
+      for (String path : paths) {
+        if (path != null) {
+          final int index = getSelection(path, tabbedPaneWrapper.getTabCount(), i -> tabbedPaneWrapper.getTitleAt(i));
+          if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
+            highlightComponent((JComponent)tabbedPaneWrapper.getTabComponentAt(index), option);
+          }
         }
       }
     }
@@ -339,7 +344,7 @@ public class SearchUtil {
   }
 
   private static void highlightComponent(@NotNull JComponent rootComponent, @NotNull String searchString) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ComponentHighligtingListener.TOPIC).highlight(rootComponent, searchString);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ComponentHighlightingListener.TOPIC).highlight(rootComponent, searchString);
   }
 
   public static boolean isComponentHighlighted(String text, String option, boolean force, final SearchableConfigurable configurable) {
@@ -571,7 +576,7 @@ public class SearchUtil {
   }
 
   @NotNull
-  public static List<Configurable> expand(@NotNull ConfigurableGroup[] groups) {
+  public static List<Configurable> expand(ConfigurableGroup @NotNull [] groups) {
     List<Configurable> result = new ArrayList<>();
     CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
     for (ConfigurableGroup group : groups) {

@@ -77,7 +77,7 @@ public class LightToolWindow extends JPanel {
                          @NotNull Project project,
                          @NotNull String key,
                          int defaultWidth,
-                         @Nullable AnAction[] actions) {
+                         AnAction @Nullable [] actions) {
     super(new BorderLayout());
     myContent = content;
     myFocusedComponent = focusedComponent;
@@ -326,7 +326,7 @@ public class LightToolWindow extends JPanel {
     group.add(myManager.createGearActions());
     if (myManager.getAnchor() == null) {
       group.addSeparator();
-      DefaultActionGroup viewModeGroup = new DefaultActionGroup(ActionsBundle.groupText("ViewMode"), true);
+      DefaultActionGroup viewModeGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.groupText("ViewMode"));
       for (ToolWindowViewModeAction.ViewMode viewMode : ToolWindowViewModeAction.ViewMode.values()) {
         viewModeGroup.add(new MyViewModeAction(viewMode));
       }
@@ -365,7 +365,7 @@ public class LightToolWindow extends JPanel {
   private class HideAction extends AnAction {
     HideAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setText(UIBundle.message("tool.window.hide.action.name"));
+      presentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"));
       presentation.setIcon(AllIcons.General.HideToolWindow);
     }
 

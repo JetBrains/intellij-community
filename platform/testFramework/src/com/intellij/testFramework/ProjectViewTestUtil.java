@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -48,9 +48,9 @@ public final class ProjectViewTestUtil {
   }
 
   public static void collect(AbstractTreeNode node,
-                             MultiValuesMap<VirtualFile, AbstractTreeNode> map,
-                             final AbstractTreeStructure structure,
-                             Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
+                             MultiValuesMap<VirtualFile, AbstractTreeNode<?>> map,
+                             AbstractTreeStructure structure,
+                             Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
     Object[] kids = structure.getChildElements(node);
     for (Object kid1 : kids) {
       ProjectViewNode kid = (ProjectViewNode)kid1;
@@ -70,12 +70,12 @@ public final class ProjectViewTestUtil {
 
   public static void checkContainsMethod(final Object rootElement,
                                          final AbstractTreeStructure structure,
-                                         Function<? super AbstractTreeNode, VirtualFile[]> converterFunction) {
-    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<>();
+                                         Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
+    MultiValuesMap<VirtualFile, AbstractTreeNode<?>> map = new MultiValuesMap<>();
     collect((AbstractTreeNode)rootElement, map, structure, converterFunction);
 
     for (VirtualFile eachFile : map.keySet()) {
-      Collection<AbstractTreeNode> nodes = map.values();
+      Collection<AbstractTreeNode<?>> nodes = map.values();
       for (final AbstractTreeNode node : nodes) {
         ProjectViewNode eachNode = (ProjectViewNode)node;
         boolean actual = eachNode.contains(eachFile);

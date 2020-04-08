@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -9,10 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
@@ -25,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
@@ -61,8 +58,6 @@ import kotlin.collections.component2
 
 /**
  * Used directly by IntelliJ IDEA.
- *
- * @see RecentDirectoryProjectsManager base class primary for minor IDEs on IntelliJ Platform
  */
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
@@ -99,7 +94,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
 
-  override fun getState(): RecentProjectManagerState {
+  final override fun getState(): RecentProjectManagerState {
     synchronized(stateLock) {
       // https://youtrack.jetbrains.com/issue/TBX-3756
       @Suppress("DEPRECATION")
@@ -120,7 +115,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun loadState(state: RecentProjectManagerState) {
+  final override fun noStateLoaded() {
+    val old = service<OldRecentDirectoryProjectsManager>().loadedState ?: return
+    val newState = RecentProjectManagerState()
+    newState.copyFrom(old)
+    newState.intIncrementModificationCount()
+    loadState(newState)
+  }
+
+  final override fun loadState(state: RecentProjectManagerState) {
     synchronized(stateLock) {
       this.state = state
       state.pid = null
@@ -130,9 +133,31 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
-      if (state.recentPaths.isNotEmpty() && state.recentPaths.size != state.additionalInfo.size) {
-        val existingPaths = state.recentPaths.toSet()
-        state.additionalInfo.keys.removeIf { !existingPaths.contains(it) }
+      val recentPaths = state.recentPaths
+      if (recentPaths.isNotEmpty()) {
+        convertToSystemIndependentPaths(recentPaths)
+
+        // replace system-dependent paths to system-independent
+        for (key in state.additionalInfo.keys.toList()) {
+          val normalizedKey = FileUtilRt.toSystemIndependentName(key)
+          if (normalizedKey != key) {
+            state.additionalInfo.remove(key)?.let {
+              state.additionalInfo.put(normalizedKey, it)
+            }
+          }
+        }
+
+        // ensure that additionalInfo contains entries in a reversed order of recentPaths (IDEA <= 2019.2 order of additionalInfo maybe not correct)
+        val newAdditionalInfo = linkedMapOf<String, RecentProjectMetaInfo>()
+        for (recentPath in recentPaths.asReversed()) {
+          val value = state.additionalInfo.get(recentPath) ?: continue
+          newAdditionalInfo.put(recentPath, value)
+        }
+
+        if (newAdditionalInfo != state.additionalInfo) {
+          state.additionalInfo.clear()
+          state.additionalInfo.putAll(newAdditionalInfo)
+        }
       }
     }
   }
@@ -142,6 +167,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     if (openPaths.isEmpty()) {
       return
     }
+
+    convertToSystemIndependentPaths(openPaths)
 
     val oldInfoMap = mutableMapOf<String, RecentProjectMetaInfo>()
     for (path in openPaths) {
@@ -265,7 +292,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
   open fun getProjectPath(project: Project): String? {
-    return PathUtil.toSystemIndependentName(project.presentableUrl)
+    return FileUtilRt.toSystemIndependentName(project.presentableUrl ?: return null)
   }
 
   // open for Rider
@@ -366,24 +393,18 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun reopenLastProjectsOnStart() {
+  override fun reopenLastProjectsOnStart(): Boolean {
     val openPaths = lastOpenedProjects
     var someProjectWasOpened = false
     for ((key, value) in openPaths) {
-      val options = OpenProjectTask(forceOpenInNewFrame = true, projectToClose = null)
-      options.frame = value.frame
-      options.projectWorkspaceId = value.projectWorkspaceId
-      options.showWelcomeScreen = false
-      options.sendFrameBack = someProjectWasOpened
+      val options = OpenProjectTask(forceOpenInNewFrame = true, sendFrameBack = someProjectWasOpened, showWelcomeScreen = false, frame = value.frame, projectWorkspaceId = value.projectWorkspaceId)
       val project = openProject(Paths.get(key), options)
       if (!someProjectWasOpened) {
         someProjectWasOpened = project != null
       }
     }
 
-    if (!someProjectWasOpened) {
-      WelcomeFrame.showIfNoProjectOpened()
-    }
+    return someProjectWasOpened
   }
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
@@ -580,3 +601,25 @@ private fun readProjectName(path: String): String {
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
+
+private fun convertToSystemIndependentPaths(list: MutableList<String>) {
+  list.replaceAll {
+    FileUtilRt.toSystemIndependentName(it)
+  }
+}
+
+@Service
+@State(name = "RecentDirectoryProjectsManager", storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)])
+private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
+  internal var loadedState: RecentProjectManagerState? = null
+
+  companion object {
+    private val emptyState = RecentProjectManagerState()
+  }
+
+  override fun loadState(state: RecentProjectManagerState) {
+    loadedState = state
+  }
+
+  override fun getState() = emptyState
+}

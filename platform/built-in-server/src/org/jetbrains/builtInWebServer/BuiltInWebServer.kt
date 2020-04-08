@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.google.common.cache.CacheBuilder
@@ -30,18 +30,21 @@ import io.netty.handler.codec.http.*
 import io.netty.handler.codec.http.cookie.DefaultCookie
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder
+import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.ide.BuiltInServerManagerImpl
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
+import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
+import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -127,13 +130,20 @@ private val STANDARD_COOKIE by lazy {
 // expire after access because we reuse tokens
 private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
+private val secureRandom by lazy { SecureRandom() }
+
 fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
-    token = DigestUtil.randomToken()
+    token = randomToken()
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
+}
+
+// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
+private fun randomToken(): String {
+  return BigInteger(130, secureRandom).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
@@ -191,7 +201,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }) ?: candidateByDirectoryName ?: return false
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify("Built-in web server is deactivated, to activate, please use Open in Browser", null)
+    notificationManager.notify(BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), null)
     return false
   }
 
@@ -207,7 +217,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     return true
   }
 
-  for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
+  for (pathHandler in WebServerPathHandler.EP_NAME.extensionList) {
     LOG.runAndLogException {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
         return true
@@ -258,10 +268,9 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
       ProjectUtil.focusProjectWindow(null, true)
 
       if (MessageDialogBuilder
-          .yesNo("", "Page '" + StringUtil.trimMiddle(url, 50) + "' requested without authorization, " +
-              "\nyou can copy URL and open it in browser to trust it.")
+          .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
           .icon(Messages.getWarningIcon())
-          .yesText("Copy authorization URL to clipboard")
+          .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
           .show() == Messages.YES) {
         CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
       }

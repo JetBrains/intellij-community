@@ -85,7 +85,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
 
   @NotNull
   @Override
-  public Class getActionClass() {
+  public Class<?> getActionClass() {
     return getAction().getClass();
   }
 
@@ -102,8 +102,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     return new IntentionWrapper(action, file);
   }
 
-  @NotNull
-  public static LocalQuickFix[] wrapToQuickFixes(@NotNull IntentionAction[] actions, @NotNull PsiFile file) {
+  public static LocalQuickFix @NotNull [] wrapToQuickFixes(IntentionAction @NotNull [] actions, @NotNull PsiFile file) {
     if (actions.length == 0) return LocalQuickFix.EMPTY_ARRAY;
     LocalQuickFix[] fixes = new LocalQuickFix[actions.length];
     for (int i = 0; i < actions.length; i++) {

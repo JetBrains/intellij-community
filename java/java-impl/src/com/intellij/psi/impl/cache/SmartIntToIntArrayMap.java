@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.util.ArrayUtilRt;
@@ -8,15 +8,11 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public class SmartIntToIntArrayMap {
   @Nullable TIntObjectHashMap<TIntArrayList> myMultipleValuesMap;
   TIntIntHashMap mySingleValueMap = new TIntIntHashMap(10, 0.9f);
 
-  @NotNull
-  public int[] keys() {
+  public int @NotNull [] keys() {
     int[] multiKeys = myMultipleValuesMap != null ? myMultipleValuesMap.keys() : ArrayUtilRt.EMPTY_INT_ARRAY;
     int[] singleKeys = mySingleValueMap.keys();
 
@@ -83,8 +79,7 @@ public class SmartIntToIntArrayMap {
     }
   }
 
-  @NotNull
-  public int[] get(int key) {
+  public int @NotNull [] get(int key) {
     if (mySingleValueMap.containsKey(key)) {
       int id = mySingleValueMap.get(key);
       return new int[]{id};
@@ -93,8 +88,7 @@ public class SmartIntToIntArrayMap {
     return getFromMultimap(key);
   }
 
-  @NotNull
-  private int[] getFromMultimap(int key) {
+  private int @NotNull [] getFromMultimap(int key) {
     TIntArrayList res = myMultipleValuesMap != null ? myMultipleValuesMap.get(key) : null;
     if (res == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
     return res.toNativeArray();

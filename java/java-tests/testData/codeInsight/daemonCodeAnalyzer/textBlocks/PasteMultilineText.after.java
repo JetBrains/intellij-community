@@ -1,8 +1,8 @@
 class C {
   String empty = """
-          <html>
+          <html> \s
             <body>
             </body>
-          </html>
+          </html> \s
                  """;
 }

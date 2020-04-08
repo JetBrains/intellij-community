@@ -25,7 +25,7 @@ import java.nio.file.Paths
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
 internal class ConfigurationFileManager(project: Project) {
-  private val clearableLazyValues = ContainerUtil.createConcurrentList<SynchronizedClearableLazy<*>>()
+  private val clearableLazyValues = ContainerUtil.createConcurrentList<() -> Unit>()
 
   private val yamlData = SynchronizedClearableLazy {
     val file = findConfigurationFile(project) ?: return@SynchronizedClearableLazy null
@@ -48,6 +48,10 @@ internal class ConfigurationFileManager(project: Project) {
   }
 
   fun registerClearableLazyValue(value: SynchronizedClearableLazy<*>) {
+    registerClearableLazyValue { value.drop() }
+  }
+
+  fun registerClearableLazyValue(value: () -> Unit) {
     clearableLazyValues.add(value)
   }
 
@@ -76,7 +80,7 @@ internal class ConfigurationFileManager(project: Project) {
             }
           }
 
-          clearableLazyValues.forEach { it.drop() }
+          clearableLazyValues.forEach { it() }
         }
       }
     })
@@ -97,7 +101,8 @@ internal fun doRead(reader: Reader): MappingNode? {
       .setUseMarks(false)
       .setScalarResolver(LightScalarResolver())
       .build()
-    return Composer(ParserImpl(StreamReader(it, settings), settings), settings.scalarResolver).singleNode.orElse(null) as? MappingNode
+    val parser = ParserImpl(StreamReader(it, settings), settings)
+    return Composer(parser, settings).singleNode.orElse(null) as? MappingNode
   }
 }
 

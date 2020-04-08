@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author traff
- */
 public class PySuperClassAttributesCompletionContributor extends CompletionContributor {
   public PySuperClassAttributesCompletionContributor() {
     extend(CompletionType.BASIC,

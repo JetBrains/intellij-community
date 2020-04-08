@@ -27,10 +27,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- *
+ * @param host the hostname to bind Python Console server at
+ * @param port the port to bind Python Console server at
  */
-class TNettyServerTransport(port: Int) : TServerTransport() {
-  private val nettyServer: NettyServer = NettyServer(port)
+class TNettyServerTransport(host: String, port: Int) : TServerTransport() {
+  private val nettyServer: NettyServer = NettyServer(host, port)
 
   @Throws(TTransportException::class)
   override fun listen() {
@@ -65,7 +66,7 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
   @Throws(InterruptedException::class)
   fun getReverseTransport(): TTransport = nettyServer.takeReverseTransport()
 
-  private class NettyServer(val port: Int) {
+  private class NettyServer(val host: String, val port: Int) {
     private val closed: AtomicBoolean = AtomicBoolean(false)
 
     private val acceptQueue: BlockingQueue<TTransport> = LinkedBlockingQueue()
@@ -147,10 +148,8 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
 
       // Bind and start to accept incoming connections.
       // We are ready to go now. What's left is to bind to the port and to
-      // start the server. Here, we bind to the port 8080 of all NICs (network
-      // interface cards) in the machine. You can now call the bind() method as
-      // many times as you want (with different bind addresses.)
-      b.bind(port).sync() // (7)
+      // start the server.
+      b.bind(host, port).sync() // (7)
 
       LOG.debug("Running Netty server on $port")
 

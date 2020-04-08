@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.editor.EditorFactory;
@@ -22,39 +8,32 @@ import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.ui.docking.DockManager;
 import org.jdom.Element;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Dmitry Avdeev
  */
 @SkipInHeadlessEnvironment
 public class EditorsContextTest extends FileEditorManagerTestCase {
-
   public void testDockableContainer() {
-
     VirtualFile file = getFile("/foo.txt");
-    myManager.openFile(file, false);
+    myManager.openFile(file, /* focusEditor = */ false);
     DockManager dockManager = DockManager.getInstance(getProject());
-    assertEquals(1, dockManager.getContainers().size());
+    assertThat(dockManager.getContainers()).hasSize(1);
     myManager.initDockableContentFactory();
 
     myManager.openFileInNewWindow(file);
-    assertEquals(2, dockManager.getContainers().size());
+    assertThat(dockManager.getContainers()).hasSize(2);
 
     Element context = new Element("context");
     WorkingContextManager contextManager = WorkingContextManager.getInstance(getProject());
     contextManager.saveContext(context);
-    assertEquals(2, context.getChild("editors").getChildren().size());
-    assertEquals(2, EditorFactory.getInstance().getAllEditors().length);
+    assertThat(context.getChild("editors").getChildren()).hasSize(2);
+    assertThat(EditorFactory.getInstance().getAllEditors()).hasSize(2);
 
     contextManager.clearContext();
-    assertEquals(1, dockManager.getContainers().size());
-    assertEquals(0, EditorFactory.getInstance().getAllEditors().length);
-
-    //contextManager.loadContext(context);
-    //assertEquals(2, dockManager.getContainers().size());
-    //Editor[] editors = EditorFactory.getInstance().getAllEditors();
-    //assertEquals(2, editors.length);
-    //
-    //contextManager.clearContext();
+    assertThat(dockManager.getContainers()).hasSize(1);
+    assertThat(EditorFactory.getInstance().getAllEditors()).isEmpty();
   }
 
   @Override
@@ -66,5 +45,4 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
   protected boolean isCommunity() {
     return true;
   }
-
 }

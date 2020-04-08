@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.intellij.execution.ExecutionException;
 
 import java.net.NoRouteToHostException;
 
-/**
- * @author traff
- */
 public class RemoteSdkException extends ExecutionException {
   private final boolean myNoRouteToHost;
   private final boolean myAuthFailed;

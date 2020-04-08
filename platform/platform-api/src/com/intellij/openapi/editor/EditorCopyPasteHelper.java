@@ -47,8 +47,7 @@ public abstract class EditorCopyPasteHelper {
    *
    * @throws TooLargeContentException if content is too large to be pasted in editor
    */
-  @Nullable
-  public abstract TextRange[] pasteFromClipboard(@NotNull Editor editor) throws TooLargeContentException;
+  public abstract TextRange @Nullable [] pasteFromClipboard(@NotNull Editor editor) throws TooLargeContentException;
 
   /**
    * Pastes given Transferable instance into editor at caret(s) position.
@@ -57,8 +56,7 @@ public abstract class EditorCopyPasteHelper {
    *
    * @throws TooLargeContentException if content is too large to be pasted in editor
    */
-  @Nullable
-  public abstract TextRange[] pasteTransferable(@NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException;
+  public abstract TextRange @Nullable [] pasteTransferable(@NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException;
 
   public static class TooLargeContentException extends RuntimeException {
     private final int contentLength;

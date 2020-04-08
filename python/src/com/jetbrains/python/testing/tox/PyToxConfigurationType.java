@@ -3,6 +3,7 @@ package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.jetbrains.python.PyBundle;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,12 +30,12 @@ public final class PyToxConfigurationType implements ConfigurationType {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "tox";
+    return PyBundle.message("runcfg.tox");
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "tox runner";
+    return PyBundle.message("runcfg.tox.runner");
   }
 
   @Override

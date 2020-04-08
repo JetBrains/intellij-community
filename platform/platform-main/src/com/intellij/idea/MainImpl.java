@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -21,6 +21,6 @@ public final class MainImpl implements StartupUtil.AppStarter {
 
   @Override
   public void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {
-    ApplicationLoader.setWizardStepsProvider(provider);
+    IdeStarter.setWizardStepsProvider(provider);
   }
 }

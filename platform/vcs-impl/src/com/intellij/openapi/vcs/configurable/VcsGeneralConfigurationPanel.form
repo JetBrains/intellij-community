@@ -22,7 +22,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="etched" title="When files are created"/>
+        <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="settings.border.when.files.are.created"/>
         <children>
           <component id="61373" class="javax.swing.JRadioButton" binding="myShowDialogOnAddingFile">
             <constraints>
@@ -54,7 +54,7 @@
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Including &amp;external files"/>
+              <text resource-bundle="messages/VcsBundle" key="checkbox.including.external.files"/>
             </properties>
           </component>
         </children>
@@ -68,7 +68,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="etched" title="When empty changelist becomes inactive"/>
+        <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="settings.border.when.empty.changelist.becomes.inactive"/>
         <children>
           <component id="7b546" class="javax.swing.JRadioButton">
             <constraints>
@@ -76,7 +76,7 @@
             </constraints>
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
-              <text value="Show options before removing"/>
+              <text resource-bundle="messages/VcsBundle" key="radio.inactive.show.options.before.removing"/>
             </properties>
           </component>
           <component id="59f74" class="javax.swing.JRadioButton">
@@ -84,7 +84,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Remove silently"/>
+              <text resource-bundle="messages/VcsBundle" key="radio.remove.silently"/>
             </properties>
           </component>
           <component id="49213" class="javax.swing.JRadioButton">
@@ -92,7 +92,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Do not remove"/>
+              <text resource-bundle="messages/VcsBundle" key="radio.do.not.remove"/>
             </properties>
           </component>
         </children>
@@ -106,7 +106,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="etched" title="When files are deleted"/>
+        <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="settings.when.files.are.deleted"/>
         <children>
           <component id="1256b" class="javax.swing.JRadioButton" binding="myShowDialogOnRemovingFile">
             <constraints>
@@ -189,11 +189,7 @@
               <component id="aec57" class="javax.swing.JComboBox" binding="myOnPatchCreation">
                 <constraints/>
                 <properties>
-                  <model>
-                    <item value="Ask"/>
-                    <item value="Yes"/>
-                    <item value="No"/>
-                  </model>
+                  <model/>
                 </properties>
               </component>
             </children>
@@ -203,7 +199,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Restore workspace on &amp;branch switching"/>
+              <text resource-bundle="messages/VcsBundle" key="radio.restore.workspace.on.branch.switching"/>
             </properties>
           </component>
         </children>

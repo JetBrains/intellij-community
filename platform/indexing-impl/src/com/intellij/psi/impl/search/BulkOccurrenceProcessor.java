@@ -21,5 +21,5 @@ import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
 interface BulkOccurrenceProcessor {
-  boolean execute(@NotNull PsiElement scope, @NotNull int[] offsetsInScope, @NotNull StringSearcher searcher);
+  boolean execute(@NotNull PsiElement scope, int @NotNull [] offsetsInScope, @NotNull StringSearcher searcher);
 }

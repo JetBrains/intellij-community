@@ -151,7 +151,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @NotNull
-  public static Icon overlayIcons(@NotNull Icon ... icons) {
+  public static Icon overlayIcons(Icon @NotNull ... icons) {
     final LayeredIcon icon = new LayeredIcon(icons.length);
     int i = 0;
     for (Icon ic : icons) {

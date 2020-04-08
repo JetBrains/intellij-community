@@ -26,7 +26,7 @@ class SequenceIterator<T> implements Iterator<T> {
   private int myCurrentIndex;
 
   @SafeVarargs
-  SequenceIterator(@NotNull Iterator<? extends T>... iterators){
+  SequenceIterator(Iterator<? extends T> @NotNull ... iterators){
     //noinspection unchecked
     myIterators = new Iterator[iterators.length];
     System.arraycopy(iterators, 0, myIterators, 0, iterators.length);

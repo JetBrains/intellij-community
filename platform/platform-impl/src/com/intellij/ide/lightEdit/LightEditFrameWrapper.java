@@ -1,17 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
 import com.intellij.ide.lightEdit.statusBar.LightEditAutosaveWidget;
+import com.intellij.ide.lightEdit.statusBar.LightEditEncodingWidgetWrapper;
+import com.intellij.ide.lightEdit.statusBar.LightEditLineSeparatorWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.platform.ProjectFrameAllocatorKt;
+import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,15 +27,13 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
-
+final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
   private final BooleanSupplier myCloseHandler;
 
   private LightEditPanel myEditPanel;
 
   LightEditFrameWrapper(@NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
     super(frame, null);
-    getFrame().setJMenuBar(new LightEditMenuBar());
     myCloseHandler = closeHandler;
   }
 
@@ -47,19 +52,19 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     LightEditorManager editorManager = LightEditService.getInstance().getEditorManager();
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    addWidget(this, statusBar, new LightEditPositionWidget(editorManager),
-              StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(this, statusBar, new LightEditAutosaveWidget(editorManager),
-              StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    for (StatusBarWidgetProvider provider : StatusBarWidgetProvider.EP_NAME.getExtensionList()) {
-      if (provider.isCompatibleWith(this)) {
-        final StatusBarWidget widget = provider.getWidget(LightEditUtil.getProject());
-        if (widget != null) {
-          addWidget(this, statusBar, widget, provider.getAnchor());
-        }
-      }
-    }
-    statusBar.updateWidgets();
+    statusBar.addWidget(new LightEditPositionWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this);
+    statusBar.addWidget(new LightEditAutosaveWidget(editorManager), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR), this);
+    statusBar.addWidget(new LightEditEncodingWidgetWrapper(), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL), this);
+    statusBar.addWidget(new LightEditLineSeparatorWidgetWrapper(), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID), this);
+
+    PopupHandler.installPopupHandler(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
+    });
+  }
+
+  @Override
+  protected void initTitleInfoProviders(@NotNull Project project) {
   }
 
   @NotNull
@@ -98,6 +103,11 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
       throw new IllegalStateException("Tool windows are unavailable in LightEdit");
     }
 
+    @Override
+    protected @NotNull IdeMenuBar createMenuBar() {
+      return new LightEditMenuBar();
+    }
+
     @NotNull
     @Override
     protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
@@ -117,9 +127,9 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, Li
     }
   }
 
-  static LightEditFrameWrapper allocate(@NotNull BooleanSupplier closeHandler) {
+  static @NotNull LightEditFrameWrapper allocate(@NotNull BooleanSupplier closeHandler) {
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
       LightEditUtil.getProject(),
-      () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(), closeHandler));
+      () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false), closeHandler));
   }
 }

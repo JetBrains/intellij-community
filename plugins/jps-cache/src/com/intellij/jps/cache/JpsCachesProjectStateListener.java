@@ -20,6 +20,7 @@ public class JpsCachesProjectStateListener implements GitRepositoryChangeListene
       return;
     }
     Hash commitHash = repository.getInfo().getRemoteBranchesWithHashes().get(branch.findTrackedBranch(repository));
+    if (commitHash == null) return;
     String currentRevision = commitHash.toString();
     if (currentRevision == null || previousCommitId.equals(currentRevision)) return;
     previousCommitId = currentRevision;

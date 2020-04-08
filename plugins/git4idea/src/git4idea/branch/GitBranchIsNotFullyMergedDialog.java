@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListWithDiffPanel;
 import org.jetbrains.annotations.NotNull;
@@ -80,9 +81,8 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
     init();
 
-    setTitle("Branch Was Not Fully Merged");
-    setOKButtonText("Restore");
-    setOKButtonMnemonic('R');
+    setTitle(GitBundle.message("branch.not.fully.merged.dialog.title"));
+    setOKButtonText(GitBundle.message("branch.not.fully.merged.dialog.restore.button"));
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
   }
 
@@ -101,11 +101,10 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     String baseBranch = myBaseBranches.get(repository);
     String description;
     if (baseBranch == null) {
-      description = String.format("All commits from branch %s were merged", myRemovedBranch);
+      description = GitBundle.message("branch.not.fully.merged.dialog.all.commits.from.branch.were.merged", myRemovedBranch);
     }
     else {
-      description = String.format("The branch %s was not fully merged to %s.<br/>Below is the list of unmerged commits.",
-                                  myRemovedBranch, baseBranch);
+      description = GitBundle.message("branch.not.fully.merged.dialog.the.branch.was.not.fully.merged.to", myRemovedBranch, baseBranch);
     }
     return XmlStringUtil.wrapInHtml(description);
   }
@@ -127,7 +126,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     });
 
     JPanel repoSelectorPanel = new JPanel(new BorderLayout());
-    JBLabel label = new JBLabel("Repository: ");
+    JBLabel label = new JBLabel(GitBundle.message("branch.not.fully.merged.dialog.repository.label"));
     label.setLabelFor(repoSelectorPanel);
     repoSelectorPanel.add(label, BorderLayout.WEST);
     repoSelectorPanel.add(repositorySelector);
@@ -149,15 +148,13 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     return rootPanel;
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[] { getOKAction() };
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action cancelAction = getCancelAction();
     cancelAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     return new Action[] { cancelAction };

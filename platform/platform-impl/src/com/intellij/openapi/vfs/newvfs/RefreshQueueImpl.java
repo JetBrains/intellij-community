@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -9,13 +10,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.EDT;
 import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +28,6 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
-/**
- * @author max
- */
 public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
 
@@ -36,7 +35,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private final Executor myEventProcessingQueue =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", PooledThreadExecutor.INSTANCE, 1, this);
 
-  private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
+  private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeBundle.message("file.synchronize.progress"));
   private int myBusyThreads;
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
@@ -47,13 +46,13 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
     else {
       Application app = ApplicationManager.getApplication();
-      if (app.isDispatchThread()) {
+      if (app.isWriteThread()) {
         ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
         doScan(session);
         session.fireEvents(session.getEvents(), null);
       }
       else {
-        if (((ApplicationEx)app).holdsReadLock()) {
+        if (((ApplicationEx)app).holdsReadLock() || EDT.isCurrentThreadEdt()) {
           LOG.error("Do not perform a synchronous refresh under read lock (except from EDT) - causes deadlocks if there are events to fire.");
           return;
         }
@@ -75,7 +74,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
           scheduleAsynchronousPreprocessing(session, modality);
         }
         else {
-          ApplicationManager.getApplication().invokeLater(() -> session.fireEvents(session.getEvents(), null), modality);
+          AppUIExecutor.onWriteThread(modality).later().submit(() -> session.fireEvents(session.getEvents(), null));
         }
       }
     });
@@ -87,7 +86,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       startRefreshActivity();
       ReadAction
         .nonBlocking(() -> runAsyncListeners(session))
-        .cancelWith(myRefreshIndicator)
+        .wrapProgress(myRefreshIndicator)
         .finishOnUiThread(modality, Runnable::run)
         .submit(myEventProcessingQueue)
         .onProcessed(__ -> finishRefreshActivity())
@@ -97,7 +96,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
           }
         });
     }
-    catch (RejectedExecutionException e) {
+    catch (RejectedExecutionException | AlreadyDisposedException e) {
       LOG.debug(e);
     }
   }

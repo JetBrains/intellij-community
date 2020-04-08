@@ -109,9 +109,8 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
   };
 
   
-  @NotNull
   @Override
-  public String[] getSourceExtensions() {
+  public String @NotNull [] getSourceExtensions() {
     return ECLIPSE_THEME_EXTENSIONS;
   }
 

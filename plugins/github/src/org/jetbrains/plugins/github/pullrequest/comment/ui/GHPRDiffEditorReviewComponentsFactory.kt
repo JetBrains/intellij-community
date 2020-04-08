@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
+import com.intellij.diff.util.Side
 import javax.swing.JComponent
 
 interface GHPRDiffEditorReviewComponentsFactory {
   fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent
-  fun createCommentComponent(diffLine: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent
+  fun createSingleCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent
+  fun createNewReviewCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent
+  fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, hideCallback: () -> Unit): JComponent
 }

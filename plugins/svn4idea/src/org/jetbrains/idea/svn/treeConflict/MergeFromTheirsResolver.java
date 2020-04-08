@@ -1,5 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
+
+import static com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder.buildPatch;
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.findValidParentAccurately;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath;
+import static com.intellij.util.ExceptionUtil.rethrowAllAsUnchecked;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.partitioningBy;
+import static java.util.stream.Collectors.toMap;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -14,10 +32,21 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.SimpleContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
@@ -32,36 +61,28 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.BackgroundTaskGroup;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnContentRevision;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.function.Consumer;
-
-import static com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder.buildPatch;
-import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
-import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
-import static com.intellij.util.ExceptionUtil.rethrowAllAsUnchecked;
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static java.util.Objects.requireNonNull;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.partitioningBy;
-import static java.util.stream.Collectors.toMap;
-import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   @NotNull private final SvnVcs myVcs;
@@ -89,8 +110,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myDescription = description;
     myChange = change;
     myCommittedRevision = revision;
-    myOldFilePath = notNull(myChange.getBeforeRevision()).getFile();
-    myNewFilePath = notNull(myChange.getAfterRevision()).getFile();
+    myOldFilePath = requireNonNull(myChange.getBeforeRevision()).getFile();
+    myNewFilePath = requireNonNull(myChange.getAfterRevision()).getFile();
     myBaseForPatch = findValidParentAccurately(myNewFilePath);
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
@@ -191,7 +212,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
             List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
             new PatchApplier(requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
             myThereAreCreations =
-              patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
+              patches.stream().anyMatch(patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
           }
           catch (IOException e) {
             myException = new VcsException(e);
@@ -214,7 +235,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void createPatches() throws VcsException {
-    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, notNull(myBaseForPatch).getPath(), false);
+    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, requireNonNull(myBaseForPatch).getPath(), false);
     myTextPatches = map(patches, TextFilePatch.class::cast);
   }
 
@@ -272,7 +293,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   private static void applyBinaryChange(@NotNull Change change) throws IOException, VcsException {
     if (change.getAfterRevision() == null) {
-      FilePath path = notNull(change.getBeforeRevision()).getFile();
+      FilePath path = requireNonNull(change.getBeforeRevision()).getFile();
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
       if (file == null) {
         throw new VcsException("Can not delete file: " + path.getPath(), true);
@@ -281,7 +302,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
     else {
       FilePath file = change.getAfterRevision().getFile();
-      String parentPath = notNull(file.getParentPath()).getPath();
+      String parentPath = requireNonNull(file.getParentPath()).getPath();
       VirtualFile parentFile = VfsUtil.createDirectoryIfMissing(parentPath);
       if (parentFile == null) {
         throw new VcsException("Can not create directory: " + parentPath, true);
@@ -373,7 +394,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @NotNull
   private static FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
-    String relativePath = notNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
+    String relativePath = requireNonNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
     return VcsUtil.getFilePath(newBase.getPath() + "/" + relativePath, path.isDirectory());
   }
 
@@ -426,7 +447,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     settings.CHANGE_AFTER = String.valueOf(min);
 
     //noinspection unchecked
-    List<SvnChangeList> committedChanges = notNull(myVcs.getCachingCommittedChangesProvider()).getCommittedChanges(settings, location, 0);
+    List<SvnChangeList> committedChanges = requireNonNull(myVcs.getCachingCommittedChangesProvider())
+      .getCommittedChanges(settings, location, 0);
     return filter(committedChanges, changeList -> changeList.getNumber() != min);
   }
 

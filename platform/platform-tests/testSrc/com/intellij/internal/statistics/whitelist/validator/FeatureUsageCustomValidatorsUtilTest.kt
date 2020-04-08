@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist.validator
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
@@ -19,6 +19,8 @@ class FeatureUsageCustomValidatorsUtilTest {
     Assert.assertEquals(PluginType.JB_NOT_BUNDLED, findPluginTypeByValue("JB_NOT_BUNDLED"))
     Assert.assertEquals(PluginType.JB_BUNDLED, findPluginTypeByValue("JB_BUNDLED"))
     Assert.assertEquals(PluginType.PLATFORM, findPluginTypeByValue("PLATFORM"))
+    Assert.assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
+    Assert.assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
   }
 
   @Test
@@ -104,6 +106,6 @@ class TestCheckPluginTypeCustomWhiteListRule(private val fromJBPlugin: Boolean) 
   override fun acceptRuleId(ruleId: String?): Boolean = true
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (fromJBPlugin) acceptWhenReportedByJetbrainsPlugin(context) else acceptWhenReportedByPluginFromPluginRepository(context)
+    return if (fromJBPlugin) acceptWhenReportedByJetBrainsPlugin(context) else acceptWhenReportedByPluginFromPluginRepository(context)
   }
 }

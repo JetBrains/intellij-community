@@ -20,6 +20,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
@@ -165,7 +166,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
     }
 
     if (!application.isDispatchThread || LOCK.isHeldByCurrentThread) {
-      application.invokeLater(runnable)
+      WriteThread.submit(runnable)
     }
     else {
       runnable.run()

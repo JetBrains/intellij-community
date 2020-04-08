@@ -780,7 +780,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       @Override
       public Icon getIcon(final boolean open) {
         if (PyUtil.isPackage(PyFileImpl.this)) {
-          return AllIcons.Modules.SourceFolder;
+          return AllIcons.Nodes.Package;
         }
         return PyFileImpl.this.getIcon(0);
       }

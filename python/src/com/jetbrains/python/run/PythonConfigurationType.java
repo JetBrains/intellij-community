@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.PyBundle;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,17 +34,22 @@ public final class PythonConfigurationType implements ConfigurationType {
     public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonRunConfiguration(project, this);
     }
+
+    @Override
+    public @NotNull String getId() {
+      return "Python";
+    }
   }
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Python";
+    return PyBundle.message("python.run.python");
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "Python run configuration";
+    return PyBundle.message("python.run.configuration");
   }
 
   @Override

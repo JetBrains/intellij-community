@@ -11,8 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public interface GrFunctionalExpression extends GrExpression, GrParameterListOwner {
 
-  @NotNull
-  GrParameter[] getAllParameters();
+  GrParameter @NotNull [] getAllParameters();
 
   @Nullable
   PsiType getOwnerType();

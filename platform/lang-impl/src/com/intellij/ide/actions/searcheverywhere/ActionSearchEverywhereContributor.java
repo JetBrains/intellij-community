@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,14 +40,14 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
   private final Project myProject;
-  private final Component myContextComponent;
+  private final WeakReference<Component> myContextComponent;
   private final GotoActionModel myModel;
   private final GotoActionItemProvider myProvider;
   protected boolean myDisabledActions;
 
   public ActionSearchEverywhereContributor(Project project, Component contextComponent, Editor editor) {
     myProject = project;
-    myContextComponent = contextComponent;
+    myContextComponent = new WeakReference<>(contextComponent);
     myModel = new GotoActionModel(project, contextComponent, editor);
     myProvider = new GotoActionItemProvider(myModel);
   }
@@ -54,7 +55,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @NotNull
   @Override
   public String getGroupName() {
-    return "Actions";
+    return IdeBundle.message("search.everywhere.group.name.actions");
   }
 
   @NotNull
@@ -171,11 +172,17 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     if (selected instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription)selected;
+      if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
+        myModel.clearActions();           // release references to plugin actions so that the plugin can be unloaded successfully
+      }
       option.setOptionState(!option.isOptionEnabled());
+      if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
+        myModel.rebuildActions();
+      }
       return false;
     }
 
-    GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent);
+    GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get());
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
                             && ((GotoActionModel.ActionWrapper)selected).getAction() instanceof ToggleAction;
     return !inplaceChange;
@@ -219,6 +226,11 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
         initEvent.getProject(),
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
+    }
+
+    @Override
+    public @Nullable KeyboardShortcut getShortcut() {
+      return ActionManager.getInstance().getKeyboardShortcut("GotoAction");
     }
   }
 }

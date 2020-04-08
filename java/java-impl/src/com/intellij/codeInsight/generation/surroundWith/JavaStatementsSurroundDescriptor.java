@@ -44,8 +44,7 @@ public class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
   };
 
   @Override
-  @NotNull
-  public Surrounder[] getSurrounders() {
+  public Surrounder @NotNull [] getSurrounders() {
     return SURROUNDERS;
   }
 
@@ -55,8 +54,7 @@ public class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     if (statements.length == 0) return PsiElement.EMPTY_ARRAY;
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.surroundwith.statement");

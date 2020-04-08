@@ -3,17 +3,25 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EdtReplacementThread;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ApplicationUtil {
+
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
     final Ref<T> result = new Ref<>();
@@ -82,6 +90,75 @@ public class ApplicationUtil {
     }
     else {
       runnable.run();
+    }
+  }
+
+  public static void invokeLaterSomewhere(@NotNull Runnable r, @NotNull EdtReplacementThread thread) {
+    invokeLaterSomewhere(r, thread, ApplicationManager.getApplication().getDefaultModalityState());
+  }
+
+  public static void invokeLaterSomewhere(@NotNull Runnable r, @NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState) {
+    switch (thread) {
+      case EDT:
+        SwingUtilities.invokeLater(r);
+        break;
+      case WT:
+        ApplicationManager.getApplication().invokeLaterOnWriteThread(r, modalityState);
+        break;
+      case EDT_WITH_IW:
+        ApplicationManager.getApplication().invokeLater(r, modalityState);
+        break;
+    }
+  }
+
+  public static void invokeAndWaitSomewhere(Runnable runnable, EdtReplacementThread thread) {
+    invokeAndWaitSomewhere(runnable, thread, ApplicationManager.getApplication().getDefaultModalityState());
+  }
+
+  public static void invokeAndWaitSomewhere(@NotNull Runnable r,
+                                            @NotNull EdtReplacementThread thread,
+                                            @NotNull ModalityState modalityState) {
+    switch (thread) {
+      case EDT:
+        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteThread()) {
+          Logger.getInstance(ApplicationUtil.class).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock");
+        }
+        UIUtil.invokeAndWaitIfNeeded(r);
+        break;
+      case WT:
+        if (ApplicationManager.getApplication().isWriteThread()) {
+          r.run();
+        }
+        else if (SwingUtilities.isEventDispatchThread()) {
+          Logger.getInstance(ApplicationUtil.class).error("Can't invokeAndWait from EDT to WT");
+        }
+        else {
+          Semaphore s = new Semaphore(1);
+          AtomicReference<Throwable> throwable = new AtomicReference<>();
+          ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
+            try {
+              r.run();
+            }
+            catch (Throwable t) {
+              throwable.set(t);
+            }
+            finally {
+              s.up();
+            }
+          }, modalityState);
+          s.waitFor();
+
+          if (throwable.get() != null) {
+            ExceptionUtil.rethrow(throwable.get());
+          }
+        }
+        break;
+      case EDT_WITH_IW:
+        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteThread()) {
+          Logger.getInstance(ApplicationUtil.class).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock");
+        }
+        ApplicationManager.getApplication().invokeAndWait(r, modalityState);
+        break;
     }
   }
 

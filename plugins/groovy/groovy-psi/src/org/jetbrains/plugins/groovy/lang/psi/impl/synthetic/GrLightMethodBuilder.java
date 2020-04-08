@@ -95,8 +95,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return getTypeParameterList().getTypeParameters();
   }
 
@@ -155,9 +154,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return myNamedParameters;
   }
 
-  @NotNull
   @Override
-  public GrReflectedMethod[] getReflectedMethods() {
+  public GrReflectedMethod @NotNull [] getReflectedMethods() {
     // not caching
     return GrReflectedMethodImpl.doCreateReflectedMethods(this, null, getParameters());
   }
@@ -228,9 +226,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return null;
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     return getParameterList().getParameters();
   }
 
@@ -339,20 +336,17 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
   }
 
@@ -368,8 +362,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
 

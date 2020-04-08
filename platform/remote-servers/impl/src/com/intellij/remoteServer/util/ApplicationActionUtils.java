@@ -4,6 +4,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -13,7 +14,6 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -106,7 +106,7 @@ public class ApplicationActionUtils {
       Deployment deployment = findDeployment(connection);
       if (deployment == null) return;
 
-      AppUIUtil.invokeOnEdt(() -> mySelector.select(connection, deployment.getName(), myLogName), myProject.getDisposed());
+      AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> mySelector.select(connection, deployment.getName(), myLogName));
     }
 
     private Deployment findDeployment(ServerConnection<?> connection) {

@@ -371,7 +371,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
 
   // ======
 
-  private static void putKeywords(final CompletionResultSet result, TailType tail, @NonNls @NotNull String... words) {
+  private static void putKeywords(final CompletionResultSet result, TailType tail, @NonNls String @NotNull ... words) {
     for (String s : words) {
       PythonLookupElement lookupElement = new PythonLookupElement(s, true, null);
       lookupElement.putUserData(PyCompletionMlElementInfo.Companion.getKey(), PyCompletionMlElementKind.KEYWORD.asInfo());

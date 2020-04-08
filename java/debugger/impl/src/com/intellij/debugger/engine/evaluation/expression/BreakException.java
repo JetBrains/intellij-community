@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 
 /**
@@ -25,7 +25,7 @@ public class BreakException extends EvaluateException{
   private final String myLabelName;
 
   public BreakException(String labelName) {
-    super(DebuggerBundle.message("evaluation.error.lebeled.loops.not.found", labelName), null);
+    super(JavaDebuggerBundle.message("evaluation.error.lebeled.loops.not.found", labelName), null);
     myLabelName = labelName;
   }
 

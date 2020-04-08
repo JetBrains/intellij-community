@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Image file type manager.
  */
-public final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
+final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   @Override
   public boolean isImage(@NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, ImageFileType.INSTANCE) || file.getFileType() instanceof SvgFileType;

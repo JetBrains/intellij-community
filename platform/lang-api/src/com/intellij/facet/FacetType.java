@@ -7,9 +7,12 @@ import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,16 +26,15 @@ import javax.swing.*;
  * &nbsp;&nbsp;&lt;facetType implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
- *
- * @author nik
  */
-public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
+public abstract class FacetType<F extends Facet, C extends FacetConfiguration> implements PluginAware {
   public static final ExtensionPointName<FacetType> EP_NAME = ExtensionPointName.create("com.intellij.facetType");
 
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
   private final @NotNull String myPresentableName;
   private final @Nullable FacetTypeId myUnderlyingFacetType;
+  private PluginDescriptor myPluginDescriptor;
 
   public static <T extends FacetType> T findInstance(Class<T> aClass) {
     return EP_NAME.findExtension(aClass);
@@ -46,7 +48,9 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    *                            subfacets to a facet of the specified type. If this parameter is {@code null} it will be possible to add facet of this type
    *                            directly to a module
    */
-  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName,
+  public FacetType(final @NotNull FacetTypeId<F> id,
+                   final @NotNull @NonNls String stringId,
+                   final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
                    final @Nullable FacetTypeId underlyingFacetType) {
     myId = id;
     myStringId = stringId;
@@ -59,7 +63,9 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    * @param stringId        unique string id of the facet type
    * @param presentableName name of this facet type which will be shown in UI
    */
-  public FacetType(final @NotNull FacetTypeId<F> id, final @NotNull @NonNls String stringId, final @NotNull String presentableName) {
+  public FacetType(final @NotNull FacetTypeId<F> id,
+                   final @NotNull @NonNls String stringId,
+                   final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
     this(id, stringId, presentableName, null);
   }
 
@@ -90,6 +96,15 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   @Nullable
   public FacetTypeId<?> getUnderlyingFacetType() {
     return myUnderlyingFacetType;
+  }
+
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
+  }
+
+  public final PluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
   }
 
   /**
@@ -160,7 +175,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    * @return editor
    */
   @Nullable
-  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, @NotNull FacetEditor[] editors) {
+  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, FacetEditor @NotNull [] editors) {
     return null;
   }
 }

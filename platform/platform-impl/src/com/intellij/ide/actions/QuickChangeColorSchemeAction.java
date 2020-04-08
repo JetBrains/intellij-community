@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
 public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
@@ -43,8 +40,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
                                 final EditorColorsScheme current,
                                 final EditorColorsScheme scheme,
                                 final boolean addScheme) {
-    group.add(new DumbAwareAction(SchemeManager.getDisplayName(scheme), "", scheme == current ? AllIcons.Actions.Forward
-                                                                                              : ourNotCurrentAction) {
+    group.add(new DumbAwareAction(scheme.getDisplayName(), "", scheme == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
@@ -66,7 +62,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     boolean isDarkEditorTheme = ColorUtil.isDark(scheme.getDefaultBackground());
 
     UIManager.LookAndFeelInfo suitableLaf = null;
-    String schemeName = SchemeManager.getDisplayName(scheme);
+    String schemeName = SchemeManager.getBaseName(scheme);
     for (UIManager.LookAndFeelInfo laf : lafManager.getInstalledLookAndFeels()) {
       if (laf instanceof UIThemeBasedLookAndFeelInfo &&
                schemeName.equals(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {
@@ -82,14 +78,13 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     if (isDarkEditorTheme &&
         (UIUtil.isUnderIntelliJLaF() || theme != null && !theme.isDark())) {
       if (/*applyAlways ||*/ Messages.showYesNoDialog(
-          ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
-          ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
-          Messages.YES_BUTTON, Messages.NO_BUTTON,
-          Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
+        ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
+        ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
+        Messages.getYesButton(), Messages.getNoButton(),
+        Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : new DarculaLookAndFeelInfo());
+        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : new DarculaLookAndFeelInfo(), true);
         lafManager.updateUI();
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
     } else if (!isDarkEditorTheme &&
@@ -99,18 +94,16 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
           (/*applyAlways ||*/ Messages.showYesNoDialog(
             ApplicationBundle.message("color.scheme.theme.change.confirmation", "bright", productName),
             ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
-            Messages.YES_BUTTON, Messages.NO_BUTTON,
+            Messages.getYesButton(), Messages.getNoButton(),
             Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES)) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLaf());
+        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLaf(), true);
         lafManager.updateUI();
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(DarculaInstaller::uninstall);
       }
     }
 
     if (onDone != null) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(onDone);
     }
   }

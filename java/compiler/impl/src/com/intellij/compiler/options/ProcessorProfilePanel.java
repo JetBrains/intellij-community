@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -73,20 +60,21 @@ public class ProcessorProfilePanel extends JPanel {
     super(new GridBagLayout());
     myProject = project;
 
-    myCbEnableProcessing = new JCheckBox("Enable annotation processing");
+    myCbEnableProcessing = new JCheckBox(JavaCompilerBundle.message("settings.enable.annotation.processing"));
 
     {
-      myRbClasspath = new JRadioButton("Obtain processors from project classpath");
-      myRbProcessorsPath = new JRadioButton("Processor path:");
-      myCbProcessorModulePath = new JCheckBox("Use --processor-module-path compiler option (for Java 9 and later)");
+      myRbClasspath = new JRadioButton(JavaCompilerBundle.message("settings.obtain.processors.from.project.classpath"));
+      myRbProcessorsPath = new JRadioButton(JavaCompilerBundle.message("settings.processor.path"));
+      myCbProcessorModulePath =
+        new JCheckBox(JavaCompilerBundle.message("settings.use.processor.module.path.compiler.option.for.java.9.and.later"));
       ButtonGroup group = new ButtonGroup();
       group.add(myRbClasspath);
       group.add(myRbProcessorsPath);
     }
 
     {
-      myRbRelativeToContentRoot = new JRadioButton("Module content root");
-      myRbRelativeToOutputRoot = new JRadioButton("Module output directory");
+      myRbRelativeToContentRoot = new JRadioButton(JavaCompilerBundle.message("settings.module.content.root"));
+      myRbRelativeToOutputRoot = new JRadioButton(JavaCompilerBundle.message("settings.module.output.directory"));
       final ButtonGroup group = new ButtonGroup();
       group.add(myRbRelativeToContentRoot);
       group.add(myRbRelativeToOutputRoot);
@@ -112,17 +100,17 @@ public class ProcessorProfilePanel extends JPanel {
 
     myProcessorTablePanel = new JPanel(new BorderLayout());
     myProcessorsModel = new ProcessorTableModel();
-    myProcessorTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation processors:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myProcessorTablePanel.setBorder(IdeBorderFactory.createTitledBorder(JavaCompilerBundle.message("settings.annotation.processors"), false, JBUI.insetsTop(8)).setShowLine(false));
     myProcessorTable = new JBTable(myProcessorsModel);
-    myProcessorTable.getEmptyText().setText("Compiler will run all automatically discovered processors");
+    myProcessorTable.getEmptyText().setText(JavaCompilerBundle.message("settings.compiler.will.run.all.automatically.discovered.processors"));
     myProcessorPanel = createTablePanel(myProcessorTable);
     myProcessorTablePanel.add(myProcessorPanel, BorderLayout.CENTER);
 
     myOptionsTablePanel = new JPanel(new BorderLayout());
     myOptionsModel = new OptionsTableModel();
-    myOptionsTablePanel.setBorder(IdeBorderFactory.createTitledBorder("Annotation processor options:", false, JBUI.insetsTop(13)).setShowLine(false));
+    myOptionsTablePanel.setBorder(IdeBorderFactory.createTitledBorder(JavaCompilerBundle.message("settings.annotation.processor.options"), false, JBUI.insetsTop(13)).setShowLine(false));
     myOptionsTable = new JBTable(myOptionsModel);
-    myOptionsTable.getEmptyText().setText("No processor-specific options configured");
+    myOptionsTable.getEmptyText().setText(JavaCompilerBundle.message("settings.no.processor.specific.options.configured"));
     myOptionsPanel = createTablePanel(myOptionsTable);
     myOptionsTablePanel.add(myOptionsPanel, BorderLayout.CENTER);
 
@@ -140,12 +128,11 @@ public class ProcessorProfilePanel extends JPanel {
     add(myCbProcessorModulePath,
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(2, 5, 0, 0), 0, 0));
 
-    add(ContextHelpLabel.create(
-      "Assume specified path is a 'module path': a path of JARs or directories containing packaged java modules." +
-      "\nIn order to be discovered and run from the module path an annotation processor should be packaged as a java module and registered with the ServiceLoader in the module declaration."
-    ), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(2, 2, 0, 0), 0, 0));
+    add(ContextHelpLabel.create(JavaCompilerBundle.message("settings.module.path.warning")),
+        new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                               JBUI.insets(2, 2, 0, 0), 0, 0));
 
-    myStoreGenSourcesLabel = new JLabel("Store generated sources relative to: ");
+    myStoreGenSourcesLabel = new JLabel(JavaCompilerBundle.message("settings.store.generated.sources.relative.to"));
     add(myStoreGenSourcesLabel,
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(15, 5, 0, 0), 0, 0));
     add(myRbRelativeToOutputRoot,
@@ -153,13 +140,15 @@ public class ProcessorProfilePanel extends JPanel {
     add(myRbRelativeToContentRoot,
         new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(15, 5, 0, 0), 0, 0));
 
-    myProductionLabel = new JLabel("Production sources directory:");
+    myProductionLabel = new JLabel(JavaCompilerBundle.message("settings.production.sources.directory"));
+    myProductionLabel.setLabelFor(myGeneratedProductionDirField);
     add(myProductionLabel,
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 5, 0, 0), 0, 0));
     add(myGeneratedProductionDirField,
         new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 5, 0, 0), 0, 0));
 
-    myTestLabel = new JLabel("Test sources directory:");
+    myTestLabel = new JLabel(JavaCompilerBundle.message("settings.test.sources.directory"));
+    myTestLabel.setLabelFor(myGeneratedTestsDirField);
     add(myTestLabel,
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 5, 0, 0), 0, 0));
     add(myGeneratedTestsDirField,
@@ -291,8 +280,8 @@ public class ProcessorProfilePanel extends JPanel {
     @Override
     public String getColumnName(int column) {
       switch (column) {
-        case 0: return "Option Name";
-        case 1: return "Value";
+        case 0: return JavaCompilerBundle.message("settings.column.option.name");
+        case 1: return JavaCompilerBundle.message("settings.column.value");
       }
       return super.getColumnName(column);
     }
@@ -368,7 +357,7 @@ public class ProcessorProfilePanel extends JPanel {
         for (Map.Entry<String, String> entry : options.entrySet()) {
           myRows.add(new KeyValuePair(entry.getKey(), entry.getValue()));
         }
-        Collections.sort(myRows, (o1, o2) -> o1.key.compareToIgnoreCase(o2.key));
+        myRows.sort((o1, o2) -> o1.key.compareToIgnoreCase(o2.key));
         fireTableRowsInserted(0, options.size()-1);
       }
     }
@@ -411,7 +400,7 @@ public class ProcessorProfilePanel extends JPanel {
     @Override
     public String getColumnName(int column) {
       if (column == 0) {
-        return "Processor FQ Name";
+        return JavaCompilerBundle.message("settings.processor.fq.name");
       }
       return super.getColumnName(column);
     }

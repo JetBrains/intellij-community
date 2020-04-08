@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public class TextMateSettingsUI implements ConfigurableUi<TextMateSettings>, Dis
     settings.loadState(state);
     if (myBundlesListPanel.isModified(state.getBundles())) {
       state.setBundles(myBundlesListPanel.getState());
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, "Loading TextMate Bundles", false,
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, TextMateBundle.message("textmate.loading.bundles.title"), false,
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {

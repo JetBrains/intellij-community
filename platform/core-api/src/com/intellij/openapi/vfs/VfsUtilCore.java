@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -18,6 +19,7 @@ import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,7 @@ public class VfsUtilCore {
 
   public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
   public static final char VFS_SEPARATOR_CHAR = '/';
+  public static final String VFS_SEPARATOR = "/";
 
   private static final String PROTOCOL_DELIMITER = ":";
 
@@ -74,7 +77,7 @@ public class VfsUtilCore {
   /**
    * @return {@code true} if {@code url} is located under one of {@code rootUrls} or equal to one of them
    */
-  public static boolean isUnder(@NotNull String url, @Nullable Collection<String> rootUrls) {
+  public static boolean isUnder(@NotNull @NonNls String url, @Nullable @NonNls Collection<String> rootUrls) {
     if (rootUrls == null || rootUrls.isEmpty()) return false;
 
     for (String excludesUrl : rootUrls) {
@@ -85,7 +88,7 @@ public class VfsUtilCore {
     return false;
   }
 
-  public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
+  public static boolean isEqualOrAncestor(@NotNull @NonNls String ancestorUrl, @NotNull @NonNls String fileUrl) {
     if (ancestorUrl.equals(fileUrl)) return true;
     if (StringUtil.endsWithChar(ancestorUrl, '/')) {
       return fileUrl.startsWith(ancestorUrl);
@@ -239,7 +242,7 @@ public class VfsUtilCore {
    * @throws IOException if file failed to be copied
    */
   @NotNull
-  public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String newName) throws IOException {
+  public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName) throws IOException {
     VirtualFile newChild = toDir.createChildData(requestor, newName);
     newChild.setBOM(file.getBOM());
     newChild.setBinaryContent(file.contentsToByteArray(), -1, -1, requestor);
@@ -247,7 +250,7 @@ public class VfsUtilCore {
   }
 
   @NotNull
-  public static InputStream byteStreamSkippingBOM(@NotNull byte[] buf, @NotNull VirtualFile file) throws IOException {
+  public static InputStream byteStreamSkippingBOM(byte @NotNull [] buf, @NotNull VirtualFile file) throws IOException {
     BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
     return inputStreamSkippingBOM(stream, file);
   }
@@ -269,7 +272,14 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
                                                    @Nullable final VirtualFileFilter filter,
                                                    @NotNull final ContentIterator iterator) {
-    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
+    return iterateChildrenRecursively(root, filter, iterator, new VirtualFileVisitor.Option[0]);
+  }
+
+  public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
+                                                   @Nullable final VirtualFileFilter filter,
+                                                   @NotNull final ContentIterator iterator,
+                                                   VirtualFileVisitor.@NotNull Option... options) {
+    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>(options) {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -381,15 +391,13 @@ public class VfsUtilCore {
     }
   }
 
-  @NotNull
-  public static byte[] loadBytes(@NotNull VirtualFile file) throws IOException {
+  public static byte @NotNull [] loadBytes(@NotNull VirtualFile file) throws IOException {
     return FileUtilRt.isTooLarge(file.getLength()) ?
            FileUtil.loadFirstAndClose(file.getInputStream(), FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
            file.contentsToByteArray();
   }
 
-  @NotNull
-  public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
+  public static VirtualFile @NotNull [] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
     return files.isEmpty() ? VirtualFile.EMPTY_ARRAY : files.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
@@ -480,11 +488,11 @@ public class VfsUtilCore {
           path = subURL.getPath();
         }
         catch (MalformedURLException e) {
-          throw new RuntimeException(VfsBundle.message("url.parse.unhandled.exception"), e);
+          throw new RuntimeException(CoreBundle.message("url.parse.unhandled.exception"), e);
         }
       }
       else {
-        throw new RuntimeException(new IOException(VfsBundle.message("url.parse.error", url.toExternalForm())));
+        throw new RuntimeException(new IOException(CoreBundle.message("url.parse.error", url.toExternalForm())));
       }
     }
     if (SystemInfo.isWindows) {
@@ -675,8 +683,7 @@ public class VfsUtilCore {
    * @param file the file
    * @return virtual files that represents paths from root to the passed file
    */
-  @NotNull
-  static VirtualFile[] getPathComponents(@NotNull VirtualFile file) {
+  static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
     List<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);
@@ -719,7 +726,7 @@ public class VfsUtilCore {
       super(virtualFiles);
     }
 
-    public DistinctVFilesRootsCollection(@NotNull VirtualFile[] collection) {
+    public DistinctVFilesRootsCollection(VirtualFile @NotNull [] collection) {
       super(collection);
     }
 

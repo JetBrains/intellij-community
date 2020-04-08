@@ -31,6 +31,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
@@ -200,5 +203,31 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     myCurrentElement = file;
     annotator.apply(file, result, this);
     myCurrentElement = null;
+  }
+
+  // to assert each AnnotationBuilder did call .create() in the end
+  private final List<B> myCreatedAnnotationBuilders = new ArrayList<>();
+  void annotationBuilderCreated(@NotNull B builder) {
+    synchronized (myCreatedAnnotationBuilders) {
+      myCreatedAnnotationBuilders.add(builder);
+    }
+  }
+  public void assertAllAnnotationsCreated() {
+    synchronized (myCreatedAnnotationBuilders) {
+      try {
+        for (B builder : myCreatedAnnotationBuilders) {
+          builder.assertAnnotationCreated();
+        }
+      }
+      finally {
+        myCreatedAnnotationBuilders.clear();
+      }
+    }
+  }
+
+  void annotationCreatedFrom(@NotNull B builder) {
+    synchronized (myCreatedAnnotationBuilders) {
+      myCreatedAnnotationBuilders.remove(builder);
+    }
   }
 }

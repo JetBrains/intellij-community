@@ -4,13 +4,14 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
@@ -42,6 +43,22 @@ internal class LegacyBridgeModifiableModuleModel(
   override fun newModule(filePath: String, moduleTypeId: String): Module =
     newModule(filePath, moduleTypeId, null)
 
+  override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
+    val moduleEntity = diff.addModuleEntity(
+      name = moduleName,
+      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+      source = object : EntitySource {}
+    )
+
+    val module = LegacyBridgeModuleImpl(moduleEntity.persistentId(), moduleName, project, null, entityStoreOnDiff, diff)
+    moduleManager.addUncommittedModule(module)
+    myModulesToAdd[moduleName] = module
+
+    module.init {}
+    module.setModuleType(moduleTypeId)
+    return module
+  }
+
   override fun newModule(filePath: String, moduleTypeId: String, options: MutableMap<String, String>?): Module {
     // TODO Handle filePath, add correct iml source with a path
 
@@ -68,6 +85,7 @@ internal class LegacyBridgeModifiableModuleModel(
     )
 
     val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
+    moduleManager.addUncommittedModule(moduleInstance)
     myModulesToAdd[moduleName] = moduleInstance
 
     moduleInstance.setModuleType(moduleTypeId)
@@ -109,6 +127,7 @@ internal class LegacyBridgeModifiableModuleModel(
     }
 
     if (myModulesToAdd.inverse().remove(module) != null) {
+      (ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent).removeUncommittedModule(module.name)
       Disposer.dispose(module)
     }
 
@@ -134,7 +153,9 @@ internal class LegacyBridgeModifiableModuleModel(
 
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
+    val moduleManager = ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent
     for (moduleToAdd in myModulesToAdd.values) {
+      moduleManager.removeUncommittedModule(moduleToAdd.name)
       Disposer.dispose(moduleToAdd)
     }
 
@@ -149,6 +170,14 @@ internal class LegacyBridgeModifiableModuleModel(
     myNewNameToModule.isNotEmpty()
 
   override fun commit() {
+    val diff = collectChanges()
+
+    WorkspaceModel.getInstance(project).updateProjectModel {
+      it.addDiff(diff)
+    }
+  }
+
+  fun collectChanges(): TypedEntityStorageBuilder {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     val storage = entityStoreOnDiff.current
@@ -159,49 +188,15 @@ internal class LegacyBridgeModifiableModuleModel(
       diff.removeEntity(moduleEntity)
     }
 
-    moduleManager.setNewModuleInstances(myModulesToAdd.values.toList())
-
-    val changedModuleIdsMap = mutableMapOf<ModuleId, ModuleId>()
     for (entry in myNewNameToModule.entries) {
       val entity = storage.resolve(entry.value.moduleEntityId) ?:
         error("Unable to resolve module by id: ${entry.value.moduleEntityId}")
       diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
         name = entry.key
-        changedModuleIdsMap[entry.value.moduleEntityId] = this.persistentId()
       }
     }
-    updateModuleDependencyIfNeeded(changedModuleIdsMap)
 
-    WorkspaceModel.getInstance(project).updateProjectModel {
-      it.addDiff(diff)
-    }
-  }
-
-  private fun updateModuleDependencyIfNeeded(changedModulesIdMap: Map<ModuleId, ModuleId>) {
-    if (changedModulesIdMap.isEmpty()) return
-
-    // Walkthrough the whole modules and update dependencies for them
-    entityStoreOnDiff.current.entities(ModuleEntity::class.java).forEach { moduleEntity ->
-      var containsOldDependency = false
-      val newDependencies = moduleEntity.dependencies.map {
-        when(it) {
-          is ModuleDependencyItem.Exportable.ModuleDependency -> {
-            val newModuleId = changedModulesIdMap[it.module]
-            if (newModuleId != null) {
-              containsOldDependency = true
-              it.copy(module = newModuleId)
-            } else it
-          }
-          else -> it
-        }
-      }
-
-      if (containsOldDependency) {
-        diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-          dependencies = newDependencies
-        }
-      }
-    }
+    return diff
   }
 
   override fun renameModule(module: Module, newName: String) {
@@ -217,7 +212,7 @@ internal class LegacyBridgeModifiableModuleModel(
     }
 
     if (oldModule != null) {
-      throw ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", newName), newName)
+      throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)
     }
   }
 

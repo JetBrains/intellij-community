@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
@@ -62,16 +62,16 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         });
       }
     };
-    mySuitesTree.getEmptyText().appendText("No coverage suites configured.");
+    mySuitesTree.getEmptyText().appendText(CoverageBundle.message("no.coverage.suites.configured"));
     mySuitesTree.setRootVisible(false);
     mySuitesTree.setShowsRootHandles(false);
     TreeUtil.installActions(mySuitesTree);
     TreeUtil.expandAll(mySuitesTree);
     TreeUtil.promiseSelectFirst(mySuitesTree);
     mySuitesTree.setMinimumSize(new Dimension(25, -1));
-    setOKButtonText("Show selected");
+    setOKButtonText(CoverageBundle.message("coverage.data.show.selected.button"));
     init();
-    setTitle("Choose Coverage Suite to Display");
+    setTitle(CoverageBundle.message("choose.coverage.suite.to.display"));
   }
 
   @Override
@@ -111,15 +111,14 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         continue;
       }
       if (!Comparing.equal(engine, suite.getCoverageEngine())) {
-        return Collections.singletonList(new ValidationInfo("Cannot show coverage reports from different engines.", mySuitesTree));
+        return Collections.singletonList(new ValidationInfo(CoverageBundle.message("cannot.show.coverage.reports.from.different.engines"), mySuitesTree));
       }
     }
     return super.doValidateAll();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), new NoCoverageAction(), getCancelAction()};
   }
 
@@ -132,7 +131,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private static String getCoverageRunnerTitle(CoverageRunner coverageRunner) {
-    return coverageRunner.getPresentableName() + " Coverage";
+    return CoverageBundle.message("coverage.data.runner.name", coverageRunner.getPresentableName());
   }
 
   @Nullable
@@ -166,7 +165,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     groupSuites(grouped, myCoverageManager.getSuites(), myEngine);
     final CoverageSuitesBundle currentSuite = myCoverageManager.getCurrentSuitesBundle();
     final List<CoverageRunner> runners = new ArrayList<>(grouped.keySet());
-    Collections.sort(runners, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+    runners.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     for (CoverageRunner runner : runners) {
       final DefaultMutableTreeNode runnerNode = new DefaultMutableTreeNode(getCoverageRunnerTitle(runner));
       final Map<String, List<CoverageSuite>> providers = grouped.get(runner);
@@ -179,7 +178,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           runnerNode.add(remoteNode);
         }
         final List<CoverageSuite> suites = providers.get(providersKey);
-        Collections.sort(suites, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
+        suites.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
         for (CoverageSuite suite : suites) {
           final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
           treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);
@@ -259,7 +258,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private class NoCoverageAction extends DialogWrapperAction {
     NoCoverageAction() {
-      super("&No Coverage");
+      super(CoverageBundle.message("coverage.data.no.coverage.button"));
     }
 
     @Override
@@ -271,7 +270,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private class AddExternalSuiteAction extends AnAction {
     AddExternalSuiteAction() {
-      super("Add", "Add", IconUtil.getAddIcon());
+      super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, mySuitesTree);
     }
 
@@ -290,7 +289,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
         final CoverageRunner coverageRunner = getCoverageRunner(file);
         if (coverageRunner == null) {
-          Messages.showErrorDialog(myProject, "No coverage runner available for " + file.getName(), CommonBundle.getErrorTitle());
+          Messages.showErrorDialog(myProject, CoverageBundle.message("no.coverage.runner.available.for", file.getName()), CommonBundle.getErrorTitle());
           return;
         }
 
@@ -340,7 +339,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private class DeleteSuiteAction extends AnAction {
     DeleteSuiteAction() {
-      super("Delete", "Delete", PlatformIcons.DELETE_ICON);
+      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);
     }
 

@@ -145,8 +145,8 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       final List<PyType> types = new ArrayList<>();
       final List<PyType> matchedTypes = new ArrayList<>();
       for (PyCallExpression.PyArgumentsMapping result : results) {
-        final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();
-        if (markedCallee == null) continue;
+        final PyCallableType callableType = result.getCallableType();
+        if (callableType == null) continue;
 
         boolean matched = true;
         for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
@@ -156,7 +156,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
             matched = false;
           }
         }
-        final PyType type = markedCallee.getCallableType().getCallType(context, this);
+        final PyType type = callableType.getCallType(context, this);
         types.add(type);
         if (matched) {
           matchedTypes.add(type);

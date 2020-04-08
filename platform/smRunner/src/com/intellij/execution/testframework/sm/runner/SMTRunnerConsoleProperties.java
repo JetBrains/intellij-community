@@ -97,9 +97,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return myConfiguration;
   }
 
-  @Nullable
   @Override
-  protected AnAction[] createImportActions() {
+  protected AnAction @Nullable [] createImportActions() {
     return new AnAction[] {new ImportTestsGroup(this), new ImportTestsFromFileAction()};
   }
 

@@ -32,9 +32,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGroup {
 
   @NotNull

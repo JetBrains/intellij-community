@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -42,7 +43,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -72,6 +72,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ThreeState;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -369,15 +370,19 @@ public final class DaemonListeners implements Disposable {
         removeQuickFixesContributedByPlugin(pluginDescriptor);
       }
     });
+    connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (root, setting) -> {
+      WriteAction.run(() -> {
+        PsiFile file = root.getContainingFile();
+        if (file != null) {
+          // force clearing all PSI caches, including those in WholeFileInspectionFactory
+          ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+        }
+      });
+    });
   }
 
   private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(ExtensionPointName<U> name, final String message) {
-    name.addExtensionPointListener(new ExtensionPointAdapter<U>() {
-      @Override
-      public void extensionListChanged() {
-        stopDaemonAndRestartAllFiles(message);
-      }
-    }, this);
+    name.addExtensionPointListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
   private boolean worthBothering(final Document document, Project project) {
@@ -406,9 +411,8 @@ public final class DaemonListeners implements Disposable {
     if (file instanceof PsiCodeFragment) return true;
     if (ScratchUtil.isScratch(virtualFile)) return listeners.canUndo(virtualFile);
     if (!ModuleUtilCore.projectContainsFile(project, virtualFile, false)) return false;
-    Result vcs = listeners.vcsThinksItChanged(virtualFile);
-    if (vcs == Result.CHANGED) return true;
-    if (vcs == Result.UNCHANGED) return false;
+    ThreeState vcs = listeners.mayChangeBasedOnVcsStatus(virtualFile);
+    if (vcs != ThreeState.UNSURE) return vcs.toBoolean();
 
     return listeners.canUndo(virtualFile);
   }
@@ -428,22 +432,24 @@ public final class DaemonListeners implements Disposable {
     return false;
   }
 
-  private enum Result {
-    CHANGED, UNCHANGED, NOT_SURE
-  }
-
   @NotNull
-  private Result vcsThinksItChanged(@NotNull VirtualFile virtualFile) {
+  private ThreeState mayChangeBasedOnVcsStatus(@NotNull VirtualFile virtualFile) {
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
-    if (activeVcs == null) return Result.NOT_SURE;
+    if (activeVcs == null) return ThreeState.UNSURE;
 
     FilePath path = VcsUtil.getFilePath(virtualFile);
     boolean vcsIsThinking = !VcsDirtyScopeManager.getInstance(myProject).whatFilesDirty(Collections.singletonList(path)).isEmpty();
-    if (vcsIsThinking) return Result.NOT_SURE; // do not modify file which is in the process of updating
+    if (vcsIsThinking) return ThreeState.UNSURE; // do not modify file which is in the process of updating
 
     FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-    if (status == FileStatus.UNKNOWN) return Result.NOT_SURE;
-    return status == FileStatus.MODIFIED || status == FileStatus.ADDED ? Result.CHANGED : Result.UNCHANGED;
+    if (status == FileStatus.UNKNOWN) return ThreeState.UNSURE;
+    if (status == FileStatus.MERGE ||
+        status == FileStatus.MERGED_WITH_CONFLICTS ||
+        status == FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
+        status == FileStatus.MERGED_WITH_PROPERTY_CONFLICTS) {
+      return ThreeState.NO;
+    }
+    return ThreeState.fromBoolean(status != FileStatus.NOT_CHANGED);
   }
 
   private class MyApplicationListener implements ApplicationListener {
@@ -544,16 +550,20 @@ public final class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyAnActionListener implements AnActionListener {
-    private final AnAction escapeAction;
-
-    private MyAnActionListener() {
-      escapeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
-    }
+  private final class MyAnActionListener implements AnActionListener {
+    private AnAction cachedEscapeAction;
 
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      myEscPressed = action == escapeAction;
+      if (cachedEscapeAction == null) {
+        myEscPressed = IdeActions.ACTION_EDITOR_ESCAPE.equals(event.getActionManager().getId(action));
+        if (myEscPressed) {
+          cachedEscapeAction = action;
+        }
+      }
+      else {
+        myEscPressed = cachedEscapeAction == action;
+      }
     }
 
     @Override
@@ -635,7 +645,7 @@ public final class DaemonListeners implements Disposable {
   }
 
   private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
-    if (myDaemonCodeAnalyzer.doRestart() && !myProject.isDisposed()) {
+    if (myDaemonCodeAnalyzer.doRestart(reason) && !myProject.isDisposed()) {
       myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -215,7 +201,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       project.setFilters(projectFilters);
     }
 
-    Collections.sort(commonFilters, (f1, f2) -> f1.getName().compareTo(f2.getName()));
+    commonFilters.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
     commonFilters.add(0, MantisFilter.newUndefined());
 
     MantisProject undefined = MantisProject.newUndefined();
@@ -279,8 +265,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private ProjectData[] fetchUserProjects(@NotNull MantisConnectPortType soap) throws Exception {
+  private ProjectData @NotNull [] fetchUserProjects(@NotNull MantisConnectPortType soap) throws Exception {
     try {
       return soap.mc_projects_get_user_accessible(getUsername(), getPassword());
     }
@@ -289,8 +274,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private FilterData[] fetchProjectFilters(@NotNull MantisConnectPortType soap, @NotNull MantisProject project) throws Exception {
+  private FilterData @NotNull [] fetchProjectFilters(@NotNull MantisConnectPortType soap, @NotNull MantisProject project) throws Exception {
     try {
       return soap.mc_filter_get(getUsername(), getPassword(), BigInteger.valueOf(project.getId()));
     }
@@ -299,9 +283,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private IssueHeaderData[] fetchProjectIssues(@NotNull MantisConnectPortType soap, @NotNull MantisProject project,
-                                               @NotNull MantisFilter filter, int pageNumber, int pageSize) throws Exception {
+  private IssueHeaderData @NotNull [] fetchProjectIssues(@NotNull MantisConnectPortType soap, @NotNull MantisProject project,
+                                                         @NotNull MantisFilter filter, int pageNumber, int pageSize) throws Exception {
     try {
       if (filter.isUnspecified()) {
         return soap.mc_project_get_issue_headers(getUsername(), getPassword(),

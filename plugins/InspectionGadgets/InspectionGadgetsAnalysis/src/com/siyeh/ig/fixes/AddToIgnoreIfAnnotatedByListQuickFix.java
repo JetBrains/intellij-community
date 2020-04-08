@@ -33,8 +33,7 @@ public class AddToIgnoreIfAnnotatedByListQuickFix {
 
   private AddToIgnoreIfAnnotatedByListQuickFix() {}
 
-  @NotNull
-  public static InspectionGadgetsFix[] build(PsiModifierListOwner modifierListOwner, List<String> configurationList) {
+  public static InspectionGadgetsFix @NotNull [] build(PsiModifierListOwner modifierListOwner, List<String> configurationList) {
     final List<InspectionGadgetsFix> fixes = build(modifierListOwner, configurationList, new ArrayList<>());
     return fixes.isEmpty() ? InspectionGadgetsFix.EMPTY_ARRAY : fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }

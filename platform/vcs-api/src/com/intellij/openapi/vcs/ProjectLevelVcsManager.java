@@ -124,8 +124,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Returns the list of VCSes used by at least one module in the project.
    */
-  @NotNull
-  public abstract AbstractVcs[] getAllActiveVcss();
+  public abstract AbstractVcs @NotNull [] getAllActiveVcss();
 
   public abstract boolean hasActiveVcss();
 
@@ -196,8 +195,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VirtualFile[] getAllVersionedRoots();
 
-  @NotNull
-  public abstract VcsRoot[] getAllVcsRoots();
+  public abstract VcsRoot @NotNull [] getAllVcsRoots();
 
   /**
    * @deprecated Use just {@link #setDirectoryMappings(List)}.
@@ -240,4 +238,26 @@ public abstract class ProjectLevelVcsManager {
 
   @NotNull
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
+
+  /**
+   * Shows VCS console.
+   * <p>
+   * Does nothing if {@code vcs.showConsole} turned off.
+   */
+  @CalledInAwt
+  public abstract void showConsole();
+
+  /**
+   * Shows VCS console and then performs the given command.
+   * <p>
+   * Does nothing if {@code vcs.showConsole} turned off.
+   */
+  @CalledInAwt
+  public abstract void showConsole(@Nullable Runnable then);
+
+  /**
+   * Navigates to the end in VCS console.
+   */
+  @CalledInAwt
+  public abstract void scrollConsoleToTheEnd();
 }

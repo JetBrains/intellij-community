@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,9 +18,12 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.emulator.ColorPalette;
+import com.jediterm.terminal.ui.TerminalAction;
+import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -44,9 +36,6 @@ import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * @author traff
- */
 public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider implements Disposable {
   private final MyColorsSchemeDelegate myColorsScheme;
   private JBTerminalSchemeColorPalette myColorPalette;
@@ -77,28 +66,75 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   private final Set<TerminalSettingsListener> myListeners = new HashSet<>();
 
   @Override
-  public KeyStroke[] getCopyKeyStrokes() {
-    return getKeyStrokesByActionId("$Copy");
+  public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
+    TerminalActionPresentation presentation = super.getNewSessionActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.NewSession.text"),
+                                          presentation.getKeyStrokes());
   }
 
   @Override
-  public KeyStroke[] getPasteKeyStrokes() {
-    return getKeyStrokesByActionId("$Paste");
+  public @NotNull TerminalActionPresentation getOpenUrlActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.OpenAsUrl.text"), Collections.emptyList());
   }
 
   @Override
-  public KeyStroke[] getNextTabKeyStrokes() {
-    return getKeyStrokesByActionId("NextTab");
+  public @NotNull TerminalActionPresentation getCopyActionPresentation() {
+    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Copy.text")),
+                                          getKeyStrokesByActionId(IdeActions.ACTION_COPY));
   }
 
   @Override
-  public KeyStroke[] getPreviousTabKeyStrokes() {
-    return getKeyStrokesByActionId("PreviousTab");
+  public @NotNull TerminalActionPresentation getPasteActionPresentation() {
+    return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$Paste.text")),
+                                          getKeyStrokesByActionId(IdeActions.ACTION_PASTE));
   }
 
   @Override
-  public KeyStroke[] getFindKeyStrokes() {
-    return getKeyStrokesByActionId("Find");
+  public @NotNull TerminalActionPresentation getClearBufferActionPresentation() {
+    TerminalActionPresentation presentation = super.getClearBufferActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.ClearBuffer.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getPageUpActionPresentation() {
+    TerminalActionPresentation presentation = super.getPageUpActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.PageUp.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getPageDownActionPresentation() {
+    TerminalActionPresentation presentation = super.getPageDownActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.PageDown.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getLineUpActionPresentation() {
+    TerminalActionPresentation presentation = super.getLineUpActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.LineUp.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getLineDownActionPresentation() {
+    TerminalActionPresentation presentation = super.getLineDownActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.LineDown.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
+    TerminalActionPresentation presentation = super.getCloseSessionActionPresentation();
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.CloseSession.text"),
+                                          presentation.getKeyStrokes());
+  }
+
+  @Override
+  public @NotNull TerminalActionPresentation getFindActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.Find.text"),
+                                          getKeyStrokesByActionId(IdeActions.ACTION_FIND));
   }
 
   @NotNull
@@ -112,8 +148,24 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     return colorPalette;
   }
 
-  private KeyStroke[] getKeyStrokesByActionId(String actionId) {
-    java.util.List<KeyStroke> keyStrokes = new ArrayList<>();
+  public static @NotNull String getGotoNextSplitTerminalActionText(boolean forward) {
+    return forward ? ActionsBundle.message("action.NextSplitter.text")
+                   : ActionsBundle.message("action.PrevSplitter.text");
+  }
+
+  public @NotNull TerminalAction getGotoNextSplitTerminalAction(@Nullable JBTerminalWidgetListener listener, boolean forward) {
+    String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
+    String text = UIUtil.removeMnemonic(getGotoNextSplitTerminalActionText(forward));
+    return new TerminalAction(new TerminalActionPresentation(text, getKeyStrokesByActionId(actionId)), event -> {
+      if (listener != null) {
+        listener.gotoNextSplitTerminal(forward);
+      }
+      return true;
+    });
+  }
+
+  private static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
+    List<KeyStroke> keyStrokes = new ArrayList<>();
     Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     for (Shortcut sc : shortcuts) {
       if (sc instanceof KeyboardShortcut) {
@@ -121,8 +173,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
         keyStrokes.add(ks);
       }
     }
-
-    return keyStrokes.toArray(new KeyStroke[0]);
+    return keyStrokes;
   }
 
   @Override
@@ -144,17 +195,30 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     }
   }
 
-  @NotNull
-  public KeyStroke[] getShowTabsKeyStrokes() {
-    return getKeyStrokesByActionId(ShowContentAction.ACTION_ID);
+  @Override
+  public @NotNull TerminalActionPresentation getNextTabActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectNextTab.text"), getKeyStrokesByActionId("NextTab"));
   }
 
-  public KeyStroke[] getMoveTabRightKeyStrokes() {
-    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabRight");
+  @Override
+  public @NotNull TerminalActionPresentation getPreviousTabActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.SelectPreviousTab.text"),
+                                          getKeyStrokesByActionId("PreviousTab"));
   }
 
-  public KeyStroke[] getMoveTabLeftKeyStrokes() {
-    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabLeft");
+  public @NotNull TerminalActionPresentation getMoveTabRightActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.MoveRight.text"),
+                                          getKeyStrokesByActionId("Terminal.MoveToolWindowTabRight"));
+  }
+
+  public @NotNull TerminalActionPresentation getMoveTabLeftActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.MoveLeft.text"),
+                                          getKeyStrokesByActionId("Terminal.MoveToolWindowTabLeft"));
+  }
+
+  public @NotNull TerminalActionPresentation getShowTabsActionPresentation() {
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.ShowTabs.text"),
+                                          getKeyStrokesByActionId(ShowContentAction.ACTION_ID));
   }
 
   static class MyColorsSchemeDelegate implements EditorColorsScheme {
@@ -207,6 +271,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     @Override
     public void setName(String name) {
       getGlobal().setName(name);
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGlobal().getDisplayName();
     }
 
     @Override

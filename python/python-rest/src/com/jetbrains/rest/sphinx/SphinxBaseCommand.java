@@ -26,6 +26,7 @@ import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,13 +65,13 @@ public class SphinxBaseCommand {
     private AskForWorkDir(Project project) {
       super(project);
 
-      setTitle("Set Sphinx Working Directory: ");
+      setTitle(RestBundle.message("sphinx.set.working.directory.dialog.title"));
       init();
       VirtualFile baseDir =  project.getBaseDir();
       String path = baseDir != null? baseDir.getPath() : "";
       myInputFile.setText(path);
       myInputFile.setEditable(false);
-      myInputFile.addBrowseFolderListener("Choose Sphinx Working Directory (Containing Makefile): ", null, project,
+      myInputFile.addBrowseFolderListener(RestBundle.message("sphinx.choose.working.directory.browse.folder.title"), null, project,
                                           FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
       myPanel.setPreferredSize(new Dimension(600, 20));
@@ -100,7 +101,7 @@ public class SphinxBaseCommand {
         .run();
     }
     catch (ExecutionException e) {
-      Messages.showErrorDialog(e.getMessage(), "ReStructuredText Error");
+      Messages.showErrorDialog(e.getMessage(), RestBundle.message("sphinx.restructured.text.error"));
     }
   }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.net.NetUtils;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,17 +123,14 @@ public class BrowserStarter {
   }
 
   private void showBrowserOpenTimeoutNotification() {
-    NotificationGroup group = NotificationGroup.balloonGroup("URL does not respond notification");
+    NotificationGroup group =
+      NotificationGroup.balloonGroup("URL does not respond notification", XmlBundle.message("browser.notification.timeout.group"));
     NotificationType type = NotificationType.ERROR;
 
-    String title = "URL does not respond";
+    String title = XmlBundle.message("browser.notification.timeout.title");
     String url = Objects.requireNonNull(mySettings.getUrl());
     String openUrlDescription = "open_url";
-    String content = String.format(
-      "Unable to open <a href=\"%s\">%s</a> in the browser because the URL does not respond.",
-      openUrlDescription,
-      url
-    );
+    String content = XmlBundle.message("browser.notification.timeout.text", url, openUrlDescription);
 
     Notification openBrowserNotification = group.createNotification(title, content, type, (notification, event) -> {
       if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;

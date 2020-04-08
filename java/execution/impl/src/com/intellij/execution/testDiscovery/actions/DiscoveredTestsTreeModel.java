@@ -106,8 +106,7 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return ClassUtil.getJVMClassName(c);
   }
 
-  @NotNull
-  synchronized TestMethodUsage[] getTestMethods() {
+  synchronized TestMethodUsage @NotNull [] getTestMethods() {
     return myTests
       .entrySet()
       .stream()

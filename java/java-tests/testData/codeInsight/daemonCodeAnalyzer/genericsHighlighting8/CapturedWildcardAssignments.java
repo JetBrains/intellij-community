@@ -20,7 +20,7 @@ class Test {
     public static void bar() {
       <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends java.util.Iterator>>', required: 'java.lang.Class<? extends java.util.Iterator<?>>'">Class<? extends Iterator<?>> c = foo();</error>
     }
-  
+
     public static Class<? extends Iterator> foo() {
       return null;
     }

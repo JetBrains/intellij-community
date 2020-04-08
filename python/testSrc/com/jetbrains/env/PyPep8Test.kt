@@ -32,6 +32,25 @@ class PyPep8Test : PyEnvTestCase() {
     )
   }
 
+  @Test
+  fun suppressingWarningsWithNoqaComments() {
+    runPythonTest(
+      Pep8Task("""
+        def func(x, y):
+            func (x , y)  # noqa
+            func (x , y)  # noqa E211,E203
+            func<weak_warning descr="PEP 8: E211 whitespace before '('"> </weak_warning>(x<weak_warning descr="PEP 8: E203 whitespace before ','"> </weak_warning>, y)  # noqa: E300 # unrelated code
+            func<weak_warning descr="PEP 8: E211 whitespace before '('"> </weak_warning>(x , y)  # noqa: E203 # specific code
+            func (x , y)  # noqa: E2 # common prefix
+        
+        
+        
+        def<weak_warning descr="PEP 8: E271 multiple spaces after keyword">   </weak_warning>func2():  # noqa: E303 # blanks lines error
+            pass  # noqa # error on the comment itself  
+      """.trimIndent())
+    )
+  }
+
   private class Pep8Task(private val text: String) : PyExecutionFixtureTestTask(null) {
 
     override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {

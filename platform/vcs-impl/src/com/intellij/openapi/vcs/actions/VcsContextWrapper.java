@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -91,9 +77,8 @@ public class VcsContextWrapper implements VcsContext {
     return getSelectedFilesStream().findFirst().orElse(null);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getSelectedFiles() {
+  public VirtualFile @NotNull [] getSelectedFiles() {
     VirtualFile[] fileArray = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
     if (fileArray != null) {
       return Stream.of(fileArray).filter(VirtualFile::isInLocalFileSystem).toArray(VirtualFile[]::new);
@@ -137,9 +122,8 @@ public class VcsContextWrapper implements VcsContext {
     return file != null ? file : ArrayUtil.getFirstElement(VcsDataKeys.IO_FILE_ARRAY.getData(myContext));
   }
 
-  @Nullable
   @Override
-  public File[] getSelectedIOFiles() {
+  public File @Nullable [] getSelectedIOFiles() {
     File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(myContext);
     if (!ArrayUtil.isEmpty(files)) return files;
 
@@ -157,9 +141,8 @@ public class VcsContextWrapper implements VcsContext {
     return Refreshable.PANEL_KEY.getData(myContext);
   }
 
-  @NotNull
   @Override
-  public FilePath[] getSelectedFilePaths() {
+  public FilePath @NotNull [] getSelectedFilePaths() {
     return getSelectedFilePathsStream().toArray(FilePath[]::new);
   }
 
@@ -167,13 +150,13 @@ public class VcsContextWrapper implements VcsContext {
   @Override
   public Stream<FilePath> getSelectedFilePathsStream() {
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
+    Stream<FilePath> pathStream = VcsDataKeys.FILE_PATH_STREAM.getData(myContext);
 
     return concat(
       StreamEx.ofNullable(path),
-      stream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
-      getSelectedFilesStream().map(VcsUtil::getFilePath),
+      pathStream != null ? pathStream : getSelectedFilesStream().map(VcsUtil::getFilePath),
       stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
-    );
+    ).distinct();
   }
 
   @Nullable
@@ -182,15 +165,13 @@ public class VcsContextWrapper implements VcsContext {
     return ArrayUtil.getFirstElement(getSelectedFilePaths());
   }
 
-  @Nullable
   @Override
-  public ChangeList[] getSelectedChangeLists() {
+  public ChangeList @Nullable [] getSelectedChangeLists() {
     return VcsDataKeys.CHANGE_LISTS.getData(myContext);
   }
 
-  @Nullable
   @Override
-  public Change[] getSelectedChanges() {
+  public Change @Nullable [] getSelectedChanges() {
     return VcsDataKeys.CHANGES.getData(myContext);
   }
 }

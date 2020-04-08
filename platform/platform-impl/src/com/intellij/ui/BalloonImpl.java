@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.application.Topics;
@@ -34,7 +34,6 @@ import com.intellij.ui.jcef.HwFacadeNonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -158,7 +157,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
           final boolean moveChanged = insideBalloon != myLastMoveWasInsideBalloon;
           myLastMoveWasInsideBalloon = insideBalloon;
           if (moveChanged) {
-            if (insideBalloon && myFadeoutAlarm.getActiveRequestCount() > 0) { //Pause hiding timer when mouse is hover
+            if (insideBalloon && !myFadeoutAlarm.isEmpty()) { //Pause hiding timer when mouse is hover
               myFadeoutAlarm.cancelAllRequests();
               myFadeoutRequestDelay -= System.currentTimeMillis() - myFadeoutRequestMillis;
             }
@@ -468,7 +467,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     myTracker = tracker;
     myTracker.init(this);
 
-    JRootPane root = ObjectUtils.notNull(UIUtil.getRootPane(comp));
+    JRootPane root = Objects.requireNonNull(UIUtil.getRootPane(comp));
 
     myVisible = true;
 
@@ -748,7 +747,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
         @Override
         public void layout(@NotNull Rectangle lpBounds) {
-          if (!myCloseButton.isVisible()) {
+          if (myCloseButton == null || !myCloseButton.isVisible()) {
             return;
           }
 
@@ -953,7 +952,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     Topics.subscribe(FrameStateListener.TOPIC, this, new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
-        if (myFadeoutAlarm.getActiveRequestCount() > 0) {
+        if (!myFadeoutAlarm.isEmpty()) {
           myFadeoutAlarm.cancelAllRequests();
           mySmartFadeoutDelay = myFadeoutRequestDelay - (int)(System.currentTimeMillis() - myFadeoutRequestMillis);
           if (mySmartFadeoutDelay <= 0) {
@@ -1069,10 +1068,11 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (myAnimator != null) {
           Disposer.dispose(myAnimator);
         }
-
-        myLayeredPane.remove(myComp);
-        myLayeredPane.revalidate();
-        myLayeredPane.repaint();
+        if (myComp != null) {
+          myLayeredPane.remove(myComp);
+          myLayeredPane.revalidate();
+          myLayeredPane.repaint();
+        }
         disposeRunnable.run();
       }
     }

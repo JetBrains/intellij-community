@@ -3,8 +3,6 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -242,11 +240,8 @@ public class Py3CompletionTest extends PyTestCase {
   public void testMockPatchObject1() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
-    assertNotNull(libDir);
-
     runWithAdditionalClassEntryInSdkRoots(
-      libDir,
+      testName + "/lib",
       () -> {
         myFixture.configureByFile(testName + "/a.py");
         myFixture.completeBasic();
@@ -259,11 +254,8 @@ public class Py3CompletionTest extends PyTestCase {
   public void testMockPatchObject2() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
-    assertNotNull(libDir);
-
     runWithAdditionalClassEntryInSdkRoots(
-      libDir,
+      testName + "/lib",
       () -> {
         myFixture.configureByFile(testName + "/a.py");
         myFixture.completeBasic();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;
@@ -139,7 +139,7 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * Clears all {@link com.intellij.psi.util.CachedValue} depending on {@link PsiModificationTracker#MODIFICATION_COUNT} and resolve caches.
-   * Can be used to reduce memory consumption in batch operations sequentially processing multiple files. Should be invoked on Swing thread.
+   * Can be used to reduce memory consumption in batch operations sequentially processing multiple files. Should be invoked on write thread.
    */
   public abstract void dropPsiCaches();
 

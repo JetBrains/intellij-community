@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
@@ -13,18 +13,18 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ProjectJdkTest extends HeavyPlatformTestCase {
   public void testDoesntCrashOnJdkRootDisappearance() throws Exception {
-    VirtualFile nDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("nroot", true)));
+    VirtualFile nDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("nroot", true)));
     String nUrl = nDir.getUrl();
     ProjectJdkImpl jdk = WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<ProjectJdkImpl, Exception>)()->{
       ProjectJdkImpl myJdk = (ProjectJdkImpl)ProjectJdkTable.getInstance().createSdk("my", JavaSdk.getInstance());

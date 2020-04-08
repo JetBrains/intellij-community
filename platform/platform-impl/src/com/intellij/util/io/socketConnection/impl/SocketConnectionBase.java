@@ -33,9 +33,6 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author nik
- */
 public abstract class SocketConnectionBase<Request extends AbstractRequest, Response extends AbstractResponse> implements SocketConnection<Request, Response> {
   private static final Logger LOG = Logger.getInstance(ServerSocketConnectionImpl.class);
   private final Object myLock = new Object();

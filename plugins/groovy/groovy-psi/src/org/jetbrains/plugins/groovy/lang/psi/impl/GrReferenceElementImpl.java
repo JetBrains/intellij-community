@@ -157,8 +157,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   public abstract boolean isFullyQualified();
 
   @Override
-  @NotNull
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     final GrTypeArgumentList typeArgsList = getTypeArgumentList();
     if (typeArgsList == null) return PsiType.EMPTY_ARRAY;
 

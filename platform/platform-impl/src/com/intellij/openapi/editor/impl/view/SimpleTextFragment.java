@@ -12,12 +12,11 @@ import java.util.function.Consumer;
  * Fragment of text for which complex layout is not required. Rendering is the same as if each character would be rendered on its own.
  */
 class SimpleTextFragment extends TextFragment {
-  @NotNull
-  private final char[] myText;
+  private final char @NotNull [] myText;
   @NotNull
   private final Font myFont;
 
-  SimpleTextFragment(@NotNull char[] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
+  SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
     super(end - start);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();

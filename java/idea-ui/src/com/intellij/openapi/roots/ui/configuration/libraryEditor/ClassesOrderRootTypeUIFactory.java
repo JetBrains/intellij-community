@@ -2,8 +2,8 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
@@ -31,12 +31,12 @@ public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public String getNodeText() {
-    return ProjectBundle.message("library.classes.node");
+    return JavaUiBundle.message("library.classes.node");
   }
 
   private static class MySdkPathEditor extends SdkPathEditor {
     MySdkPathEditor(FileChooserDescriptor descriptor) {
-      super(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, descriptor);
+      super(JavaUiBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, descriptor);
     }
 
     @Override

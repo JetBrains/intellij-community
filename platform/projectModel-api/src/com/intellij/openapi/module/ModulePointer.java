@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.module;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * This allows you to get a Module instance via {@link #getModule()} which is more efficient than {@link ModuleManager#findModuleByName}, and
  * {@link #getModuleName() module name} encapsulated inside the instance will be properly updated if the module it refers to is renamed.
  */
+@ApiStatus.NonExtendable
 public interface ModulePointer {
   @Nullable 
   Module getModule();

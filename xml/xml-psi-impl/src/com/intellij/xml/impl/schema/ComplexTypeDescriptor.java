@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -25,7 +10,12 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -34,15 +24,18 @@ import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-/**
- * @author Mike
- */
 public class ComplexTypeDescriptor extends TypeDescriptor {
   protected final XmlNSDescriptorImpl myDocumentDescriptor;
 
@@ -313,14 +306,14 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     XmlTag rootTag = info.documentDescriptor.getTag();
     XmlNSDescriptorImpl nsDescriptor = XmlNSDescriptorImpl.getNSDescriptorToSearchIn(rootTag, ref, info.documentDescriptor);
     String ns;
-    
+
     if (nsDescriptor == info.documentDescriptor) {
       ns = rootTag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(ref));
     } else {
       ns = nsDescriptor.getDefaultNamespace();
     }
 
-    if (Comparing.equal(info.expectedDefaultNs, ns) && info.documentDescriptor == nsDescriptor) return info;
+    if (Objects.equals(info.expectedDefaultNs, ns) && info.documentDescriptor == nsDescriptor) return info;
     return new CurrentContextInfo(nsDescriptor, ns);
   }
 
@@ -411,7 +404,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
     return _canContainAttribute(namespace, myTag, qName, new THashSet<>(), null);
   }
-  
+
   enum CanContainAttributeType {
     CanContainButSkip, CanContainButDoNotSkip, CanContainAny, CanNotContain
   }
@@ -428,7 +421,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String ns = tag.getAttributeValue("namespace");
       CanContainAttributeType canContainAttributeType = CanContainAttributeType.CanContainButDoNotSkip;
       if ("skip".equals(tag.getAttributeValue("processContents"))) canContainAttributeType= CanContainAttributeType.CanContainButSkip;
-      
+
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(ns)) {
         return !namespace.equals(myDocumentDescriptor.getDefaultNamespace()) ? canContainAttributeType : CanContainAttributeType.CanNotContain;
       }

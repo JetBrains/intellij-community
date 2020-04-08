@@ -62,6 +62,7 @@ public class MavenProjectsManagerWatcher {
     myManager.addManagerListener(new MavenProjectWatcher());
     registerGeneralSettingsWatcher(myManager, this, myDisposable);
     myProjectTracker.register(myProjectsAware);
+    myProjectTracker.activate(myProjectsAware.getProjectId());
   }
 
   @TestOnly

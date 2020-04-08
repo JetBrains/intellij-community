@@ -2096,6 +2096,79 @@ public class PyTypeTest extends PyTestCase {
            "expr = min(l)");
   }
 
+  // PY-37755
+  public void testGlobalType() {
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    global expr\n" +
+           "    expr");
+
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    def nuf():\n" +
+           "        global expr\n" +
+           "        expr");
+
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    expr = True\n" +
+           "    \n" +
+           "    def nuf():\n" +
+           "        global expr\n" +
+           "        expr");
+
+    doTest("Union[bool, int]",
+           "if True:\n" +
+           "    a = True\n" +
+           "else:\n" +
+           "    a = 5\n" +
+           "\n" +
+           "def fun():\n" +
+           "    def nuf():\n" +
+           "        global a\n" +
+           "        expr = a");
+  }
+
+  // PY-37755
+  public void testNonLocalType() {
+    doTest("bool",
+           "def fun():\n" +
+           "    expr = True\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal expr\n" +
+           "        expr");
+
+    doTest("bool",
+           "a = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    a = True\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal a\n" +
+           "        expr = a");
+
+    doTest("Union[bool, int]",
+           "a = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    if True:\n" +
+           "        a = True\n" +
+           "    else:\n" +
+           "        a = 5\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal a\n" +
+           "        expr = a");
+  }
+
   // PY-21906
   public void testSOFOnTransitiveNamedTupleFields() {
     final PyExpression expression = parseExpr("from collections import namedtuple\n" +
@@ -2315,14 +2388,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-24323
   public void testMethodQualifiedWithUnknownGenericsInstance() {
-    doTest("(object: Any) -> int",
+    doTest("(__value: Any) -> int",
            "my_list = []\n" +
            "expr = my_list.count");
   }
 
   // PY-24323
   public void testMethodQualifiedWithKnownGenericsInstance() {
-    doTest("(object: int) -> int",
+    doTest("(__value: int) -> int",
            "my_list = [1, 2, 2, 3, 3]\n" +
            "expr = my_list.count");
   }
@@ -3497,18 +3570,18 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-35235
   public void testUnionOfTypingLiterals() {
-    doTest("Union[Literal[-1], Literal[0], Literal[1]]",
+    doTest("Literal[-1, 0, 1]",
            "from typing_extensions import Literal\n" +
            "expr = undefined  # type: Literal[-1, 0, 1]");
 
-    doTest("Union[Literal[42], Literal[\"foo\"], Literal[True]]",
+    doTest("Literal[42, \"foo\", True]",
            "from typing_extensions import Literal\n" +
            "expr = undefined  # type: Literal[42, \"foo\", True]");
   }
 
   // PY-35235
   public void testTypingLiteralOfTypingLiterals() {
-    doTest("Union[Literal[1], Literal[2], Literal[3], Literal[4], Literal[5]]",
+    doTest("Literal[1, 2, 3, 4, 5]",
            "from typing_extensions import Literal\n" +
            "a = Literal[1]\n" +
            "b = Literal[2, 3]\n" +
@@ -3516,9 +3589,36 @@ public class PyTypeTest extends PyTestCase {
            "d = Literal[b, c]\n" +
            "expr = undefined  # type: Literal[a, d]");
 
-    doTest("Union[Literal[1], Literal[2], Literal[\"foo\"], Literal[5], None]",
+    doTest("Union[Literal[1, 2, \"foo\", 5], None]",
            "from typing_extensions import Literal\n" +
            "expr = undefined  # type: Literal[Literal[Literal[1, 2], \"foo\"], 5, None]");
+  }
+
+  // PY-40838
+  public void testUnionOfManyTypesInclLiterals() {
+    doTest("Union[Literal[\"1\", 2], bool, None]",
+           "from typing import overload, Literal\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> Literal[\"1\"]:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> Literal[2]:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> bool:\n" +
+           "    pass\n" +
+           "\n" +
+           "@overload\n" +
+           "def foo1() -> None:\n" +
+           "    pass\n" +
+           "\n" +
+           "def foo1()\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = foo1()");
   }
 
   // PY-35235

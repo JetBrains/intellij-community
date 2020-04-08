@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -44,7 +45,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return "Replace " + myMethodCall.getText() + " with " + getCollectionsMethodCall();
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", myMethodCall.getText(), getCollectionsMethodCall());
   }
 
   @Override

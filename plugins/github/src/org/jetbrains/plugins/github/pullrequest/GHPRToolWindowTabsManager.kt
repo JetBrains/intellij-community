@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.wm.ToolWindowManager
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.annotations.CalledInAwt
@@ -27,34 +27,48 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
   private val gitHelper = GithubGitHelper.getInstance()
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
 
-  private val contentManager by lazy(LazyThreadSafetyMode.NONE) {
-    GHPRToolWindowsTabsContentManager(project, ChangesViewContentManager.getInstance(project))
+  internal var contentManager: GHPRToolWindowTabsContentManager? by observable<GHPRToolWindowTabsContentManager?>(null) { _, _, _ ->
+    updateTabs()
   }
 
-  private var remoteUrls by observable(setOf<GitRemoteUrlCoordinates>()) { _, oldValue, newValue ->
-    val delta = CollectionDelta(oldValue, newValue)
-    for (item in delta.removedItems) {
-      contentManager.removeTab(item)
-    }
-    for (item in delta.newItems) {
-      contentManager.addTab(item, Disposable {
-        //means that tab closed by user
-        if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(item)) settings.addHiddenUrl(item.url)
-        ApplicationManager.getApplication().invokeLater(::updateRemoteUrls) { project.isDisposed }
-      })
-    }
-  }
+  @CalledInAwt
+  fun isAvailable(): Boolean = getRemoteUrls().isNotEmpty()
 
   @CalledInAwt
   fun showTab(remoteUrl: GitRemoteUrlCoordinates) {
     settings.removeHiddenUrl(remoteUrl.url)
-    updateRemoteUrls()
-
-    contentManager.focusTab(remoteUrl)
+    updateTabs {
+      ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.show {
+        contentManager?.focusTab(remoteUrl)
+      }
+    }
   }
 
-  private fun updateRemoteUrls() {
-    remoteUrls = gitHelper.getPossibleRemoteUrlCoordinates(project).filter {
+  private fun updateTabs(afterUpdate: (() -> Unit)? = null) {
+    val current = contentManager?.currentTabs ?: emptySet()
+    val new = getRemoteUrls()
+
+    ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID)?.setAvailable(new.isNotEmpty()) {
+      val contentManager = contentManager
+      if (contentManager != null) {
+        val delta = CollectionDelta(current, new)
+        for (item in delta.removedItems) {
+          contentManager.removeTab(item)
+        }
+        for (item in delta.newItems) {
+          contentManager.addTab(item, Disposable {
+            //means that tab was closed by user
+            if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(item)) settings.addHiddenUrl(item.url)
+            ApplicationManager.getApplication().invokeLater({ updateTabs() }) { project.isDisposed }
+          })
+        }
+      }
+      afterUpdate?.invoke()
+    }
+  }
+
+  private fun getRemoteUrls(): Set<GitRemoteUrlCoordinates> {
+    return gitHelper.getPossibleRemoteUrlCoordinates(project).filter {
       !settings.getHiddenUrls().contains(it.url)
     }.toSet()
   }
@@ -84,6 +98,6 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
       else application.invokeLater({ runnable() }) { project.isDisposed }
     }
 
-    private fun updateRemotes(project: Project) = project.service<GHPRToolWindowTabsManager>().updateRemoteUrls()
+    private fun updateRemotes(project: Project) = project.service<GHPRToolWindowTabsManager>().updateTabs()
   }
 }

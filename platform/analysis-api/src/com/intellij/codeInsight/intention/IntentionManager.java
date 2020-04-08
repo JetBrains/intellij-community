@@ -60,8 +60,7 @@ public abstract class IntentionManager  {
    *
    * @return array of registered actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getIntentionActions();
+  public abstract IntentionAction @NotNull [] getIntentionActions();
 
   /**
    * Returns all registered intention actions which are available now
@@ -69,8 +68,7 @@ public abstract class IntentionManager  {
    *
    * @return array of actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getAvailableIntentionActions();
+  public abstract IntentionAction @NotNull [] getAvailableIntentionActions();
 
   /**
    * Registers an intention action which can be enabled or disabled through the "Intention
@@ -90,7 +88,7 @@ public abstract class IntentionManager  {
    * @deprecated Please use {@code <intentionAction>} extension point instead
    */
   @Deprecated
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category);
+  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, String @NotNull ... category);
 
   public abstract void unregisterIntention(@NotNull IntentionAction intentionAction);
 

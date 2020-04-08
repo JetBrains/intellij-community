@@ -33,11 +33,10 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 
 public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
@@ -112,11 +111,16 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
-    return new MainVcsLogUiFactory(logId, filters);
+    CustomVcsLogUiFactoryProvider factoryProvider = LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(myProject, p -> p.isActive(this));
+    if (factoryProvider == null) {
+      return new MainVcsLogUiFactory(logId, filters);
+    }
+    return factoryProvider.createLogUiFactory(logId, this, filters);
   }
 
   @NotNull
   private VcsLogTabsWatcher getTabsWatcher() {
+    LOG.assertTrue(!myDisposed);
     if (myTabsLogRefresher == null) myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
     return myTabsLogRefresher;
   }
@@ -143,6 +147,7 @@ public class VcsLogManager implements Disposable {
    * For diagnostic purposes only
    */
   @ApiStatus.Internal
+  @NonNls
   public String getLogWindowsInformation() {
     return StringUtil.join(myPostponableRefresher.getLogWindows(),
                            window -> window.toString() + (window.isVisible() ? " (visible)" : ""), "\n");
@@ -249,7 +254,7 @@ public class VcsLogManager implements Disposable {
     }
 
     @Override
-    public void displayFatalErrorMessage(@NotNull String message) {
+    public void displayFatalErrorMessage(@Nls @NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }

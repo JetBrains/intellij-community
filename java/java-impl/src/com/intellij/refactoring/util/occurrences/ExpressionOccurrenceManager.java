@@ -46,9 +46,8 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     myScope = scope;
     myMaintainStaticContext = maintainStaticContext;
   }
-  @NotNull
   @Override
-  protected PsiExpression[] defaultOccurrences() {
+  protected PsiExpression @NotNull [] defaultOccurrences() {
     return new PsiExpression[]{myMainOccurence};
   }
 
@@ -56,9 +55,8 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     return myMainOccurence;
   }
 
-  @NotNull
   @Override
-  protected PsiExpression[] findOccurrences() {
+  protected PsiExpression @NotNull [] findOccurrences() {
     if("null".equals(myMainOccurence.getText())) {
       return defaultOccurrences();
     }
@@ -81,8 +79,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
     return myScope;
   }
 
-  @NotNull
-  public PsiExpression[] findExpressionOccurrences() {
+  public PsiExpression @NotNull [] findExpressionOccurrences() {
     if (myMainOccurence instanceof PsiLiteralExpression && !myMainOccurence.isPhysical()) {
       final FindManager findManager = FindManager.getInstance(getScope().getProject());
       final FindModel findModel = findManager.getFindInFileModel().clone();

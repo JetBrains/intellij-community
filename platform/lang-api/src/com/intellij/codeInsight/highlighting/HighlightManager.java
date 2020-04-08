@@ -101,7 +101,7 @@ public abstract class HighlightManager {
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} objects are added to this collection.
    */
   public abstract void addOccurrenceHighlights(@NotNull Editor editor,
-                                               @NotNull PsiReference[] occurrences,
+                                               PsiReference @NotNull [] occurrences,
                                                @NotNull TextAttributes attributes,
                                                boolean hideByTextChange,
                                                @Nullable Collection<? super RangeHighlighter> outHighlighters);
@@ -116,7 +116,7 @@ public abstract class HighlightManager {
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} objects are added to this collection.
    */
   public abstract void addOccurrenceHighlights(@NotNull Editor editor,
-                                               @NotNull PsiElement[] elements,
+                                               PsiElement @NotNull [] elements,
                                                @NotNull TextAttributes attributes,
                                                boolean hideByTextChange,
                                                @Nullable Collection<? super RangeHighlighter> outHighlighters);

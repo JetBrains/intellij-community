@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 
 import javax.swing.*;
 import java.awt.event.FocusAdapter;
@@ -22,7 +23,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
 
   public EditMavenPropertyDialog(@Nullable Pair<String, String> value, Map<String, String> availableProperties) {
     super(false);
-    setTitle(value == null ? "Add Maven Property" : "Edit Maven Property");
+    setTitle(MavenDomBundle.message(value == null ? "property.title.add" : "property.title.edit"));
 
     myAvailableProperties = availableProperties;
 

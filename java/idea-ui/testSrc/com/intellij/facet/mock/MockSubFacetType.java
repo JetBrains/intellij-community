@@ -10,9 +10,6 @@ import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class MockSubFacetType extends FacetType<Facet, MockFacetConfiguration> {
   public static final FacetTypeId<Facet> ID = new FacetTypeId<>("submock");
 

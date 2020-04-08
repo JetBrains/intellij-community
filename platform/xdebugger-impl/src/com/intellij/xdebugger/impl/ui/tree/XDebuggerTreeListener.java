@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface XDebuggerTreeListener {
   default void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
   }

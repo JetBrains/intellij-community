@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
@@ -13,6 +14,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  * <ol>
  *  <li>
  *    If group is not whitelisted, add it to local whitelist with "Add Test Group to Local Whitelist" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction}
+ *    {@link com.intellij.internal.statistic.actions.localWhitelist.AddTestGroupToLocalWhitelistAction}
  *  </li>
  *  <li>
  *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>
@@ -58,15 +60,11 @@ public class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 
-  /**
-   * System event which indicates that the counter collector is enabled in current IDE build.
-   * Used to calculate metric baseline.
-   */
-  private static final String REGISTERED = "registered";
+  @NonNls
   private static final String[] GENERAL_GROUPS = new String[]{
     "event.log", "lifecycle", "performance", "actions", "ui.dialogs", "ui.settings",
     "toolwindow", "intentions", "toolbar", "run.configuration.exec",
-    "file.types.usage", "productivity", "live.templates", "completion.postfix"
+    "file.types.usage", "productivity", "live.templates", "completion.postfix", "notifications"
   };
 
   private static final FUCounterUsageLogger INSTANCE = new FUCounterUsageLogger();
@@ -97,7 +95,7 @@ public class FUCounterUsageLogger {
         }
 
         // Not unregistering groups when a plugin is unloaded is harmless
-      });
+      }, true, null);
 
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> logRegisteredGroups(), LOG_REGISTERED_INITIAL_DELAY_MIN, LOG_REGISTERED_DELAY_MIN, TimeUnit.MINUTES
@@ -124,7 +122,7 @@ public class FUCounterUsageLogger {
 
   public void logRegisteredGroups() {
     for (EventLogGroup group : myGroups.values()) {
-      FeatureUsageLogger.INSTANCE.log(group, REGISTERED);
+      FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
     }
   }
 
@@ -143,8 +141,8 @@ public class FUCounterUsageLogger {
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    */
   public void logEvent(@Nullable Project project,
-                       @NotNull String groupId,
-                       @NotNull String eventId) {
+                       @NonNls @NotNull String groupId,
+                       @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
       final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
@@ -165,8 +163,8 @@ public class FUCounterUsageLogger {
    * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
    */
   public void logEvent(@Nullable Project project,
-                       @NotNull String groupId,
-                       @NotNull String eventId,
+                       @NonNls @NotNull String groupId,
+                       @NonNls @NotNull String eventId,
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
@@ -191,8 +189,8 @@ public class FUCounterUsageLogger {
    * @see FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    */
-  public void logEvent(@NotNull String groupId,
-                       @NotNull String eventId) {
+  public void logEvent(@NonNls @NotNull String groupId,
+                       @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
       FeatureUsageLogger.INSTANCE.log(group, eventId);
@@ -214,8 +212,8 @@ public class FUCounterUsageLogger {
    *
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    */
-  public void logEvent(@NotNull String groupId,
-                       @NotNull String eventId,
+  public void logEvent(@NonNls @NotNull String groupId,
+                       @NonNls @NotNull String eventId,
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {

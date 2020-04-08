@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,13 +10,13 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,11 +195,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newName   the new file name
    * @throws IOException if file failed to be renamed
    */
-  public void rename(Object requestor, @NotNull String newName) throws IOException {
+  public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     if (!getFileSystem().isValidName(newName)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", newName));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
     getFileSystem().renameFile(requestor, this, newName);
@@ -295,7 +296,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the file if found any, {@code null} otherwise
    */
   @Nullable
-  public VirtualFile findChild(@NotNull String name) {
+  public VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
     if (children == null) return null;
     for (VirtualFile child : children) {
@@ -307,7 +308,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   @NotNull
-  public VirtualFile findOrCreateChildData(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile findOrCreateChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     final VirtualFile child = findChild(name);
     if (child != null) return child;
     return createChildData(requestor, name);
@@ -317,9 +318,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Returns the {@link FileType} of this file, or {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if a type cannot be determined
    * (i.e. file type is not registered via {@link FileTypeRegistry}).
    *
-   * <p> Performance notice: consider using {@link FileTypeRegistry#isFileOfType} or {@link FileTypeRegistry#getFileTypeByFileName}
-   * if this method is to be called for massive file collections, e.g. in {@link BulkFileListener}. See {@code FileTypeRegistry} javadoc
-   * for the details.
+   * <p> Performance notice: this method can be slow. See {@link FileTypeRegistry} javadoc for the details.
    *
    * @see FileTypeRegistry
    */
@@ -335,7 +334,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the file if found any, {@code null} otherwise
    */
   @Nullable
-  public VirtualFile findFileByRelativePath(@NotNull String relPath) {
+  public VirtualFile findFileByRelativePath(@NotNull @NonNls String relPath) {
     VirtualFile child = this;
 
     int off = CharArrayUtil.shiftForward(relPath, 0, "/");
@@ -375,21 +374,21 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if directory failed to be created
    */
   @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
-      throw new IOException(VfsBundle.message("directory.create.wrong.parent.error"));
+      throw new IOException(CoreBundle.message("directory.create.wrong.parent.error"));
     }
 
     if (!isValid()) {
-      throw new IOException(VfsBundle.message("invalid.directory.create.files"));
+      throw new IOException(CoreBundle.message("invalid.directory.create.files"));
     }
 
     if (!getFileSystem().isValidName(name)) {
-      throw new IOException(VfsBundle.message("directory.invalid.name.error", name));
+      throw new IOException(CoreBundle.message("directory.invalid.name.error", name));
     }
 
     if (findChild(name) != null) {
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
+      throw new IOException(CoreBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
     return getFileSystem().createChildDirectory(requestor, this, name);
@@ -406,21 +405,21 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if file failed to be created
    */
   @NotNull
-  public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+  public VirtualFile createChildData(Object requestor, @NotNull @NonNls String name) throws IOException {
     if (!isDirectory()) {
-      throw new IOException(VfsBundle.message("file.create.wrong.parent.error"));
+      throw new IOException(CoreBundle.message("file.create.wrong.parent.error"));
     }
 
     if (!isValid()) {
-      throw new IOException(VfsBundle.message("invalid.directory.create.files"));
+      throw new IOException(CoreBundle.message("invalid.directory.create.files"));
     }
 
     if (!getFileSystem().isValidName(name)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", name));
     }
 
     if (findChild(name) != null) {
-      throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
+      throw new IOException(CoreBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
     return getFileSystem().createChildFile(requestor, this, name);
@@ -455,7 +454,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
@@ -465,13 +464,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   @NotNull
-  public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
+  public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull @NonNls String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
 
     if (!newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
+      throw new IOException(CoreBundle.message("file.copy.target.must.be.directory"));
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this,
@@ -531,15 +530,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return getStoredCharset() != null;
   }
 
-  public final void setBinaryContent(@NotNull byte[] content) throws IOException {
+  public final void setBinaryContent(byte @NotNull [] content) throws IOException {
     setBinaryContent(content, -1, -1);
   }
 
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) throws IOException {
     setBinaryContent(content, newModificationStamp, newTimeStamp, this);
   }
 
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
@@ -590,8 +589,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see #contentsToByteArray(boolean)
    * @see #getInputStream()
    */
-  @NotNull
-  public abstract byte[] contentsToByteArray() throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray() throws IOException;
 
   /**
    * Returns file content as an array of bytes.
@@ -601,8 +599,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray()
    */
-  @NotNull
-  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(boolean cacheContent) throws IOException {
     return contentsToByteArray();
   }
 
@@ -673,7 +670,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return whether file name equals to this name
    *         result depends on the filesystem specifics
    */
-  protected boolean nameEquals(@NotNull String name) {
+  protected boolean nameEquals(@NotNull @NonNls String name) {
     return Comparing.equal(getNameSequence(), name);
   }
 
@@ -687,12 +684,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract InputStream getInputStream() throws IOException;
 
-  @Nullable
-  public byte[] getBOM() {
+  public byte @Nullable [] getBOM() {
     return getUserData(BOM_KEY);
   }
 
-  public void setBOM(@Nullable byte[] BOM) {
+  public void setBOM(byte @Nullable [] BOM) {
     putUserData(BOM_KEY, BOM);
   }
 

@@ -18,8 +18,6 @@ abstract public class TestRunnerService
   extends
   PyDefaultProjectAwareService<TestRunnerService.ServiceState, TestRunnerService, TestRunnerService.AppService, TestRunnerService.ModuleService> {
 
-  private final static String DEFAULT_TEST_RUNNER = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
-
   private static final PyDefaultProjectAwareServiceClasses<ServiceState, TestRunnerService, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
   private static final TestRunnerDetector DETECTOR = new TestRunnerDetector();
@@ -27,7 +25,7 @@ abstract public class TestRunnerService
 
   protected TestRunnerService() {
     super(new ServiceState());
-    myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
+    myConfigurations.add(PythonTestConfigurationsModel.getPythonsUnittestName());
     for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
       myConfigurations.add(PyTestFrameworkService.getSdkReadableNameByFramework(framework));
     }
@@ -73,7 +71,7 @@ abstract public class TestRunnerService
     }
 
     ServiceState() {
-      this(DEFAULT_TEST_RUNNER);
+      this(PythonTestConfigurationsModel.getPythonsUnittestName());
     }
   }
 

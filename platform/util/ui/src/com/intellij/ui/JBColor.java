@@ -5,6 +5,7 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,17 +50,17 @@ public class JBColor extends Color {
   }
 
   @NotNull
-  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB) {
+  public static JBColor namedColor(@NonNls @NotNull String propertyName, int defaultValueRGB) {
     return namedColor(propertyName, new Color(defaultValueRGB));
   }
 
   @NotNull
-  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB, int darkValueRGB) {
+  public static JBColor namedColor(@NonNls @NotNull String propertyName, int defaultValueRGB, int darkValueRGB) {
     return namedColor(propertyName, new JBColor(defaultValueRGB, darkValueRGB));
   }
 
   @NotNull
-  public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
+  public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
       Color color = notNull(UIManager.getColor(propertyName), () ->
                             notNull(findPatternMatch(propertyName), defaultColor));
@@ -197,43 +198,37 @@ public class JBColor extends Color {
   }
 
   @Override
-  @NotNull
-  public float[] getRGBComponents(float[] compArray) {
+  public float @NotNull [] getRGBComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getRGBComponents(compArray) : c.getRGBComponents(compArray);
   }
 
   @Override
-  @NotNull
-  public float[] getRGBColorComponents(float[] compArray) {
+  public float @NotNull [] getRGBColorComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getRGBComponents(compArray) : c.getRGBColorComponents(compArray);
   }
 
   @Override
-  @NotNull
-  public float[] getComponents(float[] compArray) {
+  public float @NotNull [] getComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getComponents(compArray) : c.getComponents(compArray);
   }
 
   @Override
-  @NotNull
-  public float[] getColorComponents(float[] compArray) {
+  public float @NotNull [] getColorComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getColorComponents(compArray) : c.getColorComponents(compArray);
   }
 
   @Override
-  @NotNull
-  public float[] getComponents(@NotNull ColorSpace colorSpace, float[] compArray) {
+  public float @NotNull [] getComponents(@NotNull ColorSpace colorSpace, float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getComponents(colorSpace, compArray) : c.getComponents(colorSpace, compArray);
   }
 
   @Override
-  @NotNull
-  public float[] getColorComponents(@NotNull ColorSpace colorSpace, float[] compArray) {
+  public float @NotNull [] getColorComponents(@NotNull ColorSpace colorSpace, float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getColorComponents(colorSpace, compArray) : c.getColorComponents(colorSpace, compArray);
   }

@@ -24,6 +24,7 @@ class BranchStorage : BaseState() {
     }
 
     branches.computeIfAbsent(typeName) { mutableListOf() }.add(DvcsBranchInfo(DvcsBranchUtil.getPathFor(repository), branchName))
+    incrementModificationCount()
   }
 
   fun remove(typeName: String, repository: Repository?, branchName: String) {
@@ -33,5 +34,6 @@ class BranchStorage : BaseState() {
     if (branches.isEmpty()) {
       this.branches.remove(typeName)
     }
+    incrementModificationCount();
   }
 }

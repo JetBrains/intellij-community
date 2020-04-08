@@ -21,14 +21,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
- * @author nik
- *
  * Class is not final since it is overridden in Upsource
  */
 public class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
@@ -45,12 +42,8 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     this(file, contentAsText, null, documentStamp, false);
   }
 
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+  public FileContentImpl(@NotNull final VirtualFile file, final byte @NotNull [] content) {
     this(file, null, content, -1, true);
-  }
-
-  FileContentImpl(@NotNull final VirtualFile file) {
-    this(file, null, null, -1, true);
   }
 
   private FileContentImpl(@NotNull VirtualFile file,
@@ -141,14 +134,16 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     }
   }
 
-  @TestOnly
-  public static FileContent createByFile(@NotNull VirtualFile file) {
-    try {
-      return new FileContentImpl(file, file.contentsToByteArray());
+  public static FileContent createByFile(@NotNull VirtualFile file) throws IOException {
+    return createByFile(file, null);
+  }
+
+  public static FileContent createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
+    FileContentImpl content = new FileContentImpl(file, file.contentsToByteArray());
+    if (project != null) {
+      content.setProject(project);
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return content;
   }
 
   @NotNull
@@ -185,9 +180,8 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return myPhysicalContent;
   }
 
-  @NotNull
   @Override
-  public byte[] getContent() {
+  public byte @NotNull [] getContent() {
     byte[] content = myContent;
     if (content == null) {
       myContent = content = myContentAsText.toString().getBytes(getCharset());
@@ -218,12 +212,11 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return myFileName;
   }
 
-  @Nullable
-  public byte[] getHash(boolean fromDocument) {
+  public byte @Nullable [] getHash(boolean fromDocument) {
     return fromDocument ? myDocumentHash : myFileContentHash;
   }
 
-  public void setHashes(@NotNull byte[] fileContentHash, @NotNull byte[] documentHash) {
+  public void setHashes(byte @NotNull [] fileContentHash, byte @NotNull [] documentHash) {
     myFileContentHash = fileContentHash;
     myDocumentHash = documentHash;
   }
@@ -257,6 +250,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
 
   @Override
   public Project getProject() {
-    return getUserData(IndexingDataKeys.PROJECT);
+    Project project = super.getProject();
+    return project != null ? project : getUserData(IndexingDataKeys.PROJECT);
   }
 }

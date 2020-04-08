@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitUserRegistry
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.config.GitVcsSettings
@@ -75,16 +76,15 @@ class GitCommitOptionsUi(
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
-  private val signOffCommit = JBCheckBox("Sign-off commit", settings.shouldSignOffCommit()).apply {
+  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"), settings.shouldSignOffCommit()).apply {
     mnemonic = VK_G
 
     val user = commitPanel.roots.mapNotNull { userRegistry.getUser(it) }.firstOrNull()
     val signature = user?.let { escapeXmlEntities(VcsUserUtil.toExactString(it)) }.orEmpty()
-    toolTipText = "<html>Adds the following line at the end of the commit message:<br/>" +
-                  "Signed-off by: $signature</html>"
+    toolTipText = XmlStringUtil.wrapInHtml(GitBundle.message("commit.options.sign.off.commit.message.line", signature))
   }
   private val commitRenamesSeparately = JBCheckBox(
-    explicitMovementProviders.singleOrNull()?.description ?: "Create extra commit with file movements",
+    explicitMovementProviders.singleOrNull()?.description ?: GitBundle.message("commit.options.create.extra.commit.with.file.movements"),
     settings.isCommitRenamesSeparately
   )
 
@@ -180,7 +180,7 @@ class GitCommitOptionsUi(
     authorField.user = author.takeUnless { isAuthorNullOrDefault }
 
     if (!isAuthorNullOrDefault) {
-      authorField.putClientProperty("JComponent.outline", "warning")
+      authorField.putClientProperty("JComponent.outline", "warning") // NON-NLS
       if (authorField.isShowing) showAuthorWarning()
     }
   }
@@ -217,7 +217,7 @@ class GitCommitOptionsUi(
 
     val builder = JBPopupFactory.getInstance()
       .createBalloonBuilder(JLabel(GitBundle.getString("commit.author.diffs")))
-      .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
+      .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")) // NON-NLS
       .setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor())
       .setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor())
       .setHideOnClickOutside(true)
@@ -228,7 +228,7 @@ class GitCommitOptionsUi(
   }
 
   private fun clearAuthorWarning() {
-    authorField.putClientProperty("JComponent.outline", null)
+    authorField.putClientProperty("JComponent.outline", null) // NON-NLS
     authorWarning?.hide()
     authorWarning = null
   }
@@ -237,7 +237,7 @@ class GitCommitOptionsUi(
 
   private fun isDefaultAuthor(author: VcsUser): Boolean {
     val repositoryManager = getRepositoryManager(project)
-    val affectedRoots = commitPanel.roots.filter { repositoryManager.getRepositoryForRoot(it) != null }
+    val affectedRoots = commitPanel.roots.filter { repositoryManager.getRepositoryForRootQuick(it) != null }
 
     return affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
   }

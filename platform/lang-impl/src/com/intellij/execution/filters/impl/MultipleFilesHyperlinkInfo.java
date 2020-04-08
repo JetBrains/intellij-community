@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters.impl;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
@@ -39,9 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToIntFunction;
 
-/**
-* @author nik
-*/
 class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
   private final List<? extends VirtualFile> myVirtualFiles;
   private final int myLineNumber;
@@ -94,8 +92,8 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
       JBPopup popup = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(currentFiles)
         .setRenderer(new GotoFileCellRenderer(width))
-        .setTitle("Choose Target File")
-        .setItemChosenCallback((selectedValue) -> {
+        .setTitle(ExecutionBundle.message("popup.title.choose.target.file"))
+        .setItemChosenCallback(selectedValue -> {
           VirtualFile file = selectedValue.getVirtualFile();
           new OpenFileHyperlinkInfo(myProject, file, myLineNumber, myColumnFinder.applyAsInt(selectedValue)).navigate(project);
         })

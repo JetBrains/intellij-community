@@ -74,14 +74,18 @@ public abstract class SearchTaskBase implements Runnable {
            || options.leftBoundPageNumber != -1 && curPageNumber < options.leftBoundPageNumber;
   }
 
+  static int getTailLength(SearchTaskOptions options) {
+    return options.regularExpression ? Integer.MAX_VALUE : options.stringToFind.length() - 1;
+  }
+
   static String getTailFromPage(String nextPageText, int tailLength) {
     return tailLength < nextPageText.length() ?
            nextPageText.substring(0, tailLength) : nextPageText;
   }
 
   static char getPostfixSymbol(String nextPageText, int tailLength) {
-    return tailLength + 1 < nextPageText.length() ?
-           nextPageText.charAt(tailLength + 1) : FrameSearcher.NOT_EXISTING_BORDERING_SYMBOL;
+    return tailLength < nextPageText.length() ?
+           nextPageText.charAt(tailLength) : FrameSearcher.NOT_EXISTING_BORDERING_SYMBOL;
   }
 
   static char getPrefixSymbol(String prevPageText) {

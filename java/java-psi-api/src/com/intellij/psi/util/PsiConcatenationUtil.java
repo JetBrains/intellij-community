@@ -29,9 +29,9 @@ public class PsiConcatenationUtil {
 
   /**
    * @deprecated use {@code buildUnescapedFormatString} instead and use either
-   * {@code com.intellij.openapi.util.text.StringUtil#escapeStringCharacters(java.lang.String)}
+   * {@link StringUtil#escapeStringCharacters(String)}
    * or
-   * {@code com.intellij.openapi.util.text.StringUtil#escapeTextBlockCharacters(java.lang.String)}
+   * {@link PsiLiteralUtil#escapeTextBlockCharacters(String)}
    * to escape the resulting string.
    */
   @Deprecated
@@ -46,13 +46,7 @@ public class PsiConcatenationUtil {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
       final String value = String.valueOf(literalExpression.getValue());
       final String text = escape ? StringUtil.escapeStringCharacters(value) : value;
-      String formatText;
-      if (printfFormat) {
-        formatText = text.replace("%", "%%").replace("\\'", "'");
-      }
-      else {
-        formatText = text.replace("'", "''").replaceAll("([{}]+)", "'$1'");
-      }
+      String formatText = formatString(text, printfFormat);
       formatString.append(formatText);
     } else if (expression instanceof PsiPolyadicExpression) {
       final PsiType type = expression.getType();
@@ -97,6 +91,16 @@ public class PsiConcatenationUtil {
     }
     else {
       addFormatParameter(expression, formatString, formatParameters, printfFormat);
+    }
+  }
+
+  @NotNull
+  public static String formatString(String text, boolean printfFormat) {
+    if (printfFormat) {
+      return text.replace("%", "%%").replace("\\'", "'");
+    }
+    else {
+      return text.replace("'", "''").replaceAll("([{}]+)", "'$1'");
     }
   }
 

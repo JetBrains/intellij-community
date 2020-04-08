@@ -24,6 +24,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -40,17 +41,17 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
   @Override
-  protected void selectTargets(final List<PsiElement> targets, final Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(final @NotNull List<? extends PsiElement> targets, final @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(final List<PsiElement> targets) {
+  public void computeUsages(final @NotNull List<? extends PsiElement> targets) {
     PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return;
 

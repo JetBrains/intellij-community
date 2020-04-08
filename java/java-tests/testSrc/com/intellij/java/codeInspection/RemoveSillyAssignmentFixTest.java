@@ -17,8 +17,8 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
@@ -38,7 +38,7 @@ public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTes
   public void doTest() {
     myFixture.enableInspections(SillyAssignmentInspection.class);
     myFixture.configureByFile(getTestName(false) + ".java");
-    final IntentionAction intention = myFixture.findSingleIntention(InspectionsBundle.message("assignment.to.itself.quickfix.name"));
+    final IntentionAction intention = myFixture.findSingleIntention(JavaBundle.message("assignment.to.itself.quickfix.name"));
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
@@ -46,7 +46,7 @@ public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTes
 
   protected void assertQuickfixNotAvailable() {
     myFixture.enableInspections(SillyAssignmentInspection.class);
-    final String quickfixName = InspectionsBundle.message("assignment.to.itself.quickfix.name");
+    final String quickfixName = JavaBundle.message("assignment.to.itself.quickfix.name");
     myFixture.configureByFile(getTestName(false) + ".java");
     assertEmpty("Quickfix \'" + quickfixName + "\' is available unexpectedly", myFixture.filterAvailableIntentions(quickfixName));
   }

@@ -126,8 +126,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     Project project = element.getProject();
     Condition<PsiFileSystemItem> condition = item ->
       item.isDirectory() || MavenUtil.isPomFile(project, item.getVirtualFile());

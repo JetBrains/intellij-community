@@ -1,8 +1,9 @@
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
-import com.intellij.workspace.api.EntityStoreOnBuilder
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.configurationStore.serialize
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.workspace.api.*
 
 abstract class LegacyBridgeModifiableBase(protected val diff: TypedEntityStorageBuilder) {
   protected val entityStoreOnDiff = EntityStoreOnBuilder(diff)
@@ -20,6 +21,13 @@ abstract class LegacyBridgeModifiableBase(protected val diff: TypedEntityStorage
     if (committedOrDisposed) {
       error("${javaClass.simpleName} was already committed or disposed" )
     }
+  }
+
+  internal fun serializeComponentAsString(rootElementName: String, component: PersistentStateComponent<*>?) : String? {
+    val state = component?.state ?: return null
+    val propertiesElement = serialize(state) ?: return null
+    propertiesElement.name = rootElementName
+    return JDOMUtil.writeElement(propertiesElement)
   }
 
   companion object {

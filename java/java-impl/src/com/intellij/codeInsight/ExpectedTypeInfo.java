@@ -49,8 +49,7 @@ public interface ExpectedTypeInfo {
 
   String toString();
 
-  @NotNull
-  ExpectedTypeInfo[] intersect(@NotNull ExpectedTypeInfo info);
+  ExpectedTypeInfo @NotNull [] intersect(@NotNull ExpectedTypeInfo info);
 
   @NotNull
   TailType getTailType();

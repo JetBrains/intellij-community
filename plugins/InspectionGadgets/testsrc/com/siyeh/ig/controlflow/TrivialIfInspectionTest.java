@@ -91,6 +91,25 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "    else return false;\n" +
                  "}\n");
   }
+  
+  public void testReturnEqualBranches() {
+    // no warning: another inspection takes care about this
+    doMemberTest("\n" +
+                 "  boolean b(int x) {\n" +
+                 "    if (x > 20) return true;\n" +
+                 "    else return true;\n" +
+                 "}\n");
+  }
+  
+  public void testMethodCall() {
+    doMemberTest("void test(int x, Boolean foo) {\n" +
+                 "  if (x == 0) System.out.println(foo);\n" +
+                 "  else {\n" +
+                 "    /*'if' statement can be simplified*/if/**/ (x > 0) test(0, true);\n" +
+                 "    else test(0, false);\n" +
+                 "  }\n" +
+                 "}");
+  }
 
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -21,6 +21,5 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface PyRaiseStatement extends PyStatement {
-  @NotNull
-  PyExpression[] getExpressions();
+  PyExpression @NotNull [] getExpressions();
 }

@@ -32,7 +32,7 @@ import java.util.List;
 public class CmdChangeListClient extends BaseSvnClient implements ChangeListClient {
 
   @Override
-  public void add(@NotNull String changeList, @NotNull File path, @Nullable String[] changeListsToOperate) throws VcsException {
+  public void add(@NotNull String changeList, @NotNull File path, String @Nullable [] changeListsToOperate) throws VcsException {
     List<String> parameters = new ArrayList<>();
 
     parameters.add(changeList);

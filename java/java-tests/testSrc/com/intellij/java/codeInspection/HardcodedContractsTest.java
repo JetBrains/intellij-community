@@ -154,5 +154,13 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                        "}");
     checkHighlighting();
   }
+  
+  public void testAssertJAssert() {
+    checkHighlighting();
+  }
+  
+  public void testHardcodedContractNotNullOverride() {
+    checkHighlighting();
+  }
 
 }

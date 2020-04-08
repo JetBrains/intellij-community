@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -86,13 +86,13 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.merge.filter.text");
+    return JavaBundle.message("intention.merge.filter.text");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.merge.filter.family");
+    return JavaBundle.message("intention.merge.filter.family");
   }
 
   @Nullable

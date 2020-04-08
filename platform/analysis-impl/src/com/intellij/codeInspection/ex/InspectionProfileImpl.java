@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -19,6 +19,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -412,8 +413,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  @NotNull
-  public InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element) {
+  public InspectionToolWrapper @NotNull [] getInspectionTools(@Nullable PsiElement element) {
     initInspectionTools(element == null ? null : element.getProject());
     List<InspectionToolWrapper> result = new ArrayList<>();
     for (Tools toolList : myTools.values()) {
@@ -487,6 +487,44 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final Map<String, List<String>> dependencies = new THashMap<>();
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
+      if (toolWrapper instanceof LocalInspectionToolWrapper &&
+          ((LocalInspectionToolWrapper)toolWrapper).isDynamicGroup() &&
+          //some settings were read for the tool, so it must be initialized,
+          //otherwise no dynamic tools are expected
+          toolWrapper.isInitialized()) {
+        final ToolsImpl parent = myTools.get(toolWrapper.getShortName());
+        if (!parent.isEnabled()) continue;
+        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren();
+        if (tools.stream().noneMatch(i -> children.stream().anyMatch(l -> i.getShortName().equals(l.getShortName())))) {
+          boolean isLocked = myLockedProfile;
+          myLockedProfile = false;
+          for (LocalInspectionToolWrapper wrapper : children) {
+            addTool(project, wrapper, dependencies);
+            final String shortName = wrapper.getShortName();
+            if (InspectionElementsMerger.getMerger(shortName) != null) continue;
+            InspectionElementsMerger.addMerger(shortName, new InspectionElementsMergerBase() {
+              @Override
+              public @NotNull String getMergedToolName() {
+                return shortName;
+              }
+
+              @Override
+              public String @NotNull [] getSourceToolNames() {
+                return ArrayUtil.EMPTY_STRING_ARRAY;
+              }
+
+              @Override
+              protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
+                // returns true when settings are default, so defaults will not be saved in profile
+                return Boolean.parseBoolean(element.getAttributeValue("enabled")) == wrapper.isEnabledByDefault() &&
+                       wrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+                       Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == wrapper.isEnabledByDefault();
+              }
+            });
+          }
+          myLockedProfile = isLocked;
+        }
+      }
     }
     myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
       @Override
@@ -536,7 +574,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       final InspectionEP extension = toolWrapper.getExtension();
-      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName()) : extension::getDisplayName;
+      Computable<String> computable = extension == null || extension.displayName == null && extension.key == null
+                                      ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
+                                      : extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
@@ -556,7 +596,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
+    boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
     Element element = myUninitializedSettings.remove(shortName);
     try {
@@ -589,6 +629,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void removeTool(@NotNull InspectionToolWrapper inspectionTool) {
     String shortName = inspectionTool.getShortName();
+    removeTool(shortName);
+  }
+
+  public void removeTool(@NotNull String shortName) {
     myTools.remove(shortName);
     HighlightDisplayKey.unregister(shortName);
   }
@@ -606,21 +650,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         return merger.getMergedToolName();
       }
 
-      @NotNull
       @Override
-      public String[] getSourceToolNames() {
+      public String @NotNull [] getSourceToolNames() {
         return merger.getSourceToolNames();
       }
     };
   }
 
-  @Nullable
   @Transient
-  public String[] getScopesOrder() {
+  public String @Nullable [] getScopesOrder() {
     return myScopesOrder;
   }
 
-  public void setScopesOrder(@NotNull String[] scopesOrder) {
+  public void setScopesOrder(String @NotNull [] scopesOrder) {
     myScopesOrder = scopesOrder;
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

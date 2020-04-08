@@ -62,7 +62,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private boolean myClosed;
   private boolean myDirty;
   private boolean myCorrupted;
-  private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
+  private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private Flushable myMarkCleanCallback;
 
   public static class Version {
@@ -83,10 +83,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase> {
+  abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase<?>> {
     abstract int recordWriteOffset(T enumerator, byte[] buf);
-    @NotNull
-    abstract byte[] getRecordBuffer(T enumerator);
+    abstract byte @NotNull [] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
 
@@ -163,16 +162,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
                                   @NotNull KeyDescriptor<Data> dataDescriptor,
                                   int initialSize,
                                   @NotNull Version version,
-                                  @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase> recordBufferHandler,
+                                  @NotNull RecordBufferHandler<? extends PersistentEnumeratorBase<?>> recordBufferHandler,
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
     myVersion = version;
-    myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
+    myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase<?>>)recordBufferHandler;
     myDoCaching = doCaching;
 
     if (!Files.exists(file)) {
-      assert file.getFileSystem() == FileSystems.getDefault();
+      if (file.getFileSystem() != FileSystems.getDefault()) {
+        throw new IOException(file + " in " + file.getFileSystem() + " is not exist");
+      }
       FileUtil.delete(keyStreamFile());
       if (!FileUtil.createIfDoesntExist(file.toFile())) {
         throw new IOException("Cannot create empty file: " + file);
@@ -229,16 +230,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       unlockStorage();
     }
 
-    if (inlineKeyStorage(dataDescriptor)) {
+    if (dataDescriptor instanceof InlineKeyDescriptor) {
       myKeyStorage = null;
     }
     else {
       try {
         myKeyStorage = new AppendableStorageBackedByResizableMappedFile(keyStreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), PagedFileStorage.MB, false);
-      }
-      catch (IOException e) {
-        myStorage.close();
-        throw e;
       }
       catch (Throwable e) {
         LOG.info(e);
@@ -247,10 +244,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     myAssumeDifferentSerializedBytesMeansObjectsInequality = myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy;
-  }
-
-  public static boolean inlineKeyStorage(@NotNull KeyDescriptor<?> descriptor) {
-    return descriptor instanceof InlineKeyDescriptor;
   }
 
   void lockStorage() {
@@ -264,11 +257,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected abstract void setupEmptyFile() throws IOException;
 
   @NotNull
-  final RecordBufferHandler<PersistentEnumeratorBase> getRecordHandler() {
+  final RecordBufferHandler<PersistentEnumeratorBase<?>> getRecordHandler() {
     return myRecordHandler;
   }
 
-  public void setRecordHandler(@NotNull RecordBufferHandler<PersistentEnumeratorBase> recordHandler) {
+  public void setRecordHandler(@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler) {
     myRecordHandler = recordHandler;
   }
 
@@ -280,6 +273,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return valueOf(keyId);
   }
 
+  @Override
   public int tryEnumerate(Data value) throws IOException {
     return doEnumerate(value, true, false);
   }
@@ -316,6 +310,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return id;
   }
 
+  @Override
   public int enumerate(Data value) throws IOException {
     return doEnumerate(value, false, false);
   }
@@ -468,7 +463,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return myFile.resolveSibling(myFile.getFileName() + ".keystream");
   }
 
+  @Override
   public Data valueOf(int idx) throws IOException {
+    if (idx <= NULL_ID) return null;
     try {
 
       lockStorage();
@@ -481,7 +478,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       finally {
         unlockStorage();
       }
-
+    }
+    catch (NoDataException e) {
+      markCorrupted();
+      return null;
     }
     catch (IOException io) {
       markCorrupted();

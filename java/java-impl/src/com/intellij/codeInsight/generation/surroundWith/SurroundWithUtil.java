@@ -165,7 +165,7 @@ public class SurroundWithUtil {
    * @param container     code block that surrounds target statements
    * @param statements    target statements being surrounded
    */
-  public static void indentCommentIfNecessary(@NotNull PsiCodeBlock container, @Nullable PsiElement[] statements) {
+  public static void indentCommentIfNecessary(@NotNull PsiCodeBlock container, PsiElement @Nullable [] statements) {
     if (statements == null || statements.length <= 0) {
       return;
     }

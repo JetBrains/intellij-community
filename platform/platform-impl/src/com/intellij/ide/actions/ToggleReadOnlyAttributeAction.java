@@ -45,17 +45,21 @@ public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware
         if (file.isWritable()) ++rw; else ++ro;
         if (file.isDirectory()) ++d; else ++f;
       }
+      int finalRo = ro;
+      int finalRw = rw;
+      int finalF = f;
+      int finalD = d;
       if (ro > 0 && rw > 0) {
-        e.getPresentation().setText(ActionsBundle.message("action.ToggleReadOnlyAttribute.text"));
+        e.getPresentation().setText(ActionsBundle.messagePointer("action.ToggleReadOnlyAttribute.text"));
       }
       else if (f > 0 && d == 0) {
-        e.getPresentation().setText(ActionsBundle.message("action.ToggleReadOnlyAttribute.files", ro, rw, f, d));
+        e.getPresentation().setText(ActionsBundle.messagePointer("action.ToggleReadOnlyAttribute.files", finalRo, finalRw, finalF, finalD));
       }
       else if (f == 0 && d > 0) {
-        e.getPresentation().setText(ActionsBundle.message("action.ToggleReadOnlyAttribute.dirs", ro, rw, f, d));
+        e.getPresentation().setText(ActionsBundle.messagePointer("action.ToggleReadOnlyAttribute.dirs", finalRo, finalRw, finalF, finalD));
       }
       else {
-        e.getPresentation().setText(ActionsBundle.message("action.ToggleReadOnlyAttribute.mixed", ro, rw, f, d));
+        e.getPresentation().setText(ActionsBundle.messagePointer("action.ToggleReadOnlyAttribute.mixed", finalRo, finalRw, finalF, finalD));
       }
     }
   }

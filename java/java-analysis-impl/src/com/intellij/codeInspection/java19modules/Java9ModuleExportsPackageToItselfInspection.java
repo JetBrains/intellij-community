@@ -3,8 +3,8 @@ package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -39,13 +39,13 @@ public class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJav
         List<PsiJavaModuleReferenceElement> references = ContainerUtil.newArrayList(statement.getModuleReferences());
         for (PsiJavaModuleReferenceElement referenceElement : references) {
           if (moduleName.equals(referenceElement.getReferenceText())) {
-            String message = InspectionsBundle.message("inspection.module.exports.package.to.itself");
+            String message = JavaAnalysisBundle.message("inspection.module.exports.package.to.itself");
             if (references.size() == 1) {
-              String fixText = InspectionsBundle.message("exports.to.itself.delete.statement.fix");
+              String fixText = JavaAnalysisBundle.message("exports.to.itself.delete.statement.fix");
               myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(statement, fixText));
             }
             else {
-              String fixText = InspectionsBundle.message("exports.to.itself.delete.module.ref.fix", moduleName);
+              String fixText = JavaAnalysisBundle.message("exports.to.itself.delete.module.ref.fix", moduleName);
               myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(referenceElement, fixText));
             }
           }

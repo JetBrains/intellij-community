@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.Disposable;
@@ -8,19 +8,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UI;
-import com.intellij.vcs.commit.CommitWorkflowManager;
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.vcs.commit.CommitWorkflowManager.setCommitFromLocalChanges;
 
 public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguration>, Disposable {
   @NotNull private final Project myProject;
@@ -41,23 +41,13 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     myProject = project;
     myMoveToFailedCommitChangeListModel = new EnumComboBoxModel<>(VcsShowConfirmationOption.Value.class);
     myMoveToFailedCommitChangeList.setRenderer(
-      SimpleListCellRenderer.create("", CommitDialogSettingsPanel::getConfirmationOptionText));
+      SimpleListCellRenderer.create("", VcsShowConfirmationOption::getConfirmationOptionText));
     myMoveToFailedCommitChangeList.setModel(myMoveToFailedCommitChangeListModel);
   }
 
   @NotNull
   private static VcsApplicationSettings getAppSettings() {
     return VcsApplicationSettings.getInstance();
-  }
-
-  private static void setCommitFromLocalChanges(boolean value) {
-    VcsApplicationSettings settings = getAppSettings();
-    boolean oldValue = settings.COMMIT_FROM_LOCAL_CHANGES;
-    settings.COMMIT_FROM_LOCAL_CHANGES = value;
-
-    if (oldValue != value) {
-      getApplication().getMessageBus().syncPublisher(CommitWorkflowManager.SETTINGS).settingsChanged();
-    }
   }
 
   @Override
@@ -102,10 +92,10 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   }
 
   private void createUIComponents() {
-    myCommitFromLocalChanges = new JBCheckBox("Commit from Local Changes without showing the Commit dialog");
+    myCommitFromLocalChanges = new JBCheckBox(VcsBundle.message("settings.commit.without.dialog"));
     myCommitFromLocalChangesPanel =
       UI.PanelFactory.panel(myCommitFromLocalChanges).
-        withComment("Applies to projects under Git and Mercurial").
+        withComment(VcsBundle.message("settings.commit.without.dialog.applies.to.git.mercurial")).
         createPanel();
     myInspectionsPanel = new CommitMessageInspectionsPanel(myProject);
     myCommitOptions = new CommitOptionsConfigurable(myProject);
@@ -115,18 +105,5 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   public void dispose() {
     Disposer.dispose(myInspectionsPanel);
     Disposer.dispose(myCommitOptions);
-  }
-
-  @NotNull
-  private static String getConfirmationOptionText(@NotNull VcsShowConfirmationOption.Value value) {
-    switch (value) {
-      case SHOW_CONFIRMATION:
-        return "Ask";
-      case DO_NOTHING_SILENTLY:
-        return "No";
-      case DO_ACTION_SILENTLY:
-        return "Yes";
-    }
-    throw new IllegalArgumentException("Unknown confirmation option " + value);
   }
 }

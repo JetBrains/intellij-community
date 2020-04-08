@@ -232,12 +232,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             else if ("#disable".equals(e.getDescription())) {
               final int result = Messages.showYesNoDialog(
                 myProject,
-                "Notification will be disabled for all projects.\n\n" +
-                "Settings | Appearance & Behavior | Notifications | " +
-                NON_MANAGED_POM_NOTIFICATION_GROUP_ID +
-                "\ncan be used to configure the notification.",
-                "Non-Managed Maven Project Detection",
-                "Disable Notification", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
+                MavenProjectBundle.message("maven.notification.nonmanaged.pom.will.be.disabled.message", NON_MANAGED_POM_NOTIFICATION_GROUP_ID),
+                MavenProjectBundle.message("maven.notification.nonmanaged.pom.disable.title"),
+                MavenProjectBundle.message("maven.notification.disable"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
               if (result == Messages.YES) {
                 NotificationsConfigurationImpl.getInstanceImpl().changeSettings(
                   NON_MANAGED_POM_NOTIFICATION_GROUP_ID, NotificationDisplayType.NONE, false, false);
@@ -595,8 +592,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     MavenUtil.invokeLater(myProject, () -> {
-      if (myProject == null || !myProject.isDefault() && !myProject.isDisposed()) {
-        for (Notification notification : EventLog.getLogModel(myProject).getNotifications()) {
+      Project project = myProject;
+      if (project == null || !project.isDefault() && !project.isDisposed()) {
+        for (Notification notification : (project == null ? EventLog.getLogModel(null).getNotifications() : EventLog.getNotifications(project))) {
           if (NON_MANAGED_POM_NOTIFICATION_GROUP_ID.equals(notification.getGroupId())) {
             for (VirtualFile file : files) {
               if (StringUtil.startsWith(notification.getContent(), file.getPresentableUrl())) {
@@ -1048,7 +1046,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     AsyncPromise<DownloadResult> promise = null;
     if (result != null) {
       promise = new AsyncPromise<DownloadResult>()
-        .onSuccess(it -> result.setDone(it))
+        .onSuccess(result::setDone)
         .onError(it -> result.reject(it.getMessage()));
     }
     scheduleArtifactsDownloading(projects, artifacts, sources, docs, promise);

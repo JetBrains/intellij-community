@@ -15,10 +15,14 @@
  */
 package net.sf.cglib.proxy;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectIntHashMap;
 import net.sf.cglib.asm.$ClassVisitor;
 import net.sf.cglib.asm.$Label;
 import net.sf.cglib.asm.$Type;
@@ -65,7 +69,7 @@ import java.util.*;
  */
 
 @SuppressWarnings("StaticFieldReferencedViaSubclass")
-public class AdvancedEnhancer extends AbstractClassGenerator
+public final class AdvancedEnhancer extends AbstractClassGenerator
 {
   private static final CallbackFilter ALL_ZERO = new CallbackFilter(){
     @Override
@@ -369,11 +373,22 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     int maxIndex = -1;
     ClassLoader bestLoader = null;
     ClassLoader nonPluginLoader = null;
+
+    List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+    NotNullLazyValue<TObjectIntHashMap<PluginId>> idToIndex = NotNullLazyValue.createValue(() -> {
+      int count = 0;
+      TObjectIntHashMap<PluginId> map = new TObjectIntHashMap<>(plugins.size());
+      for (IdeaPluginDescriptor descriptor : plugins) {
+        map.put(descriptor.getPluginId(), count++);
+      }
+      return map;
+    });
+
     if (interfaces != null && interfaces.length > 0) {
-      for (final Class anInterface : interfaces) {
-        final ClassLoader loader = anInterface.getClassLoader();
+      for (Class<?> anInterface : interfaces) {
+        ClassLoader loader = anInterface.getClassLoader();
         if (loader instanceof PluginClassLoader) {
-          final int order = PluginManagerCore.getPluginLoadingOrder(((PluginClassLoader)loader).getPluginId());
+          int order = idToIndex.getValue().get(((PluginClassLoader)loader).getPluginId());
           if (maxIndex < order) {
             maxIndex = order;
             bestLoader = loader;
@@ -384,15 +399,19 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         }
       }
     }
+
     ClassLoader superLoader = null;
     if (superclass != null) {
       superLoader = superclass.getClassLoader();
       if (superLoader instanceof PluginClassLoader &&
-          maxIndex < PluginManagerCore.getPluginLoadingOrder(((PluginClassLoader)superLoader).getPluginId())) {
+          maxIndex < idToIndex.getValue().get(((PluginClassLoader)superLoader).getPluginId())) {
         return superLoader;
       }
     }
-    if (bestLoader != null) return bestLoader;
+
+    if (bestLoader != null) {
+      return bestLoader;
+    }
     return superLoader == null ? nonPluginLoader : superLoader;
   }
 
@@ -424,7 +443,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   @Override
-  public void generateClass($ClassVisitor v) throws Exception {
+  public void generateClass($ClassVisitor v) {
     Class sc = (superclass == null) ? Object.class : superclass;
 
     if (TypeUtils.isFinal(sc.getModifiers())) {
@@ -551,7 +570,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
    * @param constructors the list of all declared constructors from the superclass
    * @throws IllegalArgumentException if there are no non-private constructors
    */
-  protected void filterConstructors(Class sc, List<Constructor> constructors) {
+  private static void filterConstructors(Class sc, List<Constructor> constructors) {
     CollectionUtils.filter(constructors, new VisibilityPredicate(sc, true));
     if (constructors.size() == 0) {
       throw new IllegalArgumentException("No visible constructors in " + sc);
@@ -559,26 +578,30 @@ public class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   @Override
-  protected Object firstInstance(Class type) throws Exception {
+  protected Object firstInstance(Class type) {
     if (classOnly) {
       return type;
-    } else {
+    }
+    else {
       return createUsingReflection(type);
     }
   }
 
   @Override
   protected Object nextInstance(Object instance) {
-    Class protoclass = (instance instanceof Class) ? (Class) instance : instance.getClass();
+    Class<?> protoclass = (instance instanceof Class) ? (Class) instance : instance.getClass();
     if (classOnly) {
       return protoclass;
-    } else if (instance instanceof Factory) {
+    }
+    else if (instance instanceof Factory) {
       if (argumentTypes != null) {
         return ((Factory)instance).newInstance(argumentTypes, arguments, callbacks);
-      } else {
+      }
+      else {
         return ((Factory)instance).newInstance(callbacks);
       }
-    } else {
+    }
+    else {
       return createUsingReflection(protoclass);
     }
   }

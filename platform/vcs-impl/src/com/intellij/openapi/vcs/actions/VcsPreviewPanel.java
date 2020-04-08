@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
@@ -133,7 +134,7 @@ class VcsPreviewPanel implements PreviewPanel {
     RangeHighlighter highlighter = LineStatusMarkerRenderer.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
-      public void paint(Editor editor, Graphics g, Rectangle r) {
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
         LineStatusMarkerRenderer.paintRange(g, myEditor, range, 0, isIgnored);
       }
 
@@ -150,7 +151,7 @@ class VcsPreviewPanel implements PreviewPanel {
       @NotNull
       @Override
       public String getAccessibleName() {
-        return "VCS marker: changed line";
+        return DiffBundle.message("vcs.marker.changed.line");
       }
     });
   }

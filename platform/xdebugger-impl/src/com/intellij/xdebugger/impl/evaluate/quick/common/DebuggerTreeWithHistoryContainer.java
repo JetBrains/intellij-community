@@ -25,9 +25,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 abstract class DebuggerTreeWithHistoryContainer<D> {
   private static final Logger LOG = Logger.getInstance(DebuggerTreeWithHistoryContainer.class);
   private static final int HISTORY_SIZE = 11;
@@ -89,7 +86,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
   private class GoForwardAction extends AnAction {
     GoForwardAction() {
-      super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
+      super(CodeInsightBundle.messagePointer("quick.definition.forward"), AllIcons.Actions.Forward);
     }
 
     @Override
@@ -108,7 +105,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
   private class GoBackwardAction extends AnAction {
     GoBackwardAction() {
-      super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
+      super(CodeInsightBundle.messagePointer("quick.definition.back"), AllIcons.Actions.Back);
     }
 
     @Override

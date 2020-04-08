@@ -1,12 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.zip.CRC32;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
@@ -82,5 +85,19 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     return groups.stream()
       .flatMap(elements -> elements.stream().sorted(sorter))
       .collect(toList());
+  }
+
+  protected static long randomFile(Path file) throws IOException {
+    Random rnd = new Random();
+    int size = (1 + rnd.nextInt(1023)) * 1024;
+    byte[] data = new byte[size];
+    rnd.nextBytes(data);
+
+    Files.createDirectories(file.getParent());
+    Files.write(file, data);
+
+    CRC32 crc32 = new CRC32();
+    crc32.update(data);
+    return crc32.getValue();
   }
 }

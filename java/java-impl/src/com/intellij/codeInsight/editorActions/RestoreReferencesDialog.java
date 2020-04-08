@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -56,10 +56,10 @@ class RestoreReferencesDialog extends DialogWrapper {
       }
     }
     if (myContainsClassesOnly) {
-      setTitle(CodeInsightBundle.message("dialog.import.on.paste.title"));
+      setTitle(JavaBundle.message("dialog.import.on.paste.title"));
     }
     else {
-      setTitle(CodeInsightBundle.message("dialog.import.on.paste.title2"));
+      setTitle(JavaBundle.message("dialog.import.on.paste.title2"));
     }
     init();
 
@@ -84,8 +84,8 @@ class RestoreReferencesDialog extends DialogWrapper {
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
 
     myExplanationLabel = new JBLabel(myContainsClassesOnly ?
-                                     CodeInsightBundle.message("dialog.paste.on.import.text") :
-                                     CodeInsightBundle.message("dialog.paste.on.import.text2"), SMALL, BRIGHTER);
+                                     JavaBundle.message("dialog.paste.on.import.text") :
+                                     JavaBundle.message("dialog.paste.on.import.text2"), SMALL, BRIGHTER);
     panel.add(myExplanationLabel, BorderLayout.NORTH);
 
     final JPanel buttonPanel = new JPanel(new VerticalFlowLayout());
@@ -109,8 +109,7 @@ class RestoreReferencesDialog extends DialogWrapper {
     return "#com.intellij.codeInsight.editorActions.RestoreReferencesDialog";
   }
 
-  @NotNull
-  public Object[] getSelectedElements(){
+  public Object @NotNull [] getSelectedElements(){
     return mySelectedElements;
   }
 }

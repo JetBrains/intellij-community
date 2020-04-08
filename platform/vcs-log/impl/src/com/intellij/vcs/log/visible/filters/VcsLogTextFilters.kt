@@ -51,4 +51,4 @@ class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<S
   }
 }
 
-internal fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})"
+internal fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})" // NON-NLS

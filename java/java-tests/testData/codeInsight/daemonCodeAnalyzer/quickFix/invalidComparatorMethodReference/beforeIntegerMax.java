@@ -1,4 +1,4 @@
-// "Replace with Comparator.naturalOrder()" "true"
+// "Replace with 'Comparator.naturalOrder()'" "true"
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;

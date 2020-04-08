@@ -122,6 +122,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     doTestCannotFindInitializer();
   }
 
+  public void testRefSameFinalFieldOtherObject() {
+    doTestCannotFindInitializer();
+  }
+
   public void testRef2ConstantsWithTheSameValue() {
     doTest(false);
   }

@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ScrollBarUI;
@@ -18,9 +19,6 @@ import java.beans.PropertyChangeListener;
 
 import static java.awt.Adjustable.VERTICAL;
 
-/**
- * @author Sergey.Malenkov
- */
 class DefaultScrollBarUI extends ScrollBarUI {
   static final Key<Component> LEADING = Key.create("JB_SCROLL_BAR_LEADING_COMPONENT");
   static final Key<Component> TRAILING = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT");
@@ -201,13 +199,13 @@ class DefaultScrollBarUI extends ScrollBarUI {
     Dimension preferred = new Dimension(thickness, thickness);
     if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
       preferred.height += preferred.height;
-      addPreferredHeight(preferred, UIUtil.getClientProperty(myScrollBar, LEADING));
-      addPreferredHeight(preferred, UIUtil.getClientProperty(myScrollBar, TRAILING));
+      addPreferredHeight(preferred, ComponentUtil.getClientProperty(myScrollBar, LEADING));
+      addPreferredHeight(preferred, ComponentUtil.getClientProperty(myScrollBar, TRAILING));
     }
     else {
       preferred.width += preferred.width;
-      addPreferredWidth(preferred, UIUtil.getClientProperty(myScrollBar, LEADING));
-      addPreferredWidth(preferred, UIUtil.getClientProperty(myScrollBar, TRAILING));
+      addPreferredWidth(preferred, ComponentUtil.getClientProperty(myScrollBar, LEADING));
+      addPreferredWidth(preferred, ComponentUtil.getClientProperty(myScrollBar, TRAILING));
     }
     return preferred;
   }
@@ -240,7 +238,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       Rectangle bounds = new Rectangle(c.getWidth(), c.getHeight());
       JBInsets.removeFrom(bounds, c.getInsets());
       // process an area before the track
-      Component leading = UIUtil.getClientProperty(c, LEADING);
+      Component leading = ComponentUtil.getClientProperty(c, LEADING);
       if (leading != null) {
         if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
           int size = leading.getPreferredSize().height;
@@ -256,7 +254,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
         }
       }
       // process an area after the track
-      Component trailing = UIUtil.getClientProperty(c, TRAILING);
+      Component trailing = ComponentUtil.getClientProperty(c, TRAILING);
       if (trailing != null) {
         if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
           int size = trailing.getPreferredSize().height;
@@ -289,7 +287,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       updateThumbBounds(animate);
       paintTrack((Graphics2D)g, c);
       // process additional drawing on the track
-      RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
+      RegionPainter<Object> track = ComponentUtil.getClientProperty(c, JBScrollBar.TRACK);
       if (track != null && myTrack.bounds.width > 0 && myTrack.bounds.height > 0) {
         track.paint((Graphics2D)g, myTrack.bounds.x, myTrack.bounds.y, myTrack.bounds.width, myTrack.bounds.height, null);
       }
@@ -483,7 +481,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseMoved(MouseEvent event) {
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
       if (!isDragging) updateMouse(event.getX(), event.getY());
-      redispatchIfTrackNotClickable(event);
     }
 
     @Override

@@ -25,9 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface JpsJavaCompilerConfiguration extends JpsElement {
   boolean isAddNotNullAssertions();
   void setAddNotNullAssertions(boolean addNotNullAssertions);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
@@ -75,11 +75,11 @@ public class SvnUtil {
 
   public static final AtomicNotNullLazyValue<Path> USER_CONFIGURATION_PATH = createValue(
     () -> SystemInfo.isWindows
-          ? Paths.get(notNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
+          ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
           : Paths.get(getUserHome(), ".subversion"));
   public static final AtomicNotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = createValue(
     () -> SystemInfo.isWindows
-          ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
+          ? Paths.get(Objects.requireNonNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
           : Paths.get("/etc/subversion"));
 
   private static final Logger LOG = Logger.getInstance(SvnUtil.class);
@@ -164,12 +164,11 @@ public class SvnUtil {
     ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
   }
 
-  @NotNull
-  public static File[] toIoFiles(@NotNull VirtualFile[] files) {
+  public static File @NotNull [] toIoFiles(VirtualFile @NotNull [] files) {
     return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);
   }
 
-  public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
+  public static void doLockFiles(Project project, final SvnVcs activeVcs, final File @NotNull [] ioFiles) throws VcsException {
     final String lockMessage;
     final boolean force;
     // TODO[yole]: check for shift pressed
@@ -615,7 +614,7 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static String join(@NotNull final String... parts) {
+  public static String join(final String @NotNull ... parts) {
     return StringUtil.join(parts, "/");
   }
 

@@ -126,7 +126,7 @@ public class NSDefaults {
       }
     }
 
-    static @NotNull Path createDomainPath(@NotNull String domain, @NotNull String[] nodes) {
+    static @NotNull Path createDomainPath(@NotNull String domain, String @NotNull [] nodes) {
       final Path result = new Path();
       result.myPath.add(new Node("persistentDomainForName:", domain));
       for (String nodeName: nodes)

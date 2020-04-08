@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
@@ -36,9 +36,6 @@ import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 @State(name = ArtifactManagerImpl.COMPONENT_NAME, storages = @Storage(value = "artifacts", stateSplitter = ArtifactManagerStateSplitter.class))
 public final class ArtifactManagerImpl extends ArtifactManager implements PersistentStateComponent<ArtifactManagerState>, Disposable {
   private static final Logger LOG = Logger.getInstance(ArtifactManagerImpl.class);
@@ -61,8 +58,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
   }
 
   @Override
-  @NotNull
-  public Artifact[] getArtifacts() {
+  public Artifact @NotNull [] getArtifacts() {
     return myModel.getArtifacts();
   }
 
@@ -121,7 +117,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
             artifactState.getPropertiesList().add(propertiesState);
           }
         }
-        Collections.sort(artifactState.getPropertiesList(), Comparator.comparing(ArtifactPropertiesState::getId));
+        artifactState.getPropertiesList().sort(Comparator.comparing(ArtifactPropertiesState::getId));
       }
       state.getArtifacts().add(artifactState);
     }

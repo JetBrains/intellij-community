@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
   @NotNull
   @Override
@@ -53,7 +50,7 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
     List<GotoRelatedItem> items = new ArrayList<>();
     for (LineMarkerProvider provider : providers) {
       if (provider instanceof RelatedItemLineMarkerProvider) {
-        List<RelatedItemLineMarkerInfo> markers = new ArrayList<>();
+        List<RelatedItemLineMarkerInfo<?>> markers = new ArrayList<>();
         RelatedItemLineMarkerProvider relatedItemLineMarkerProvider = (RelatedItemLineMarkerProvider)provider;
         for (PsiElement parent : parents) {
           ContainerUtil.addIfNotNull(markers, relatedItemLineMarkerProvider.getLineMarkerInfo(parent));

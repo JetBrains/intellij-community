@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -30,8 +30,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -104,6 +103,28 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   public void updateUI() {
     UISettings.setupComponentAntialiasing(this);
+    Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
+    if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
+  }
+
+  private void updateFractionalMetrics() {
+    if (SystemInfo.isMacOSCatalina) {
+      Object value = hasSearchMatch() ? null : UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
+      if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+      putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
+    }
+  }
+
+  private boolean hasSearchMatch() {
+    synchronized (myFragments) {
+      for (ColoredFragment fragment : myFragments) {
+        if (SimpleTextAttributes.STYLE_SEARCH_MATCH == fragment.attributes.getStyle()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -259,8 +280,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   @Override
   public final void setIcon(@Nullable final Icon icon) {
-    myIcon = icon;
-    revalidateAndRepaint();
+    if (!Objects.equals(icon, myIcon)) {
+      myIcon = icon;
+      revalidateAndRepaint();
+    }
   }
 
   /**
@@ -319,6 +342,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @param paintFocusBorder {@code true} or {@code false}
    */
   protected final void setPaintFocusBorder(final boolean paintFocusBorder) {
+    if (myPaintFocusBorder == paintFocusBorder) return;
     myPaintFocusBorder = paintFocusBorder;
 
     repaint();
@@ -331,6 +355,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @param focusBorderAroundIcon {@code true} or {@code false}
    */
   protected final void setFocusBorderAroundIcon(final boolean focusBorderAroundIcon) {
+    if (myFocusBorderAroundIcon == focusBorderAroundIcon) return;
     myFocusBorderAroundIcon = focusBorderAroundIcon;
 
     repaint();
@@ -341,6 +366,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   public void setIconOpaque(final boolean iconOpaque) {
+    if (myIconOpaque == iconOpaque) return;
     myIconOpaque = iconOpaque;
 
     repaint();
@@ -370,6 +396,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @NotNull
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
+    updateFractionalMetrics();
     synchronized (myFragments) {
       // Calculate width
       float width = myIpad.left;
@@ -528,6 +555,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @return the index of the fragment, {@link #FRAGMENT_ICON} if the icon is at the offset, or -1 if nothing is there.
    */
   public int findFragmentAt(int x) {
+    updateFractionalMetrics();
     float curX = myIpad.left;
     if (myBorder != null) {
       curX += myBorder.getBorderInsets(this).left;
@@ -727,6 +755,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected int doPaintText(Graphics2D g, int textStart, boolean focusAroundIcon) {
+    updateFractionalMetrics();
     synchronized (myFragments) {
       // If there is no icon, then we have to add left internal padding
       if (textStart == 0) {
@@ -976,10 +1005,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
     UISettings.setupAntialiasing(g);
+    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getClientProperty(RenderingHints.KEY_FRACTIONALMETRICS));
   }
 
   @Override
   public int getBaseline(int width, int height) {
+    updateFractionalMetrics();
     super.getBaseline(width, height);
     return getTextBaseLine(getFontMetrics(getFont()), height);
   }

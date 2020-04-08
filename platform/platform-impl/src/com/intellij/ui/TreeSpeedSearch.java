@@ -75,9 +75,8 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
+  protected Object @NotNull [] getAllElements() {
     JBIterable<TreePath> paths;
     if (myCanExpand) {
       paths = TreeUtil.treePathTraverser(myComponent).traverse();

@@ -136,6 +136,7 @@ public interface JavaElementType {
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", PsiReceiverParameterImpl::new);
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", PsiJavaModuleReferenceElementImpl::new);
   IElementType TYPE_TEST_PATTERN = new JavaCompositeElementType("TYPE_TEST_PATTERN", PsiTypeTestPatternImpl::new);
+  IElementType PATTERN_VARIABLE = new JavaCompositeElementType("PATTERN_VARIABLE", PsiPatternVariableImpl::new);
 
   class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {

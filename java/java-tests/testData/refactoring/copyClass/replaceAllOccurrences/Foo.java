@@ -1,3 +1,4 @@
+class AnotherFoo {}
 public class Foo {
 
     public static Foo createInstance() {

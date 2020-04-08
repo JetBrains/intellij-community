@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.*;
@@ -76,8 +77,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final RncGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
@@ -122,8 +122,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final RncGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
@@ -143,12 +142,11 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return "Unresolved pattern reference ''{0}''";
+    return RelaxngBundle.message("unresolved.pattern.reference.0");
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public LocalQuickFix @Nullable [] getQuickFixes() {
     if (getScope() != null) {
       return new LocalQuickFix[] { new CreatePatternFix(this) };
     }
@@ -165,13 +163,13 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     @NotNull
     @Override
     public String getName() {
-      return "Create Pattern '" + myReference.getCanonicalText() + "'";
+      return RelaxngBundle.message("create.pattern.0", myReference.getCanonicalText());
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Create Pattern";
+      return RelaxngBundle.message("create.pattern");
     }
 
     @Override

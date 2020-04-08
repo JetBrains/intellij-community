@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
@@ -186,7 +186,8 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
     final List<ParameterInfoImpl> parameters = new ArrayList<>();
     for (VariableData data : myParameterTablePanel.getVariableData()) {
       if (data.passAsParameter) {
-        parameters.add(new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)data.variable), data.name, data.type));
+        int oldParameterIndex = parameterList.getParameterIndex((PsiParameter)data.variable);
+        parameters.add(ParameterInfoImpl.create(oldParameterIndex).withName(data.name).withType(data.type));
       }
     }
     final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[0]);

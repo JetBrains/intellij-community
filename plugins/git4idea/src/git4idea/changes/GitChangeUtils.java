@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,9 +9,9 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.update.FilePathChange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -509,10 +509,10 @@ public class GitChangeUtils {
     }
   }
 
-  public static class GitDiffChange {
-    @NotNull public final FileStatus status;
-    @Nullable public final FilePath beforePath;
-    @Nullable public final FilePath afterPath;
+  public static class GitDiffChange implements FilePathChange {
+    @NotNull private final FileStatus status;
+    @Nullable private final FilePath beforePath;
+    @Nullable private final FilePath afterPath;
 
     public GitDiffChange(@NotNull FileStatus status, @Nullable FilePath beforePath, @Nullable FilePath afterPath) {
       assert beforePath != null || afterPath != null;
@@ -521,9 +521,27 @@ public class GitChangeUtils {
       this.afterPath = afterPath;
     }
 
+    @Override
+    @Nullable
+    public FilePath getBeforePath() {
+      return beforePath;
+    }
+
+    @Override
+    @Nullable
+    public FilePath getAfterPath() {
+      return afterPath;
+    }
+
     @NotNull
     public FilePath getFilePath() {
-      return ObjectUtils.assertNotNull(afterPath != null ? afterPath : beforePath);
+      com.intellij.openapi.vcs.@Nullable FilePath t = afterPath != null ? afterPath : beforePath;
+      return Objects.requireNonNull(t);
+    }
+
+    @NotNull
+    public FileStatus getStatus() {
+      return status;
     }
   }
 }

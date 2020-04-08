@@ -46,9 +46,15 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return isExplicitCall(this) ? myExplicitCallReference : null;
   }
 
+  @Nullable
   @Override
-  @NotNull
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyMethodCallReference getCallReference() {
+    GroovyMethodCallReference explicitCallReference = getExplicitCallReference();
+    return explicitCallReference == null ? getImplicitCallReference() : explicitCallReference;
+  }
+
+  @Override
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
     return ((GrReferenceExpression)invoked).multiResolve(true);
@@ -71,9 +77,8 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return ((GrReferenceExpression)expression).getDotToken() == null;
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final GroovyMethodCallReference implicitCallReference = getImplicitCallReference();
     if (implicitCallReference != null) {
       return implicitCallReference.multiResolve(incompleteCode);

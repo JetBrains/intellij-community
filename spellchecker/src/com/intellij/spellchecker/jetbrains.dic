@@ -1,7 +1,9 @@
 accessor
 accessors
 additivity
+agentlib
 agentmain
+agentpath
 aggregator
 ajax
 akka
@@ -13,6 +15,7 @@ anyschema
 aopalliance
 apomorphism
 apothem
+appdata
 appender
 archivelog
 argc
@@ -268,6 +271,7 @@ getters
 gists
 github
 gitlab
+gitter
 globals
 google
 googletest
@@ -275,6 +279,7 @@ goto
 gradle
 grapheme
 graphemes
+graphql
 grayscale
 greenplum
 greyscale
@@ -348,6 +353,7 @@ isnull
 iterable
 iterables
 jacoco
+jaeger
 javabean
 javabeans
 javac
@@ -358,7 +364,7 @@ javascript
 javax
 jaxb
 jaxen
-jetbrains
+jcef
 jibx
 jira
 jndi
@@ -407,6 +413,7 @@ liskov
 listable
 lldb
 llvm
+localappdata
 localhost
 localtime
 localtimestamp
@@ -454,6 +461,7 @@ metadata
 metas
 metaspace
 micronaut
+microprofile
 microservice
 microservices
 middleint
@@ -481,6 +489,7 @@ msql
 mssql
 msvc
 multi
+multihost
 multilinestring
 multipart
 multipoint
@@ -703,6 +712,8 @@ rubymine
 runtime
 rvalue
 rvalues
+rxkotlin
+rxjava
 samskivert
 savepoint
 sbin
@@ -916,6 +927,7 @@ upsource
 urlencoded
 urowid
 username
+userprofile
 utf
 util
 utils
@@ -934,6 +946,7 @@ vectorcall
 verdana
 versa
 vertices
+vertx
 viewlet
 viewport
 viewports

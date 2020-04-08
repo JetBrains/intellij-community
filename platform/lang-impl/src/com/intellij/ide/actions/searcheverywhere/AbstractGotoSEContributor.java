@@ -1,21 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider;
+import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider;
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -27,36 +40,52 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.AbstractAction;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object> {
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
@@ -70,34 +99,33 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   );
 
   protected final Project myProject;
-  protected final PsiElement psiContext;
   protected boolean myEverywhere;
   protected ScopeDescriptor myScopeDescriptor;
 
   private final GlobalSearchScope myEverywhereScope;
   private final GlobalSearchScope myProjectScope;
 
-  protected AbstractGotoSEContributor(@Nullable Project project, @Nullable PsiElement context) {
-    myProject = project;
-    psiContext = context;
-    myEverywhereScope = myProject == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.everythingScope(myProject);
-    GlobalSearchScope projectScope = myProject == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.projectScope(myProject);
-    if (myProject == null) {
-      myProjectScope = GlobalSearchScope.EMPTY_SCOPE;
-    }
-    else if (!myEverywhereScope.equals(projectScope)) {
-      myProjectScope = projectScope;
-    }
-    else {
+  protected final SmartPsiElementPointer<PsiElement> myPsiContext;
+  protected final List<ScopeDescriptor> myScopeDescriptors = new ArrayList<>();
+
+  protected AbstractGotoSEContributor(@NotNull AnActionEvent event) {
+    myProject = event.getRequiredData(CommonDataKeys.PROJECT);
+    PsiElement context = GotoActionBase.getPsiContext(event);
+    myPsiContext = context != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context) : null;
+    myEverywhereScope = GlobalSearchScope.everythingScope(myProject);
+    ScopeChooserCombo.processScopes(
+      myProject, event.getDataContext(),
+      ScopeChooserCombo.OPT_LIBRARIES | ScopeChooserCombo.OPT_EMPTY_SCOPES,
+      new CommonProcessors.CollectProcessor<>(myScopeDescriptors));
+    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
+    if (myEverywhereScope.equals(projectScope)) {
       // just get the second scope, i.e. Attached Directories in DataGrip
-      Ref<GlobalSearchScope> result = Ref.create();
-      processScopes(SimpleDataContext.getProjectContext(myProject), o -> {
-        if (o.scopeEquals(myEverywhereScope) || o.scopeEquals(null)) return true;
-        result.set((GlobalSearchScope)o.getScope());
-        return false;
-      });
-      myProjectScope = ObjectUtils.notNull(result.get(), myEverywhereScope);
+      ScopeDescriptor secondScope = JBIterable.from(myScopeDescriptors)
+        .filter(o -> !o.scopeEquals(myEverywhereScope) && !o.scopeEquals(null))
+        .first();
+      projectScope = secondScope != null ? (GlobalSearchScope)secondScope.getScope() : myEverywhereScope;
     }
+    myProjectScope = projectScope;
     myScopeDescriptor = getInitialSelectedScope();
   }
 
@@ -116,11 +144,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @Override
   public boolean isShownInSeparateTab() {
     return true;
-  }
-
-  private static void processScopes(@NotNull DataContext dataContext, @NotNull Processor<? super ScopeDescriptor> processor) {
-    Project project = ObjectUtils.notNull(CommonDataKeys.PROJECT.getData(dataContext));
-    ScopeChooserCombo.processScopes(project, dataContext, ScopeChooserCombo.OPT_LIBRARIES | ScopeChooserCombo.OPT_EMPTY_SCOPES, processor);
   }
 
   @NotNull
@@ -148,6 +171,11 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         @Override
         void onProjectScopeToggled() {
           setEverywhere(!myScopeDescriptor.scopeEquals(myEverywhereScope));
+        }
+
+        @Override
+        boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
+          return ContainerUtil.process(myScopeDescriptors, processor);
         }
 
         @Override
@@ -192,17 +220,12 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     String selectedScope = myProject == null ? null : getSelectedScopes(myProject).get(getClass().getSimpleName());
     if (Registry.is("search.everywhere.show.scopes") && Registry.is("search.everywhere.sticky.scopes") &&
         StringUtil.isNotEmpty(selectedScope)) {
-      Ref<ScopeDescriptor> result = Ref.create();
-      processScopes(SimpleDataContext.getProjectContext(myProject), o -> {
-        if (!selectedScope.equals(o.getDisplayName()) || o.scopeEquals(null)) return true;
-        result.set(o);
-        return false;
-      });
-      return !result.isNull() ? result.get() : new ScopeDescriptor(myProjectScope);
+      for (ScopeDescriptor descriptor : myScopeDescriptors) {
+        if (!selectedScope.equals(descriptor.getDisplayName()) || descriptor.scopeEquals(null)) continue;
+        return descriptor;
+      }
     }
-    else {
-      return new ScopeDescriptor(myProjectScope);
-    }
+    return new ScopeDescriptor(myProjectScope);
   }
 
   private void setSelectedScope(@NotNull ScopeDescriptor o) {
@@ -226,45 +249,55 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     if (myProject == null) return; //nowhere to search
     if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-    }
-    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+    Runnable fetchRunnable = () -> {
       if (!isDumbAware() && DumbService.isDumb(myProject)) return;
 
       FilteringGotoByModel<?> model = createModel(myProject);
       if (progressIndicator.isCanceled()) return;
 
-      PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
+      PsiElement context = myPsiContext != null ? myPsiContext.getElement() : null;
       ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
         ChooseByNameItemProvider provider = popup.getProvider();
         GlobalSearchScope scope = Registry.is("search.everywhere.show.scopes")
-                                  ? (GlobalSearchScope)ObjectUtils.notNull(myScopeDescriptor.getScope())
+                                  ? (GlobalSearchScope)Objects.requireNonNull(myScopeDescriptor.getScope())
                                   : null;
 
         boolean everywhere = scope == null ? myEverywhere : scope.isSearchInLibraries();
         if (scope != null && provider instanceof ChooseByNameInScopeItemProvider) {
           FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, scope);
-          ((ChooseByNameInScopeItemProvider) provider).filterElementsWithWeights(popup, parameters, progressIndicator,
-                        item -> processElement(progressIndicator, consumer, model, item.getItem(), item.getWeight())
+          ((ChooseByNameInScopeItemProvider)provider).filterElementsWithWeights(popup, parameters, progressIndicator,
+                                                                                item -> processElement(progressIndicator, consumer, model,
+                                                                                                       item.getItem(), item.getWeight())
           );
         }
         else if (provider instanceof ChooseByNameWeightedItemProvider) {
-          ((ChooseByNameWeightedItemProvider) provider).filterElementsWithWeights(popup, pattern, everywhere, progressIndicator,
-                        item -> processElement(progressIndicator, consumer, model, item.getItem(), item.getWeight())
+          ((ChooseByNameWeightedItemProvider)provider).filterElementsWithWeights(popup, pattern, everywhere, progressIndicator,
+                                                                                 item -> processElement(progressIndicator, consumer, model,
+                                                                                                        item.getItem(), item.getWeight())
           );
         }
         else {
           provider.filterElements(popup, pattern, everywhere, progressIndicator,
-                        element -> processElement(progressIndicator, consumer, model, element, getElementPriority(element, pattern))
+                                  element -> processElement(progressIndicator, consumer, model, element,
+                                                            getElementPriority(element, pattern))
           );
         }
       }
       finally {
         Disposer.dispose(popup);
       }
-    }, progressIndicator);
+    };
+
+
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() && application.isDispatchThread()) {
+      fetchRunnable.run();
+    }
+    else {
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
+      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator);
+    }
   }
 
   private boolean processElement(@NotNull ProgressIndicator progressIndicator,
@@ -447,16 +480,18 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
     abstract void onProjectScopeToggled();
 
+    abstract boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor);
+
     @Override public boolean canBePerformed(@NotNull DataContext context) { return true; }
     @Override public boolean isPopup() { return true; }
-    @NotNull @Override public AnAction[] getChildren(@Nullable AnActionEvent e) { return EMPTY_ARRAY; }
+    @Override public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) { return EMPTY_ARRAY; }
 
     @NotNull @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       JComponent component = new ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-      UIUtil.putClientProperty(component, MnemonicHelper.MNEMONIC_CHECKER, keyCode ->
-        KeyEvent.getExtendedKeyCodeForChar(TOGGLE) == keyCode ||
-        KeyEvent.getExtendedKeyCodeForChar(CHOOSE) == keyCode);
+      ComponentUtil.putClientProperty(component, MnemonicHelper.MNEMONIC_CHECKER, keyCode ->
+          KeyEvent.getExtendedKeyCodeForChar(TOGGLE) == keyCode ||
+          KeyEvent.getExtendedKeyCodeForChar(CHOOSE) == keyCode);
 
       MnemonicHelper.registerMnemonicAction(component, CHOOSE);
       InputMap map = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -492,7 +527,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         CHOOSE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
       String shortcutText2 = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(
         TOGGLE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
-      e.getPresentation().setDescription("Choose scope (" + shortcutText + ")\n" +
+      e.getPresentation().setDescription("Choose scope (" + shortcutText + ")<p/>" +
                                          "Toggle scope (" + shortcutText2 + ")");
       JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
       if (button != null) {
@@ -504,7 +539,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     public void actionPerformed(@NotNull AnActionEvent e) {
       JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
       if (button == null || !button.isValid()) return;
-      JList<ScopeDescriptor> fakeList = new JBList<>();
       ListCellRenderer<ScopeDescriptor> renderer = new ListCellRenderer<ScopeDescriptor>() {
         final ListCellRenderer<ScopeDescriptor> delegate = ScopeChooserCombo.createDefaultRenderer();
         @Override
@@ -523,7 +557,8 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         }
       };
       List<ScopeDescriptor> items = new ArrayList<>();
-      processScopes(e.getDataContext(), o -> {
+      JList<ScopeDescriptor> fakeList = new JBList<>();
+      processScopes(o -> {
         Component c = renderer.getListCellRendererComponent(fakeList, o, -1, false, false);
         if (c instanceof JSeparator || c instanceof TitledSeparator ||
             !o.scopeEquals(null) && o.getScope() instanceof GlobalSearchScope) {
@@ -558,8 +593,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         }
       };
       ScopeDescriptor selection = getSelectedScope();
-      step.setDefaultOptionIndex(ContainerUtil.indexOf(items, o ->
-        Comparing.equal(o.getDisplayName(), selection.getDisplayName())));
+      step.setDefaultOptionIndex(ContainerUtil.indexOf(items, o -> Objects.equals(o.getDisplayName(), selection.getDisplayName())));
       ListPopupImpl popup = new ListPopupImpl(e.getProject(), step);
       popup.setMaxRowCount(10);
       //noinspection unchecked

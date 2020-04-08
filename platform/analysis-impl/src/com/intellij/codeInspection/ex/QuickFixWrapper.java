@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -9,20 +9,22 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author max
- */
 public class QuickFixWrapper implements IntentionAction, PriorityAction {
   private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
@@ -103,7 +105,7 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   public ProblemHighlightType getHighlightType() {
     return myDescriptor.getHighlightType();
   }
-  
+
   @Nullable
   public PsiFile getFile() {
     PsiElement element = myDescriptor.getPsiElement();
@@ -112,5 +114,54 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
 
   public String toString() {
     return getText();
+  }
+
+  @Override
+  public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
+    LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
+    if (result == null) return null;
+    PsiElement start, end, psi;
+    try {
+      start = transferElement(target, myDescriptor.getStartElement());
+      end = transferElement(target, myDescriptor.getEndElement());
+      psi = transferElement(target, myDescriptor.getPsiElement());
+    }
+    catch (IllegalStateException e) {
+      return null;
+    }
+    ProblemDescriptor descriptor = new ProblemDescriptor() {
+      //@formatter:off
+      @Override public PsiElement getPsiElement() { return psi;}
+      @Override public PsiElement getStartElement() { return start;}
+      @Override public PsiElement getEndElement() { return end;}
+      @Override public TextRange getTextRangeInElement() { return myDescriptor.getTextRangeInElement();}
+      @Override public int getLineNumber() { return myDescriptor.getLineNumber();}
+      @Override public @NotNull ProblemHighlightType getHighlightType() { return myDescriptor.getHighlightType();}
+      @Override public boolean isAfterEndOfLine() { return myDescriptor.isAfterEndOfLine();}
+      @Override public void setTextAttributes(TextAttributesKey key) {}
+      @Override public @Nullable ProblemGroup getProblemGroup() { return myDescriptor.getProblemGroup(); }
+      @Override public void setProblemGroup(@Nullable ProblemGroup problemGroup) {}
+      @Override public boolean showTooltip() { return myDescriptor.showTooltip();}
+      @Override public @NotNull String getDescriptionTemplate() { return myDescriptor.getDescriptionTemplate();}
+      @Override public QuickFix<?> @Nullable [] getFixes() { return QuickFix.EMPTY_ARRAY;}
+      //@formatter:on
+    };
+    return new QuickFixWrapper(descriptor, result);
+  }
+
+  @Contract("_, null -> null")
+  private static PsiElement transferElement(@NotNull PsiFile target, @Nullable PsiElement element) {
+    if (element == null) return null;
+    TextRange range = element.getTextRange();
+    PsiElement newElement = target.findElementAt(range.getStartOffset());
+    while (newElement != null) {
+      TextRange newRange = newElement.getTextRange();
+      if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
+        return newElement;
+      }
+      if (newRange.getStartOffset() < range.getStartOffset() || newRange.getEndOffset() > range.getEndOffset()) break;
+      newElement = newElement.getParent();
+    }
+    throw new IllegalStateException("Cannot find element in copy file");
   }
 }

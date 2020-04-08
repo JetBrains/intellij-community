@@ -16,9 +16,10 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -42,7 +43,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
-  public static final String NAME = ProjectBundle.message("modules.classpath.title");
+  /**
+   * @deprecated Use {@link #getName()} instead
+   */
+  @Deprecated
+  public static final String NAME = "Dependencies";
 
   private ClasspathPanelImpl myPanel;
   private ClasspathFormatPanel myClasspathFormatPanel;
@@ -67,7 +72,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public String getDisplayName() {
-    return NAME;
+    return getName();
   }
 
   @Override
@@ -161,11 +166,11 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       super(new GridBagLayout());
       rootModel = model;
 
-      add(new JLabel(ProjectBundle.message("project.roots.classpath.format.label")),
+      add(new JLabel(JavaUiBundle.message("project.roots.classpath.format.label")),
           new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(10, 6, 6, 0), 0, 0));
 
       Map<String, String> formatIdToDescription = new LinkedHashMap<>();
-      formatIdToDescription.put(ClassPathStorageUtil.DEFAULT_STORAGE, ProjectBundle.message("project.roots.classpath.format.default.descr"));
+      formatIdToDescription.put(ClassPathStorageUtil.DEFAULT_STORAGE, JavaUiBundle.message("project.roots.classpath.format.default.descr"));
       for (ClasspathStorageProvider provider : providers) {
         formatIdToDescription.put(provider.getID(), provider.getDescription());
       }
@@ -199,5 +204,9 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       canApply();
       ClasspathStorage.setStorageType(rootModel, getSelectedClasspathFormat());
     }
+  }
+
+  public static String getName() {
+    return JavaCompilerBundle.message("modules.classpath.title");
   }
 }

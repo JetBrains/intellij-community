@@ -25,7 +25,7 @@ public class DefaultCompactActionGroup extends DefaultActionGroup implements Com
     super();
   }
 
-  public DefaultCompactActionGroup(@NotNull AnAction... actions) {
+  public DefaultCompactActionGroup(AnAction @NotNull ... actions) {
     super(actions);
   }
 

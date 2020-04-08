@@ -68,17 +68,15 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
   }
 
   @Override
-  @NotNull
-  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
     final XmlElementDescriptor[] descriptors = super.getRootElementsDescriptors(doc);
     List<XmlElementDescriptor> rootElements = ContainerUtil.filter(descriptors, descriptor -> isRootTag((RelaxedHtmlFromRngElementDescriptor)descriptor));
     ContainerUtil.addAll(rootElements, HtmlUtil.getCustomTagDescriptors(doc));
     return rootElements.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public XmlElementDescriptor[] getAllElementsDescriptors(@Nullable XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getAllElementsDescriptors(@Nullable XmlDocument document) {
     return super.getRootElementsDescriptors(document);
   }
 

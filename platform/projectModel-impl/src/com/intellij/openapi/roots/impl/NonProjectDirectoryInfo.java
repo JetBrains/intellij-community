@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 class NonProjectDirectoryInfo extends DirectoryInfo {
   static final NonProjectDirectoryInfo IGNORED = new NonProjectDirectoryInfo("ignored") {
     @Override

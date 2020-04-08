@@ -3,10 +3,10 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.MessageBusUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
@@ -46,14 +45,18 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
+import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
+
 /**
  * @author yole
  */
+@Service
 @State(
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
+public final class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
   private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
   private final Project myProject;
@@ -62,7 +65,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   private int myPendingUpdateCount = 0;
   private ScheduledFuture myFuture;
   private List<CommittedChangeList> myCachedIncomingChangeLists;
-  private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
+  @NotNull private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
 
   private MyRefreshRunnable myRefresnRunnable;
 
@@ -74,7 +77,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
                                                                                     CommittedChangesListener.class);
 
   public static CommittedChangesCache getInstance(Project project) {
-    return project.getComponent(CommittedChangesCache.class);
+    return project.getService(CommittedChangesCache.class);
   }
 
   public CommittedChangesCache(@NotNull Project project) {
@@ -420,12 +423,12 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   private void fireChangesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesLoaded(location, changes));
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesLoaded(location, changes));
   }
 
   private void fireIncomingReloaded() {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC,
-                                                      listener -> listener.incomingChangesUpdated(Collections.emptyList()));
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC,
+                                       listener -> listener.incomingChangesUpdated(Collections.emptyList()));
   }
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
@@ -562,7 +565,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
 
     myCachedIncomingChangeLists = result;
     debug("Incoming changes loaded");
-    notifyIncomingChangesUpdated(result);
+    fireIncomingChangesUpdated(result);
     return result;
   }
 
@@ -645,7 +648,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
       myCachesHolder.clearAllCaches();
       myCachedIncomingChangeLists = null;
       if (continuation != null) continuation.run();
-      MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesCleared());
+      invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesCleared());
     });
   }
 
@@ -694,7 +697,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   private void pendingUpdateProcessed(@Nullable Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
     myPendingUpdateCount--;
     if (myPendingUpdateCount == 0) {
-      notifyIncomingChangesUpdated(myNewIncomingChanges);
+      fireIncomingChangesUpdated(myNewIncomingChanges);
       if (incomingChangesConsumer != null) {
         incomingChangesConsumer.consume(new ArrayList<>(myNewIncomingChanges));
       }
@@ -740,32 +743,14 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     });
   }
 
-  private void fireIncomingChangesUpdated(final List<? extends CommittedChangeList> lists) {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC,
-                                                      listener -> listener.incomingChangesUpdated(new ArrayList<>(lists)));
-  }
+  private void fireIncomingChangesUpdated(@NotNull Collection<? extends CommittedChangeList> incomingChanges) {
+    List<CommittedChangeList> incomingChangesCopy = unmodifiableOrEmptyList(new ArrayList<>(incomingChanges));
 
-  private void notifyIncomingChangesUpdated(@Nullable final Collection<CommittedChangeList> receivedChanges) {
-    final Collection<CommittedChangeList> changes = receivedChanges == null ? myCachedIncomingChangeLists : receivedChanges;
-    if (changes == null) {
-      final Application application = ApplicationManager.getApplication();
-      final Runnable runnable = () -> {
-        final List<CommittedChangeList> lists = loadIncomingChanges(true);
-        fireIncomingChangesUpdated(lists);
-      };
-      if (application.isDispatchThread()) {
-        myTaskQueue.run(runnable);
-      } else {
-        runnable.run();
-      }
-      return;
-    }
-    final ArrayList<CommittedChangeList> listCopy = new ArrayList<>(changes);
-    fireIncomingChangesUpdated(listCopy);
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.incomingChangesUpdated(incomingChangesCopy));
   }
 
   private void notifyRefreshError(final VcsException e) {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.refreshErrorStatusChanged(e));
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.refreshErrorStatusChanged(e));
   }
 
 
@@ -859,7 +844,15 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
 
   private void notifyReloadIncomingChanges() {
     myCachedIncomingChangeLists = null;
-    notifyIncomingChangesUpdated(null);
+
+    Runnable runnable = () -> loadIncomingChanges(true);
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      myTaskQueue.run(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   private void refreshCacheAsync(final ChangesCacheFile cache, final boolean initIfEmpty,

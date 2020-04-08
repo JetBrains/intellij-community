@@ -5,6 +5,7 @@ package com.intellij.refactoring.replaceConstructorWithBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,6 +32,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,10 +114,10 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Parameters to Pass to the Builder"), BorderLayout.CENTER);
+    panel.add(new JLabel(JavaRefactoringBundle.message("constructor.with.builder.parameters.to.pass.to.the.builder.title")), BorderLayout.CENTER);
 
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
-    actionGroup.addAction(new AnAction("Rename Setters Prefix") {
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.addAction(new AnAction(JavaRefactoringBundle.message("constructor.with.builder.rename.setters.prefix.action.name")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         applyNewSetterPrefix();
@@ -130,7 +132,9 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   }
 
   private void applyNewSetterPrefix() {
-    final String setterPrefix = Messages.showInputDialog(myTable, "New setter prefix:", "Rename Setters Prefix", null,
+    final String setterPrefix = Messages.showInputDialog(myTable, JavaRefactoringBundle
+                                                           .message("constructor.with.builder.new.setter.prefix.dialog.message"), JavaRefactoringBundle
+                                                           .message("constructor.with.builder.rename.setters.prefix.action.name"), null,
                                                          mySetterPrefix, new MySetterPrefixInputValidator());
     if (setterPrefix != null) {
       mySetterPrefix = setterPrefix;
@@ -235,7 +239,8 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       JComponent.WHEN_FOCUSED
     );
 
-    myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(550, -1));
+    myTable.setVisibleRowCount(12);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     return ScrollPaneFactory.createScrollPane(myTable);

@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp.validation;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.inspection.RegExpReplacementUtil;
 import org.intellij.lang.regexp.psi.RegExpClosure;
@@ -43,13 +45,15 @@ class SimplifyQuantifierAction implements IntentionAction {
     @Override
     @NotNull
     public String getText() {
-        return myReplacement == null ? "Remove '{1,1}'" : "Replace with '" + myReplacement + "'";
+        return myReplacement == null ? 
+               CommonQuickFixBundle.message("fix.remove", "{1,1}") : 
+               CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Simplify quantifier";
+        return RegExpBundle.message("intention.name.simplify.quantifier");
     }
 
     @Override

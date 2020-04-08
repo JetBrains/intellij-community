@@ -23,9 +23,6 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author max
- */
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
   implements PyCustomizableStubElementType<PyClass, PyCustomClassStub, PyCustomClassStubType<? extends PyCustomClassStub>> {
 

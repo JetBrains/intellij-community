@@ -21,9 +21,6 @@ import org.jetbrains.jps.appengine.model.JpsAppEngineExtensionService;
 import org.jetbrains.jps.appengine.model.JpsAppEngineModuleExtension;
 import org.jetbrains.jps.model.module.JpsModule;
 
-/**
- * @author nik
- */
 public class JpsAppEngineExtensionServiceImpl extends JpsAppEngineExtensionService {
   @Nullable
   @Override

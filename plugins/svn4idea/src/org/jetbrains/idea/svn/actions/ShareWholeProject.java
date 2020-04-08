@@ -32,7 +32,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
 
     presentation.setVisible(checker.isVisible());
     if (checker.isEnabled()) {
-      presentation.setText(SvnBundle.message("action.share.whole.project.text"));
+      presentation.setText(SvnBundle.messagePointer("action.share.whole.project.text"));
     }
   }
 

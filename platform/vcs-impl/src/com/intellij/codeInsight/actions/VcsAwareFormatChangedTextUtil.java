@@ -70,7 +70,7 @@ final class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @NotNull
   @Override
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
-                                                           @NotNull Change[] changes,
+                                                           Change @NotNull [] changes,
                                                            @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     List<T> result = new SmartList<>();
     for (Change change : changes) {

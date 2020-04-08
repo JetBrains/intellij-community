@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -193,7 +193,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   private static void gcPointerCache(SmartPsiElementPointer<?>... pointers) {
-    GCWatcher.tracking(ContainerUtil.map(pointers, p -> ((SmartPointerEx) p).getCachedElement())).tryGc();
+    GCWatcher.tracking(ContainerUtil.map(pointers, p -> ((SmartPointerEx) p).getCachedElement())).ensureCollected();
     for (SmartPsiElementPointer<?> pointer : pointers) {
       assertNull(((SmartPointerEx)pointer).getCachedElement());
     }
@@ -203,20 +203,20 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     configureByText(PlainTextFileType.INSTANCE, "foo bar goo\n");
     SmartPsiElementPointer pointer = createPointer(myFile.getFirstChild());
 
-    GCWatcher.tracking(myFile.getNode()).tryGc();
+    GCWatcher.tracking(myFile.getNode()).ensureCollected();
     assertEquals(myFile.getFirstChild(), pointer.getElement());
 
     Document document = myFile.getViewProvider().getDocument();
     ApplicationManager.getApplication().runWriteAction(() -> {
       document.deleteString(0, document.getTextLength());
 
-      GCWatcher.tracking(myFile.getNode()).tryGc();
+      GCWatcher.tracking(myFile.getNode()).ensureCollected();
       assertEquals(myFile.getFirstChild(), pointer.getElement());
 
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     });
 
-    GCWatcher.tracking(myFile.getNode()).tryGc();
+    GCWatcher.tracking(myFile.getNode()).ensureCollected();
     assertEquals(myFile.getFirstChild(), pointer.getElement());
   }
 
@@ -543,7 +543,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     GCWatcher watcher = GCWatcher.tracking(psiFile, FileDocumentManager.getInstance().getDocument(vfile));
     //noinspection UnusedAssignment
     psiFile = null;
-    watcher.tryGc();
+    watcher.ensureCollected();
 
     assertNull(FileDocumentManager.getInstance().getCachedDocument(vfile));
     assertEquals(pointer1.getRange(), range1);
@@ -666,7 +666,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     final SmartPsiElementPointer<PsiClass> pointer1 = createPointer(file.getClasses()[0]);
     assertNotNull(((PsiFileImpl)file).getStubTree());
 
-    GCWatcher.tracking(((PsiFileImpl)file).getStubTree(), file.getClasses()[0]).tryGc();
+    GCWatcher.tracking(((PsiFileImpl)file).getStubTree(), file.getClasses()[0]).ensureCollected();
 
     final FileASTNode node = file.getNode();
     final SmartPsiElementPointer<PsiClass> pointer2 = createPointer(file.getClasses()[0]);
@@ -1026,7 +1026,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertNotNull(file.getNode());
     SmartPointerEx<PsiClass> pointer = createPointer(file.getClasses()[0]);
 
-    GCWatcher.tracking(file.getNode()).tryGc();
+    GCWatcher.tracking(file.getNode()).ensureCollected();
     assertNull(file.getTreeElement());
 
     assertNotNull(pointer.getElement());

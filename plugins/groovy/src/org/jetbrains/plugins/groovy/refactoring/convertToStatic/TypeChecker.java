@@ -19,7 +19,7 @@ public class TypeChecker extends GroovyStaticTypeCheckVisitor {
   @Override
   protected void registerError(@NotNull PsiElement location,
                                @NotNull String description,
-                               @Nullable LocalQuickFix[] fixes,
+                               LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType) {
 
     if (highlightType == ProblemHighlightType.GENERIC_ERROR) {

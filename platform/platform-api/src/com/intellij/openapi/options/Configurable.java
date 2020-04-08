@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -121,8 +122,8 @@ import java.util.Collection;
  * @see ShowSettingsUtil
  */
 public interface Configurable extends UnnamedConfigurable {
-  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = ExtensionPointName.create("com.intellij.applicationConfigurable");
-  ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = ExtensionPointName.create("com.intellij.projectConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = new ExtensionPointName<>("com.intellij.applicationConfigurable");
+  ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ExtensionPointName<>("com.intellij.projectConfigurable");
 
   /**
    * Returns the visible name of the configurable component.
@@ -132,7 +133,7 @@ public interface Configurable extends UnnamedConfigurable {
    *
    * @return the visible name of the configurable component
    */
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsContexts.ConfigurableName
   @Contract(pure = true)
   String getDisplayName();
 
@@ -156,8 +157,7 @@ public interface Configurable extends UnnamedConfigurable {
    */
   @FunctionalInterface
   interface Composite {
-    @NotNull
-    Configurable[] getConfigurables();
+    Configurable @NotNull [] getConfigurables();
   }
 
   /**
@@ -187,7 +187,7 @@ public interface Configurable extends UnnamedConfigurable {
      */
     boolean isProjectLevel();
   }
-  
+
   /**
    * The interface is used for configurable that depends on some dynamic extension points.
    * If a configurable implements the interface by default the configurable will re-created after adding / removing extensions for the EP.
@@ -195,7 +195,7 @@ public interface Configurable extends UnnamedConfigurable {
    * Examples: postfix template configurable. If we have added a plugin with new postfix templates we have to re-create the configurable
    * (but only if the content of the configurable was loaded)
    *
-   * @apiNote configurable must not initialize EP-depend resources in the constructor
+   * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor
    */
   interface WithEpDependencies {
     /**

@@ -17,9 +17,6 @@ package com.intellij.openapi.vfs;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class VirtualFileUrlChangeAdapter implements VirtualFileListener {
   @Override
   public void fileMoved(@NotNull VirtualFileMoveEvent event) {

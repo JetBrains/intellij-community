@@ -2,7 +2,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.project.Project;
@@ -57,7 +57,7 @@ public class DebuggerTreeNodeExpression {
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(
-        DebuggerBundle.message("evaluation.error.invalid.this.expression", result.getText(), howToEvaluateThis.getText()), null);
+        JavaDebuggerBundle.message("evaluation.error.invalid.this.expression", result.getText(), howToEvaluateThis.getText()), null);
     }
 
     try {
@@ -106,7 +106,7 @@ public class DebuggerTreeNodeExpression {
       return parenthExpression;
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", typeName), e);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.type.name", typeName), e);
     }
   }
 

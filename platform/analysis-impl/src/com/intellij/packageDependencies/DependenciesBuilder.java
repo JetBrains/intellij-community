@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -78,9 +79,9 @@ public abstract class DependenciesBuilder {
     return myProject;
   }
 
-  public abstract String getRootNodeNameInUsageView();
+  public abstract @Nls String getRootNodeNameInUsageView();
 
-  public abstract String getInitialUsagesPosition();
+  public abstract @Nls String getInitialUsagesPosition();
 
   public abstract boolean isBackward();
 

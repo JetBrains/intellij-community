@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.repo.Repository;
@@ -6,40 +6,34 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
+import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 
-/**
- * The utilities related to rebase functionality
- */
 public class GitRebaseUtils {
-  public static final String CONTINUE_PROGRESS_TITLE = "Continue Rebase Process...";
-  /**
-   * The logger instance
-   */
   private final static Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
 
-  /**
-   * A private constructor for utility class
-   */
   private GitRebaseUtils() {
   }
 
@@ -57,8 +51,7 @@ public class GitRebaseUtils {
       new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE).rebase();
     }
     else {
-      LOG.warn("Refusing to continue: no rebase spec");
-      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+      notifyContinueFailed(project, "continue");
     }
   }
 
@@ -68,8 +61,7 @@ public class GitRebaseUtils {
       new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE).rebase();
     }
     else {
-      LOG.warn("Refusing to continue: no rebase spec");
-      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+      notifyContinueFailed(project, "continue");
     }
   }
 
@@ -79,8 +71,7 @@ public class GitRebaseUtils {
       new GitRebaseProcess(project, spec, GitRebaseResumeMode.SKIP).rebase();
     }
     else {
-      LOG.warn("Refusing to skip: no rebase spec");
-      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+      notifyContinueFailed(project, "skip");
     }
   }
 
@@ -90,9 +81,17 @@ public class GitRebaseUtils {
       new GitRebaseProcess(project, spec, GitRebaseResumeMode.SKIP).rebase();
     }
     else {
-      LOG.warn("Refusing to skip: no rebase spec");
-      VcsNotifier.getInstance(project).notifyError("Can't Continue Rebase", "No rebase in progress");
+      notifyContinueFailed(project, "skip");
     }
+  }
+
+  private static void notifyContinueFailed(@NotNull Project project, @NotNull @NonNls String action) {
+    LOG.warn(String.format("Refusing to %s: no rebase spec", action));
+    VcsNotifier.getInstance(project).notifyError(
+      GitBundle.getString("rebase.notification.no.rebase.in.progress.continue.title"),
+      GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+      true
+    );
   }
 
   /**
@@ -109,7 +108,11 @@ public class GitRebaseUtils {
     }
     else {
       LOG.warn("Refusing to abort: no rebase spec");
-      VcsNotifier.getInstance(project).notifyError("Can't Abort Rebase", "No rebase in progress");
+      VcsNotifier.getInstance(project).notifyError(
+        GitBundle.getString("rebase.notification.no.rebase.in.progress.abort.title"),
+        GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+        true
+      );
     }
   }
 
@@ -125,35 +128,38 @@ public class GitRebaseUtils {
     // TODO links to 'rebase', 'resolve conflicts', etc.
     for (GitRepository repository : repositories) {
       Repository.State state = repository.getState();
-      String in = GitUtil.mention(repository);
+      String repositoryName = getShortRepositoryName(repository);
       String message = null;
       switch (state) {
         case NORMAL:
           if (repository.isFresh()) {
-            message = "Repository" + in + " is empty.";
+            message = GitBundle.message("rebase.notification.not.allowed.empty.repository.message", repositoryName);
           }
           break;
         case MERGING:
-          message = "There is an unfinished merge process" + in + ".<br/>You should complete the merge before starting a rebase";
+          message = GitBundle.message("rebase.notification.not.allowed.merging.message", repositoryName);
           break;
         case REBASING:
-          message = "There is an unfinished rebase process" + in + ".<br/>You should complete it before starting another rebase";
+          message = GitBundle.message("rebase.notification.not.allowed.rebasing.message", repositoryName);
           break;
         case GRAFTING:
-          message = "There is an unfinished cherry-pick process" + in + ".<br/>You should finish it before starting a rebase.";
+          message = GitBundle.message("rebase.notification.not.allowed.grafting.message", repositoryName);
           break;
         case REVERTING:
-          message = "There is an unfinished revert process" + in + ".<br/>You should finish it before starting a rebase.";
+          message = GitBundle.message("rebase.notification.not.allowed.reverting.message", repositoryName);
           break;
         case DETACHED:
-          message = "You are in the detached HEAD state" + in + ".<br/>Rebase is not possible.";
+          message = GitBundle.message("rebase.notification.not.allowed.detached.message", repositoryName);
           break;
         default:
           LOG.error("Unknown state [" + state.name() + "]");
-          message = "Rebase is not possible" + in;
+          message = GitBundle.message("rebase.notification.not.allowed.message", repositoryName);
       }
       if (message != null) {
-        VcsNotifier.getInstance(project).notifyError("Rebase not Allowed", message);
+        VcsNotifier.getInstance(project).notifyError(
+          GitBundle.getString("rebase.notification.not.allowed.title"),
+          message
+        );
         return false;
       }
     }
@@ -161,27 +167,16 @@ public class GitRebaseUtils {
   }
 
   /**
-   * Checks if the rebase is in the progress for the specified git root
-   *
-   *
-   * @param project
-   * @param root the git root
-   * @return true if the rebase directory presents in the root
+   * @deprecated Use {@link GitRepository#isRebaseInProgress()}.
    */
   @Deprecated
   public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
     return getRebaseDir(project, root) != null;
   }
 
-  /**
-   * Get rebase directory
-   *
-   * @param root the vcs root
-   * @return the rebase directory or null if it does not exist.
-   */
   @Nullable
   public static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
-    GitRepository repository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
+    GitRepository repository = Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(root));
     File f = repository.getRepositoryFiles().getRebaseApplyDir();
     if (f.exists()) {
       return f;
@@ -252,19 +247,67 @@ public class GitRebaseUtils {
 
   @NotNull
   static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
-    return saver != null && saver.wereChangesSaved() ?
-           "<br/>Local changes were " + toPast(saver.getOperationName()) + " before rebase." :
-           "";
-  }
-
-  @NotNull
-  private static String toPast(@NotNull String word) {
-    return word.endsWith("e") ? word + "d" : word + "ed";
+    if (saver == null || !saver.wereChangesSaved()) {
+      return "";
+    }
+    return saver.getSaveMethod().selectBundleMessage(
+      GitBundle.getString("rebase.notification.saved.local.changes.part.stash.text"),
+      GitBundle.getString("rebase.notification.saved.local.changes.part.shelf.text")
+    );
   }
 
   @NotNull
   public static Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
     return GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
+  }
+
+  public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository, @NotNull String upstream, @Nullable String branch)
+    throws VcsException {
+
+    String rebasingBranch = branch;
+    if (rebasingBranch == null) {
+      if (repository.isRebaseInProgress()) {
+        rebasingBranch = getRebasingBranchHash(repository).asString();
+      }
+      else {
+        rebasingBranch = GitUtil.HEAD;
+      }
+    }
+
+    return GitHistoryUtils.collectTimedCommits(
+      repository.getProject(),
+      repository.getRoot(),
+      upstream + ".." + rebasingBranch
+    ).size();
+  }
+
+  @NotNull
+  private static Hash getRebasingBranchHash(@NotNull GitRepository repository) throws VcsException {
+    return readHashFromFile(repository.getProject(), repository.getRoot(), "orig-head");
+  }
+
+  @Nullable
+  public static Hash getOntoHash(@NotNull Project project, @NotNull VirtualFile root) {
+    try {
+      return readHashFromFile(project, root, "onto");
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  @NotNull
+  private static Hash readHashFromFile(
+    @NotNull Project project,
+    @NotNull VirtualFile root,
+    @NotNull @NonNls String fileName
+  ) throws VcsException {
+    try {
+      return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(project, root), fileName)).trim());
+    }
+    catch (IOException e) {
+      throw new VcsException("Couldn't resolve " + fileName, e);
+    }
   }
 
   /**

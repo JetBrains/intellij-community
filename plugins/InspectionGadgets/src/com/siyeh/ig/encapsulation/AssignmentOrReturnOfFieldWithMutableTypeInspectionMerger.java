@@ -15,9 +15,8 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspectionMerger extends In
     return "AssignmentOrReturnOfFieldWithMutableType";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "AssignmentToCollectionFieldFromParameter",
       "AssignmentToDateFieldFromParameter",
@@ -26,9 +25,8 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspectionMerger extends In
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {
       "AssignmentToCollectionOrArrayFieldFromParameter",
       "AssignmentToDateFieldFromParameter",

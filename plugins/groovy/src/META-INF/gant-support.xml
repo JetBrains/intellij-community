@@ -2,7 +2,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Groovy" extensions="gant"/>
     <projectConfigurable id="reference.settingsdialog.project.gant"
-                         groupId="build.tools" groupWeight="100" displayName="Gant"
+                         groupId="build.tools" groupWeight="100"
+                         bundle="messages.GroovyBundle"
+                         key="configurable.GantConfigurable.display.name"
                          instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
   </extensions>

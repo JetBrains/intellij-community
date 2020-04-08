@@ -113,12 +113,11 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public final int[] getCompletionPredecessorIds() {
+  public final int @NotNull [] getCompletionPredecessorIds() {
     return myCompletionPredecessorIds;
   }
 
-  public final void setCompletionPredecessorIds(@NotNull int[] completionPredecessorIds) {
+  public final void setCompletionPredecessorIds(int @NotNull [] completionPredecessorIds) {
     myCompletionPredecessorIds = completionPredecessorIds;
   }
 
@@ -127,11 +126,11 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return myDocument;
   }
 
-  @NotNull public final int[] getStartingPredecessorIds() {
+  public final int @NotNull [] getStartingPredecessorIds() {
     return myStartingPredecessorIds;
   }
 
-  public final void setStartingPredecessorIds(@NotNull final int[] startingPredecessorIds) {
+  public final void setStartingPredecessorIds(final int @NotNull [] startingPredecessorIds) {
     myStartingPredecessorIds = startingPredecessorIds;
   }
 

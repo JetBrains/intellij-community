@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.ImmutableSet;
@@ -41,9 +41,6 @@ import java.util.concurrent.Semaphore;
 import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.convertToList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author traff
- */
 public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private static final Logger LOG = Logger.getInstance(PyConsoleTask.class);
 

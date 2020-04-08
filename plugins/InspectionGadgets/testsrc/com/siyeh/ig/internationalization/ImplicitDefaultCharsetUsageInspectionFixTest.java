@@ -33,9 +33,8 @@ public class ImplicitDefaultCharsetUsageInspectionFixTest extends LightQuickFixP
     return JAVA_9;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {new ImplicitDefaultCharsetUsageInspection()};
   }
 }

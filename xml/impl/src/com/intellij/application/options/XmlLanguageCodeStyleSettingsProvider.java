@@ -19,10 +19,10 @@ import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAcces
 import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,14 +32,11 @@ import java.lang.reflect.Field;
  * @author Rustam Vishnyakov
  */
 public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-
-  public static final String CONFIGURABLE_DISPLAY_NAME = ApplicationBundle.message("title.xml");
-
   @Override
   @NotNull
   public CodeStyleConfigurable createConfigurable(@NotNull final CodeStyleSettings baseSettings,
                                                   @NotNull final CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, CONFIGURABLE_DISPLAY_NAME){
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, getConfigurableDisplayNameText()){
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
@@ -122,5 +119,9 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
         });
     }
     return super.getAccessor(codeStyleObject, field);
+  }
+
+  public static String getConfigurableDisplayNameText() {
+    return XmlBundle.message("title.xml");
   }
 }

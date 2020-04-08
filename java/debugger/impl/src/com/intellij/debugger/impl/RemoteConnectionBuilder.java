@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.AsyncStacksUtils;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -14,6 +14,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -26,7 +27,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,9 +37,6 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.jar.Attributes;
 
-/**
- * @author egor
- */
 public class RemoteConnectionBuilder {
   private static final Logger LOG = Logger.getInstance(RemoteConnectionBuilder.class);
 
@@ -120,7 +120,7 @@ public class RemoteConnectionBuilder {
     final String _debuggeeRunProperties = debuggeeRunProperties.toString();
 
     ApplicationManager.getApplication().runReadAction(() -> {
-      JavaSdkUtil.addRtJar(parameters.getClassPath());
+      addRtJar(parameters.getClassPath());
 
       if (myAsyncAgent) {
         addDebuggerAgent(parameters);
@@ -165,21 +165,32 @@ public class RemoteConnectionBuilder {
     return new RemoteConnection(useSockets, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, address, myServer);
   }
 
-  private static void checkTargetJPDAInstalled(JavaParameters parameters) throws ExecutionException {
+  private static void addRtJar(@NotNull PathsList pathsList) {
+    if (PluginManagerCore.isRunningFromSources()) {
+      String path = DebuggerUtilsImpl.getIdeaRtPath();
+      pathsList.remove(JavaSdkUtil.getIdeaRtJarPath());
+      pathsList.addTail(path);
+    }
+    else {
+      JavaSdkUtil.addRtJar(pathsList);
+    }
+  }
+
+  private static void checkTargetJPDAInstalled(@NotNull JavaParameters parameters) throws ExecutionException {
     final Sdk jdk = parameters.getJdk();
     if (jdk == null) {
-      throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
+      throw new ExecutionException(JavaDebuggerBundle.message("error.jdk.not.specified"));
     }
     final JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
     if (version == JavaSdkVersion.JDK_1_0 || version == JavaSdkVersion.JDK_1_1) {
       String versionString = jdk.getVersionString();
-      throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
+      throw new ExecutionException(JavaDebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
     if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
         String versionString = jdk.getVersionString();
-        throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));
+        throw new ExecutionException(JavaDebuggerBundle.message("error.invalid.jdk.home", versionString));
       }
       File dllFile = new File(
         homeDirectory.getPath().replace('/', File.separatorChar) + File.separator + "bin" + File.separator + "jdwp.dll"
@@ -187,7 +198,7 @@ public class RemoteConnectionBuilder {
       if (!dllFile.exists()) {
         GetJPDADialog dialog = new GetJPDADialog();
         dialog.show();
-        throw new ExecutionException(DebuggerBundle.message("error.debug.libraries.missing"));
+        throw new ExecutionException(JavaDebuggerBundle.message("error.debug.libraries.missing"));
       }
     }
   }

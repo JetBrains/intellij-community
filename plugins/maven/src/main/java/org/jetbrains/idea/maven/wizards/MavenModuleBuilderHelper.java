@@ -168,7 +168,7 @@ public class MavenModuleBuilderHelper {
     });
   }
 
-  private static void unblockAndSaveDocuments(@NotNull Project project, @NotNull VirtualFile... files) {
+  private static void unblockAndSaveDocuments(@NotNull Project project, VirtualFile @NotNull ... files) {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (VirtualFile file : files) {

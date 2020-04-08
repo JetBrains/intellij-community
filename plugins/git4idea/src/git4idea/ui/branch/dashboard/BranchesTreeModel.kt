@@ -3,6 +3,7 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.ThreeState
+import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
@@ -18,10 +19,20 @@ internal data class BranchInfo(val branchName: String,
   override fun toString() = branchName
 }
 
-internal data class BranchNodeDescriptor(val type: NodeType, val branchInfo: BranchInfo? = null)
+internal data class BranchNodeDescriptor(val type: NodeType,
+                                         val branchInfo: BranchInfo? = null,
+                                         val displayName: String? = branchInfo?.branchName,
+                                         val parent: BranchNodeDescriptor? = null) {
+  override fun toString(): String {
+    val suffix = branchInfo?.branchName ?: displayName
+    return if (suffix != null) "$type:$suffix" else "$type"
+  }
+
+  fun getDisplayText() = displayName ?: branchInfo?.branchName
+}
 
 internal enum class NodeType {
-  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH
+  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
@@ -29,10 +40,9 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   fun getTextRepresentation(): String {
     val nodeDescriptor = userObject as? BranchNodeDescriptor ?: return super.toString()
     return when (nodeDescriptor.type) {
-      NodeType.ROOT -> "root"
-      NodeType.LOCAL_ROOT -> "Local"
-      NodeType.REMOTE_ROOT -> "Remote"
-      else -> nodeDescriptor.branchInfo?.branchName ?: super.toString()
+      NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")
+      NodeType.REMOTE_ROOT -> message("group.Git.Remote.Branch.title")
+      else -> nodeDescriptor.getDisplayText() ?: super.toString()
     }
   }
 
@@ -49,8 +59,75 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal fun Set<BranchInfo>.toNodeDescriptors() =
-  asSequence()
-    .map { BranchNodeDescriptor(NodeType.BRANCH, it) }
-    .sortedWith(BRANCH_TREE_NODE_COMPARATOR)
-    .toList()
+internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchNodeDescriptor,
+                                    private val remoteRootNodeDescriptor: BranchNodeDescriptor) {
+  /**
+   * Parent node descriptor to direct children map
+   */
+  private val branchNodeDescriptors = hashMapOf<BranchNodeDescriptor, MutableSet<BranchNodeDescriptor>>()
+
+  fun clear() = branchNodeDescriptors.clear()
+
+  fun getChildrenForParent(parent: BranchNodeDescriptor): Set<BranchNodeDescriptor> =
+    branchNodeDescriptors.getOrDefault(parent, emptySet())
+
+  fun populateFrom(branches: Sequence<BranchInfo>, useGrouping: Boolean) {
+    branches.forEach { branch -> populateFrom(branch, useGrouping) }
+  }
+
+  private fun populateFrom(branch: BranchInfo, useGrouping: Boolean) {
+    var curParent: BranchNodeDescriptor = if (branch.isLocal) localRootNodeDescriptor else remoteRootNodeDescriptor
+
+    if (!useGrouping) {
+      addChild(curParent, BranchNodeDescriptor(NodeType.BRANCH, branch))
+      return
+    }
+
+    val iter = branch.branchName.split("/").iterator()
+
+    while (iter.hasNext()) {
+      val branchNamePart = iter.next()
+      val groupNode = iter.hasNext()
+      val nodeType = if (groupNode) NodeType.GROUP_NODE else NodeType.BRANCH
+      val branchInfo = if (nodeType == NodeType.BRANCH) branch else null
+
+      val branchNodeDescriptor = BranchNodeDescriptor(nodeType, branchInfo, displayName = branchNamePart, parent = curParent)
+      addChild(curParent, branchNodeDescriptor)
+      curParent = branchNodeDescriptor
+    }
+  }
+
+  private fun addChild(parent: BranchNodeDescriptor, child: BranchNodeDescriptor) {
+    val directChildren = branchNodeDescriptors.computeIfAbsent(parent) { sortedSetOf(BRANCH_TREE_NODE_COMPARATOR) }
+    directChildren.add(child)
+    branchNodeDescriptors[parent] = directChildren
+  }
+}
+
+internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1, d2 ->
+  val b1 = d1.branchInfo
+  val b2 = d2.branchInfo
+  val displayText1 = d1.getDisplayText()
+  val displayText2 = d2.getDisplayText()
+  val b1GroupNode = d1.type == NodeType.GROUP_NODE
+  val b2GroupNode = d2.type == NodeType.GROUP_NODE
+  val b1Current = b1 != null && b1.isCurrent
+  val b2Current = b2 != null && b2.isCurrent
+  val b1Favorite = b1 != null && b1.isFavorite
+  val b2Favorite = b2 != null && b2.isFavorite
+  fun compareByDisplayTextOrType() =
+    if (displayText1 != null && displayText2 != null) displayText1.compareTo(displayText2) else d1.type.compareTo(d2.type)
+
+  when {
+    b1Current && b2Current -> compareByDisplayTextOrType()
+    b1Current -> -1
+    b2Current -> 1
+    b1Favorite && b2Favorite -> compareByDisplayTextOrType()
+    b1Favorite -> -1
+    b2Favorite -> 1
+    b1GroupNode && b2GroupNode -> compareByDisplayTextOrType()
+    b1GroupNode -> -1
+    b2GroupNode -> 1
+    else -> compareByDisplayTextOrType()
+  }
+}

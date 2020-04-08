@@ -17,8 +17,8 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.ui.ScrollPaneFactory;
@@ -44,8 +44,8 @@ class UndoApplyPatchDialog extends DialogWrapper {
                        boolean shouldInformAboutBinaries) {
     super(project, true);
     myProject = project;
-    setTitle("Patch Applying Partly Failed");
-    setOKButtonText("Rollback");
+    setTitle(VcsBundle.message("patch.apply.partly.failed.title"));
+    setOKButtonText(VcsBundle.message("patch.apply.rollback.action"));
     myFailedFilePaths = filePaths;
     myShouldInformAboutBinaries = shouldInformAboutBinaries;
     init();
@@ -57,11 +57,10 @@ class UndoApplyPatchDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new BorderLayout());
     int numFiles = myFailedFilePaths.size();
     JPanel labelsPanel = new JPanel(new BorderLayout());
-    String detailedText = numFiles == 0 ? "" : String.format("Failed to apply %s below.<br>", StringUtil.pluralize("file", numFiles));
-    final JLabel infoLabel = new JBLabel(XmlStringUtil.wrapInHtml(detailedText + "Would you like to rollback all applied?"));
+    final JLabel infoLabel = new JBLabel(XmlStringUtil.wrapInHtml(VcsBundle.message("patch.apply.rollback.prompt", numFiles)));
     labelsPanel.add(infoLabel, BorderLayout.NORTH);
     if (myShouldInformAboutBinaries) {
-      JLabel warningLabel = new JLabel("Rollback will not affect binaries");
+      JLabel warningLabel = new JLabel(VcsBundle.message("patch.apply.rollback.will.not.affect.binaries.info"));
       warningLabel.setIcon(UIUtil.getBalloonWarningIcon());
       labelsPanel.add(warningLabel, BorderLayout.CENTER);
     }

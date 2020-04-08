@@ -183,8 +183,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
-  @NotNull
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS);
   }
 

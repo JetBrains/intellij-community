@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -9,11 +9,10 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 
 import java.util.function.Consumer
 
-/**
- * @author nik
- */
 @CompileStatic
 class ProductModulesLayout {
+  public static List<String> DEFAULT_BUNDLED_PLUGINS = ["intellij.platform.images"]
+
   /**
    * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
@@ -30,12 +29,10 @@ class ProductModulesLayout {
   List<String> productImplementationModules = []
 
   /**
-   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
-   * includes names of optional modules (added via {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#withOptionalModule})
-   * from these plugins which need to be included into the plugin distribution for this product. Layouts of the bundled plugins are specified
-   * in {@link #allNonTrivialPlugins} list.
+   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
+   * bundled plugins are specified in {@link #allNonTrivialPlugins} list.
    */
-  List<String> bundledPluginModules = []
+  List<String> bundledPluginModules = new ArrayList<>(DEFAULT_BUNDLED_PLUGINS)
 
   /**
    * @deprecated use {@link #bundledPluginModules} directly instead
@@ -56,7 +53,7 @@ class ProductModulesLayout {
   }
 
   /**
-   * @see #setPluginModulesToPublish 
+   * @see #setPluginModulesToPublish
    */
   List<String> getPluginModulesToPublish() {
     return pluginsToPublish.toList()
@@ -108,7 +105,7 @@ class ProductModulesLayout {
    * @see #setPluginModulesToPublish
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = true
-  
+
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built. By default these plugins will be placed to "auto-uploading"
    * subdirectory and may be automatically uploaded to plugins.jetbrains.com.
@@ -124,7 +121,7 @@ class ProductModulesLayout {
 
   /**
    * @deprecated we generate the order file automatically based on the application startup statistics
-   * 
+   *
    * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files
    * will be reordered accordingly to reduct IDE startup time. If {@code null} no reordering will be performed.
    */
@@ -136,7 +133,7 @@ class ProductModulesLayout {
    */
   List<String> getIncludedPluginModules(Set<String> enabledPluginModules) {
     def modulesFromNonTrivialPlugins = allNonTrivialPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.
-      collectMany { it.getActualModules(enabledPluginModules).values() }
+      collectMany { it.moduleJars.values() }
     (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
   }
 

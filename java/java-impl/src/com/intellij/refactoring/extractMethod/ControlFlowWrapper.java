@@ -16,6 +16,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -24,7 +25,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class ControlFlowWrapper {
         ControlFlowFactory.getInstance(project).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
     }
     catch (AnalysisCanceledException e) {
-      throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());
+      throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());
     }
 
     if (LOG.isDebugEnabled()) {
@@ -89,7 +89,7 @@ public class ControlFlowWrapper {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(@NotNull final PsiElement[] elements,
+  public Collection<PsiStatement> prepareExitStatements(final PsiElement @NotNull [] elements,
                                                         @NotNull final PsiElement enclosingCodeFragment)
     throws ExitStatementsNotSameException {
     myExitPoints = new IntArrayList();
@@ -154,13 +154,11 @@ public class ControlFlowWrapper {
   public static class ExitStatementsNotSameException extends Exception {}
 
 
-  @NotNull
-  public PsiVariable[] getOutputVariables() {
+  public PsiVariable @NotNull [] getOutputVariables() {
     return getOutputVariables(myGenerateConditionalExit);
   }
 
-  @NotNull
-  PsiVariable[] getOutputVariables(boolean collectVariablesAtExitPoints) {
+  PsiVariable @NotNull [] getOutputVariables(boolean collectVariablesAtExitPoints) {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods

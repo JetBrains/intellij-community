@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -268,7 +269,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       if (ApplicationManager.getApplication().isReadAccessAllowed()) {
         List<String> result = ProgressManager.getInstance().run(
           new Task.WithResult<List<String>, IOException>(project,
-                                                         "Searching for Affected File Paths...",
+                                                         ExecutionBundle.message("searching.for.affected.file.paths"),
                                                          true) {
             @Override
             protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {

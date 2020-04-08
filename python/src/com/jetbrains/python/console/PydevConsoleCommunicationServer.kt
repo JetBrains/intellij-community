@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.Project
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.protocol.PythonConsoleBackendService
 import com.jetbrains.python.console.protocol.PythonConsoleFrontendService
 import com.jetbrains.python.console.transport.server.ServerClosedException
@@ -22,7 +23,9 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class PydevConsoleCommunicationServer(project: Project, port: Int) : PydevConsoleCommunication(project) {
+class PydevConsoleCommunicationServer(project: Project,
+                                      host: String,
+                                      port: Int) : PydevConsoleCommunication(project) {
   private val serverTransport: TNettyServerTransport
 
   /**
@@ -69,7 +72,7 @@ class PydevConsoleCommunicationServer(project: Project, port: Int) : PydevConsol
     val serverHandler = createPythonConsoleFrontendHandler()
     val serverProcessor = PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface>(serverHandler)
     //noinspection IOResourceOpenedButNotSafelyClosed
-    serverTransport = TNettyServerTransport(port)
+    serverTransport = TNettyServerTransport(host, port)
     server = TNettyServer(serverTransport, serverProcessor)
   }
 
@@ -188,7 +191,7 @@ class PydevConsoleCommunicationServer(project: Project, port: Int) : PydevConsol
     // if client exists then try to gracefully `close()` it
     try {
       client?.apply {
-        progressIndicator?.text2 = "Sending close message to Python Console..."
+        progressIndicator?.text2 = PyBundle.message("debugger.sending.close.message")
 
         close()
         dispose()
@@ -199,7 +202,7 @@ class PydevConsoleCommunicationServer(project: Project, port: Int) : PydevConsol
     }
 
     _pythonConsoleProcess?.let {
-      progressIndicator?.text2 = "Waiting for Python Console process to finish..."
+      progressIndicator?.text2 = PyBundle.message("debugger.waiting.to.finish")
 
       // TODO move under feature!
       try {

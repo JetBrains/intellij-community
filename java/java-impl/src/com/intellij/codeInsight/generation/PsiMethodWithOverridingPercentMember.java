@@ -72,8 +72,7 @@ public class PsiMethodWithOverridingPercentMember extends PsiMethodMember {
     return String.CASE_INSENSITIVE_ORDER.compare(e1.getText(), e2.getText());
   };
 
-  @NotNull
-  public static PsiMethodWithOverridingPercentMember[] calculateOverridingPercents(@NotNull final Collection<? extends CandidateInfo> candidateInfos) {
+  public static PsiMethodWithOverridingPercentMember @NotNull [] calculateOverridingPercents(@NotNull final Collection<? extends CandidateInfo> candidateInfos) {
     final List<PsiMethodWithOverridingPercentMember> result = new ArrayList<>(candidateInfos.size());
     final Map<String, Collection<PsiClass>> classShortNames2Inheritors = new HashMap<>();
     for (final CandidateInfo candidateInfo : candidateInfos) {

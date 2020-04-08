@@ -32,6 +32,5 @@ public interface SuppressableProblemGroup extends ProblemGroup {
    *                Inspections tool window
    * @return the list of suppression actions.
    */
-  @NotNull
-  SuppressIntentionAction[] getSuppressActions(@Nullable final PsiElement element);
+  SuppressIntentionAction @NotNull [] getSuppressActions(@Nullable final PsiElement element);
 }

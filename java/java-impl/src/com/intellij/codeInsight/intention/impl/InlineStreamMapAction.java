@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -63,7 +63,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     if(nextCall == null) return false;
     String key = curCall.getArgumentList().isEmpty() || nextCall.getArgumentList().isEmpty() ?
                  "intention.inline.map.merge.text" : "intention.inline.map.inline.text";
-    setText(CodeInsightBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
+    setText(JavaBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
     return true;
   }
 
@@ -188,7 +188,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.inline.map.family");
+    return JavaBundle.message("intention.inline.map.family");
   }
 
   @Override

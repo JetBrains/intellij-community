@@ -12,17 +12,15 @@ public class ForwardCompatibilityInspectionMerger extends InspectionElementsMerg
     return "ForwardCompatibility";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "AssertAsName", "EnumAsName"
     };
   }
 
-  @NotNull
   @Override
-  public String[] getSuppressIds() {
+  public String @NotNull [] getSuppressIds() {
     return new String[] {
       "AssertAsIdentifier", "EnumAsIdentifier"
     };

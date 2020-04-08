@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -27,7 +26,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
@@ -144,7 +142,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
            '}';
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testInvalidProjectModel() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -322,7 +319,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root);
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedDependencies() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -376,7 +372,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Unresolved dependency: 'zzz:zzz:jar:3'");
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedPomTypeDependency() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -495,7 +490,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getModules(root).get(2));
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedExtensionsAfterImport() {
     MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
@@ -516,7 +510,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "Unresolved build extension: 'xxx:yyy:1'");
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedExtensionsAfterResolve() {
     MavenServerManager.getInstance().setUseMaven2();
     importProjectWithErrors("<groupId>test</groupId>" +
@@ -586,7 +579,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getRootProjects().get(0));
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedBuildExtensionsInModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -646,7 +638,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Unresolved build extension: 'zzz:zzz:1'");
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedPlugins() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
@@ -689,7 +680,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(getRootProjects().get(0));
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testUnresolvedPluginsAsExtensions() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +

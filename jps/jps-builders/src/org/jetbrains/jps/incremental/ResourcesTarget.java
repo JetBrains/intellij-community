@@ -50,8 +50,6 @@ import java.util.List;
 
 /**
  * Describes step of compilation process which copies resources files from source and resource roots of a Java module.
- *
- * @author nik
  */
 public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> {
   private final ResourcesTargetType myTargetType;

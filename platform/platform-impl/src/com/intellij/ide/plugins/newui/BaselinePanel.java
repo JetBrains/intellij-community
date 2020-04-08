@@ -182,7 +182,10 @@ public class BaselinePanel extends NonOpaquePanel {
   }
 
   public void removeProgressComponent() {
-    assert myProgressComponent != null;
+    if (myProgressComponent == null) {
+      return;
+    }
+
     remove(myProgressComponent);
     myProgressComponent = null;
 

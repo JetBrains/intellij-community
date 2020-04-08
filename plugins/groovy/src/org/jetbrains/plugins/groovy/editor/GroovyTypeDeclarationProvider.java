@@ -28,8 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  */
 public class GroovyTypeDeclarationProvider implements TypeDeclarationProvider {
   @Override
-  @Nullable
-  public PsiElement[] getSymbolTypeDeclarations(@NotNull final PsiElement targetElement) {
+  public PsiElement @Nullable [] getSymbolTypeDeclarations(@NotNull final PsiElement targetElement) {
     PsiType type;
     if (targetElement instanceof GrVariable){
       type = ((GrVariable)targetElement).getTypeGroovy();

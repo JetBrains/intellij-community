@@ -49,7 +49,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("make.protected.quickfix");
+      return InspectionGadgetsBundle.message("change.modifier.quickfix", PsiModifier.PROTECTED);
     }
 
     @Override

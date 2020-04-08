@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.icons.AllIcons;
@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -37,19 +38,16 @@ public final class FavoritesPanel {
   private final Project myProject;
   private final FavoritesTreeViewPanel myViewPanel;
   private final DnDAwareTree myTree;
-  private final AbstractTreeBuilder myTreeBuilder;
-  private final FavoritesTreeStructure myTreeStructure;
   private final Image myFavoritesImage = IconUtil.toImage(AllIcons.Toolwindows.ToolWindowFavorites);
 
-  public FavoritesPanel(Project project) {
+  public FavoritesPanel(@NotNull Project project) {
     myProject = project;
     myViewPanel = new FavoritesTreeViewPanel(myProject);
     myTree = myViewPanel.getTree();
-    myTreeBuilder = myViewPanel.getBuilder();
-    if (myTreeBuilder != null) {
-      Disposer.register(myProject, myTreeBuilder);
+    AbstractTreeBuilder treeBuilder = myViewPanel.getBuilder();
+    if (treeBuilder != null) {
+      Disposer.register(myProject, treeBuilder);
     }
-    myTreeStructure = myViewPanel.getFavoritesTreeStructure();
     setupDnD();
   }
 
@@ -65,8 +63,8 @@ public final class FavoritesPanel {
           Object o = path.getLastPathComponent();
           if (o instanceof DefaultMutableTreeNode) {
             o = ((DefaultMutableTreeNode)o).getUserObject();
-            if (o instanceof FavoritesTreeNodeDescriptor) {
-              FavoritesTreeNodeDescriptor root = ((FavoritesTreeNodeDescriptor)o).getFavoritesRoot();
+            if (o instanceof FavoriteTreeNodeDescriptor) {
+              FavoriteTreeNodeDescriptor root = ((FavoriteTreeNodeDescriptor)o).getFavoritesRoot();
               if (root != null && root != o) {
                 o = root.getElement();
                 if (o instanceof FavoritesListNode && ((FavoritesListNode)o).getProvider() == null) {
@@ -80,8 +78,8 @@ public final class FavoritesPanel {
           Object o = path.getLastPathComponent();
           if (o instanceof DefaultMutableTreeNode) {
             o = ((DefaultMutableTreeNode)o).getUserObject();
-            if (o instanceof FavoritesTreeNodeDescriptor) {
-              FavoritesTreeNodeDescriptor root = ((FavoritesTreeNodeDescriptor)o).getFavoritesRoot();
+            if (o instanceof FavoriteTreeNodeDescriptor) {
+              FavoriteTreeNodeDescriptor root = ((FavoriteTreeNodeDescriptor)o).getFavoritesRoot();
               if (root == o) {
                 return new DnDDragStartBean(path);
               }
@@ -147,8 +145,7 @@ public final class FavoritesPanel {
             final String listFrom = FavoritesTreeViewPanel.getListNodeFromPath(path).getValue();
             if (listTo.equals(listFrom)) return;
             if (path.getPathCount() == 3) {
-              final AbstractTreeNode abstractTreeNode =
-                ((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject()).getElement();
+              AbstractTreeNode<?> abstractTreeNode = ((FavoriteTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject()).getElement();
               Object element = abstractTreeNode.getValue();
               mgr.removeRoot(listFrom, Collections.singletonList(abstractTreeNode));
               if (element instanceof SmartPsiElementPointer) {
@@ -202,8 +199,8 @@ public final class FavoritesPanel {
         final Object pathObj = pathToList.getLastPathComponent();
         if (pathObj instanceof DefaultMutableTreeNode) {
           final Object userObject = ((DefaultMutableTreeNode)pathObj).getUserObject();
-          if (userObject instanceof FavoritesTreeNodeDescriptor) {
-            if (((FavoritesTreeNodeDescriptor)userObject).getElement() == node) {
+          if (userObject instanceof FavoriteTreeNodeDescriptor) {
+            if (((FavoriteTreeNodeDescriptor)userObject).getElement() == node) {
               break;
             }
           }
@@ -235,9 +232,10 @@ public final class FavoritesPanel {
     }
   }
 
-  @Nullable
-  protected PsiFileSystemItem[] getPsiFiles(@Nullable List<? extends File> fileList) {
-    if (fileList == null) return null;
+  private PsiFileSystemItem @Nullable [] getPsiFiles(@Nullable List<? extends File> fileList) {
+    if (fileList == null) {
+      return null;
+    }
     List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);

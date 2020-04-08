@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.keePass
 
+import com.intellij.credentialStore.*
 import com.intellij.credentialStore.EncryptionSpec
 import com.intellij.credentialStore.LOG
-import com.intellij.credentialStore.getTrimmedChars
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KdbxPassword.Companion.createAndClear
@@ -73,7 +73,9 @@ internal open class KeePassFileManager(private val file: Path,
     }
     catch (e: Exception) {
       LOG.warn(e)
-      Messages.showMessageDialog(event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)!!, "Internal error", "Cannot Import", Messages.getErrorIcon())
+      Messages.showMessageDialog(event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)!!,
+                                 CredentialStoreBundle.message("kee.pass.dialog.message"),
+                                 CredentialStoreBundle.message("kee.pass.dialog.title.cannot.import"), Messages.getErrorIcon())
     }
   }
 
@@ -106,7 +108,7 @@ internal open class KeePassFileManager(private val file: Path,
       }
     }
 
-    if (masterPassword == null && !requestMasterPassword("Specify Master Password", contextComponent = contextComponent) {
+    if (masterPassword == null && !requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.request.master.title"), contextComponent = contextComponent) {
         try {
           loadKdbx(file, KdbxPassword(it))
           masterPassword = it
@@ -138,7 +140,7 @@ internal open class KeePassFileManager(private val file: Path,
       return requestCurrentAndNewKeys(contextComponent)
     }
 
-    return requestMasterPassword("Set Master Password", topNote = topNote, contextComponent = contextComponent) {
+    return requestMasterPassword(CredentialStoreBundle.message("kee.pass.dialog.title.set.master.password"), topNote = topNote, contextComponent = contextComponent) {
       saveDatabase(file, db, createMasterKey(it), masterKeyFileStorage, secureRandom.value)
       null
     }
@@ -148,13 +150,13 @@ internal open class KeePassFileManager(private val file: Path,
     val currentPasswordField = JPasswordField()
     val newPasswordField = JPasswordField()
     val panel = panel {
-      row("Current password:") { currentPasswordField().focused() }
-      row("New password:") { newPasswordField() }
+      row(CredentialStoreBundle.message("kee.pass.row.current.password")) { currentPasswordField().focused() }
+      row(CredentialStoreBundle.message("kee.pass.row.new.password")) { newPasswordField() }
 
-      commentRow("If the current password is unknown, clear the KeePass database.")
+      commentRow(CredentialStoreBundle.message("kee.pass.row.comment"))
     }
 
-    return dialog(title = "Change Master Password", panel = panel, parent = contextComponent) {
+    return dialog(title = CredentialStoreBundle.message("kee.pass.dialog.default.title"), panel = panel, parent = contextComponent) {
       val errors = SmartList<ValidationInfo>()
       val current = checkIsEmpty(currentPasswordField, errors)
       val new = checkIsEmpty(newPasswordField, errors)
@@ -166,7 +168,7 @@ internal open class KeePassFileManager(private val file: Path,
           }
         }
         catch (e: IncorrectMasterPasswordException) {
-          errors.add(ValidationInfo("The current password is incorrect.", currentPasswordField))
+          errors.add(ValidationInfo(CredentialStoreBundle.message("kee.pass.validation.info.current.password.incorrect"), currentPasswordField))
           new?.fill(0.toChar())
         }
       }
@@ -193,7 +195,7 @@ internal open class KeePassFileManager(private val file: Path,
   private fun checkIsEmpty(field: JPasswordField, errors: MutableList<ValidationInfo>): CharArray? {
     val chars = field.getTrimmedChars()
     if (chars == null) {
-      errors.add(ValidationInfo("Current master password is empty.", field))
+      errors.add(ValidationInfo(CredentialStoreBundle.message("kee.pass.validation.info.current.password.incorrect.current.empty"), field))
     }
     return chars
   }
@@ -204,7 +206,7 @@ internal open class KeePassFileManager(private val file: Path,
       topNote?.let {
         noteRow(it)
       }
-      row("Master password:") { passwordField().focused() }
+      row(CredentialStoreBundle.message("kee.pass.row.master.password")) { passwordField().focused() }
     }
 
     return dialog(title = title, panel = panel, parent = contextComponent) {
@@ -242,6 +244,6 @@ internal open class KeePassFileManager(private val file: Path,
       return
     }
 
-    askAndSetMasterKey(null, topNote = "Database in a custom location, therefore\ncustom master password is required.")
+    askAndSetMasterKey(null, topNote = CredentialStoreBundle.message("kee.pass.top.note"))
   }
 }

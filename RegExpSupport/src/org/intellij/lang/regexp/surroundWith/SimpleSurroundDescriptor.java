@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.RegExpAtom;
 import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -34,18 +35,17 @@ import java.util.List;
 
 public class SimpleSurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] SURROUNDERS = {
-    new GroupSurrounder("Capturing Group (pattern)", "("),
-    new GroupSurrounder("Non-Capturing Group (?:pattern)", "(?:"),
-    new GroupSurrounder("Atomic Group (?:pattern)", "(?:"),
-    new GroupSurrounder("Positive Lookbehind (?<=pattern)", "(?<="),
-    new GroupSurrounder("Negative Lookbehind (?<!pattern)", "(?<!"),
-    new GroupSurrounder("Positive Lookahead (?=pattern)", "(?="),
-    new GroupSurrounder("Negative Lookahead (?!pattern)", "(?!"),
+    new GroupSurrounder(RegExpBundle.message("surrounder.capturing.group.pattern"), "("),
+    new GroupSurrounder(RegExpBundle.message("surrounder.non.capturing.group.pattern"), "(?:"),
+    new GroupSurrounder(RegExpBundle.message("surrounder.atomic.group.pattern"), "(?:"),
+    new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookbehind.pattern"), "(?<="),
+    new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookbehind.pattern"), "(?<!"),
+    new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookahead.pattern"), "(?="),
+    new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookahead.pattern"), "(?!"),
   };
 
   @Override
-  @NotNull
-  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     // adjust start/end
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
@@ -85,8 +85,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
   }
 
   @Override
-  @NotNull
-  public Surrounder[] getSurrounders() {
+  public Surrounder @NotNull [] getSurrounders() {
     return SURROUNDERS;
   }
 

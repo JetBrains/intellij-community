@@ -13,7 +13,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class TextComponentInlayModel implements InlayModel {
+class TextComponentInlayModel implements InlayModel {
   @Nullable
   @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
@@ -89,6 +89,16 @@ public class TextComponentInlayModel implements InlayModel {
 
   @Override
   public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {}
+
+  @Override
+  public void execute(boolean batchMode, @NotNull Runnable operation) {
+    operation.run();
+  }
+
+  @Override
+  public boolean isInBatchMode() {
+    return false;
+  }
 
   @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {

@@ -81,9 +81,8 @@ public class ShortBasedStorage implements DataStorage {
     return new ShortBasedStorage();
   }
 
-  @NotNull
-  protected static short[] insert(@NotNull short[] array,
-                                  @NotNull short[] insertArray, int startIndex, int insertLength, int mySegmentCount) {
+  protected static short @NotNull [] insert(short @NotNull [] array,
+                                            short @NotNull [] insertArray, int startIndex, int insertLength, int mySegmentCount) {
     short[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if (startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
@@ -92,8 +91,7 @@ public class ShortBasedStorage implements DataStorage {
     return newArray;
   }
 
-  @NotNull
-  protected static short[] reallocateArray(@NotNull short[] array, int index) {
+  protected static short @NotNull [] reallocateArray(short @NotNull [] array, int index) {
     if (index < array.length) return array;
     return ArrayUtil.realloc(array, calcCapacity(array.length, index));
   }

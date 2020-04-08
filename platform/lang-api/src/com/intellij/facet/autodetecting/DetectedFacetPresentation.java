@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @deprecated use {@link com.intellij.framework.detection.FrameworkDetector} instead
- *
- * @author nik
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
@@ -39,7 +37,7 @@ public abstract class DetectedFacetPresentation {
   }
 
   @Nullable
-  public String getAutodetectionPopupText(@NotNull Module module, @NotNull FacetType facetType, @NotNull String facetName, @NotNull VirtualFile[] files) {
+  public String getAutodetectionPopupText(@NotNull Module module, @NotNull FacetType facetType, @NotNull String facetName, VirtualFile @NotNull [] files) {
     return null;
   }
 
@@ -50,7 +48,7 @@ public abstract class DetectedFacetPresentation {
    */
   @Deprecated
   @Nullable
-  public String getAutodetectionPopupText(@NotNull Facet facet, @NotNull VirtualFile[] files) {
+  public String getAutodetectionPopupText(@NotNull Facet facet, VirtualFile @NotNull [] files) {
     return null;
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.task;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,5 +25,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ProjectTask {
   @NotNull
+  @Nls
   String getPresentableName();
 }

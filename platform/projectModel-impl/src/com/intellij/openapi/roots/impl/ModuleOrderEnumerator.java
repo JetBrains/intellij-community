@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final ModuleRootModel myRootModel;
 

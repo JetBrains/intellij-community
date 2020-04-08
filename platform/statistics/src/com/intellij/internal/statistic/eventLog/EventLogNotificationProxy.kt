@@ -12,7 +12,7 @@ class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
 
   override fun getActiveFile(): EventLogFile? = writer.getActiveFile()
 
-  override fun getFiles(): List<EventLogFile> = writer.getFiles()
+  override fun getLogFilesProvider(): EventLogFilesProvider  = writer.getLogFilesProvider()
 
   override fun cleanup() = writer.cleanup()
 

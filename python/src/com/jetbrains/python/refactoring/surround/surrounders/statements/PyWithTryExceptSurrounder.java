@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
   @Override
   @Nullable
-  protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+  protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException {
     PyTryExceptStatement tryStatement = PyElementGenerator.getInstance(project).
       createFromText(LanguageLevel.getDefault(), PyTryExceptStatement.class, getTemplate());

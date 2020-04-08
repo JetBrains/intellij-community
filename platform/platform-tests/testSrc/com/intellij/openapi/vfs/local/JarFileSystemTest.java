@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
@@ -297,6 +299,19 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
   }
 
+  @Test
+  public void testCrazyJarWithDuplicateEntriesMustNotCrashAnything() {
+    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/sample.jar";
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
+    assertNotNull(vFile);
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
+    assertNotNull(jarRoot);
+    String[] children = JarFileSystem.getInstance().list(jarRoot);
+    assertEquals("com", UsefulTestCase.assertOneElement(children));
+    assertEquals("Hello.class", UsefulTestCase.assertOneElement(JarFileSystem.getInstance().list(jarRoot.findFileByRelativePath("com"))));
+  }
+
   @NotNull
   private static VirtualFile findByPath(String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
@@ -312,7 +327,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) {
+    public int read(byte @NotNull [] b, int off, int len) {
       return len;
     }
   }

@@ -112,7 +112,9 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun dispose() {
     super.dispose()
     queue.clear()
-    unprocessedFiles.clear()
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.clear()
+    }
   }
 
   override val askedBeforeProperty = ASKED_ADD_EXTERNAL_FILES_PROPERTY

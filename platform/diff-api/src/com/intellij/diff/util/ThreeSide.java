@@ -53,18 +53,18 @@ public enum ThreeSide {
     throw new IllegalStateException();
   }
 
-  public int select(@NotNull int[] array) {
+  public int select(int @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];
   }
 
-  public <T> T select(@NotNull T[] array) {
+  public <T> T select(T @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];
   }
 
   @NotNull
-  public <T> T selectNotNull(@NotNull T[] array) {
+  public <T> T selectNotNull(T @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];
   }

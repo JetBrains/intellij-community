@@ -18,9 +18,6 @@ package com.intellij.util.descriptors;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ConfigFileUtil {
   private ConfigFileUtil() {
   }

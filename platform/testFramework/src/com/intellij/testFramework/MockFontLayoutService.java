@@ -39,7 +39,7 @@ public class MockFontLayoutService extends FontLayoutService {
   @Override
   public GlyphVector layoutGlyphVector(@NotNull Font font,
                                        @NotNull FontRenderContext fontRenderContext,
-                                       @NotNull char[] chars,
+                                       char @NotNull [] chars,
                                        int start,
                                        int end,
                                        boolean isRtl) {

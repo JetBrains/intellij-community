@@ -1,24 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-public class RecordAugmentProvider extends PsiAugmentProvider {
+public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAware {
   @NotNull
   @Override
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
@@ -37,27 +36,49 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
 
   @NotNull
   private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(@NotNull PsiElement element, PsiExtensibleClass aClass) {
+    PsiRecordHeader header = aClass.getRecordHeader();
+    if (header == null) return Collections.emptyList();
     PsiRecordComponent[] components = aClass.getRecordComponents();
     PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     ArrayList<Psi> methods = new ArrayList<>(components.length);
+    List<PsiMethod> ownMethods = aClass.getOwnMethods();
     for (PsiRecordComponent component : components) {
-      if (!shouldGenerateMethod(aClass, component)) continue;
+      if (!shouldGenerateMethod(component, ownMethods)) continue;
       PsiMethod recordMethod = createRecordMethod(component, factory);
       if (recordMethod == null) continue;
       LightMethod method = new LightRecordMethod(element.getManager(), recordMethod, aClass, component);
       //noinspection unchecked
       methods.add((Psi)method);
     }
+    PsiMethod constructor = getCanonicalConstructor(aClass, ownMethods, header);
+    if (constructor != null) {
+      //noinspection unchecked
+      methods.add((Psi)constructor);
+    }
     return methods;
   }
 
-  private static boolean shouldGenerateMethod(PsiExtensibleClass aClass, PsiRecordComponent component) {
+  @Nullable
+  private static PsiMethod getCanonicalConstructor(PsiExtensibleClass aClass,
+                                                   List<PsiMethod> ownMethods,
+                                                   @NotNull PsiRecordHeader recordHeader) {
+    String className = aClass.getName();
+    if (className == null) return null;
+    for (PsiMethod method : ownMethods) {
+      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) return null;
+    }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(recordHeader.getProject());
+    String sb = "public " + className + recordHeader.getText() + "{}";
+    PsiMethod nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
+    return new LightRecordCanonicalConstructor(nonPhysical, aClass);
+  }
+
+  private static boolean shouldGenerateMethod(PsiRecordComponent component, List<PsiMethod> ownMethods) {
     String componentName = component.getName();
     if (componentName == null) return false;
-    List<PsiMethod> methods = aClass.getOwnMethods();
-    for (PsiMethod method : methods) {
+    for (PsiMethod method : ownMethods) {
       // Return type is not checked to avoid unnecessary warning about clashing signatures in case of different return types
-      if (componentName.equals(method.getName())) return false;
+      if (componentName.equals(method.getName()) && method.getParameterList().isEmpty()) return false;
     }
     return true;
   }
@@ -80,8 +101,8 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   @Nullable
   private static PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
-    if (name == null) return null;
-    String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForField);
+    if (hasForbiddenType(component)) return null;
+    String typeText = getTypeText(component);
     if (typeText == null) return null;
     return factory.createFieldFromText("private final " + typeText + " " + name + ";", component.getContainingClass());
   }
@@ -90,29 +111,29 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   private static PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
     if (name == null) return null;
-    String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForMethod);
+    if (hasForbiddenType(component)) return null;
+    String typeText = getTypeText(component);
     if (typeText == null) return null;
     return factory.createMethodFromText("public " + typeText + " " + name + "(){ return " + name + "; }", component.getContainingClass());
   }
 
+  private static boolean hasForbiddenType(@NotNull PsiRecordComponent component) {
+    PsiTypeElement typeElement = component.getTypeElement();
+    return typeElement == null || typeElement.getText().equals(PsiKeyword.RECORD);
+  }
+
   @Nullable
-  private static String getTypeText(@NotNull PsiRecordComponent component, Predicate<PsiAnnotation> annotationPredicate) {
-    PsiType type = component.getType();
-    if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
+  private static String getTypeText(@NotNull PsiRecordComponent component) {
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
-    String annotations = Arrays.stream(component.getAnnotations())
-        .filter(annotationPredicate)
-        .map(annotation -> annotation.getText())
-        .collect(Collectors.joining(" "));
-    return annotations + " " + type.getCanonicalText();
-  }
-
-  private static boolean hasTargetApplicableForField(PsiAnnotation annotation) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.FIELD) != null;
-  }
-
-  private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.METHOD) != null;
+    StringBuilder sb = new StringBuilder(); // not allowed to use types because of dumb mode
+    for (PsiElement child : typeElement.getChildren()) {
+      if (child.getNode().getElementType() != JavaTokenType.ELLIPSIS) {
+        sb.append(child.getText());
+      } else {
+        sb.append("[]");
+      }
+    }
+    return sb.toString();
   }
 }

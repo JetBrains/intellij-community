@@ -59,8 +59,7 @@ public class LineReader {
     return bytes;
   }
 
-  @Nullable
-  public byte[] readLine() throws IOException {
+  public byte @Nullable [] readLine() throws IOException {
     if (myBytesBuffered == -1) {
       if (myLastEol != 0) {
         myLastEol = 0;

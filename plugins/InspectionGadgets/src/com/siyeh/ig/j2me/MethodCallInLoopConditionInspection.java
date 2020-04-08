@@ -59,7 +59,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore known methods with side-effects", this, "ignoreIterationMethods");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("inspection.method.call.in.loop.ignore.known.methods.option"), this, "ignoreIterationMethods");
   }
 
   @Override

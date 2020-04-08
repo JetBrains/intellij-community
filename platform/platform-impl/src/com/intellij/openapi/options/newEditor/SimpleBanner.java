@@ -8,7 +8,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -36,22 +35,9 @@ class SimpleBanner extends JPanel {
         super.layoutContainer(target);
         baselineLayout();
       }
-    }) {
-      @Override
-      public void setBounds(int x, int y, int width, int height) {
-        super.setBounds(x, 0, width, height + y);
-      }
-    };
+    });
     myLeftPanel.add(myProgress);
     add(BorderLayout.WEST, myLeftPanel);
-  }
-
-  @Override
-  public void setBorder(Border border) {
-    super.setBorder(border);
-    if (myLeftPanel != null) {
-      myLeftPanel.setBorder(border);
-    }
   }
 
   Dimension getPreferredLeftPanelSize(Dimension size) {
@@ -84,7 +70,7 @@ class SimpleBanner extends JPanel {
         y = baseline - component.getBaseline(component.getWidth(), component.getHeight());
       }
 
-      component.setLocation(component.getX(), getInsets().top + y);
+      component.setLocation(component.getX(), y);
     }
   }
 

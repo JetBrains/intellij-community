@@ -20,9 +20,6 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class HyperlinkInfoBase implements HyperlinkInfo {
   public abstract void navigate(@NotNull Project project, @Nullable RelativePoint hyperlinkLocationPoint);
 

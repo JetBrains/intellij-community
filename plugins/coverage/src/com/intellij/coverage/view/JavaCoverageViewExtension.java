@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,14 +32,15 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getSummaryForNode(AbstractTreeNode node) {
-    if (!myCoverageViewManager.isReady()) return "Loading...";
+    if (!myCoverageViewManager.isReady()) return CommonBundle.getLoadingTreeNodeText();
     if (myCoverageDataManager.isSubCoverageActive()) {
       return showSubCoverageNotification();
     }
     PsiPackage aPackage = (PsiPackage)node.getValue();
     final String coverageInformationString = myAnnotator
       .getPackageCoverageInformationString(aPackage, null, myCoverageDataManager, myStateBean.myFlattenPackages);
-    return getNotCoveredMessage(coverageInformationString) + " in package \'" + (aPackage != null ? aPackage.getQualifiedName() : node.getName()) + "\'";
+    return JavaCoverageBundle.message("coverage.view.node.summary", getNotCoveredMessage(coverageInformationString),
+                                   aPackage != null ? aPackage.getQualifiedName() : node.getName());
   }
 
   private static String showSubCoverageNotification() {
@@ -67,7 +56,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null,
                                                                                        myCoverageDataManager);
     if (coverageInformationString == null) {
-      if (!myCoverageViewManager.isReady()) return "Loading...";
+      if (!myCoverageViewManager.isReady()) return CommonBundle.getLoadingTreeNodeText();
       PackageAnnotator.SummaryCoverageInfo info = new PackageAnnotator.PackageCoverageInfo();
       final Collection children = childNode.getChildren();
       for (Object child : children) {
@@ -77,12 +66,12 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       }
       coverageInformationString = JavaCoverageAnnotator.getCoverageInformationString(info, false);
     }
-    return getNotCoveredMessage(coverageInformationString) + " in 'all classes in scope'";
+    return JavaCoverageBundle.message("coverage.view.root.node.summary", getNotCoveredMessage(coverageInformationString));
   }
 
   private static String getNotCoveredMessage(String coverageInformationString) {
     if (coverageInformationString == null) {
-      coverageInformationString = "No coverage";
+      coverageInformationString = JavaCoverageBundle.message("coverage.view.no.coverage");
     }
     return coverageInformationString;
   }
@@ -165,7 +154,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public List<AbstractTreeNode> createTopLevelNodes() {
+  public List<AbstractTreeNode<?>> createTopLevelNodes() {
     final LinkedHashSet<PsiPackage> packages = new LinkedHashSet<>();
     final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
     for (CoverageSuite suite : mySuitesBundle.getSuites()) {
@@ -185,7 +174,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
     packages.removeAll(packs);
 
-    final List<AbstractTreeNode> topLevelNodes = new ArrayList<>();
+    final List<AbstractTreeNode<?>> topLevelNodes = new ArrayList<>();
     for (PsiPackage aPackage : packages) {
       final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
       if (aPackage.getClasses(searchScope).length != 0) {
@@ -201,7 +190,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return topLevelNodes;
   }
 
-  private void collectSubPackages(List<AbstractTreeNode> children, final PsiPackage rootPackage) {
+  private void collectSubPackages(List<AbstractTreeNode<?>> children, final PsiPackage rootPackage) {
     final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(rootPackage.getProject());
     final PsiPackage[] subPackages = ReadAction.compute(() -> rootPackage.getSubPackages(searchScope));
     for (final PsiPackage aPackage : subPackages) {
@@ -209,7 +198,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
   }
 
-  private void processSubPackage(final PsiPackage aPackage, List<AbstractTreeNode> children) {
+  private void processSubPackage(final PsiPackage aPackage, List<AbstractTreeNode<?>> children) {
     if (ReadAction.compute(() -> isInCoverageScope(aPackage))) {
       final CoverageListNode node = new CoverageListNode(aPackage.getProject(), aPackage, mySuitesBundle, myStateBean);
       children.add(node);
@@ -223,8 +212,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public List<AbstractTreeNode> getChildrenNodes(final AbstractTreeNode node) {
-    List<AbstractTreeNode> children = new ArrayList<>();
+  public List<AbstractTreeNode<?>> getChildrenNodes(final AbstractTreeNode node) {
+    List<AbstractTreeNode<?>> children = new ArrayList<>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
       if (val instanceof PsiClass) return Collections.emptyList();
@@ -267,16 +256,18 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return children;
   }
 
-  protected void collectFileChildren(final PsiFile file, AbstractTreeNode node, List<? super AbstractTreeNode> children) {
+  protected void collectFileChildren(final PsiFile file, AbstractTreeNode<?> node, List<? super AbstractTreeNode<?>> children) {
     if (file instanceof PsiClassOwner) {
       PsiClass[] classes = ReadAction.compute(() -> file.isValid() ? ((PsiClassOwner)file).getClasses() : PsiClass.EMPTY_ARRAY);
       for (PsiClass aClass : classes) {
-        if (!(node instanceof CoverageListRootNode) && getClassCoverageInfo(aClass) == null) continue;
+        if (!(node instanceof CoverageListRootNode) && getClassCoverageInfo(aClass) == null) {
+          continue;
+        }
         children.add(new CoverageListNode(myProject, aClass, mySuitesBundle, myStateBean));
       }
     }
   }
-       
+
   @Nullable
   private PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(final PsiClass aClass) {
     return myAnnotator.getClassCoverageInfo(ReadAction.compute(() -> aClass.isValid() ? aClass.getQualifiedName() : null));
@@ -286,9 +277,9 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   public ColumnInfo[] createColumnInfos() {
     ArrayList<ColumnInfo> infos = new ArrayList<>();
     infos.add(new ElementColumnInfo());
-    infos.add(new PercentageCoverageColumnInfo(1, "Class, %", mySuitesBundle, myStateBean)); 
-    infos.add(new PercentageCoverageColumnInfo(2, "Method, %", mySuitesBundle, myStateBean));
-    infos.add(new PercentageCoverageColumnInfo(3, "Line, %", mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(1, JavaCoverageBundle.message("coverage.view.column.class"), mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(2, JavaCoverageBundle.message("coverage.view.column.method"), mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(3, JavaCoverageBundle.message("coverage.view.column.line"), mySuitesBundle, myStateBean));
     RunConfigurationBase runConfiguration = mySuitesBundle.getRunConfiguration();
     if (runConfiguration != null) {
       JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
@@ -309,7 +300,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   private boolean isBranchColumnAvailable(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean sampling) {
     if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(sampling)) {
-      infos.add(new PercentageCoverageColumnInfo(4, "Branch, %", mySuitesBundle, myStateBean));
+      infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle, myStateBean));
       return true;
     }
     return false;

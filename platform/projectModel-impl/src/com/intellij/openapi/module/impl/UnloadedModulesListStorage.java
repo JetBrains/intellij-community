@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 @State(name = "UnloadedModulesList", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))
 public class UnloadedModulesListStorage implements PersistentStateComponent<UnloadedModulesListStorage> {
   private List<String> myModuleNames = new ArrayList<>();

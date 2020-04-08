@@ -22,9 +22,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
   private final FileCopyingHandler myCopyingHandler;

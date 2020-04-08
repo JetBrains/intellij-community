@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -46,6 +47,8 @@ public interface ExternalFormatProcessor {
    */
   @Nullable
   String indent(@NotNull PsiFile source, int lineStartOffset);
+
+  default void createConfiguration(@NotNull Project project) {}
 
   /**
    * @return the unique id for external formatter
@@ -113,12 +116,11 @@ public interface ExternalFormatProcessor {
   @NotNull
   static PsiElement formatElement(@NotNull PsiElement elementToFormat,
                                   @NotNull TextRange range,
-                                  boolean canChangeWhiteSpacesOnly,
-                                  boolean keepLineBreaks) {
+                                  boolean canChangeWhiteSpacesOnly) {
     final PsiFile file = elementToFormat.getContainingFile();
     final Document document = file.getViewProvider().getDocument();
     if (document != null) {
-      final TextRange rangeAfterFormat = formatRangeInFile(file, range, canChangeWhiteSpacesOnly, keepLineBreaks);
+      final TextRange rangeAfterFormat = formatRangeInFile(file, range, canChangeWhiteSpacesOnly, false);
       if (rangeAfterFormat != null) {
         PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
         if (!elementToFormat.isValid()) {

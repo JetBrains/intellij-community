@@ -27,8 +27,9 @@ public class StringToConstraintsTransformer {
   @NonNls private static final String SCRIPT = "script";
   @NonNls private static final String CONTAINS = "contains";
   @NonNls private static final String WITHIN = "within";
+  @NonNls private static final String CONTEXT = "context";
 
-  private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN);
+  private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN, CONTEXT);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static void transformCriteria(@NotNull String criteria, MatchOptions options) {
@@ -402,7 +403,7 @@ public class StringToConstraintsTransformer {
         constraint.setFormalArgTypeWithinHierarchy(true);
       }
       argument = unescape(argument);
-      constraint.setExpressionTypes(argument);
+      constraint.setExpectedTypes(argument);
       constraint.setInvertFormalType(invert);
     }
     else if (option.equalsIgnoreCase(SCRIPT)) {
@@ -418,6 +419,11 @@ public class StringToConstraintsTransformer {
         throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
       constraint.setWithinConstraint(argument);
       constraint.setInvertWithinConstraint(invert);
+    }
+    else if (option.equalsIgnoreCase(CONTEXT)) {
+      if (!Configuration.CONTEXT_VAR_NAME.equals(constraint.getName()))
+        throw new MalformedPatternException(SSRBundle.message("error.only.applicable.to.complete.match", option));
+      constraint.setContextConstraint(argument);
     }
     else {
       assert false;

@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.internal.statistic.eventLog.*
-import com.intellij.openapi.application.ApplicationManager
-import java.io.File
+import com.intellij.internal.statistic.eventLog.EmptyStatisticsEventLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.internal.statistic.eventLog.getEventLogProvider
+import org.jetbrains.annotations.TestOnly
 
 /**
- * An entrypoint class to record in event log an information about feature usages.
+ * An entry point class to record in event log an information about feature usages.
  *
  * There are two types of events:
  * 1) Regular events, recorded when they occur, e.g. open project, invoked action;
@@ -22,11 +24,12 @@ import java.io.File
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
 object FeatureUsageLogger {
-  private val ourLoggerProvider : StatisticsEventLoggerProvider = getEventLogProvider("FUS")
+  internal var loggerProvider = getEventLogProvider("FUS")
+  @TestOnly internal set
 
   init {
     if (isEnabled()) {
-      ApplicationManager.getApplication().executeOnPooledThread { initStateEventTrackers(); }
+      initStateEventTrackers()
     }
   }
 
@@ -34,7 +37,7 @@ object FeatureUsageLogger {
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
   fun log(group: EventLogGroup, action: String) {
-    return ourLoggerProvider.logger.log(group, action, false)
+    return loggerProvider.logger.log(group, action, false)
   }
 
   /**
@@ -42,14 +45,14 @@ object FeatureUsageLogger {
    * Adds context information to the event, e.g. source and shortcut for an action.
    */
   fun log(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return ourLoggerProvider.logger.log(group, action, data, false)
+    return loggerProvider.logger.log(group, action, data, false)
   }
 
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    */
   fun logState(group: EventLogGroup, action: String) {
-    return ourLoggerProvider.logger.log(group, action, true)
+    return loggerProvider.logger.log(group, action, true)
   }
 
   /**
@@ -57,7 +60,7 @@ object FeatureUsageLogger {
    * Adds context information to the event, e.g. if configuration is stored on project or on IDE level.
    */
   fun logState(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return ourLoggerProvider.logger.log(group, action, data, true)
+    return loggerProvider.logger.log(group, action, data, true)
   }
 
   /**
@@ -65,22 +68,22 @@ object FeatureUsageLogger {
    * @deprecated
    */
   fun log(groupId: String, action: String) {
-    return ourLoggerProvider.logger.log(EventLogGroup(groupId, 1), action, true)
+    return loggerProvider.logger.log(EventLogGroup(groupId, 1), action, true)
   }
 
   fun cleanup() {
-    ourLoggerProvider.logger.cleanup()
+    loggerProvider.logger.cleanup()
   }
 
   fun rollOver() {
-    ourLoggerProvider.logger.rollOver()
+    loggerProvider.logger.rollOver()
   }
 
   fun getConfig() : StatisticsEventLoggerProvider {
-    return ourLoggerProvider
+    return loggerProvider
   }
 
   fun isEnabled() : Boolean {
-    return ourLoggerProvider.logger !is EmptyStatisticsEventLogger
+    return loggerProvider.logger !is EmptyStatisticsEventLogger
   }
 }

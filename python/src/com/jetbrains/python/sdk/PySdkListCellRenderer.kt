@@ -42,6 +42,9 @@ open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifi
 
   override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
     when (value) {
+      is PySdkToInstall -> {
+        value.renderInList(this)
+      }
       is Sdk -> {
         val sdkModificator = sdkModifiers?.get(value)
         appendName(value, name(value, sdkModificator), sdkModificator)

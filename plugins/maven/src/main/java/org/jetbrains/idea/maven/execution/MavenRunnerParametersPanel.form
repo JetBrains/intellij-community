@@ -21,7 +21,7 @@
           <componentClass value="com.intellij.ui.EditorTextField"/>
           <labelInsets top="0" left="0" bottom="0" right="0"/>
           <labelLocation value="West"/>
-          <text value="&amp;Command line"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.command.line"/>
         </properties>
       </component>
       <grid id="1fdf9" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
@@ -39,7 +39,7 @@
             <properties>
               <componentClass value="com.intellij.ui.EditorTextField"/>
               <labelLocation value="West"/>
-              <text value="&amp;Profiles (separated with space)"/>
+              <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.runner.profiles"/>
             </properties>
           </component>
           <component id="3c5c0" class="com.intellij.ui.components.JBLabel">
@@ -49,7 +49,7 @@
             <properties>
               <componentStyle value="SMALL"/>
               <fontColor value="BRIGHTER"/>
-              <text value="add prefix '-' to disable profile, e.g. &quot;-test&quot;"/>
+              <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.runner.profiles.notes"/>
             </properties>
           </component>
           <component id="2561b" class="com.intellij.ui.components.JBLabel" binding="myFakeLabel">
@@ -65,8 +65,8 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Resolve &amp;Workspace artifacts"/>
-          <toolTipText value="In case of multi-project workspace, dependencies will be looked for in the workspace first, and only after that in local repository."/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.runner.resolve.workspace.artifacts"/>
+          <toolTipText resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.runner.resolve.workspace.artifacts.tooltip"/>
         </properties>
       </component>
       <grid id="41a03" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -81,13 +81,13 @@
             <properties>
               <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
               <labelLocation value="West"/>
-              <text value="Working &amp;directory"/>
+              <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.working.directory"/>
             </properties>
           </component>
           <component id="b7a16" class="com.intellij.openapi.ui.FixedSizeButton" binding="showProjectTreeButton">
             <constraints border-constraint="East"/>
             <properties>
-              <toolTipText value="Select maven project"/>
+              <toolTipText resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.working.directory.tooltip"/>
             </properties>
           </component>
         </children>

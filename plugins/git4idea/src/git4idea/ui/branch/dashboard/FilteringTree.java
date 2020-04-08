@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard;
 
 import com.intellij.ide.ui.UISettings;
@@ -37,12 +37,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
-import java.util.List;
 import java.util.*;
 
 public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
@@ -78,7 +76,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   }
 
   @NotNull
-  public SearchTextField installSearchField(boolean isOpaque, @Nullable Border textFieldBorder) {
+  public SearchTextField installSearchField(@Nullable Border textFieldBorder) {
     SearchTextField field = new SearchTextField(false) {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent e) {
@@ -97,19 +95,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       @Override
       public void updateUI() {
         super.updateUI();
-        setOpaqueRecursively(this, isOpaque);
+        UIUtil.setNotOpaqueRecursively(this);
         JBTextField editor = getTextEditor();
         if (textFieldBorder != null && editor !=null) {
           editor.setBorder(textFieldBorder);
-        }
-      }
-
-      private void setOpaqueRecursively(@NotNull Component component, boolean isOpaque) {
-        if (!(component instanceof JComponent)) return;
-        JComponent jComponent = (JComponent)component;
-        jComponent.setOpaque(isOpaque);
-        for (Component child : jComponent.getComponents()) {
-          setOpaqueRecursively(child, isOpaque);
         }
       }
     };
@@ -122,7 +111,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       protected void onSearchFieldUpdated(String pattern) {
         TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
         getSearchModel().refilter();
-        updateExpandedPathsOnSpeedSearchUpdateComplete();
+        onSpeedSearchUpdateComplete();
         myTree.getSelectionModel().setSelectionPaths(paths);
       }
 
@@ -211,7 +200,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     return false;
   }
 
-  protected void updateExpandedPathsOnSpeedSearchUpdateComplete() {
+  protected void onSpeedSearchUpdateComplete() {
   }
 
   @Nullable
@@ -257,7 +246,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
                            @NotNull Function<U, String> namer, @NotNull Function<U, N> nodeFactory,
                            @NotNull Function<U, Iterable<U>> structure) {
       super(root);
-      myRootObject = ObjectUtils.assertNotNull(getUserObject(root));
+      myRootObject = Objects.requireNonNull(getUserObject(root));
       mySpeedSearch = speedSearch;
       myNamer = namer;
       myFactory = nodeFactory;
@@ -294,6 +283,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     public void setSpeedSearch(@NotNull SpeedSearchSupply supply) {
       mySpeedSearch = supply;
       updateStructure();
+    }
+
+    protected SpeedSearchSupply getSpeedSearchSupply() {
+      return mySpeedSearch;
     }
 
     public void addNodeListener(@NotNull Listener<U> listener) {

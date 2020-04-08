@@ -13,6 +13,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -20,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -52,7 +54,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
                 if (fieldClass != null) {
                   final String text = reference.getCanonicalText();
                   boolean validName = LanguageNamesValidation.isIdentifier(fieldClass.getLanguage(), text, fieldClass.getProject());
-                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(), "Unresolved fx:id reference",
+                  holder.registerProblem(reference.getElement(), reference.getRangeInElement(), JavaFXBundle.message("inspection.javafx.unresolved.fx.id.reference.problem"),
                                          isOnTheFly && validName ? new LocalQuickFix[]{new CreateFieldFromUsageQuickFix(text)} : LocalQuickFix.EMPTY_ARRAY);
                 }
               }
@@ -100,7 +102,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
     @NotNull
     @Override
     public String getName() {
-      return QuickFixBundle.message("create.field.from.usage.text", myCanonicalName);
+      return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.object(), myCanonicalName);
     }
 
     @NotNull

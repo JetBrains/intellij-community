@@ -16,6 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.EventListener;
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
     return ServiceManager.getService(ProjectJdkTable.class);
@@ -27,8 +28,7 @@ public abstract class ProjectJdkTable {
   @Nullable
   public abstract Sdk findJdk(@NotNull String name, @NotNull String type);
 
-  @NotNull
-  public abstract Sdk[] getAllJdks();
+  public abstract Sdk @NotNull [] getAllJdks();
 
   @NotNull
   public abstract List<Sdk> getSdksOfType(@NotNull SdkTypeId type);

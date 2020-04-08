@@ -209,7 +209,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     final LibraryData libraryDependencyDataTarget = libraryDependencyData.getTarget();
     Map<OrderRootType, Collection<File>> files = ProjectDataService.EP_NAME.findExtensionOrFail(LibraryDataService.class)
       .prepareLibraryFiles(libraryDependencyDataTarget);
-    LibraryDataService.registerPaths(libraryDependencyDataTarget.isUnresolved(), files, libraryModel, libraryName);
+    Set<String> excludedPaths = libraryDependencyDataTarget.getPaths(LibraryPathType.EXCLUDED);
+    LibraryDataService.registerPaths(libraryDependencyDataTarget.isUnresolved(), files, excludedPaths, libraryModel, libraryName);
     LibraryOrderEntry orderEntry = findLibraryOrderEntry(moduleRootModel, library, libraryDependencyData.getScope());
 
     assert orderEntry != null;
@@ -228,13 +229,10 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         if (library == libraryOrderEntry.getLibrary()) {
           return libraryOrderEntry;
         }
-        if (library.equals(libraryOrderEntry.getLibrary())) {
-          if (libraryOrderEntry.getScope() == scope) {
-            return libraryOrderEntry;
-          }
-          else {
-            candidate = libraryOrderEntry;
-          }
+        // LibraryImpl.equals will return true for unrelated module library if it's just created and empty
+        if (library.equals(libraryOrderEntry.getLibrary()) &&
+            (candidate == null || libraryOrderEntry.getScope() == scope)) {
+          candidate = libraryOrderEntry;
         }
       }
     }

@@ -6,7 +6,6 @@
     Plugin provides Java Gradle projects support
   </description>
   <vendor>JetBrains</vendor>
-  <resource-bundle>messages.ActionsBundle</resource-bundle>
 
   <depends>com.intellij.java</depends>
   <depends>com.intellij.gradle</depends>
@@ -18,7 +17,7 @@
   <depends optional="true" config-file="gradle-coverage-integration.xml">Coverage</depends>
   <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
 
-  <resource-bundle>i18n.GradleInspectionBundle</resource-bundle>
+  <resource-bundle>messages.GradleInspectionBundle</resource-bundle>
 
   <extensionPoints>
     <extensionPoint name="frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"/>
@@ -83,5 +82,7 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsModuleLibrariesService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.AnnotationProcessingDataService"/>
+
+    <referencesSearch implementation="org.jetbrains.plugins.gradle.findUsages.GradlePropertyReferencesSearcher"/>
   </extensions>
 </idea-plugin>

@@ -2,11 +2,11 @@
 package com.intellij.lang.html.structureView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.PlaceHolder;
@@ -59,8 +59,8 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
     @Override
     @NotNull
     public ActionPresentation getPresentation() {
-      return new ActionPresentationData(IdeBundle.message("action.sort.alphabetically"),
-                                        IdeBundle.message("action.sort.alphabetically"),
+      return new ActionPresentationData(PlatformEditorBundle.message("action.sort.alphabetically"),
+                                        PlatformEditorBundle.message("action.sort.alphabetically"),
                                         AllIcons.ObjectBrowser.Sorted);
     }
 
@@ -90,8 +90,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     if (TreeStructureUtil.isInStructureViewPopup(this)) {
       return Sorter.EMPTY_ARRAY;  // because in popup there's no option to disable sorter
     }

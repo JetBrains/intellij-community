@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -38,6 +38,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -67,12 +68,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
 
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
-  public static final String FONT_CONFIGURABLE_NAME = "Color Scheme Font";
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
 
-  public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
+  /**
+   * @deprecated Use {@link #getScopesGroup()} instead
+   */
+  @Deprecated
+  public static final String SCOPES_GROUP = "By Scope";
 
   private boolean mySomeSchemesDeleted = false;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;
@@ -162,7 +166,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       scheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)scheme).getOriginal() : null;
     return
       !isReadOnly(scheme) &&
-      scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX) &&
+      scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX) &&
       originalScheme instanceof ReadOnlyColorsScheme;
   }
 
@@ -184,13 +188,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Override
   public boolean containsScheme(@NotNull String name, boolean projectScheme) {
     assert !projectScheme;
-    return mySchemes.get(name) != null || mySchemes.get(SchemeManager.EDITABLE_COPY_PREFIX + name) != null;
+    return mySchemes.get(name) != null || mySchemes.get(Scheme.EDITABLE_COPY_PREFIX + name) != null;
   }
 
   @Override
   public boolean differsFromDefault(@NotNull EditorColorsScheme scheme) {
-    if (scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
-      String displayName = SchemeManager.getDisplayName(scheme);
+    if (scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
+      String displayName = SchemeManager.getBaseName(scheme);
       EditorColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getScheme(displayName);
       if (defaultScheme == null) {
         defaultScheme = EditorColorsManager.getInstance().getScheme(displayName);
@@ -220,7 +224,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @NotNull
   public Collection<EditorColorsScheme> getOrderedSchemes() {
     List<EditorColorsScheme> schemes = new ArrayList<>(mySchemes.values());
-    Collections.sort(schemes, EditorColorSchemesComparator.INSTANCE);
+    schemes.sort(EditorColorSchemesComparator.INSTANCE);
     return schemes;
   }
 
@@ -377,9 +381,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return true;
   }
 
-  @NotNull
   @Override
-  public Configurable[] buildConfigurables() {
+  public Configurable @NotNull [] buildConfigurables() {
     myDisposeCompleted = false;
     initAll();
 
@@ -441,7 +444,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       });
     }
     extensions.addAll(ColorAndFontPanelFactory.EP_NAME.getExtensionList());
-    Collections.sort(extensions, (f1, f2) -> {
+    extensions.sort((f1, f2) -> {
       if (f1 instanceof DisplayPrioritySortable) {
         if (f2 instanceof DisplayPrioritySortable) {
           int result1 = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
@@ -460,12 +463,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return new ArrayList<>(extensions);
   }
 
+  public static String getFontConfigurableName() {
+    return ApplicationBundle.message("title.colors.scheme.font");
+  }
+
   private static class FontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
-      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new FontOptions(options), previewPanel, FONT_CONFIGURABLE_NAME, null, null){
+      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new FontOptions(options), previewPanel, getFontConfigurableName(), null, null){
         @Override
         public boolean containsFontOptions() {
           return true;
@@ -476,7 +483,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public String getPanelDisplayName() {
-      return FONT_CONFIGURABLE_NAME;
+      return getFontConfigurableName();
     }
 
     @Override
@@ -495,7 +502,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
         }
       };
-      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new ConsoleFontOptions(options), previewPanel, "Font", null, null){
+      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new ConsoleFontOptions(options), previewPanel, ApplicationBundle.message("label.font.type"), null, null){
         @Override
         public boolean containsFontOptions() {
           return true;
@@ -506,7 +513,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public String getPanelDisplayName() {
-      return "Console Font";
+      return ApplicationBundle.message("title.console.font");
     }
 
      @NotNull
@@ -608,7 +615,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<>(namedScopes);
 
-    Collections.sort(list, (o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
+    list.sort((o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
       String name = namedScope.getName();
@@ -620,7 +627,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       PackageSet value = namedScope.getValue();
       String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
-      descriptions.add(new SchemeTextAttributesDescription(name, SCOPES_GROUP, textAttributesKey, scheme, holder.getIcon(), toolTip));
+      descriptions.add(new SchemeTextAttributesDescription(name, getScopesGroup(), textAttributesKey, scheme, holder.getIcon(), toolTip));
     }
   }
 
@@ -826,11 +833,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       super(name, group, colorKey.getExternalName(), scheme, null, null);
       myColorKey = colorKey;
       myKind = kind;
+      ColorKey fallbackKey = myColorKey.getFallbackColorKey();
+      Color fallbackColor = null;
+      if (fallbackKey != null) {
+        fallbackColor = scheme.getColor(fallbackKey);
+        myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getColorDescriptor(fallbackKey);
+        if (myBaseAttributeDescriptor == null) {
+          myBaseAttributeDescriptor = Pair.create(null, new ColorDescriptor(fallbackKey.getExternalName(), fallbackKey, myKind));
+        }
+        myFallbackAttributes = new TextAttributes(myKind == ColorDescriptor.Kind.FOREGROUND ? fallbackColor : null,
+                                                  myKind == ColorDescriptor.Kind.BACKGROUND ? fallbackColor : null,
+                                                  null, null, Font.PLAIN);
+      }
       myColor = scheme.getColor(myColorKey);
-      myInitialColor = myColor;
+      myInitialColor = ObjectUtils.chooseNotNull(fallbackColor, myColor);
 
-      myIsInheritedInitial = false;
+      myIsInheritedInitial = scheme.isInherited(myColorKey);
       setInherited(myIsInheritedInitial);
+      if (myIsInheritedInitial) {
+        //setInheritedAttributes(getTextAttributes());
+      }
       initCheckedStatus();
     }
 
@@ -1114,6 +1136,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         if (attributes != null) {
           TextAttributes fallbackAttributes = getAttributes(fallbackKey);
           return attributes == fallbackAttributes;
+        }
+      }
+      return false;
+    }
+
+    public boolean isInherited(ColorKey key) {
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      if (fallbackKey != null) {
+        if (myParentScheme instanceof AbstractColorsScheme) {
+          Color ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key);
+          if (ownAttrs != null) {
+            return ownAttrs == AbstractColorsScheme.INHERITED_COLOR_MARKER;
+          }
+        }
+        Color attributes = getColor(key);
+        if (attributes != null) {
+          Color fallback = getColor(fallbackKey);
+          return attributes == fallback;
         }
       }
       return false;
@@ -1488,5 +1528,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       options.disposeUIResources();
     }
     return page != null;
+  }
+
+  public static String getScopesGroup() {
+    return ApplicationBundle.message("title.scope.based");
   }
 }

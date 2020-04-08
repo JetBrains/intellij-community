@@ -126,9 +126,8 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
     return PathReferenceManager.getInstance().getCustomPathReference(s, module, element, ourProvider);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(@NotNull PsiElement psiElement, boolean soft) {
+  public PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement, boolean soft) {
     return PathReferenceManager.getInstance().createCustomReferences(psiElement,
                                                                      soft,
                                                                      ourProvider);

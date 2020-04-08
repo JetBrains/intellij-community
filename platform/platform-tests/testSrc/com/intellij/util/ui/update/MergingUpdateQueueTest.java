@@ -305,7 +305,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     }
 
     @Override
-    protected void execute(@NotNull final Update[] update) {
+    protected void execute(final Update @NotNull [] update) {
       super.execute(update);
       myExecuted = true;
     }

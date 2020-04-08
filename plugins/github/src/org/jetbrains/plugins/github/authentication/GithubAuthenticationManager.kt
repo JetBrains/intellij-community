@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
 import com.intellij.openapi.components.service
@@ -18,10 +18,12 @@ import java.awt.Component
 /**
  * Entry point for interactions with Github authentication subsystem
  */
-class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager,
-                                                       private val executorFactory: GithubApiRequestExecutor.Factory) {
+class GithubAuthenticationManager internal constructor() {
+  private val accountManager: GithubAccountManager
+    get() = service()
+
   @CalledInAny
-  fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()
+  fun hasAccounts() = accountManager.accounts.isNotEmpty()
 
   @CalledInAny
   fun getAccounts(): Set<GithubAccount> = accountManager.accounts
@@ -32,7 +34,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAwt
   @JvmOverloads
   internal fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
-    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
+    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
       .withToken()
@@ -49,7 +51,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAwt
   @JvmOverloads
   fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? {
-    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
+    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
@@ -59,7 +61,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAwt
   @JvmOverloads
   fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? {
-    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique).withServer(server.toUrl(), false)
+    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, ::isAccountUnique).withServer(server.toUrl(), false)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
@@ -72,7 +74,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
                                  login: String,
                                  project: Project?,
                                  parentComponent: Component? = null): GithubAccount? {
-    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
+    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, ::isAccountUnique)
       .withServer(server.toUrl(), false)
       .withCredentials(login, editableLogin = false)
     DialogManager.show(dialog)
@@ -87,7 +89,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAwt
   @JvmOverloads
   fun requestReLogin(account: GithubAccount, project: Project?, parentComponent: Component? = null): Boolean {
-    val dialog = GithubLoginDialog(executorFactory, project, parentComponent)
+    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent)
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
 

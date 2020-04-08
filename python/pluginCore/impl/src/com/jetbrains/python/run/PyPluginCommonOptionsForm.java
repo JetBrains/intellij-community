@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -22,14 +22,16 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -62,14 +64,15 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     // setting modules
     myProject = data.getProject();
     final List<Module> validModules = data.getValidModules();
-    Collections.sort(validModules, new ModulesAlphaComparator());
+    validModules.sort(new ModulesAlphaComparator());
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModules(validModules);
     myModuleComboBox.setSelectedModule(selection);
 
     myInterpreterComboBox.setMinimumAndPreferredWidth(100);
-    myInterpreterComboBox.setRenderer(new PySdkListCellRenderer(null,"<Project Default>"));
-    myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
+    myInterpreterComboBox
+      .setRenderer(new PySdkListCellRenderer(null, "<" + PyBundle.message("python.sdk.rendering.project.default") + ">"));
+    myWorkingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {
@@ -86,23 +89,24 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     setAnchor(myEnvsComponent.getLabel());
 
 
-    final HideableDecorator decorator = new HideableDecorator(myHideablePanel, "Environment", false) {
-      @Override
-      protected void on() {
-        super.on();
-        storeState();
-      }
+    final HideableDecorator decorator =
+      new HideableDecorator(myHideablePanel, PyBundle.message("python.sdk.common.options.environment"), false) {
+        @Override
+        protected void on() {
+          super.on();
+          storeState();
+        }
 
-      @Override
-      protected void off() {
-        super.off();
-        storeState();
-      }
+        @Override
+        protected void off() {
+          super.off();
+          storeState();
+        }
 
-      private void storeState() {
-        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
-      }
-    };
+        private void storeState() {
+          PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
+        }
+      };
     decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
     decorator.setContentComponent(myMainPanel);
     myPathMappingsComponent.setAnchor(myEnvsComponent.getLabel());
@@ -180,7 +184,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     List<Sdk> sdkList = new ArrayList<>();
     sdkList.add(null);
     final List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
-    Collections.sort(allSdks, new PreferredSdkComparator());
+    allSdks.sort(new PreferredSdkComparator());
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
       String homePath = sdk.getHomePath();

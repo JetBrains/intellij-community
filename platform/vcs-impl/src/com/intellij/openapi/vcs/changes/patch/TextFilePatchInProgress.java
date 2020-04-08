@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFilePatch> {
 
@@ -41,11 +44,13 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       if (FilePatchStatus.ADDED.equals(myStatus)) {
         final FilePath newFilePath = VcsUtil.getFilePath(myIoCurrentBase, false);
         final String content = myPatch.getSingleHunkPatchText();
-        myNewContentRevision = new SimpleContentRevision(content, newFilePath, myPatch.getAfterVersionId());
+        myNewContentRevision = new SimpleContentRevision(content, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
+          .message("patch.apply.conflict.patched.version")));
       }
       else {
         final FilePath newFilePath = detectNewFilePathForMovedOrModified();
-        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
+        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
+          .message("patch.apply.conflict.patched.version")), myPatch);
       }
     }
     return myNewContentRevision;
@@ -74,7 +79,7 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
               .create(project, file, VcsUtil.getFilePath(file), getPatch(), patchReader.getBaseRevision(project, path));
 
           String afterTitle = getPatch().getAfterVersionId();
-          if (afterTitle == null) afterTitle = "Patched Version";
+          if (afterTitle == null) afterTitle = VcsBundle.message("patch.apply.conflict.patched.version");
           return PatchDiffRequestFactory.createConflictDiffRequest(project, file, getPatch(), afterTitle, texts, getName());
         }
         else {

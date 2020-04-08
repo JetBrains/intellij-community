@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -19,10 +19,6 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 
-/**
- * @author egor
- */
-
 class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "debugger.breakpoints"
 
@@ -33,7 +29,8 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val breakpointManager = XDebuggerManagerImpl.getInstance(project).breakpointManager as XBreakpointManagerImpl
 
-    val res = XBreakpointUtil.breakpointTypes()
+    val res = XBreakpointType.EXTENSION_POINT_NAME.extensionList
+      .asSequence()
       .filter { it.isSuspendThreadSupported() }
       .filter { breakpointManager.getBreakpointDefaults(it).getSuspendPolicy() != it.getDefaultSuspendPolicy() }
       .map {

@@ -134,4 +134,8 @@ public final class JavaMethod implements AnnotatedElement {
   public Class<?>[] getParameterTypes() {
     return myMethod.getParameterTypes();
   }
+
+  public int getParameterCount() {
+    return myMethod.getParameterCount();
+  }
 }

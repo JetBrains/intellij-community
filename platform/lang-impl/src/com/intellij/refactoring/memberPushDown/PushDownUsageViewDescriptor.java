@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -34,8 +34,7 @@ public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Membe
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return myMembers;
   }
 
@@ -44,10 +43,4 @@ public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Membe
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("classes.to.push.down.members.to", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
-
-  @Override
-  public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return null;
-  }
-
 }

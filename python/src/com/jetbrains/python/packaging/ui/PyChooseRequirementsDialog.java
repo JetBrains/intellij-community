@@ -19,6 +19,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyRequirement;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +35,8 @@ public class PyChooseRequirementsDialog extends DialogWrapper {
 
   public PyChooseRequirementsDialog(@NotNull Project project, @NotNull List<PyRequirement> requirements) {
     super(project, false);
-    setTitle("Choose Packages to Install");
-    setOKButtonText("Install");
+    setTitle(PyBundle.message("python.packaging.choose.packages.to.install"));
+    setOKButtonText(PyBundle.message("python.packaging.install"));
     myRequirementsChooser = new ElementsChooser<PyRequirement>(true) {
       @Override
       public String getItemText(@NotNull PyRequirement requirement) {
@@ -56,7 +57,7 @@ public class PyChooseRequirementsDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setPreferredSize(new Dimension(400, 300));
-    final JBLabel label = new JBLabel("Choose packages to install:");
+    final JBLabel label = new JBLabel(PyBundle.message("choose.packages.to.install"));
     label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
     panel.add(label, BorderLayout.NORTH);
     panel.add(myRequirementsChooser, BorderLayout.CENTER);

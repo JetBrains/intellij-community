@@ -19,15 +19,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class CvsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.intellij.cvsSupport2.CvsBundle";
+  @NonNls public static final String BUNDLE = "messages.CvsBundle";
   private static final CvsBundle INSTANCE = new CvsBundle();
 
   private CvsBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 
   public static String getCvsDisplayName() {

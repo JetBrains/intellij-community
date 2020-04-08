@@ -20,9 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class PyAugAssignmentStatementNavigator {
   private PyAugAssignmentStatementNavigator() {
   }

@@ -27,7 +27,14 @@ public interface LayoutViewOptions {
   String STARTUP = "startup";
 
   @NotNull
+  @Deprecated
   LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
+
+  @NotNull
+  LayoutViewOptions setTopLeftToolbar(@NotNull ActionGroup actions, @NotNull String place);
+
+  @NotNull
+  LayoutViewOptions setTopRightToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
   @NotNull
   LayoutViewOptions setLeftToolbar(@NotNull ActionGroup leftToolbar, @NotNull String place);
@@ -50,8 +57,7 @@ public interface LayoutViewOptions {
   LayoutViewOptions setToFocus(@Nullable Content content, @NotNull String condition);
 
   AnAction getLayoutActions();
-  @NotNull
-  AnAction[] getLayoutActionsList();
+  AnAction @NotNull [] getLayoutActionsList();
 
   @NotNull
   LayoutViewOptions setTabPopupActions(@NotNull ActionGroup group);
@@ -59,6 +65,5 @@ public interface LayoutViewOptions {
   LayoutViewOptions setAdditionalFocusActions(@NotNull ActionGroup group);
 
   AnAction getSettingsActions();
-  @NotNull
-  AnAction[] getSettingsActionsList();
+  AnAction @NotNull [] getSettingsActionsList();
 }

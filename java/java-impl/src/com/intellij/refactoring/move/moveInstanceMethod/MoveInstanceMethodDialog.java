@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -14,6 +15,7 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +40,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
   public MoveInstanceMethodDialog(final PsiMethod method,
                                   final PsiVariable[] variables) {
-    super(method, variables, MoveInstanceMethodHandler.REFACTORING_NAME);
+    super(method, variables, MoveInstanceMethodHandler.getRefactoringName(), true);
     init();
   }
 
@@ -78,9 +80,6 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
                                                             JBUI.emptyInsets(), 0, 0));
     }
 
-    mainPanel.add(initOpenInEditorCb(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
-                                                               JBUI.emptyInsets(), 0, 0));
-
     separator.setLabelFor(myList);
     validateTextFields(myList.getSelectedIndex());
 
@@ -111,7 +110,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     if (myThisClassesMap.size() == 0) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
-      final String text = RefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
+      final String text = JavaRefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
       panel.add(new TitledSeparator(text, null));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
@@ -133,7 +132,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
         String parameterName = field.getText().trim();
         if (!PsiNameHelper.getInstance(myMethod.getProject()).isIdentifier(parameterName)) {
           Messages
-            .showErrorDialog(getProject(), RefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
+            .showErrorDialog(getProject(), JavaRefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
           return;
         }
         parameterNames.put(aClass, parameterName);
@@ -148,7 +147,6 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
                                                                                   isOpenInEditor(),
                                                                                   parameterNames);
     if (!verifyTargetClass(processor.getTargetClass())) return;
-    saveOpenInEditorOption();
     invokeRefactoring(processor);
   }
 
@@ -169,12 +167,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   @Override
-  protected String getMovePropertySuffix() {
-    return "Instance";
-  }
-
-  @Override
-  protected String getCbTitle() {
-    return "Open moved method in editor";
+  protected @NotNull String getRefactoringId() {
+    return "MoveInstance";
   }
 }

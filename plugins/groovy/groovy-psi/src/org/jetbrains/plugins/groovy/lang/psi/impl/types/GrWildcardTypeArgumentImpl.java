@@ -60,9 +60,8 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     return findChildByType(GroovyTokenTypes.kSUPER) != null;
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

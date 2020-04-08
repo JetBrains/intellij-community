@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Yura Cangea
- * @version 1.0
- */
 public interface Filter {
   Filter[] EMPTY_ARRAY = new Filter[0];
 
@@ -40,42 +26,41 @@ public interface Filter {
     private NextAction myNextAction = NextAction.EXIT;
     private final List<? extends ResultItem> myResultItems;
 
-    public Result(final int highlightStartOffset, final int highlightEndOffset, @Nullable final HyperlinkInfo hyperlinkInfo) {
+    public Result(final int highlightStartOffset, final int highlightEndOffset, final @Nullable HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
     }
 
     public Result(final int highlightStartOffset,
                   final int highlightEndOffset,
-                  @Nullable final HyperlinkInfo hyperlinkInfo,
-                  @Nullable final TextAttributes highlightAttributes) {
+                  final @Nullable HyperlinkInfo hyperlinkInfo,
+                  final @Nullable TextAttributes highlightAttributes) {
       super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, null);
       myResultItems = null;
     }
 
     public Result(final int highlightStartOffset,
                   final int highlightEndOffset,
-                  @Nullable final HyperlinkInfo hyperlinkInfo,
-                  @Nullable final TextAttributes highlightAttributes,
-                  @Nullable final TextAttributes followedHyperlinkAttributes) {
+                  final @Nullable HyperlinkInfo hyperlinkInfo,
+                  final @Nullable TextAttributes highlightAttributes,
+                  final @Nullable TextAttributes followedHyperlinkAttributes) {
       super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, followedHyperlinkAttributes);
       myResultItems = null;
     }
 
     public Result(final int highlightStartOffset,
                   final int highlightEndOffset,
-                  @Nullable final HyperlinkInfo hyperlinkInfo,
+                  final @Nullable HyperlinkInfo hyperlinkInfo,
                   final boolean grayedHyperlink) {
       super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, grayedHyperlink);
       myResultItems = null;
     }
 
     public Result(@NotNull List<? extends ResultItem> resultItems) {
-      super(-1, -1, null, null, null);
+      super(0, 0, null, null, null);
       myResultItems = resultItems;
     }
 
-    @NotNull
-    public List<ResultItem> getResultItems() {
+    public @NotNull List<ResultItem> getResultItems() {
       List<? extends ResultItem> resultItems = myResultItems;
       if (resultItems == null) {
         resultItems = Collections.singletonList(this);
@@ -105,9 +90,8 @@ public interface Filter {
      * @deprecated This method will be removed. Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} instead.
      */
     @Deprecated
-    @Nullable
     @Override
-    public TextAttributes getHighlightAttributes() {
+    public @Nullable TextAttributes getHighlightAttributes() {
       return super.getHighlightAttributes();
     }
 
@@ -115,14 +99,12 @@ public interface Filter {
      * @deprecated This method will be removed. Result may be constructed using ResultItems, in that case this method will return incorrect value. Use {@link #getResultItems()} or {@link #getFirstHyperlinkInfo()} instead.
      */
     @Deprecated
-    @Nullable
     @Override
-    public HyperlinkInfo getHyperlinkInfo() {
+    public @Nullable HyperlinkInfo getHyperlinkInfo() {
       return super.getHyperlinkInfo();
     }
 
-    @Nullable
-    public HyperlinkInfo getFirstHyperlinkInfo() {
+    public @Nullable HyperlinkInfo getFirstHyperlinkInfo() {
       HyperlinkInfo info = super.getHyperlinkInfo();
       if (info == null && myResultItems != null) {
         //noinspection ForLoopReplaceableByForEach
@@ -166,24 +148,22 @@ public interface Filter {
     /**
      * @deprecated use {@link #getHighlightAttributes()} instead, the visibility of this field will be decreased.
      */
-    @Deprecated @Nullable
-    public final TextAttributes highlightAttributes;
+    @Deprecated public final @Nullable TextAttributes highlightAttributes;
     /**
      * @deprecated use {@link #getHyperlinkInfo()} instead, the visibility of this field will be decreased.
      */
-    @Deprecated @Nullable
-    public final HyperlinkInfo hyperlinkInfo;
-    
+    @Deprecated public final @Nullable HyperlinkInfo hyperlinkInfo;
+
     private final TextAttributes myFollowedHyperlinkAttributes;
 
-    public ResultItem(final int highlightStartOffset, final int highlightEndOffset, @Nullable final HyperlinkInfo hyperlinkInfo) {
+    public ResultItem(final int highlightStartOffset, final int highlightEndOffset, final @Nullable HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null, null);
     }
 
     public ResultItem(final int highlightStartOffset,
                       final int highlightEndOffset,
-                      @Nullable final HyperlinkInfo hyperlinkInfo,
-                      @Nullable final TextAttributes highlightAttributes) {
+                      final @Nullable HyperlinkInfo hyperlinkInfo,
+                      final @Nullable TextAttributes highlightAttributes) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, null);
     }
 
@@ -198,11 +178,12 @@ public interface Filter {
 
     public ResultItem(final int highlightStartOffset,
                       final int highlightEndOffset,
-                      @Nullable final HyperlinkInfo hyperlinkInfo,
-                      @Nullable final TextAttributes highlightAttributes,
-                      @Nullable final TextAttributes followedHyperlinkAttributes) {
+                      final @Nullable HyperlinkInfo hyperlinkInfo,
+                      final @Nullable TextAttributes highlightAttributes,
+                      final @Nullable TextAttributes followedHyperlinkAttributes) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
+      TextRange.assertProperRange(highlightStartOffset, highlightEndOffset, "");
       this.hyperlinkInfo = hyperlinkInfo;
       this.highlightAttributes = highlightAttributes;
       myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
@@ -216,30 +197,26 @@ public interface Filter {
       return highlightEndOffset;
     }
 
-    @Nullable
-    public TextAttributes getHighlightAttributes() {
+    public @Nullable TextAttributes getHighlightAttributes() {
       return highlightAttributes;
     }
 
-    @Nullable
-    public TextAttributes getFollowedHyperlinkAttributes() {
+    public @Nullable TextAttributes getFollowedHyperlinkAttributes() {
       return myFollowedHyperlinkAttributes;
     }
 
-    @Nullable
-    public HyperlinkInfo getHyperlinkInfo() {
+    public @Nullable HyperlinkInfo getHyperlinkInfo() {
       return hyperlinkInfo;
     }
 
     /**
-     * See {@link HighlighterLayer} for available predefined layers. 
+     * See {@link HighlighterLayer} for available predefined layers.
      */
     public int getHighlighterLayer() {
-      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.CONSOLE_FILTER; 
+      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.CONSOLE_FILTER;
     }
 
-    @Nullable
-    private static TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
+    private static @Nullable TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.get(normalHyperlinkAttrsKey);
       if (grayedHyperlinkAttrs == null) {

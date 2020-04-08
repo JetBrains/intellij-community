@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jar;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -7,6 +7,11 @@ import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
@@ -27,10 +32,10 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
-public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile, InputRedirectAware {
+public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters,
+                                                                                       SearchScopeProvidingRunProfile,
+                                                                                       InputRedirectAware,
+                                                                                       TargetEnvironmentAwareRunProfile {
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
@@ -109,8 +114,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     Module module = myConfigurationModule.getModule();
     return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
   }
@@ -230,6 +234,28 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
       String baseDir = FileUtil.toSystemIndependentName(StringUtil.notNullize(getProject().getBasePath()));
       setWorkingDirectory(baseDir);
     }
+  }
+
+  @Override
+  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
+    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return getOptions().getRemoteTarget();
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    getOptions().setRemoteTarget(targetName);
   }
 
   private static class JarApplicationConfigurationBean {

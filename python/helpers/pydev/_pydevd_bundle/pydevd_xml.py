@@ -364,13 +364,13 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
 
     xml_shape = ''
-    if is_numeric_container(type_qualifier, typeName, v):
-        xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
-    elif hasattr(v, "__len__") and not is_string(v):
-        try:
+    try:
+        if is_numeric_container(type_qualifier, typeName, v):
+            xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
+        elif hasattr(v, '__len__') and not is_string(v):
             xml_shape = ' shape="%s"' % make_valid_xml_value("%s" % str(len(v)))
-        except:
-            pass
+    except:
+        pass
 
     if is_exception_on_eval:
         xml_container = ' isErrorOnEval="True"'

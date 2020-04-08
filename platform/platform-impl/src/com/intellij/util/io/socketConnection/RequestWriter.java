@@ -17,9 +17,6 @@ package com.intellij.util.io.socketConnection;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public interface RequestWriter<R extends AbstractRequest> {
   void writeRequest(R request) throws IOException;
 }

@@ -18,6 +18,9 @@ public class JsonTypingHandlingTest extends JsonTestCase {
   private void doTestQuote(@NotNull final String before, @NotNull final String expected) {
     doTypingTest('"', before, expected, "json");
   }
+  private void doTestSingleQuote(@NotNull final String before, @NotNull final String expected) {
+    doTypingTest('\'', before, expected, "json");
+  }
   private void doTestColon(@NotNull final String before, @NotNull final String expected) {
     doTypingTest(':', before, expected, "json");
   }
@@ -264,5 +267,13 @@ public class JsonTypingHandlingTest extends JsonTestCase {
     finally {
       editorOptions.COMMA_MOVE_OUTSIDE_QUOTES = oldQuote;
     }
+  }
+
+  public void testQuotePairingNotInsideString01() {
+    doTestQuote("{\"MyKey\": \"This \\<caret>\"}", "{\"MyKey\": \"This \\\"<caret>\"}");
+  }
+
+  public void testQuotePairingNotInsideString02() {
+    doTestSingleQuote("{\"MyKey\": \"This <caret> \\\"is\\\" my value\"}", "{\"MyKey\": \"This ' \\\"is\\\" my value\"}");
   }
 }

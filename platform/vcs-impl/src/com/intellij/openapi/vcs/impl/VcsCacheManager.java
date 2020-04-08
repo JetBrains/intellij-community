@@ -21,9 +21,14 @@ public class VcsCacheManager {
     myContentRevisionCache = new ContentRevisionCache();
 
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsHistoryCache::clearHistory);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, myVcsHistoryCache::clearHistory);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsHistoryCache::clearAll);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, myVcsHistoryCache::clearAll);
     connection.subscribe(UpdatedFilesListener.UPDATED_FILES, myContentRevisionCache::clearCurrent);
+
+    VcsEP.EP_NAME.addExtensionPointListener(() -> {
+      myVcsHistoryCache.clearAll();
+      myContentRevisionCache.clearAll();
+    }, project);
   }
 
   public VcsHistoryCache getVcsHistoryCache() {

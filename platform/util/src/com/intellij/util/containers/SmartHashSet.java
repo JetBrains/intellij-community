@@ -184,9 +184,8 @@ public class SmartHashSet<T> extends THashSet<T> {
     return super.forEach(procedure);
   }
 
-  @NotNull
   @Override
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     T theElement = this.theElement;
     if (theElement != null) {
       return new Object[]{theElement};
@@ -194,9 +193,8 @@ public class SmartHashSet<T> extends THashSet<T> {
     return super.toArray();
   }
 
-  @NotNull
   @Override
-  public <T> T[] toArray(@NotNull T[] a) {
+  public <T> T @NotNull [] toArray(T @NotNull [] a) {
     T theElement = (T)this.theElement;
     if (theElement != null) {
       if (a.length == 0) {

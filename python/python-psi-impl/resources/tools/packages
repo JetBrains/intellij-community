@@ -355,8 +355,7 @@ herald Cohorte-Herald
 qualitylib quality_report 
 noaadata noaadata-py 
 _jitviewer JitViewer 
-session_csrf django-session-csrf-per-view 
-arrow arrow-fatisar 
+session_csrf django-session-csrf-per-view
 indexfile idxtools 
 debug Chandler-debugPlugin 
 djangohelper django-helper 
@@ -4779,3 +4778,4 @@ can python-can
 github PyGithub
 gitlab python-gitlab
 tensorflow tensorflow-gpu
+aocd advent-of-code-data

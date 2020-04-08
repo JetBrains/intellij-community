@@ -26,9 +26,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingEleme
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ArtifactSorter {
   private final JpsModel myModel;
   private Map<JpsArtifact, JpsArtifact> myArtifactToSelfIncludingName;

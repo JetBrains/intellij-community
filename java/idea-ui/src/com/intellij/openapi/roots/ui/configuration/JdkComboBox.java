@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -92,19 +92,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
         onNewSdkAdded.consume(sdk);
       }
     };
-    setRenderer(new SdkListPresenter(sdkModel) {
-      @NotNull
-      @Override
-      protected SdkListModel getModel() {
-        return ((JdkComboBoxModel)JdkComboBox.this.getModel()).myInnerModel;
-      }
-
-      @Override
-      protected boolean showProgressIcon() {
-        return JdkComboBox.this.isPopupVisible();
-      }
-    }.forType(JdkComboBox::unwrapItem));
-
+    setRenderer(new SdkListPresenter(() -> ((JdkComboBoxModel)this.getModel()).myInnerModel).forType(JdkComboBox::unwrapItem));
     reloadModel();
   }
 
@@ -273,7 +261,16 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
 
     if (anObject == null) {
-      setSelectedItem(myModel.showProjectSdkItem());
+      SdkListModel innerModel = ((JdkComboBoxModel)getModel()).myInnerModel;
+      SdkListItem candidate = innerModel.findProjectSdkItem();
+      if (candidate == null) {
+        candidate = innerModel.findNoneSdkItem();
+      }
+      if (candidate == null) {
+        candidate = myModel.showProjectSdkItem();
+      }
+
+      setSelectedItem(candidate);
       return;
     }
 
@@ -488,7 +485,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
 
     public String toString() {
-      return ProjectBundle.message("jdk.combo.box.none.item");
+      return JavaUiBundle.message("jdk.combo.box.none.item");
     }
 
     @Override

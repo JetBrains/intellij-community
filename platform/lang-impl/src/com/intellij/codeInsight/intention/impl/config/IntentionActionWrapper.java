@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -16,9 +19,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate {
+public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware {
   private final IntentionActionBean myExtension;
   private String myFullFamilyName;
+  private String myFamilyName;
 
   IntentionActionWrapper(@NotNull IntentionActionBean extension) {
     myExtension = extension;
@@ -43,7 +47,11 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   @Override
   @NotNull
   public String getFamilyName() {
-    return getDelegate().getFamilyName();
+    String result = myFamilyName;
+    if (result == null) {
+      myFamilyName = result = getDelegate().getFamilyName();
+    }
+    return result;
   }
 
   @Override
@@ -59,6 +67,11 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   @Override
   public boolean startInWriteAction() {
     return getDelegate().startInWriteAction();
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return getDelegate().getFileModifierForPreview(target);
   }
 
   @Nullable
@@ -77,12 +90,18 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return result;
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return DumbService.isDumbAware(getDelegate());
+  }
+
   @NotNull
   @Override
   public IntentionAction getDelegate() {
     return myExtension.getInstance();
   }
 
+  @Override
   @NotNull
   public String getImplementationClassName() {
     return myExtension.className;

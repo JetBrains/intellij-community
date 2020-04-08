@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -32,6 +33,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -90,7 +92,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       setTreeBuilder(treeBuilder);
     }
     else {
-      myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTree, myTreeStructure, createComparator());
+      myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
+      myAsyncSupport.setModelTo(myTree);
     }
 
     initTree();
@@ -118,8 +121,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
-    if (myAsyncSupport != null) myAsyncSupport.setComparator(comparator);
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+    if (myAsyncSupport != null) {
+      myAsyncSupport.setComparator(comparator);
+    }
     super.installComparator(builder, comparator);
   }
 
@@ -195,6 +200,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     }
     else if (myAsyncSupport != null) {
       myAsyncSupport.updateAll(afterUpdate);
+    }
+    else {
+      return ActionCallback.REJECTED;
     }
     return cb;
   }
@@ -300,5 +308,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @Override
   AsyncProjectViewSupport getAsyncSupport() {
     return myAsyncSupport;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public AsyncProjectViewSupport createAsyncSupport(@NotNull Disposable parent, @NotNull Comparator<NodeDescriptor<?>> comparator) {
+    return new AsyncProjectViewSupport(parent, myProject, createStructure(), comparator);
   }
 }

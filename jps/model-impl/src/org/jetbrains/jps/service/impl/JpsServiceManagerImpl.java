@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.service.impl;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.plugin.JpsPluginManager;
@@ -24,9 +25,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author nik
- */
 public class JpsServiceManagerImpl extends JpsServiceManager {
   private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<>(16, 0.75f, 1);
@@ -88,7 +86,16 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     if (pluginManager == null) {
       Iterator<JpsPluginManager> managers = ServiceLoader.load(JpsPluginManager.class, JpsPluginManager.class.getClassLoader()).iterator();
       if (managers.hasNext()) {
-        pluginManager = managers.next();
+        try {
+          pluginManager = managers.next();
+        }
+        catch (ServiceConfigurationError e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof ProcessCanceledException) {
+            throw (ProcessCanceledException)cause;
+          }
+          throw e;
+        }
         if (managers.hasNext()) {
           throw new ServiceConfigurationError("More than one implementation of " + JpsPluginManager.class + " found: " + pluginManager.getClass() + " and " + managers.next().getClass());
         }

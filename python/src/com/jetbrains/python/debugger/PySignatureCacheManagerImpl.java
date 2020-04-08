@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.cache.CacheBuilder;
@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ArrayUtilRt;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author traff
- */
 public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   protected static final Logger LOG = Logger.getInstance(PySignatureCacheManagerImpl.class.getName());
 
@@ -271,16 +269,16 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
           return false;
         }
         return true;
-      }), "Cleaning the Cache of Dynamically Collected Types", true, myProject);
+      }), PyBundle.message("debugger.cleaning.signature.cache"), true, myProject);
 
 
     String message;
     if (deleted.get()) {
-      message = "Collected signatures were deleted";
+      message = PyBundle.message("python.debugger.collection.signatures.deleted");
     }
     else {
-      message = "Nothing to delete";
+      message = PyBundle.message("python.debugger.nothing.to.delete");
     }
-    Messages.showInfoMessage(myProject, message, "Delete Cache");
+    Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
   }
 }

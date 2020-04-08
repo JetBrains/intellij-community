@@ -13,6 +13,25 @@
   <item name='java.lang.Boolean boolean getBoolean(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.lang.Boolean boolean logicalAnd(boolean, boolean)'>
+      <annotation name='org.jetbrains.annotations.Contract'>
+          <val name="value" val="&quot;true,_ -&gt; param2; _,_ -&gt; false&quot;"/>
+          <val name="pure" val="true"/>
+      </annotation>
+  </item>
+  <item name='java.lang.Boolean boolean logicalOr(boolean, boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;false,_ -&gt; param2; _,_ -&gt; true&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Boolean boolean logicalXor(boolean, boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value"
+           val="&quot;true,true -&gt; false; true,false -&gt; true; false,true -&gt; true; false,false -&gt; true&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.Boolean boolean parseBoolean(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;null-&gt;false&quot;"/>
@@ -232,6 +251,12 @@
     </annotation>
   </item>
   <item name='java.lang.Class java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Class java.lang.String getPackageName()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -1250,6 +1275,9 @@
   </item>
   <item name="java.lang.System java.lang.String getProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.lang.System java.lang.String getenv(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls"/>

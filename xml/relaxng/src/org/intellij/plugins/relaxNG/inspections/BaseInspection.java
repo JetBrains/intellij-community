@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,9 +73,8 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     return false;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
       return ArrayUtil.mergeArrays(new SuppressQuickFix[] {
               new SuppressAction("Define") {
@@ -180,7 +180,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Suppress for " + myLocation;
+      return RelaxngBundle.message("suppress.for.0", myLocation);
     }
 
     @Override

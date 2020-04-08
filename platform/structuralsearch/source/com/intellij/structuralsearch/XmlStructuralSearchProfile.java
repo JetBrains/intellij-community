@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -25,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,17 +76,16 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return language instanceof XMLLanguage;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull LanguageFileType fileType,
-                                        @NotNull Language language,
-                                        String contextId,
-                                        @NotNull Project project,
-                                        boolean physical) {
+  public PsiElement @NotNull [] createPatternTree(@NonNls @NotNull String text,
+                                                  @NotNull PatternTreeContext context,
+                                                  @NotNull LanguageFileType fileType,
+                                                  @NotNull Language language,
+                                                  String contextId,
+                                                  @NotNull Project project,
+                                                  boolean physical) {
     text = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
-    final String fileName = "dummy." + fileType.getDefaultExtension();
+    @NonNls final String fileName = "dummy." + fileType.getDefaultExtension();
     final PsiFile fileFromText =
       PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), physical, true);
 
@@ -146,10 +147,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       super.visitErrorElement(element);
       final String errorDescription = element.getErrorDescription();
       final PsiElement parent = element.getParent();
-      if (parent instanceof XmlAttribute && "'=' expected".equals(errorDescription)) {
+      if (parent instanceof XmlAttribute && XmlErrorBundle.message("expected.attribute.eq.sign").equals(errorDescription)) {
         return;
       }
-      else if (parent instanceof XmlTag && errorDescription.startsWith("Element") && errorDescription.endsWith(" is not closed")) {
+      else if (parent instanceof XmlTag &&
+               XmlErrorBundle.message("named.element.is.not.closed", ((XmlTag)parent).getName()).equals(errorDescription)) {
         return;
       }
       throw new MalformedPatternException(errorDescription);
@@ -243,19 +245,21 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static class XmlPredefinedConfigurations {
-    private static final String HTML_XML = SSRBundle.message("xml_html.category");
-
     static Configuration[] createPredefinedTemplates() {
       return new Configuration[]{
-        createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
-        createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),
-        createSearchTemplateInfo("html attribute", "<'_tag 'attribute />", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),
-        createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("<ul> or <ol>", "<'_tag:[regex( ul|ol )] />", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( <ul> or <ol> )]<li />", HTML_XML, StdFileTypes.HTML)
+        createSearchTemplateInfo("xml tag", "<'a/>", getHtmlXml(), StdFileTypes.XML),
+        createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", getHtmlXml(), StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute", "<'_tag 'attribute />", getHtmlXml(), StdFileTypes.HTML),
+        createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", getHtmlXml(), StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", getHtmlXml(), StdFileTypes.HTML),
+        createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", getHtmlXml(), StdFileTypes.HTML),
+        createSearchTemplateInfo("<ul> or <ol>", "<'_tag:[regex( ul|ol )] />", getHtmlXml(), StdFileTypes.HTML),
+        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( <ul> or <ol> )]<li />", getHtmlXml(), StdFileTypes.HTML)
       };
+    }
+
+    private static String getHtmlXml() {
+      return SSRBundle.message("xml_html.category");
     }
   }
 }

@@ -49,7 +49,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private static final Logger LOG = Logger.getInstance(FileTextFieldImpl.class);
 
-
+  private final Object myLock = new Object();
   private final JTextField myPathTextField;
 
   private CompletionResult myCurrentCompletion;
@@ -72,7 +72,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   protected boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
   private final Set<Action> myDisabledTextActions;
-  private final Map<String, String> myMacroMap;
+  private Map<String, String> myMacroMap;
 
   public FileTextFieldImpl(Finder finder, LookupFilter filter, Map<String, String> macroMap) {
     this(new JTextField(), finder, filter, macroMap, null);
@@ -80,9 +80,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   public FileTextFieldImpl(final JTextField field, Finder finder, LookupFilter filter, Map<String, String> macroMap, final Disposable parent) {
     myPathTextField = field;
-    myMacroMap = new TreeMap<>();
-    myMacroMap.putAll(macroMap);
-
+    myMacroMap = new TreeMap<>(macroMap);
 
     final InputMap listMap = (InputMap)UIManager.getDefaults().get("List.focusInputMap");
     final KeyStroke[] listKeys = listMap.keys();
@@ -161,6 +159,12 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         Disposer.register(child, myUiUpdater);
       }
     };
+  }
+
+  public void resetMacroMap(Map<String, String> macroMap) {
+    synchronized (myLock) {
+      myMacroMap = new TreeMap<>(macroMap);
+    }
   }
 
   @Override
@@ -319,7 +323,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           }
 
           if (myCurrentCompletion.myMacros.size() > 0 && fileIndex == 0) {
-            return new Separator(IdeBundle.message("file.chooser.completion.path.variables.text"));
+            return new Separator(getPathVariablesSeparatorText());
           }
 
           return null;
@@ -403,6 +407,11 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myPathTextField.setFocusTraversalKeysEnabled(false);
 
     myCurrentPopup.showInScreenCoordinates(getField(), getLocationForCaret(myPathTextField));
+  }
+
+  @NotNull
+  protected String getPathVariablesSeparatorText() {
+    return IdeBundle.message("file.chooser.completion.path.variables.text");
   }
 
   private void showNoSuggestions(boolean isExplicit) {
@@ -583,9 +592,14 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     MinusculeMatcher matcher = createMatcher(typedText);
 
-    for (String eachMacro : myMacroMap.keySet()) {
+    Map<String, String> macroMap;
+    synchronized (myLock) {
+      macroMap = myMacroMap;
+    }
+
+    for (String eachMacro : macroMap.keySet()) {
       if (matcher.matches(eachMacro)) {
-        final String eachPath = myMacroMap.get(eachMacro);
+        final String eachPath = macroMap.get(eachMacro);
         if (eachPath != null) {
           final LookupFile macroFile = myFinder.find(eachPath);
           if (macroFile != null && macroFile.exists()) {

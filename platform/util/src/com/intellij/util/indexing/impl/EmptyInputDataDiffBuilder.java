@@ -21,12 +21,18 @@ import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
-@ApiStatus.Experimental
-public class EmptyInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key,Value> {
+public class EmptyInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key,Value> {
   public EmptyInputDataDiffBuilder(int inputId) {
     super(inputId);
+  }
+
+  @Override
+  public @NotNull Collection<Key> getKeys() {
+    return Collections.emptySet();
   }
 
   @Override

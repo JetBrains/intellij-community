@@ -24,6 +24,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,6 +37,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
@@ -58,12 +60,13 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.security.TokenReader;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
@@ -97,6 +100,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
 
   private static final String FORCE_MAVEN2_OPTION = "-Didea.force.maven2";
 
+
   private final RemoteProcessSupport<Object, MavenServer, Object> mySupport;
 
   private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
@@ -105,6 +109,8 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
   private State myState = new State();
+
+  private File eventListenerJar;
 
   public void showMavenNotifications(MavenSyncConsole console) {
     String mavenVersion = getCurrentMavenVersion();
@@ -117,54 +123,6 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     }
   }
 
-  private static class BundledMavenPathHolder {
-    private static final File myBundledMaven2Home;
-    private static final File myBundledMaven3Home;
-    private static final File eventListenerJar;
-
-    static {
-      final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-      final String root = pluginFileOrDir.getParent();
-      if (pluginFileOrDir.isDirectory()) {
-        File parentFile = getMavenPluginParentFile();
-        myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
-        myBundledMaven3Home = new File(parentFile, "maven36-server-impl/lib/maven3");
-        eventListenerJar = getEventSpyPathForLocalBuild();
-      }
-      else {
-        myBundledMaven2Home = new File(root, "maven2");
-        myBundledMaven3Home = new File(root, "maven3");
-        eventListenerJar = new File(root, "maven-event-listener.jar");
-      }
-
-      if (!myBundledMaven3Home.exists()) {
-        if (ApplicationManager.getApplication().isInternal()) {
-          MavenLog.LOG.error("Cannot find bundled maven " + myBundledMaven3Home + " please run setupBundledMaven.gradle script");
-        }
-        else {
-          MavenLog.LOG.error("Cannot find bundled maven " + myBundledMaven3Home);
-        }
-      }
-
-      if (!eventListenerJar.exists()) {
-        if (ApplicationManager.getApplication().isInternal()) {
-          MavenLog.LOG.error("Event listener does not exist: Please run rebuild for maven modules:\n" +
-                             "community/plugins/maven/maven-event-listener\n" +
-                             "and all maven*-server* modules"
-          );
-        }
-        else {
-          MavenLog.LOG.error("Event listener does not exist " + eventListenerJar);
-        }
-      }
-    }
-
-    private static File getEventSpyPathForLocalBuild() {
-      final File root = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-      return new File(root.getParent(), "intellij.maven.server.eventListener");
-    }
-  }
-
   static class State {
     @Deprecated
     @Attribute(value = "version", converter = UseMavenConverter.class)
@@ -173,8 +131,9 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     public String vmOptions = DEFAULT_VM_OPTIONS;
     @Attribute
     public String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
-    @Attribute
-    public String mavenHome = BUNDLED_MAVEN_3;
+    @Attribute(converter = MavenDistributionConverter.class)
+    @Nullable
+    public MavenDistribution mavenHome;
     @Attribute
     public MavenExecutionOptions.LoggingLevel loggingLevel = MavenExecutionOptions.LoggingLevel.INFO;
   }
@@ -186,64 +145,13 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   public MavenServerManager() {
     super(null);
 
-    mySupport = new RemoteProcessSupport<Object, MavenServer, Object>(MavenServer.class) {
-      @Override
-      protected void fireModificationCountChanged() {
-      }
-
-      @Override
-      protected String getName(@NotNull Object file) {
-        return MavenServerManager.class.getSimpleName();
-      }
-
-      @Override
-      protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
-        return new MavenServerCMDState();
-      }
-
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      @Override
-      protected void sendDataAfterStart(ProcessHandler handler) {
-        if(handler.getProcessInput() == null) {
-          return;
-        }
-        OutputStreamWriter writer = new OutputStreamWriter(handler.getProcessInput(), StandardCharsets.UTF_8);
-        try {
-          writer.write(TokenReader.PREFIX + ourToken);
-          writer.write(System.lineSeparator());
-          writer.flush();
-        }
-        catch (IOException e) {
-          MavenLog.LOG.warn("Cannot send token to maven server", e);
-        }
-      }
-
-      @Override
-      protected void onProcessTerminated(ProcessEvent event) {
-        if (event.getExitCode() == 0) {
-          return;
-        }
-        Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-        for (Project p : openProjects) {
-          ReadAction.run(() -> {
-            if (p.isDisposed()) {
-              return;
-            }
-            MavenProjectsManager manager = MavenProjectsManager.getInstance(p);
-            if (!manager.isMavenizedProject()) {
-              return;
-            }
-            manager.terminateImport(event.getExitCode());
-          });
-        }
-      }
-    };
+    mySupport = new MavenServerRemoteProcessSupport(this);
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        ProgressManager.getInstance().run(new Task.Modal(null, "Maven Server Shutdown", false) {
+        ProgressManager.getInstance().run(new Task.Modal(null, RunnerBundle.message("maven.server.shutdown"), false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             shutdown(true);
@@ -310,7 +218,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   @NotNull
   private Sdk getJdk() {
     if (myState.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
       if (!StringUtil.isEmptyOrSpaces(javaHome)) {
         return JavaSdk.getInstance().createJdk("", javaHome);
       }
@@ -331,15 +239,45 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") >= 0
         && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
       new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                       "Maven 3.3.1+ requires JDK 1.7+. Please set appropriate JDK at <br>" +
-                       sdkConfigLocation,
+                       RunnerBundle.message("maven.3.3.1.bad.jdk", sdkConfigLocation),
                        NotificationType.WARNING).notify(null);
     }
   }
 
 
   public static File getMavenEventListener() {
-    return BundledMavenPathHolder.eventListenerJar;
+    return getInstance().getEventListenerJar();
+  }
+
+  private File getEventListenerJar() {
+    if (eventListenerJar != null) {
+      return eventListenerJar;
+    }
+    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    final String root = pluginFileOrDir.getParent();
+    if (pluginFileOrDir.isDirectory()) {
+      eventListenerJar = getEventSpyPathForLocalBuild();
+    }
+    else {
+      eventListenerJar = new File(root, "maven-event-listener.jar");
+    }
+    if (!eventListenerJar.exists()) {
+      if (ApplicationManager.getApplication().isInternal()) {
+        MavenLog.LOG.warn("Event listener does not exist: Please run rebuild for maven modules:\n" +
+                           "community/plugins/maven/maven-event-listener\n" +
+                           "and all maven*-server* modules"
+        );
+      }
+      else {
+        MavenLog.LOG.warn("Event listener does not exist " + eventListenerJar);
+      }
+    }
+    return eventListenerJar;
+  }
+
+  private static File getEventSpyPathForLocalBuild() {
+    final File root = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    return new File(root.getParent(), "intellij.maven.server.eventListener");
   }
 
   public static File getMavenLibDirectory() {
@@ -359,7 +297,14 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
 
   @Nullable
   public String getCurrentMavenVersion() {
-    return getMavenVersion(myState.mavenHome);
+    if (myState.mavenHome == null) {
+      return null;
+    }
+    return getMavenVersion(myState.mavenHome.getMavenHome());
+  }
+
+  public MavenDistribution getCurrentMavenDistribution() {
+    return myState.mavenHome;
   }
 
   /*
@@ -386,6 +331,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   private static void prepareClassPathForProduction(@NotNull String mavenVersion,
                                                     List<File> classpath,
                                                     String root) {
+    classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "maven-server-api.jar"));
 
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
@@ -409,6 +355,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
+    classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
     File parentFile = getMavenPluginParentFile();
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
@@ -546,11 +493,11 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   @TestOnly
   @Deprecated
   public void setUseMaven2() {
-    String newMavenHome = BUNDLED_MAVEN_2;
-    if (!StringUtil.equals(myState.mavenHome, newMavenHome)) {
-      myState.mavenHome = newMavenHome;
-      shutdown(false);
+    if(isUseMaven2()){
+      return;
     }
+    myState.mavenHome = resolveEmbeddedMaven2HomeForTests();
+    shutdown(false);
   }
 
   @Nullable
@@ -558,10 +505,10 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     if (mavenHome == null) return null;
     //will be removed after IDEA-205421
     if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
-      return BundledMavenPathHolder.myBundledMaven2Home;
+      return resolveEmbeddedMaven2HomeForTests().getMavenHome();
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
-      return BundledMavenPathHolder.myBundledMaven3Home;
+      return resolveEmbeddedMavenHome().getMavenHome();
     }
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;
@@ -569,14 +516,16 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
 
   @Nullable
   public File getCurrentMavenHomeFile() {
-    return getMavenHomeFile(myState.mavenHome);
+    return myState.mavenHome == null ? null : myState.mavenHome.getMavenHome();
   }
 
   public void setMavenHome(@NotNull String mavenHome) {
-    if (!StringUtil.equals(myState.mavenHome, mavenHome)) {
-      myState.mavenHome = mavenHome;
-      shutdown(false);
+    File newHome = getMavenHomeFile(mavenHome);
+    if (newHome == null || FileUtil.filesEqual(newHome, getCurrentMavenHomeFile())) {
+      return;
     }
+    myState.mavenHome = new MavenDistribution(newHome, mavenHome);
+    shutdown(false);
   }
 
   @NotNull
@@ -630,7 +579,39 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     if (state.embedderJdk == null) {
       state.embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
     }
+    if (state.mavenHome == null) {
+      state.mavenHome = resolveEmbeddedMavenHome();
+    }
     myState = state;
+  }
+
+  @NotNull
+  private static MavenDistribution resolveEmbeddedMavenHome() {
+    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    final String root = pluginFileOrDir.getParent();
+    if (pluginFileOrDir.isDirectory()) {
+      File parentFile = getMavenPluginParentFile();
+      return new MavenDistribution(new File(parentFile, "maven36-server-impl/lib/maven3"), BUNDLED_MAVEN_3);
+    }
+    else {
+      return new MavenDistribution(new File(root, "maven3"), BUNDLED_MAVEN_3);
+    }
+  }
+
+  @NotNull
+  private static MavenDistribution resolveEmbeddedMaven2HomeForTests() {
+    if(!ApplicationManager.getApplication().isUnitTestMode()){
+      throw new IllegalStateException("Maven2 is for test purpose only");
+    }
+
+    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+    if (pluginFileOrDir.isDirectory()) {
+      File parentFile = getMavenPluginParentFile();
+      return new MavenDistribution(new File(parentFile, "maven2-server-impl/lib/maven2"), BUNDLED_MAVEN_2);
+    }
+    else {
+      throw new IllegalStateException("Maven2 is not bundled anymore, please do not try to use it in tests");
+    }
   }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
@@ -666,13 +647,19 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
       }
     }
   }
-  public class MavenServerCMDState extends CommandLineState {
-    public MavenServerCMDState() {super(null);}
+
+  public static class MavenServerCMDState extends CommandLineState {
+    private final MavenServerManager myServerManager;
+
+    public MavenServerCMDState(MavenServerManager serverManager) {
+      super(null);
+      myServerManager = serverManager;
+    }
 
     SimpleJavaParameters createJavaParameters() {
       final SimpleJavaParameters params = new SimpleJavaParameters();
 
-      final Sdk jdk = getJdk();
+      final Sdk jdk = myServerManager.getJdk();
       params.setJdk(jdk);
 
       params.setWorkingDirectory(PathManager.getBinPath());
@@ -698,38 +685,33 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
       params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
       boolean xmxSet = false;
-      boolean maven2Forced = false;
 
-      if (myState.vmOptions != null) {
+      if (myServerManager.myState.vmOptions != null) {
         ParametersList mavenOptsList = new ParametersList();
-        mavenOptsList.addParametersString(myState.vmOptions);
+        mavenOptsList.addParametersString(myServerManager.myState.vmOptions);
 
         for (String param : mavenOptsList.getParameters()) {
           if (param.startsWith("-Xmx")) {
             xmxSet = true;
           }
-          if (param.equals(FORCE_MAVEN2_OPTION)) {
-            MavenLog.LOG.warn("Forced maven 2 option");
-            maven2Forced = true;
-          }
-
           params.getVMParametersList().add(param);
         }
       }
 
       final File mavenHome;
       final String mavenVersion;
-      final File currentMavenHomeFile = maven2Forced ? BundledMavenPathHolder.myBundledMaven2Home : getCurrentMavenHomeFile();
+      final File currentMavenHomeFile = myServerManager.getCurrentMavenHomeFile();
 
       if (currentMavenHomeFile == null) {
-        MavenLog.LOG.warn("Not found maven at " + myState.mavenHome);
-        mavenHome = BundledMavenPathHolder.myBundledMaven3Home;
-        mavenVersion = getMavenVersion(mavenHome);
+        MavenLog.LOG.warn("Not found maven at " + myServerManager.myState.mavenHome);
+        MavenDistribution embedded = resolveEmbeddedMavenHome();
+        mavenHome = embedded.getMavenHome();
+        mavenVersion = embedded.getVersion();
         showInvalidMavenNotification(mavenVersion);
       }
       else {
         mavenHome = currentMavenHomeFile;
-        mavenVersion = getMavenVersion(mavenHome);
+        mavenVersion = myServerManager.getMavenVersion(mavenHome);
       }
       MavenLog.LOG.debug("", currentMavenHomeFile, "with version ", mavenVersion, " chosen as maven home");
       assert mavenVersion != null;
@@ -813,20 +795,22 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
       final Project project = openProjects.length == 1 ? openProjects[0] : null;
 
-      String message = messageToShow(myState.mavenHome, mavenVersion, project);
+      String message = invalidHomeMessageToShow(myServerManager.myState.mavenHome, mavenVersion, project);
 
       NotificationListener listener = project == null ? null : new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenProjectBundle.message("configurable.MavenSettings.display.name"));
         }
       };
 
       new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(null);
     }
 
-    private String messageToShow(String mavenHome, String mavenVersion, Project project) {
-      if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome)) {
+    private static String invalidHomeMessageToShow(@Nullable MavenDistribution mavenDistribution,
+                                                   String substitutedVersion,
+                                                   Project project) {
+      if (mavenDistribution != null && StringUtil.equals(BUNDLED_MAVEN_2, mavenDistribution.getName())) {
         if (project == null) {
           return RunnerBundle.message("bundled.maven.maven2.not.supported");
         }
@@ -835,12 +819,74 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
         }
       }
       else {
+        String wrongDir = mavenDistribution == null ? null : mavenDistribution.getMavenHome().getAbsolutePath();
         if (project == null) {
-          return RunnerBundle.message("external.maven.home.invalid.substitution.warning", myState.mavenHome, mavenVersion);
+          return RunnerBundle
+            .message("external.maven.home.invalid.substitution.warning", wrongDir, substitutedVersion);
         }
         else {
-          return RunnerBundle.message("external.maven.home.invalid.substitution.warning.with.fix", myState.mavenHome, mavenVersion);
+          return RunnerBundle.message("external.maven.home.invalid.substitution.warning.with.fix", wrongDir, substitutedVersion);
         }
+      }
+    }
+  }
+
+  private class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object> {
+    private final MavenServerManager myServerManager;
+
+    public MavenServerRemoteProcessSupport(MavenServerManager manager) {
+      super(MavenServer.class);
+      myServerManager = manager;
+    }
+
+    @Override
+    protected void fireModificationCountChanged() {
+    }
+
+    @Override
+    protected String getName(@NotNull Object file) {
+      return MavenServerManager.class.getSimpleName();
+    }
+
+    @Override
+    protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
+      return new MavenServerCMDState(myServerManager);
+    }
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    @Override
+    protected void sendDataAfterStart(ProcessHandler handler) {
+      if (handler.getProcessInput() == null) {
+        return;
+      }
+      OutputStreamWriter writer = new OutputStreamWriter(handler.getProcessInput(), StandardCharsets.UTF_8);
+      try {
+        writer.write(TokenReader.PREFIX + ourToken);
+        writer.write(System.lineSeparator());
+        writer.flush();
+      }
+      catch (IOException e) {
+        MavenLog.LOG.warn("Cannot send token to maven server", e);
+      }
+    }
+
+    @Override
+    protected void onProcessTerminated(ProcessEvent event) {
+      if (event.getExitCode() == 0) {
+        return;
+      }
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      for (Project p : openProjects) {
+        ReadAction.run(() -> {
+          if (p.isDisposed()) {
+            return;
+          }
+          MavenProjectsManager manager = MavenProjectsManager.getInstance(p);
+          if (!manager.isMavenizedProject()) {
+            return;
+          }
+          manager.terminateImport(event.getExitCode());
+        });
       }
     }
   }

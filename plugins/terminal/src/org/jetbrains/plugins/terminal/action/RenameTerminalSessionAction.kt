@@ -3,7 +3,10 @@ package org.jetbrains.plugins.terminal.action
 
 import com.intellij.ide.actions.ToolWindowTabRenameActionBase
 import com.intellij.openapi.project.DumbAware
+import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 
-class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(TerminalToolWindowFactory.TOOL_WINDOW_ID, "Enter new session name:"),
-                                    DumbAware
+class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
+  TerminalToolWindowFactory.TOOL_WINDOW_ID,
+  TerminalBundle.message("action.RenameSession.newSessionName.label")
+), DumbAware

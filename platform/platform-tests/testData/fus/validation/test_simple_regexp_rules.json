@@ -72,6 +72,22 @@
                 "regexp_ref": "[AB]_(.*)"
               }
             }
+          },
+          {
+            "id": "my.simple.regexp.with.number.of.elements",
+            "builds": [
+              {
+                "from": "191.4811"
+              }
+            ],
+            "rules": {
+              "event_id": [
+                "{regexp#regexp_ref}"
+              ],
+              "regexps": {
+                "regexp_ref": "[0-9]{10}[A-Z]{4}[0-9-]{6}"
+              }
+            }
           }
         ]
       }

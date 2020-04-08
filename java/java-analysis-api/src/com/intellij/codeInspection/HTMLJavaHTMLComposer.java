@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.lang.HTMLComposerExtension;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefMethod;
@@ -16,13 +17,13 @@ public abstract class HTMLJavaHTMLComposer implements HTMLComposerExtension<HTML
 
   public static String getClassOrInterface(RefClass refClass, boolean capitalizeFirstLetter) {
     if (refClass.isInterface()) {
-      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.interface") : InspectionsBundle.message("inspection.export.results.interface");
+      return capitalizeFirstLetter ? AnalysisBundle.message("inspection.export.results.capitalized.interface") : AnalysisBundle.message("inspection.export.results.interface");
     }
     else if (refClass.isAbstract()) {
-      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.abstract.class") : InspectionsBundle.message("inspection.export.results.abstract.class");
+      return capitalizeFirstLetter ? AnalysisBundle.message("inspection.export.results.capitalized.abstract.class") : AnalysisBundle.message("inspection.export.results.abstract.class");
     }
     else {
-      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.class") : InspectionsBundle.message("inspection.export.results.class");
+      return capitalizeFirstLetter ? AnalysisBundle.message("inspection.export.results.capitalized.class") : AnalysisBundle.message("inspection.export.results.class");
     }
   }
 

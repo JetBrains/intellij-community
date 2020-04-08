@@ -45,12 +45,12 @@ import org.jetbrains.annotations.NotNull;
     return new IntDeltaCompressor(compressedDeltas, startedDeltaIndex, deltaList.size());
   }
 
-  @NotNull private final byte[] myCompressedDeltas;
+  private final byte @NotNull [] myCompressedDeltas;
   @NotNull private final Flags myStartedDeltaIndex;
 
   @NotNull private final IntToIntMap myStartIndexMap;
 
-  private IntDeltaCompressor(@NotNull byte[] compressedDeltas, @NotNull final Flags startedDeltaIndex, int countDeltas) {
+  private IntDeltaCompressor(byte @NotNull [] compressedDeltas, @NotNull final Flags startedDeltaIndex, int countDeltas) {
     myCompressedDeltas = compressedDeltas;
     myStartedDeltaIndex = startedDeltaIndex;
     myStartIndexMap = PermanentListIntToIntMap.newInstance(startedDeltaIndex, countDeltas);

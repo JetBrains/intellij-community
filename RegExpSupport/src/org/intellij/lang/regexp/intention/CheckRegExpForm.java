@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -84,6 +85,7 @@ public class CheckRegExpForm {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         editor.putUserData(CHECK_REG_EXP_EDITOR, Boolean.TRUE);
+        editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
@@ -98,6 +100,7 @@ public class CheckRegExpForm {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
+        editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
@@ -156,9 +159,9 @@ public class CheckRegExpForm {
         updater.cancelAllRequests();
         if (!updater.isDisposed()) {
           updater.addRequest(() -> {
-            final RegExpMatchResult result = isMatchingText(myRegexpFile, mySampleText.getText());
+            final RegExpMatchResult result = isMatchingText(myRegexpFile, myRegExp.getText(), mySampleText.getText());
             ApplicationManager.getApplication().invokeLater(() -> setBalloonState(result), ModalityState.any(), __ -> updater.isDisposed());
-          }, 200);
+          }, 0);
         }
       }
 
@@ -176,19 +179,19 @@ public class CheckRegExpForm {
     mySampleText.setBackground(result == RegExpMatchResult.MATCHES ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
     switch (result) {
       case MATCHES:
-        myMessage.setText("Matches!");
+        myMessage.setText(RegExpBundle.message("intention.balloon.matches"));
         break;
       case NO_MATCH:
-        myMessage.setText("No match");
+        myMessage.setText(RegExpBundle.message("intention.balloon.no.match"));
         break;
       case TIMEOUT:
-        myMessage.setText("Pattern is too complex");
+        myMessage.setText(RegExpBundle.message("intention.balloon.pattern.is.too.complex"));
         break;
       case BAD_REGEXP:
-        myMessage.setText("Bad pattern");
+        myMessage.setText(RegExpBundle.message("intention.balloon.bad.pattern"));
         break;
       case INCOMPLETE:
-        myMessage.setText("More input expected");
+        myMessage.setText(RegExpBundle.message("intention.balloon.more.input.expected"));
         break;
       default:
         throw new AssertionError();
@@ -210,18 +213,17 @@ public class CheckRegExpForm {
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    return isMatchingText(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
+    return isMatchingText(regexpFile, regexpFile.getText(), sampleText) == RegExpMatchResult.MATCHES;
   }
-  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
-    final String regExp = regexpFile.getText();
 
+  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, String regexpText, @NotNull String sampleText) {
     final Language regexpFileLanguage = regexpFile.getLanguage();
     final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regexpFileLanguage);
     if (matcherProvider != null) {
       final RegExpMatchResult result = ReadAction.compute(() -> {
         final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
         if (host != null) {
-          return matcherProvider.matches(regExp, regexpFile, host, sampleText, 1000L);
+          return matcherProvider.matches(regexpText, regexpFile, host, sampleText, 1000L);
         }
         return null;
       });
@@ -244,7 +246,7 @@ public class CheckRegExpForm {
 
     try {
       //noinspection MagicConstant
-      final Matcher matcher = Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
+      final Matcher matcher = Pattern.compile(regexpText, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
       if (matcher.matches()) {
         return RegExpMatchResult.MATCHES;
       }

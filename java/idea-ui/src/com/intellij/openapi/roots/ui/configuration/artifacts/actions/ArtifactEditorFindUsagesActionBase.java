@@ -23,9 +23,6 @@ import com.intellij.ui.treeStructure.Tree;
 
 import java.awt.*;
 
-/**
- * @author nik
- */
 public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInProjectStructureActionBase {
   private final Tree myTree;
   protected final ArtifactsStructureConfigurableContext myArtifactContext;

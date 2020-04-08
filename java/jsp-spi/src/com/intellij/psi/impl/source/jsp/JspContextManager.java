@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
-/**
- * @author nik
- */
 public abstract class JspContextManager {
 
   public static JspContextManager getInstance(Project project) {

@@ -28,7 +28,7 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.testFramework.ServiceContainerUtil;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
-  private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
+  static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
 
   @Override
   protected String getTestDataPath() {

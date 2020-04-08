@@ -35,8 +35,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -150,7 +148,8 @@ public abstract class InplaceRefactoring {
     if (editor == null || oldDocument != editor.getDocument()) {
       final int exitCode = Messages.showYesNoDialog(project, message,
                                                     RefactoringBundle.getCannotRefactorMessage(null),
-                                                    "Continue Started", "Abandon Started", Messages.getErrorIcon());
+                                                    RefactoringBundle.message("inplace.refactoring.continue.started"),
+                                                    RefactoringBundle.message("inplace.refactoring.abandon.started"), Messages.getErrorIcon());
       navigateToStarted(oldDocument, project, exitCode, startMarkAction.getCommandName());
     }
     else {
@@ -237,8 +236,7 @@ public abstract class InplaceRefactoring {
     return null;
   }
 
-  @NotNull
-  private PsiElement[] getElements(LocalSearchScope searchScope) {
+  private PsiElement @NotNull [] getElements(LocalSearchScope searchScope) {
     final PsiElement[] elements = searchScope.getScope();
     FileViewProvider provider = myElementToRename.getContainingFile().getViewProvider();
     for (PsiElement element : elements) {
@@ -327,7 +325,9 @@ public abstract class InplaceRefactoring {
       final Document oldDocument = e.getDocument();
       if (oldDocument != myEditor.getDocument()) {
         final int exitCode = Messages.showYesNoCancelDialog(myProject, e.getMessage(), getCommandName(),
-                                                            "Navigate to Started", "Abandon Started", "Cancel Current", Messages.getErrorIcon());
+                                                            RefactoringBundle.message("inplace.refactoring.navigate.to.started"),
+                                                            RefactoringBundle.message("inplace.refactoring.abandon.started"),
+                                                            RefactoringBundle.message("inplace.refactoring.cancel.current"), Messages.getErrorIcon());
         if (exitCode == Messages.CANCEL) {
           finish(true);
         }
@@ -615,10 +615,9 @@ public abstract class InplaceRefactoring {
   }
 
   protected void showDialogAdvertisement(final String actionId) {
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    final Shortcut[] shortcuts = keymap.getShortcuts(actionId);
-    if (shortcuts.length > 0) {
-      setAdvertisementText("Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to show dialog with more options");
+    final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(actionId);
+    if (shortcut != null) {
+      setAdvertisementText("Press " + KeymapUtil.getShortcutText(shortcut) + " to show dialog with more options");
     }
   }
 
@@ -778,7 +777,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  private PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
+  protected PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
                                                 final Collection<? extends PsiReference> refs,
                                                 Collection<? extends Pair<PsiElement, TextRange>> stringUsages,
                                                 final int offset) {
@@ -863,6 +862,7 @@ public abstract class InplaceRefactoring {
     if (borderColor != null) {
       balloonBuilder.setBorderColor(borderColor);
     }
+    adjustBalloon(balloonBuilder);
 
     myBalloon = balloonBuilder.createBalloon();
     Disposer.register(myProject, myBalloon);
@@ -875,6 +875,10 @@ public abstract class InplaceRefactoring {
     });
     EditorUtil.disposeWithEditor(myEditor, myBalloon);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    showBalloonInEditor();
+  }
+
+  protected void showBalloonInEditor() {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
@@ -896,6 +900,9 @@ public abstract class InplaceRefactoring {
         return myTarget;
       }
     }, Balloon.Position.above);
+  }
+
+  protected void adjustBalloon(BalloonBuilder builder) {
   }
 
   protected void releaseIfNotRestart() {

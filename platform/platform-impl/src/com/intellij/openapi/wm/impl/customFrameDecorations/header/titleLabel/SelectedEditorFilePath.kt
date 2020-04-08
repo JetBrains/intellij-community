@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -20,7 +23,9 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.TitleInfoProvider
+import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
@@ -34,25 +39,35 @@ import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import javax.swing.event.AncestorEvent
 import kotlin.math.min
 
-open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
+open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null) {
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClippingTitle()
-  private val productTitle = DefaultPartTitle(" - ")
-  private val productVersion = DefaultPartTitle(" ")
-  private val superUserSuffix = DefaultPartTitle(" ")
 
-  protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
+  private var simplePaths: List<TitlePart>? = null
+  private var basePaths: List<TitlePart> = listOf(projectTitle, classTitle)
+  protected var components = basePaths
 
   private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
   private val UPDATER_TIMEOUT = 70
 
   private val registryListener = object : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
-      updateTitlePaths()
-      update()
+      updatePaths()
     }
+  }
+
+  private fun updateProjectPath() {
+    updateTitlePaths()
+    updateProjectName()
+  }
+
+  private fun updatePaths() {
+    updateTitlePaths()
+    update()
   }
 
   protected val label = object : JLabel() {
@@ -102,10 +117,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = Registry.get("ide.borderless.title.project.path").asBoolean() || multipleSameNamed
+    projectTitle.active = instance.fullPathsInWindowHeader || multipleSameNamed
     classTitle.active = Registry.get("ide.borderless.title.classpath").asBoolean() || classPathNeeded
-    productTitle.active = Registry.get("ide.borderless.title.product").asBoolean()
-    productVersion.active = Registry.get("ide.borderless.title.version").asBoolean()
   }
 
   open fun getView(): JComponent {
@@ -115,7 +128,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   private var disposable: Disposable? = null
   var project: Project? = null
     set(value) {
-      if(field == value) return
+      if (field == value) return
       field = value
 
       installListeners()
@@ -123,23 +136,22 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   var multipleSameNamed = false
     set(value) {
-      if(field == value) return
+      if (field == value) return
       field = value
 
-      updateTitlePaths()
-      update()
+      updateProjectPath()
     }
 
 
   var classPathNeeded = false
     set(value) {
-      if(field == value) return
+      if (field == value) return
       field = value
 
-      updateTitlePaths()
-      update()
+      updatePaths()
     }
 
+  private var simpleExtensions: List<TitleInfoProvider>? = null
 
   protected open fun installListeners() {
     project ?: return
@@ -148,35 +160,55 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       unInstallListeners()
     }
 
-    project?.let {
-      val disp = Disposer.newDisposable()
+    project?.let { it ->
+      val disp = Disposable {
+        disposable = null
+        HelpTooltip.dispose(label)
+      }
+
       Disposer.register(it, disp)
       disposable = disp
 
-      Registry.get("ide.borderless.title.project.path").addListener(registryListener, disp)
+      it.messageBus.connect(disp).subscribe(UISettingsListener.TOPIC,
+                                            UISettingsListener {
+                                              updateProjectPath()
+                                            })
       Registry.get("ide.borderless.title.classpath").addListener(registryListener, disp)
-      Registry.get("ide.borderless.title.product").addListener(registryListener, disp)
-      Registry.get("ide.borderless.title.version").addListener(registryListener, disp)
 
+      simpleExtensions = getProviders(it)
+      simplePaths = simpleExtensions?.map { ex ->
+        val partTitle = DefaultPartTitle(ex.borderlessPrefix, ex.borderlessSuffix)
+        ex.addUpdateListener(disp) {
+          partTitle.active = it.isActive
+          partTitle.longText = it.value
+
+          update()
+        }
+        partTitle
+      }
+
+      val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
+      simplePaths?.let { sp -> shrinkingPaths.addAll(sp) }
+      components = shrinkingPaths
       updateTitlePaths()
 
       it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
         override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-          updatePath()
+          updatePathLater()
         }
 
         override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          updatePath()
+          updatePathLater()
         }
 
         override fun selectionChanged(event: FileEditorManagerEvent) {
-          updatePath()
+          updatePathLater()
         }
       })
 
       it.messageBus.connect(disp).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-        override fun after(events: MutableList<out VFileEvent>) {
-            updatePath()
+        override fun after(events: List<VFileEvent>) {
+          updatePathLater()
         }
       })
     }
@@ -185,6 +217,15 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     updatePath()
 
     getView().addComponentListener(resizedListener)
+    label.addAncestorListener(ancestorListener)
+  }
+
+  protected fun updatePathLater() {
+    SwingUtilities.invokeLater {
+      disposable?.let {
+        updatePath()
+      }
+    }
   }
 
   protected open fun unInstallListeners() {
@@ -197,6 +238,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     pane.invalidate()
 
     getView().removeComponentListener(resizedListener)
+    label.removeAncestorListener(ancestorListener)
   }
 
   private val resizedListener = object : ComponentAdapter() {
@@ -205,6 +247,12 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       updater.addRequest({
                            update()
                          }, UPDATER_TIMEOUT)
+    }
+  }
+
+  private val ancestorListener = object : AncestorListenerAdapter() {
+    override fun ancestorMoved(event: AncestorEvent?) {
+      HelpTooltip.hide(label)
     }
   }
 
@@ -229,12 +277,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   protected fun updateProjectName() {
-    productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName
-    productVersion.longText = ApplicationInfo.getInstance().fullVersion ?: ""
-
-    superUserSuffix.longText = ProjectFrameHelper.getSuperUserSuffix() ?: ""
-
-
     project?.let {
       val short = it.name
       val long = FrameTitleBuilder.getInstance().getProjectTitle(it) ?: short
@@ -247,6 +289,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   protected var isClipped = false
   var titleString = ""
 
+  data class Pattern(val preferredWidth: Int, val createTitle: () -> String)
+
   private fun update() {
     updater.cancelAllRequests()
 
@@ -255,100 +299,69 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     val fm = label.getFontMetrics(label.font)
 
-    components.forEach{it.refresh(label, fm)}
+    components.forEach { it.refresh(label, fm) }
 
     isClipped = true
 
-    titleString = when {
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + superUserSuffix.longWidth + productVersion.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.showLong")
+    val shrinkedSimplePaths = simplePaths?.let { shrinkSimplePaths(it, width - (projectTitle.longWidth + classTitle.longWidth)) }
 
-        isClipped = components.any{!it.active}
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getLong()+
-        superUserSuffix.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.longWidth + superUserSuffix.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.SHOW_SHORT")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getLong()+
-        superUserSuffix.getShort()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productVersion.longWidth + productTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productVersion.shortWidth + productTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.SHOW_SHORT")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getShort()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.SHOW_SHORT")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getShort()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.SHRINK: ${width - projectTitle.longWidth}, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.shrink(label, fm,width - projectTitle.longWidth)
-      }
-
-      width > projectTitle.shortWidth + classTitle.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.SHOW_SHORT, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.shrink(label, fm,width - classTitle.shortWidth)+
+    val pathPatterns = listOf(
+      Pattern(projectTitle.longWidth + classTitle.shortWidth) {
+        projectTitle.getLong() +
+        classTitle.shrink(label, fm, width - projectTitle.longWidth)
+      },
+      Pattern(projectTitle.shortWidth + classTitle.shortWidth) {
+        projectTitle.shrink(label, fm, width - classTitle.shortWidth) +
         classTitle.getShort()
-      }
-
-      else -> {
-        //LOGGER.info("projectTitle.SHOW_SHORT, classTitle.HIDE, productTitle.HIDE, productVersion.HIDE")
+      },
+      Pattern(0) {
         projectTitle.getShort()
-      }
-    }
+      })
+
+    titleString = shrinkedSimplePaths?.let {
+      projectTitle.getLong() +
+      classTitle.getLong() + it
+    } ?: pathPatterns.firstOrNull { it.preferredWidth < width }?.let { it.createTitle() } ?: ""
 
     label.text = titleString
-    label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
+    HelpTooltip.dispose(label)
+
+    if (isClipped) {
+      HelpTooltip().setTitle(components.joinToString(separator = "", transform = { it.toolTipPart })).installOn(label)
+    }
 
     label.revalidate()
     label.repaint()
 
     onBoundsChanged?.invoke()
   }
+
+  private fun shrinkSimplePaths(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
+    isClipped = simplePaths.sumBy { it.longWidth } > simpleWidth
+
+    for (i in simplePaths.size - 1 downTo 0) {
+      var beforeWidth = 0
+      var beforeString = ""
+
+      for (j in 0 until i) {
+        val titlePart = simplePaths[j]
+        beforeWidth += titlePart.longWidth
+        beforeString += titlePart.getLong()
+      }
+
+      val testWidth = simpleWidth - beforeWidth
+      val path = simplePaths[i]
+
+      if (testWidth < 0) continue
+
+      return when {
+        testWidth > path.longWidth -> beforeString + path.getLong()
+        testWidth > path.shortWidth -> beforeString + path.getShort()
+        else -> beforeString
+      }
+    }
+
+    return null
+  }
+
 }

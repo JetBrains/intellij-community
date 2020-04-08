@@ -5,6 +5,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.LocationUtil;
+import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -32,7 +33,7 @@ public abstract class AbstractAllInPackageConfigurationProducer extends JUnitCon
   protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
-    PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(context.getPsiLocation());
+    PsiPackage psiPackage = AbstractJavaTestConfigurationProducer.checkPackage(context.getPsiLocation());
     if (psiPackage == null) return false;
     sourceElement.set(psiPackage);
     if (!LocationUtil.isJarAttached(context.getLocation(), psiPackage, JUnitUtil.TEST_CASE_CLASS, JUnitUtil.TEST5_ANNOTATION,

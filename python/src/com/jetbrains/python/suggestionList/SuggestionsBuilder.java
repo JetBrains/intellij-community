@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.suggestionList;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -65,7 +51,7 @@ public class SuggestionsBuilder {
   /**
    * @param words words to add to current group
    */
-  public final SuggestionsBuilder add(@NotNull final String... words) {
+  public final SuggestionsBuilder add(final String @NotNull ... words) {
     return add(Arrays.asList(words));
   }
 
@@ -85,7 +71,7 @@ public class SuggestionsBuilder {
    */
   public SuggestionsBuilder add(@NotNull final String text, final boolean strong) {
     myCurrentGroup.add(new Suggestion(text, strong));
-    Collections.sort(myCurrentGroup, SUGGESTION_COMPARATOR);
+    myCurrentGroup.sort(SUGGESTION_COMPARATOR);
     return this;
   }
 

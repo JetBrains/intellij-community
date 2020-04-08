@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
-import com.intellij.BundleBase;
+import com.intellij.AbstractBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,18 +15,14 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * @author nik
- * @author Sergey.Malenkov
- */
-public class ConfigurableExtensionPointUtil {
-
+public final class ConfigurableExtensionPointUtil {
   private final static Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);
 
   private ConfigurableExtensionPointUtil() {
@@ -138,6 +134,7 @@ public class ConfigurableExtensionPointUtil {
    * @param project       a project used to create a project settings group or {@code null}
    * @return the root configurable group that represents a tree of settings
    */
+  @Nullable
   public static ConfigurableGroup getConfigurableGroup(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
     Map<String, Node<SortedConfigurableGroup>> tree = new THashMap<>();
@@ -231,7 +228,7 @@ public class ConfigurableExtensionPointUtil {
     if (node.myValue == null) {
       int weight = getInt(bundle, id + ".settings.weight");
       String help = getString(bundle, id + ".settings.help.topic");
-      String name = getString(bundle, id + ".settings.display.name");
+      String name = getName(bundle, id + ".settings.display.name");
       if (name != null && project != null) {
         if (!project.isDefault() && !name.contains("{")) {
           String named = getString(bundle, id + ".named.settings.display.name");
@@ -329,6 +326,7 @@ public class ConfigurableExtensionPointUtil {
       }
       return null;
     }
+
     List<Configurable> list = new ArrayList<>(node.myChildren.size());
     for (Iterator<Object> iterator = node.myChildren.iterator(); iterator.hasNext(); iterator.remove()) {
       Object child = iterator.next();
@@ -345,9 +343,11 @@ public class ConfigurableExtensionPointUtil {
         tree.remove(value.myValue.getId());
       }
     }
+
     if (node.myValue == null) {
       return list; // for group only
     }
+
     for (Configurable configurable : list) {
       node.myValue = node.myValue.addChild(configurable);
     }
@@ -393,15 +393,11 @@ public class ConfigurableExtensionPointUtil {
     if (configurable == null) {
       return false;
     }
-    OptionalConfigurable optional = ConfigurableWrapper.cast(OptionalConfigurable.class, configurable);
-    if (optional != null && !optional.needDisplay()) {
-      return false;
-    }
     return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
   }
 
   @Nullable
-  public static ResourceBundle getBundle(@NotNull String resource,
+  public static ResourceBundle getBundle(@NonNls @NotNull String resource,
                                          @Nullable Iterable<? extends Configurable> configurables,
                                          @Nullable ResourceBundle alternative) {
     ResourceBundle bundle = OptionsBundle.INSTANCE.getResourceBundle();
@@ -425,18 +421,27 @@ public class ConfigurableExtensionPointUtil {
     return null;
   }
 
-  private static String getString(ResourceBundle bundle, String resource) {
+  private static String getString(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {
-      // mimic CommonBundle.message(..) behavior
-      return BundleBase.replaceMnemonicAmpersand(bundle.getString(resource));
+      return bundle.getString(resource);
     }
     catch (MissingResourceException ignored) {
       return null;
     }
   }
 
-  private static int getInt(ResourceBundle bundle, String resource) {
+  private static String getName(ResourceBundle bundle, @NonNls String resource) {
+    if (bundle == null) return null;
+    try {
+      return AbstractBundle.message(bundle, resource);
+    }
+    catch (MissingResourceException ignored) {
+      return null;
+    }
+  }
+
+  private static int getInt(ResourceBundle bundle, @NonNls String resource) {
     try {
       String value = getString(bundle, resource);
       return value == null ? 0 : Integer.parseInt(value);

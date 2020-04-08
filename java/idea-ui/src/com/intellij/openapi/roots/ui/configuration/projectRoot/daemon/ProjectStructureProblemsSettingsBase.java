@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectStructureProblemsSettingsBase extends ProjectStructureProblemsSettings implements PersistentStateComponent<ProjectStructureProblemsSettingsBase> {
   @XCollection(propertyElementName = "ignored-problems", elementName = "problem", valueAttributeName = "id")
   public List<String> myIgnoredProblems = new SortedList<>(String.CASE_INSENSITIVE_ORDER);

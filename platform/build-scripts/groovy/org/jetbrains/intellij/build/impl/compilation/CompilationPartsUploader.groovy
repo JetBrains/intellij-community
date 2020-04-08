@@ -21,19 +21,9 @@ import org.jetbrains.intellij.build.BuildMessages
 
 @CompileStatic
 class CompilationPartsUploader implements Closeable {
-  private final String myServerUrl
   private final BuildMessages myMessages
-  private final CloseableHttpClient myHttpClient
-
-  static class UploadException extends Exception {
-    UploadException(String message) {
-      super(message)
-    }
-
-    UploadException(String message, Throwable cause) {
-      super(message, cause)
-    }
-  }
+  protected final String myServerUrl
+  protected final CloseableHttpClient myHttpClient
 
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)
@@ -107,6 +97,7 @@ class CompilationPartsUploader implements Closeable {
     String path = '/check-files'
 
     CloseableHttpResponse response = null
+    String responseString = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
       debug("POST " + url)
@@ -118,12 +109,13 @@ class CompilationPartsUploader implements Closeable {
 
       debug("POST code: ${response.getStatusLine().getStatusCode()}")
 
-      def responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+      responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
       def parsedResponse = new Gson().fromJson(responseString, CheckFilesResponse.class)
       return parsedResponse
     }
     catch (Exception e) {
-      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}")
+      def additionalMessage = responseString == null ? "" : "\nResponse: $responseString"
+      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}" + additionalMessage)
       return null
     }
     finally {

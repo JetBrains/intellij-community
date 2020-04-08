@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.stripe;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +19,6 @@ import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class Updater<Painter extends ErrorStripePainter> implements Disposable {
   private final Painter myPainter;
   private final JScrollBar myScrollBar;
@@ -48,7 +45,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
     myScrollBar.addMouseListener(myMouseAdapter);
     myScrollBar.addMouseMotionListener(myMouseAdapter);
     myQueue = new MergingUpdateQueue("ErrorStripeUpdater", 100, true, myScrollBar, this);
-    UIUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, (g, x, y, width, height, object) -> {
+    ComponentUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, (g, x, y, width, height, object) -> {
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
       myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUIScale.scale(4)));
       myPainter.setErrorStripeGap(Registry.intValue("error.stripe.gap", 0));
@@ -64,7 +61,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   public void dispose() {
     myScrollBar.removeMouseListener(myMouseAdapter);
     myScrollBar.removeMouseMotionListener(myMouseAdapter);
-    UIUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, null);
+    ComponentUtil.putClientProperty(myScrollBar, JBScrollBar.TRACK, null);
   }
 
   private int findErrorStripeIndex(Painter painter, int x, int y) {

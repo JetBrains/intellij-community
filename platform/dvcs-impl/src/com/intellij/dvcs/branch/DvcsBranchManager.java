@@ -23,7 +23,7 @@ public abstract class DvcsBranchManager {
     Topic.create("Branch settings changed", DvcsBranchManagerListener.class);
 
   protected DvcsBranchManager(@NotNull Project project, @NotNull DvcsBranchSettings settings,
-                              @NotNull BranchType[] branchTypes) {
+                              BranchType @NotNull [] branchTypes) {
     myProject = project;
     myBranchSettings = settings;
     for (BranchType type : branchTypes) {

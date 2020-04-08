@@ -18,9 +18,6 @@ package com.intellij.appengine.cloud;
 import com.intellij.remoteServer.configuration.ServerConfigurationBase;
 import com.intellij.util.xmlb.annotations.Attribute;
 
-/**
- * @author nik
- */
 public class AppEngineServerConfiguration extends ServerConfigurationBase<AppEngineServerConfiguration> {
   private String myEmail;
   private boolean myOAuth2;

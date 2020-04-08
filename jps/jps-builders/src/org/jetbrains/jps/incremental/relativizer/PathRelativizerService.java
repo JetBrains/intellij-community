@@ -8,11 +8,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,20 +30,20 @@ public class PathRelativizerService {
   private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
-  private List<PathRelativizer> myRelativizers;
-  private Set<String> myUnhandledPaths;
+  private final List<PathRelativizer> myRelativizers = new SmartList<>();
+  private final Set<String> myUnhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
 
-  public PathRelativizerService(@Nullable String projectPath, @Nullable String buildDirPath) {
-    initialize(projectPath, buildDirPath, null);
+  public PathRelativizerService(@Nullable String projectPath) {
+    initialize(projectPath, null, null);
   }
 
-  public PathRelativizerService(@NotNull JpsProject project, @NotNull File buildDir) {
+  public PathRelativizerService(@NotNull JpsProject project) {
     File projectBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(project);
     Set<JpsSdk<?>> javaSdks = project.getModules().stream().map(module -> module.getSdk(JpsJavaSdkType.INSTANCE))
       .filter(sdk -> sdk != null && sdk.getVersionString() != null && sdk.getHomePath() != null)
       .collect(Collectors.toSet());
 
-    initialize(projectBaseDirectory != null ? projectBaseDirectory.getAbsolutePath() : null, buildDir.getPath(), javaSdks);
+    initialize(projectBaseDirectory != null ? projectBaseDirectory.getAbsolutePath() : null, getBuildDirPath(project), javaSdks);
   }
 
   @TestOnly
@@ -50,12 +54,11 @@ public class PathRelativizerService {
   private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
-    myRelativizers = new SmartList<>(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER),
-                                     new JavaSdkPathRelativizer(javaSdks),
-                                     new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER),
-                                     new MavenPathRelativizer(),
-                                     new GradlePathRelativizer());
-    myUnhandledPaths = new LinkedHashSet<>();
+    myRelativizers.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER));
+    myRelativizers.add(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER));
+    myRelativizers.add(new JavaSdkPathRelativizer(javaSdks));
+    myRelativizers.add(new MavenPathRelativizer());
+    myRelativizers.add(new GradlePathRelativizer());
   }
 
   /**
@@ -94,15 +97,25 @@ public class PathRelativizerService {
   }
 
   public void reportUnhandledPaths() {
-    if (!LOG.isDebugEnabled()) return;
-    final StringBuilder logBuilder = new StringBuilder();
-    myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
-    LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
-    myUnhandledPaths = new LinkedHashSet<>();
+    if (LOG.isDebugEnabled()) {
+      final StringBuilder logBuilder = new StringBuilder();
+      myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
+      LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
+      myUnhandledPaths.clear();
+    }
   }
 
   @NotNull
   static String normalizePath(@NotNull String path) {
     return StringUtil.trimTrailing(toSystemIndependentName(path), '/');
+  }
+
+  @Nullable
+  private static String getBuildDirPath(@NotNull JpsProject project) {
+    JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
+    if (projectExtension == null) return null;
+    String url = projectExtension.getOutputUrl();
+    if (StringUtil.isEmpty(url)) return null;
+    return JpsPathUtil.urlToFile(url).getAbsolutePath();
   }
 }

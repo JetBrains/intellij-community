@@ -27,7 +27,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   private PsiType[] myTypeArguments;
   private final LanguageLevel myLanguageLevel;
 
-  MethodsProcessor(@NotNull PsiConflictResolver[] resolvers,
+  MethodsProcessor(PsiConflictResolver @NotNull [] resolvers,
                    @NotNull List<CandidateInfo> container,
                    @NotNull PsiElement place,
                    @NotNull PsiFile placeFile) {
@@ -69,7 +69,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
 
   @Override
   public void handleEvent(@NotNull Event event, Object associated) {
-    if (event == JavaScopeProcessorEvent.START_STATIC) {
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStaticScopeFlag = true;
     }
     else if (JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT.equals(event)) {

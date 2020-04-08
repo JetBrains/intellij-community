@@ -42,9 +42,8 @@ public interface OverrideImplementsAnnotationsHandler {
    * @deprecated Use {@link #getAnnotations(PsiFile)}
    */
   @Deprecated
-  @NotNull
   @Contract(pure = true)
-  default String[] annotationsToRemove(Project project, @NotNull String fqName) {
+  default String @NotNull [] annotationsToRemove(Project project, @NotNull String fqName) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -79,6 +78,6 @@ public interface OverrideImplementsAnnotationsHandler {
     assert modifierList != null : target;
     PsiAnnotation srcAnnotation = AnnotationUtil.findAnnotation(source, annotation);
     PsiNameValuePair[] valuePairs = srcAnnotation != null ? srcAnnotation.getParameterList().getAttributes() : PsiNameValuePair.EMPTY_ARRAY;
-    AddAnnotationPsiFix.addPhysicalAnnotation(annotation, valuePairs, modifierList);
+    AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, valuePairs, modifierList);
   }
 }

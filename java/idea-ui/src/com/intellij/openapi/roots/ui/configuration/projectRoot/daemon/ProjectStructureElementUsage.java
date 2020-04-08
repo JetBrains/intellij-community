@@ -4,9 +4,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class ProjectStructureElementUsage {
   public abstract ProjectStructureElement getSourceElement();
 

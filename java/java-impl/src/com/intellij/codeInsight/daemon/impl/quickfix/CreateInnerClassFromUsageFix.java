@@ -46,7 +46,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.inner.class.from.usage.text", myKind.getDescription(), varName);
+    return QuickFixBundle.message("create.inner.class.from.usage.text", myKind.getDescriptionAccusative(), varName);
   }
 
   @Override
@@ -76,8 +76,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
   }
 
-  @NotNull
-  private static PsiClass[] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
+  private static PsiClass @NotNull [] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
     List<PsiClass> result = new ArrayList<>();
     PsiElement run = element;
     PsiMember contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
@@ -124,9 +123,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
-    PsiClass created = myKind == CreateClassKind.INTERFACE
-                      ? elementFactory.createInterface(refName)
-                      : myKind == CreateClassKind.CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
+    PsiClass created = myKind.create(elementFactory, refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
     if (aClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(aClass)) {

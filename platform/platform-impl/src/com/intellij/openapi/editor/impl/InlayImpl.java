@@ -4,12 +4,15 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl> extends RangeMarkerWithGetterImpl implements Inlay<R> {
   static final Key<Integer> OFFSET_BEFORE_DISPOSAL = Key.create("inlay.offset.before.disposal");
@@ -28,7 +31,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     myEditor = editor;
     myRelatedToPrecedingText = relatesToPrecedingText;
     myRenderer = renderer;
-    doUpdateSize();
+    doUpdate();
     //noinspection unchecked
     getTree().addInterval((T)this, offset, offset, false, false, relatesToPrecedingText, 0);
   }
@@ -42,12 +45,23 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   }
 
   @Override
-  public void updateSize() {
+  public boolean isValid() {
+    return !myEditor.isDisposed() && super.isValid();
+  }
+
+  @Override
+  public void update() {
+    EditorImpl.assertIsDispatchThread();
     int oldWidth = getWidthInPixels();
     int oldHeight = getHeightInPixels();
-    doUpdateSize();
-    if (oldWidth != getWidthInPixels() || oldHeight != getHeightInPixels()) {
-      myEditor.getInlayModel().notifyChanged(this);
+    GutterIconRenderer oldIconRenderer = getGutterIconRenderer();
+    doUpdate();
+    int changeFlags = 0;
+    if (oldWidth != getWidthInPixels()) changeFlags |= InlayModel.ChangeFlags.WIDTH_CHANGED;
+    if (oldHeight != getHeightInPixels()) changeFlags |= InlayModel.ChangeFlags.HEIGHT_CHANGED;
+    if (!Objects.equals(oldIconRenderer, getGutterIconRenderer())) changeFlags |= InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED;
+    if (changeFlags != 0) {
+      myEditor.getInlayModel().notifyChanged(this, changeFlags);
     }
     else {
       repaint();
@@ -56,7 +70,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void repaint() {
-    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate()) {
+    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate() && !myEditor.getInlayModel().isInBatchMode()) {
       JComponent contentComponent = myEditor.getContentComponent();
       if (contentComponent.isShowing()) {
         Rectangle bounds = getBounds();
@@ -70,10 +84,11 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     }
   }
 
-  abstract void doUpdateSize();
+  abstract void doUpdate();
 
   @Override
   public void dispose() {
+    EditorImpl.assertIsDispatchThread();
     if (isValid()) {
       int offset = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
       putUserData(OFFSET_BEFORE_DISPOSAL, offset);
@@ -113,5 +128,11 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   @Override
   public int getWidthInPixels() {
     return myWidthInPixels;
+  }
+
+  @Nullable
+  @Override
+  public GutterIconRenderer getGutterIconRenderer() {
+    return null;
   }
 }

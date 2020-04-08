@@ -56,9 +56,8 @@ public class PublicFieldInspection extends BaseInspection {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiField field = (PsiField)infos[0];
     fixes.add(new EncapsulateVariableFix(field.getName()));

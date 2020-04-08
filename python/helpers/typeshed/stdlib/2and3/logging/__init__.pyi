@@ -57,7 +57,42 @@ class Logger(Filterer):
     def isEnabledFor(self, level: int) -> bool: ...
     def getEffectiveLevel(self) -> int: ...
     def getChild(self, suffix: str) -> Logger: ...
-    if sys.version_info >= (3,):
+    if sys.version_info >= (3, 8):
+        def debug(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                  stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                  **kwargs: Any) -> None: ...
+        def info(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                 stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                 **kwargs: Any) -> None: ...
+        def warning(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                    stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                    **kwargs: Any) -> None: ...
+        def warn(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                 stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                 **kwargs: Any) -> None: ...
+        def error(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                  stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                  **kwargs: Any) -> None: ...
+        def exception(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                      stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                      **kwargs: Any) -> None: ...
+        def critical(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                     stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                     **kwargs: Any) -> None: ...
+        def log(self, level: int, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                **kwargs: Any) -> None: ...
+        def _log(
+            self,
+            level: int,
+            msg: Any,
+            args: _ArgsType,
+            exc_info: Optional[_ExcInfoType] = ...,
+            extra: Optional[Dict[str, Any]] = ...,
+            stack_info: bool = ...,
+            stacklevel: int = ...,
+        ) -> None: ...  # undocumented
+    elif sys.version_info >= (3,):
         def debug(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
                   stack_info: bool = ..., extra: Optional[Dict[str, Any]] = ...,
                   **kwargs: Any) -> None: ...
@@ -83,6 +118,15 @@ class Logger(Filterer):
         def exception(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
                       stack_info: bool = ..., extra: Optional[Dict[str, Any]] = ...,
                       **kwargs: Any) -> None: ...
+        def _log(
+            self,
+            level: int,
+            msg: Any,
+            args: _ArgsType,
+            exc_info: Optional[_ExcInfoType] = ...,
+            extra: Optional[Dict[str, Any]] = ...,
+            stack_info: bool = ...,
+        ) -> None: ...  # undocumented
     else:
         def debug(self,
                   msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
@@ -107,12 +151,22 @@ class Logger(Filterer):
         def exception(self,
                       msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
                       extra: Optional[Dict[str, Any]] = ..., **kwargs: Any) -> None: ...
+        def _log(
+            self,
+            level: int,
+            msg: Any,
+            args: _ArgsType,
+            exc_info: Optional[_ExcInfoType] = ...,
+            extra: Optional[Dict[str, Any]] = ...,
+        ) -> None: ...  # undocumented
     def addFilter(self, filt: _FilterType) -> None: ...
     def removeFilter(self, filt: _FilterType) -> None: ...
     def filter(self, record: LogRecord) -> bool: ...
     def addHandler(self, hdlr: Handler) -> None: ...
     def removeHandler(self, hdlr: Handler) -> None: ...
-    if sys.version_info >= (3,):
+    if sys.version_info >= (3, 8):
+        def findCaller(self, stack_info: bool = ..., stacklevel: int = ...) -> Tuple[str, int, str, Optional[str]]: ...
+    elif sys.version_info >= (3,):
         def findCaller(self, stack_info: bool = ...) -> Tuple[str, int, str, Optional[str]]: ...
     else:
         def findCaller(self) -> Tuple[str, int, str]: ...
@@ -176,7 +230,11 @@ class Formatter:
         default_time_format: str
         default_msec_format: str
 
-    if sys.version_info >= (3,):
+    if sys.version_info >= (3, 8):
+        def __init__(self, fmt: Optional[str] = ...,
+                     datefmt: Optional[str] = ...,
+                     style: str = ..., validate: bool = ...) -> None: ...
+    elif sys.version_info >= (3,):
         def __init__(self, fmt: Optional[str] = ...,
                      datefmt: Optional[str] = ...,
                      style: str = ...) -> None: ...
@@ -242,7 +300,32 @@ class LoggerAdapter:
     extra: Mapping[str, Any]
     def __init__(self, logger: Logger, extra: Mapping[str, Any]) -> None: ...
     def process(self, msg: Any, kwargs: MutableMapping[str, Any]) -> Tuple[Any, MutableMapping[str, Any]]: ...
-    if sys.version_info >= (3,):
+    if sys.version_info >= (3, 8):
+        def debug(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                  stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                  **kwargs: Any) -> None: ...
+        def info(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                 stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                 **kwargs: Any) -> None: ...
+        def warning(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                    stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                    **kwargs: Any) -> None: ...
+        def warn(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                 stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                 **kwargs: Any) -> None: ...
+        def error(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                  stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                  **kwargs: Any) -> None: ...
+        def exception(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                      stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                      **kwargs: Any) -> None: ...
+        def critical(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                     stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                     **kwargs: Any) -> None: ...
+        def log(self, level: int, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                **kwargs: Any) -> None: ...
+    elif sys.version_info >= (3,):
         def debug(self, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
                   stack_info: bool = ..., extra: Optional[Dict[str, Any]] = ...,
                   **kwargs: Any) -> None: ...
@@ -294,7 +377,16 @@ class LoggerAdapter:
         def getEffectiveLevel(self) -> int: ...
         def setLevel(self, lvl: Union[int, str]) -> None: ...
         def hasHandlers(self) -> bool: ...
-
+    if sys.version_info >= (3, 6):
+        def _log(
+            self,
+            level: int,
+            msg: Any,
+            args: _ArgsType,
+            exc_info: Optional[_ExcInfoType] = ...,
+            extra: Optional[Dict[str, Any]] = ...,
+            stack_info: bool = ...,
+        ) -> None: ...  # undocumented
 
 if sys.version_info >= (3,):
     def getLogger(name: Optional[str] = ...) -> Logger: ...
@@ -307,7 +399,32 @@ def getLoggerClass() -> type: ...
 if sys.version_info >= (3,):
     def getLogRecordFactory() -> Callable[..., LogRecord]: ...
 
-if sys.version_info >= (3,):
+if sys.version_info >= (3, 8):
+    def debug(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+              stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+              **kwargs: Any) -> None: ...
+    def info(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+             stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+             **kwargs: Any) -> None: ...
+    def warning(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                **kwargs: Any) -> None: ...
+    def warn(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+             stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+             **kwargs: Any) -> None: ...
+    def error(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+              stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+              **kwargs: Any) -> None: ...
+    def critical(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                 stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                 **kwargs: Any) -> None: ...
+    def exception(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+                  stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+                  **kwargs: Any) -> None: ...
+    def log(level: int, msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
+            stack_info: bool = ..., stacklevel: int = ..., extra: Optional[Dict[str, Any]] = ...,
+            **kwargs: Any) -> None: ...
+elif sys.version_info >= (3,):
     def debug(msg: Any, *args: Any, exc_info: _ExcInfoType = ...,
               stack_info: bool = ..., extra: Optional[Dict[str, Any]] = ...,
               **kwargs: Any) -> None: ...
@@ -356,7 +473,12 @@ def getLevelName(lvl: Union[int, str]) -> Any: ...
 
 def makeLogRecord(attrdict: Mapping[str, Any]) -> LogRecord: ...
 
-if sys.version_info >= (3,):
+if sys.version_info >= (3, 8):
+    def basicConfig(*, filename: Optional[_Path] = ..., filemode: str = ...,
+                    format: str = ..., datefmt: Optional[str] = ..., style: str = ...,
+                    level: Optional[_Level] = ..., stream: Optional[IO[str]] = ...,
+                    handlers: Optional[Iterable[Handler]] = ..., force: bool = ...) -> None: ...
+elif sys.version_info >= (3,):
     def basicConfig(*, filename: Optional[_Path] = ..., filemode: str = ...,
                     format: str = ..., datefmt: Optional[str] = ..., style: str = ...,
                     level: Optional[_Level] = ..., stream: Optional[IO[str]] = ...,
@@ -398,6 +520,7 @@ class FileHandler(StreamHandler):
     delay: bool  # undocumented
     def __init__(self, filename: _Path, mode: str = ...,
                  encoding: Optional[str] = ..., delay: bool = ...) -> None: ...
+    def _open(self) -> IO[Any]: ...
 
 
 class NullHandler(Handler): ...

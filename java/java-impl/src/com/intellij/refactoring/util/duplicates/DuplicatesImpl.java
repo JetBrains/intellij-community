@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -128,8 +129,8 @@ public class DuplicatesImpl {
           final boolean allChosen = promptDialog.getExitCode() == FindManager.PromptResult.ALL;
           showAll.set(allChosen);
           if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
-            if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?",
-                                            "Change Method Signature", CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) !=
+            if (Messages.showOkCancelDialog(project, JavaRefactoringBundle.message("process.duplicates.change.signature.promt"),
+                                            JavaRefactoringBundle.message("change.method.signature.action.name"), CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) !=
                 Messages.OK) return true;
           }
           if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
@@ -144,8 +145,8 @@ public class DuplicatesImpl {
     // call change signature when needed
     provider.prepareSignature(match);
 
-    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.REFACTORING_NAME)
-                      .withGroupId(MethodDuplicatesHandler.REFACTORING_NAME).run(() -> {
+    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.getRefactoringName())
+                      .withGroupId(MethodDuplicatesHandler.getRefactoringName()).run(() -> {
       try {
         provider.processMatch(match);
       }
@@ -203,9 +204,11 @@ public class DuplicatesImpl {
         highlighters = previewMatch(project, duplicates.get(0), editor);
       }
       final int answer = ApplicationManager.getApplication().isUnitTestMode() || hasDuplicates == null ? Messages.YES : Messages.showYesNoDialog(project,
-        RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
+                                                                                                                                                 RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
         ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
-        "Process Duplicates", Messages.getQuestionIcon());
+                                                                                                                                                 JavaRefactoringBundle
+                                                                                                                                                   .message(
+                                                                                                                                                     "process.duplicates.title"), Messages.getQuestionIcon());
       if (answer == Messages.YES) {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         invoke(project, editor, provider, hasDuplicates != null);

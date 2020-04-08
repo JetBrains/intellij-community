@@ -34,7 +34,6 @@ class DfaVariableState {
   }
 
   DfaVariableState(@NotNull DfType dfType) {
-    assert dfType != DfTypes.BOTTOM;
     myDfType = dfType instanceof DfReferenceType ? ((DfReferenceType)dfType).dropSpecialField() : dfType;
     myHash = myDfType.hashCode();
   }

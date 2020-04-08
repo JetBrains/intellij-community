@@ -12,6 +12,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -51,10 +52,10 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
       String name = myModuleName != null ? myModuleName : "...";
       if (myRelativeLevel > 0) {
         String[] relative_names = getRelativeNames(false, this);
-        return PyBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
+        return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
       }
       else {
-        return PyBundle.message("INTN.convert.to.import.$0", name);
+        return PyPsiBundle.message("INTN.convert.to.import.$0", name);
       }
     }
 
@@ -88,8 +89,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   }
 
   // given module "...foo.bar". returns "...foo" and "bar"; if not strict, undefined names become "?".
-  @Nullable
-  private static String[] getRelativeNames(boolean strict, InfoHolder info) {
+  private static String @Nullable [] getRelativeNames(boolean strict, InfoHolder info) {
     String remaining_name = "?";
     String separated_name = "?";
     boolean failure = true;

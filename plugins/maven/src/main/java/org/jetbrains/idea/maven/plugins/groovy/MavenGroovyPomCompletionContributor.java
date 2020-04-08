@@ -199,8 +199,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.LatestVersionId));
   }
 
-  @NotNull
-  private static PsiReference[] getReferences(PsiElement psiElement) {
+  private static PsiReference @NotNull [] getReferences(PsiElement psiElement) {
     return psiElement instanceof XmlText ? psiElement.getParent().getReferences() : psiElement.getReferences();
   }
 

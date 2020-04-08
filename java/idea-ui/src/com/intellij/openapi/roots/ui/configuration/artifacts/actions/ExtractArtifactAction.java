@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
@@ -36,12 +36,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class ExtractArtifactAction extends LayoutTreeActionBase {
   public ExtractArtifactAction(ArtifactEditorEx editor) {
-    super(ProjectBundle.message("action.name.extract.artifact"), editor);
+    super(JavaUiBundle.messagePointer("action.name.extract.artifact"), editor);
   }
 
   @Override

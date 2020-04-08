@@ -22,26 +22,26 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- */
+/** Thread-safe implementation of persistent hash map (PHM). The implementation works in the following (generic) way:<ul>
+ <li> Particular key is translated via myEnumerator into an int. </li>
+ <li> As part of enumeration process for the new key, additional space is reserved in
+ myEnumerator.myStorage for offset in ".values" file (myValueStorage) where (serialized) value is stored. </li>
+ <li> Once new value is written the offset storage is updated. </li>
+ <li> When the key is removed from PHM, offset storage is set to zero. </li>
+ </ul>
+<p>
+ It is important to note that offset
+ is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
+ PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to ".values" file with the offset
+ of previously calculated chunk.
+ For performance reasons we try hard to minimize storage occupied by keys / offsets in ".values" file: this storage is allocated as (limited)
+ direct byte buffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
+ key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.
+ Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
+ directly in storage used for offset and in case of btree enumerator directly in btree leaf.
+ **/
 public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
-  // PersistentHashMap (PHM) works in the following (generic) way:
-  // - Particular key is translated via myEnumerator into an int.
-  // - As part of enumeration process for the new key, additional space is reserved in
-  // myEnumerator.myStorage for offset in ".values" file (myValueStorage) where (serialized) value is stored.
-  // - Once new value is written the offset storage is updated.
-  // - When the key is removed from PHM, offset storage is set to zero.
-  //
-  // It is important to note that offset
-  // is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
-  // PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to ".values" file with the offset
-  // of previously calculated chunk.
-  // For performance reasons we try hard to minimize storage occupied by keys / offsets in ".values" file: this storage is allocated as (limited)
-  // direct byte buffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
-  // key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.
-  // Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
-  // directly in storage used for offset and in case of btree enumerator directly in btree leaf.
+
   private static final Logger LOG = Logger.getInstance(PersistentHashMap.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
   private static final int DEAD_KEY_NUMBER_MASK = 0xFFFFFFFF;
@@ -68,8 +68,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private static final long USED_LONG_VALUE_MASK = 1L << 62;
   private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
-  @NotNull private final byte[] myRecordBuffer;
-  @NotNull private final byte[] mySmallRecordBuffer;
+  private final byte @NotNull [] myRecordBuffer;
+  private final byte @NotNull [] mySmallRecordBuffer;
   private final boolean myIntMapping;
   private final boolean myDirectlyStoreLongFileOffsetMode;
   private final boolean myCanReEnumerate;
@@ -162,7 +162,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if (myIsReadOnly) options = options.setReadOnly();
 
     myAppendCache = createAppendCache(keyDescriptor);
-    final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
+    final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
     myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonNegativeIntegralValues();
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
@@ -170,20 +170,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8];
     mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4];
 
-    myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase>() {
+    myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>>() {
       @Override
-      int recordWriteOffset(PersistentEnumeratorBase enumerator, byte[] buf) {
+      int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) {
         return recordHandler.recordWriteOffset(enumerator, buf);
       }
 
-      @NotNull
       @Override
-      byte[] getRecordBuffer(PersistentEnumeratorBase enumerator) {
+      byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase<?> enumerator) {
         return myIntAddressForNewRecord ? mySmallRecordBuffer : myRecordBuffer;
       }
 
       @Override
-      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, @NotNull byte[] buf) {
+      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte @NotNull [] buf) {
         recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
         for (int i = myParentValueRefOffset; i < buf.length; i++) {
           buf[i] = 0;
@@ -375,6 +374,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
     IOUtil.deleteAllFilesStartingWith(prefixFile);
+  }
+
+  /**
+   * Deletes {@param map} files and trying to close it before.
+   */
+  public static void deleteMap(@NotNull PersistentHashMap<?, ?> map) {
+    Path baseFile = map.getBaseFile();
+    try {
+      map.close();
+    }
+    catch (IOException ignored) {}
+    deleteFilesStartingWith(baseFile.toFile());
   }
 
   @NotNull

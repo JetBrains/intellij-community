@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +27,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
-  private static final Set<Class> ourReportedValueClasses = Collections.synchronizedSet(new THashSet<>());
+  private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new THashSet<>());
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
   @SuppressWarnings("SSBasedInspection") private static final ThreadLocal<List<String>> ourLog = new ThreadLocal<>();
   private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");
@@ -74,8 +75,17 @@ public class IdempotenceChecker {
                                           @NotNull Class<?> providerClass,
                                           @Nullable Computable<? extends T> recomputeValue) {
     String msg = checkValueEquivalence(existing, fresh);
-    if (msg != null &&
-        ourReportedValueClasses.add(providerClass)) {
+    if (msg != null) {
+      reportFailure(existing, fresh, providerClass, recomputeValue, msg);
+    }
+  }
+
+  private static <T> void reportFailure(@Nullable T existing,
+                                        @Nullable T fresh,
+                                        @NotNull Class<?> providerClass,
+                                        @Nullable Computable<? extends T> recomputeValue, String msg) {
+    boolean shouldReport = ApplicationManager.getApplication().isUnitTestMode() || ourReportedValueClasses.add(providerClass);
+    if (shouldReport) {
       if (recomputeValue != null) {
         msg += recomputeWithLogging(existing, fresh, recomputeValue);
       }
@@ -187,8 +197,7 @@ public class IdempotenceChecker {
     return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
   }
 
-  @Nullable
-  private static Object[] asArray(Object o) {
+  private static Object @Nullable [] asArray(Object o) {
     if (o instanceof Object[]) return (Object[])o;
     if (o instanceof Map.Entry) return new Object[]{((Map.Entry)o).getKey(), ((Map.Entry)o).getValue()};
     if (o instanceof Pair) return new Object[]{((Pair)o).first, ((Pair)o).second};
@@ -303,6 +312,14 @@ public class IdempotenceChecker {
    */
   public static boolean areRandomChecksEnabled() {
     return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest();
+  }
+
+  /**
+   * Useful when your test checks how many times a specific code was called, and random checks make that test flaky.
+   */
+  @TestOnly
+  public static void disableRandomChecksUntil(Disposable parentDisposable) {
+    ourRateCheckProperty.setValue(0, parentDisposable);
   }
 
   /**

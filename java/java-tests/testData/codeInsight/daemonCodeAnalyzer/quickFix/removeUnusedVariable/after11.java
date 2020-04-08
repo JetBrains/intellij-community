@@ -1,4 +1,4 @@
-// "Remove variable 'oo'" "true"
+// "Remove local variable 'oo'" "true"
 import java.io.*;
 
 class a {

@@ -7,18 +7,19 @@ import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.hash.EqualityPolicy
+import com.intellij.util.containers.hash.LinkedHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.Comparator
+import kotlin.collections.ArrayList
 import kotlin.math.max
 
 open class BaseCompletionLookupArranger(@JvmField protected val myProcess: CompletionProcessEx) : LookupArranger(), CompletionLookupArranger {
@@ -52,6 +53,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     return element.getUserData(mySorterKey)
   }
 
+  @Synchronized
   override fun getRelevanceObjects(items: Iterable<LookupElement>, hideSingleValued: Boolean): Map<LookupElement, List<Pair<String, Any>>> {
     val map: MutableMap<LookupElement, MutableList<Pair<String, Any>>> = ContainerUtil.newIdentityHashMap()
     val inputBySorter = groupItemsBySorter(items)
@@ -83,7 +85,8 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
         classifier = classifier.next
       }
     }
-    val result: MutableMap<LookupElement, List<Pair<String, Any>>> = ContainerUtil.newIdentityHashMap()
+    @Suppress("UNCHECKED_CAST")
+    val result: MutableMap<LookupElement, List<Pair<String, Any>>> = LinkedHashMap(EqualityPolicy.IDENTITY as EqualityPolicy<in LookupElement>)
     val additional: Map<LookupElement, List<Pair<String, Any>>> = myFinalSorter.getRelevanceObjects(items)
     items.forEach { item ->
       val mainRelevance = map[item] ?: mutableListOf()
@@ -112,6 +115,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     addElement(result.lookupElement, result.sorter, result.prefixMatcher, presentation)
   }
 
+  @Synchronized
   override fun addElement(element: LookupElement, presentation: LookupElementPresentation) {
     //StatisticsWeigher.clearBaseStatisticsInfo(element)
     val invariant = PresentationInvariant(presentation.itemText, presentation.tailText,
@@ -124,9 +128,48 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     }
     val context = createContext()
     classifier!!.addElement(element, context)
-    super.addElement(element, presentation)
-    trimToLimit(context)
+    if (isInBatchUpdate) {
+      batchItems.add(element to presentation)
+    } else {
+      super.addElement(element, presentation)
+      trimToLimit(context)
+    }
   }
+
+  private var isInBatchUpdate = false
+  private val batchItems = mutableListOf<kotlin.Pair<LookupElement, LookupElementPresentation>>()
+
+  @ApiStatus.Internal
+  fun batchUpdate(runnable: Runnable) {
+    if (isInBatchUpdate) {
+      runnable.run()
+    } else {
+      isInBatchUpdate = true
+      try {
+        runnable.run()
+      } finally {
+        isInBatchUpdate = false
+      }
+      if (batchItems.isNotEmpty()) {
+        flushBatch()
+      }
+    }
+  }
+
+  @Synchronized
+  private fun flushBatch() {
+    for ((element, presentation) in batchItems) {
+      super.addElement(element, presentation)
+    }
+    batchItems.clear()
+    trimToLimit(createContext())
+  }
+
+  @Synchronized
+  override fun itemPattern(element: LookupElement): String = super.itemPattern(element)
+
+  @Synchronized
+  override fun prefixReplaced(lookup: Lookup, newPrefix: String) = super.prefixReplaced(lookup, newPrefix)
 
   override fun itemSelected(lookupItem: LookupElement?, completionChar: Char) {
     myProcess.itemSelected(lookupItem, completionChar)
@@ -227,6 +270,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     return doArrangeItems(lookup as LookupElementListPresenter, onExplicitAction)
   }
 
+  @Synchronized
   private fun doArrangeItems(lookup: LookupElementListPresenter, onExplicitAction: Boolean): Pair<MutableList<LookupElement>, Int> {
     val items = matchingItems
     var sortedByRelevance: Iterable<LookupElement> = sortByRelevance(groupItemsBySorter(items))
@@ -383,6 +427,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     return false
   }
 
+  @Synchronized
   override fun prefixChanged(lookup: Lookup) {
     myPrefixChanges++
     myFrozenItems.clear()

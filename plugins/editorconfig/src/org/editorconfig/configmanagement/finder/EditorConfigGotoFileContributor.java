@@ -20,17 +20,15 @@ import java.util.List;
 public class EditorConfigGotoFileContributor implements ChooseByNameContributor {
   private final static String[] EDITOR_CONFIG_NAMES = new String[] {Utils.EDITOR_CONFIG_FILE_NAME};
 
-  @NotNull
   @Override
-  public String[] getNames(Project project, boolean includeNonProjectItems) {
+  public String @NotNull [] getNames(Project project, boolean includeNonProjectItems) {
     return EDITOR_CONFIG_NAMES;
   }
 
-  @NotNull
   @Override
-  public NavigationItem[] getItemsByName(String name,
-                                         String pattern,
-                                         Project project, boolean includeNonProjectItems) {
+  public NavigationItem @NotNull [] getItemsByName(String name,
+                                                   String pattern,
+                                                   Project project, boolean includeNonProjectItems) {
     if (includeNonProjectItems) {
       NavigationItemFactory itemFactory = new NavigationItemFactory(project);
       //noinspection deprecation

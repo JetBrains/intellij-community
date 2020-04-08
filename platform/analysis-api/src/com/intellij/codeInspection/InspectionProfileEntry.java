@@ -40,8 +40,6 @@ import java.util.*;
 
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
-  public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
-
   private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
   private static Set<String> ourBlackList;
@@ -60,6 +58,10 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    return !suppressors.isEmpty() && isSuppressedFor(element, suppressors);
+  }
+
+  private boolean isSuppressedFor(@NotNull PsiElement element, Set<InspectionSuppressor> suppressors) {
     String toolId = getSuppressId();
     for (InspectionSuppressor suppressor : suppressors) {
       if (isSuppressed(toolId, suppressor, element)) {
@@ -67,19 +69,20 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       }
     }
 
-    final InspectionElementsMerger merger = InspectionElementsMerger.getMerger(getShortName());
-    if (merger != null) {
-      String[] suppressIds = merger.getSuppressIds();
-      String[] sourceToolIds = suppressIds.length != 0 ? suppressIds : merger.getSourceToolNames();
-      for (String sourceToolId : sourceToolIds) {
-        for (InspectionSuppressor suppressor : suppressors) {
-          if (suppressor.isSuppressedFor(element, sourceToolId)) {
-            return true;
-          }
+    InspectionElementsMerger merger = InspectionElementsMerger.getMerger(getShortName());
+    return merger != null && isSuppressedForMerger(element, suppressors, merger);
+  }
+
+  private static boolean isSuppressedForMerger(PsiElement element, Set<InspectionSuppressor> suppressors, InspectionElementsMerger merger) {
+    String[] suppressIds = merger.getSuppressIds();
+    String[] sourceToolIds = suppressIds.length != 0 ? suppressIds : merger.getSourceToolNames();
+    for (String sourceToolId : sourceToolIds) {
+      for (InspectionSuppressor suppressor : suppressors) {
+        if (suppressor.isSuppressedFor(element, sourceToolId)) {
+          return true;
         }
       }
     }
-
     return false;
   }
 
@@ -92,9 +95,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return getShortName();
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element == null) {
       return SuppressQuickFix.EMPTY_ARRAY;
     }
@@ -193,6 +195,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public void cleanup(@NotNull Project project) {
   }
 
+  public void initialize(@NotNull GlobalInspectionContext context) {
+  }
+
   interface DefaultNameProvider {
 
     @NonNls
@@ -251,11 +256,10 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#groupPath
    */
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  public String[] getGroupPath() {
+  public String @NotNull [] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
     if (groupDisplayName.isEmpty()) {
-      groupDisplayName = GENERAL_GROUP_NAME;
+      groupDisplayName = getGeneralGroupName();
     }
     return new String[]{groupDisplayName};
   }
@@ -445,14 +449,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  /** @deprecated This method is no longer internally used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Nullable
-  protected URL getDescriptionUrl() {
-    return null;
-  }
-
   @NotNull
   protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
@@ -488,5 +484,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
 
     return null;
+  }
+
+  public static String getGeneralGroupName() {
+    return InspectionsBundle.message("inspection.general.tools.group.name");
   }
 }

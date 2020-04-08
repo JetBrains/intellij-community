@@ -1,67 +1,74 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("UastReferenceRegistrar")
 
 package com.intellij.psi
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.ElementPatternCondition
-import com.intellij.patterns.InitialPatternCondition
 import com.intellij.patterns.StandardPatterns
+import com.intellij.patterns.uast.UElementPattern
+import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfExpectedTypes
+import java.util.concurrent.ConcurrentHashMap
 
+private val CONTRIBUTOR_CHUNKS_KEY: Key<MutableMap<ChunkTag, UastReferenceContributorChunk>> = Key.create(
+  "uast.psiReferenceContributor.chunks")
+
+/**
+ * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
+ */
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerReferenceProvider(adaptPattern(pattern, provider.supportedUElementTypes),
-                                 UastReferenceProviderAdapter(provider),
-                                 priority)
+  // important: here we rely on the fact that all reference contributors run in a single-thread
+  val registrar = this
+  val chunks = getContributorChunks(registrar)
+
+  val chunk = chunks.getOrPut(ChunkTag(priority, provider.supportedUElementTypes)) {
+    val newChunk = UastReferenceContributorChunk(provider.supportedUElementTypes)
+    registrar.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), newChunk, priority)
+    newChunk
+  }
+  chunk.register(pattern, provider)
+}
+
+private fun getContributorChunks(registrar: PsiReferenceRegistrar): MutableMap<ChunkTag, UastReferenceContributorChunk> {
+  val existingChunks = registrar.getUserData(CONTRIBUTOR_CHUNKS_KEY)
+  if (existingChunks != null) return existingChunks
+
+  val newChunks: MutableMap<ChunkTag, UastReferenceContributorChunk> = ConcurrentHashMap()
+  registrar.putUserData(CONTRIBUTOR_CHUNKS_KEY, newChunks)
+  // reset cache on extension point removal IDEA-235191
+  PsiReferenceContributor.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<KeyedLazyInstance<PsiReferenceContributor>> {
+    override fun extensionRemoved(extension: KeyedLazyInstance<PsiReferenceContributor>, pluginDescriptor: PluginDescriptor) {
+      newChunks.clear()
+    }
+  }, ApplicationManager.getApplication())
+  return newChunks
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  this.registerReferenceProvider(adaptPattern(pattern::accepts, provider.supportedUElementTypes),
-                                 UastReferenceProviderAdapter(provider), priority)
-}
-
-abstract class UastReferenceProvider(open val supportedUElementTypes: List<Class<out UElement>> = listOf(UElement::class.java)) {
-
-  constructor(cls: Class<out UElement>) : this(listOf(cls))
-
-  abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
-
-  open fun acceptsTarget(target: PsiElement): Boolean = true
+  this.registerUastReferenceProvider(pattern::accepts, provider, priority)
 }
 
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
   object : UastInjectionHostReferenceProvider() {
-
     override fun getReferencesForInjectionHost(uExpression: UExpression,
                                                host: PsiLanguageInjectionHost,
                                                context: ProcessingContext): Array<PsiReference> = provider(uExpression, host)
+
+    override fun toString(): String = "uastInjectionHostReferenceProvider($provider)"
   }
 
 fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
@@ -78,73 +85,73 @@ inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, P
 
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
 internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEMENT")
+internal val USAGE_PSI_ELEMENT = Key.create<PsiElement>("USAGE_PSI_ELEMENT")
 
-private fun getOrCreateCachedElement(element: PsiElement,
-                                     context: ProcessingContext?,
-                                     supportedUElementTypes: List<Class<out UElement>>): UElement? =
-  element as? UElement ?: context?.get(cachedUElement) ?: supportedUElementTypes.asSequence().mapNotNull {
-    element.toUElement(it)
-  }.firstOrNull()?.also { context?.put(cachedUElement, it) }
+internal fun getOrCreateCachedElement(element: PsiElement,
+                                      context: ProcessingContext,
+                                      supportedUElementTypes: List<Class<out UElement>>): UElement? {
+  val existingElement = element as? UElement ?: context.get(cachedUElement)
+  if (existingElement != null) return existingElement
 
+  val uElement = element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray()) ?: return null
+  context.put(cachedUElement, uElement)
+  return uElement
+}
 
-private fun adaptPattern(
-  predicate: (UElement, ProcessingContext) -> Boolean,
-  supportedUElementTypes: List<Class<out UElement>>
-): ElementPattern<out PsiElement> {
-  val uastPatternAdapter = UastPatternAdapter(predicate, supportedUElementTypes)
+internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
+  val uastTypePattern = UElementTypePatternAdapter(supportedUElementTypes)
 
   // optimisation until IDEA-211738 is implemented
   if (supportedUElementTypes == listOf(UInjectionHost::class.java)) {
-    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastPatternAdapter)
+    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastTypePattern)
   }
 
-  return uastPatternAdapter
+  return uastTypePattern
 }
 
-private class UastPatternAdapter(
-  val predicate: (UElement, ProcessingContext) -> Boolean,
-  val supportedUElementTypes: List<Class<out UElement>>
-) : ElementPattern<PsiElement> {
-
-  override fun accepts(o: Any?): Boolean = accepts(o, null)
-
-  override fun accepts(o: Any?, context: ProcessingContext?): Boolean = when (o) {
-    is PsiElement -> RecursionManager.doPreventingRecursion(this, false) {
-      getOrCreateCachedElement(o, context, supportedUElementTypes)
-        ?.let { predicate(it, (context ?: ProcessingContext()).apply { put(REQUESTED_PSI_ELEMENT, o) }) }
-      ?: false
-    } ?: false
-    else -> false
-  }
-
-  private val condition = ElementPatternCondition(object : InitialPatternCondition<PsiElement>(PsiElement::class.java) {
-    override fun accepts(o: Any?, context: ProcessingContext?): Boolean = this@UastPatternAdapter.accepts(o, context)
-  })
-
-  override fun getCondition(): ElementPatternCondition<PsiElement> = condition
-}
-
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+@Deprecated("Use custom pattern with PsiElementPattern.Capture<PsiElement>")
 fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
-  this::accepts,
-  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java)
+  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java),
+  this::accepts
 )
 
-private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) : PsiReferenceProvider() {
-  override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
-    val uElement = getOrCreateCachedElement(element, context, provider.supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
-    val references = provider.getReferencesByElement(uElement, context)
-    if (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isInternal) {
-      for (reference in references) {
-        if (reference.element !== element)
-          throw AssertionError(
-            """reference $reference was created for $element but targets ${reference.element}, provider $provider"""
-          )
-      }
+/**
+ * Creates UAST reference provider that accepts additional PSI element that could be either the same as reference PSI element or reference
+ * element that is used in the same file and satisfy usage pattern.
+ *
+ * @see registerReferenceProviderByUsage
+ */
+@ApiStatus.Experimental
+fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiLanguageInjectionHost, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  object : UastReferenceProvider(UInjectionHost::class.java) {
+
+    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+      val uLiteral = element as? UExpression ?: return PsiReference.EMPTY_ARRAY
+      val host = context[REQUESTED_PSI_ELEMENT] as? PsiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
+      val usagePsi = context[USAGE_PSI_ELEMENT] ?: context[REQUESTED_PSI_ELEMENT]
+
+      return provider(uLiteral, host, usagePsi)
     }
-    return references
+
+    override fun toString(): String = "uastByUsageReferenceProvider($provider)"
   }
 
-  override fun toString(): String = "UastReferenceProviderAdapter($provider)"
+/**
+ * Registers a provider that will be called on the expressions that directly satisfy the [usagePattern] or at least one of the expression
+ * usages satisfies the pattern if it was assigned to a variable. The provider will search for usages of variables only for expressions that
+ * satisfy [expressionPattern]. There are standard expression patterns for usage search: [uInjectionHostInVariable] and [uExpressionInVariable].
+ *
+ * Consider using [uastReferenceProviderByUsage] if you need to obtain additional context from a usage place.
+ */
+@ApiStatus.Experimental
+fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UElementPattern<*, *>,
+                                                           usagePattern: UElementPattern<*, *>,
+                                                           provider: UastReferenceProvider,
+                                                           priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  this.registerUastReferenceProvider(usagePattern, provider, priority)
 
-  override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
+  if (Registry.`is`("uast.references.by.usage", true)) {
+    this.registerUastReferenceProvider(expressionPattern, UastReferenceByUsageAdapter(usagePattern, provider), priority)
+  }
 }

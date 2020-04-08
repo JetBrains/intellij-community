@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.replaceInProject;
 
@@ -237,7 +237,7 @@ public class ReplaceInProjectManager {
                          StringUtil.escapeXmlEntities(stringToReplace)))
                                                .yesText(FindBundle.message("find.replace.command"))
                                                .project(myProject)
-                                               .noText(Messages.CANCEL_BUTTON).show();
+                                               .noText(Messages.getCancelButton()).show();
   }
 
   private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
@@ -522,7 +522,7 @@ public class ReplaceInProjectManager {
     }
 
     final List<Usage> usages = new ArrayList<>(usagesSet);
-    Collections.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
+    usages.sort(UsageViewImpl.USAGE_COMPARATOR);
 
     if (!ensureUsagesWritable(replaceContext, usages)) return;
 
@@ -570,7 +570,7 @@ public class ReplaceInProjectManager {
       return true;
     }
     if (!success) {
-      NOTIFICATION_GROUP.createNotification("One or more malformed replacement strings", MessageType.ERROR).notify(myProject);
+      NOTIFICATION_GROUP.createNotification(FindBundle.message("notification.content.one.or.more.malformed.replacement.strings"), MessageType.ERROR).notify(myProject);
     }
     return false;
   }

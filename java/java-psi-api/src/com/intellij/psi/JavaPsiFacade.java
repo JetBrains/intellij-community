@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author max
- */
 public abstract class JavaPsiFacade {
   private static final NotNullLazyKey<JavaPsiFacade, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaPsiFacade.class);
 
@@ -40,8 +37,7 @@ public abstract class JavaPsiFacade {
    *
    * @return the array of found classes, or an empty array if no classes are found.
    */
-  @NotNull
-  public abstract PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract PsiClass @NotNull [] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
    * Searches the project for the package with the specified full-qualified name and returns one

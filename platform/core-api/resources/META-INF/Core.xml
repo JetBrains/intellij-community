@@ -5,6 +5,8 @@
     <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
     <extensionPoint name="virtualFileManagerListener" interface="com.intellij.openapi.vfs.VirtualFileManagerListener" dynamic="true"/>
     <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
 
@@ -24,6 +26,8 @@
     <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.ElementManipulator"/>
     </extensionPoint>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"

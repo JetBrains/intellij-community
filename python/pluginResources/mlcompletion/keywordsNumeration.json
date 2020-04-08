@@ -35,5 +35,6 @@
   "with": 34,
   "yield": 35,
   "print": 36,
-  "exec": 37
+  "exec": 37,
+  "__init__": 38
 }

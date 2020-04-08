@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.Alarm
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
@@ -97,11 +98,11 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
   }
 
   inner class MyTaskInfo : TaskInfo {
-    override fun getTitle(): String = "${vcsName.capitalize()} Log Indexing..."
+    override fun getTitle(): String = VcsLogBundle.message("vcs.log.status.bar.indexing", vcsName.capitalize())
 
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
 
-    override fun getCancelTooltipText(): String = "Cancel indexing. Indexing could be restarted manually from Vcs Log toolbar."
+    override fun getCancelTooltipText(): String = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.tooltip")
 
     override fun isCancellable(): Boolean = true
   }

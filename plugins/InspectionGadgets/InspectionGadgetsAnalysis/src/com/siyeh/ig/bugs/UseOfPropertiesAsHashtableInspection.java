@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,20 +76,13 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      if (put) {
-        return InspectionGadgetsBundle.message(
-          "properties.object.as.hashtable.set.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message(
-          "properties.object.as.hashtable.get.quickfix");
-      }
+      return CommonQuickFixBundle.message("fix.replace.with.x", put ? "setProperty()" : "getProperty()");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix property access";
+      return InspectionGadgetsBundle.message("use.of.properties.as.hashtable.fix.family.name");
     }
 
     @Override

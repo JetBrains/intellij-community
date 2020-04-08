@@ -4,9 +4,6 @@ package com.intellij.facet;
 import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetType;
 
-/**
- * @author nik
- */
 public class ProjectFacetManagerTest extends FacetTestCase {
   public void testHasFacets() {
     final ProjectFacetManager manager = ProjectFacetManager.getInstance(myProject);

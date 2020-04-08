@@ -66,8 +66,7 @@ public class JavadocManagerImpl implements JavadocManager {
   }
 
   @Override
-  @NotNull
-  public JavadocTagInfo[] getTagInfos(PsiElement context) {
+  public JavadocTagInfo @NotNull [] getTagInfos(PsiElement context) {
     List<JavadocTagInfo> result = new ArrayList<>();
 
     for (JavadocTagInfo info : myInfos) {

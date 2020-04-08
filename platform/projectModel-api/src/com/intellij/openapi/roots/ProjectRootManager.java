@@ -73,8 +73,7 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
    * TODO: remove this method?
    */
-  @NotNull
-  public abstract VirtualFile[] getContentRootsFromAllModules();
+  public abstract VirtualFile @NotNull [] getContentRootsFromAllModules();
 
   /**
    * Returns the list of content root URLs for all modules in the project.
@@ -89,16 +88,14 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
     *
     * @return the list of content roots.
     */
-  @NotNull
-  public abstract VirtualFile[] getContentRoots();
+  public abstract VirtualFile @NotNull [] getContentRoots();
 
   /**
    * Returns the list of source roots under the content roots for all modules in the project.
    *
    * @return the list of content source roots.
    */
-  @NotNull
-  public abstract VirtualFile[] getContentSourceRoots();
+  public abstract VirtualFile @NotNull [] getContentSourceRoots();
 
   /**
    * Returns the list of source roots from all modules which types belong to the specified set

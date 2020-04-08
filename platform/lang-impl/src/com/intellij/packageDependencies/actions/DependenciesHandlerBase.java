@@ -17,6 +17,7 @@ package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,9 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class DependenciesHandlerBase {
   @NotNull
   protected final Project myProject;
@@ -113,7 +111,8 @@ public abstract class DependenciesHandlerBase {
       snapshot.logResponsivenessSinceCreation("Dependency analysis");
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(myProject).showDumbModeNotification("Analyze dependencies is not available until indices are ready");
+      DumbService.getInstance(myProject).showDumbModeNotification(
+        CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"));
       throw new ProcessCanceledException();
     }
   }

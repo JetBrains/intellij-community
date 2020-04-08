@@ -20,9 +20,6 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.io.generateInVirtualTempDir
 import com.intellij.util.io.zipFile
 
-/**
- * @author nik
- */
 class ConvertToRepositoryLibraryActionTest : LightPlatformTestCase() {
   fun `test detect single coordinates`() {
     val file = zipFile {

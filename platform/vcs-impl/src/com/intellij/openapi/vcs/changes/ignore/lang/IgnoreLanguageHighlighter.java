@@ -63,9 +63,8 @@ public class IgnoreLanguageHighlighter extends SyntaxHighlighterBase {
     return new IgnoreLexerAdapter(currentHighlightedFile);
   }
 
-  @NotNull
   @Override
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return pack(ATTRIBUTES.get(tokenType));
   }
 }

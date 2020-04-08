@@ -54,8 +54,7 @@ public interface ConcurrentLongObjectMap<V> {
   @NotNull
   Iterable<LongEntry<V>> entries();
 
-  @NotNull
-  long[] keys();
+  long @NotNull [] keys();
 
   /**
    * @return Approximate number of elements in the map.

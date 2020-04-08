@@ -180,6 +180,26 @@ public class PythonSdkUtil {
     return false;
   }
 
+  /**
+   * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
+   */
+  @NotNull
+  public static String getSkeletonsPath(String basePath, String sdkHome) {
+    String sep = File.separator;
+    return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
+  }
+
+  @Nullable
+  public static String getSkeletonsPath(@NotNull Sdk sdk) {
+    String path = sdk.getHomePath();
+    return path != null ? getSkeletonsPath(PathManager.getSystemPath(), path) : null;
+  }
+
+  @NotNull
+  public static String getSkeletonsRootPath(String basePath) {
+    return basePath + File.separator + SKELETON_DIR_NAME;
+  }
+
   public static String getRemoteSourcesLocalPath(String sdkHome) {
     String sep = File.separator;
 
@@ -301,16 +321,17 @@ public class PythonSdkUtil {
     File binPath = new File(homeDirectory);
     File binDir = binPath.getParentFile();
     if (binDir == null) return null;
+    VirtualFileSystem localVfs = StandardFileSystems.local();
     File runner = new File(binDir, name);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
     runner = new File(new File(binDir, "Scripts"), name);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
     runner = new File(new File(binDir.getParentFile(), "Scripts"), name);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
     runner = new File(new File(binDir.getParentFile(), "local"), name);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
     runner = new File(new File(new File(binDir.getParentFile(), "local"), "bin"), name);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
 
     // if interpreter is a symlink
     if (FileSystemUtil.isSymLink(homeDirectory)) {
@@ -321,9 +342,9 @@ public class PythonSdkUtil {
     }
     // Search in standard unix path
     runner = new File(new File("/usr", "bin"), name);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
     runner = new File(new File(new File("/usr", "local"), "bin"), name);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
     return null;
   }
 
@@ -468,13 +489,29 @@ public class PythonSdkUtil {
     return envs == null;
   }
 
-  // Conda virtual environment and system conda
+  // Conda virtual environment and base conda
   public static boolean isConda(@NotNull Sdk sdk) {
     return isConda(sdk.getHomePath());
   }
 
   public static boolean isConda(@Nullable String sdkPath) {
     return findCondaMeta(sdkPath) != null;
+  }
+
+  public static boolean isBaseConda(@Nullable String sdkPath) {
+    final VirtualFile condaMeta = findCondaMeta(sdkPath);
+    if (condaMeta == null) {
+      return false;
+    }
+    final VirtualFile parent = condaMeta.getParent();
+    if (parent == null) {
+      return false;
+    }
+    final VirtualFile condaBin = parent.findChild("condabin");
+    if (condaBin != null) {
+      return true;
+    }
+    return parent.findChild("envs") != null;
   }
 
   @Nullable

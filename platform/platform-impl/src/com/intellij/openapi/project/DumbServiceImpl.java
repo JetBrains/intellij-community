@@ -1,20 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -25,28 +29,32 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.DeprecationStripePanel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -54,17 +62,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
+  private static final @NotNull JBInsets DUMB_BALLOON_INSETS = JBInsets.create(5, 8);
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
@@ -79,15 +87,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
    * The task is removed from this map after it's finished or when the project is disposed.
    */
   private final Map<DumbModeTask, ProgressIndicatorEx> myProgresses = ContainerUtil.newConcurrentMap();
-  private Pair<DumbModeTask, ProgressIndicatorEx> myCurrentProgress; //used from EDT only
-  private volatile ProgressIndicatorEx myDialogIndicator; //used from EDT only
-  private boolean myDialogRequested = false;//used from EDT only
+  private Balloon myBalloon;//used from EDT only
 
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private volatile ProgressSuspender myCurrentSuspender;
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
+   private final BlockingQueue<TrackedEdtActivity> myTrackedEdtActivities = new LinkedBlockingQueue<>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -134,7 +141,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
+    if (myBalloon != null) {
+      Disposer.dispose(myBalloon);
+    }
     myUpdatesQueue.clear();
     myQueuedEquivalences.clear();
     synchronized (myRunWhenSmartQueue) {
@@ -246,6 +256,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
+  @TestOnly
+  public void runInDumbMode(@NotNull Runnable runnable) {
+    setDumb(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setDumb(false);
+    }
+  }
+
   @Override
   public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> unsafeRunWhenSmart(runnable));
@@ -273,7 +294,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if ((application.isUnitTestMode() || application.isHeadlessEnvironment()) && !Boolean.parseBoolean(System.getProperty("idea.force.dumb.queue.tasks", "false"))) {
       runTaskSynchronously(task);
     }
     else {
@@ -317,7 +338,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
       enterDumbMode(modality, trace);
-      ApplicationManager.getApplication().invokeLater(this::startBackgroundProcess, myProject.getDisposed());
+      new TrackedEdtActivity(this::startBackgroundProcess).invokeLater();
     }
   }
 
@@ -329,7 +350,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     myProgresses.put(task, new ProgressIndicatorBase());
     Disposer.register(task, () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
       myProgresses.remove(task);
     });
     myUpdatesQueue.addLast(task);
@@ -364,8 +385,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // The current suspender, however, might have already got suspended between the point of the last check cancelled call and
       // this point. If it has happened it will be cleaned up when the suspender is closed on the background process thread.
       myCurrentSuspender = null;
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        () -> ApplicationManager.getApplication().invokeLater(this::updateFinished, myDumbStartModality, myProject.getDisposed()));
+      new TrackedEdtActivity(this::updateFinished).invokeLaterAfterProjectInitialized();
     }
   }
 
@@ -433,113 +453,102 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public boolean showDumbModeDialog(@NotNull List<String> actionNames) {
+  public void showDumbModeActionBalloon(@NotNull String balloonText,
+                                        @NotNull Runnable runWhenSmartAndBalloonStillShowing) {
+    if (LightEdit.owns(myProject)) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isDumb()) {
-      UIEventLogger.logUIEvent(UIEventId.DumbModeDialogWasNotNeeded, new FeatureUsageData().addProject(myProject));
-      return true;
+      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonWasNotNeeded, new FeatureUsageData().addProject(myProject));
+      runWhenSmartAndBalloonStillShowing.run();
+      return;
     }
-    if (myDialogRequested) {
-      //here should be an assert that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
-      return false;
+    if (myBalloon != null) {
+      //here should be an assertion that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
+      return;
     }
-    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogRequested, new FeatureUsageData().addProject(myProject));
-    long progressesStartTimestamp = System.currentTimeMillis();
-    int iteration = 0;
-    while (isDumb()) {
-      if (tryShowDialogTillSmartMode(actionNames, iteration)) return false;
-      iteration++;
-    }
-    FeatureUsageData data = new FeatureUsageData().addProject(myProject).
-      addData("duration_ms", System.currentTimeMillis() - progressesStartTimestamp);
-    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogProceededToActions, data);
-    return true;
+    tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing);
   }
 
-  /**
-   * @return true if the progress was cancelled
-   */
-  private boolean tryShowDialogTillSmartMode(@NotNull List<String> actionNames, int iteration) {
+  private void tryShowBalloonTillSmartMode(@NotNull String balloonText,
+                                           @NotNull Runnable runWhenSmartAndBalloonNotHidden) {
+    LOG.assertTrue(myBalloon == null);
     long startTimestamp = System.currentTimeMillis();
-    UIEventLogger.logUIEvent(UIEventId.DumbModeDialogShown, new FeatureUsageData().addProject(myProject).addCount(iteration));
-    myDialogRequested = true;
-    AtomicBoolean dialogCancelled = new AtomicBoolean(false);
-    Semaphore semaphore = new Semaphore(1);
-    runWhenSmart(semaphore::up);
-    Task.Modal task = new Task.Modal(myProject, createDialogTitle(actionNames), true) {
+    UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonRequested, new FeatureUsageData().addProject(myProject));
+    myBalloon = JBPopupFactory.getInstance().
+            createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
+            setBorderColor(JBColor.border()).
+            setBorderInsets(DUMB_BALLOON_INSETS).
+            setShowCallout(false).
+            createBalloon();
+    myBalloon.setAnimationEnabled(false);
+    myBalloon.addListener(new JBPopupListener() {
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        LaterInvocator.markTransparent(indicator.getModalityState());
-        indicator.setText("Waiting for indexing to finish...");
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          myDialogIndicator = (ProgressIndicatorEx)indicator;
-          attachDialogIndicatorToCurrentProgress();
-        });
-        try {
-          ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        if (myBalloon == null) {
+          return;
         }
-        catch (ProcessCanceledException e) {
-          dialogCancelled.set(true);
-        }
+        FeatureUsageData data = new FeatureUsageData().addProject(myProject);
+        UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonCancelled, data);
+        myBalloon = null;
       }
-    };
-    task.setCancelText(createCancelButtonText(actionNames));
-    ProgressManager.getInstance().run(task);
-    myDialogIndicator = null;
-    myDialogRequested = false;
-    FeatureUsageData data = new FeatureUsageData().addProject(myProject).addCount(iteration).
-      addData("duration_ms", System.currentTimeMillis() - startTimestamp);
-    UIEventLogger.logUIEvent(dialogCancelled.get() ? UIEventId.DumbModeDialogCancelled : UIEventId.DumbModeDialogFinished, data);
-    return dialogCancelled.get();
+    });
+    runWhenSmart(() -> {
+      if (myBalloon == null) {
+        return;
+      }
+      FeatureUsageData data = new FeatureUsageData().addProject(myProject).
+        addData("duration_ms", System.currentTimeMillis() - startTimestamp);
+      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonProceededToActions, data);
+      runWhenSmartAndBalloonNotHidden.run();
+      Balloon balloon = myBalloon;
+      myBalloon = null;
+      balloon.hide();
+    });
+    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+      if (!isDumb()) {
+        return;
+      }
+      if (myBalloon == null) {
+        return;
+      }
+      UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonShown, new FeatureUsageData().addProject(myProject));
+      myBalloon.show(getDumbBalloonPopupPoint(myBalloon, context), Balloon.Position.above);
+    });
   }
 
   @NotNull
-  private static String createDialogTitle(@NotNull List<String> actionNames) {
-    if (actionNames.isEmpty()) {
-      return "Action";
-    }
-    else if (actionNames.size() == 1) {
-      return "'" + actionNames.get(0) + "' Action";
-    }
-    else {
-      return "Actions: " + StringUtil.join(actionNames, ", ");
-    }
+  private static RelativePoint getDumbBalloonPopupPoint(@NotNull Balloon balloon, DataContext context) {
+    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(context);
+    Dimension size = balloon.getPreferredSize();
+    Point point = relativePoint.getPoint();
+    point.translate(size.width / 2, 0);
+    //here are included hardcoded insets, icon width and small hardcoded delta to show before guessBestPopupLocation point
+    point.translate(-DUMB_BALLOON_INSETS.left - AllIcons.General.BalloonWarning.getIconWidth() - JBUIScale.scale(6), 0);
+    return new RelativePoint(relativePoint.getComponent(), point);
   }
 
-  @NotNull
-  private static String createCancelButtonText(@NotNull List<String> actionNames) {
-    if (actionNames.isEmpty()) {
-      return "Discard action";
+  @Override
+  public void cancelAllTasksAndWait() {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isWriteThread() || application.isWriteAccessAllowed()) {
+      throw new AssertionError("Must be called on write thread without write action");
     }
-    else if (actionNames.size() == 1) {
-      return "Discard '" + actionNames.get(0) + "'";
-    }
-    else {
-      return "Discard actions";
-    }
-  }
 
-  private void attachDialogIndicatorToCurrentProgress() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ProgressIndicatorEx dialogIndicator = myDialogIndicator;
-    if (dialogIndicator == null || myCurrentProgress == null) return;
-
-    AbstractProgressIndicatorExBase delegatingVisibleStateIndicator = new AbstractProgressIndicatorExBase() {
-      @Override
-      public void setText(String text) {
+    while (myState.get() != State.SMART && !myProject.isDisposed()) {
+      LockSupport.parkNanos(50_000_000);
+      // polls next dumb mode task
+      while (!myTrackedEdtActivities.isEmpty()) {
+        myTrackedEdtActivities.poll().run();
+      }
+      // cancels all scheduled and running tasks
+      for (DumbModeTask task : myProgresses.keySet()) {
+        cancelTask(task);
       }
 
-      @Override
-      protected void delegateProgressChange(@NotNull IndicatorAction action) {
-        super.delegateProgressChange(action);
-        action.execute(dialogIndicator);
+      if (myCurrentSuspender != null && myCurrentSuspender.isSuspended()) {
+        myCurrentSuspender.resumeProcess();
       }
-    };
-
-    String text = dialogIndicator.getText();
-    myCurrentProgress.second.addStateDelegate(delegatingVisibleStateIndicator);
-    dialogIndicator.setText(text);
-    dialogIndicator.setIndeterminate(delegatingVisibleStateIndicator.isIndeterminate());
+    }
   }
 
   @Override
@@ -575,6 +584,33 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
+  public JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent, @NotNull Runnable updateRunnable, @NotNull Disposable parentDisposable) {
+    //TODO replace with a proper mockup implementation
+    DeprecationStripePanel stripePanel = new DeprecationStripePanel(IdeBundle.message("dumb.mode.spoiler.wrapper.text"), AllIcons.General.Warning)
+      .withAlternativeAction(IdeBundle.message("dumb.mode.spoiler.wrapper.reload.text"), new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          updateRunnable.run();
+        }
+      });
+    stripePanel.setVisible(isDumb());
+    getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        stripePanel.setVisible(true);
+        updateRunnable.run();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        stripePanel.setVisible(false);
+        updateRunnable.run();
+      }
+    });
+    return stripePanel.wrap(dumbAwareContent);
+  }
+
+  @Override
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     smartInvokeLater(runnable, ModalityState.defaultModalityState());
   }
@@ -592,7 +628,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void completeJustSubmittedTasks() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     assert myProject.isInitialized();
     if (myState.get() != State.SCHEDULED_TASKS) {
       return;
@@ -604,9 +640,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void showModalProgress() {
-    NoAccessDuringPsiEvents.checkCallContext();
+    NoAccessDuringPsiEvents.checkCallContext("modal indexing");
     try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IdeBundle.message("progress.indexing"), () -> {
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IndexingBundle.message("progress.indexing"), () -> {
         assertState(State.SCHEDULED_TASKS);
         runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator());
         assertState(State.SMART, State.WAITING_FOR_FINISH);
@@ -639,7 +675,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void startBackgroundProcess() {
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
         @Override
         public void run(@NotNull final ProgressIndicator visibleIndicator) {
           runBackgroundProcess(visibleIndicator);
@@ -714,10 +750,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ProgressManager.getInstance().runProcess(() -> {
       try {
         taskIndicator.checkCanceled();
-
         taskIndicator.setIndeterminate(true);
-        taskIndicator.setText(IdeBundle.message("progress.indexing.scanning"));
-
         task.performInDumbMode(taskIndicator);
       }
       catch (ProcessCanceledException ignored) {
@@ -731,7 +764,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Nullable
   private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask) {
     CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
-    UIUtil.invokeLaterIfNeeded(() -> {
+    new TrackedEdtActivity(() -> {
       if (myProject.isDisposed()) {
         result.completeExceptionally(new ProcessCanceledException());
         return;
@@ -741,11 +774,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         Disposer.dispose(prevTask);
       }
 
-      Pair<DumbModeTask, ProgressIndicatorEx> value = pollTaskQueue();
-      myCurrentProgress = value;
-      attachDialogIndicatorToCurrentProgress();
-      result.complete(value);
-    });
+      result.complete(pollTaskQueue());
+    }).invokeLater();
     return waitForFuture(result);
   }
 
@@ -844,5 +874,44 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
      * (in a write-safe context on EDT when project is initialized). If new tasks are queued at this state, it's switched to {@link #SCHEDULED_TASKS}.
      */
     WAITING_FOR_FINISH
+  }
+
+  private class TrackedEdtActivity implements Runnable {
+    @NotNull
+    private final Runnable myRunnable;
+
+    TrackedEdtActivity(@NotNull Runnable runnable) {
+      myRunnable = runnable;
+      myTrackedEdtActivities.add(this);
+    }
+
+    void invokeLater() {
+      ApplicationManager.getApplication().invokeLater(this, getExpirationCondition());
+    }
+
+    void invokeLaterAfterProjectInitialized() {
+      StartupManager startupManager = StartupManager.getInstance(myProject);
+      startupManager.runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+        Application app = ApplicationManager.getApplication();
+        app.invokeLater(this, myDumbStartModality, getExpirationCondition());
+      });
+    }
+
+    @Override
+    public void run() {
+      myTrackedEdtActivities.remove(this);
+      myRunnable.run();
+    }
+
+    @SuppressWarnings({"RedundantCast", "unchecked", "rawtypes"})
+    @NotNull
+    private Condition getExpirationCondition() {
+      return Conditions.or((Condition)myProject.getDisposed(), (Condition)getActivityExpirationCondition());
+    }
+
+    @NotNull
+    Condition<?> getActivityExpirationCondition() {
+      return __ -> !myTrackedEdtActivities.contains(this);
+    }
   }
 }

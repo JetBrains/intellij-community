@@ -1,29 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
+
+import static com.intellij.openapi.util.io.FileUtil.delete;
+import static com.intellij.openapi.util.io.FileUtil.ensureExists;
+import static com.intellij.openapi.util.io.FileUtil.writeToFile;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.Assert.assertThat;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.status.StatusType;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import static com.intellij.openapi.util.io.FileUtil.*;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.empty;
-import static org.junit.Assert.assertThat;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.status.StatusType;
 
 // TODO Seems we could just apply corresponding patches with "svn patch" without custom code
 public class ConflictCreator {
@@ -68,7 +69,7 @@ public class ConflictCreator {
     }
 
     for (TextFilePatch patch : patches) {
-      if (patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName())) {
+      if (patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName())) {
         String subPath = "";
         for (String part : patch.getAfterName().split("/")) {
           final String path = subPath + part;

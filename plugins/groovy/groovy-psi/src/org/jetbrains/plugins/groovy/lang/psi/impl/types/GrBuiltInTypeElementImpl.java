@@ -37,9 +37,8 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
     return TypesUtil.getPrimitiveTypeByText(getText());
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

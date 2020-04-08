@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -6,17 +6,12 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 
@@ -29,7 +24,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public interface Builder {
     @Contract(pure = true)
     @NotNull
-    Builder withName(@Nullable String name);
+    Builder withName(@Nullable @NlsContexts.Command String name);
 
     @Contract(pure = true)
     @NotNull
@@ -61,7 +56,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     private boolean myGlobalUndoAction;
     private boolean myShouldRecordActionForActiveDocument = true;
 
-    private BuilderImpl(Project project, @NotNull PsiFile... files) {
+    private BuilderImpl(Project project, PsiFile @NotNull ... files) {
       myProject = project;
       myFiles = files;
     }
@@ -153,13 +148,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(@NotNull PsiFile first, @NotNull PsiFile... others) {
+  public static Builder writeCommandAction(@NotNull PsiFile first, PsiFile @NotNull ... others) {
     return new BuilderImpl(first.getProject(), ArrayUtil.prepend(first, others));
   }
 
   @NotNull
   @Contract(pure = true)
-  public static Builder writeCommandAction(Project project, @NotNull PsiFile... files) {
+  public static Builder writeCommandAction(Project project, PsiFile @NotNull ... files) {
     return new BuilderImpl(project, files);
   }
 
@@ -172,7 +167,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @NotNull PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, PsiFile @NotNull ... files) {
     this(project, DEFAULT_COMMAND_NAME, files);
   }
 
@@ -180,7 +175,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @NotNull PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, PsiFile @NotNull ... files) {
     this(project, commandName, DEFAULT_GROUP_ID, files);
   }
 
@@ -191,7 +186,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   protected WriteCommandAction(@Nullable Project project,
                                @Nullable String commandName,
                                @Nullable String groupID,
-                               @NotNull PsiFile... files) {
+                               PsiFile @NotNull ... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
@@ -349,10 +344,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static void runWriteCommandAction(Project project,
-                                           @Nullable final String commandName,
+                                           @Nls(capitalization = Nls.Capitalization.Title) @Nullable final String commandName,
                                            @Nullable final String groupID,
                                            @NotNull final Runnable runnable,
-                                           @NotNull PsiFile... files) {
+                                           PsiFile @NotNull ... files) {
     writeCommandAction(project, files).withName(commandName).withGroupId(groupID).run(() -> runnable.run());
   }
 

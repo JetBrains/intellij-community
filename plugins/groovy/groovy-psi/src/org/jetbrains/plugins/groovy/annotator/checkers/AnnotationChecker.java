@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiClass;
@@ -31,7 +32,7 @@ public class AnnotationChecker {
     String qname = anno.getQualifiedName();
     if (!anno.isAnnotationType() && GrAnnotationCollector.findAnnotationCollector(anno) == null) {
       if (qname != null) {
-        holder.createErrorAnnotation(toHighlight, GroovyBundle.message("class.is.not.annotation", qname));
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("class.is.not.annotation", qname)).range(toHighlight).create();
       }
       return;
     }
@@ -42,7 +43,7 @@ public class AnnotationChecker {
 
     String description = CustomAnnotationChecker.checkAnnotationApplicable(annotation, owner);
     if (description != null) {
-      holder.createErrorAnnotation(toHighlight, description).registerFix(new GrRemoveAnnotationIntention());
+      holder.newAnnotation(HighlightSeverity.ERROR, description).range(toHighlight).withFix(new GrRemoveAnnotationIntention()).create();
     }
   }
 

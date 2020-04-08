@@ -16,31 +16,38 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
     if(tabs.isEmptyVisible || tabs.isHideTabs) return
 
-    val myInfo2Label = tabs.myInfo2Label
-    val firstLabel = myInfo2Label[tabs.lastLayoutPass.getTabAt(0, 0)] ?: return
+    if (JBTabsImpl.NEW_TABS) {
+      val borderLines = tabs.lastLayoutPass.extraBorderLines ?: return
+      for (borderLine in borderLines) {
+        tabs.tabPainter.paintBorderLine(g, thickness, borderLine.from(), borderLine.to())
+      }
+    } else {
+      val myInfo2Label = tabs.myInfo2Label
+      val firstLabel = myInfo2Label[tabs.lastLayoutPass.getTabAt(0, 0)] ?: return
 
-    val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
+      val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
 
-    when(tabs.position) {
-      JBTabsPosition.top -> {
-        for (eachRow in 0..tabs.lastLayoutPass.rowCount) {
-          val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
-          tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
+      when(tabs.position) {
+        JBTabsPosition.top -> {
+          for (eachRow in 0..tabs.lastLayoutPass.rowCount) {
+            val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
+            tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
+          }
         }
-      }
-      JBTabsPosition.bottom -> {
-        tabs.tabPainter.paintBorderLine(g, thickness, Point(x, startY), Point(x + width, startY))
-        tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
-      }
-      JBTabsPosition.right -> {
-        val lx = firstLabel.x
-        tabs.tabPainter.paintBorderLine(g, thickness, Point(lx, y), Point(lx, y + height))
-      }
+        JBTabsPosition.bottom -> {
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(x, startY), Point(x + width, startY))
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
+        }
+        JBTabsPosition.right -> {
+          val lx = firstLabel.x
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(lx, y), Point(lx, y + height))
+        }
 
-      JBTabsPosition.left -> {
-        val bounds = firstLabel.bounds
-        val i = bounds.x + bounds.width - thickness
-        tabs.tabPainter.paintBorderLine(g, thickness, Point(i, y), Point(i, y + height))
+        JBTabsPosition.left -> {
+          val bounds = firstLabel.bounds
+          val i = bounds.x + bounds.width - thickness
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(i, y), Point(i, y + height))
+        }
       }
     }
 

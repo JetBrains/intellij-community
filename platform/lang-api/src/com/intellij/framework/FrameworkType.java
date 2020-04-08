@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class FrameworkType {
   private final String myId;
 

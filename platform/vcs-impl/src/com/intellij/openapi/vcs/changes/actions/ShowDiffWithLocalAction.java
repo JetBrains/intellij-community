@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -40,7 +41,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
 
   public ShowDiffWithLocalAction(boolean useBeforeVersion) {
     myUseBeforeVersion = useBeforeVersion;
-    ActionUtil.copyFrom(this, useBeforeVersion ? "Vcs.ShowDiffWithLocal.Before" : "Vcs.ShowDiffWithLocal");
+    ActionUtil.copyFrom(this, useBeforeVersion ? VcsActions.DIFF_BEFORE_WITH_LOCAL : VcsActions.DIFF_AFTER_WITH_LOCAL);
   }
 
   @Override

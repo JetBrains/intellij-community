@@ -64,8 +64,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   @NotNull
   public abstract Icon getNodeIcon(@Deprecated boolean isOpened);
 
-  @NotNull
-  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull T moduleBuilder, @NotNull ModulesProvider modulesProvider) {
+  public ModuleWizardStep @NotNull [] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull T moduleBuilder, @NotNull ModulesProvider modulesProvider) {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 

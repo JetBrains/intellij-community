@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -14,9 +14,6 @@ import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
   private static final int DEPRECATED = 0x01;
   private static final int INTERFACE = 0x02;
@@ -211,7 +208,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   public boolean isLocalClassInner() {
     return BitUtil.isSet(myFlags, LOCAL_CLASS_INNER);
   }
-  
+
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public String toString() {

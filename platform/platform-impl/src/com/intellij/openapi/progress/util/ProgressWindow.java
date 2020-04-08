@@ -1,19 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.BlockingProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -23,13 +25,18 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Window;
+import java.awt.event.KeyEvent;
+import java.util.Objects;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -70,7 +77,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project,
-                        @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
+                        @Nullable @NlsContexts.Button String cancelText) {
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
@@ -78,7 +85,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
                         boolean shouldShowBackground,
                         @Nullable Project project,
                         @Nullable JComponent parentComponent,
-                        @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
+                        @Nullable @NlsContexts.Button String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
@@ -168,13 +175,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @Override
   public void startBlocking() {
     startBlocking(EmptyRunnable.getInstance());
   }
 
+  @Override
   public void startBlocking(@NotNull Runnable init) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert EventQueue.isDispatchThread();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
@@ -184,16 +191,23 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     init.run();
 
     try {
-      IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
-        if (isCancellationEvent(event)) {
-          cancel();
-        }
-        return wasStarted() && !isRunning();
+      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
+        pumpEventsForHierarchy();
+        return null;
       });
     }
     finally {
       exitModality();
     }
+  }
+
+  public void pumpEventsForHierarchy() {
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
+      if (isCancellationEvent(event)) {
+        cancel();
+      }
+      return wasStarted() && !isRunning();
+    });
   }
 
   final boolean isCancellationEvent(@Nullable AWTEvent event) {
@@ -240,7 +254,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         Disposer.dispose(this);
       });
 
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
     }
   }
@@ -265,7 +278,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void setText(String text) {
-    if (!Comparing.equal(text, getText())) {
+    if (!Objects.equals(text, getText())) {
       super.setText(text);
       update();
     }
@@ -281,7 +294,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void setText2(String text) {
-    if (!Comparing.equal(text, getText2())) {
+    if (!Objects.equals(text, getText2())) {
       super.setText2(text);
       update();
     }
@@ -294,7 +307,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public void setTitle(String title) {
-    if (!Comparing.equal(title, myTitle)) {
+    if (!Objects.equals(title, myTitle)) {
       myTitle = title;
       update();
     }
@@ -319,7 +332,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert EventQueue.isDispatchThread();
     stopSystemActivity();
     if (isRunning()) {
       cancel();

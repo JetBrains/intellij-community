@@ -41,7 +41,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionProfileManager {
-      return project.service()
+      return project.getService(InspectionProjectProfileManager::class.java) as ProjectInspectionProfileManager
     }
   }
 

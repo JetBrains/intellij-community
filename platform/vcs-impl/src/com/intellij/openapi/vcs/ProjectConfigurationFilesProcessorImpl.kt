@@ -51,7 +51,11 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   fun filterNotProjectConfigurationFiles(files: List<VirtualFile>): List<VirtualFile> {
     val projectConfigurationFiles = doFilterFiles(files)
 
-    foundProjectConfigurationFiles.set(projectConfigurationFiles.isNotEmpty())
+    if (projectConfigurationFiles.isNotEmpty()) {
+      if (foundProjectConfigurationFiles.compareAndSet(false, true)) {
+        LOG.debug("Found new project configuration files ", projectConfigurationFiles)
+      }
+    }
 
     return files - projectConfigurationFiles
   }

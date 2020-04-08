@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.ListTable;
@@ -24,9 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -77,7 +74,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public final class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
+public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
 
   @NonNls
@@ -87,21 +84,15 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
 
   @XCollection
   public List<PluginModuleSet> PLUGINS_MODULES = new ArrayList<>();
-  private final AtomicClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName =
-    AtomicClearableLazyValue.create(() -> {
-      Map<String, PluginModuleSet> result = new HashMap<>();
-      for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
-        for (String module : modulesSet.modules) {
-          result.put(module, modulesSet);
-        }
+  private final ClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
+    Map<String, PluginModuleSet> result = new HashMap<>();
+    for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
+      for (String module : modulesSet.modules) {
+        result.put(module, modulesSet);
       }
-      return result;
-    });
-
-
-  public PluginXmlDomInspection() {
-    super(IdeaPlugin.class);
-  }
+    }
+    return result;
+  });
 
   @NotNull
   @Override
@@ -170,9 +161,7 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
     }
     else {
       ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
-        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName,
-                                               myRegistrationCheckIgnoreClassList,
-                                               holder);
+        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, myRegistrationCheckIgnoreClassList, holder);
       if (element instanceof Extension) {
         annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
       }
@@ -260,6 +249,7 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
   }
 
   private static final int LISTENERS_PLATFORM_VERSION = 193;
+  private static final int LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION = 201;
 
   private static void annotateListeners(Listeners listeners, DomElementAnnotationHolder holder) {
     final Module module = listeners.getModule();
@@ -282,6 +272,10 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
     final boolean noSinceBuildXml = !DomUtil.hasXml(sinceBuild);
     if (noSinceBuildXml ||
         sinceBuild.getValue() == null) {
+
+      // Gradle setups usually do not specify it in plugin.xml
+      if (!PluginModuleType.isPluginModuleOrDependency(module)) return;
+
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            "Must specify <idea-version> 'since-build'", null,
                            noSinceBuildXml ? new AddDomElementQuickFix<>(ideaPlugin.getIdeaVersion()) : null)
@@ -290,6 +284,21 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
     }
 
     final int baselineVersion = sinceBuild.getValue().getBaselineVersion();
+
+    boolean canHaveOsAttribute = baselineVersion >= LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION;
+    if (!canHaveOsAttribute) {
+      for (Listeners.Listener listener : listeners.getListeners()) {
+        if (DomUtil.hasXml(listener.getOs())) {
+          holder.createProblem(listener.getOs(), ProblemHighlightType.ERROR,
+                               "Attribute 'os' available in platform version " +
+                               LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION + " or later only, " +
+                               "but specified 'since-build' platform is '" + baselineVersion + "'", null)
+            .highlightWholeElement();
+        }
+      }
+    }
+
+
     if (baselineVersion >= LISTENERS_PLATFORM_VERSION) return;
 
     holder.createProblem(listeners, ProblemHighlightType.ERROR,
@@ -480,7 +489,12 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
         if (epQualifiedName != null && epQualifiedName.startsWith(pluginId + ".")) {
           holder.createProblem(extensionPoint.getQualifiedName(), ProblemHighlightType.WARNING,
                                DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous"), null,
-                               new LocalQuickFixBase(DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix")) {
+                               new LocalQuickFix() {
+                                 @Override
+                                 public @NlsContexts.ListItem @NotNull String getFamilyName() {
+                                   return DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix");
+                                 }
+
                                  @Override
                                  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                                    extensionPoint.getQualifiedName().undefine();
@@ -684,7 +698,7 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
           vendor.getValue();
-          if (DomUtil.hasXml(vendor) && PluginManager.isDevelopedByJetBrains(vendor.getValue())) {
+          if (DomUtil.hasXml(vendor) && PluginManager.getInstance().isDevelopedByJetBrains(vendor.getValue())) {
             highlightRedundant(extension,
                                DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);
@@ -749,16 +763,6 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       componentModuleRegistrationChecker.checkProperXmlFileForExtension(extension);
     }
-  }
-
-  @Nullable
-  static GenericAttributeValue getAttribute(DomElement domElement, String attributeName) {
-    final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
-    if (attributeDescription == null) {
-      return null;
-    }
-
-    return attributeDescription.getDomAttributeValue(domElement);
   }
 
   private static void annotateComponent(Component component,

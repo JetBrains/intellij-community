@@ -138,8 +138,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final ASTNode categoryNode = getCategoryNode();
       if (categoryNode != null && categoryNode.getText().startsWith("In") && !categoryNode.getText().startsWith("Intelli")) {
         return UNICODE_BLOCKS;

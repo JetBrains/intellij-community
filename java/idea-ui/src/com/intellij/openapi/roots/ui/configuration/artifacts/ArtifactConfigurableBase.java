@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.packaging.artifacts.Artifact;
@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class ArtifactConfigurableBase extends ProjectStructureElementConfigurable<Artifact> {
   protected final Artifact myOriginalArtifact;
   protected final ArtifactsStructureConfigurableContextImpl myArtifactsStructureContext;
@@ -57,7 +54,7 @@ public abstract class ArtifactConfigurableBase extends ProjectStructureElementCo
 
   @Override
   public String getBannerSlogan() {
-    return ProjectBundle.message("banner.slogan.artifact.0", getDisplayName());
+    return JavaUiBundle.message("banner.slogan.artifact.0", getDisplayName());
   }
 
   @Override

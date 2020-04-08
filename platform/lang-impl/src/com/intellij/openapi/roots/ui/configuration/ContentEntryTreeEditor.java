@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -103,7 +103,8 @@ public class ContentEntryTreeEditor {
       }
     });
     excludePatternsPanel.add(myExcludePatternsField, gridBag.next().fillCellHorizontally());
-    JBLabel excludePatternsLegendLabel = new JBLabel(XmlStringUtil.wrapInHtml("Use <b>;</b> to separate name patterns, <b>*</b> for any number of symbols, <b>?</b> for one."));
+    JBLabel excludePatternsLegendLabel =
+      new JBLabel(XmlStringUtil.wrapInHtml(ProjectBundle.message("label.content.entry.separate.name.patterns")));
     excludePatternsLegendLabel.setForeground(JBColor.GRAY);
     excludePatternsPanel.add(excludePatternsLegendLabel, gridBag.nextLine().next().next().fillCellHorizontally());
     myTreePanel = new MyPanel(new BorderLayout());
@@ -184,7 +185,7 @@ public class ContentEntryTreeEditor {
     myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer(entry), init, null) {
       @Override
       protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure,
-                                                      Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor,
+                                                      Comparator<NodeDescriptor<?>> comparator, FileChooserDescriptor descriptor,
                                                       final Runnable onInitialized) {
         return new MyFileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
       }
@@ -274,8 +275,8 @@ public class ContentEntryTreeEditor {
 
   private static class MyNewFolderAction extends NewFolderAction implements CustomComponentAction {
     private MyNewFolderAction() {
-      super(ActionsBundle.message("action.FileChooser.NewFolder.text"),
-            ActionsBundle.message("action.FileChooser.NewFolder.description"),
+      super(ActionsBundle.messagePointer("action.FileChooser.NewFolder.text"),
+            ActionsBundle.messagePointer("action.FileChooser.NewFolder.description"),
             AllIcons.Actions.NewFolder);
     }
 
@@ -290,7 +291,7 @@ public class ContentEntryTreeEditor {
     MyFileTreeBuilder(JTree tree,
                       DefaultTreeModel treeModel,
                       AbstractTreeStructure treeStructure,
-                      Comparator<? super NodeDescriptor> comparator,
+                      Comparator<? super NodeDescriptor<?>> comparator,
                       FileChooserDescriptor descriptor,
                       @Nullable Runnable onInitialized) {
       super(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);

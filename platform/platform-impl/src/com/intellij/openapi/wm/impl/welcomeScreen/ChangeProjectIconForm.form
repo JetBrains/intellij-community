@@ -13,7 +13,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Project icon for Default theme:"/>
+          <text resource-bundle="messages/IdeBundle" key="label.project.icon.for.default.theme"/>
         </properties>
       </component>
       <hspacer id="e638b">
@@ -31,7 +31,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Project icon for Darcula theme:"/>
+          <text resource-bundle="messages/IdeBundle" key="label.project.icon.for.darcula.theme"/>
         </properties>
       </component>
       <component id="e1e79" class="com.intellij.ui.components.JBLabel" binding="myDarculaIcon">
@@ -51,7 +51,7 @@
           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Change..."/>
+          <text resource-bundle="messages/IdeBundle" key="link.change.project.icon"/>
         </properties>
       </component>
       <component id="3c805" class="com.intellij.ui.components.labels.ActionLink" binding="mySetIconDark" custom-create="true">
@@ -59,7 +59,7 @@
           <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Change..."/>
+          <text resource-bundle="messages/IdeBundle" key="link.change.project.icon"/>
         </properties>
       </component>
       <component id="4a23c" class="com.intellij.ui.components.labels.ActionLink" binding="myClear" custom-create="true">
@@ -67,7 +67,7 @@
           <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Reset"/>
+          <text resource-bundle="messages/IdeBundle" key="link.reset.project.icon"/>
         </properties>
       </component>
       <component id="48a91" class="com.intellij.ui.components.labels.ActionLink" binding="myClearDark" custom-create="true">
@@ -75,7 +75,7 @@
           <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Reset"/>
+          <text resource-bundle="messages/IdeBundle" key="link.reset.project.icon"/>
         </properties>
       </component>
     </children>

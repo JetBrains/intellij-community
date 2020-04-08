@@ -74,7 +74,7 @@ final class ParamsValue implements Value {
   final boolean[] params;
   final int size;
 
-  ParamsValue(@NotNull boolean[] params, int size) {
+  ParamsValue(boolean @NotNull [] params, int size) {
     this.params = params;
     this.size = size;
   }

@@ -25,9 +25,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 
-/**
- * @author nik
- */
 class ExplicitModuleGroupTest : HeavyPlatformTestCase() {
   @Test
   fun `test single module`() {

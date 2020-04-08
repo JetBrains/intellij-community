@@ -69,7 +69,17 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
 
   @MagicConstant(intValues = {ALL, NONE, FIRST_LETTER})
+  @Deprecated
   public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER;
+
+  public int getCompletionCaseSensitive() {
+    return COMPLETION_CASE_SENSITIVE;
+  }
+
+  public void setCompletionCaseSensitive(int value) {
+    COMPLETION_CASE_SENSITIVE = value;
+  }
+
   public static final int ALL = 1;
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
@@ -174,8 +184,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
    */
   @Property(surroundWithTag = false)
   @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
-  @NotNull
-  public String[] EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  public String @NotNull [] EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
   @Override
   public void loadState(@NotNull Element state) {

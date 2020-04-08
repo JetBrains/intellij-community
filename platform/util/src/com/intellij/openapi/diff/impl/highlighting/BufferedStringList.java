@@ -26,8 +26,7 @@ class BufferedStringList {
     }
   }
 
-  @NotNull
-  public String[] toArray() {
+  public String @NotNull [] toArray() {
     flushLast();
     return ArrayUtilRt.toStringArray(myStrings);
   }

@@ -27,9 +27,8 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
     super(node);
   }
 
-  @NotNull
   @Override
-  public GrTypeElement[] getTypeElements() {
+  public GrTypeElement @NotNull [] getTypeElements() {
     return findChildrenByClass(GrTypeElement.class);
   }
 
@@ -90,9 +89,8 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
     super.deleteChildInternal(child);
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

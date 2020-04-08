@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +25,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
@@ -115,7 +115,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     PsiElement[] elements = new PsiElement[myElementsToMove.length];
     System.arraycopy(myElementsToMove, 0, elements, 0, myElementsToMove.length);
     return new MoveMultipleElementsViewDescriptor(elements, MoveClassesOrPackagesUtil.getPackageName(myTargetPackage));
@@ -126,7 +126,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     if (!StringUtil.isEmpty(qName)) {
       PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
       if (!helper.isQualifiedName(qName)) {
-        Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"), "Invalid Package Name",
+        Messages.showMessageDialog(myProject, JavaRefactoringBundle.message("invalid.target.package.name.specified"),
+                                   JavaRefactoringBundle.message("move.classes.invalid.package.name.warning.message"),
                                    Messages.getErrorIcon());
         return false;
       }
@@ -152,8 +153,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> allUsages = new ArrayList<>();
     final List<UsageInfo> usagesToSkip = new ArrayList<>();
     myConflicts = new MultiMap<>();
@@ -213,7 +213,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElements(myTargetPackage.getDirectories());
     data.addElement(JavaPsiFacade.getInstance(myProject).findPackage(myTargetPackage.getQualifiedName()));
@@ -270,7 +270,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
               if (directory != null) {
                 PsiPackage usagePackage = JavaDirectoryService.getInstance().getPackage(directory);
                 if (usagePackage != null && !myTargetPackage.equalToPackage(usagePackage)) {
-                  final String message = RefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
+                  final String message = JavaRefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
                                                                    CommonRefactoringUtil.htmlEmphasize(aClass.getName()),
                                                                    RefactoringUIUtil.getDescription(
                                                                    container, true));
@@ -322,7 +322,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
 
-      return Comparing.equal(myElement.getName(), wrapper.myElement.getName());
+      return Objects.equals(myElement.getName(), wrapper.myElement.getName());
     }
 
     public int hashCode() {
@@ -428,13 +428,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
     System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
   }
 
   @Override
-  protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
+  protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     if (UsageViewUtil.reportNonRegularUsages(usages, myProject)) {
       return true;
     }
@@ -444,7 +444,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     // If files are being moved then I need to collect some information to delete these
     // files from CVS. I need to know all common parents of the moved files and relative
     // paths.
@@ -476,9 +476,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
+      final RefactoringElementListener[] listeners =
+        Arrays.stream(myElementsToMove)
+          .map(psiElement -> getTransaction().getElementListener(psiElement))
+          .toArray(RefactoringElementListener[]::new);
+
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement element = myElementsToMove[idx];
-        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
         if (element instanceof PsiPackage) {
           final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
           final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
@@ -530,7 +534,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         else {
           LOG.error("Unexpected element to move: " + element);
         }
-        elementListener.elementMoved(element);
+        listeners[idx].elementMoved(element);
         myElementsToMove[idx] = element;
       }
 
@@ -570,7 +574,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected String getCommandName() {
     String elements = RefactoringUIUtil.calculatePsiElementDescriptionList(myElementsToMove);
     String target = myTargetPackage.getQualifiedName();
-    return RefactoringBundle.message("move.classes.command", elements, target);
+    return JavaRefactoringBundle.message("move.classes.command", elements, target);
   }
 
   private class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
@@ -637,7 +641,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             if (directory != null) {
               PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
               if (!myTargetPackage.equalToPackage(aPackage)) {
-                String message = RefactoringBundle.message("0.will.be.inaccessible.from.1", RefactoringUIUtil.getDescription(member, true),
+                String message = JavaRefactoringBundle.message("0.will.be.inaccessible.from.1", RefactoringUIUtil.getDescription(member, true),
                                                       RefactoringUIUtil.getDescription(container, true));
                 myConflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
               }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -31,6 +30,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   protected static final int TIMESTAMP_INCREMENT = 3000;
@@ -76,7 +76,7 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
 
   protected void setUpInWriteAction() throws Exception {
     VirtualFile tmpTestDir =
-      ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(FileUtil.getTempDirectory())));
+      Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(FileUtil.getTempDirectory())));
     myRoot = tmpTestDir.createChildDirectory(null, "idea_test_integration");
     PsiTestUtil.addContentRoot(myModule, myRoot);
   }

@@ -287,19 +287,6 @@ object GuiTestUtil {
 
   }
 
-  private fun completeInstallation(robot: Robot) {
-    val dialogName = ApplicationBundle.message("title.complete.installation")
-    try {
-      val completeInstallationDialog = findDialog(dialogName)
-        .withTimeout(Timeouts.seconds30.duration()).using(robot)
-      completeInstallationDialog.button("OK").click()
-    }
-    catch (we: WaitTimedOutError) {
-      LOG.warn("Timed out waiting for \"$dialogName\" JDialog. Continue...")
-    }
-
-  }
-
   private fun evaluateIdea(robot: Robot) {
     val dialogName = ApplicationNamesInfo.getInstance().fullProductName + " License Activation"
     try {

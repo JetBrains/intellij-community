@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -20,20 +20,21 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.ui.*;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import gnu.trove.THashSet;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +48,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -63,15 +63,14 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   private String myTitle;
   private String myFileTitle;
-  private File myCurrentFile;
+  private Path myCurrentFile;
 
   private Project myProject;
 
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
 
-  @Nullable
-  private IdeFrameDecorator myFrameDecorator;
+  private @Nullable IdeFrameDecorator myFrameDecorator;
 
   @SuppressWarnings("unused")
   private volatile Image selfie;
@@ -88,8 +87,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     Disposer.register(ApplicationManager.getApplication(), this);
   }
 
-  @Nullable
-  public static ProjectFrameHelper getFrameHelper(@Nullable Window window) {
+  public static @Nullable ProjectFrameHelper getFrameHelper(@Nullable Window window) {
     if (window == null) {
       return null;
     }
@@ -118,9 +116,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myFrameDecorator = IdeFrameDecorator.decorate(myFrame, this);
 
     myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
-      @Nullable
       @Override
-      public Object getData(@NotNull String dataId) {
+      public @Nullable Object getData(@NotNull String dataId) {
         return ProjectFrameHelper.this.getData(dataId);
       }
 
@@ -150,15 +147,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         ProjectFrameHelper.this.updateView();
       }
 
-      @Nullable
       @Override
-      public Project getProject() {
+      public @Nullable Project getProject() {
         return myProject;
       }
 
-      @NotNull
       @Override
-      public IdeFrame getHelper() {
+      public @NotNull IdeFrame getHelper() {
         return ProjectFrameHelper.this;
       }
 
@@ -179,8 +174,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
-  @NotNull
-  protected IdeRootPane createIdeRootPane() {
+  protected @NotNull IdeRootPane createIdeRootPane() {
     return new IdeRootPane(myFrame, this, this);
   }
 
@@ -234,14 +228,12 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     });
   }
 
-  @NotNull
-  protected CloseProjectWindowHelper createCloseProjectWindowHelper() {
+  protected @NotNull CloseProjectWindowHelper createCloseProjectWindowHelper() {
     return new CloseProjectWindowHelper();
   }
 
-  @Nullable
   @Override
-  public IdeStatusBarImpl getStatusBar() {
+  public @Nullable IdeStatusBarImpl getStatusBar() {
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
@@ -259,44 +251,57 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Override
-  public void setFileTitle(@Nullable String fileTitle, @Nullable File file) {
+  public void setFileTitle(@Nullable String fileTitle, @Nullable Path file) {
     myFileTitle = fileTitle;
     myCurrentFile = file;
     updateTitle();
   }
 
   @Override
-  @Nullable
-  public IdeRootPaneNorthExtension getNorthExtension(String key) {
+  public @Nullable IdeRootPaneNorthExtension getNorthExtension(String key) {
     return myRootPane.findByName(key);
   }
 
   private void updateTitle() {
-    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile);
+    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile, myTitleInfoExtensions);
   }
 
-  public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
+  public static @Nullable
+  String getSuperUserSuffix() {
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "Administrator" : "ROOT";
   }
 
-  public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
-    if (ourUpdatingTitle) return;
+  private List<TitleInfoProvider> myTitleInfoExtensions = null;
+
+  public static void updateTitle(@NotNull JFrame frame,
+                                 @Nullable String title,
+                                 @Nullable String fileTitle,
+                                 @Nullable Path currentFile,
+                                 @Nullable List<TitleInfoProvider> extensions) {
+    if (ourUpdatingTitle) {
+      return;
+    }
 
     try {
       ourUpdatingTitle = true;
 
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
-        frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+        File ioFile = currentFile != null ? currentFile.toFile() : null;
+        frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
 
       Builder builder = new Builder().append(title).append(fileTitle);
-      if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
+      if (extensions != null && !extensions.isEmpty()) {
+        for (TitleInfoProvider extension : extensions) {
+          if (extension.isActive()) {
+            String it = extension.getValue();
+            if (!it.isEmpty()) {
+              builder.append(it, " ");
+            }
+          }
+        }
       }
-      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
-      }
-      builder.append(getSuperUserSuffix(), " ");
+
       frame.setTitle(builder.toString());
     }
     finally {
@@ -319,7 +324,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     private final StringBuilder sb = new StringBuilder();
 
     Builder append(@Nullable String s) {
-      return append(s, " - ");
+      return append(s, " \u2013 ");
     }
 
     Builder append(@Nullable String s, String separator) {
@@ -330,10 +335,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       return this;
     }
 
-    boolean isEmpty() {
-      return sb.length() == 0;
-    }
-
     @Override
     public String toString() {
       return sb.toString();
@@ -341,7 +342,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       if (myProject != null) {
         return myProject.isInitialized() ? myProject : null;
@@ -378,6 +379,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     installDefaultProjectStatusBarWidgets(myProject);
+    initTitleInfoProviders(project);
     if (selfie != null) {
       StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
         selfie = null;
@@ -385,75 +387,16 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
   }
 
-  private final Set<String> widgetIds = new THashSet<>();
-
-  protected boolean addWidget(@NotNull Disposable disposable, @NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
-    if (!widgetIds.add(widget.ID())) {
-      LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
-      return false;
-    }
-
-    statusBar.doAddWidget(widget, anchor);
-
-    final String id = widget.ID();
-    Disposer.register(disposable, () -> {
-      widgetIds.remove(id);
-      statusBar.removeWidget(id);
+  protected void initTitleInfoProviders(@NotNull Project project) {
+    myTitleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
+      updateTitle();
+      return Unit.INSTANCE;
     });
-    return true;
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    addWidget(project, statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(project, statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-
-    LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
-    addWidget(project, statusBar, lineSeparatorPanel, StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
-    EncodingPanel encodingPanel = new EncodingPanel(project);
-    addWidget(project, statusBar, encodingPanel, StatusBar.Anchors.after(lineSeparatorPanel.ID()));
-
-    addWidget(project, statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
-    addWidget(project, statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
-
-    Map<StatusBarWidgetProvider, Disposable> providerToWidgetDisposable = new HashMap<>();
-    StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
-      @Override
-      public void extensionAdded(@NotNull StatusBarWidgetProvider widgetProvider, @NotNull PluginDescriptor pluginDescriptor) {
-        if (!widgetProvider.isCompatibleWith(ProjectFrameHelper.this)) {
-          return;
-        }
-
-        StatusBarWidget widget = widgetProvider.getWidget(project);
-        if (widget == null) {
-          return;
-        }
-
-        Disposable widgetDisposable = new Disposable() {
-          @Override
-          public void dispose() {
-            providerToWidgetDisposable.remove(widgetProvider);
-          }
-        };
-
-        if (addWidget(widgetDisposable, statusBar, widget, widgetProvider.getAnchor())) {
-          Disposer.register(project, widgetDisposable);
-          providerToWidgetDisposable.put(widgetProvider, widgetDisposable);
-        }
-        statusBar.repaint();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-        if (!provider.isCompatibleWith(ProjectFrameHelper.this)) {
-          return;
-        }
-
-        assert providerToWidgetDisposable.containsKey(provider);
-        Disposer.dispose(providerToWidgetDisposable.get(provider));
-        statusBar.repaint();
-      }
-    }, true, project);
+    project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
+    PopupHandler.installPopupHandler(Objects.requireNonNull(getStatusBar()), StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
   }
 
   @Override
@@ -487,25 +430,21 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myFrameDecorator = null;
   }
 
-  private static boolean isTemporaryDisposed(@Nullable JFrame frame) {
-    JRootPane rootPane = frame == null ? null : frame.getRootPane();
-    return rootPane != null && rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
+  static boolean isTemporaryDisposed(@Nullable JFrame frame) {
+    return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
-  @NotNull
-  public IdeFrameImpl getFrame() {
+  public @NotNull IdeFrameImpl getFrame() {
     return myFrame;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  IdeRootPane getRootPane() {
+  @Nullable IdeRootPane getRootPane() {
     return myRootPane;
   }
 
-  @NotNull
   @Override
-  public Rectangle suggestChildFrameBounds() {
+  public @NotNull Rectangle suggestChildFrameBounds() {
     Rectangle b = myFrame.getBounds();
     b.x += 100;
     b.width -= 200;
@@ -514,9 +453,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return b;
   }
 
-  @Nullable
   @Override
-  public final BalloonLayout getBalloonLayout() {
+  public final @Nullable BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
 
@@ -525,9 +463,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
   }
 
-  @NotNull
   @Override
-  public Promise<?> toggleFullScreen(boolean state) {
+  public @NotNull Promise<?> toggleFullScreen(boolean state) {
     if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
       return Promises.resolvedPromise();
     }

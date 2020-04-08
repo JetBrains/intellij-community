@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ProjectTopics;
@@ -423,12 +423,12 @@ public final class MvcModuleStructureSynchronizer {
         if (myProject.isDisposed()) return;
 
         for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensionList()) {
-          Class<? extends ToolWindowFactory> factoryClass = ep.getFactoryClass();
+          Class<? extends ToolWindowFactory> factoryClass = ep.getFactoryClass(ep.getPluginDescriptor());
           if (factoryClass == null || !MvcToolWindowDescriptor.class.isAssignableFrom(factoryClass)) {
             continue;
           }
 
-          MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
+          MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory(ep.getPluginDescriptor());
           String id = descriptor.getToolWindowId();
           boolean shouldShow = descriptor.value(myProject);
 

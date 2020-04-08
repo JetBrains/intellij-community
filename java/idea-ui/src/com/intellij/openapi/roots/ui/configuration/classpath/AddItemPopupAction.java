@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* @author nik
-*/
 abstract class AddItemPopupAction<ItemType> extends ChooseAndAddAction<ItemType> {
   private final String myTitle;
   private final Icon myIcon;

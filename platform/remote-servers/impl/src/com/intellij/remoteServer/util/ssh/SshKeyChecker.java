@@ -23,6 +23,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
@@ -233,7 +234,7 @@ public class SshKeyChecker {
       myServerConfiguration = serverConfiguration;
       myServerType = serverType;
 
-      label.setHyperlinkText("Upload Public SSH Key");
+      label.setHyperlinkText(CloudBundle.message("upload.public.ssh.key"));
       label.addHyperlinkListener(this);
       myLabel = label;
     }
@@ -249,7 +250,7 @@ public class SshKeyChecker {
         myServerConfigurable.apply();
       }
       catch (ConfigurationException e) {
-        Messages.showErrorDialog("Cannot upload SSH key: " + e.getMessage(), e.getTitle());
+        Messages.showErrorDialog(CloudBundle.message("dialog.message.cannot.upload.ssh.key.0", e.getMessage()), e.getTitle());
         return;
       }
 

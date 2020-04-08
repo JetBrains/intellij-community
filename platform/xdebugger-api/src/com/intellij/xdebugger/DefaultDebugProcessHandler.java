@@ -19,9 +19,6 @@ import com.intellij.execution.process.ProcessHandler;
 
 import java.io.OutputStream;
 
-/**
- * @author nik
- */
 public class DefaultDebugProcessHandler extends ProcessHandler {
   @Override
   protected void destroyProcessImpl() {

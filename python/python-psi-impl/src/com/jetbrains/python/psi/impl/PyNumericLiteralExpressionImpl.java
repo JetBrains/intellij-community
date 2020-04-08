@@ -87,6 +87,12 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
     return getNode().getElementType() == PyElementTypes.INTEGER_LITERAL_EXPRESSION;
   }
 
+  @Nullable
+  @Override
+  public String getIntegerLiteralSuffix() {
+    return isIntegerLiteral() ? StringUtil.nullize(retrieveSuffix(getText())) : null;
+  }
+
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
@@ -107,7 +113,7 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
 
   @Nullable
   private static BigInteger getBigIntegerValue(@NotNull String text) {
-    if (text.equals("0") || text.equalsIgnoreCase("0l")) {
+    if (text.equalsIgnoreCase("0" + retrieveSuffix(text))) {
       return BigInteger.ZERO;
     }
 
@@ -141,9 +147,18 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
 
   @NotNull
   private static String prepareLiteralForJava(@NotNull String text, int beginIndex) {
-    final int endIndex =
-      StringUtil.endsWithIgnoreCase(text, "l") || StringUtil.endsWithIgnoreCase(text, "j") ? text.length() - 1 : text.length();
-
+    int endIndex = text.length() - retrieveSuffix(text).length();
     return text.substring(beginIndex, endIndex).replaceAll("_", "");
+  }
+
+  @NotNull
+  private static String retrieveSuffix(@NotNull String text) {
+    int lastIndex = text.length();
+    while (lastIndex > 0) {
+      char last = text.charAt(lastIndex - 1);
+      if (last != 'u' && last != 'U' && last != 'l' && last != 'L' && last != 'j' && last != 'J') break;
+      --lastIndex;
+    }
+    return text.substring(lastIndex);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -15,7 +15,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class TestPackage extends TestObject {
@@ -250,7 +250,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getPackageName().trim().length() > 0
            ? ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName())
-           : ExecutionBundle.message("all.tests.scope.presentable.text");
+           : JUnitBundle.message("all.tests.scope.presentable.text");
   }
 
   @Override
@@ -264,7 +264,7 @@ public class TestPackage extends TestObject {
                                        PsiMethod testMethod,
                                        PsiPackage testPackage,
                                        PsiDirectory testDir) {
-    return testPackage != null && Comparing.equal(testPackage.getQualifiedName(), configuration.getPersistentData().getPackageName());
+    return testPackage != null && Objects.equals(testPackage.getQualifiedName(), configuration.getPersistentData().getPackageName());
   }
 
   @Override
@@ -273,7 +273,7 @@ public class TestPackage extends TestObject {
     final String packageName = getConfiguration().getPersistentData().getPackageName();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
     if (aPackage == null) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("package.does.not.exist.error.message", packageName));
+      throw new RuntimeConfigurationWarning(JUnitBundle.message("package.does.not.exist.error.message", packageName));
     }
     if (getSourceScope() == null) {
       getConfiguration().getConfigurationModule().checkForWarning();

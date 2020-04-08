@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -29,7 +30,7 @@ public class ExpandAllAction extends AnAction implements DumbAware {
   protected JTree myTree;
 
   public ExpandAllAction(JTree tree) {
-    super("Expand All", "", AllIcons.Actions.Expandall);
+    super(IdeBundle.messagePointer("action.ExpandAllAction.text.expand.all"), () -> "", AllIcons.Actions.Expandall);
     myTree = tree;
   }
 

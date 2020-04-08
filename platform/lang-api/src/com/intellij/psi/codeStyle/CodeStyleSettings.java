@@ -83,7 +83,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   public CodeStyleSettings(boolean loadExtensions) {
-    initTypeToName();
     initImportsByDefault();
 
     if (loadExtensions) {
@@ -105,25 +104,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
-  }
-
-  private void initTypeToName() {
-    initGeneralLocalVariable(PARAMETER_TYPE_TO_NAME);
-    initGeneralLocalVariable(LOCAL_VARIABLE_TYPE_TO_NAME);
-    PARAMETER_TYPE_TO_NAME.addPair("*Exception", "e");
-  }
-
-  private static void initGeneralLocalVariable(@NonNls TypeToNameMap map) {
-    map.addPair("int", "i");
-    map.addPair("byte", "b");
-    map.addPair("char", "c");
-    map.addPair("long", "l");
-    map.addPair("short", "i");
-    map.addPair("boolean", "b");
-    map.addPair("double", "v");
-    map.addPair("float", "v");
-    map.addPair("java.lang.Object", "o");
-    map.addPair("java.lang.String", "s");
   }
 
   public void setParentSettings(CodeStyleSettings parent) {
@@ -168,11 +148,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       for (final CustomCodeStyleSettings settings : from.getCustomSettingsValues()) {
         addCustomSettings(settings.copyWith(this));
       }
-
-      FIELD_TYPE_TO_NAME.copyFrom(from.FIELD_TYPE_TO_NAME);
-      STATIC_FIELD_TYPE_TO_NAME.copyFrom(from.STATIC_FIELD_TYPE_TO_NAME);
-      PARAMETER_TYPE_TO_NAME.copyFrom(from.PARAMETER_TYPE_TO_NAME);
-      LOCAL_VARIABLE_TYPE_TO_NAME.copyFrom(from.LOCAL_VARIABLE_TYPE_TO_NAME);
 
       PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(from.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
       IMPORT_LAYOUT_TABLE.copyFrom(from.IMPORT_LAYOUT_TABLE);
@@ -219,7 +194,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public String LINE_SEPARATOR;
 
   /**
-   * @return line separator. If choosen line separator is "System-dependent" method returns default separator for this OS.
+   * @return line separator. If the chosen line separator is "System-dependent", return default separator for this OS.
    */
   public String getLineSeparator() {
     return LINE_SEPARATOR != null ? LINE_SEPARATOR : ourSystemLineSeparator;
@@ -258,19 +233,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PREFER_LONGER_NAMES} */
   @Deprecated
   public boolean PREFER_LONGER_NAMES = true;
-
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#FIELD_TYPE_TO_NAME} */
-  @Deprecated
-  public final TypeToNameMap FIELD_TYPE_TO_NAME = new TypeToNameMap();
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#STATIC_FIELD_TYPE_TO_NAME} */
-  @Deprecated
-  public final TypeToNameMap STATIC_FIELD_TYPE_TO_NAME = new TypeToNameMap();
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#PARAMETER_TYPE_TO_NAME} */
-  @Deprecated
-  @NonNls public final TypeToNameMap PARAMETER_TYPE_TO_NAME = new TypeToNameMap();
-  /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#LOCAL_VARIABLE_TYPE_TO_NAME} */
-  @Deprecated
-  public final TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
 
 //----------------- 'final' modifier settings -------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_LOCALS} */
@@ -998,92 +960,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return getIndentOptions(fileType).USE_TAB_CHARACTER;
   }
 
-  public static class TypeToNameMap implements JDOMExternalizable {
-    private final List<String> myPatterns = new ArrayList<>();
-    private final List<String> myNames = new ArrayList<>();
-
-    public void addPair(String pattern, String name) {
-      myPatterns.add(pattern);
-      myNames.add(name);
-    }
-
-    public String nameByType(String type) {
-      for (int i = 0; i < myPatterns.size(); i++) {
-        String pattern = myPatterns.get(i);
-        if (StringUtil.startsWithChar(pattern, '*')) {
-          if (type.endsWith(pattern.substring(1))) {
-            return myNames.get(i);
-          }
-        }
-        else {
-          if (type.equals(pattern)) {
-            return myNames.get(i);
-          }
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public void readExternal(@NonNls Element element) throws InvalidDataException {
-      myPatterns.clear();
-      myNames.clear();
-      for (final Object o : element.getChildren("pair")) {
-        @NonNls Element e = (Element)o;
-
-        String pattern = e.getAttributeValue("type");
-        String name = e.getAttributeValue("name");
-        if (pattern == null || name == null) {
-          throw new InvalidDataException();
-        }
-        myPatterns.add(pattern);
-        myNames.add(name);
-
-      }
-    }
-
-    @Override
-    public void writeExternal(Element parentNode) throws WriteExternalException {
-      for (int i = 0; i < myPatterns.size(); i++) {
-        String pattern = myPatterns.get(i);
-        String name = myNames.get(i);
-        @NonNls Element element = new Element("pair");
-        parentNode.addContent(element);
-        element.setAttribute("type", pattern);
-        element.setAttribute("name", name);
-      }
-    }
-
-    public void copyFrom(TypeToNameMap from) {
-      assert from != this;
-      myPatterns.clear();
-      myPatterns.addAll(from.myPatterns);
-      myNames.clear();
-      myNames.addAll(from.myNames);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other instanceof TypeToNameMap) {
-        TypeToNameMap otherMap = (TypeToNameMap)other;
-        return myPatterns.equals(otherMap.myPatterns) && myNames.equals(otherMap.myNames);
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      int code = 0;
-      for (String myPattern : myPatterns) {
-        code += myPattern.hashCode();
-      }
-      for (String myName : myNames) {
-        code += myName.hashCode();
-      }
-      return code;
-    }
-  }
-
   void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
     FileType registered = findRegisteredFileType(fileType);
     if (registered == null || registered instanceof TempFileType) {
@@ -1181,7 +1057,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
 
     @Override
-    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
       return null;
     }
   }
@@ -1421,5 +1297,20 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @ApiStatus.Internal
   public void registerSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
     myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
+  }
+
+  @ApiStatus.Internal
+  public void removeSettings(@NotNull CodeStyleSettingsProvider provider) {
+    CustomCodeStyleSettings customSettings = provider.createCustomSettings(this);
+    if (customSettings != null) {
+      synchronized (myCustomSettings) {
+        myCustomSettings.remove(customSettings.getClass());
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void registerSettings(@NotNull CodeStyleSettingsProvider provider) {
+    addCustomSettings(provider.createCustomSettings(this));
   }
 }

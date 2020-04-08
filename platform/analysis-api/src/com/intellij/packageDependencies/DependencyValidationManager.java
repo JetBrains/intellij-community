@@ -43,14 +43,11 @@ public abstract class DependencyValidationManager extends NamedScopesHolder {
   @Nullable
   public abstract DependencyRule getViolatorDependencyRule(@NotNull PsiFile from, @NotNull PsiFile to);
 
-  @NotNull
-  public abstract DependencyRule[] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to);
+  public abstract DependencyRule @NotNull [] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to);
 
-  @NotNull
-  public abstract DependencyRule[] getApplicableRules(@NotNull PsiFile file);
+  public abstract DependencyRule @NotNull [] getApplicableRules(@NotNull PsiFile file);
 
-  @NotNull
-  public abstract DependencyRule[] getAllRules();
+  public abstract DependencyRule @NotNull [] getAllRules();
 
   public abstract void removeAllRules();
 

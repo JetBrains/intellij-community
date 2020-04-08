@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ChooseAndAddAction<ItemType> extends ClasspathPanelAction {
   protected ChooseAndAddAction(ClasspathPanel classpathPanel) {
     super(classpathPanel);

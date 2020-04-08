@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -21,10 +21,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -322,8 +319,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  @NotNull
-  public EditorWindow[] getWindows() {
+  public EditorWindow @NotNull [] getWindows() {
     return new EditorWindow[0];
   }
 
@@ -348,22 +344,19 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  @NotNull
-  public FileEditor[] getEditors(@NotNull VirtualFile file) {
+  public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
     FileEditor e = getSelectedEditor(file);
     if (e == null) return new FileEditor[0];
     return new FileEditor[] {e};
   }
 
-  @NotNull
   @Override
-  public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
+  public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
     return getEditors(file);
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
+  public VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
   }
 
@@ -396,14 +389,12 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSelectedFiles() {
+  public VirtualFile @NotNull [] getSelectedFiles() {
     return myActiveFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{myActiveFile};
   }
 
   @Override
-  @NotNull
-  public FileEditor[] getSelectedEditors() {
+  public FileEditor @NotNull [] getSelectedEditors() {
     return myActiveFile == null ? new FileEditor[0] : getEditors(myActiveFile);
   }
 
@@ -418,8 +409,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getOpenFiles() {
+  public VirtualFile @NotNull [] getOpenFiles() {
     return VfsUtilCore.toVirtualFileArray(myVirtualFile2Editor.keySet());
   }
 
@@ -428,8 +418,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  @NotNull
-  public FileEditor[] getAllEditors() {
+  public FileEditor @NotNull [] getAllEditors() {
     FileEditor[] result = new FileEditor[myVirtualFile2Editor.size()];
     int i = 0;
     for (Map.Entry<VirtualFile, Editor> entry : myVirtualFile2Editor.entrySet()) {
@@ -458,18 +447,26 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @NotNull
   private Editor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor) {
-    final VirtualFile file = descriptor.getFile();
+    VirtualFile file = descriptor.getFile();
     Editor editor = myVirtualFile2Editor.get(file);
 
     if (editor == null) {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       LOG.assertTrue(document != null, file);
-      editor = EditorFactory.getInstance().createEditor(document, myProject);
-      final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, file);
-      Language language = TextEditorImpl.getDocumentLanguage(editor);
-      editor.getSettings().setLanguageSupplier(() -> language);
-      ((EditorEx) editor).setHighlighter(highlighter);
-      ((EditorEx) editor).setFile(file);
+      EditorFactory editorFactory = EditorFactory.getInstance();
+      editor = editorFactory.createEditor(document, myProject);
+      try {
+        EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, file);
+        Language language = TextEditorImpl.getDocumentLanguage(editor);
+        editor.getSettings().setLanguageSupplier(() -> language);
+        EditorEx editorEx = (EditorEx)editor;
+        editorEx.setHighlighter(highlighter);
+        editorEx.setFile(file);
+      }
+      catch (Throwable e) {
+        editorFactory.releaseEditor(editor);
+        throw e;
+      }
 
       myVirtualFile2Editor.put(file, editor);
     }
@@ -479,18 +476,6 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     myActiveFile = file;
 
     return editor;
-  }
-
-  @Override
-  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
-  }
-
-  @Override
-  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
-  }
-
-  @Override
-  public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
   }
 
   @Override

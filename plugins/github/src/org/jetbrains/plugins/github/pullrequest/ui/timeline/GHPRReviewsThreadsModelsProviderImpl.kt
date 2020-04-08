@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.util.handleOnEdt
 
-class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GithubPullRequestDataProvider,
+class GHPRReviewsThreadsModelsProviderImpl(private val reviewDataProvider: GHPRReviewDataProvider,
                                            private val parentDisposable: Disposable)
   : GHPRReviewsThreadsModelsProvider {
 
@@ -16,10 +16,8 @@ class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GithubPullR
   private var threadsUpdateRequired = false
 
   init {
-    dataProvider.addRequestsChangesListener(parentDisposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
-      override fun reviewThreadsRequestChanged() {
-        if (threadsModelsByReview.isNotEmpty()) requestUpdateReviewsThreads()
-      }
+    reviewDataProvider.addReviewThreadsListener(parentDisposable, {
+      if (threadsModelsByReview.isNotEmpty()) requestUpdateReviewsThreads()
     })
   }
 
@@ -28,7 +26,9 @@ class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GithubPullR
       val loadedThreads = threadsByReview[reviewId]
       threadsUpdateRequired = true
       if (loadedThreads == null && !loading) requestUpdateReviewsThreads()
-      GHPRReviewThreadsModel(loadedThreads.orEmpty())
+      GHPRReviewThreadsModel().apply {
+        update(loadedThreads.orEmpty())
+      }
     }
   }
 
@@ -42,7 +42,7 @@ class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GithubPullR
   private fun requestUpdateReviewsThreads() {
     loading = true
     threadsUpdateRequired = false
-    dataProvider.reviewThreadsRequest.handleOnEdt(parentDisposable) { threads, _ ->
+    reviewDataProvider.loadReviewThreads().handleOnEdt(parentDisposable) { threads, _ ->
       if (threads != null) {
         updateReviewsThreads(threads)
         loading = false

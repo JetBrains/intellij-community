@@ -30,8 +30,7 @@ public abstract class PsiReferenceService {
   @NotNull
   public abstract List<PsiReference> getReferences(@NotNull final PsiElement element, @NotNull final Hints hints);
 
-  @NotNull
-  public PsiReference[] getContributedReferences(@NotNull final PsiElement element) {
+  public PsiReference @NotNull [] getContributedReferences(@NotNull final PsiElement element) {
     final List<PsiReference> list = getReferences(element, Hints.NO_HINTS);
     return list.toArray(PsiReference.EMPTY_ARRAY);
   }

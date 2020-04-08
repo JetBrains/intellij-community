@@ -6,8 +6,10 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +78,20 @@ public class DfaBinOpValue extends DfaValue {
       }
     }
     return myLeft + delimiter + myRight;
+  }
+
+  @NotNull
+  public DfaValue tryReduceOnCast(DfaMemoryState state, PsiPrimitiveType type) {
+    if (!TypeConversionUtil.isIntegralNumberType(type)) return this;
+    if ((myOp == BinOp.PLUS || myOp == BinOp.MINUS) &&
+        DfLongType.extractRange(state.getDfType(myRight)).castTo(type).equals(LongRangeSet.point(0))) {
+      return myLeft;
+    }
+    if (myOp == BinOp.PLUS &&
+        DfLongType.extractRange(state.getDfType(myLeft)).castTo(type).equals(LongRangeSet.point(0))) {
+      return myRight;
+    }
+    return this;
   }
 
   private static long extractLong(DfaTypeValue right) {
@@ -165,6 +181,7 @@ public class DfaBinOpValue extends DfaValue {
       }
       if (left instanceof DfaBinOpValue) {
         DfaBinOpValue sumValue = (DfaBinOpValue)left;
+        if (sumValue.getOperation() != BinOp.PLUS && sumValue.getOperation() != BinOp.MINUS) return null;
         if (rightConst != null) {
           if (sumValue.getRight() instanceof DfaTypeValue) {
             long value1 = extractLong((DfaTypeValue)sumValue.getRight());

@@ -22,7 +22,7 @@ public abstract class SingleTargetReference implements SymbolReference {
   @NotNull
   public final Collection<? extends SymbolResolveResult> resolveReference() {
     Symbol target = resolveSingleTarget();
-    return target == null ? Collections.emptyList() : Collections.singletonList(() -> target);
+    return target == null ? Collections.emptyList() : Collections.singletonList(SymbolResolveResult.fromSymbol(target));
   }
 
   /**

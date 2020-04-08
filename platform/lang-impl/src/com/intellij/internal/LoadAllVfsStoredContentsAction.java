@@ -28,14 +28,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAware {
+  LoadAllVfsStoredContentsAction() {
+    super(InternalActionsBundle.messagePointer("action.AnAction.text.load.all.virtual.files.content"),
+          InternalActionsBundle.messagePointer("action.AnAction.description.load.all.virtual.files.content"), null);
+  }
   private static final Logger LOG = Logger.getInstance(LoadAllVfsStoredContentsAction.class);
 
   private final AtomicInteger count = new AtomicInteger();
   private final AtomicLong totalSize = new AtomicLong();
-
-  public LoadAllVfsStoredContentsAction() {
-    super("Load All VirtualFiles Content", "Measure virtualFile.contentsToByteArray() for all virtual files stored in the VFS", null);
-  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

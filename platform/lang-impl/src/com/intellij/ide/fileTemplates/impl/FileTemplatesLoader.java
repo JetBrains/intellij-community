@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -29,8 +29,6 @@ import java.util.*;
 
 /**
  * Serves as a container for all existing template manager types and loads corresponding templates upon creation (at construction time).
- *
- * @author Rustam Vishnyakov
  */
 class FileTemplatesLoader {
   private static final Logger LOG = Logger.getInstance(FileTemplatesLoader.class);
@@ -57,9 +55,14 @@ class FileTemplatesLoader {
   private final URL myDefaultIncludeDescription;
 
   FileTemplatesLoader(@Nullable Project project) {
-    Path configDir = Paths.get(project == null || project.isDefault()
-                               ? PathManager.getConfigPath()
-                               : UriUtil.trimTrailingSlashes(Objects.requireNonNull(ProjectKt.getStateStore(project).getDirectoryStorePath(true))), TEMPLATES_DIR);
+    Path configDir;
+    if (project == null || project.isDefault()) {
+      configDir = PathManager.getConfigDir().resolve(TEMPLATES_DIR);
+    }
+    else {
+      String storeDirPath = Objects.requireNonNull(ProjectKt.getStateStore(project).getDirectoryStorePath(true));
+      configDir = Paths.get(storeDirPath, TEMPLATES_DIR);
+    }
 
     myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, configDir);
     myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, configDir.resolve(INTERNAL_DIR), true);
@@ -90,8 +93,7 @@ class FileTemplatesLoader {
     }
   }
 
-  @NotNull
-  FTManager[] getAllManagers() {
+  FTManager @NotNull [] getAllManagers() {
     return myAllManagers;
   }
 
@@ -128,14 +130,13 @@ class FileTemplatesLoader {
     return myDefaultIncludeDescription;
   }
 
-  @NotNull
-  private static FileTemplateLoadResult loadDefaultTemplates(@NotNull List<String> prefixes) {
+  private static @NotNull FileTemplateLoadResult loadDefaultTemplates(@NotNull List<String> prefixes) {
     FileTemplateLoadResult result = new FileTemplateLoadResult(MultiMap.createSmart());
     Set<URL> processedUrls = new THashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
     IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (PluginDescriptor plugin : plugins) {
-      if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
+      if (plugin instanceof IdeaPluginDescriptorImpl && plugin.isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
         if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty() ||
             !processedLoaders.add(loader)) {
@@ -213,8 +214,7 @@ class FileTemplatesLoader {
   }
 
   //Example: templateName="NewClass"   templateExtension="java"
-  @Nullable
-  private static String getDescriptionPath(@NotNull String pathPrefix,
+  private static @Nullable String getDescriptionPath(@NotNull String pathPrefix,
                                            @NotNull String templateName,
                                            @NotNull String templateExtension,
                                            @NotNull Set<String> descriptionPaths) {

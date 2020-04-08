@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 @State(name = "ExternalDependencies", storages = @Storage("externalDependencies.xml"))
 public final class ExternalDependenciesManagerImpl extends ExternalDependenciesManager implements PersistentStateComponent<ExternalDependenciesManagerImpl.ExternalDependenciesState> {
   private final Project myProject;
@@ -57,7 +54,7 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
   public void setAllDependencies(@NotNull List<? extends ProjectExternalDependency> dependencies) {
     myDependencies.clear();
     myDependencies.addAll(dependencies);
-    Collections.sort(myDependencies, DEPENDENCY_COMPARATOR);
+    myDependencies.sort(DEPENDENCY_COMPARATOR);
   }
 
   @NotNull

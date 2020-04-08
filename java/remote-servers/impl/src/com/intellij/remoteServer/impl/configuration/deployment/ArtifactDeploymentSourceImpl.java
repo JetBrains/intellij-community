@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.File;
 
-/**
- * @author nik
- */
 public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
   private final ArtifactPointer myPointer;
 

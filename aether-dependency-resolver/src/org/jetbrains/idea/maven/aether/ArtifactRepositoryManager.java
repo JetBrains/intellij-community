@@ -130,7 +130,7 @@ public class ArtifactRepositoryManager {
    * Returns list of classes corresponding to classpath entries for this this module.
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static List<Class> getClassesFromDependencies() {
+  public static List<Class<?>> getClassesFromDependencies() {
     return Arrays.asList(
       org.jetbrains.idea.maven.aether.ArtifactRepositoryManager.class, //this module
       org.apache.maven.repository.internal.VersionsMetadataGeneratorFactory.class, //maven-aether-provider

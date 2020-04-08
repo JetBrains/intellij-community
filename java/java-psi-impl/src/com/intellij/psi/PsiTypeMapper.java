@@ -23,7 +23,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitArrayType(final PsiArrayType type) {
+  public PsiType visitArrayType(@NotNull final PsiArrayType type) {
     PsiType componentType = type.getComponentType();
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
@@ -32,7 +32,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitEllipsisType(final PsiEllipsisType type) {
+  public PsiType visitEllipsisType(@NotNull final PsiEllipsisType type) {
     PsiType componentType = type.getComponentType();
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
@@ -41,36 +41,36 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitTypeVariable(final PsiTypeVariable var) {
+  public PsiType visitTypeVariable(@NotNull final PsiTypeVariable var) {
     return var;
   }
 
   @Override
-  public PsiType visitBottom(final Bottom bottom) {
+  public PsiType visitBottom(@NotNull final Bottom bottom) {
     return bottom;
   }
 
   @Override
-  public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType type) {
+  public PsiType visitCapturedWildcardType(@NotNull final PsiCapturedWildcardType type) {
     return type;
   }
 
   @Override
-  public abstract PsiType visitClassType(final PsiClassType classType);
+  public abstract PsiType visitClassType(@NotNull final PsiClassType classType);
 
   @Override
-  public PsiType visitPrimitiveType(final PsiPrimitiveType primitiveType) {
+  public PsiType visitPrimitiveType(@NotNull final PsiPrimitiveType primitiveType) {
     return primitiveType;
   }
 
   @Override
-  public PsiType visitType(final PsiType type) {
+  public PsiType visitType(@NotNull final PsiType type) {
     LOG.error(type);
     return null;
   }
 
   @Override
-  public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
+  public PsiType visitWildcardType(@NotNull final PsiWildcardType wildcardType) {
     PsiType bound = wildcardType.getBound();
     final PsiManager manager = wildcardType.getManager();
     if (bound == null) return PsiWildcardType.createUnbounded(manager);
@@ -82,7 +82,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
 
   @Nullable
   @Override
-  public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
+  public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
     final List<PsiType> substituted = new SmartList<>();
     for (PsiType component : intersectionType.getConjuncts()) {
       PsiType mapped = mapType(component);
@@ -94,7 +94,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+  public PsiType visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
     final List<PsiType> substituted = new SmartList<>();
     for (PsiType component : disjunctionType.getDisjunctions()) {
       PsiType mapped = mapType(component);
@@ -106,7 +106,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitDiamondType(PsiDiamondType diamondType) {
+  public PsiType visitDiamondType(@NotNull PsiDiamondType diamondType) {
     return diamondType;
   }
 

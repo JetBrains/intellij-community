@@ -30,8 +30,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
   @NotNull
   @Override
   public List<NamedScope> getCustomScopes() {
-
-    if (myProject.isDefault() || !ProjectLevelVcsManager.getInstance(myProject).hasAnyMappings()) return Collections.emptyList();
+    if (myProject.isDefault() || !ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return Collections.emptyList();
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
     final List<NamedScope> result = new ArrayList<>();
@@ -51,7 +50,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
   public NamedScope getCustomScope(@NotNull String name) {
     if (myProject.isDefault()) return null;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    if (ChangeListScope.NAME.equals(name)) {
+    if (ChangeListScope.ALL_CHANGED_FILES_SCOPE_NAME.equals(name)) {
       return new ChangeListScope(changeListManager);
     }
     final LocalChangeList changeList = changeListManager.findChangeList(name);

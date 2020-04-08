@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +16,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,9 @@ import javax.swing.*;
 import java.util.*;
 
 /**
- * @see FileChooserDescriptorFactory
+ * Allows customizing {@link FileChooser} dialog options.
+ * <p>
+ * Please consider using common variants provided by {@link FileChooserDescriptorFactory}.
  */
 public class FileChooserDescriptor implements Cloneable {
   private final boolean myChooseFiles;
@@ -47,14 +49,14 @@ public class FileChooserDescriptor implements Cloneable {
   private final Map<String, Object> myUserData = new THashMap<>();
 
   /**
-   * Creates new instance. Use methods from {@link FileChooserDescriptorFactory} for most used descriptors.
+   * Use {@link FileChooserDescriptorFactory} for most used descriptors.
    *
    * @param chooseFiles       controls whether files can be chosen
    * @param chooseFolders     controls whether folders can be chosen
    * @param chooseJars        controls whether .jar files can be chosen
    * @param chooseJarsAsFiles controls whether .jar files will be returned as files or as folders
    * @param chooseJarContents controls whether .jar file contents can be chosen
-   * @param chooseMultiple    controls how many files can be chosen
+   * @param chooseMultiple    controls whether multiple files can be chosen
    */
   public FileChooserDescriptor(boolean chooseFiles,
                                boolean chooseFolders,
@@ -109,11 +111,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myTitle;
   }
 
-  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     withTitle(title);
   }
 
-  public FileChooserDescriptor withTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public FileChooserDescriptor withTitle(@NlsContexts.DialogTitle String title) {
     myTitle = title;
     return this;
   }
@@ -122,11 +124,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myDescription;
   }
 
-  public void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
+  public void setDescription(@NlsContexts.Label String description) {
     withDescription(description);
   }
 
-  public FileChooserDescriptor withDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
+  public FileChooserDescriptor withDescription(@NlsContexts.Label String description) {
     myDescription = description;
     return this;
   }
@@ -148,7 +150,7 @@ public class FileChooserDescriptor implements Cloneable {
     return Collections.unmodifiableList(myRoots);
   }
 
-  public void setRoots(@NotNull VirtualFile... roots) {
+  public void setRoots(VirtualFile @NotNull ... roots) {
     withRoots(roots);
   }
 
@@ -277,12 +279,13 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   /**
-   * the method is called upon pressing Ok in the FileChooserDialog
-   * Override the method in order to customize validation of user input
-   * @param files - selected files to be checked
-   * @throws Exception if the the files cannot be accepted
+   * Called upon <em>OK</em> action before closing dialog.
+   * Override to customize validation of user input.
+   *
+   * @param files selected files to be checked
+   * @throws Exception if selected files cannot be accepted, exception message will be shown in UI.
    */
-  public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
+  public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
   }
 
   public boolean isForcedToUseIdeaFileChooser() {

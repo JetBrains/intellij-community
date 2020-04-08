@@ -34,9 +34,8 @@ public class CorePsiPackageImplementationHelper extends PsiPackageImplementation
     return globalSearchScope;
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] occursInPackagePrefixes(@NotNull PsiPackage psiPackage) {
+  public VirtualFile @NotNull [] occursInPackagePrefixes(@NotNull PsiPackage psiPackage) {
     return VirtualFile.EMPTY_ARRAY;
   }
 
@@ -53,9 +52,8 @@ public class CorePsiPackageImplementationHelper extends PsiPackageImplementation
     return false;
   }
 
-  @NotNull
   @Override
-  public Object[] getDirectoryCachedValueDependencies(@NotNull PsiPackage cachedValueProvider) {
+  public Object @NotNull [] getDirectoryCachedValueDependencies(@NotNull PsiPackage cachedValueProvider) {
     return EMPTY_DEPENDENCY;
   }
 }

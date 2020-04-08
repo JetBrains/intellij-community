@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -7,19 +7,20 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
@@ -29,20 +30,23 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.task.ProjectTaskManager
+import com.intellij.util.Restarter
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
 import java.util.*
 import kotlin.collections.LinkedHashSet
 
-open class UpdateIdeFromSourcesAction
+private val LOG = logger<UpdateIdeFromSourcesAction>()
+
+private val notificationGroup by lazy {
+  NotificationGroup(displayId = "Update from Sources", displayType = NotificationDisplayType.STICKY_BALLOON)
+}
+
+internal open class UpdateIdeFromSourcesAction
  @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) "Update IDE from Sources Settings..." else "Update IDE from Sources...",
-             "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null) {
-
-  private val LOG: Logger = Logger.getInstance(UpdateIdeFromSourcesAction::class.java)
-
-
+             "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
@@ -74,24 +78,30 @@ open class UpdateIdeFromSourcesAction
       return error("The build scripts is out-of-date, please update to the latest 'master' sources.")
     }
 
-    val bundledPluginDirsToSkip = if (!state.buildDisabledPlugins) {
-      val pluginDirectoriesToSkip = LinkedHashSet<String>(state.pluginDirectoriesForDisabledPlugins)
-      val allPlugins = PluginManagerCore.getPlugins()
-      pluginDirectoriesToSkip.removeAll(allPlugins.filter { it.isBundled && it.isEnabled }.map { it.path }.filter { it.isDirectory }.map { it.name })
-      allPlugins.filter { it.isBundled && !it.isEnabled }.map { it.path }.filter { it.isDirectory }.mapTo(pluginDirectoriesToSkip) { it.name }
+    val bundledPluginDirsToSkip: List<String>
+    val nonBundledPluginDirsToInclude: List<String>
+    val buildEnabledPluginsOnly = !state.buildDisabledPlugins
+    if (buildEnabledPluginsOnly) {
+      val pluginDirectoriesToSkip = LinkedHashSet(state.pluginDirectoriesForDisabledPlugins)
+      pluginDirectoriesToSkip.removeAll(PluginManagerCore.getLoadedPlugins().asSequence().filter { it.isBundled }.map { it.path }.filter { it.isDirectory }.map { it.name })
+      PluginManagerCore.getPlugins().filter { it.isBundled && !it.isEnabled }.map { it.path }.filter { it.isDirectory }.mapTo(pluginDirectoriesToSkip) { it.name }
       val list = pluginDirectoriesToSkip.toMutableList()
       state.pluginDirectoriesForDisabledPlugins = list
-      list
+      bundledPluginDirsToSkip = list
+      nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins().filter {
+        !it.isBundled && it.isEnabled && it.version != null && it.version.contains("SNAPSHOT")
+      }.map { it.path }.filter { it.isDirectory }.map { it.name }
     }
     else {
-      emptyList<String>()
+      bundledPluginDirsToSkip = emptyList()
+      nonBundledPluginDirsToInclude = emptyList()
     }
 
     val deployDir = "$devIdeaHome/out/deploy"
     val distRelativePath = "dist"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
     val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
-                                            bundledPluginDirsToSkip, state.buildDisabledPlugins) ?: return
+                                            buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
     ProjectTaskManager.getInstance(project)
       .buildAllModules()
       .onSuccess {
@@ -147,8 +157,9 @@ open class UpdateIdeFromSourcesAction
 
             if (event.exitCode != 0) {
               val errorText = errorLines.joinToString("\n")
-              Notification("Update from Sources", "Update from Sources Failed", "Build script finished with ${event.exitCode}: $errorText",
-                           NotificationType.ERROR).notify(project)
+              notificationGroup.createNotification(title = "Update from Sources Failed",
+                                                   content = "Build script finished with ${event.exitCode}: $errorText",
+                                                   type = NotificationType.ERROR).notify(project)
               return
             }
 
@@ -162,11 +173,9 @@ open class UpdateIdeFromSourcesAction
               restartWithCommand(command)
             }
             else {
-              val notification = Notification("Update from Sources", "Update from Sources", "New installation is prepared from sources. <a href=\"#\">Restart</a>?",
-                                              NotificationType.INFORMATION) { _, _ ->
-                restartWithCommand(command)
-              }
-              Notifications.Bus.notify(notification, project)
+              notificationGroup.createNotification(title = "Update from Sources",
+                                                   content = "New installation is prepared from sources. <a href=\"#\">Restart</a>?",
+                                                   listener = NotificationListener { _, _ -> restartWithCommand(command) }).notify(project)
             }
           }
         })
@@ -227,26 +236,28 @@ open class UpdateIdeFromSourcesAction
          removal of the script file is performed in separate process to avoid errors while executing the script */
       FileUtil.writeToFile(updateScript, """
         @echo off
-        SET count=30
-        SET time_to_wait=500
+        SET count=20
+        SET time_to_wait=1
         :DELETE_DIR
         RMDIR /Q /S "$workHomePath"
         IF EXIST "$workHomePath" (
           IF %count% GEQ 0 (
-            ECHO "$workHomePath" still exists, wait %time_to_wait%ms and try delete again
-            PING 127.0.0.1 -n 2 -w %time_to_wait% >NUL
+            ECHO "$workHomePath" still exists, wait %time_to_wait%s and try delete again
+            SET /A time_to_wait=%time_to_wait%+1
+            PING 127.0.0.1 -n %time_to_wait% >NUL
             SET /A count=%count%-1
-            SET /A time_to_wait=%time_to_wait%+1000
             ECHO %count% attempts remain
             GOTO DELETE_DIR
-          ) 
+          )
+          ECHO Failed to delete "$workHomePath", IDE wasn't updated. You may delete it manually and copy files from "${File(builtDistPath).absolutePath}" by hand  
+          GOTO CLEANUP_AND_EXIT 
         )
         
         XCOPY "${File(builtDistPath).absolutePath}" "$workHomePath"\ /Q /E /Y
+        :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
       """.trimIndent())
-      // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
-      return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
+      return arrayOf("cmd", "/c", updateScript.absolutePath, ">${restartLogFile.absolutePath}", "2>&1")
     }
 
     val command = arrayOf(
@@ -258,16 +269,18 @@ open class UpdateIdeFromSourcesAction
   }
 
   private fun restartWithCommand(command: Array<String>) {
+    Restarter.doNotLockInstallFolderOnRestart()
     (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
   }
 
   private fun createScriptJavaParameters(devIdeaHome: String,
                                          project: Project,
                                          deployDir: String,
-                                         distRelativePath: String,
+                                         @Suppress("SameParameterValue") distRelativePath: String,
                                          scriptFile: File,
+                                         buildEnabledPluginsOnly: Boolean,
                                          bundledPluginDirsToSkip: List<String>,
-                                         buildNonBundledPlugins: Boolean): JavaParameters? {
+                                         nonBundledPluginDirsToInclude: List<String>): JavaParameters? {
     val sdk = ProjectRootManager.getInstance(project).projectSdk
     if (sdk == null) {
       LOG.warn("Project SDK is not defined")
@@ -308,10 +321,16 @@ open class UpdateIdeFromSourcesAction
     params.programParametersList.add("update-from-sources")
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
     params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk-")
-    if (bundledPluginDirsToSkip.isNotEmpty()) {
-      params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
+
+    if (buildEnabledPluginsOnly) {
+      if (bundledPluginDirsToSkip.isNotEmpty()) {
+        params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
+      }
+      val nonBundled = if (nonBundledPluginDirsToInclude.isNotEmpty()) nonBundledPluginDirsToInclude.joinToString(",") else "none"
+      params.vmParametersList.add("-Dintellij.build.non.bundled.plugin.dirs.to.include=$nonBundled")
     }
-    if (buildNonBundledPlugins) {
+
+    if (!buildEnabledPluginsOnly || nonBundledPluginDirsToInclude.isNotEmpty()) {
       params.vmParametersList.add("-Dintellij.build.local.plugins.repository=true")
     }
     params.vmParametersList.add("-Dintellij.build.output.root=$deployDir")
@@ -320,12 +339,21 @@ open class UpdateIdeFromSourcesAction
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = PsiUtil.isIdeaProject(e.project)
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null && isIdeaProject(project)
+  }
+
+  private fun isIdeaProject(project: Project) = try {
+    DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, RuntimeException> { PsiUtil.isIdeaProject(project) }
+  }
+  catch (e: IndexNotReadyException) {
+    false
   }
 }
 
 private const val includeBinAndRuntimeProperty = "intellij.build.generate.bin.and.runtime.for.unpacked.dist"
-class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
+
+internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
 
 private val safeToDeleteFilesInHome = setOf(
   "bin", "help", "jre", "jre64", "jbr", "lib", "license", "plugins", "redist", "MacOS", "Resources",

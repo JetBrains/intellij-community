@@ -21,6 +21,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -29,14 +30,15 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompareFilesAction extends BaseShowDiffAction {
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFilesAction.DiffRequest");
 
-  public static final String LAST_USED_FILE_KEY = "two.files.diff.last.used.file";
-  public static final String LAST_USED_FOLDER_KEY = "two.files.diff.last.used.folder";
+  @NonNls public static final String LAST_USED_FILE_KEY = "two.files.diff.last.used.file";
+  @NonNls public static final String LAST_USED_FOLDER_KEY = "two.files.diff.last.used.folder";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -44,27 +46,27 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
-    String text = "Compare Files";
+    String text = ActionsBundle.message("action.compare.files.text");
     if (files != null && files.length == 1) {
-      text = "Compare With...";
+      text = ActionsBundle.message("action.compare.with.text");
     }
     else if (files != null && files.length == 2) {
       Type type1 = getType(files[0]);
       Type type2 = getType(files[1]);
 
       if (type1 != type2) {
-        text = "Compare";
+        text = ActionsBundle.message("action.compare.text");
       }
       else {
         switch (type1) {
           case FILE:
-            text = "Compare Files";
+            text = ActionsBundle.message("action.compare.files.text");
             break;
           case DIRECTORY:
-            text = "Compare Directories";
+            text = ActionsBundle.message("action.CompareDirs.text");
             break;
           case ARCHIVE:
-            text = "Compare Archives";
+            text = ActionsBundle.message("action.compare.archives.text");
             break;
         }
       }

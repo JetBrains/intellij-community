@@ -31,8 +31,7 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     Object value = null;
 
     if (element instanceof GrLiteral) {

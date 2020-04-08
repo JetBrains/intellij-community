@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReplaceConcatenationWithFormatStringIntention extends Intention {
 
@@ -106,12 +106,14 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
                                          String formatString,
                                          boolean insertNewline,
                                          StringBuilder newExpression) {
-    boolean textBlocks = Arrays.stream(expression.getOperands())
-      .anyMatch(operand -> operand instanceof PsiLiteralExpressionImpl &&
-                           ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
+    final boolean textBlocks = Arrays.stream(expression.getOperands())
+      .anyMatch(operand -> operand instanceof PsiLiteralExpression && ((PsiLiteralExpression)operand).isTextBlock());
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
-      newExpression.append(PsiLiteralUtil.escapeTextBlockCharacters(formatString));
+      formatString = Arrays.stream(formatString.split("\n"))
+        .map(s -> PsiLiteralUtil.escapeTextBlockCharacters(s))
+        .collect(Collectors.joining("\n"));
+      newExpression.append(formatString);
       if (insertNewline) {
         newExpression.append('\n');
       }

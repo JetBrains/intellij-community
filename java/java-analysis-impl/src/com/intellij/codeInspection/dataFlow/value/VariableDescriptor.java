@@ -64,7 +64,7 @@ public interface VariableDescriptor {
     }
     PsiType type = getType(null);
     LongRangeSet range = LongRangeSet.fromPsiElement(getPsiElement());
-    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, getPsiElement()));
+    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, getPsiElement()));
     if (dfType instanceof DfIntegralType) {
       dfType = ((DfIntegralType)dfType).meetRange(range);
     }

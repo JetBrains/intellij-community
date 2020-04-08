@@ -36,7 +36,7 @@ public abstract class EditorFactory {
    * Creates a document from the specified text specified as an array of characters.
    */
   @NotNull
-  public abstract Document createDocument(@NotNull char[] text);
+  public abstract Document createDocument(char @NotNull [] text);
 
   /**
    * Creates an editor for the specified document. Must be invoked in EDT.
@@ -127,22 +127,19 @@ public abstract class EditorFactory {
    * @param project  the project with which editors should be associated, or null if any editors
    *                 for this document should be returned.
    */
-  @NotNull
-  public abstract Editor[] getEditors(@NotNull Document document, @Nullable Project project);
+  public abstract Editor @NotNull [] getEditors(@NotNull Document document, @Nullable Project project);
 
   /**
    * Returns the list of all editors for the specified document.
    */
-  @NotNull
-  public Editor[] getEditors(@NotNull Document document) {
+  public Editor @NotNull [] getEditors(@NotNull Document document) {
     return getEditors(document, null);
   }
 
   /**
    * Returns the list of all currently open editors.
    */
-  @NotNull
-  public abstract Editor[] getAllEditors();
+  public abstract Editor @NotNull [] getAllEditors();
 
   /**
    * Registers a listener for receiving notifications when editor instances are created

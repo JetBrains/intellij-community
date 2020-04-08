@@ -21,6 +21,8 @@
 
     <module.workingDirectoryProvider
         implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.util.environment.Environment"
+                        serviceImplementation="com.intellij.openapi.externalSystem.util.environment.SystemEnvironment"/>
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
@@ -30,6 +32,7 @@
     <editorFloatingToolbarProvider implementation="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
                     serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl"/>
+    <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalProjectsSettingsWatcher"/>
     <projectService serviceInterface="com.intellij.openapi.project.ExternalStorageConfigurationManager"
                     serviceImplementation="com.intellij.openapi.project.ExternalStorageConfigurationManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage"/>
@@ -44,6 +47,8 @@
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectSdkDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleSdkDataService"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.externalSystem.service.project.manage.ReprocessContentRootDataActivity"/>
 
@@ -57,7 +62,8 @@
         implementation="com.intellij.openapi.externalSystem.service.project.settings.EncodingConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.PackagePrefixConfigurationHandler"/>
-    <externalSystemConfigurationHandler implementation="com.intellij.profile.codeInspection.InspectionsProfileConfigurationHandler"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.openapi.externalSystem.service.project.settings.BuildArtifactsTaskImporter"/>
@@ -82,6 +88,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>
     <statistics.counterUsagesCollector groupId="build.tools.actions" version="1"/>
+    <notificationWhitelist groupIds="Gradle Import;Unindexed maven repositories gradle detection;Build sync orphan modules;Content root duplicates"/>
   </extensions>
 
 </idea-plugin>

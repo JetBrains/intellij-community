@@ -12,9 +12,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class AppEngineFacetConverterTest extends HeavyPlatformTestCase {
   public void testConvert() throws IOException {
     String testDataPath = "plugins/google-app-engine/testData/conversion/appEngineFacet/";

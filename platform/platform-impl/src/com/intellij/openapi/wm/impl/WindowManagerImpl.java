@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
@@ -12,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -30,6 +32,7 @@ import com.sun.jna.platform.WindowUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +40,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -139,21 +146,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
-
-    if (UIUtil.hasLeakingAppleListeners()) {
-      UIUtil.addAwtListener(event -> {
-        if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
-          if (((ContainerEvent)event).getChild() instanceof JViewport) {
-            UIUtil.removeLeakingAppleListeners();
-          }
-        }
-      }, AWTEvent.CONTAINER_EVENT_MASK, application);
-    }
   }
 
   @Override
-  @NotNull
-  public ProjectFrameHelper[] getAllProjectFrames() {
+  public ProjectFrameHelper @NotNull [] getAllProjectFrames() {
     return myProjectToFrame.values().toArray(new ProjectFrameHelper[0]);
   }
 
@@ -388,13 +384,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     if (parent instanceof IdeFrame) {
       return ((IdeFrame)parent).getStatusBar().findChild(c);
     }
-
     IdeFrame frame = findFrameFor(project);
     if (frame != null) {
       return frame.getStatusBar().findChild(c);
     }
-
-    assert false : "Cannot find status bar for " + c;
     return null;
   }
 
@@ -517,8 +510,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   public void assignFrame(@NotNull ProjectFrameHelper frameHelper, @NotNull Project project) {
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
-    frameHelper.setProject(project);
     myProjectToFrame.put(project, frameHelper);
+    frameHelper.setProject(project);
 
     IdeFrameImpl frame = frameHelper.getFrame();
     frame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(project));
@@ -528,12 +521,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
-    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null));
+    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(false), null));
   }
 
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project,
-                                                @NotNull Supplier<? extends ProjectFrameHelper> projectFrameHelperSupplier) {
+                                                @NotNull Supplier<@NotNull ? extends ProjectFrameHelper> projectFrameHelperFactory) {
     ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
@@ -544,7 +537,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = projectFrameHelperSupplier.get();
+      frame = projectFrameHelperFactory.get();
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();
@@ -626,7 +619,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frameHelper.setFileTitle(null, null);
 
     myProjectToFrame.remove(project);
-    if (myProjectToFrame.isEmpty()) {
+    if (myProjectToFrame.isEmpty() && !LightEdit.owns(project)) {
       myProjectToFrame.put(null, frameHelper);
     }
     else {
@@ -653,14 +646,35 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final Component getFocusedComponent(@NotNull final Window window) {
+  public final Component getFocusedComponent(@NotNull Window window) {
     return myWindowWatcher.getFocusedComponent(window);
   }
 
   @Override
-  @Nullable
-  public final Component getFocusedComponent(@Nullable final Project project) {
+  public final @Nullable Component getFocusedComponent(@Nullable Project project) {
     return myWindowWatcher.getFocusedComponent(project);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    try {
+      myLayout.readExternal(JDOMUtil.load(
+        "<layout>\n" +
+        "  <!-- left stripe -->\n" +
+        "  <window_info id=\"Project\" order=\"0\" weight=\"0.25\" content_ui=\"combo\" />\n" +
+        "  <window_info id=\"Structure\" order=\"1\" weight=\"0.25\" />\n" +
+        "  <!-- bottom stripe -->\n" +
+        "  <window_info id=\"Version Control\" anchor=\"bottom\" order=\"0\" />\n" +
+        "  <window_info id=\"Find\" anchor=\"bottom\" order=\"1\" />\n" +
+        "  <window_info id=\"Run\" anchor=\"bottom\" order=\"2\" />\n" +
+        "  <window_info id=\"Debug\" anchor=\"bottom\" order=\"3\" weight=\"0.4\" />\n" +
+        "  <window_info id=\"Inspection\" anchor=\"bottom\" order=\"4\" weight=\"0.4\" />\n" +
+        "</layout>"
+      ));
+    }
+    catch (IOException | JDOMException e) {
+      LOG.error(e);
+    }
   }
 
   @Override
@@ -719,7 +733,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final DesktopLayout getLayout() {
+  public final @NotNull DesktopLayout getLayout() {
     return myLayout;
   }
 

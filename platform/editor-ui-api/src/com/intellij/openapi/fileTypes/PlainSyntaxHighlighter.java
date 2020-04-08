@@ -32,8 +32,7 @@ public class PlainSyntaxHighlighter implements SyntaxHighlighter {
   }
 
   @Override
-  @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return ATTRS;
   }
 }

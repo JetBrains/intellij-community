@@ -31,8 +31,7 @@ public class PyPartitionedElementImpl extends PyElementImpl {
     super(astNode);
   }
 
-  @NotNull
-  PyStatementPart[] getParts() {
+  PyStatementPart @NotNull [] getParts() {
     return childrenToPsi(PyElementTypes.PARTS, PyStatementPart.EMPTY_ARRAY);
   }
 

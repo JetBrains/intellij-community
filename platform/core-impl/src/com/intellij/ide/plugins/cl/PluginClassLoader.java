@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -40,7 +41,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
   }
 
-  private final ClassLoader[] myParents;
+  private ClassLoader[] myParents;
   private final PluginId myPluginId;
   private final IdeaPluginDescriptor myPluginDescriptor;
   private final String myPluginVersion;
@@ -50,9 +51,10 @@ public final class PluginClassLoader extends UrlClassLoader {
   private final AtomicLong backgroundTime = new AtomicLong();
 
   private final AtomicInteger loadedClassCounter = new AtomicInteger();
+  private ClassLoader myCoreLoader;
 
   public PluginClassLoader(@NotNull List<URL> urls,
-                           @NotNull ClassLoader[] parents,
+                           ClassLoader @NotNull [] parents,
                            PluginId pluginId,
                            @Nullable IdeaPluginDescriptor pluginDescriptor,
                            String version,
@@ -61,7 +63,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   public PluginClassLoader(@NotNull Builder builder,
-                           @NotNull ClassLoader[] parents,
+                           ClassLoader @NotNull [] parents,
                            PluginId pluginId,
                            @Nullable IdeaPluginDescriptor pluginDescriptor,
                            String version,
@@ -83,7 +85,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   public PluginClassLoader(@NotNull List<URL> urls,
-                           @NotNull ClassLoader[] parents,
+                           ClassLoader @NotNull [] parents,
                            @NotNull IdeaPluginDescriptorImpl descriptor) {
     this(build().urls(urls).allowLock().useCache(), parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
   }
@@ -92,7 +94,7 @@ public final class PluginClassLoader extends UrlClassLoader {
    * @deprecated Use {@link #PluginClassLoader(List, ClassLoader[], IdeaPluginDescriptorImpl)}
    */
   @Deprecated
-  public PluginClassLoader(@NotNull List<URL> urls, @NotNull ClassLoader[] parents, PluginId pluginId, String version, File pluginRoot) {
+  public PluginClassLoader(@NotNull List<URL> urls, ClassLoader @NotNull [] parents, PluginId pluginId, String version, File pluginRoot) {
     this(urls, parents, pluginId, null, version, pluginRoot == null ? null : pluginRoot.toPath());
   }
 
@@ -110,7 +112,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
-    Class<?> c = tryLoadingClass(name, resolve, null);
+    Class<?> c = tryLoadingClass(name, resolve, null, true);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
     }
@@ -128,18 +130,34 @@ public final class PluginClassLoader extends UrlClassLoader {
                    ParameterType parameter) {
       Result resource = doExecute(name, classloader, parameter);
       if (resource != null) return resource;
-      return classloader.processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, visited, parameter);
+      return classloader.processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, visited, parameter, false);
     }
 
     protected abstract Result doExecute(String name, PluginClassLoader classloader, ParameterType parameter);
+
   }
 
   @Nullable
   private <Result, ParameterType> Result processResourcesInParents(String name,
                                                                    ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader,
                                                                    ActionWithClassloader<Result, ParameterType> actionWithClassloader,
-                                                                   Set<ClassLoader> visited, ParameterType parameter) {
+                                                                   ParameterType parameter) {
+    return processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, null, parameter, true);
+  }
+
+  public void setCoreLoader(ClassLoader loader) {
+    myCoreLoader = loader;
+  }
+
+  @Nullable
+  private <Result, ParameterType> Result processResourcesInParents(String name,
+                                                                   ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader,
+                                                                   ActionWithClassloader<Result, ParameterType> actionWithClassloader,
+                                                                   Set<ClassLoader> visited,
+                                                                   ParameterType parameter,
+                                                                   boolean withRoot) {
     for (ClassLoader parent : myParents) {
+      if (parent == myCoreLoader) continue;
       if (visited == null) {
         visited = new THashSet<>();
         visited.add(this);
@@ -162,6 +180,10 @@ public final class PluginClassLoader extends UrlClassLoader {
       if (resource != null) return resource;
     }
 
+    if (withRoot && myCoreLoader != null && (visited == null || visited.add(myCoreLoader))) {
+      return actionWithClassloader.execute(name, myCoreLoader, parameter);
+    }
+
     return null;
   }
 
@@ -173,7 +195,7 @@ public final class PluginClassLoader extends UrlClassLoader {
                      ActionWithPluginClassLoader<Class<?>, Void> actionWithPluginClassLoader,
                      ActionWithClassloader<Class<?>, Void> actionWithClassloader,
                      Void parameter) {
-      return classloader.tryLoadingClass(name, false, visited);
+      return classloader.tryLoadingClass(name, false, visited, false);
     }
 
     @Override
@@ -198,7 +220,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class<?> tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+  private Class<?> tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited, boolean withRoot) {
     long startTime = StartUpMeasurer.getCurrentTime();
     Class<?> c = null;
     if (!mustBeLoadedByPlatform(name)) {
@@ -206,7 +228,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
 
     if (c == null) {
-      c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, visited, null);
+      c = processResourcesInParents(name, loadClassInPluginCL, loadClassInCl, visited, null, withRoot);
     }
 
     if (c != null) {
@@ -288,7 +310,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     URL resource = findOwnResource(name);
     if (resource != null) return resource;
 
-    return processResourcesInParents(name, findResourceInPluginCL, findResourceInCl, null, null);
+    return processResourcesInParents(name, findResourceInPluginCL, findResourceInCl, null);
   }
 
   @Nullable
@@ -318,7 +340,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     InputStream stream = getOwnResourceAsStream(name);
     if (stream != null) return stream;
 
-    return processResourcesInParents(name, getResourceAsStreamInPluginCL, getResourceAsStreamInCl, null, null);
+    return processResourcesInParents(name, getResourceAsStreamInPluginCL, getResourceAsStreamInCl, null);
   }
 
   @Nullable
@@ -360,7 +382,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   public Enumeration<URL> findResources(String name) throws IOException {
     List<Enumeration<URL>> resources = new ArrayList<>();
     resources.add(findOwnResources(name));
-    processResourcesInParents(name, findResourcesInPluginCL, findResourcesInCl, null, resources);
+    processResourcesInParents(name, findResourcesInPluginCL, findResourcesInCl, resources);
     //noinspection unchecked,ToArrayCallWithZeroLengthArrayArgument
     return new DeepEnumeration(resources.toArray(new Enumeration[resources.size()]));
   }
@@ -442,5 +464,17 @@ public final class PluginClassLoader extends UrlClassLoader {
   public List<ClassLoader> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(myParents));
+  }
+
+  @ApiStatus.Internal
+  public void attachParent(@NotNull ClassLoader classLoader) {
+    myParents = ArrayUtil.append(myParents, classLoader);
+  }
+
+  @ApiStatus.Internal
+  public boolean detachParent(ClassLoader classLoader) {
+    int oldSize = myParents.length;
+    myParents = ArrayUtil.remove(myParents, classLoader);
+    return myParents.length == oldSize - 1;
   }
 }

@@ -89,7 +89,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace fully qualified name";
+      return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.fix.family.name");
     }
 
     @Override

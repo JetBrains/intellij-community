@@ -21,18 +21,17 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
   @Override
-  @SuppressWarnings("BoundedWildcard")
-  protected void selectTargets(List<PsiElement> targets, Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiElement> targets, @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(List<PsiElement> targets) {
+  public void computeUsages(@NotNull List<? extends PsiElement> targets) {
     PsiElement parent = myTarget.getParent();
     if (parent instanceof PsiContinueStatement) {
       PsiElement statement = ((PsiContinueStatement)parent).findContinuedStatement();

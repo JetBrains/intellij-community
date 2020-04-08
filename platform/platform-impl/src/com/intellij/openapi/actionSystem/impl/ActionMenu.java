@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -24,6 +24,7 @@ import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,6 +78,12 @@ public final class ActionMenu extends JBMenu {
 
     // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     getPopupMenu();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    if (!(getParent() instanceof JMenuBar)) return super.getComponentGraphics(graphics);
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public void updateContext(DataContext context) {
@@ -228,31 +235,37 @@ public final class ActionMenu extends JBMenu {
     }
 
     private void onMenuHidden() {
-      if (!KEEP_MENU_HIERARCHY) {
-        final Runnable clearSelf = ()->{
-          clearItems();
-          addStubItem();
-        };
-        if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
-          // Menu items may contain mnemonic and they can affect key-event dispatching (when Alt pressed)
-          // To avoid influence of mnemonic it's necessary to clear items when menu was hidden.
-          // When user selects item of system menu (under MacOs) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
-          // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
-          // Defer clearing to avoid this problem.
-          final Disposable listenerHolder = Disposer.newDisposable();
-          IdeEventQueue.getInstance().addDispatcher(e->{
-            if (e instanceof KeyEvent) {
-              if (myIsHidden)
-                clearSelf.run();
-              ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(listenerHolder));
-            }
-            return false;
-          }, listenerHolder);
+      if (KEEP_MENU_HIERARCHY) {
+        return;
+      }
 
-          myIsHidden = true;
-        } else {
-          clearSelf.run();
-        }
+      Runnable clearSelf = () -> {
+        clearItems();
+        addStubItem();
+      };
+
+      if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
+        // Menu items may contain mnemonic and they can affect key-event dispatching (when Alt pressed)
+        // To avoid influence of mnemonic it's necessary to clear items when menu was hidden.
+        // When user selects item of system menu (under MacOs) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
+        // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
+        // Defer clearing to avoid this problem.
+        Disposable listenerHolder = Disposer.newDisposable();
+        Disposer.register(ApplicationManager.getApplication(), listenerHolder);
+        IdeEventQueue.getInstance().addDispatcher(e -> {
+          if (e instanceof KeyEvent) {
+            if (myIsHidden) {
+              clearSelf.run();
+            }
+            ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(listenerHolder));
+          }
+          return false;
+        }, listenerHolder);
+
+        myIsHidden = true;
+      }
+      else {
+        clearSelf.run();
       }
     }
 

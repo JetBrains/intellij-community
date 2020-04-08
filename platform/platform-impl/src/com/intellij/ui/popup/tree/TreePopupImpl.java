@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
@@ -238,10 +238,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   }
 
   public void scrollToSelection() {
-    TreePath selectionPath = myWizardTree.getSelectionPath();
-    if (selectionPath != null) {
-      TreeUtil.scrollToVisible(myWizardTree, selectionPath, false);
-    }
+    myWizardTree.scrollPathToVisible(myWizardTree.getSelectionPath());
   }
 
   private TreePopupStep getTreeStep() {
@@ -438,9 +435,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         final boolean hasNextStep = getTreeStep().hasSubstep(extractUserObject(lastPathComponent));
         if (!hasNextStep) continue;
 
-        Icon icon = isPathSelected(eachPath) ?
-                    AllIcons.Icons.Ide.NextStep :
-                    AllIcons.Icons.Ide.NextStepGrayed;
+        Icon icon = AllIcons.Icons.Ide.NextStep;
         final Rectangle rec = getPathBounds(eachPath);
         int x = getSize().width - icon.getIconWidth() - 1;
         int y = rec.y + (rec.height - icon.getIconWidth()) / 2;

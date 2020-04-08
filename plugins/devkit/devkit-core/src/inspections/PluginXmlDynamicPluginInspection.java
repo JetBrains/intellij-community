@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
@@ -28,13 +26,8 @@ import org.jetbrains.idea.devkit.dom.*;
 import javax.swing.*;
 import java.util.Objects;
 
-public class PluginXmlDynamicPluginInspection extends BasicDomElementsInspection<IdeaPlugin> {
-
+public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
   public boolean highlightNonDynamicEPUsages = false;
-
-  public PluginXmlDynamicPluginInspection() {
-    super(IdeaPlugin.class);
-  }
 
   @Nullable
   @Override
@@ -64,10 +57,9 @@ public class PluginXmlDynamicPluginInspection extends BasicDomElementsInspection
   }
 
   private static void highlightComponents(DomElementAnnotationHolder holder, DomElement component) {
-    holder.createProblem(component, ProblemHighlightType.LIKE_DEPRECATED,
-                         "<html>Replace Components with " +
-                         "<a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html\">alternatives</a></html>",
-                         null).highlightWholeElement();
+    holder.createProblem(component,
+                         "<html>Non-dynamic plugin due to using components, replace with " +
+                         "<a href=\"https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html\">alternatives</a></html>");
   }
 
   private static void highlightExtensionPoint(DomElementAnnotationHolder holder, ExtensionPoint extensionPoint) {

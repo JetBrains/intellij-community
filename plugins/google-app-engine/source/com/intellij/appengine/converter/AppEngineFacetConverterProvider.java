@@ -11,9 +11,6 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public final class AppEngineFacetConverterProvider extends ConverterProvider {
   public AppEngineFacetConverterProvider() {
     super("google-app-engine-facet");

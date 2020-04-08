@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.codeInsight.highlighting.ChooseClassAndDoHighlightRunnable;
 import com.intellij.codeInsight.highlighting.HighlightOverridingMethodsHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -47,11 +48,11 @@ public class GrHighlightOverridingMethodsHandler extends HighlightOverridingMeth
 
 
   @Override
-  public List<PsiClass> getTargets() {
+  public @NotNull List<PsiClass> getTargets() {
     GrReferenceList list =
       GroovyTokenTypes.kEXTENDS == myTarget.getNode().getElementType() ? myClass.getExtendsClause() : myClass.getImplementsClause();
     if (list == null) return Collections.emptyList();
     final PsiClassType[] classTypes = list.getReferencedTypes();
-    return ChooseClassAndDoHighlightRunnable.resolveClasses(classTypes);
+    return ContainerUtil.mapNotNull(classTypes, t->t.resolve());
   }
 }

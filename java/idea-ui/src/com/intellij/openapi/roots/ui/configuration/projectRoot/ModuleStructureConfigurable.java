@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -7,6 +7,7 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetToModuleAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -18,11 +19,11 @@ import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
@@ -266,9 +267,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @NotNull
   private static MyNode createModuleGroupNode(ModuleGroup moduleGroup) {
     final NamedConfigurable<?> moduleGroupConfigurable = new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
-                                                                                ProjectBundle.message("module.group.banner.text",
+                                                                                JavaUiBundle.message("module.group.banner.text",
                                                                                                       moduleGroup.toString()),
-                                                                                ProjectBundle.message("project.roots.module.groups.text"),
+                                                                                JavaUiBundle.message("project.roots.module.groups.text"),
                                                                                 PlatformIcons.CLOSED_MODULE_GROUP_ICON);
     return new ModuleGroupNodeImpl(moduleGroupConfigurable, moduleGroup);
   }
@@ -354,8 +355,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   public void apply() throws ConfigurationException {
-    checkForEmptyAndDuplicatedNames(ProjectBundle.message("rename.message.prefix.module"),
-                                    ProjectBundle.message("rename.module.title"), ModuleConfigurable.class);
+    checkForEmptyAndDuplicatedNames(JavaUiBundle.message("rename.message.prefix.module"),
+                                    JavaUiBundle.message("rename.module.title"), ModuleConfigurable.class);
 
     // let's apply extensions first, since they can write to/commit modifiable models
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
@@ -411,7 +412,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("project.roots.display.name");
+    return JavaUiBundle.message("project.roots.display.name");
   }
 
   @Override
@@ -440,11 +441,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final MasterDetailsComponent.MyNode node = findModuleNode(module);
     if (node != null) {
       p.putPath(TREE_OBJECT, module);
-      p.putPath(ModuleEditor.SELECTED_EDITOR_NAME, ClasspathEditor.NAME);
+      p.putPath(ModuleEditor.SELECTED_EDITOR_NAME, ClasspathEditor.getName());
       r = () -> {
         if (orderEntry != null) {
           ModuleEditor moduleEditor = ((ModuleConfigurable)node.getConfigurable()).getModuleEditor();
-          ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
+          ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.getName());
           if (editor instanceof ClasspathEditor) {
             ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
           }
@@ -502,8 +503,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), library.getName())) {
         if (Messages.showYesNoDialog(module.getProject(),
-                                     ProjectBundle.message("project.roots.replace.library.entry.message", entry.getPresentableName()),
-                                     ProjectBundle.message("project.roots.replace.library.entry.title"),
+                                     JavaUiBundle.message("project.roots.replace.library.entry.message", entry.getPresentableName()),
+                                     JavaUiBundle.message("project.roots.replace.library.entry.title"),
                                      Messages.getInformationIcon()) == Messages.YES) {
           modelProxy.removeOrderEntry(entry);
           break;
@@ -530,7 +531,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private void addModule(boolean anImport, String defaultModuleName) {
     final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport, defaultModuleName);
-    if (modules != null) {
+    if (modules != null && !modules.isEmpty()) {
+      //new module wizard may add yet another SDK to the project
+      ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel().syncSdks();
       for (Module module : modules) {
         addModuleNode(module);
       }
@@ -805,7 +808,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                        final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      String text = ProjectBundle
+      String text = JavaUiBundle
         .message(myHideModuleGroups ? "project.roots.plain.mode.action.text.enabled" : "project.roots.plain.mode.action.text.disabled");
       presentation.setText(text);
       presentation.setDescription(text);
@@ -841,25 +844,24 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @Override
   protected AbstractAddGroup createAddAction() {
-    return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
+    return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
-      @NotNull
-      public AnAction[] getChildren(@Nullable
+      public AnAction @NotNull [] getChildren(@Nullable
                                     final AnActionEvent e) {
 
         AnAction addModuleAction = new AddModuleAction(false);
-        addModuleAction.getTemplatePresentation().setText("New Module");
+        addModuleAction.getTemplatePresentation().setText(JavaUiBundle.message("action.text.new.module"));
         List<AnAction> result = new ArrayList<>();
         result.add(addModuleAction);
 
         AnAction importModuleAction = new AddModuleAction(true);
-        importModuleAction.getTemplatePresentation().setText("Import Module");
+        importModuleAction.getTemplatePresentation().setText(JavaUiBundle.message("action.text.import.module"));
         importModuleAction.getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Import);
         result.add(importModuleAction);
 
         final Collection<AnAction> actions = AddFacetToModuleAction.createAddFrameworkActions(myFacetEditorFacade, myProject);
         if (!actions.isEmpty()) {
-          result.add(new Separator(ProjectBundle.message("add.group.framework.separator")));
+          result.add(new Separator(JavaUiBundle.message("add.group.framework.separator")));
           result.addAll(actions);
         }
 
@@ -894,12 +896,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   @Nullable
   protected String getEmptySelectionString() {
-    return ProjectBundle.message("empty.module.selection.string");
+    return JavaUiBundle.message("empty.module.selection.string");
   }
 
   private class MyCopyAction extends AnAction implements DumbAware {
     private MyCopyAction() {
-      super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
+      super(CommonBundle.messagePointer("button.copy"), CommonBundle.messagePointer("button.copy"), COPY_ICON);
     }
 
     @Override
@@ -909,10 +911,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         try {
           final ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
           final String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
-          final NamePathComponent component = new NamePathComponent(IdeBundle.message("label.module.name"), IdeBundle
-            .message("label.component.file.location", StringUtil.capitalize(modulePresentation)), IdeBundle
+          final NamePathComponent component = new NamePathComponent(JavaUiBundle.message("label.module.name"), JavaUiBundle
+            .message("label.component.file.location", StringUtil.capitalize(modulePresentation)), JavaUiBundle
                                                                       .message("title.select.project.file.directory", modulePresentation),
-                                                                    IdeBundle.message("description.select.project.file.directory",
+                                                                    JavaUiBundle.message("description.select.project.file.directory",
                                                                                       StringUtil.capitalize(modulePresentation)), true,
                                                                     false);
           final Module originalModule = moduleEditor.getModule();
@@ -921,31 +923,31 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           }
 
           final DialogBuilder dialogBuilder = new DialogBuilder(myTree);
-          dialogBuilder.setTitle(ProjectBundle.message("copy.module.dialog.title"));
+          dialogBuilder.setTitle(JavaUiBundle.message("copy.module.dialog.title"));
           dialogBuilder.setCenterPanel(component);
           dialogBuilder.setPreferredFocusComponent(component.getNameComponent());
           dialogBuilder.setOkOperation(() -> {
             final String name = component.getNameValue();
             if (name.isEmpty()) {
-              Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
+              Messages.showErrorDialog(JavaUiBundle.message("enter.module.copy.name.error.message"), CommonBundle.getErrorTitle());
               return;
             }
             if (getModule(name) != null) {
               Messages
-                .showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.message("title.error"));
+                .showErrorDialog(JavaUiBundle.message("module.0.already.exists.error.message", name), CommonBundle.getErrorTitle());
               return;
             }
 
             if (component.getPath().isEmpty()) {
-              Messages.showErrorDialog(IdeBundle.message("prompt.enter.project.file.location", modulePresentation),
-                                       CommonBundle.message("title.error"));
+              Messages.showErrorDialog(JavaUiBundle.message("prompt.enter.project.file.location", modulePresentation),
+                                       CommonBundle.getErrorTitle());
               return;
             }
             if (!ProjectWizardUtil
-              .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
+              .createDirectoryIfNotExists(JavaUiBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
                                           true)) {
-              Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()),
-                                       CommonBundle.message("title.error"));
+              Messages.showErrorDialog(JavaUiBundle.message("path.0.is.invalid.error.message", component.getPath()),
+                                       CommonBundle.getErrorTitle());
               return;
             }
             dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
@@ -1037,7 +1039,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     private final boolean myImport;
 
     AddModuleAction(boolean anImport) {
-      super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Actions.Module);
+      super(JavaUiBundle.message("add.new.module.text.full"), null, AllIcons.Nodes.Module);
       myImport = anImport;
     }
 

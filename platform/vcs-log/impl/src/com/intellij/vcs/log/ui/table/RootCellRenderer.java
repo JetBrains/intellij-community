@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -60,7 +59,7 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
 
     myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
               VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
-    myBorderColor = ObjectUtils.assertNotNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground());
+    myBorderColor = Objects.requireNonNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground());
     setForeground(UIUtil.getTableForeground(false, hasFocus));
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {

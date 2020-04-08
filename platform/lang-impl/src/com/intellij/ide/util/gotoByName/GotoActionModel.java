@@ -1,6 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
@@ -11,7 +17,18 @@ import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,12 +43,22 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.DirtyUI;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -45,23 +72,37 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.accessibility.AccessibleContext;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.util.List;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
-import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 
 public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
@@ -69,7 +110,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Nullable private final Project myProject;
   private final Component myContextComponent;
-  @Nullable private final Editor myEditor;
+  @Nullable private final WeakReference<Editor> myEditor;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
@@ -78,7 +119,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
   private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
-    if (SwingUtilities.isEventDispatchThread()) LOG.error("Configurable names must not be loaded on EDT");
+    if (SwingUtilities.isEventDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) LOG.error("Configurable names must not be loaded on EDT");
 
     Map<String, String> map = new THashMap<>();
     for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
@@ -98,8 +139,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myContextComponent = component;
-    myEditor = editor;
+    myEditor = new WeakReference<>(editor);
     myModality = modalityState;
+    buildActions();
+  }
+
+  private void buildActions() {
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     ActionGroup keymapOthers = (ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup");
     assert mainMenu != null && keymapOthers != null;
@@ -114,10 +159,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
+    Editor editor = myEditor != null ? myEditor.get() : null;
     if (myProject != null && !myProject.isDisposed() && !DumbService.isDumb(myProject) &&
-        myEditor != null && !myEditor.isDisposed()) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
+        editor != null && !editor.isDisposed()) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(editor, file);
       if (children != null) {
         for (ApplyIntentionAction action : children) {
           map.put(action.getName(), action);
@@ -158,6 +204,17 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public void saveInitialCheckBoxState(boolean state) {
+  }
+
+  @ApiStatus.Internal
+  public void rebuildActions() {
+    myActionGroups.clear();
+    buildActions();
+  }
+
+  @ApiStatus.Internal
+  public void clearActions() {
+    myActionGroups.clear();
   }
 
   public static class MatchedValue {
@@ -320,14 +377,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @Override
-  @NotNull
-  public String[] getNames(boolean checkBoxState) {
+  public String @NotNull [] getNames(boolean checkBoxState) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
-  @NotNull
-  public Object[] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
+  public Object @NotNull [] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
@@ -388,8 +443,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @Override
-  @NotNull
-  public String[] getSeparators() {
+  public String @NotNull [] getSeparators() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -665,7 +719,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     public String getGroupName() {
       if (myGroupMapping == null) return null;
       String groupName = myGroupMapping.getBestGroupName();
-      if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), groupName)) return null;
+      if (myAction instanceof ActionGroup && Objects.equals(myAction.getTemplatePresentation().getText(), groupName)) return null;
       return groupName;
     }
 
@@ -690,6 +744,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
   }
 
+  @DirtyUI
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
     public static final Border TOGGLE_BUTTON_BORDER = JBUI.Borders.empty(0, 2);
     private final Function<? super OptionDescription, String> myGroupNamer;
@@ -709,14 +764,21 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     public Component getListCellRendererComponent(@NotNull JList list,
                                                   Object matchedValue,
                                                   int index, boolean isSelected, boolean cellHasFocus) {
+      SimpleColoredComponent nameComponent = new SimpleColoredComponent();
+
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
-      JPanel panel = new JPanel(new BorderLayout());
+      JPanel panel = new JPanel(new BorderLayout()){
+        @Override
+        public AccessibleContext getAccessibleContext() {
+          return nameComponent.getAccessibleContext();
+        }
+      };
+
       panel.setBorder(JBUI.Borders.empty(2));
       panel.setOpaque(true);
       Color bg = UIUtil.getListBackground(isSelected, cellHasFocus);
       panel.setBackground(bg);
 
-      SimpleColoredComponent nameComponent = new SimpleColoredComponent();
       if (myUseListFont) {
         nameComponent.setFont(list.getFont());
       }
@@ -828,10 +890,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (!list.isShowing() || list.getWidth() <= 0) {
         return StringUtil.first(name, 60, true); // fallback to previous behaviour
       }
-      
+
       // we have a min size for SE, which is ~40 symbols, don't spend time for trimming, let's use a shortcut
       if (name.length() < 40) return name;
-      
+
       int freeSpace = calcFreeSpace(list, panel, nameComponent, shortcutText);
 
       if (freeSpace <= 0) {

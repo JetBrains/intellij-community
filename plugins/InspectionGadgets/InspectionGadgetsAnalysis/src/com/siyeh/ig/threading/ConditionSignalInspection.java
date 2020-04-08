@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -50,14 +51,6 @@ public class ConditionSignalInspection extends BaseInspection {
   }
 
   private static class ConditionSignalFix extends AbstractReplaceWithAnotherMethodCallFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "condition.signal.replace.quickfix");
-    }
-
     @Override
     protected String getMethodName() {
       return "signalAll";

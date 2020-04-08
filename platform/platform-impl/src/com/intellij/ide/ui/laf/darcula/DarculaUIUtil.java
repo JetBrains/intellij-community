@@ -3,14 +3,14 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -240,7 +240,7 @@ public class DarculaUIUtil {
            ComponentUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 
-  public static final JBValue MINIMUM_WIDTH = new JBValue.Float(64);
+  public static final JBValue MINIMUM_WIDTH = new JBValue.Float(49); // 72px total
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);

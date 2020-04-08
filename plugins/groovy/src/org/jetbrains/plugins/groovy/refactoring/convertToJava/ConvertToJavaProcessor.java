@@ -39,11 +39,10 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return myFiles;
       }
 
@@ -54,15 +53,14 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     };
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return UsageInfo.EMPTY_ARRAY;
   }
 
   //private static String
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     final GeneratorClassNameProvider classNameProvider = new GeneratorClassNameProvider();
 
     ExpressionContext context = new ExpressionContext(myProject, myFiles);

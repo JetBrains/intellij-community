@@ -26,7 +26,7 @@ abstract class SourceOperation implements Operation {
   }
 
   @Nullable
-  static SourceOperation create(@NotNull String name, @NotNull PsiType type, @NotNull PsiExpression[] args) {
+  static SourceOperation create(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
     if ("empty".equals(name) && args.length == 0) {
       return new Empty(type);
     }

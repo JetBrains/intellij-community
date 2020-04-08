@@ -23,7 +23,7 @@ public interface MarkdownHtmlPanel extends Disposable {
 
   void setHtml(@NotNull String html);
 
-  void setCSS(@Nullable String inlineCss, @NotNull String... fileUris);
+  void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris);
 
   void render();
 
@@ -46,7 +46,7 @@ public interface MarkdownHtmlPanel extends Disposable {
   }
 
   @NotNull
-  static String getCssLines(@Nullable String inlineCss, @NotNull String... fileUris) {
+  static String getCssLines(@Nullable String inlineCss, String @NotNull ... fileUris) {
     StringBuilder result = new StringBuilder();
 
     for (String uri : fileUris) {

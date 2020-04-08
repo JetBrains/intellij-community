@@ -1,5 +1,5 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.migration;
 
 import com.intellij.application.options.CodeStyle;
@@ -24,6 +24,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
@@ -119,15 +121,17 @@ public class MigrationMapSet {
     return ret;
   }
 
+  @Nullable
   private static File getMapDirectory() {
-    File dir = new File(PathManager.getConfigPath() + File.separator + "migration");
-
-    if (!dir.exists() && !dir.mkdirs()) {
-      LOG.error("cannot create directory: " + dir.getAbsolutePath());
+    Path dir = PathManager.getConfigDir().resolve("migration");
+    try {
+      Files.createDirectories(dir);
+    }
+    catch (IOException e) {
+      LOG.error("cannot create directory: " + dir, e);
       return null;
     }
-
-    return dir;
+    return dir.toFile();
   }
 
   private void copyPredefinedMaps(File dir) {

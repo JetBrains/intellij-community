@@ -43,7 +43,6 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -108,7 +107,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Generate binary stubs";
+    return PyBundle.message("QFIX.generate.binary.stubs");
   }
 
   @Override
@@ -134,7 +133,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   public Backgroundable getFixTask(@NotNull final PsiFile fileToRunTaskIn) {
     final Project project = fileToRunTaskIn.getProject();
     final String folder = fileToRunTaskIn.getContainingDirectory().getVirtualFile().getCanonicalPath();
-    return new Task.Backgroundable(project, "Generating skeletons for binary module", false) {
+    return new Task.Backgroundable(project, PyBundle.message("QFIX.generating.skeletons.for.binary.module"), false) {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -178,7 +177,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     GeneralCommandLine cmd = PythonHelper.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd,
                                                                new File(homePath).getParent(),
-                                                               PythonSdkType.activateVirtualEnv(mySdk), 5000
+                                                               PySdkUtil.activateVirtualEnv(mySdk), 5000
     );
     if (runResult.checkSuccess(LOG)) {
       final PySkeletonGenerator.Builder builder = refresher.getGenerator()

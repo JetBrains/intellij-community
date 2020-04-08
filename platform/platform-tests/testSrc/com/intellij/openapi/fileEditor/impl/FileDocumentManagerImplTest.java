@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -22,9 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.util.*;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
@@ -39,6 +41,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -126,7 +129,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    GCWatcher.tracking(myDocumentManager.getCachedDocument(file)).tryGc();
+    GCWatcher.tracking(myDocumentManager.getCachedDocument(file)).ensureCollected();
 
     document = myDocumentManager.getDocument(file);
     assertTrue(idCode != System.identityHashCode(document));
@@ -220,7 +223,8 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     Document document = myDocumentManager.getDocument(file);
     int idCode = System.identityHashCode(document);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
+    WriteCommandAction.runWriteCommandAction(myProject,
+                                             () -> Objects.requireNonNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
 
     //noinspection UnusedAssignment
     document = null;
@@ -235,14 +239,15 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     final VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> ObjectUtils.assertNotNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
+    WriteCommandAction.runWriteCommandAction(myProject,
+                                             () -> Objects.requireNonNull(myDocumentManager.getDocument(file)).insertString(0, "xxx"));
 
     //noinspection UnusedAssignment
     document = null;
 
     myDocumentManager.saveAllDocuments();
 
-    GCWatcher.tracking(myDocumentManager.getDocument(file)).tryGc();
+    GCWatcher.tracking(myDocumentManager.getDocument(file)).ensureCollected();
 
     assertNull(myDocumentManager.getCachedDocument(file));
   }
@@ -632,7 +637,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
 
     for (int iteration = 0; iteration < 10; iteration++) {
-      GCWatcher.tracking(ContainerUtil.mapNotNull(physicalFiles, f -> FileDocumentManager.getInstance().getCachedDocument(f))).tryGc();
+      GCWatcher.tracking(ContainerUtil.mapNotNull(physicalFiles, f -> FileDocumentManager.getInstance().getCachedDocument(f))).ensureCollected();
 
       checkDocumentFiles(physicalFiles);
       checkDocumentFiles(createNonPhysicalFiles());

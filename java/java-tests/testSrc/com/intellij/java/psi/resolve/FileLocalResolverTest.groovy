@@ -20,12 +20,15 @@ import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
 import com.intellij.lang.TreeBackedLighterAST
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.impl.source.FileLocalResolver
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -35,6 +38,10 @@ import org.jetbrains.annotations.NotNull
  */
 @CompileStatic
 class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14
+  }
 
   void "test unknown variable"() {
     assertDoesNotResolve 'class C {{ <caret>a = 2; }}'
@@ -158,6 +165,12 @@ int f = 2;
 }'''
   }
 
+  void "test record component"() {
+    def result = configureAndResolve('record A(String s) {{String other = <caret>s;}}')?.target
+    assert result
+    assert result.startOffset == findReference().resolve().navigationElement.textRange.startOffset
+  }
+
   void "test possible anonymous super class field"() {
     assert FileLocalResolver.LightResolveResult.UNKNOWN == configureAndResolve('''
 class C {
@@ -183,6 +196,16 @@ class C {
     assert FileLocalResolver.LightResolveResult.NON_LOCAL == configureAndResolve('''
 class C {
 int field = 1;
+{
+  new SuperClass() {
+  void foo() {
+    print(<caret>field);
+  }
+  }
+}
+}''')
+    assert FileLocalResolver.LightResolveResult.NON_LOCAL == configureAndResolve('''
+record C(int field) {
 {
   new SuperClass() {
   void foo() {
@@ -229,7 +252,11 @@ class C {
     def astRef = TreeBackedLighterAST.wrap(findReference().element.node)
     def astResult = new FileLocalResolver(astTree).resolveLocally(astRef)
 
-    def fctsTree = PsiFileFactory.getInstance(project).createFileFromText('a.java', JavaLanguage.INSTANCE, myFixture.file.text, false, false).node.lighterAST
+    def file = PsiFileFactory.getInstance(project).
+      createFileFromText('a.java', JavaLanguage.INSTANCE, myFixture.file.text, false, false)
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW)
+    def fctsTree = file.node.lighterAST
+
     assert fctsTree instanceof FCTSBackedLighterAST
     def fctsRef = findEquivalentNode(fctsTree, astRef)
     def fctsResult = new FileLocalResolver(fctsTree).resolveLocally(fctsRef)

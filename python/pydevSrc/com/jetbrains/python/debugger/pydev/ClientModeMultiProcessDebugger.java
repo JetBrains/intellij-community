@@ -199,6 +199,12 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
+    throws PyDebuggerException {
+    return debugger(threadId).getSmartStepIntoVariants(threadId, frameId, startContextLine, endContextLine);
+  }
+
+  @Override
   public XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException {
     return debugger(threadId).loadVariable(threadId, frameId, var);
   }
@@ -398,8 +404,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void smartStepInto(String threadId, String functionName) {
-    debugger(threadId).smartStepInto(threadId, functionName);
+  public void smartStepInto(String threadId, String frameId, String functionName, int callOrder, int contextStartLine, int contextEndLine) {
+    debugger(threadId).smartStepInto(threadId, frameId, functionName, callOrder, contextStartLine, contextEndLine);
   }
 
   @Override

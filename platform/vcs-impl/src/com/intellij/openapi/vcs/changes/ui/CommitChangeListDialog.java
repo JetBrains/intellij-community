@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -216,7 +216,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     boolean isDefaultChangeListFullyIncluded = new HashSet<>(changes).containsAll(defaultList.getChanges());
     SingleChangeListCommitWorkflow workflow =
-      new SingleChangeListCommitWorkflow(project, included, initialSelection, executors, showVcsCommit, forceCommitInVcs, affectedVcses,
+      new SingleChangeListCommitWorkflow(project, affectedVcses, included, initialSelection, executors, showVcsCommit,
                                          isDefaultChangeListFullyIncluded, comment, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
@@ -444,7 +444,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private class CommitAction extends AbstractAction implements OptionAction {
-    @NotNull private Action[] myOptions = new Action[0];
+    private Action @NotNull [] myOptions = new Action[0];
 
     private CommitAction(String okActionText) {
       super(okActionText);
@@ -456,9 +456,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       myExecutorEventDispatcher.getMulticaster().executorCalled(null);
     }
 
-    @NotNull
     @Override
-    public Action[] getOptions() {
+    public Action @NotNull [] getOptions() {
       return myOptions;
     }
 
@@ -474,8 +473,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> result = new ArrayList<>();
 
     if (myCommitAction != null) {
@@ -718,7 +716,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myWorkflow.getCommitOptions();
   }
 
-  private boolean isDefaultCommitEnabled() {
+  public boolean isDefaultCommitEnabled() {
     return myWorkflow.isDefaultCommitEnabled();
   }
 

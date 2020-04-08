@@ -23,7 +23,7 @@ import java.util.Set;
  * @author peter
  */
 public class ClassDependencyLoader {
-  private final Set<Class> myVisited = new HashSet<Class>();
+  private final Set<Class<?>> myVisited = new HashSet<Class<?>>();
 
   /**
    * @param aClass

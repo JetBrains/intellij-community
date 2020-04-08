@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.hint.HintManager
@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
@@ -598,23 +597,10 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
     (field as? Navigatable)?.navigate(true)
   }
 
-  override fun update() {
-  }
-
-  override fun highlightUsages(file: PsiFile, editor: Editor, clearHighlights: Boolean) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
-  override fun findUsagesInEditor(editor: FileEditor) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
-
   override fun isValid(): Boolean = field.isValid
 }
 
 private class DummyUsageTarget(val text: String) : UsageTarget {
-  override fun getFiles(): Array<VirtualFile>? = null
-
   override fun getPresentation(): ItemPresentation? {
     return object : ItemPresentation {
       override fun getLocationString(): String? = null
@@ -638,15 +624,6 @@ private class DummyUsageTarget(val text: String) : UsageTarget {
   override fun isReadOnly(): Boolean = false
 
   override fun navigate(requestFocus: Boolean) {
-  }
-
-  override fun update() {
-  }
-
-  override fun highlightUsages(file: PsiFile, editor: Editor, clearHighlights: Boolean) {
-  }
-
-  override fun findUsagesInEditor(editor: FileEditor) {
   }
 
   override fun isValid(): Boolean = true

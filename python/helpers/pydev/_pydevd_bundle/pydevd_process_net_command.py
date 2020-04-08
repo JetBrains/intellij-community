@@ -20,9 +20,9 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, 
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
     CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS,
-    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, \
+    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_SMART_STEP_INTO_VARIANTS, \
     CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand, \
-    CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack)
+    CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR, IS_WINDOWS, get_current_thread_id)
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
@@ -173,20 +173,25 @@ def process_net_command(py_db, cmd_id, seq, text):
                 elif text.startswith('__frame__:'):
                     sys.stderr.write("Can't make tasklet step command: %s\n" % (text,))
 
-
-            elif cmd_id == CMD_RUN_TO_LINE or cmd_id == CMD_SET_NEXT_STATEMENT or cmd_id == CMD_SMART_STEP_INTO:
-                # we received some command to make a single step
-                thread_id, line, func_name = text.split('\t', 2)
+            elif cmd_id in (CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_SMART_STEP_INTO):
+                if cmd_id == CMD_SMART_STEP_INTO:
+                    # we received a smart step into command
+                    thread_id, frame_id, line, func_name, call_order, start_line, end_line = text.split('\t', 6)
+                else:
+                    # we received some command to make a single step
+                    thread_id, line, func_name = text.split('\t', 2)
                 if func_name == "None":
                     # global context
                     func_name = ''
                 t = pydevd_find_thread_by_id(thread_id)
                 if t:
-                    int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name, seq)
+                    if cmd_id == CMD_SMART_STEP_INTO:
+                        int_cmd = InternalSmartStepInto(thread_id, frame_id, cmd_id, func_name, line, call_order, start_line, end_line, seq)
+                    else:
+                        int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name, seq)
                     py_db.post_internal_command(int_cmd, thread_id)
                 elif thread_id.startswith('__frame__:'):
                     sys.stderr.write("Can't set next statement in tasklet: %s\n" % (thread_id,))
-
 
             elif cmd_id == CMD_RELOAD_CODE:
                 # we received some command to make a reload of a module
@@ -855,6 +860,11 @@ def process_net_command(py_db, cmd_id, seq, text):
                 finally:
                     frame = None
                     t = None
+
+            elif cmd_id == CMD_GET_SMART_STEP_INTO_VARIANTS:
+                thread_id, frame_id, start_line, end_line = text.split('\t', 3)
+                int_cmd = InternalGetSmartStepIntoVariants(seq, thread_id, frame_id, start_line, end_line)
+                py_db.post_internal_command(int_cmd, thread_id)
 
             else:
                 #I have no idea what this is all about

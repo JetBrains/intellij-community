@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -26,7 +26,7 @@ import java.util.List;
 
 public class JavaAnonymousUnwrapper extends JavaUnwrapper {
   public JavaAnonymousUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.anonymous"));
+    super(JavaBundle.message("unwrap.anonymous"));
   }
 
   @Override

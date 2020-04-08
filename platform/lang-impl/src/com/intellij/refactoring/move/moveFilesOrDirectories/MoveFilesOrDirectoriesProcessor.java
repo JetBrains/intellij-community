@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.EditorHelper;
@@ -90,19 +76,18 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveFilesOrDirectoriesViewDescriptor(myElementsToMove, myNewParent);
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
     for (int i = 0; i < myElementsToMove.length; i++) {
       PsiElement element = myElementsToMove[i];
       if (mySearchForReferences) {
         for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject))) {
-          result.add(new MyUsageInfo(reference.getElement(), i, reference));
+          result.add(new MyUsageInfo(reference, i));
         }
       }
       findElementUsages(result, element);
@@ -131,7 +116,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
     System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
   }
@@ -144,7 +129,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     // If files are being moved then I need to collect some information to delete these
     // files from CVS. I need to know all common parents of the moved files and relative
     // paths.
@@ -165,9 +150,14 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           }
         }
       }
-      for (final PsiElement element : myElementsToMove) {
-        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
 
+     RefactoringElementListener[] listeners =
+       Arrays.stream(myElementsToMove)
+         .map(item -> getTransaction().getElementListener(item))
+         .toArray(RefactoringElementListener[]::new);
+
+      for (int i = 0; i < myElementsToMove.length; i++) {
+        PsiElement element = myElementsToMove[i];
         if (element instanceof PsiDirectory) {
           MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
           for (PsiElement psiElement : element.getChildren()) {
@@ -190,7 +180,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           }
         }
 
-        elementListener.elementMoved(element);
+        listeners[i].elementMoved(element);
       }
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
@@ -210,7 +200,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       if (myMoveCallback != null) {
         myMoveCallback.refactoringCompleted();
       }
-      if (MoveFilesOrDirectoriesDialog.isOpenInEditor()) {
+      if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) {
         List<PsiFile> justFiles = new ArrayList<>(movedFiles.keySet());
         ApplicationManager.getApplication().invokeLater(() ->
           EditorHelper.openFilesInEditor(justFiles.stream().filter(PsiElement::isValid).toArray(PsiFile[]::new))
@@ -247,7 +237,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   @Nullable
   @Override
-  protected RefactoringEventData getAfterData(@NotNull UsageInfo[] usages) {
+  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myNewParent);
     return data;
@@ -327,8 +317,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     int myIndex;
     PsiReference myReference;
 
-    MyUsageInfo(PsiElement element, final int index, PsiReference reference) {
-      super(element);
+    MyUsageInfo(@NotNull PsiReference reference, int index) {
+      super(reference);
       myIndex = index;
       myReference = reference;
     }

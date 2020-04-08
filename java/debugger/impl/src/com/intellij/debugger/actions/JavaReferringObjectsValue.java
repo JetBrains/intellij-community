@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.ReferringObject;
 import com.intellij.debugger.engine.ReferringObjectsProvider;
@@ -75,7 +75,7 @@ public class JavaReferringObjectsValue extends JavaValue {
             referringObjects = myReferringObjectsProvider.getReferringObjects(getEvaluationContext(), (ObjectReference)value,
                                                                               MAX_REFERRING);
           } catch (ObjectCollectedException e) {
-            node.setErrorMessage(DebuggerBundle.message("evaluation.error.object.collected"));
+            node.setErrorMessage(JavaDebuggerBundle.message("evaluation.error.object.collected"));
             return;
           }
           catch (EvaluateException e) {

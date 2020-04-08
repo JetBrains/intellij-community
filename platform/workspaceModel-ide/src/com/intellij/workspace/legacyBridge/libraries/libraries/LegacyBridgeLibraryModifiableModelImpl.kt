@@ -28,6 +28,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
   private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
+  private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->
     val newLibrary = LibraryViaTypedEntity(
@@ -79,9 +80,13 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     assertModelIsLive()
 
     modelIsCommittedOrDisposed = true
-    if (!isChanged) return
 
-    committer(this, diff)
+    if (reloadKind) {
+      originalLibrary.entityStore.clearCachedValue(originalLibrary.snapshotValue, originalLibrary.entityId)
+    }
+    if (isChanged) {
+      committer(this, diff)
+    }
   }
 
   private fun update(updater: ModifiableLibraryEntity.() -> Unit) {
@@ -241,18 +246,9 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
       return
     }
 
-    val state = properties?.state
-    val propertiesString = if (state != null) {
-        val propertiesElement = serialize(state)
-        if (propertiesElement != null && !JDOMUtil.isEmpty(propertiesElement)) {
-          propertiesElement.name = LibraryImpl.PROPERTIES_ELEMENT
-          JDOMUtil.writeElement(propertiesElement)
-        } else null
-      } else null
-
     updateProperties {
       libraryType = kind.kindId
-      propertiesXmlTag = propertiesString
+      propertiesXmlTag = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, properties)
     }
 
     if (assertChangesApplied && currentLibrary.properties != properties) {
@@ -272,6 +268,14 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     if (assertChangesApplied && currentLibrary.kind?.kindId != type.kindId) {
       error("setKind: expected kindId ${type.kindId}, but got ${currentLibrary.kind?.kindId}. Original kind: ${originalLibrarySnapshot.kind?.kindId}")
     }
+  }
+
+  override fun forgetKind() {
+    reloadKind = true
+  }
+
+  override fun restoreKind() {
+    reloadKind = true
   }
 
   private fun isUnderRoots(url: VirtualFileUrl, roots: Collection<LibraryRoot>): Boolean {

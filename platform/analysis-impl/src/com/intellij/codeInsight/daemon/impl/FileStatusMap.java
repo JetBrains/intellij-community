@@ -334,7 +334,7 @@ public final class FileStatusMap implements Disposable {
   private static int getThreadNum() {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
-  public static void log(@NonNls @NotNull Object... info) {
+  public static void log(@NonNls Object @NotNull ... info) {
     if (LOG.isDebugEnabled()) {
       StringJoiner joiner = new StringJoiner(", ", StringUtil.repeatSymbol(' ', getThreadNum() * 4) + "[", "]\n");
       for (Object o : info) {

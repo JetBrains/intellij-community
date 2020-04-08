@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiAwareDefaultLineWrapPositionStrategy extends PsiAwareLineWrapPositionStrategy {
 
-  public PsiAwareDefaultLineWrapPositionStrategy(boolean nonVirtualOnly, @NotNull IElementType ... enabledTypes) {
+  public PsiAwareDefaultLineWrapPositionStrategy(boolean nonVirtualOnly, IElementType @NotNull ... enabledTypes) {
     super(nonVirtualOnly, enabledTypes);
   }
 

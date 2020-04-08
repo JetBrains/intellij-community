@@ -2,7 +2,9 @@
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreProjectScopeBuilder;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.scratch.RootType;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -11,7 +13,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -61,14 +62,15 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         return Collections.emptySet();
       }
     };
-    result.setDisplayName(PsiBundle.message("psi.search.scope.libraries"));
+    result.setDisplayName(LangBundle.message("psi.search.scope.libraries"));
     return result;
   }
 
   @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
-    ProjectRootManager projectRootManager = myProject.isDefault() ? null : ProjectRootManager.getInstance(myProject);
+    ProjectRootManager projectRootManager = myProject.isDefault() || LightEdit.owns(myProject)
+                                            ? null : ProjectRootManager.getInstance(myProject);
     if (projectRootManager == null) {
       return new EverythingGlobalScope(myProject);
     }

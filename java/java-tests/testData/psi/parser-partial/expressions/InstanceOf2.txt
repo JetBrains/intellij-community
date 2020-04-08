@@ -7,11 +7,12 @@ PsiJavaFile:InstanceOf2.java
     PsiWhiteSpace(' ')
     PsiKeyword:instanceof('instanceof')
     PsiWhiteSpace(' ')
-    PsiTypeTestPattern:Foo v
-      PsiTypeElement:Foo
-        PsiJavaCodeReferenceElement:Foo
-          PsiIdentifier:Foo('Foo')
-          PsiReferenceParameterList
-            <empty list>
-      PsiWhiteSpace(' ')
-      PsiIdentifier:v('v')
+    PsiTypeTestPattern
+      PsiPatternVariable:v
+        PsiTypeElement:Foo
+          PsiJavaCodeReferenceElement:Foo
+            PsiIdentifier:Foo('Foo')
+            PsiReferenceParameterList
+              <empty list>
+        PsiWhiteSpace(' ')
+        PsiIdentifier:v('v')

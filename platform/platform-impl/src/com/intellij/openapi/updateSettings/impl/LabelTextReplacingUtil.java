@@ -22,9 +22,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class LabelTextReplacingUtil {
 
   /**

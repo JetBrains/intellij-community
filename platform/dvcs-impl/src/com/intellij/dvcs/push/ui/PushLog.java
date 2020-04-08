@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushSettings;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,6 +23,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +37,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import kotlin.Unit;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,12 +57,11 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
-public class PushLog extends JPanel implements DataProvider {
-
-  private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
-  private static final String START_EDITING = "startEditing";
-  private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
-  private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
+public final class PushLog extends JPanel implements DataProvider {
+  @NonNls private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
+  @NonNls private static final String START_EDITING = "startEditing";
+  @NonNls private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
+  @NonNls private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
   private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
@@ -107,8 +109,8 @@ public class PushLog extends JPanel implements DataProvider {
           return "";
         }
         if (node instanceof TooltipNode) {
-          return ((TooltipNode)node).getTooltip() +
-                 "<p style='font-style:italic;color:gray;'>Select to show commit details </p>";
+          String select = DvcsBundle.getString("push.select.all.commit.details");
+          return ((TooltipNode)node).getTooltip() + "<p style='font-style:italic;color:gray;'>" + select + "</p>"; //NON-NLS
         }
         return "";
       }
@@ -310,12 +312,12 @@ public class PushLog extends JPanel implements DataProvider {
 
   private JComponent createStrategyPanel() {
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBackground(myTree.getBackground());
-    final LinkLabel<String> linkLabel = new LinkLabel<>("Edit all targets", null);
+    labelPanel.setBackground(RenderingUtil.getBackground(myTree));
+    final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.getString("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<String>() {
       @Override
-      public void linkSelected(LinkLabel aSource, String aLinkData) {
+      public void linkSelected(LinkLabel<String> aSource, String aLinkData) {
         if (linkLabel.isEnabled()) {
           startSyncEditing();
         }
@@ -394,19 +396,19 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Integer> getSortedRows(@NotNull int[] rows) {
+  private static List<Integer> getSortedRows(int @NotNull [] rows) {
     List<Integer> sorted = new ArrayList<>();
     for (int row : rows) {
       sorted.add(row);
     }
-    Collections.sort(sorted, Collections.reverseOrder());
+    sorted.sort(Collections.reverseOrder());
     return sorted;
   }
 
   private void updateChangesView() {
     List<CommitNode> commitNodes = getSelectedCommitNodes();
     if (!commitNodes.isEmpty()) {
-      myChangesBrowser.getViewer().setEmptyText("No differences");
+      myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.differences"));
     }
     else {
       setDefaultEmptyText();
@@ -422,7 +424,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   private void setDefaultEmptyText() {
-    myChangesBrowser.getViewer().setEmptyText("No commits selected");
+    myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.commits.selected"));
   }
 
   // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
@@ -758,7 +760,7 @@ public class PushLog extends JPanel implements DataProvider {
     @NotNull private final Consumer<Boolean> myOnUpdate;
 
     MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<Boolean> onUpdate) {
-      super("Show Details", AllIcons.Actions.PreviewDetailsVertically);
+      super(DvcsBundle.message("push.show.details"), AllIcons.Actions.PreviewDetailsVertically);
       mySettings = ServiceManager.getService(project, PushSettings.class);
       myOnUpdate = onUpdate;
     }

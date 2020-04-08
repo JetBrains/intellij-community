@@ -52,7 +52,7 @@ public class PsiMatchers {
   }
 
   @NotNull
-  public static PsiMatcherExpression hasText(@NotNull final String... texts) {
+  public static PsiMatcherExpression hasText(final String @NotNull ... texts) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -74,7 +74,7 @@ public class PsiMatchers {
   }
 
   @NotNull
-  public static PsiMatcherExpression hasClass(@NotNull final Class... classes) {
+  public static PsiMatcherExpression hasClass(final Class @NotNull ... classes) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {

@@ -256,9 +256,8 @@ public final class SVGLoader {
             colorPatcher.patchColors(url, svg);
           }
 
-          @Nullable
           @Override
-          public byte[] digest() {
+          public byte @Nullable [] digest() {
             return null;
           }
         };
@@ -285,8 +284,7 @@ public final class SVGLoader {
     /**
      * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
      */
-    @Nullable
-    byte[] digest();
+    byte @Nullable [] digest();
   }
 
   public interface SvgElementColorPatcherProvider {

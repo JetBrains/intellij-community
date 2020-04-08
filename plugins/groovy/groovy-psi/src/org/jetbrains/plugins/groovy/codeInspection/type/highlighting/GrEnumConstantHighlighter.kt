@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 
 class GrEnumConstantHighlighter(
@@ -11,7 +10,5 @@ class GrEnumConstantHighlighter(
   sink: HighlightSink
 ) : ConstructorCallHighlighter(enumConstant.constructorReference, sink) {
 
-  override val argumentList: GrArgumentList? get() = enumConstant.argumentList
-
-  override val highlightElement: PsiElement get() = argumentList ?: enumConstant.nameIdentifierGroovy
+  override val highlightElement: PsiElement get() = enumConstant.argumentList ?: enumConstant.nameIdentifierGroovy
 }

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,7 +96,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "  }\n" +
                                                    "}");
     doTest(schema, "prop:\n - 101\n - 102");
-    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Less than a minimum 18\">16</warning>");
+    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Less than the minimum 18\">16</warning>");
     doTest(schema, "prop:\n - <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">test</warning>");
   }
 
@@ -348,7 +349,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "  }\n" +
                                             "}";
     final String correctText = "withPattern: p1";
-    final String wrongText = "withPattern: <warning descr=\"Schema validation: String is violating the pattern: 'p[0-9]'\">wrong</warning>";
+    final String wrongText = "withPattern: <warning descr=\"Schema validation: String violates the pattern: 'p[0-9]'\">wrong</warning>";
     doTest(schema, correctText);
     doTest(schema, wrongText);
   }
@@ -362,7 +363,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "  }\n" +
                                             "}";
     @Language("yaml") final String correctText = "withPattern: 1234-11-11";
-    final String wrongText = "withPattern: <warning descr=\"Schema validation: String is violating the pattern: '^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$'\">wrong</warning>\n";
+    final String wrongText = "withPattern: <warning descr=\"Schema validation: String violates the pattern: '^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$'\">wrong</warning>\n";
     doTest(schema, correctText);
     doTest(schema, wrongText);
   }
@@ -431,7 +432,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "  }\n" +
                                             "}";
     final String text = "withPattern:" +
-                        " <warning descr=\"Schema validation: Can not check string by pattern because of error: Unclosed character class near index 3\n^[]$\n   ^\">(124)555-4216</warning>";
+                        " <warning descr=\"Schema validation: Cannot check the string by pattern because of an error: Unclosed character class near index 3\n^[]$\n   ^\">(124)555-4216</warning>";
     doTest(schema, text);
   }
 
@@ -451,7 +452,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "  }}";
     doTest(schema, "not_type: va4");
     doTest(schema, "not_type: <warning descr=\"Schema validation: Validates against 'not' schema\">a4</warning>");
-    doTest(schema, "not_type: <warning descr=\"Schema validation: String is violating the pattern: '^[a-z]*[0-5]*$'\">4a4</warning>");
+    doTest(schema, "not_type: <warning descr=\"Schema validation: String violates the pattern: '^[a-z]*[0-5]*$'\">4a4</warning>");
   }
 
   public void testDoNotMarkOneOfThatDiffersWithFormat() {
@@ -929,5 +930,18 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "    \"enum\": [\"a\", \"b\"]\n" +
            "  }\n" +
            "}", "<warning>r</warning>: true");
+  }
+
+  public void _testTypeVariants() throws IOException {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/prometheus.schema.json"));
+    doTest(schema, "alerting:\n" +
+                   "  alertmanagers:\n" +
+                   "  - static_configs:\n" +
+                   "    - targets: <warning>1</warning>  \n" +
+                   "      # - alertmanager:9093  \n" +
+                   "\n" +
+                   "rule_files:\n" +
+                   "  # - \"first_rules.yml\"\n" +
+                   "  # - \"second_rules.yml\"");
   }
 }

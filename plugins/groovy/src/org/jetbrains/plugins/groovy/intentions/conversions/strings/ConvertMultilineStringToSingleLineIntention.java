@@ -41,8 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 public class ConvertMultilineStringToSingleLineIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertMultilineStringToSingleLineIntention.class);
 
-  public static final String hint = GroovyIntentionsBundle.message("convert.multiline.string.to.single.line.intention.name");
-
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     String quote = element.getText().substring(0, 1);
@@ -127,5 +125,9 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
                GrStringUtil.TRIPLE_DOUBLE_QUOTES.equals(quote);
       }
     };
+  }
+
+  public static String getHint() {
+    return GroovyIntentionsBundle.message("convert.multiline.string.to.single.line.intention.name");
   }
 }

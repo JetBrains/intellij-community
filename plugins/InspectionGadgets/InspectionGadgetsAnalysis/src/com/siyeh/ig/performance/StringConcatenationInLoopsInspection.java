@@ -283,9 +283,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     return element instanceof PsiVariable ? (PsiVariable)element : null;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     PsiExpression expression = ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), PsiExpression.class);
     PsiVariable var = getAppendedVariable(expression);
     if (var == null) return InspectionGadgetsFix.EMPTY_ARRAY;

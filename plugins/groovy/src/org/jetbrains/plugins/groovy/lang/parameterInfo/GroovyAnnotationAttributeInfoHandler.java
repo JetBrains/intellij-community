@@ -29,12 +29,11 @@ import java.util.Set;
  */
 public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrAnnotationArgumentList, PsiAnnotationMethod, GrAnnotationNameValuePair> {
 
-  private static final Set<Class> ALLOWED_CLASSES = ContainerUtil.newHashSet(GrAnnotation.class);
-  private static final Set<Class> STOP_SEARCHING_CLASSES = Collections.singleton(GroovyFile.class);
+  private static final Set<Class<?>> ALLOWED_CLASSES = ContainerUtil.newHashSet(GrAnnotation.class);
+  private static final Set<Class<?>> STOP_SEARCHING_CLASSES = Collections.singleton(GroovyFile.class);
 
-  @NotNull
   @Override
-  public GrAnnotationNameValuePair[] getActualParameters(@NotNull GrAnnotationArgumentList o) {
+  public GrAnnotationNameValuePair @NotNull [] getActualParameters(@NotNull GrAnnotationArgumentList o) {
     return o.getAttributes();
   }
 
@@ -52,13 +51,13 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
 
   @NotNull
   @Override
-  public Set<Class> getArgumentListAllowedParentClasses() {
+  public Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_CLASSES;
   }
 
   @NotNull
   @Override
-  public Set<Class> getArgListStopSearchClasses() {
+  public Set<? extends Class<?>> getArgListStopSearchClasses() {
     return STOP_SEARCHING_CLASSES;
   }
 
@@ -73,9 +72,8 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
     return true;
   }
 
-  @Nullable
   @Override
-  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+  public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     if (item == null || context == null) return null;
     Object o = item.getObject();
 
@@ -92,8 +90,7 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
     }
   }
 
-  @NotNull
-  private static PsiAnnotationMethod[] extractAnnotationMethodsFromClass(@NotNull PsiClass o) {
+  private static PsiAnnotationMethod @NotNull [] extractAnnotationMethodsFromClass(@NotNull PsiClass o) {
     if (o.isAnnotationType()) {
       PsiMethod[] methods = o.getMethods();
       if (methods.length > 0) {

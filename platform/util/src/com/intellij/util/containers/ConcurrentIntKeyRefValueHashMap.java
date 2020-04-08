@@ -119,9 +119,8 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     processQueue();
   }
 
-  @NotNull
   @Override
-  public int[] keys() {
+  public int @NotNull [] keys() {
     return myMap.keys();
   }
 

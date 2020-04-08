@@ -20,6 +20,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import javax.swing.JComponent
 
 class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTypeRegistry,
@@ -46,7 +47,7 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
   private fun createDiff(filePath: String, diffHunk: String): JComponent {
     try {
-      val patchReader = PatchReader(createPatchFromHunk(filePath, diffHunk))
+      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(filePath, diffHunk))
       val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it) }
                       ?: throw IllegalStateException("Could not parse diff hunk")
 
@@ -149,11 +150,5 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
   companion object {
     private const val DIFF_SIZE = 3
-
-    private fun createPatchFromHunk(filePath: String, diffHunk: String): String {
-      return """--- a/$filePath
-+++ b/$filePath
-""" + diffHunk
-    }
   }
 }

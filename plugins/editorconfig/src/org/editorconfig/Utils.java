@@ -26,6 +26,7 @@ import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.core.EditorConfig.OutPair;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
@@ -120,7 +121,7 @@ public class Utils {
     final VirtualFile child = baseDir.findChild(".editorconfig");
     if (child != null) {
       final String message = ".editorconfig already present in " + baseDir.getPath() + "\nOverwrite?";
-      if (Messages.showYesNoDialog(project, message, ".editorconfig exists", null) == Messages.NO) return;
+      if (Messages.showYesNoDialog(project, message, EditorConfigBundle.message("dialog.title.editorconfig.exists"), null) == Messages.NO) return;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {

@@ -208,6 +208,10 @@ public interface Editor extends UserDataHolder {
   @NotNull
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos);
 
+  default int visualPositionToOffset(@NotNull VisualPosition pos) {
+    return logicalPositionToOffset(visualToLogicalPosition(pos));
+  }
+
   /**
    * Maps an offset in the document to a logical position.
    * <p>

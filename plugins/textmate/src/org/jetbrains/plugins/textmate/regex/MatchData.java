@@ -13,10 +13,9 @@ public class MatchData {
   public static final MatchData NOT_MATCHED = new MatchData(false, ArrayUtil.EMPTY_INT_ARRAY);
 
   private final boolean matched;
-  @NotNull
-  private final int[] offsets;
+  private final int @NotNull [] offsets;
 
-  private MatchData(boolean matched, @NotNull int[] offsets) {
+  private MatchData(boolean matched, int @NotNull [] offsets) {
     this.matched = matched;
     this.offsets = offsets;
   }

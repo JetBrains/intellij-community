@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.groovy.codeInsight.editorActions
 
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.testFramework.fixtures.EditorHintFixture
+import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -61,6 +63,15 @@ class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements Resolve
     def myHintFixture = new EditorHintFixture(fixture.testRootDisposable)
     fixture.performEditorAction IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO
     dispatchAllInvocationEvents()
+    waitForParameterInfo()
     return myHintFixture.currentHintText
+  }
+
+  static void waitForParameterInfo() {
+    // effective there is a chain of 3 nonBlockingRead actions
+    for (int i = 0; i < 3; i++) {
+      UIUtil.dispatchAllInvocationEvents()
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    }
   }
 }

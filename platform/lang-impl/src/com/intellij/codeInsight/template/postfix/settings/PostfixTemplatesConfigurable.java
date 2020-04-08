@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
-import com.intellij.application.options.editor.AutoImportOptionsProviderEP;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
@@ -60,10 +59,6 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private JPanel myDescriptionPanel;
   private final Alarm myUpdateDescriptionPanelAlarm = new Alarm();
 
-  private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
-  private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
-  private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
-
   public PostfixTemplatesConfigurable() {
     myTemplatesSettings = PostfixTemplatesSettings.getInstance();
 
@@ -73,9 +68,9 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
         updateComponents();
       }
     });
-    myShortcutComboBox.addItem(TAB);
-    myShortcutComboBox.addItem(SPACE);
-    myShortcutComboBox.addItem(ENTER);
+    myShortcutComboBox.addItem(getTab());
+    myShortcutComboBox.addItem(getSpace());
+    myShortcutComboBox.addItem(getEnter());
     myDescriptionPanel.setLayout(new BorderLayout());
   }
 
@@ -107,7 +102,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     panel.add(ToolbarDecorator.createDecorator(myCheckboxTree)
                               .setAddActionUpdater(e -> canAddTemplate)
                               .setAddAction(button -> myCheckboxTree.addTemplate(button))
-                              .setEditActionUpdater(e -> true)
+                              .setEditActionUpdater(e -> myCheckboxTree.canEditSelectedTemplate())
                               .setEditAction(button -> myCheckboxTree.editSelectedTemplate())
                               .setRemoveActionUpdater(e -> myCheckboxTree.canRemoveSelectedTemplates())
                               .setRemoveAction(button -> myCheckboxTree.removeSelectedTemplates())
@@ -119,7 +114,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   }
 
   private AnActionButton duplicateAction() {
-    AnActionButton button = new AnActionButton("Duplicate", PlatformIcons.COPY_ICON) {
+    AnActionButton button = new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.duplicate"), PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myCheckboxTree != null) {
@@ -158,7 +153,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   @Nls
   @Override
   public String getDisplayName() {
-    return "Postfix Completion";
+    return CodeInsightBundle.message("configurable.PostfixTemplatesConfigurable.display.name");
   }
 
   @Nullable
@@ -269,10 +264,10 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   }
 
   private static char stringToShortcut(@Nullable String string) {
-    if (SPACE.equals(string)) {
+    if (getSpace().equals(string)) {
       return TemplateSettings.SPACE_CHAR;
     }
-    else if (ENTER.equals(string)) {
+    else if (getEnter().equals(string)) {
       return TemplateSettings.ENTER_CHAR;
     }
     return TemplateSettings.TAB_CHAR;
@@ -280,11 +275,23 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   private static String shortcutToString(char shortcut) {
     if (shortcut == TemplateSettings.SPACE_CHAR) {
-      return SPACE;
+      return getSpace();
     }
     if (shortcut == TemplateSettings.ENTER_CHAR) {
-      return ENTER;
+      return getEnter();
     }
-    return TAB;
+    return getTab();
+  }
+
+  private static String getSpace() {
+    return CodeInsightBundle.message("template.shortcut.space");
+  }
+
+  private static String getTab() {
+    return CodeInsightBundle.message("template.shortcut.tab");
+  }
+
+  private static String getEnter() {
+    return CodeInsightBundle.message("template.shortcut.enter");
   }
 }

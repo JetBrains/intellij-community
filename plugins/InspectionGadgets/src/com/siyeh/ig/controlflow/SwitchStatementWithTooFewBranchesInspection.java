@@ -88,8 +88,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       registerStatementError(statement, infos);
     }
 
-    @Nullable
-    public Object[] processSwitch(@NotNull PsiSwitchBlock block) {
+    public Object @Nullable [] processSwitch(@NotNull PsiSwitchBlock block) {
       final PsiCodeBlock body = block.getBody();
       if (body == null) return null;
       int branches = 0;

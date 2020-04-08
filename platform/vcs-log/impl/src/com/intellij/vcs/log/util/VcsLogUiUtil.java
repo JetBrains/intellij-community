@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -8,9 +8,11 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
@@ -22,14 +24,20 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +45,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
+
+import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP;
 
 public class VcsLogUiUtil {
   @NotNull
@@ -90,7 +101,7 @@ public class VcsLogUiUtil {
   @NotNull
   public static JScrollPane setupScrolledGraph(@NotNull VcsLogGraphTable graphTable, int border) {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(graphTable, border);
-    UIUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     graphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
   }
@@ -162,16 +173,31 @@ public class VcsLogUiUtil {
     return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
   }
 
-  public static void appendActionToEmptyText(@NotNull StatusText emptyText, @NotNull String text, @NotNull Runnable action) {
+  public static void appendActionToEmptyText(@Nls @NotNull StatusText emptyText, @Nls @NotNull String text, @NotNull Runnable action) {
     emptyText.appendSecondaryText(text, getLinkAttributes(), e -> action.run());
   }
 
-  public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @NotNull StatusText emptyText) {
-    appendActionToEmptyText(emptyText, "Reset filters", () -> filterUi.setFilter(null));
+  public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @Nls @NotNull StatusText emptyText) {
+    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"), () -> filterUi.clearFilters());
+  }
+
+  public static boolean isDiffPreviewInEditor() {
+    return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
+  }
+
+  public static void installHighlighters(@NotNull Project project, @NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
+    LOG_HIGHLIGHTER_FACTORY_EP.getPoint(project).addExtensionPointListener(() -> {
+      logUi.getTable().removeAllHighlighters();
+      for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList(project)) {
+        if (enabled.test(factory)) {
+          logUi.getTable().addHighlighter(factory.createHighlighter(logUi.getLogData(), logUi));
+        }
+      }
+    }, true, logUi);
   }
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {
-    private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
+    @NonNls private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
     @NotNull private final VcsLogUiEx myUi;
 
     private VcsLogPlaceNavigator(@NotNull VcsLogUiEx ui) {

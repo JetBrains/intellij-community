@@ -24,9 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class TestNGDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
   @Nullable
   @Override

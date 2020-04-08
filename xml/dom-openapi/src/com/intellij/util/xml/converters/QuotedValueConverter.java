@@ -49,8 +49,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
   protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<T> genericDomValue,
                                                    final TextRange rangeInElement);
 
-  @NotNull
-  protected abstract ResolveResult[] multiResolveReference(@Nullable final T t, final ConvertContext context);
+  protected abstract ResolveResult @NotNull [] multiResolveReference(@Nullable final T t, final ConvertContext context);
 
   protected abstract String getUnresolvedMessage(String value);
 
@@ -73,10 +72,9 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue<T> genericDomValue,
-                                         final PsiElement element,
-                                         final ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue<T> genericDomValue,
+                                                   final PsiElement element,
+                                                   final ConvertContext context) {
     final String originalValue = genericDomValue.getStringValue();
     if (originalValue == null) return PsiReference.EMPTY_ARRAY;
     TextRange range = ElementManipulators.getValueTextRange(element);
@@ -136,23 +134,22 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     }
 
     @Override
-    @NotNull
-    public ResolveResult[] multiResolve(final boolean incompleteCode) {
+    public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
       if (myBadQuotation) return ResolveResult.EMPTY_ARRAY;
       final String value = getValue();
       return multiResolveReference(convertString(value, myContext), myContext);
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       return getReferenceVariants(myContext, myGenericDomValue, getRangeInElement());
     }
 
+    @SuppressWarnings("UnresolvedPropertyKey")
     @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
-      return myBadQuotation? DomBundle.message("message.invalid.value.quotation") : getUnresolvedMessage(getValue());
+      return myBadQuotation ? XmlDomBundle.message("message.invalid.value.quotation") : getUnresolvedMessage(getValue());
     }
   }
 }

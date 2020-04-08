@@ -7,11 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class JvmAnalysisBundle extends DynamicBundle {
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "com.intellij.jvm.analysis.JvmAnalysisBundle";
+  @NonNls private static final String BUNDLE = "messages.JvmAnalysisBundle";
   private static final JvmAnalysisBundle ourInstance = new JvmAnalysisBundle();
 
   private JvmAnalysisBundle() {

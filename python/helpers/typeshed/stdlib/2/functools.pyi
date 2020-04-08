@@ -3,8 +3,7 @@
 # NOTE: These are incomplete!
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Generic, Dict, Iterable, Optional, Sequence, Tuple, TypeVar, overload
-from collections import namedtuple
+from typing import Any, Callable, Generic, Dict, Iterable, Optional, Sequence, Tuple, Type, TypeVar, overload
 
 _AnyCallable = Callable[..., Any]
 
@@ -23,7 +22,7 @@ WRAPPER_UPDATES: Sequence[str]
 def update_wrapper(wrapper: _AnyCallable, wrapped: _AnyCallable, assigned: Sequence[str] = ...,
                    updated: Sequence[str] = ...) -> _AnyCallable: ...
 def wraps(wrapped: _AnyCallable, assigned: Sequence[str] = ..., updated: Sequence[str] = ...) -> Callable[[_AnyCallable], _AnyCallable]: ...
-def total_ordering(cls: type) -> type: ...
+def total_ordering(cls: Type[_T]) -> Type[_T]: ...
 def cmp_to_key(mycmp: Callable[[_T, _T], int]) -> Callable[[_T], Any]: ...
 
 class partial(Generic[_T]):

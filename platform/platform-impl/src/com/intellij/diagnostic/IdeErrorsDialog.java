@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
@@ -6,11 +6,8 @@ import com.intellij.ExtensionPoints;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -18,8 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,6 +40,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +126,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       setDevelopers(developers);
     }
     else {
-      new Task.Backgroundable(null, "Loading Developers List", true) {
+      new Task.Backgroundable(null, DiagnosticBundle.message("progress.title.loading.developers.list"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -214,7 +210,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return panel;
   }
 
-  private static JComponent actionToolbar(String id, AnAction action) {
+  private static JComponent actionToolbar(@NonNls String id, AnAction action) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
@@ -283,7 +279,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       });
       myAssigneeCombo.setSwingPopup(false);
       myAssigneePanel = new JPanel();
-      myAssigneePanel.add(new JBLabel("Assignee:"));
+      myAssigneePanel.add(new JBLabel(DiagnosticBundle.message("label.assignee")));
       myAssigneePanel.add(myAssigneeCombo);
     }
 
@@ -337,9 +333,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return scrollPane;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (SystemInfo.isWindows) {
       return new Action[]{getOKAction(), new ClearErrorsAction(), getCancelAction()};
     }
@@ -348,9 +343,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     if (myAssigneeVisible && myProject != null && !myProject.isDefault()) {
       AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
@@ -457,6 +451,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof Freeze) {
       info.append(DiagnosticBundle.message("error.list.message.blame.freeze"));
     }
+    else if (t instanceof JBRCrash) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"));
+    }
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
@@ -482,7 +479,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
-    if (submitter == null && plugin != null && !PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && plugin != null && !PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String vendorUrl = plugin.getVendorUrl();
@@ -541,7 +538,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePanel(MessageCluster cluster) {
-    if (cluster.submitter instanceof ITNReporter && !(cluster.first.getThrowable() instanceof Freeze)) {
+    if (cluster.submitter instanceof ITNReporter) {
       myAssigneePanel.setVisible(true);
       myAssigneeCombo.setEnabled(cluster.isUnsent());
       Integer assignee = cluster.first.getAssigneeId();
@@ -617,7 +614,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
       message.setSubmitted(reportInfo);
-      UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
+      UIUtil.invokeLaterIfNeeded(this::updateOnSubmit);
     });
     if (!accepted) {
       message.setSubmitting(false);
@@ -708,9 +705,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /* UI components */
 
-  private class BackAction extends AnAction implements DumbAware {
+  private class BackAction extends AnAction implements DumbAware, LightEditCompatible {
     BackAction() {
-      super("Previous", null, AllIcons.Actions.Back);
+      super(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
       if (action != null) {
         registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());
@@ -729,9 +726,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ForwardAction extends AnAction implements DumbAware {
+  private class ForwardAction extends AnAction implements DumbAware, LightEditCompatible {
     ForwardAction() {
-      super("Next", null, AllIcons.Actions.Forward);
+      super(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
       if (action != null) {
         registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), getDisposable());
@@ -819,9 +816,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   @Override
-  public void entryWasRead() { }
-
-  @Override
   public Object getData(@NotNull String dataId) {
     return CURRENT_TRACE_KEY.is(dataId) ? selectedMessage().getThrowableText() : null;
   }
@@ -838,7 +832,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     private MessageCluster(AbstractMessage message) {
       first = message;
-      pluginId = findPluginId(message.getThrowable());
+      pluginId = PluginUtil.getInstance().findPluginId(message.getThrowable());
       plugin = PluginManagerCore.getPlugin(pluginId);
       submitter = getSubmitter(message.getThrowable(), plugin);
       detailsText = detailsText();
@@ -894,114 +888,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else {
       Throwable t = event.getThrowable();
       if (t != null) {
-        plugin = PluginManagerCore.getPlugin(findPluginId(t));
+        plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(t));
       }
     }
     return plugin;
   }
 
+  /**
+   * @deprecated use {@link PluginUtil#findPluginId}
+   */
   @Nullable
+  @Deprecated
   public static PluginId findPluginId(@NotNull Throwable t) {
-    if (t instanceof PluginException) {
-      return ((PluginException)t).getPluginId();
-    }
-    if (t instanceof ExtensionInstantiationException) {
-      return ((ExtensionInstantiationException)t).getExtensionOwnerId();
-    }
-
-    Set<String> visitedClassNames = new HashSet<>();
-    for (StackTraceElement element : t.getStackTrace()) {
-      if (element != null) {
-        String className = element.getClassName();
-        if (visitedClassNames.add(className)) {
-          PluginId id = PluginManagerCore.getPluginByClassName(className);
-          if (id != null) {
-            logPluginDetection(className, id);
-            return id;
-          }
-        }
-      }
-    }
-
-    if (t instanceof NoSuchMethodException) {
-      // check is method called from plugin classes
-      if (t.getMessage() != null) {
-        StringBuilder className = new StringBuilder();
-        StringTokenizer tok = new StringTokenizer(t.getMessage(), ".");
-        while (tok.hasMoreTokens()) {
-          String token = tok.nextToken();
-          if (!token.isEmpty() && Character.isJavaIdentifierStart(token.charAt(0))) {
-            className.append(token);
-          }
-        }
-
-        PluginId pluginId = PluginManagerCore.getPluginByClassName(className.toString());
-        if (pluginId != null) {
-          return pluginId;
-        }
-      }
-    }
-    else if (t instanceof ClassNotFoundException) {
-      // check is class from plugin classes
-      if (t.getMessage() != null) {
-        PluginId id = PluginManagerCore.getPluginByClassName(t.getMessage());
-        if (id != null) {
-          return id;
-        }
-      }
-    }
-    else if (t instanceof NoClassDefFoundError && t.getMessage() != null) {
-      String className = StringUtil.substringAfterLast(t.getMessage(), " ");
-      if (className == null) className = t.getMessage();
-      if (className.indexOf('/') > 0) {
-        className = className.replace('/', '.');
-      }
-
-      PluginId id = PluginManagerCore.getPluginByClassName(className);
-      if (id != null) {
-        return PluginManagerCore.getPluginByClassName(className);
-      }
-    }
-    else if (t instanceof AbstractMethodError && t.getMessage() != null) {
-      String s = t.getMessage();
-      int pos = s.indexOf('(');
-      if (pos >= 0) {
-        s = s.substring(0, pos);
-        pos = s.lastIndexOf('.');
-        if (pos >= 0) {
-          s = s.substring(0, pos);
-          PluginId id = PluginManagerCore.getPluginByClassName(s);
-          if (id != null) {
-            return id;
-          }
-        }
-      }
-    }
-    else if (t instanceof ExtensionException) {
-      String className = ((ExtensionException)t).getExtensionClass().getName();
-      PluginId id = PluginManagerCore.getPluginByClassName(className);
-      if (id != null) {
-        return id;
-      }
-    }
-
-    Throwable cause = t.getCause();
-    return cause == null ? null : findPluginId(cause);
-  }
-
-  private static void logPluginDetection(String className, PluginId id) {
-    if (LOG.isDebugEnabled()) {
-      String message = "Detected a plugin " + id + " by class " + className;
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
-      if (descriptor != null) {
-        ClassLoader loader = descriptor.getPluginClassLoader();
-        message += "; loader=" + loader + '/' + loader.getClass();
-        if (loader instanceof PluginClassLoader) {
-          message += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
-        }
-      }
-      LOG.debug(message);
-    }
+    return PluginUtil.getInstance().findPluginId(t);
   }
 
   static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, @Nullable PluginId pluginId) {
@@ -1030,7 +929,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
-    if (plugin == null || PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (plugin == null || PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
         if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,16 +116,33 @@ public class MdnDocumentationUtil {
         url = urlCandidate;
       }
     }
-    if (url == null) return null;
-    File targetDir = new File(PathManager.getConfigPath(), "mdn");
+    if (url == null || url.contains(HtmlDocumentationProvider.ATTR_PREFIX)) return null;
+    
+    File targetDir = PathManager.getConfigDir().resolve("mdn").toFile();
     File targetFile = new File(targetDir, makeUniqueFileName(url));
     try {
       String text = defaultDocProducer.get();
       if (text == null || !text.contains(DocumentationMarkup.CONTENT_START)) {
         if (!targetFile.exists()) {
-          DownloadUtil.downloadAtomically(ProgressManager.getInstance().getProgressIndicator(), url + "?raw&summary", targetFile);
+          try {
+            DownloadUtil.downloadAtomically(ProgressManager.getInstance().getProgressIndicator(), url + "?raw&summary", targetFile);
+          } catch (IOException e) {
+            Throwable cause = e.getCause();
+            if (!(cause instanceof HttpRequests.HttpStatusException)) {
+              throw e;
+            }
+            if (((HttpRequests.HttpStatusException)cause).getStatusCode() != 404) {
+              throw e;
+            }
+            LOG.warn("Mdn broken url: " + url);
+
+            //create empty file if the server has returned 404
+            if (!targetFile.createNewFile()) throw e;
+          }
         }
         String content = FileUtil.loadFile(targetFile, StandardCharsets.UTF_8);
+        if (content.isEmpty()) return null;
+        
         String mdnDecorated = decorate(fixLinks(content), url);
         if (text == null) {
           return mdnDecorated;
@@ -140,7 +158,7 @@ public class MdnDocumentationUtil {
       }
     }
     catch (IOException e) {
-      LOG.warn(e);
+      LOG.debug(e);
     }
     return null;
   }

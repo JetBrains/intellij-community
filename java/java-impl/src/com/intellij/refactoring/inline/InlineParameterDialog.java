@@ -15,12 +15,12 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 
 import javax.swing.*;
@@ -45,13 +45,13 @@ public class InlineParameterDialog extends RefactoringDialog {
     myInitializer = initializer;
     init();
     myCreateLocalCheckbox.setSelected(createLocal);
-    setTitle(InlineParameterHandler.REFACTORING_NAME);
+    setTitle(InlineParameterHandler.getRefactoringName());
   }
 
   @Override
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    String message = RefactoringBundle.message("inline.parameter.confirmation", myParameter.getName(), myInitializer.getText());
+    String message = JavaRefactoringBundle.message("inline.parameter.confirmation", myParameter.getName(), myInitializer.getText());
     JLabel label = new JLabel(message, UIManager.getIcon("OptionPane.questionIcon"), SwingConstants.LEFT);
     panel.add(label, BorderLayout.NORTH);
     return panel;
@@ -60,7 +60,7 @@ public class InlineParameterDialog extends RefactoringDialog {
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    myCreateLocalCheckbox = new JCheckBox(RefactoringBundle.message("inline.parameter.replace.with.local.checkbox"));
+    myCreateLocalCheckbox = new JCheckBox(JavaRefactoringBundle.message("inline.parameter.replace.with.local.checkbox"));
     panel.add(myCreateLocalCheckbox, BorderLayout.SOUTH);
     return panel;
   }

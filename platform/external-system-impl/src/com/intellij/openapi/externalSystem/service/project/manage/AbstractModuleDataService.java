@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.build.BuildContentManager;
@@ -17,13 +17,13 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -108,7 +108,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         syncPaths(module, modifiableRootModel, node.getData());
 
         EP_NAME.forEachExtensionSafe(extension -> extension.importModule(modelsProvider, module, node.getData()));
-        setSdk(modifiableRootModel, node.getData());
+        importModuleSdk(modifiableRootModel, node.getData());
       }
     }
 
@@ -131,7 +131,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
       // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
       final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(created);
-      modifiableRootModel.inheritSdk();
 
       RootPolicy<Object> visitor = new RootPolicy<Object>() {
         @Override
@@ -468,7 +467,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
-    Collections.sort(noOrderAwareItems, new Comparator<OrderEntry>() {
+    noOrderAwareItems.sort(new Comparator<OrderEntry>() {
       @Override
       public int compare(OrderEntry o1, OrderEntry o2) {
         return o1.toString().compareTo(o2.toString());
@@ -506,17 +505,22 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     return idx;
   }
 
-  private void setSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {
+  private void importModuleSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {
+    if (!data.isSetSdkName()) return;
+    if (modifiableRootModel.getSdk() != null) return;
     String skdName = data.getSdkName();
-    if (skdName != null) {
-      ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-      Sdk sdk = projectJdkTable.findJdk(skdName);
-      if (sdk != null) {
-        modifiableRootModel.setSdk(sdk);
-      }
-      else {
-        modifiableRootModel.setInvalidSdk(skdName, ExternalSystemJdkProvider.getInstance().getJavaSdkType().getName());
-      }
+    if (skdName == null) return;
+    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+    Sdk sdk = projectJdkTable.findJdk(skdName);
+    if (sdk == null) return;
+    Project project = modifiableRootModel.getProject();
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    Sdk projectSdk = projectRootManager.getProjectSdk();
+    if (sdk.equals(projectSdk)) {
+      modifiableRootModel.inheritSdk();
+    }
+    else {
+      modifiableRootModel.setSdk(sdk);
     }
   }
 }

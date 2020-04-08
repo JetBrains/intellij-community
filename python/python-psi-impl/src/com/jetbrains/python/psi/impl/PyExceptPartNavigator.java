@@ -21,9 +21,6 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class PyExceptPartNavigator {
   private PyExceptPartNavigator() {
   }

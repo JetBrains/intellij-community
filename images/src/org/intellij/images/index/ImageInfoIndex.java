@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -13,11 +13,11 @@ import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.intellij.images.util.ImageInfo;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Map;
 
 public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo> {
   private static final long ourMaxImageSize = (long)(Registry.get("ide.index.image.max.size").asDouble() * 1024 * 1024);
@@ -58,11 +58,9 @@ public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<Ima
     return myDataIndexer;
   }
 
-  public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<? super ImageInfo> processor, Project project) {
-    Map<Integer, ImageInfo> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, virtualFile, project);
-    if (!data.isEmpty()) {
-      processor.process(virtualFile, data.values().iterator().next());
-    }
+  @Nullable
+  public static ImageInfo getInfo(@NotNull VirtualFile file, @NotNull Project project) {
+    return ContainerUtil.getFirstItem(FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project).values());
   }
 
   @NotNull
@@ -80,6 +78,11 @@ public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<Ima
         return file.isInLocalFileSystem() && file.getLength() < ourMaxImageSize;
       }
     };
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 
   @Override

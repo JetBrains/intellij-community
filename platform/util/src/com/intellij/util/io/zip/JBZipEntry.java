@@ -483,7 +483,7 @@ public class JBZipEntry implements Cloneable {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
       if (remaining <= 0) {
         if (addDummyByte) {
           addDummyByte = false;

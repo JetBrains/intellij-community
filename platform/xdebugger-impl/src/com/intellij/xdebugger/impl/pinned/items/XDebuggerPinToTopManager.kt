@@ -88,7 +88,6 @@ open class XDebuggerPinToTopManager {
         myListeners.remove(listener)
     }
 
-    @Suppress("unused")
     fun getPinnedItemInfos() = myPinnedMembers.values.toList()
 
     fun addItemInfo(typeName: String, fieldName: String) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -17,10 +18,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -33,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -93,10 +92,29 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
           ProgressManager.getInstance().getProgressIndicator().checkCanceled();
         }
       })
-      .cancelWith(outerIndicator)
+      .wrapProgress(outerIndicator)
       .submit(AppExecutorUtil.getAppExecutorService());
     outerIndicator.cancel();
     waitForPromise(promise);
+  }
+
+  public void testPropagateVisualChangesToOuterIndicator() {
+    ProgressIndicator outerIndicator = new ProgressIndicatorBase();
+    outerIndicator.setIndeterminate(false);
+    waitForPromise(ReadAction
+      .nonBlocking(() -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        indicator.setText("X");
+        indicator.setFraction(0.5);
+
+        assertEquals("X", outerIndicator.getText());
+        assertEquals(0.5, outerIndicator.getFraction());
+
+        indicator.setIndeterminate(true);
+        assertTrue(outerIndicator.isIndeterminate());
+      })
+      .wrapProgress(outerIndicator)
+      .submit(AppExecutorUtil.getAppExecutorService()));
   }
 
   public void testDoNotSpawnZillionThreadsForManyCoalescedSubmissions() {
@@ -165,7 +183,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotBlockExecutorThreadDuringWriteAction() throws Exception {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("a", 1);
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotBlockExecutorThreadDuringWriteAction", 1);
     Semaphore mayFinish = new Semaphore();
     Promise<Void> promise = ReadAction.nonBlocking(() -> {
       while (!mayFinish.waitFor(1)) {
@@ -194,7 +212,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testDoNotLeakSecondCancelledCoalescedAction() throws Exception {
-    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+    Executor executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("TestDoNotLeakSecondCancelledCoalescedAction", 10);
 
     Object leak = new Object(){};
     CancellablePromise<String> p = ReadAction.nonBlocking(() -> "a").coalesceBy(leak).submit(executor);
@@ -332,17 +350,10 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }).assertTiming();
   }
 
-  public void testExceptionInsideComputationIsLogged() throws Exception {
-    BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+  public void testExceptionInsideAsyncComputationIsLogged() throws Exception {
+    BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor("TestExceptionInsideAsyncComputationIsLogged", 10);
 
-    AtomicReference<Throwable> loggedError = new AtomicReference<>();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
-      @Override
-      public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
-        assertNotNull(t);
-        loggedError.set(t);
-      }
-    });
+    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
 
     Callable<Object> throwUOE = () -> {
       throw new UnsupportedOperationException();
@@ -371,6 +382,39 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }
   }
 
+  public void testDoNotLogSyncExceptions() {
+    AtomicReference<Throwable> loggedError = watchLoggedExceptions();
+
+    try {
+      // unchecked is rethrown
+      assertThrows(UnsupportedOperationException.class, () -> ReadAction.nonBlocking(() -> {
+        throw new UnsupportedOperationException();
+      }).executeSynchronously());
+      assertNull(loggedError.get());
+
+      // checked is wrapped
+      assertThrows(ExecutionException.class, () -> ReadAction.nonBlocking(() -> {
+        throw new IOException();
+      }).executeSynchronously());
+      assertNull(loggedError.get());
+    }
+    finally {
+      LoggedErrorProcessor.restoreDefaultProcessor();
+    }
+  }
+
+  private static AtomicReference<Throwable> watchLoggedExceptions() {
+    AtomicReference<Throwable> loggedError = new AtomicReference<>();
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+        assertNotNull(t);
+        loggedError.set(t);
+      }
+    });
+    return loggedError;
+  }
+
   private static void assertLogsAndThrowsUOE(CancellablePromise<Object> promise, AtomicReference<Throwable> loggedError, BoundedTaskExecutor executor) throws Exception {
     Throwable cause = null;
     try {
@@ -384,4 +428,34 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     assertSame(cause, loggedError.getAndSet(null));
   }
 
+  public void testTryAgainOnServiceNotReadyException() {
+    AtomicInteger count = new AtomicInteger();
+    Callable<String> computation = () -> {
+      if (count.incrementAndGet() < 10) {
+        throw new ServiceNotReadyException();
+      }
+      return "x";
+    };
+
+    CancellablePromise<String> future1 = ReadAction.nonBlocking(computation).submit(AppExecutorUtil.getAppExecutorService());
+    assertEquals("x", PlatformTestUtil.waitForFuture(future1, 1000));
+    assertEquals(10, count.get());
+
+    count.set(0);
+    Future<String> future2 = ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ReadAction.nonBlocking(computation).executeSynchronously());
+    assertEquals("x", PlatformTestUtil.waitForFuture(future2, 1000));
+    assertEquals(10, count.get());
+  }
+
+  public void testReportTooManyUnboundedCalls() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
+      WriteAction.run(() -> {
+        for (int i = 0; i < 1000; i++) {
+          ReadAction.nonBlocking(() -> {}).submit(AppExecutorUtil.getAppExecutorService());
+        }
+      });
+    });
+  }
 }

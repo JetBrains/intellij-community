@@ -10,8 +10,12 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddVariableInitializerFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InitializeFinalFieldInConstructorFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +34,8 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("inspection.notnull.field.not.initialized.option.implicit"), IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME);
-    panel.addCheckbox(InspectionsBundle.message("inspection.notnull.field.not.initialized.option.setup"), IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME);
+    panel.addCheckbox(JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"), IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME);
+    panel.addCheckbox(JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME);
     return panel;
   }
 
@@ -60,21 +64,22 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         PsiJavaCodeReferenceElement name = annotation.getNameReferenceElement();
         boolean ownAnnotation = annotation.isPhysical() && !byDefault;
         PsiElement anchor = ownAnnotation ? annotation : field.getNameIdentifier();
-        String message = (byDefault && name != null ? "@" + name.getReferenceName() : "Not-null") + " fields must be initialized";
+        String message = JavaBundle.message("inspection.notnull.field.not.initialized.message",
+                                            byDefault && name != null ? "@" + name.getReferenceName() : "Not-null");
 
         List<LocalQuickFix> fixes = new ArrayList<>();
         if (implicitWrite) {
           fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
                                                IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME,
-                                               InspectionsBundle.message("inspection.notnull.field.not.initialized.option.implicit"), true));
+                                               JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"), true));
         }
         if (writtenInSetup) {
           fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
                                                IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME,
-                                               InspectionsBundle.message("inspection.notnull.field.not.initialized.option.setup"), true));
+                                               JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), true));
         }
         if (ownAnnotation) {
-          fixes.add(new DeleteElementFix(annotation, "Remove not-null annotation"));
+          fixes.add(new DeleteElementFix(annotation, JavaBundle.message("quickfix.text.remove.not.null.annotation")));
         }
         if (isOnTheFly) {
           fixes.add(new InitializeFinalFieldInConstructorFix(field));

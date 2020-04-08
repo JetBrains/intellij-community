@@ -20,7 +20,10 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -58,7 +61,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NotNull
   @Override
   public String getTitle() {
-    return IdeBundle.message("title.packages");
+    return JavaBundle.message("title.packages");
   }
 
   @NotNull
@@ -119,9 +122,8 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return selected instanceof PackageElement ? (PackageElement)selected : null;
   }
 
-  @NotNull
   @Override
-  public PsiDirectory[] getSelectedDirectories() {
+  public PsiDirectory @NotNull [] getSelectedDirectories() {
     List<PsiDirectory> directories = new ArrayList<>();
     for (PackageElementNode node : getSelectedNodes(PackageElementNode.class)) {
       PackageElement packageElement = node.getValue();

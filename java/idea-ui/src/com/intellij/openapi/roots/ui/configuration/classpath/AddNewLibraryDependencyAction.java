@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* @author nik
-*/
 class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
   private final StructureConfigurableContext myContext;
   private final LibraryType myLibraryType;

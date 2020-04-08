@@ -36,11 +36,10 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     addDescriptors(descriptors);
   }
 
-  @NotNull
-  public static <Init,Result> ProblemDescriptor[] checkFileWithExternalAnnotator(@NotNull PsiFile file,
-                                                                                 @NotNull InspectionManager manager,
-                                                                                 boolean isOnTheFly,
-                                                                                 @NotNull ExternalAnnotator<Init, Result> annotator) {
+  public static <Init,Result> ProblemDescriptor @NotNull [] checkFileWithExternalAnnotator(@NotNull PsiFile file,
+                                                                                           @NotNull InspectionManager manager,
+                                                                                           boolean isOnTheFly,
+                                                                                           @NotNull ExternalAnnotator<Init, Result> annotator) {
     if (isOnTheFly) {
       // ExternalAnnotator does this work
       return ProblemDescriptor.EMPTY_ARRAY;
@@ -55,6 +54,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       return ReadAction.compute(() -> {
         AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), true);
         annotationHolder.applyExternalAnnotatorWithContext(file, annotator, annotationResult);
+        annotationHolder.assertAllAnnotationsCreated();
         return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
       });
     }
@@ -62,7 +62,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   }
 
 
-  private void addDescriptors(@NotNull ProblemDescriptor[] descriptors) {
+  private void addDescriptors(ProblemDescriptor @NotNull [] descriptors) {
     for (ProblemDescriptor descriptor : descriptors) {
       LOG.assertTrue(descriptor != null, getClass().getName());
       myHolder.registerProblem(descriptor);

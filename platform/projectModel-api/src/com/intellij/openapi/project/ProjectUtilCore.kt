@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
@@ -26,6 +26,22 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
     }
   }
 
+  val urlWithLibraryName = decorateWithLibraryName(file, project, result)
+  if (urlWithLibraryName != null) {
+    return urlWithLibraryName
+  }
+
+  // see PredefinedSearchScopeProviderImpl.getPredefinedScopes for the other place to fix.
+  if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
+    return result
+  }
+
+  return appendModuleName(file, project, result, moduleOnTheLeft)
+}
+
+fun decorateWithLibraryName(file: VirtualFile,
+                                    project: Project,
+                                    result: String): String? {
   if (file.fileSystem is LocalFileProvider) {
     @Suppress("DEPRECATION") val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
     if (localFile != null) {
@@ -36,12 +52,13 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
       }
     }
   }
+  return null
+}
 
-  // see PredefinedSearchScopeProviderImpl.getPredefinedScopes for the other place to fix.
-  if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
-    return result
-  }
-
+fun appendModuleName(file: VirtualFile,
+                     project: Project,
+                     result: String,
+                     moduleOnTheLeft: Boolean): String {
   val module = ModuleUtilCore.findModuleForFile(file, project)
   return when {
     module == null || ModuleManager.getInstance(project).modules.size == 1 -> result

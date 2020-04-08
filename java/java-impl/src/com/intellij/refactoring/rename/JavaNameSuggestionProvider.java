@@ -76,8 +76,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     return null;
   }
 
-  @Nullable
-  private static String[] suggestProperlyCasedName(PsiElement psiElement) {
+  private static String @Nullable [] suggestProperlyCasedName(PsiElement psiElement) {
     if (!(psiElement instanceof PsiNamedElement)) return null;
     if (psiElement instanceof PsiFile) return null;
     String name = ((PsiNamedElement)psiElement).getName();

@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -162,14 +164,14 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     private final JRadioButton myProviderButton = new JBRadioButton();
 
     protected CreateServiceImplementationDialog(@Nullable Project project,
-                                                @NotNull PsiDirectory[] psiRootDirs,
+                                                PsiDirectory @NotNull [] psiRootDirs,
                                                 @NotNull String superClassName) {
       super(project);
-      setTitle("Create Service Implementation");
+      setTitle(QuickFixBundle.message("create.service.implementation"));
 
-      mySubclassButton.setText("Subclass of '" + superClassName + "'");
+      mySubclassButton.setText(JavaBundle.message("radio.button.subclass.of.0", superClassName));
       mySubclassButton.setSelected(true);
-      myProviderButton.setText("With 'provider()' method");
+      myProviderButton.setText(JavaBundle.message("radio.button.with.provider.method"));
 
       ButtonGroup group = new ButtonGroup();
       group.add(mySubclassButton);
@@ -181,9 +183,8 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       init();
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
@@ -196,10 +197,10 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Override
     protected JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
-      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel("Implementation:"))
+      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(JavaBundle.message("label.implementation")))
              .add(UI.PanelFactory.panel(myProviderButton));
       if (myRootDirCombo.getModel().getSize() > 1) {
-        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
       }
       return builder.createPanel();
     }

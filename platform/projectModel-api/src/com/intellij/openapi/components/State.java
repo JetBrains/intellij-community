@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
@@ -16,7 +17,7 @@ public @interface State {
   /**
    * Component name.
    */
-  @NotNull
+  @NotNull @NonNls
   String name();
 
   /**
@@ -28,8 +29,7 @@ public @interface State {
    *
    * <p>Module-level: optional, corresponding module file will be used ({@code *.iml}).</p>
    */
-  @NotNull
-  Storage[] storages() default {};
+  Storage @NotNull [] storages() default {};
 
   /**
    * If set to false, complete project (or application) reload is required when the storage file is changed externally and the state has changed.
@@ -68,7 +68,9 @@ public @interface State {
    */
   boolean reportStatistic() default false;
 
-  @ApiStatus.Experimental
+  boolean allowLoadInTests() default false;
+
+  @ApiStatus.Internal
   boolean useLoadedStateAsExisting() default true;
 
   abstract class NameGetter implements Getter<String> {

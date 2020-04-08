@@ -55,6 +55,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     super(BuilderCategory.INITIAL);
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.emptyList();

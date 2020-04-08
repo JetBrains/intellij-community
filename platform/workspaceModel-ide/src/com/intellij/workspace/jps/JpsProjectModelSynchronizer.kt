@@ -1,6 +1,8 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.*
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -8,6 +10,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.module.impl.AutomaticModuleUnloader
+import com.intellij.openapi.module.impl.ModulePath
+import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
@@ -26,6 +32,7 @@ import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.EntityStoreChanged
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.ide.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -33,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashSet
 
-class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
+internal class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
   private lateinit var fileContentReader: StorageJpsConfigurationReader
   private val serializationData = AtomicReference<JpsEntitiesSerializationData?>()
@@ -83,7 +90,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   private fun registerListener() {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+      override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
         val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }
@@ -98,7 +105,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
       }
     })
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) {
         event.getAllChanges().forEach {
           when (it) {
@@ -115,18 +122,42 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   internal fun loadInitialProject(storagePlace: JpsProjectStoragePlace) {
+    val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     val baseDirUrl = storagePlace.baseDirectoryUrl
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
-    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false, false)
+    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false, true)
     this.serializationData.set(serializationData)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()
+
+    val modulePaths = serializationData.fileSerializersByUrl.values().filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
+    loadStateOfUnloadedModules(modulePaths)
+
     serializationData.loadAll(fileContentReader, builder)
     WriteAction.runAndWait<RuntimeException> {
       WorkspaceModel.getInstance(project).updateProjectModel { updater ->
         updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
       }
     }
+    activity.end()
+  }
+
+  // Logic from com.intellij.openapi.module.impl.ModuleManagerImpl.loadState(java.util.Set<com.intellij.openapi.module.impl.ModulePath>)
+  private fun loadStateOfUnloadedModules(modulePaths: List<ModulePath>) {
+    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+
+    val (unloadedModulePaths, modulePathsToLoad) = modulePaths.partition { it.moduleName in unloadedModuleNames }
+
+    val unloaded = UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, project).toMutableList()
+
+    if (unloaded.isNotEmpty()) {
+      val changeUnloaded = AutomaticModuleUnloader.getInstance(project).processNewModules(modulePathsToLoad.toSet(), unloaded)
+      unloaded.addAll(changeUnloaded.toUnloadDescriptions)
+    }
+
+    val unloadedModules = LegacyBridgeModuleManagerComponent.getInstance(project).unloadedModules
+    unloadedModules.clear()
+    unloaded.associateByTo(unloadedModules) { it.name }
   }
 
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {

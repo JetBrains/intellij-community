@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import static java.util.Collections.unmodifiableSet;
 
 public class OptionsEditorContext {
   CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
@@ -151,7 +153,7 @@ public class OptionsEditorContext {
   }
 
   public Set<Configurable> getModified() {
-    return myModified;
+    return unmodifiableSet(myModified);
   }
 
   public Map<Configurable, ConfigurationException> getErrors() {

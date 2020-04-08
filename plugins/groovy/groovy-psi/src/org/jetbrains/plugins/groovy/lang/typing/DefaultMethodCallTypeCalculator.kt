@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -11,13 +11,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
@@ -73,11 +70,10 @@ private fun getTypeFromPropertyCall(element: PsiElement?, arguments: Arguments?,
     is PsiMethod -> element.returnType
     else -> null
   }
-  if (type !is GrClosureType) {
+  if (type !is GroovyClosureType) {
     return null
   }
-  val argumentTypes = arguments?.map(Argument::type)?.toTypedArray()
-  return GrClosureSignatureUtil.getReturnType(type.signatures, argumentTypes, context)
+  return type.returnType(arguments)
 }
 
 fun PsiType?.devoid(context: PsiElement): PsiType? {

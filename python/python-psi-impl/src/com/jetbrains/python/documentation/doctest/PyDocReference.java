@@ -41,9 +41,8 @@ public class PyDocReference extends PyReferenceImpl {
     return severity != null ? HighlightSeverity.WARNING : null;
   }
 
-  @NotNull
   @Override
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     ResolveResult[] results = super.multiResolve(incompleteCode);
     if (results.length == 0) {
       final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myElement.getProject());
@@ -137,8 +136,7 @@ public class PyDocReference extends PyReferenceImpl {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final ArrayList<Object> ret = Lists.newArrayList(super.getVariants());
     final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
     final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;

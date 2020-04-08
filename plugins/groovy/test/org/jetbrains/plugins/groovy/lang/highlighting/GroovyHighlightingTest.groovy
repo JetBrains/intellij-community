@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -1323,7 +1323,7 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></weak_warning>
+print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning descr="'foo' cannot be applied to '()'">()</warning></weak_warning>
 ''', true, false, true, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 

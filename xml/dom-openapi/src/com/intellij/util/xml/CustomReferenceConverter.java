@@ -37,6 +37,5 @@ public interface CustomReferenceConverter<T> {
    * @param context {@link com.intellij.util.xml.ConvertContext}
    * @return custom {@link com.intellij.psi.PsiReference}s for the value
    */
-  @NotNull
-  PsiReference[] createReferences(GenericDomValue<T> value, PsiElement element, ConvertContext context);
+  PsiReference @NotNull [] createReferences(GenericDomValue<T> value, PsiElement element, ConvertContext context);
 }

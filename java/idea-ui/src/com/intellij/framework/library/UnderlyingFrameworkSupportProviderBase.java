@@ -18,8 +18,6 @@ package com.intellij.framework.library;
 import com.intellij.framework.FrameworkTypeEx;
 
 /**
- * @author nik
- *
  * @deprecated use {@link #LibraryBasedFrameworkSupportProvider} instead
  */
 @Deprecated

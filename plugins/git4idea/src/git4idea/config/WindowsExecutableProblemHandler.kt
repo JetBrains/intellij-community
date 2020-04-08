@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.HttpRequests
+import com.intellij.openapi.util.io.FileUtil
+import git4idea.i18n.GitBundle
 import java.io.File
 
 internal class WindowsExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
@@ -17,54 +17,50 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
     val LOG = logger<WindowsExecutableProblemHandler>()
   }
 
-  private val gitexe = if (SystemInfo.is64Bit) "Git-2.24.1.2-64-bit.exe" else "Git-2.24.1.2-32-bit.exe"
-  private val gitFile = File(PathManager.getTempPath(), gitexe)
-
-  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
-    errorNotifier.showError("Git is not installed", ErrorNotifier.FixOption.Standard("Download and install") {
-      errorNotifier.executeTask("Downloading...", false) {
-        // todo display determinate inline progress for downloading
-        if (downloadGit(errorNotifier)) {
-          errorNotifier.changeProgressTitle("Installing...")
-          installGit(errorNotifier)
+  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
+                            ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
+        errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), true) {
+          val installer = fetchInstaller(errorNotifier) { it.os == "windows" && archMatches(it.arch) }
+          if (installer != null) {
+            val fileName = installer.fileName
+            val exeFile = File(PathManager.getTempPath(), fileName)
+            try {
+              if (downloadGit(installer, exeFile, project, errorNotifier)) {
+                errorNotifier.changeProgressTitle(GitBundle.message("install.installing.progress"))
+                installGit(exeFile, errorNotifier, onErrorResolved)
+              }
+            }
+            finally {
+              FileUtil.delete(exeFile)
+            }
+          }
         }
-      }
-    })
+      })
   }
 
-  private fun downloadGit(errorNotifier: ErrorNotifier): Boolean {
-    // todo get the JSON with the URL from our server, then get the URL from the JSON
-    val url = "https://github.com/git-for-windows/git/releases/download/v2.24.1.windows.2/$gitexe"
-    try {
-      HttpRequests.request(url).saveToFile(gitFile, ProgressManager.getInstance().progressIndicator)
-      return true
-    }
-    catch (e: Exception) {
-      LOG.warn("Couldn't download $gitexe from $url")
-      // todo special text for the network unavailable error
-      errorNotifier.showError("Couldn't download Git, please do it manually", getLinkToConfigure(project))
-      return false
-    }
-  }
+  private fun archMatches(arch: String) = if (SystemInfo.is32Bit) arch == "x86_32" else arch == "x86_64"
 
-  private fun installGit(errorNotifier: ErrorNotifier) {
+  private fun installGit(exeFile: File, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     val commandLine = GeneralCommandLine()
-      .withExePath(gitFile.path)
+      .withExePath(exeFile.path)
       .withParameters("/verysilent")
     try {
       val output = ExecUtil.execAndGetOutput(commandLine)
 
       if (!output.checkSuccess(LOG)) {
-        errorNotifier.showError("Couldn't install Git, please do it manually", getLinkToConfigure(project))
+        errorNotifier.showError(GitBundle.message("install.general.error"), getLinkToConfigure(project))
       }
       else {
         LOG.info("Installed Git. ${output.dumpToString()}")
-        errorNotifier.showMessage("Git has been installed")
+        errorNotifier.showMessage(GitBundle.message("install.success.message"))
+        errorNotifier.resetGitExecutable()
+        onErrorResolved()
       }
     }
     catch (e: Exception) {
       LOG.warn("Couldn't run $commandLine")
-      errorNotifier.showError("Couldn't install Git, please do it manually", getLinkToConfigure(project))
+      errorNotifier.showError(GitBundle.message("install.general.error"), getLinkToConfigure(project))
     }
   }
 }

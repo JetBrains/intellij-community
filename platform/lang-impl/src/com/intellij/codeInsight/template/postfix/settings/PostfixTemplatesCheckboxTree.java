@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -55,7 +55,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   private final CheckedTreeNode myRoot;
   @NotNull
   private final DefaultTreeModel myModel;
-  
+
   public PostfixTemplatesCheckboxTree() {
     super(getRenderer(), new CheckedTreeNode(null));
     myModel = (DefaultTreeModel)getModel();
@@ -70,7 +70,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     Disposer.register(this, () -> getSelectionModel().removeTreeSelectionListener(selectionListener));
     DoubleClickListener doubleClickListener = new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         TreePath location = getClosestPathForLocation(event.getX(), event.getY());
         return location != null && doubleClick(location.getLastPathComponent());
       }
@@ -131,7 +131,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   }
 
   protected void selectionChanged() {
-    
+
   }
 
   public void initTree(@NotNull MultiMap<PostfixTemplateProvider, PostfixTemplate> providerToTemplates) {
@@ -268,7 +268,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     DataContext context = DataManager.getInstance().getDataContext(button.getContextComponent());
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
                                                                           JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
-    popup.show(ObjectUtils.assertNotNull(button.getPreferredPopupPoint()));
+    popup.show(Objects.requireNonNull(button.getPreferredPopupPoint()));
   }
 
   public boolean canEditSelectedTemplate() {

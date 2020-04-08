@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +33,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +43,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 
-/**
- * @author max
- */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance(VirtualDirectoryImpl.class);
 
@@ -61,6 +59,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     super(id, segment, parent);
     myData = data;
     myFs = fs;
+    if (parent != null) {
+      registerLink(fs);
+    }
   }
 
   @Override
@@ -220,8 +221,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return c == '/' || c == File.separatorChar;
   }
 
-  @NotNull
-  private VirtualFileSystemEntry[] getArraySafely(boolean putToMemoryCache) {
+  private VirtualFileSystemEntry @NotNull [] getArraySafely(boolean putToMemoryCache) {
     return myData.getFileChildren(this, putToMemoryCache);
   }
 
@@ -250,7 +250,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       VfsData.initFile(id, segment, nameId, attributes.isDirectory() ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     }
     catch (VfsData.FileAlreadyCreatedException e) {
-      throw new RuntimeException("dir=" + myId + "; dir.children=" + Arrays.toString(FSRecords.listAll(myId)), e);
+      throw new RuntimeException("id="+id+"; nameId="+nameId+"; this.id=" + myId + "; dir.children=" + FSRecords.listAll(myId), e);
     }
     LOG.assertTrue(!(getFileSystem() instanceof Win32LocalFileSystem));
 
@@ -345,8 +345,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getChildren() {
+  public VirtualFile @NotNull [] getChildren() {
     if (!isValid()) {
       return handleInvalidDirectory(EMPTY_ARRAY);
     }
@@ -357,8 +356,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return loadAllChildren();
   }
 
-  @NotNull
-  private VirtualFile[] loadAllChildren() {
+  private VirtualFile @NotNull [] loadAllChildren() {
     NewVirtualFileSystem delegate = getFileSystem();
     boolean caseSensitive = delegate.isCaseSensitive();
     synchronized (myData) {
@@ -468,7 +466,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            + ") ";
   }
 
-  private static void error(String message, VirtualFileSystemEntry[] array, Object... details) {
+  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, Object... details) {
     String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
     String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
     throw new AssertionError(message + "; children: " + children + "\nDetails: " + detailsStr);
@@ -491,9 +489,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false, false, getFileSystem());
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     throw new IOException("Cannot get content of directory: " + this);
   }
 
@@ -647,10 +644,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     int id = getId();
     synchronized (myData) {
-      FSRecords.NameId[] persistentIds = FSRecords.listAll(id);
-      for (FSRecords.NameId nameId : persistentIds) {
-        existingNames.add(nameId.name);
-      }
+      existingNames.addAll(FSRecords.listNames(id));
 
       validateAgainst(childrenToCreate, existingNames);
 
@@ -691,7 +685,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return myData.getAdoptedNames();
   }
 
-  private int findIndex(@NotNull int[] ids, @NotNull CharSequence name, boolean caseSensitive) {
+  private int findIndex(int @NotNull [] ids, @NotNull CharSequence name, boolean caseSensitive) {
     return ObjectUtils.binarySearch(0, ids.length, mid -> compareNames(mySegment.vfsData.getNameByFileId(ids[mid]), name, caseSensitive));
   }
 

@@ -17,15 +17,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
@@ -423,7 +419,8 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = field instanceof LightRecordField ? field.getName() : PropertyUtilBase.suggestGetterName(field);
+        final String getterName = JavaPsiRecordUtil.getComponentForField(field) != null ? 
+                                  field.getName() : PropertyUtilBase.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
              psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);

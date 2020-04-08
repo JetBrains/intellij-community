@@ -16,7 +16,7 @@ import java.awt.geom.Rectangle2D;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
-  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
+  private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(13)).asUIResource();
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

@@ -117,8 +117,7 @@ public final class MavenShortcutsManager implements Disposable {
     return getShortcuts(project, goal).length > 0;
   }
 
-  @NotNull
-  private Shortcut[] getShortcuts(MavenProject project, String goal) {
+  private Shortcut @NotNull [] getShortcuts(MavenProject project, String goal) {
     String actionId = getActionId(project.getPath(), goal);
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     return activeKeymap.getShortcuts(actionId);

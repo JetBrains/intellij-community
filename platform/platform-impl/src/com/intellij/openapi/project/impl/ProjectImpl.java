@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -22,11 +20,10 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLoadHelper;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -39,7 +36,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.*;
@@ -50,7 +47,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
+public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance(ProjectImpl.class);
 
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
@@ -75,12 +72,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
-    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
 
-    getPicoContainer().registerComponentInstance(Project.class, this);
+    registerServiceInstance(Project.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
@@ -92,7 +89,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // default project constructor
   ProjectImpl() {
-    super((PlatformComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -257,37 +254,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  public final void registerComponents() {
-    String activityNamePrefix = activityNamePrefix();
-    Activity activity = (activityNamePrefix == null || !StartUpMeasurer.isEnabled()) ? null : StartUpMeasurer.startMainActivity(activityNamePrefix + StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX);
-    //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
-    if (activity != null) {
-      activity = activity.endAndStart("projectComponentRegistered");
-    }
-
-    ProjectServiceContainerCustomizer.getEp().processWithPluginDescriptor((customizer, pluginDescriptor) -> {
-      if (pluginDescriptor.getPluginId() != PluginManagerCore.CORE_ID) {
-        LOG.error("Plugin " + pluginDescriptor + " is not approved to add ProjectServiceContainerCustomizer");
-      }
-
-      try {
-        customizer.serviceContainerInitialized(this);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    });
-
-    if (activity != null) {
-      activity.end();
-    }
-  }
-
   public void init(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
 
@@ -311,7 +277,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
-    application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
+
+    ProjectLoadHelper.notifyThatComponentCreated(this);
   }
 
   @Override
@@ -364,6 +331,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     super.dispose();
 
+    if (myComponentStore.isComputed()) {
+      myComponentStore.getValue().release();
+    }
+
     if (!app.isDisposed()) {
       //noinspection deprecation
       app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
@@ -382,7 +353,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NonNls
   @Override
   public String toString() {
-    return "Project (name=" + myName + ", containerState=" + containerState.get().name() +
+    return "Project (name=" + myName + ", containerState=" + getContainerStateName() +
            ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
            (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }

@@ -36,9 +36,8 @@ public class XIncludeProvider extends FileIncludeProvider {
     fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<>();

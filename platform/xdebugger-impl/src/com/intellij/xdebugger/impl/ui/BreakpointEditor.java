@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,10 @@ public class BreakpointEditor {
   private void createUIComponents() {
     AnAction action = ActionManager.getInstance().getAction(XDebuggerActions.VIEW_BREAKPOINTS);
     String shortcutText = action != null ? KeymapUtil.getFirstKeyboardShortcutText(action) : null;
-    String text = shortcutText != null ? "More (" + shortcutText + ")" : "More";
+    String text = XDebuggerBundle.message("xbreakpoints.popup.more.label");
+    if (shortcutText != null) {
+      text += " (" + shortcutText + ")";
+    }
     myShowMoreOptionsLink = LinkLabel.create(text, () -> {
       if (myDelegate != null) {
         myDelegate.more();
@@ -88,6 +92,8 @@ public class BreakpointEditor {
     doneAction.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.ESCAPE,
                                                                   CommonShortcuts.ENTER,
                                                                   CommonShortcuts.CTRL_ENTER), myMainPanel);
+    myMainPanel.setFocusCycleRoot(true);
+    myMainPanel.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }
 
   private void done() {

@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
@@ -38,7 +39,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   @NotNull
   public static ToggleToolbarAction createAction(@NotNull String id,
                                                  @NotNull PropertiesComponent properties,
-                                                 @NotNull Supplier<? extends Iterable<JComponent>> components) {
+                                                 @NotNull Supplier<? extends Iterable<? extends JComponent>> components) {
     return new ToggleToolbarAction(properties, getShowToolbarProperty(id), components);
   }
 
@@ -98,12 +99,12 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
   private final PropertiesComponent myPropertiesComponent;
   private final String myProperty;
-  private final Supplier<? extends Iterable<JComponent>> myProducer;
+  private final Supplier<? extends Iterable<? extends JComponent>> myProducer;
 
   private ToggleToolbarAction(@NotNull PropertiesComponent propertiesComponent,
                               @NotNull String property,
-                              @NotNull Supplier<? extends Iterable<JComponent>> producer) {
-    super("Show Toolbar");
+                              @NotNull Supplier<? extends Iterable<? extends JComponent>> producer) {
+    super(ActionsBundle.messagePointer("action.ShowToolbar.text"));
     myPropertiesComponent = propertiesComponent;
     myProperty = property;
     myProducer = producer;
@@ -171,9 +172,8 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
       e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       ContentManager contentManager = myToolWindow.getContentManager();
       Content selectedContent = contentManager.getSelectedContent();
       JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -137,7 +137,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             final ParameterInfo[] parameters = changeInfo.getNewParameters();
             for (ParameterInfo parameter : parameters) {
               final String defaultValue = parameter.getDefaultValue();
-              if (defaultValue == null && parameter.getOldIndex() == -1) {
+              if (defaultValue == null && parameter.isNew()) {
                 ((ParameterInfoImpl)parameter).setDefaultValue("");
                 if (!ApplicationManager.getApplication().isUnitTestMode()) {
                   final PsiType type = ((ParameterInfoImpl)parameter).getTypeWrapper().getType(element);

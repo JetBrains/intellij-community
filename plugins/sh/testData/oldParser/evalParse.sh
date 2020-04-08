@@ -9,3 +9,4 @@ eval `echo args$i`=`cygpath --path --ignore --mixed "$arg"`
 if ! eval "$@"; then
 	echo >&2 "WARNING: command failed \"$@\""
 fi
+echo '$x' | eval

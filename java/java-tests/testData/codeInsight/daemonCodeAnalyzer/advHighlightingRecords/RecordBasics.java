@@ -1,5 +1,8 @@
 import java.lang.annotation.*;
 
+class <error descr="'record' is a restricted identifier and cannot be used for type declarations">record</error> {
+  void x(<error descr="Illegal reference to restricted type 'record'">record</error> r) {}
+}
 record <error descr="Record has no header declared">NoComponentList</error> {}
 record NoComponents() {}
 class ClassWithComponents<error descr="Record header declared for non-record">(int x)</error> {}
@@ -23,7 +26,7 @@ record <error descr="Class 'UnrelatedDefaults' must implement abstract method 'r
 record ComponentModifiers(
   <error descr="Modifier 'public' not allowed here">public</error> int x, 
   <error descr="Modifier 'static' not allowed here">static</error> int y,
-  final int z) {}
+  <error descr="Modifier 'final' not allowed here">final</error> int z) {}
 record ComponentDuplicateName(int <error descr="Variable 'x' is already defined in the scope">x</error>, int <error descr="Variable 'x' is already defined in the scope">x</error>) {}
 record VarArgOk(int... x) {}
 record VarArgOk2(int x, int... y) {}

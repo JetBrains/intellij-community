@@ -169,6 +169,14 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getVariables();
   }
 
+  @Override
+  public List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
+    throws PyDebuggerException {
+    GetSmartStepIntoVariantsCommand command = new GetSmartStepIntoVariantsCommand(this, threadId, frameId, startContextLine, endContextLine);
+    command.execute();
+    return command.getVariants();
+  }
+
   // todo: don't generate temp variables for qualified expressions - just split 'em
   @Override
   public XValueChildrenList loadVariable(final String threadId, final String frameId, final PyDebugValue var) throws PyDebuggerException {
@@ -440,8 +448,9 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void smartStepInto(String threadId, String functionName) {
-    final SmartStepIntoCommand command = new SmartStepIntoCommand(this, threadId, functionName);
+  public void smartStepInto(String threadId, String frameId, String functionName, int callOrder, int contextStartLine, int contextEndLine) {
+    final SmartStepIntoCommand command = new SmartStepIntoCommand(this, threadId, frameId, functionName, callOrder,
+                                                                  contextStartLine, contextEndLine);
     execute(command);
   }
 

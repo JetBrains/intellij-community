@@ -27,7 +27,7 @@ import java.util.Collections;
  */
 public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNameContributorEx {
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     FileBasedIndex fileIndex = FileBasedIndex.getInstance();
     StubIndex stubIndex = StubIndex.getInstance();
     if (!fileIndex.processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter)) return;
@@ -39,7 +39,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     Project project = parameters.getProject();
     GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestScope(parameters.getSearchScope());
@@ -55,7 +55,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
     if (!stubIndex.processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
     if (!stubIndex.processElements(PyFunctionNameIndex.KEY, name, project, scope, filter, PyFunction.class, processor)) return;
     if (!stubIndex.processElements(PyVariableNameIndex.KEY, name, project, scope, filter, PyTargetExpression.class, processor)) return;
-    if (!stubIndex.processElements(PyClassAttributesIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
+    PyClassAttributesIndex.findClassAndInstanceAttributes(name, project, scope).forEach(processor::process);
   }
 
   @Override

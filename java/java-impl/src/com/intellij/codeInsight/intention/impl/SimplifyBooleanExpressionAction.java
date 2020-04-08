@@ -39,7 +39,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
   @Override
   @NotNull
   public String getFamilyName() {
-    return SimplifyBooleanExpressionFix.FAMILY_NAME;
+    return SimplifyBooleanExpressionFix.getFamilyNameText();
   }
 
   @Override

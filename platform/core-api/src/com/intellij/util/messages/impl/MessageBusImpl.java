@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -27,9 +27,6 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author max
- */
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance(MessageBusImpl.class);
   private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = (bus1, bus2) -> ArrayUtil.lexicographicCompare(bus1.myOrder, bus2.myOrder);
@@ -135,8 +132,7 @@ public class MessageBusImpl implements MessageBus {
   /**
    * calculates {@link #myOrder} for the given child bus
    */
-  @NotNull
-  private int[] nextOrder() {
+  private int @NotNull [] nextOrder() {
     MessageBusImpl lastChild = ContainerUtil.getLastItem(myChildBuses);
 
     int lastChildIndex = lastChild == null ? 0 : ArrayUtil.getLastElement(lastChild.myOrder, 0);
@@ -349,13 +345,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private void postMessage(@NotNull Message message) {
-    checkNotDisposed();
-    List<MessageBusConnectionImpl> topicSubscribers = getTopicSubscribers(message.getTopic());
-    if (topicSubscribers.isEmpty()) {
-      return;
-    }
-
+  private static void postMessage(@NotNull Message message, @NotNull List<MessageBusConnectionImpl> topicSubscribers) {
     for (MessageBusConnectionImpl subscriber : topicSubscribers) {
       MessageBusImpl bus = subscriber.getBus();
       // maybe temporarily disposed (light test project)
@@ -404,8 +394,12 @@ public class MessageBusImpl implements MessageBus {
 
   private void sendMessage(@NotNull Message message) {
     pumpMessages();
-    postMessage(message);
-    pumpMessages();
+
+    List<MessageBusConnectionImpl> subscribers = getTopicSubscribers(message.getTopic());
+    if (!subscribers.isEmpty()) {
+      postMessage(message, subscribers);
+      pumpMessages();
+    }
   }
 
   private void pumpMessages() {

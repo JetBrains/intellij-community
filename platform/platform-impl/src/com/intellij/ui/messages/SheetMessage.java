@@ -12,6 +12,7 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,8 @@ final class SheetMessage implements Disposable {
 
     maximizeIfNeeded(owner);
 
-    myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
+    @NonNls String hiddenTitle = "This should not be shown";
+    myWindow = new JDialog(owner, hiddenTitle, Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
     //Sometimes we cannot find the owner from the project. For instance, WelcomeScreen could be showing without a

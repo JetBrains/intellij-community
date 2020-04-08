@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.Disposer
@@ -113,6 +114,7 @@ class LegacyBridgeModifiableRootModel(
     val entity = currentModel.contentEntities.firstOrNull { it.url == contentEntryUrl }
                  ?: error("ContentEntry $entry does not belong to modifiableRootModel of module ${legacyBridgeModule.name}")
 
+    entry.clearSourceFolders()
     diff.removeEntity(entity)
 
     if (assertChangesApplied && contentEntries.any { it.url == contentEntryUrl.url }) {
@@ -178,8 +180,10 @@ class LegacyBridgeModifiableRootModel(
 
     updateDependencies { it + libraryDependency }
 
-    return orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
-           ?: error("Unable to find library orderEntry after adding")
+
+    val libraryOrderEntry = (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
+                             ?: error("Unable to find library orderEntry after adding"))
+    return libraryOrderEntry
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
@@ -191,8 +195,8 @@ class LegacyBridgeModifiableRootModel(
 
     updateDependencies { it + libraryDependency }
 
-    return orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
-           ?: error("Unable to find library orderEntry after adding")
+    return (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
+                             ?: error("Unable to find library orderEntry after adding"))
   }
 
   override fun addModuleOrderEntry(module: Module): ModuleOrderEntry {
@@ -292,9 +296,9 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  override fun commit() {
+  fun collectChanges(): TypedEntityStorageBuilder? {
     assertModelIsLive()
-    if (!isChanged) return
+    if (!isChanged) return null
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) {
       val element = Element("component")
@@ -340,7 +344,12 @@ class LegacyBridgeModifiableRootModel(
     LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.addAll(moduleLibraryTable.librariesToAdd)
     // Do not clear `librariesToAdd`. Otherwise `getLibraries()` will return an empty list after the commit
 
-    disposeSkippingLibraries()
+    disposeWithoutLibraries()
+    return diff
+  }
+
+  override fun commit() {
+    val diff = collectChanges() ?: return
 
     val moduleDiff = module.diff
 
@@ -354,18 +363,13 @@ class LegacyBridgeModifiableRootModel(
   }
 
   override fun dispose() {
-    if (!modelIsCommittedOrDisposed) {
-      Disposer.dispose(extensionsDisposable)
-
-      moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
-      moduleLibraryTable.librariesToRemove.clear()
-    }
-
-    // No assertions here since it is ok to call dispose twice or more
-    modelIsCommittedOrDisposed = true
+    disposeWithoutLibraries()
+    if (isDisposed) return
+    moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
+    moduleLibraryTable.librariesToRemove.clear()
   }
 
-  private fun disposeSkippingLibraries() {
+  private fun disposeWithoutLibraries() {
     if (!modelIsCommittedOrDisposed) {
       Disposer.dispose(extensionsDisposable)
     }
@@ -534,6 +538,14 @@ class LegacyBridgeModifiableRootModel(
       get() = modifiableModel.entityStoreOnDiff.cachedValue(librariesValue, librariesToAdd to librariesToRemove)
 
     override fun commit() {
+      librariesToAdd.forEach { library ->
+        val componentAsString = modifiableModel.serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
+        library.libraryEntity?.getCustomProperties()?.let { property ->
+          modifiableModel.diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
+            propertiesXmlTag = componentAsString
+          }
+        }
+      }
     }
 
     override fun dispose() {

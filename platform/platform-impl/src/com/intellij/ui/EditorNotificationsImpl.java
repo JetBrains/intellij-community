@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
@@ -42,11 +42,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author peter
- */
-public class EditorNotificationsImpl extends EditorNotifications {
-  private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
+public final class EditorNotificationsImpl extends EditorNotifications {
+  public static final ProjectExtensionPointName<Provider<?>> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final MergingUpdateQueue myUpdateMerger;
@@ -90,10 +87,9 @@ public class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
-    
-    //noinspection rawtypes
+
     EP_PROJECT.getPoint(project).addExtensionPointListener(
-      new ExtensionPointListener<Provider>() {
+      new ExtensionPointListener<Provider<?>>() {
         @Override
         public void extensionAdded(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
           updateAllNotifications();
@@ -101,17 +97,21 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
         @Override
         public void extensionRemoved(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          //noinspection unchecked
-          Key<? extends JComponent> key = extension.getKey();
-          for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-            List<FileEditor> editors = getEditors(file);
-
-            for (FileEditor editor : editors) {
-              updateNotification(editor, key, null, PluginInfoDetectorKt.getPluginInfo(extension.getClass()));
-            }
-          }
+          updateNotifications(extension);
         }
       }, false, project);
+  }
+
+  @Override
+  public void updateNotifications(@NotNull Provider<?> provider) {
+    Key<? extends JComponent> key = provider.getKey();
+    for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+      List<FileEditor> editors = getEditors(file);
+
+      for (FileEditor editor : editors) {
+        updateNotification(editor, key, null, PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+      }
+    }
   }
 
   @Override
@@ -160,7 +160,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @NotNull
   private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<? extends FileEditor> editors) {
-    List<Provider> providers = DumbService.getDumbAwareExtensions(myProject, EP_PROJECT);
+    List<Provider<?>> providers = DumbService.getDumbAwareExtensions(myProject, EP_PROJECT);
     List<Runnable> updates = new SmartList<>();
     for (FileEditor editor : editors) {
       for (Provider<?> provider : providers) {
@@ -211,10 +211,17 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @Override
   public void updateAllNotifications() {
+    if (myProject.isDefault()) {
+      throw new UnsupportedOperationException("Editor notifications aren't supported for default project");
+    }
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    if (fileEditorManager == null) {
+      throw new IllegalStateException("No FileEditorManager for " + myProject);
+    }
     myUpdateMerger.queue(new Update("update") {
       @Override
       public void run() {
-        for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+        for (VirtualFile file : fileEditorManager.getOpenFiles()) {
           updateNotifications(file);
         }
       }

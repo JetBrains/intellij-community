@@ -14,13 +14,13 @@ import java.util.stream.Stream;
 final class Component {
   static final Component[] EMPTY_ARRAY = new Component[0];
   @NotNull Value value;
-  @NotNull final EKey[] ids;
+  final EKey @NotNull [] ids;
 
   Component(@NotNull Value value, @NotNull Set<EKey> ids) {
     this(value, ids.toArray(new EKey[0]));
   }
 
-  Component(@NotNull Value value, @NotNull EKey[] ids) {
+  Component(@NotNull Value value, EKey @NotNull [] ids) {
     this.value = value;
     this.ids = ids;
   }
@@ -180,13 +180,13 @@ interface Result {
 }
 
 final class Pending implements Result {
-  @NotNull final Component[] delta; // sum
+  final Component @NotNull [] delta; // sum
 
   Pending(Collection<Component> delta) {
     this(delta.toArray(Component.EMPTY_ARRAY));
   }
 
-  Pending(@NotNull Component[] delta) {
+  Pending(Component @NotNull [] delta) {
     this.delta = delta;
   }
 

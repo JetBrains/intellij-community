@@ -33,8 +33,6 @@ import java.util.Collections;
  * {@link Promise} objects which may be used to be notified when the project configuration is finally updated.
  *
  * @see JavaProjectModelModifier
- *
- * @author nik
  */
 public abstract class JavaProjectModelModificationService {
   public static JavaProjectModelModificationService getInstance(@NotNull Project project) {

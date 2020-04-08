@@ -16,19 +16,16 @@
 
 package com.intellij.codeEditor.printing;
 
-import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.editor.EditorBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
 
-public class CodeEditorBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.CodeEditorBundle";
-  private static final CodeEditorBundle INSTANCE = new CodeEditorBundle();
-
-  private CodeEditorBundle() { super(BUNDLE); }
-
+/**
+ * @deprecated use {@link EditorBundle} instead
+ */
+@Deprecated
+public class CodeEditorBundle {
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return INSTANCE.getMessage(key, params);
+  public static String message(@NotNull String key, Object @NotNull ... params) {
+    return EditorBundle.message(key, params);
   }
 }

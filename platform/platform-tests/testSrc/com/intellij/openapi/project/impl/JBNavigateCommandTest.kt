@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.openapi.application.AppUIExecutor
@@ -58,7 +58,7 @@ class JBNavigateCommandTest {
   @Test
   fun pathWithLineColumn() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      runInEdtAndWait {
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
         configure(project)
         navigate(project.name, mapOf("path" to "A.java:1:5"))
         assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
@@ -72,7 +72,7 @@ class JBNavigateCommandTest {
   @Test
   fun pathWithLine() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      runInEdtAndWait {
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
         configure(project)
         navigate(project.name, mapOf("path" to "A.java:2"))
         assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
@@ -94,7 +94,7 @@ class JBNavigateCommandTest {
   }
 
   @Test
-  fun pathOpenProject() = runBlocking {
+  fun pathOpenProject(): Unit = runBlocking {
     var projectName: String? = null
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
       withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
@@ -104,18 +104,15 @@ class JBNavigateCommandTest {
     }
 
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      var recentProject: Project? = null
-      try {
-        navigate(projectName!!, mapOf("path" to "A.java"))
-        UIUtil.dispatchAllInvocationEvents()
+      navigate(projectName!!, mapOf("path" to "A.java"))
+      UIUtil.dispatchAllInvocationEvents()
 
-        recentProject = ProjectManager.getInstance().openProjects.find { it.name == projectName }!!
+      ProjectManager.getInstance().openProjects.find { it.name == projectName }!!.use { recentProject ->
         assertThat(getCurrentElement(recentProject).name).isEqualTo("A.java")
       }
-      finally {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(recentProject ?: return@withContext)
-      }
     }
+
+    ProjectRule.checkThatNoOpenProjects()
   }
 
   private fun configure(project: Project) {
@@ -138,10 +135,9 @@ class JBNavigateCommandTest {
   }
 
   private fun navigate(projectName: String, parameters: Map<String, String>) {
-    val navigateCommand = JBProtocolCommand.findCommand("navigate")
     val map = hashMapOf("project" to projectName)
     map.putAll(parameters)
-    navigateCommand?.perform("reference", map)
+    JBProtocolCommand.findCommand("navigate")!!.perform("reference", map)
   }
 }
 

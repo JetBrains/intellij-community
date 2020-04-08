@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
@@ -45,12 +47,7 @@ import static java.awt.Toolkit.getDefaultToolkit;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 
-/**
- * @author Sergey.Malenkov
- */
 class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
-  private static final String RESET_NAME = "Reset";
-  private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
   private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
     @Override
@@ -66,7 +63,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       apply();
     }
   };
-  private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
+  private final AbstractAction myResetAction = new AbstractAction(UIBundle.message("configurable.reset.action.name")) {
     @Override
     public void actionPerformed(ActionEvent event) {
       if (myConfigurable != null) {
@@ -89,7 +86,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   protected void init(Configurable configurable, boolean enableError) {
     myApplyAction.setEnabled(false);
-    myResetAction.putValue(Action.SHORT_DESCRIPTION, RESET_DESCRIPTION);
+    myResetAction.putValue(Action.SHORT_DESCRIPTION, UIBundle.message("configurable.reset.action.description"));
     myResetAction.setEnabled(false);
     myErrorLabel.setOpaque(true);
     myErrorLabel.setEnabled(enableError);
@@ -284,8 +281,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
-    content.setBorder(JBUI.Borders.empty(10));
-    String key = configurable == null ? null : ConfigurableVisitor.ByID.getID(configurable) + ".settings.description";
+    content.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
+    String key = configurable == null ? null : ConfigurableVisitor.getId(configurable) + ".settings.description";
     String description = key == null ? null : getString(configurable, key);
     if (description == null) {
       description = "Select configuration element in the tree to edit its settings";
@@ -317,7 +314,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     JBIterable<Configurable> it = JBIterable.of(configurable).append(
       JBIterable.of(configurable instanceof Configurable.Composite ? ((Configurable.Composite)configurable).getConfigurables() : null));
     ResourceBundle bundle = ConfigurableExtensionPointUtil.getBundle(key, it, null);
-    return bundle != null ? bundle.getString(key) : null;
+    return bundle != null ? BundleBase.message(bundle, key) : null;
   }
 
   static ConfigurationException apply(Configurable configurable) {

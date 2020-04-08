@@ -2,17 +2,19 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Pattern;
@@ -26,7 +28,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
+    return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
   @Override
@@ -57,7 +59,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Annotate as @SafeVarargs";
+      return JavaAnalysisBundle.message("annotate.as.safevarargs");
     }
 
     @Override
@@ -68,11 +70,19 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiIdentifier) {
-        final PsiModifierListOwner psiMethod = (PsiModifierListOwner)psiElement.getParent();
-        if (psiMethod != null) {
-          new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
-        }
+      if (!(psiElement instanceof PsiIdentifier)) return;
+      PsiModifierListOwner owner = (PsiModifierListOwner)psiElement.getParent();
+      if (owner instanceof PsiClass) {
+        PsiClass rec = (PsiClass)owner;
+        if (!rec.isRecord()) return;
+        String compactCtorText = "public " + rec.getName() + " {}";
+        PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(compactCtorText, owner);
+        PsiMethod firstMethod = ArrayUtil.getFirstElement(rec.getMethods());
+        owner = (PsiMethod)WriteCommandAction.writeCommandAction(owner.getContainingFile()).withName(getFamilyName())
+          .compute(() -> rec.addBefore(ctor, firstMethod));
+      }
+      if (owner instanceof PsiMethod) {
+        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, owner, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
       }
     }
   }
@@ -81,7 +91,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make final and annotate as @SafeVarargs";
+      return JavaAnalysisBundle.message("make.final.and.annotate.as.safevarargs");
     }
 
     @Nullable
@@ -136,6 +146,8 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       if (header == null) return;
       PsiRecordComponent lastComponent = ArrayUtil.getLastElement(header.getRecordComponents());
       if (lastComponent == null || !lastComponent.isVarArgs()) return;
+      PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+      if (constructor != null && constructor.isPhysical()) return; // will be reported on constructor instead
       final PsiType type = lastComponent.getType();
       LOG.assertTrue(type instanceof PsiEllipsisType, "type: " + type.getCanonicalText() + "; param: " + lastComponent);
 
@@ -146,7 +158,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)aClass).getNameIdentifier();
       if (nameIdentifier != null) {
         final LocalQuickFix quickFix = new AnnotateAsSafeVarargsQuickFix();
-        myHolder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
+        myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
       }
     }
 
@@ -186,7 +198,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
                              OverridingMethodsSearch.search(method).findFirst() == null;
         quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix() : null;
       }
-      myHolder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
+      myHolder.registerProblem(nameIdentifier, JavaAnalysisBundle.message("possible.heap.pollution.from.parameterized.vararg.type.loc"), quickFix);
     }
   }
 }

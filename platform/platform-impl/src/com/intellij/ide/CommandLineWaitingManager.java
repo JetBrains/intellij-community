@@ -77,7 +77,7 @@ public final class CommandLineWaitingManager {
     final CompletableFuture<CliResult> result = new CompletableFuture<>();
     myFileOrProjectToCallback.put(fileOrProject, result);
     Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                              "Activated from command line",
+                                              IdeBundle.message("notification.title.activated.from.command.line"),
                                               notificationText,
                                               NotificationType.WARNING).setImportant(true));
 

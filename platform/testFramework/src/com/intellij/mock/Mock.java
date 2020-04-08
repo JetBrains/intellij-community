@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -226,14 +226,12 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public EditorWindow[] getWindows() {
+    public EditorWindow @NotNull [] getWindows() {
       return new EditorWindow[0];
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
+    public VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file) {
       return VirtualFile.EMPTY_ARRAY;
     }
 
@@ -318,20 +316,17 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getOpenFiles() {
+    public VirtualFile @NotNull [] getOpenFiles() {
       return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getSelectedFiles() {
+    public VirtualFile @NotNull [] getSelectedFiles() {
       return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
-    @NotNull
-    public FileEditor[] getSelectedEditors() {
+    public FileEditor @NotNull [] getSelectedEditors() {
       return new FileEditor[0];
     }
 
@@ -341,35 +336,18 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public FileEditor[] getEditors(@NotNull VirtualFile file) {
-      return new FileEditor[0];
-    }
-
-    @NotNull
-    @Override
-    public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
+    public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
       return new FileEditor[0];
     }
 
     @Override
-    @NotNull
-    public FileEditor[] getAllEditors() {
+    public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
       return new FileEditor[0];
     }
 
-
-
     @Override
-    public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
-    }
-
-    @Override
-    public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable) {
-    }
-
-    @Override
-    public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
+    public FileEditor @NotNull [] getAllEditors() {
+      return new FileEditor[0];
     }
 
     @Override
@@ -481,8 +459,7 @@ public class Mock {
     }
 
     @Override
-    @NotNull
-    public byte[] contentsToByteArray() {
+    public byte @NotNull [] contentsToByteArray() {
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
 

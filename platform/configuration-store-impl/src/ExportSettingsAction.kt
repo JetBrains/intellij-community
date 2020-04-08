@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.CommonBundle
+import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
@@ -55,15 +55,15 @@ open class ExportSettingsAction : AnAction(), DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isImportExportActionApplicable()
+    e.presentation.isEnabled = isImportExportActionApplicable()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     ApplicationManager.getApplication().saveSettings()
 
     val dialog = ChooseComponentsToExportDialog(getExportableComponents(), true,
-                                                IdeBundle.message("title.select.components.to.export"),
-                                                IdeBundle.message("prompt.please.check.all.components.to.export"))
+                                                ConfigurationStoreBundle.message("title.select.components.to.export"),
+                                                ConfigurationStoreBundle.message("prompt.please.check.all.components.to.export"))
     if (!dialog.showAndGet()) {
       return
     }
@@ -77,18 +77,18 @@ open class ExportSettingsAction : AnAction(), DumbAware {
     try {
       if (saveFile.exists() && showOkCancelDialog(
           title = IdeBundle.message("title.file.already.exists"),
-          message = IdeBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
+          message = ConfigurationStoreBundle.message("prompt.overwrite.settings.file", saveFile.toString()),
           okText = IdeBundle.message("action.overwrite"),
           icon = Messages.getWarningIcon()) != Messages.OK) {
         return
       }
 
       exportSettings(saveFile, markedComponents)
-      RevealFileAction.showDialog(getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
-                                  IdeBundle.message("title.export.successful"), saveFile.toFile(), null)
+      RevealFileAction.showDialog(getEventProject(e), ConfigurationStoreBundle.message("message.settings.exported.successfully"),
+                                  ConfigurationStoreBundle.message("title.export.successful"), saveFile.toFile(), null)
     }
     catch (e: IOException) {
-      Messages.showErrorDialog(IdeBundle.message("error.writing.settings", e.toString()), IdeBundle.message("title.error.writing.file"))
+      Messages.showErrorDialog(ConfigurationStoreBundle.message("error.writing.settings", e.toString()), IdeBundle.message("title.error.writing.file"))
     }
   }
 }
@@ -138,7 +138,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
     }
   }
 
-  val app = ApplicationManager.getApplication() as PlatformComponentManagerImpl
+  val app = ApplicationManager.getApplication() as ComponentManagerImpl
 
   @Suppress("DEPRECATION")
   app.getComponentInstancesOfType(ExportableApplicationComponent::class.java).forEach(processor)
@@ -292,7 +292,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 
 private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, defaultName: String): String {
   try {
-    return CommonBundle.messageOrDefault(
+    return AbstractBundle.messageOrDefault(
       DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader), "exportable.$defaultName.presentable.name", defaultName)
   }
   catch (e: MissingResourceException) {

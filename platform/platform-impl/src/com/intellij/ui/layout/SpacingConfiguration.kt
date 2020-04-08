@@ -16,13 +16,15 @@ interface SpacingConfiguration {
   /**
    * Vertical space between two components (in terms of layout grid - rows).
    */
-  val verticalGap: Int
+  val verticalGap: Int get() = componentVerticalGap * 2
+  val componentVerticalGap: Int
 
   /**
    * Horizontal gap after label column.
    */
   val labelColumnHorizontalGap: Int
 
+  val largeHorizontalGap: Int
   val largeVerticalGap: Int
   val radioGroupTitleVerticalGap: Int
 
@@ -48,8 +50,9 @@ interface SpacingConfiguration {
 fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
     override val horizontalGap = JBUI.scale(6)
-    override val verticalGap = JBUI.scale(6 * 2)
+    override val componentVerticalGap = JBUI.scale(6)
     override val labelColumnHorizontalGap = JBUI.scale(6)
+    override val largeHorizontalGap = JBUI.scale(16)
     override val largeVerticalGap = JBUI.scale(20)
     override val radioGroupTitleVerticalGap = JBUI.scale(6 + 2)
 

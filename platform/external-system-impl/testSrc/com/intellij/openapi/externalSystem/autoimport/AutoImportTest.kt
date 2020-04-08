@@ -498,4 +498,93 @@ class AutoImportTest : AutoImportTestCase() {
     assertProjectAware(projectAware, refresh = 3, event = "modification during project refresh")
     assertNotificationAware(projectId, event = "modification during project refresh")
   }
+
+  fun `test disabling of auto-import`() {
+    var state = simpleTest("settings.groovy") { settingsFile ->
+      assertState(refresh = 1, enabled = true, notified = false, event = "register project without cache")
+      disableAutoReloadExternalChanges()
+      assertState(refresh = 1, enabled = false, notified = false, event = "disable project auto-import")
+      settingsFile.replaceContentInIoFile("println 'hello'")
+      assertState(refresh = 1, enabled = false, notified = true, event = "modification with disabled auto-import")
+    }
+    state = simpleTest("settings.groovy", state = state) { settingsFile ->
+      // Open modified project with disabled auto-import for external changes
+      assertState(refresh = 0, enabled = false, notified = true, event = "register modified project")
+      refreshProject()
+      assertState(refresh = 1, enabled = false, notified = false, event = "refresh project")
+
+      // Checkout git branch, that has additional linked project
+      withLinkedProject("module/settings.groovy") { moduleSettingsFile ->
+        assertState(refresh = 0, enabled = false, notified = true, event = "register project without cache with disabled auto-import")
+        moduleSettingsFile.replaceContentInIoFile("println 'hello'")
+        assertState(refresh = 0, enabled = false, notified = true, event = "modification with disabled auto-import")
+      }
+      assertState(refresh = 1, enabled = false, notified = false, event = "remove modified linked project")
+
+      enableAutoReloadExternalChanges()
+      assertState(refresh = 1, enabled = true, notified = false, event = "enable auto-import for project without modifications")
+      disableAutoReloadExternalChanges()
+      assertState(refresh = 1, enabled = false, notified = false, event = "disable project auto-import")
+
+      settingsFile.replaceStringInIoFile("hello", "hi")
+      assertState(refresh = 1, enabled = false, notified = true, event = "modification with disabled auto-import")
+      enableAutoReloadExternalChanges()
+      assertState(refresh = 2, enabled = true, notified = false, event = "enable auto-import for modified project")
+    }
+    simpleTest("settings.groovy", state = state) {
+      assertState(refresh = 0, enabled = true, notified = false, event = "register project with correct cache")
+    }
+  }
+
+  @Test
+  fun `test activation of auto-import`() {
+    val systemId = ProjectSystemId("External System")
+    val projectId1 = ExternalSystemProjectId(systemId, projectPath)
+    val projectId2 = ExternalSystemProjectId(systemId, "$projectPath/sub-project")
+    val projectAware1 = MockProjectAware(projectId1)
+    val projectAware2 = MockProjectAware(projectId2)
+
+    initialize()
+
+    register(projectAware1, activate = false)
+    assertProjectAware(projectAware1, refresh = 0, event = "register project")
+    assertNotificationAware(projectId1, event = "register project")
+    assertActivationStatus(event = "register project")
+
+    activate(projectId1)
+    assertProjectAware(projectAware1, refresh = 1, event = "activate project")
+    assertNotificationAware(event = "activate project")
+    assertActivationStatus(projectId1, event = "activate project")
+
+    register(projectAware2, activate = false)
+    assertProjectAware(projectAware1, refresh = 1, event = "register project 2")
+    assertProjectAware(projectAware2, refresh = 0, event = "register project 2")
+    assertNotificationAware(projectId2, event = "register project 2")
+    assertActivationStatus(projectId1, event = "register project 2")
+
+    val settingsFile1 = createIoFile("settings.groovy")
+    val settingsFile2 = createIoFile("sub-project/settings.groovy")
+    projectAware1.settingsFiles.add(settingsFile1.path)
+    projectAware2.settingsFiles.add(settingsFile2.path)
+
+    settingsFile1.replaceContentInIoFile("println 'hello'")
+    settingsFile2.replaceContentInIoFile("println 'hello'")
+    assertProjectAware(projectAware1, refresh = 2, event = "externally modified both settings files, but project 2 is inactive")
+    assertProjectAware(projectAware2, refresh = 0, event = "externally modified both settings files, but project 2 is inactive")
+    assertNotificationAware(projectId2, event = "externally modified both settings files, but project 2 is inactive")
+    assertActivationStatus(projectId1, event = "externally modified both settings files, but project 2 is inactive")
+
+    settingsFile1.replaceString("hello", "Hello world!")
+    settingsFile2.replaceString("hello", "Hello world!")
+    assertProjectAware(projectAware1, refresh = 2, event = "internally modify settings")
+    assertProjectAware(projectAware2, refresh = 0, event = "internally modify settings")
+    assertNotificationAware(projectId1, projectId2, event = "internally modify settings")
+    assertActivationStatus(projectId1, event = "internally modify settings")
+
+    refreshProject()
+    assertProjectAware(projectAware1, refresh = 3, event = "refresh project")
+    assertProjectAware(projectAware2, refresh = 1, event = "refresh project")
+    assertNotificationAware(event = "refresh project")
+    assertActivationStatus(projectId1, projectId2, event = "refresh project")
+  }
 }

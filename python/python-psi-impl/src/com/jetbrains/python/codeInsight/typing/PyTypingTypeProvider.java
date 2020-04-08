@@ -1321,7 +1321,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getGenericTypeBound(@NotNull PyExpression[] typeVarArguments, @NotNull Context context) {
+  private static PyType getGenericTypeBound(PyExpression @NotNull [] typeVarArguments, @NotNull Context context) {
     final List<PyType> types = new ArrayList<>();
     for (int i = 1; i < typeVarArguments.length; i++) {
       final PyExpression argument = typeVarArguments[i];

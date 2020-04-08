@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class ConvertStringToMultilineTest extends GrIntentionTestCase {
   ConvertStringToMultilineTest() {
-    super(ConvertStringToMultilineIntention.hint)
+    super(ConvertStringToMultilineIntention.getHint())
   }
 
   final String basePath = TestUtils.testDataPath + "intentions/convertToMultiline/"

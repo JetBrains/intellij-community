@@ -21,6 +21,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.SingleTaskController
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import org.jetbrains.annotations.ApiStatus
@@ -36,7 +37,7 @@ abstract class FullCommitDetailsListPanel(
   modalityState: ModalityState
 ) : BorderLayoutPanel() {
   companion object {
-    private const val DETAILS_SPLITTER = "Full.Commit.Details.List.Splitter"
+    private const val DETAILS_SPLITTER = "Full.Commit.Details.List.Splitter" // NON-NLS
   }
 
   private val changesBrowserWithLoadingPanel = ChangesBrowserWithLoadingPanel(project, parent)
@@ -106,7 +107,7 @@ private class ChangesLoadingController(
   private val changesBrowser: ChangesBrowserWithLoadingPanel,
   private val loader: (List<VcsCommitMetadata>) -> List<Change>
 ) : SingleTaskController<List<VcsCommitMetadata>, List<Change>>(
-  "Loading Commit Changes",
+  VcsLogBundle.message("loading.commit.changes"),
   Consumer { changes ->
     runInEdt(modalityState = modalityState) {
       changesBrowser.stopLoading(changes)
@@ -118,7 +119,7 @@ private class ChangesLoadingController(
     runInEdt(modalityState = modalityState) {
       changesBrowser.startLoading()
     }
-    val task: Task.Backgroundable = object : Task.Backgroundable(project, "Loading Commit Changes") {
+    val task: Task.Backgroundable = object : Task.Backgroundable(project, VcsLogBundle.message("loading.commit.changes")) {
       override fun run(indicator: ProgressIndicator) {
         var result: List<Change>? = null
         try {

@@ -3,21 +3,22 @@ package com.intellij.openapi.rd
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.onTermination
 
-inline fun using(disposable: Disposable, block: () -> Unit) {
-  try {
-    block()
-  } finally {
-    Disposer.dispose(disposable)
-  }
-}
+@Deprecated("Use implementation from `intellij.platform.util.ex` instead.", ReplaceWith("disposable.use(block)"))
+inline fun using(disposable: Disposable, block: () -> Unit): Unit = disposable.use { block() }
 
 fun Disposable.defineNestedLifetime(): LifetimeDefinition {
   val lifetimeDefinition = Lifetime.Eternal.createNested()
+  if (Disposer.isDisposing(this) || Disposer.isDisposed(this)) {
+    lifetimeDefinition.terminate()
+    return lifetimeDefinition
+  }
+
   this.attach { if (lifetimeDefinition.lifetime.isAlive) lifetimeDefinition.terminate() }
   return lifetimeDefinition
 }

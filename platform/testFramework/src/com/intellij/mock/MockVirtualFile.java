@@ -158,9 +158,8 @@ public class MockVirtualFile extends VirtualFile {
     myModStamp = modStamp;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() {
+  public byte @NotNull [] contentsToByteArray() {
     return myText == null ? ArrayUtilRt.EMPTY_BYTE_ARRAY : myText.getBytes(StandardCharsets.UTF_8);
   }
 

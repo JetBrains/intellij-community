@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public final class IntEnumRenderer extends LabelPropertyRenderer<Integer> {
   private final IntEnumEditor.Pair[] myPairs;
 
-  public IntEnumRenderer(@NotNull final IntEnumEditor.Pair[] pairs) {
+  public IntEnumRenderer(final IntEnumEditor.Pair @NotNull [] pairs) {
     myPairs = pairs;
   }
 

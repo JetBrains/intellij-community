@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,7 +81,7 @@ public class GitUntrackedFilesHelper {
                                                        @NotNull String operation,
                                                        @Nullable String description,
                                                        @Nullable NotificationListener listener,
-                                                       @NotNull NotificationAction... actions) {
+                                                       NotificationAction @NotNull ... actions) {
 
     Notification notification = getUntrackedFilesOverwrittenByNotification(project, root, relativePaths, operation, description, listener);
     for (NotificationAction action : actions) {
@@ -146,7 +147,7 @@ public class GitUntrackedFilesHelper {
 
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc, NotificationType.ERROR, listener);
 
-    notification.addAction(new NotificationAction("View Files...") {
+    notification.addAction(new NotificationAction(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         final String dialogDesc = UNTRACKED_FILES_DESCRIPTION + operation;
@@ -172,9 +173,8 @@ public class GitUntrackedFilesHelper {
       init();
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction()};
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -16,6 +16,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RegExpReplacementUtil {
 
+  /**
+   * Dummy text that never needs escaping
+   */
+  private static final String DUMMY = "a";
+
   private RegExpReplacementUtil() {}
 
   public static void replaceInContext(@NotNull PsiElement element, @NotNull String text) {
@@ -31,15 +36,15 @@ public class RegExpReplacementUtil {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
     if (injectedLanguageManager.isInjectedFragment(file)) {
       final PsiElement context = file.getContext();
-      ElementManipulator<PsiElement> manipulator = context == null ? null : ElementManipulators.getManipulator(context);
+      final ElementManipulator<PsiElement> manipulator = context == null ? null : ElementManipulators.getManipulator(context);
       if (manipulator != null) {
         // use element manipulator to process escape sequences correctly for all supported languages
-        PsiElement copy = context.copy(); // create a copy to avoid original element modifications
-        PsiElement newElement = manipulator.handleContentChange(copy, text);
+        final PsiElement copy = context.copy(); // create a copy to avoid original element modifications
+        final PsiElement newElement = manipulator.handleContentChange(copy, DUMMY + text);
         if (newElement != null) {
-          String newElementText = newElement.getText();
-          TextRange newRange = manipulator.getRangeInElement(newElement);
-          return newElementText.substring(newRange.getStartOffset(), newRange.getEndOffset());
+          final String newElementText = newElement.getText();
+          final TextRange newRange = manipulator.getRangeInElement(newElement);
+          return newElementText.substring(newRange.getStartOffset() + DUMMY.length(), newRange.getEndOffset());
         }
       }
       if (RegExpElementImpl.isLiteralExpression(context)) {

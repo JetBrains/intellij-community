@@ -94,7 +94,9 @@ public class PlaybackRunner implements Disposable {
         });
       });
 
-      myRobot = new Robot();
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        myRobot = new Robot();
+      }
 
       parse();
 
@@ -134,7 +136,7 @@ public class PlaybackRunner implements Disposable {
       }
       PlaybackContext context =
         new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir,
-                            (Set<Class>)myFacadeClasses.clone()) {
+                            (Set<Class<?>>)myFacadeClasses.clone()) {
           private final long myTimeStamp = myContextTimestamp;
 
           @Override

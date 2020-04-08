@@ -84,9 +84,8 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
    * @deprecated use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
    */
   @Deprecated
-  @NotNull
   @Override
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     return getReferences(PsiReferenceService.Hints.NO_HINTS);
   }
 
@@ -95,9 +94,8 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
     return false;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences(@NotNull PsiReferenceService.Hints hints) {
+  public PsiReference @NotNull [] getReferences(@NotNull PsiReferenceService.Hints hints) {
     return getImpl().getDefaultReferences(hints);
   }
 
@@ -147,8 +145,7 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
   }
 
   @Override
-  @NotNull
-  public XmlAttribute[] getAttributes() {
+  public XmlAttribute @NotNull [] getAttributes() {
     XmlAttribute[] attributes = myAttributes;
     if (attributes == null) {
       myAttributes = attributes = getImpl().calculateAttributes();
@@ -167,8 +164,7 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
   }
 
   @Override
-  @NotNull
-  public XmlTag[] getSubTags() {
+  public XmlTag @NotNull [] getSubTags() {
     return getSubTags(shouldProcessIncludesNow());
   }
 
@@ -182,14 +178,12 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
   }
 
   @Override
-  @NotNull
-  public XmlTag[] findSubTags(@NotNull String name) {
+  public XmlTag @NotNull [] findSubTags(@NotNull String name) {
     return findSubTags(name, null);
   }
 
   @Override
-  @NotNull
-  public XmlTag[] findSubTags(@NotNull final String name, @Nullable final String namespace) {
+  public XmlTag @NotNull [] findSubTags(@NotNull final String name, @Nullable final String namespace) {
     return getImpl().findSubTags(name, namespace);
   }
 

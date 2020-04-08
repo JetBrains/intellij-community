@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -50,13 +49,13 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
     VirtualFile src2 = createChildDirectory(module2, "src2");
     VirtualFile my2Txt = createChildData(src2, "my2.txt");
 
-    Module myModule = newModuleWithContent("myModule", module);
+    Module myModule = createJavaModuleWithContent(getProject(), "myModule", module);
     PsiTestUtil.addSourceRoot(myModule, src);
     PsiTestUtil.addExcludedRoot(myModule, excluded);
     PsiTestUtil.addSourceRoot(myModule, src1);
     PsiTestUtil.addExcludedRoot(myModule, excluded1);
 
-    Module myModule2 = newModuleWithContent("myModule2", module2);
+    Module myModule2 = createJavaModuleWithContent(getProject(), "myModule2", module2);
     PsiTestUtil.addSourceRoot(myModule2, src2);
 
     checkIterate(root, module, src, src1, module2, src2, my2Txt);
@@ -75,25 +74,10 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
                           Arrays.asList(root, excluded1, eTxt, excluded, subExcluded));
   }
 
-  private void checkIterate(@NotNull VirtualFile file, @NotNull VirtualFile... expectToIterate) {
+  private void checkIterate(@NotNull VirtualFile file, VirtualFile @NotNull ... expectToIterate) {
     final List<VirtualFile> collected = new ArrayList<>();
     myFileIndex.iterateContentUnderDirectory(file, fileOrDir -> collected.add(fileOrDir));
     assertSameElements(collected, expectToIterate);
-  }
-
-  @NotNull
-  private Module newModuleWithContent(@NotNull String name, @NotNull VirtualFile contentRoot) {
-    ModuleType<?> type = ModuleTypeManager.getInstance().findByID(ModuleTypeId.JAVA_MODULE);
-    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
-      ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-      String moduleName = moduleModel.newModule(contentRoot.getPath() + "/" + name + ".iml", type.getId()).getName();
-      moduleModel.commit();
-      Module module = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
-      assertNotNull(moduleName, module);
-      PsiTestUtil.addContentRoot(module, contentRoot);
-
-      return module;
-    });
   }
 
   public void testDirectoryIndexMustNotGoInsideIgnoredDotGit() throws IOException {
@@ -117,7 +101,7 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
     VirtualFile module = createChildDirectory(root, "myModule");
     VirtualFile src = createChildDirectory(module, "src");
 
-    Module myModule = newModuleWithContent("myModule", module);
+    Module myModule = createJavaModuleWithContent(getProject(), "myModule", module);
     PsiTestUtil.addSourceRoot(myModule, src);
 
     root.refresh(false, true);

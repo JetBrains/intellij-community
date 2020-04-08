@@ -309,7 +309,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return each.isDisposed() || each.isExpired();
   }
 
-  protected void execute(@NotNull Update[] update) {
+  protected void execute(Update @NotNull [] update) {
     for (final Update each : update) {
       if (isExpired(each)) {
         each.setRejected();

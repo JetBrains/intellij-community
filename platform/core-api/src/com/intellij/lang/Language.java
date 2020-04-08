@@ -12,9 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -52,15 +50,15 @@ public abstract class Language extends UserDataHolderBase {
     }
   };
 
-  protected Language(@NotNull String ID) {
+  protected Language(@NonNls @NotNull String ID) {
     this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NotNull String ID, @NotNull String... mimeTypes) {
+  protected Language(@NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(@Nullable Language baseLanguage, @NotNull String ID, @NotNull String... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
     if (baseLanguage instanceof MetaLanguage) {
       throw new ImplementationConflictException(
         "MetaLanguage cannot be a base language.\n" +
@@ -109,6 +107,16 @@ public abstract class Language extends UserDataHolderBase {
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
+  public static void unregisterLanguages(ClassLoader classLoader) {
+    List<Class<? extends Language>> classes = new ArrayList<>(ourRegisteredLanguages.keySet());
+    for (Class<? extends Language> clazz : classes) {
+      if (clazz.getClassLoader() == classLoader) {
+        unregisterLanguage(ourRegisteredLanguages.get(clazz));
+      }
+    }
+    IElementType.unregisterElementTypes(classLoader);
+  }
+
   public static void unregisterLanguage(@NotNull Language language) {
     IElementType.unregisterElementTypes(language);
     ReferenceProvidersRegistry.getInstance().unloadProvidersFor(language);
@@ -119,8 +127,13 @@ public abstract class Language extends UserDataHolderBase {
     }
     final Language baseLanguage = language.getBaseLanguage();
     if (baseLanguage != null) {
-      baseLanguage.myDialects.remove(language);
+      baseLanguage.unregisterDialect(language);
     }
+  }
+
+  @ApiStatus.Internal
+  public void unregisterDialect(Language language) {
+    myDialects.remove(language);
   }
 
   /**
@@ -153,8 +166,7 @@ public abstract class Language extends UserDataHolderBase {
    *
    * @return The list of MIME types.
    */
-  @NotNull
-  public String[] getMimeTypes() {
+  public String @NotNull [] getMimeTypes() {
     return myMimeTypes;
   }
 

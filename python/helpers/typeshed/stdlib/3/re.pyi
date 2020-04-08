@@ -8,10 +8,15 @@
 import sys
 from typing import (
     List, Iterator, overload, Callable, Tuple,
-    AnyStr, Match, Pattern, Any, Optional, Union
+    AnyStr, Any, Optional, Union
 )
 
 # ----- re variables and constants -----
+if sys.version_info >= (3, 7):
+    from typing import Pattern as Pattern, Match as Match
+else:
+    from typing import Pattern, Match
+
 if sys.version_info >= (3, 6):
     import enum
     class RegexFlag(enum.IntFlag):
@@ -149,7 +154,7 @@ def subn(pattern: Pattern[AnyStr], repl: Callable[[Match[AnyStr]], AnyStr],
          string: AnyStr, count: int = ...,
          flags: _FlagsType = ...) -> Tuple[AnyStr, int]: ...
 
-def escape(string: AnyStr) -> AnyStr: ...
+def escape(pattern: AnyStr) -> AnyStr: ...
 
 def purge() -> None: ...
 def template(pattern: Union[AnyStr, Pattern[AnyStr]], flags: _FlagsType = ...) -> Pattern[AnyStr]: ...

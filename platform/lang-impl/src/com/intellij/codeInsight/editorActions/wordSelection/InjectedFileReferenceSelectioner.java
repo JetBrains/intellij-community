@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions.wordSelection;
 
@@ -11,12 +11,17 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiLiteralValue;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.IntStream;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * This selectioner tries to guess location of file segments within a particular element.
@@ -36,13 +41,21 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
     PsiElement host = PsiTreeUtil.getParentOfType(e, PsiLanguageInjectionHost.class);
     if (host == null) return Collections.emptyList();
 
-    TextRange realRange = ElementManipulators.getValueTextRange(host).shiftRight(host.getTextRange().getStartOffset());
+
+    TextRange realRange = ElementManipulators.getValueTextRange(host)
+      .shiftRight(host.getTextRange().getStartOffset());
+    if (!realRange.contains(cursorOffset)) return Collections.emptyList();
+
+    PsiElement valueElement = findValueElement(host, realRange);
+
     realRange = limitToCurrentLineAndStripWhiteSpace(editorText, cursorOffset, realRange);
 
-    Set<Integer> charEscapeLocations = isWithinLiteral(e, host) ? findCharEscapeLocations(editor, editorText, host.getTextRange())
-                                                                : Collections.emptySet();
+    BitSet charEscapeLocations = isWithinLiteral(e, host)
+                                 ? findCharEscapeLocations(editor, editorText, host.getTextRange(), realRange.getStartOffset())
+                                 : new BitSet(0);
 
-    List<TextRange> segments = buildSegments(editorText, cursorOffset, charEscapeLocations, realRange);
+    BitSet compositeIndexes = createCompositeIndexesSet(valueElement, realRange.getStartOffset());
+    List<TextRange> segments = buildSegments(editorText, cursorOffset, realRange, charEscapeLocations, compositeIndexes);
     if (!segments.isEmpty()) {
       int endOffsetAlignment = segments.get(segments.size() - 1).getEndOffset();
       for (ListIterator<TextRange> it = segments.listIterator(); it.hasNext(); ) {
@@ -56,10 +69,20 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
   }
 
   @NotNull
+  private static PsiElement findValueElement(@NotNull PsiElement host, @NotNull TextRange valueRange) {
+    return notNull(
+      PsiTreeUtil.findFirstParent(
+        host.getContainingFile().findElementAt(valueRange.getStartOffset()), false,
+        parent -> parent == host || parent.getTextRange().contains(valueRange)),
+      host);
+  }
+
+  @NotNull
   private static List<TextRange> buildSegments(@NotNull CharSequence editorText,
                                                final int cursorOffset,
-                                               @NotNull Set<Integer> charEscapeLocations,
-                                               @NotNull TextRange range) {
+                                               @NotNull TextRange range,
+                                               @NotNull BitSet charEscapeLocations,
+                                               @NotNull BitSet compositeIndexes) {
     if (range.getLength() == 0) {
       return Collections.emptyList();
     }
@@ -72,10 +95,13 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
     int hardSegmentCount = 0;
 
     for (int i = hostTextOffset; i < hostTextEndOffset; i++) {
+      if (compositeIndexes.get(i - hostTextOffset)) {
+        continue;
+      }
       char ch = editorText.charAt(i);
       if (!segmentsFinished) {
         if (ch == '/'
-            || (ch == '\\' && !charEscapeLocations.contains(i))
+            || (ch == '\\' && !charEscapeLocations.get(i - hostTextOffset))
             //treat space as soft segment marker
             || (ch == ' ' && i <= cursorOffset)) {
           if (rangeStart < i) {
@@ -97,6 +123,9 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
         // URLs - expand to content after '?' first, but count it as soft segment
         else if (ch == '?') {
           segments.add(new TextRange(rangeStart, i));
+          if (i + 1 < hostTextEndOffset) {
+            segments.add(new TextRange(i + 1, hostTextEndOffset));
+          }
           segments.add(new TextRange(rangeStart, hostTextEndOffset));
           segmentsFinished = true;
         }
@@ -114,6 +143,17 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
       segments.add(new TextRange(rangeStart, hostTextEndOffset));
     }
     return segments;
+  }
+
+  @NotNull
+  private static BitSet createCompositeIndexesSet(@NotNull PsiElement valueElement, int indexesOffset) {
+    return StreamEx.of(valueElement.getChildren())
+      .filter(child -> !(child instanceof LeafPsiElement))
+      .map(PsiElement::getTextRange)
+      .flatMapToInt(range -> IntStream.range(range.getStartOffset(), range.getEndOffset()))
+      .map(index -> index - indexesOffset)
+      .atLeast(0)
+      .toBitSet();
   }
 
   @NotNull
@@ -141,17 +181,21 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
            || SkipAutopopupInStrings.isInStringLiteral(e);
   }
 
-  private static Set<Integer> findCharEscapeLocations(@NotNull Editor editor, @NotNull CharSequence text, @NotNull TextRange range) {
+  private static BitSet findCharEscapeLocations(@NotNull Editor editor,
+                                                @NotNull CharSequence text,
+                                                @NotNull TextRange range,
+                                                int indexesOffset) {
     HighlighterIterator iterator =
       ((EditorEx)editor).getHighlighter().createIterator(range.getStartOffset());
     int rangeEnd = range.getEndOffset();
 
-    Set<Integer> locations = new HashSet<>();
+    BitSet locations = new BitSet(range.getLength());
     int pos;
     while (!iterator.atEnd() && (pos = iterator.getStart()) < rangeEnd) {
       if (text.charAt(pos) == '\\'
-          && (pos + 1 >= rangeEnd || text.charAt(pos + 1) != '\\')) {
-        locations.add(pos);
+          && (pos + 1 >= rangeEnd || text.charAt(pos + 1) != '\\')
+          && pos >= indexesOffset) {
+        locations.set(pos - indexesOffset);
       }
       iterator.advance();
     }

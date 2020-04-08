@@ -21,6 +21,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -398,9 +399,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   private static class Tag {
-    @NotNull private final String myKey;
+    @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
 
-    Tag(@NotNull String key) {
+    Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 

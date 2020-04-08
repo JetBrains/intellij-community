@@ -185,9 +185,8 @@ public class ToBeMergedDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (myAllStatusesCalculated) {
       return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {
         @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.DataManager;
@@ -34,9 +34,6 @@ import static com.intellij.openapi.application.ApplicationBundle.message;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 import static javax.swing.SwingConstants.LEFT;
 
-/**
- * @author Sergey.Malenkov
- */
 final class BreadcrumbsConfigurable extends CompositeConfigurable<BreadcrumbsConfigurable.BreadcrumbsProviderConfigurable> implements SearchableConfigurable {
   private final HashMap<String, JCheckBox> map = new HashMap<>();
   private JComponent component;

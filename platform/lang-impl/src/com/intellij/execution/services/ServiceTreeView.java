@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDManager;
@@ -8,13 +9,13 @@ import com.intellij.ide.navigationToolbar.NavBarModel;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
@@ -63,7 +64,7 @@ class ServiceTreeView extends ServiceView {
     myTreeModel = new ServiceViewTreeModel(model);
     myTree = new ServiceViewTree(myTreeModel, this);
 
-    myListener = new MyViewModelListener();
+    myListener = this::rootsChanged;
     model.addModelListener(myListener);
 
     ServiceViewActionProvider actionProvider = ServiceViewActionProvider.getInstance();
@@ -78,16 +79,15 @@ class ServiceTreeView extends ServiceView {
 
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
-    model.addModelListener(this::rootsChanged);
 
     Consumer<ServiceViewItem> selector = item ->
       select(item.getValue(), item.getRootContributor().getClass())
-        .onSuccess(result -> AppUIUtil.invokeOnEdt(() -> {
+        .onSuccess(result -> AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
           JComponent component = getUi().getDetailsComponent();
           if (component != null) {
             IdeFocusManager.getInstance(getProject()).requestFocus(component, false);
           }
-        }, getProject().getDisposed()));
+        }));
     myNavBarPanel = new ServiceViewNavBarPanel(getProject(), true, getModel(), selector);
     myNavBarPanel.getModel().updateModel(null);
     myUi.setNavBar(myNavBarPanel);
@@ -137,7 +137,7 @@ class ServiceTreeView extends ServiceView {
     for (int i = 0; i < rows.length; i++) {
       objectRows.add(Pair.create(objects.get(i), rows[i]));
     }
-    Collections.sort(objectRows, Comparator.comparing(pair -> pair.second));
+    objectRows.sort(Comparator.comparing(pair -> pair.second));
     return ContainerUtil.mapNotNull(objectRows, pair -> ObjectUtils.tryCast(pair.first, ServiceViewItem.class));
   }
 
@@ -231,10 +231,15 @@ class ServiceTreeView extends ServiceView {
   }
 
   private void rootsChanged() {
+    updateSelectionPaths();
     updateNavBar();
+    updateLastSelection();
+  }
+
+  private void updateLastSelection() {
     ServiceViewItem lastSelection = myLastSelection;
     ServiceViewItem updatedItem = lastSelection == null ? null : getModel().findItem(lastSelection);
-    AppUIUtil.invokeOnEdt(() -> {
+    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
       List<ServiceViewItem> selected = getSelectedItems();
       if (selected.isEmpty()) {
         ServiceViewItem item = ContainerUtil.getFirstItem(getModel().getRoots());
@@ -250,32 +255,34 @@ class ServiceTreeView extends ServiceView {
       }
       if (Comparing.equal(newSelection, myLastSelection)) {
         myLastSelection = newSelection;
-        if (mySelected) {
-          ServiceViewDescriptor descriptor = newSelection == null ? null : newSelection.getViewDescriptor();
+        // Skip updating details component if updatedItem has been already marked as removed,
+        // thus details component will be updated in the next already submitted update runnable.
+        if (mySelected && (updatedItem == null || !updatedItem.isRemoved())) {
+          ServiceViewDescriptor descriptor = newSelection == null || (newSelection.isRemoved() && updatedItem == null) ?
+                                             null : newSelection.getViewDescriptor();
           myUi.setDetailsComponent(descriptor == null ? null : descriptor.getContentComponent());
         }
       }
-    }, getProject().getDisposed());
+    });
   }
 
   private void updateNavBar() {
-    AsyncPromise<ServiceViewItem> itemPromise = new AsyncPromise<>();
-    itemPromise.onSuccess(item -> {
+    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+      ServiceViewItem item = getNavBarItem();
       if (item == null) return;
 
       getModel().getInvoker().invoke(() -> {
         ServiceViewItem updatedItem = getModel().findItem(item);
         if (updatedItem != null) {
-          AppUIUtil.invokeOnEdt(() -> {
+          AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
             ServiceViewItem navBarItem = getNavBarItem();
-            if (updatedItem.equals(navBarItem)) {
+            if (updatedItem.equals(navBarItem) && !updatedItem.isRemoved()) {
               myNavBarPanel.getModel().updateModel(updatedItem);
             }
-          }, getProject().getDisposed());
+          });
         }
       });
     });
-    AppUIUtil.invokeOnEdt(() -> itemPromise.setResult(getNavBarItem()), getProject().getDisposed());
   }
 
   private ServiceViewItem getNavBarItem() {
@@ -283,6 +290,38 @@ class ServiceTreeView extends ServiceView {
     if (navBarModel.isEmpty()) return null;
 
     return ObjectUtils.tryCast(navBarModel.getElement(navBarModel.size() - 1), ServiceViewItem.class);
+  }
+
+  private void updateSelectionPaths() {
+    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+      TreePath[] currentPaths = myTree.getSelectionPaths();
+      List<TreePath> selectedPaths =
+        currentPaths == null || currentPaths.length == 0 ? Collections.emptyList() : Arrays.asList(currentPaths);
+      myTreeModel.rootsChanged();
+      if (selectedPaths.isEmpty()) return;
+
+      myTreeModel.getInvoker().invokeLater(() -> {
+        List<Promise<TreePath>> pathPromises =
+          ContainerUtil.mapNotNull(selectedPaths, path -> {
+            ServiceViewItem item = ObjectUtils.tryCast(path.getLastPathComponent(), ServiceViewItem.class);
+            return item == null ? null : myTreeModel.findPath(item.getValue(), item.getRootContributor().getClass());
+          });
+        Promises.collectResults(pathPromises, true).onProcessed(paths -> {
+          if (paths != null && !paths.isEmpty() && !paths.equals(selectedPaths)) {
+            Promise<?> newSelectPromise = TreeUtil.promiseSelect(myTree, paths.stream().map(PathSelectionVisitor::new));
+            cancelSelectionUpdate();
+            if (newSelectPromise instanceof AsyncPromise) {
+              ((AsyncPromise<?>)newSelectPromise).onError(t -> {
+                if (t instanceof CancellationException) {
+                  TreeUtil.promiseExpand(myTree, paths.stream().map(path -> new PathSelectionVisitor(path.getParentPath())));
+                }
+              });
+            }
+            myUpdateSelectionPromise = newSelectPromise;
+          }
+        });
+      });
+    });
   }
 
   @Override
@@ -324,8 +363,8 @@ class ServiceTreeView extends ServiceView {
   }
 
   private static void setEmptyText(JComponent component, StatusText emptyText) {
-    emptyText.setText("No services configured.");
-    emptyText.appendSecondaryText("Add Service",
+    emptyText.setText(ExecutionBundle.message("service.view.empty.tree.text"));
+    emptyText.appendSecondaryText(ExecutionBundle.message("service.view.add.service.action.name"),
                                   new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
                                   new ActionListener() {
                                     @Override
@@ -366,41 +405,6 @@ class ServiceTreeView extends ServiceView {
       }
     }
     return result;
-  }
-
-  private class MyViewModelListener implements ServiceViewModel.ServiceViewModelListener {
-    @Override
-    public void rootsChanged() {
-      AppUIUtil.invokeOnEdt(() -> {
-        TreePath[] currentPaths = myTree.getSelectionPaths();
-        List<TreePath> selectedPaths =
-          currentPaths == null || currentPaths.length == 0 ? Collections.emptyList() : Arrays.asList(currentPaths);
-        myTreeModel.rootsChanged();
-        if (selectedPaths.isEmpty()) return;
-
-        myTreeModel.getInvoker().invokeLater(() -> {
-          List<Promise<TreePath>> pathPromises =
-            ContainerUtil.mapNotNull(selectedPaths, path -> {
-              ServiceViewItem item = ObjectUtils.tryCast(path.getLastPathComponent(), ServiceViewItem.class);
-              return item == null ? null : myTreeModel.findPath(item.getValue(), item.getRootContributor().getClass());
-            });
-          Promises.collectResults(pathPromises, true).onProcessed(paths -> {
-            if (paths != null && !paths.isEmpty() && !paths.equals(selectedPaths)) {
-              Promise<?> newSelectPromise = TreeUtil.promiseSelect(myTree, paths.stream().map(PathSelectionVisitor::new));
-              cancelSelectionUpdate();
-              if (newSelectPromise instanceof AsyncPromise) {
-                ((AsyncPromise<?>)newSelectPromise).onError(t -> {
-                  if (t instanceof CancellationException) {
-                    TreeUtil.promiseExpand(myTree, paths.stream().map(path -> new PathSelectionVisitor(path.getParentPath())));
-                  }
-                });
-              }
-              myUpdateSelectionPromise = newSelectPromise;
-            }
-          });
-        });
-      }, getProject().getDisposed());
-    }
   }
 
   private static class PathSelectionVisitor implements TreeVisitor {

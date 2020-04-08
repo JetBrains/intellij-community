@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
-import java.util.Stack;
 import java.util.stream.Stream;
 
 public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
@@ -140,14 +140,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   @Nullable
   private JBPopup findPopup() {
-    while(true) {
-      if (myStack.isEmpty()) break;
+    while (!myStack.isEmpty()) {
       final AbstractPopup each = (AbstractPopup)myStack.peek();
-      if (each == null || each.isDisposed()) {
-        myStack.pop();
-      } else {
+      if (each != null && !each.isDisposed()) {
         return each;
       }
+      myStack.pop();
     }
 
     return null;

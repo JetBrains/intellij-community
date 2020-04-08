@@ -295,8 +295,7 @@ public class GroovyExpectedTypesProvider {
        type instanceof PsiClassType && ((PsiClassType)type).resolve() != null && ((PsiClassType)type).resolve().isEnum();
     }
 
-    @NotNull
-    private static TypeConstraint[] createSimpleSubTypeResult(@NotNull PsiType type) {
+    private static TypeConstraint @NotNull [] createSimpleSubTypeResult(@NotNull PsiType type) {
       return new TypeConstraint[]{new SubtypeConstraint(type, type)};
     }
 
@@ -340,10 +339,10 @@ public class GroovyExpectedTypesProvider {
     }
 
     private void processCallVariants(@NotNull PsiElement place,
-                                     @NotNull GroovyResolveResult[] variants,
-                                     @NotNull GrNamedArgument[] namedArguments,
-                                     @NotNull GrExpression[] expressionArguments,
-                                     @NotNull GrClosableBlock[] closureArguments) {
+                                     GroovyResolveResult @NotNull [] variants,
+                                     GrNamedArgument @NotNull [] namedArguments,
+                                     GrExpression @NotNull [] expressionArguments,
+                                     GrClosableBlock @NotNull [] closureArguments) {
 
       List<Pair<PsiParameter, PsiType>> expectedParams =
         ResolveUtil.collectExpectedParamsByArg(place, variants, namedArguments, expressionArguments, closureArguments, myExpression);

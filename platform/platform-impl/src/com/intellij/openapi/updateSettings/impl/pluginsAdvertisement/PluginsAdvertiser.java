@@ -1,19 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.*;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -51,38 +47,34 @@ public final class PluginsAdvertiser {
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
   public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
-  public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate";
-  public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate";
-  public static final String CHECK_ULTIMATE_EDITION_TITLE = "Try " + IDEA_ULTIMATE_EDITION;
-  public static final String DISPLAY_ID = "Plugins Suggestion";
-  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup(DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true);
+  public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Plugins Suggestion", NotificationDisplayType.STICKY_BALLOON, true);
   public static final String FUS_GROUP_ID = "plugins.advertiser";
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
+  private static boolean extensionsHaveBeenUpdated = false;
 
   @Nullable
-  public static List<Plugin> retrieve(UnknownFeature unknownFeature) throws IOException {
-    final String featureType = unknownFeature.getFeatureType();
-    final String implementationName = unknownFeature.getImplementationName();
-    final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
-    return processFeatureRequest(
-      ImmutableMap.of("featureType", featureType, "implementationName", implementationName, "build", buildNumber),
-      request -> {
-        final JsonReader jsonReader = new JsonReader(request.getReader());
-        jsonReader.setLenient(true);
-        final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
-        final List<Plugin> result = new ArrayList<>();
-        for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
-          final JsonObject jsonObject = jsonElement.getAsJsonObject();
-          final JsonElement pluginId = jsonObject.get("pluginId");
-          final JsonElement pluginName = jsonObject.get("pluginName");
-          final JsonElement bundled = jsonObject.get("bundled");
-          result.add(new Plugin(StringUtil.unquoteString(pluginId.toString()),
-                                pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
-                                Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
-        }
-        return result;
-      });
+  public static List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) throws IOException {
+    Map<String, String> map = new HashMap<>();
+    map.put("featureType", unknownFeature.getFeatureType());
+    map.put("implementationName", unknownFeature.getImplementationName());
+    map.put("build", PluginRepositoryRequests.getBuildForPluginRepositoryRequests());
+    return processFeatureRequest(map, request -> {
+      JsonReader jsonReader = new JsonReader(request.getReader());
+      jsonReader.setLenient(true);
+      JsonElement jsonRootElement = JsonParser.parseReader(jsonReader);
+      List<Plugin> result = new ArrayList<>();
+      for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
+        JsonElement pluginId = jsonObject.get("pluginId");
+        JsonElement pluginName = jsonObject.get("pluginName");
+        JsonElement bundled = jsonObject.get("bundled");
+        result.add(new Plugin(StringUtil.unquoteString(pluginId.toString()),
+                              pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
+                              Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
+      }
+      return result;
+    });
   }
 
   static void loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) throws IOException {
@@ -90,11 +82,12 @@ public final class PluginsAdvertiser {
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
-    @SuppressWarnings("deprecation") Map<String, String> params = ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
+    @SuppressWarnings("deprecation")
+    Map<String, String> params = Collections.singletonMap("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
     processFeatureRequest(params, request -> {
       JsonReader jsonReader = new JsonReader(request.getReader());
       jsonReader.setLenient(true);
-      JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
+      JsonElement jsonRootElement = JsonParser.parseReader(jsonReader);
       Map<String, Set<Plugin>> result = new HashMap<>();
       for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -137,7 +130,7 @@ public final class PluginsAdvertiser {
     });
   }
 
-  private static <K> K processFeatureRequest(Map<String, String> params, HttpRequests.RequestProcessor<K> requestProcessor) throws IOException {
+  private static <K> K processFeatureRequest(@NotNull Map<String, String> params, @NotNull HttpRequests.RequestProcessor<K> requestProcessor) throws IOException {
     String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
     Url url = Urls.parseEncoded(baseUrl);
     if (url == null) {
@@ -152,6 +145,7 @@ public final class PluginsAdvertiser {
   }
 
   public static @Nullable KnownExtensions loadExtensions() {
+    if (!extensionsHaveBeenUpdated) return null;
     KnownExtensions knownExtensions = ourKnownExtensions.get();
     if (knownExtensions != null) return knownExtensions;
     try {
@@ -178,6 +172,7 @@ public final class PluginsAdvertiser {
       FileUtil.ensureCanCreateFile(plugins);
     }
     JDOMUtil.write(XmlSerializer.serialize(new KnownExtensions(extensions)), plugins);
+    extensionsHaveBeenUpdated = true;
   }
 
   public static void openDownloadPage() {
@@ -199,7 +194,7 @@ public final class PluginsAdvertiser {
     return null;
   }
 
-  static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
+  static @Nullable List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) {
       return null;
     }
@@ -222,7 +217,11 @@ public final class PluginsAdvertiser {
   }
 
   public static void installAndEnable(@NotNull Set<PluginId> pluginIds, @NotNull Runnable onSuccess) {
-    ProgressManager.getInstance().run(new Task.Modal(null, "Search for Plugins in Repository", true) {
+    installAndEnable(null, pluginIds, true, onSuccess);
+  }
+
+  public static void installAndEnable(@Nullable Project project, @NotNull Set<PluginId> pluginIds, boolean showDialog, @NotNull Runnable onSuccess) {
+    ProgressManager.getInstance().run(new Task.Modal(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
 
@@ -248,12 +247,20 @@ public final class PluginsAdvertiser {
 
       @Override
       public void onSuccess() {
-        if (myAllPlugins != null) {
-          final PluginsAdvertiserDialog advertiserDialog =
-            new PluginsAdvertiserDialog(null,
-                                        myPlugins.toArray(new PluginDownloader[0]),
-                                        myAllPlugins);
+        if (myAllPlugins == null) {
+          return;
+        }
+
+        PluginsAdvertiserDialog advertiserDialog =
+          new PluginsAdvertiserDialog(null,
+                                      myPlugins.toArray(new PluginDownloader[0]),
+                                      myAllPlugins);
+        if (showDialog) {
           if (advertiserDialog.showAndGet()) {
+            onSuccess.run();
+          }
+        } else {
+          if (advertiserDialog.doInstallPlugins()) {
             onSuccess.run();
           }
         }
@@ -263,29 +270,29 @@ public final class PluginsAdvertiser {
 
   @Tag("exts")
   @SuppressWarnings("SpellCheckingInspection")
-  public static class KnownExtensions {
+  public static final class KnownExtensions {
     @OptionTag
     @XMap
-    public Map<String, PluginSet> myExtensions = new HashMap<>();
+    public final Map<String, PluginSet> myExtensions = new HashMap<>();
 
     @SuppressWarnings("unused")
     public KnownExtensions() { }
 
-    public KnownExtensions(Map<String, Set<Plugin>> extensions) {
+    public KnownExtensions(@NotNull Map<String, Set<Plugin>> extensions) {
       for (String ext : extensions.keySet()) {
         myExtensions.put(ext, new PluginSet(extensions.get(ext)));
       }
     }
 
-    public Set<Plugin> find(String extension) {
-      final PluginSet pluginSet = myExtensions.get(extension);
+    public @Nullable Set<Plugin> find(@NotNull String extension) {
+      PluginSet pluginSet = myExtensions.get(extension);
       return pluginSet != null ? pluginSet.myPlugins : null;
     }
   }
 
   @Tag("plugins")
-  public static class PluginSet {
-    public Set<Plugin> myPlugins = new HashSet<>();
+  public static final class PluginSet {
+    public final Set<Plugin> myPlugins = new HashSet<>();
 
     @SuppressWarnings("unused")
     public PluginSet() { }

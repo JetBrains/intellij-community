@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
@@ -7,9 +9,10 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.util.ExecUtil
-import com.intellij.lang.annotation.Annotation
+import com.intellij.java.JavaBundle
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -84,8 +87,10 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
         if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment::class.java) != null) {
           val range = adjust(element, text, offset)
           val description = StringUtil.capitalize(message)
-          val annotation = if (error) holder.createErrorAnnotation(range, description) else holder.createWarningAnnotation(range, description)
-          registerFix(annotation)
+          val severity = if (error) HighlightSeverity.ERROR else HighlightSeverity.WARNING
+          holder.newAnnotation(severity, description).range(range)
+            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key.value).registerFix()
+            .create()
         }
       }
     }
@@ -187,7 +192,5 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     return range
   }
 
-  private fun registerFix(annotation: Annotation) =
-    annotation.registerFix(EmptyIntentionAction(InspectionsBundle.message("inspection.javadoc.lint.display.name")), null, key.value)
   //</editor-fold>
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -7,14 +7,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.intellij.lang.annotations.Language;
 import org.intellij.lang.regexp.inspection.AnonymousGroupInspection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ALL")
 public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDuplicateNamedGroup() {
@@ -56,8 +55,8 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("a<weak_warning descr=\"Fixed repetition range\">{3,3}</weak_warning>");
   }
 
-  public void testDuplicateCharacterClass() {
-    doTest("[\\w-<warning descr=\"Duplicate predefined character class '\\w' inside character class\">\\w</warning>]");
+  public void testNotDuplicateControlCharacter() {
+    doTest("[\\ca\\cb]");
   }
 
   public void testNoRange() {
@@ -138,7 +137,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testQuoted() {
-    doTest("[\\Qabc?*+.)<warning descr=\"Duplicate character ')' inside character class\">)</warning>]<warning descr=\"Duplicate character ']' inside character class\">]</warning>[<warning descr=\"Duplicate character ']' inside character class\">]</warning>\\E]");
+    doTest("[\\Qabc?*+.))]][]</warning>\\E]");
   }
 
   public void testValidDanglingMetacharacters() {
@@ -183,7 +182,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testPosixCharacterClass() {
     // posix character classes are not available in java regex patterns
-    doTest("[:xdig<warning descr=\"Duplicate character 'i' inside character class\">i</warning>t<warning descr=\"Duplicate character ':' inside character class\">:</warning>]+");
+    doTest("[:xdigit:]+");
   }
 
   public void testNestedBackReference() {
@@ -191,7 +190,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testNoNPE() {
-    doTest("<warning descr=\"Empty group\">(</warning><error descr=\"Unclosed group\">\"</error>);}}//");
+    doTest("(<error descr=\"Unclosed group\">\"</error>);}}//");
   }
 
   public void testBadInlineOption() {
@@ -241,7 +240,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("\\p{gc=<error descr=\"Unknown property value\">ZZZ</error>}+");
   }
 
-  private void doTest(@Language("RegExp") String code) {
+  private void doTest(@NonNls String code) {
     code = StringUtil.escapeBackSlashes(code);
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
     myFixture.testHighlighting();

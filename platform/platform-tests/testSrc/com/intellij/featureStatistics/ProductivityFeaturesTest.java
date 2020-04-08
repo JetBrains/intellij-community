@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Element;
@@ -76,26 +75,20 @@ public class ProductivityFeaturesTest extends LightPlatformTestCase {
     TipAndTrickBean tip = TipAndTrickBean.findByFileName(featureDescriptor.getTipFileName());
     assertNotNull(tip);
 
-    final boolean initialValue = Registry.is("ide.javafx.tips");
-    try {
-      Registry.get("ide.javafx.tips").setValue(false);//Don't test JavaFX case as is it triggers 'Thread leaked' failure
-      TipUIUtil.Browser browser = TipUIUtil.createBrowser();
-      TipUIUtil.openTipInBrowser(TipUIUtil.getTip(featureDescriptor), browser);
-      //if (Registry.is("ide.javafx.tips")) {
-      //  assertEquals("<html><body>Test Tip</body></html>", browser.getText());
-      //}
-      //else
-      assertEquals("<html>\n" +
-                   "  <head>\n" +
-                   "    \n" +
-                   "  </head>\n" +
-                   "  <body>\n" +
-                   "    Test Tip\n" +
-                   "  </body>\n" +
-                   "</html>", browser.getText().trim());
-    } finally {
-      Registry.get("ide.javafx.tips").setValue(initialValue);
-    }
+    TipUIUtil.Browser browser = TipUIUtil.createBrowser();
+    TipUIUtil.openTipInBrowser(TipUIUtil.getTip(featureDescriptor), browser);
+    //if (Registry.is("ide.javafx.tips")) {
+    //  assertEquals("<html><body>Test Tip</body></html>", browser.getText());
+    //}
+    //else
+    assertEquals("<html>\n" +
+                 "  <head>\n" +
+                 "    \n" +
+                 "  </head>\n" +
+                 "  <body>\n" +
+                 "    Test Tip\n" +
+                 "  </body>\n" +
+                 "</html>", browser.getText().trim());
   }
 
   public void testStatistics(){

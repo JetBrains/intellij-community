@@ -1,29 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/lib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.xslt.debugger.rt" />
     <orderEntry type="module" module-name="intellij.xslt.debugger.engine" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
-      <library name="Saxon-6.5.5">
+      <library name="Saxon-9HE">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/saxon.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/saxon9he.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="Saxon-9HE">
+      <library name="Saxon-6.5.5">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/saxon9he.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/saxon.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -44,5 +45,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
   </component>
 </module>

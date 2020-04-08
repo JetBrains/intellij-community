@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,31 +43,23 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author ik
- */
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
   private static final Key<ParameterizedCachedValue<Map<GlobalSearchScope, MembersMap>, PsiClass>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
-  private static final String VALUES_METHOD = "values";
-  private static final String VALUE_OF_METHOD = "valueOf";
 
   private PsiClassImplUtil() { }
 
-  @NotNull
-  public static PsiField[] getAllFields(@NotNull PsiClass aClass) {
+  public static PsiField @NotNull [] getAllFields(@NotNull PsiClass aClass) {
     List<PsiField> map = getAllByMap(aClass, MemberType.FIELD);
     return map.toArray(PsiField.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiMethod[] getAllMethods(@NotNull PsiClass aClass) {
+  public static PsiMethod @NotNull [] getAllMethods(@NotNull PsiClass aClass) {
     List<PsiMethod> methods = getAllByMap(aClass, MemberType.METHOD);
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiClass[] getAllInnerClasses(@NotNull PsiClass aClass) {
+  public static PsiClass @NotNull [] getAllInnerClasses(@NotNull PsiClass aClass) {
     List<PsiClass> classes = getAllByMap(aClass, MemberType.CLASS);
     return classes.toArray(PsiClass.EMPTY_ARRAY);
   }
@@ -77,8 +70,7 @@ public class PsiClassImplUtil {
     return byMap.isEmpty() ? null : (PsiField)byMap.get(0);
   }
 
-  @NotNull
-  public static PsiMethod[] findMethodsByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
+  public static PsiMethod @NotNull [] findMethodsByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
     List<PsiMember> methods = findByMap(aClass, name, checkBases, MemberType.METHOD);
     //noinspection SuspiciousToArrayCall
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
@@ -92,8 +84,7 @@ public class PsiClassImplUtil {
 
   // ----------------------------- findMethodsBySignature -----------------------------------
 
-  @NotNull
-  public static PsiMethod[] findMethodsBySignature(@NotNull PsiClass aClass, @NotNull PsiMethod patternMethod, final boolean checkBases) {
+  public static PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiClass aClass, @NotNull PsiMethod patternMethod, final boolean checkBases) {
     List<PsiMethod> methods = findMethodsBySignature(aClass, patternMethod, checkBases, false);
     return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
@@ -375,22 +366,15 @@ public class PsiClassImplUtil {
     }
   }
 
+  /**
+   * @deprecated synthetic enum methods are included into {@link PsiClass#getMethods()}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static boolean processDeclarationsInEnum(@NotNull PsiScopeProcessor processor,
                                                   @NotNull ResolveState state,
                                                   @NotNull ClassInnerStuffCache innerStuffCache) {
-    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-      NameHint nameHint = processor.getHint(NameHint.KEY);
-      if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
-        PsiMethod method = innerStuffCache.getValuesMethod();
-        if (method != null && !processor.execute(method, ResolveState.initial())) return false;
-      }
-      if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
-        PsiMethod method = innerStuffCache.getValueOfMethod();
-        if (method != null && !processor.execute(method, ResolveState.initial())) return false;
-      }
-    }
-
     return true;
   }
 
@@ -453,7 +437,7 @@ public class PsiClassImplUtil {
       }
 
       private PsiSubstitutor obtainSubstitutor(PsiMember member) {
-        PsiClass containingClass = ObjectUtils.assertNotNull(member.getContainingClass());
+        PsiClass containingClass = Objects.requireNonNull(member.getContainingClass());
         PsiSubstitutor superSubstitutor = ObjectUtils.notNull(hierarchy.getSuperMembersSubstitutor(containingClass, languageLevel),
                                                               PsiSubstitutor.EMPTY);
         return obtainFinalSubstitutor(containingClass, superSubstitutor, aClass, substitutor, factory, languageLevel);
@@ -730,8 +714,7 @@ public class PsiClassImplUtil {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(className, psiClass.getResolveScope());
   }
 
-  @NotNull
-  public static PsiClass[] getSupers(@NotNull PsiClass psiClass) {
+  public static PsiClass @NotNull [] getSupers(@NotNull PsiClass psiClass) {
     final PsiClass[] supers = getSupersInner(psiClass);
     for (final PsiClass aSuper : supers) {
       LOG.assertTrue(aSuper != null);
@@ -739,8 +722,7 @@ public class PsiClassImplUtil {
     return supers;
   }
 
-  @NotNull
-  private static PsiClass[] getSupersInner(@NotNull PsiClass psiClass) {
+  private static PsiClass @NotNull [] getSupersInner(@NotNull PsiClass psiClass) {
     PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
 
     if (psiClass.isInterface()) {
@@ -782,8 +764,7 @@ public class PsiClassImplUtil {
     return types;
   }
 
-  @NotNull
-  public static PsiClassType[] getSuperTypes(@NotNull PsiClass psiClass) {
+  public static PsiClassType @NotNull [] getSuperTypes(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassType.resolve();
@@ -842,8 +823,7 @@ public class PsiClassImplUtil {
     return superType;
   }
 
-  @NotNull
-  public static PsiClass[] getInterfaces(@NotNull PsiTypeParameter typeParameter) {
+  public static PsiClass @NotNull [] getInterfaces(@NotNull PsiTypeParameter typeParameter) {
     final PsiClassType[] referencedTypes = typeParameter.getExtendsListTypes();
     if (referencedTypes.length == 0) {
       return PsiClass.EMPTY_ARRAY;
@@ -858,8 +838,7 @@ public class PsiClassImplUtil {
     return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiClass[] getInterfaces(@NotNull PsiClass psiClass) {
+  public static PsiClass @NotNull [] getInterfaces(@NotNull PsiClass psiClass) {
     if (psiClass.isInterface()) {
       return resolveClassReferenceList(psiClass.getExtendsListTypes(), psiClass, false);
     }
@@ -874,10 +853,9 @@ public class PsiClassImplUtil {
     return resolveClassReferenceList(implementsListTypes, psiClass, false);
   }
 
-  @NotNull
-  private static PsiClass[] resolveClassReferenceList(@NotNull PsiClassType[] listOfTypes,
-                                                      @NotNull PsiClass psiClass,
-                                                      boolean includeObject) {
+  private static PsiClass @NotNull [] resolveClassReferenceList(PsiClassType @NotNull [] listOfTypes,
+                                                                @NotNull PsiClass psiClass,
+                                                                boolean includeObject) {
     PsiClass objectClass = null;
     if (includeObject) {
       objectClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
@@ -938,8 +916,7 @@ public class PsiClassImplUtil {
     });
   }
 
-  @NotNull
-  public static PsiClassType[] getExtendsListTypes(@NotNull PsiClass psiClass) {
+  public static PsiClassType @NotNull [] getExtendsListTypes(@NotNull PsiClass psiClass) {
     if (psiClass.isEnum()) {
       PsiClassType enumSuperType = getEnumSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()));
       return enumSuperType == null ? PsiClassType.EMPTY_ARRAY : new PsiClassType[]{enumSuperType};
@@ -979,8 +956,7 @@ public class PsiClassImplUtil {
     return PsiClassType.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public static PsiClassType[] getImplementsListTypes(@NotNull PsiClass psiClass) {
+  public static PsiClassType @NotNull [] getImplementsListTypes(@NotNull PsiClass psiClass) {
     final PsiReferenceList extendsList = psiClass.getImplementsList();
     if (extendsList != null) {
       return extendsList.getReferencedTypes();
@@ -1044,7 +1020,7 @@ public class PsiClassImplUtil {
       if (stub != null) {
         // groovy etc
         for (PsiClassType type : list.getReferencedTypes()) {
-          if (Comparing.equal(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
+          if (Objects.equals(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
             return true;
           }
         }
@@ -1064,7 +1040,7 @@ public class PsiClassImplUtil {
     }
 
     for (PsiClassType type : list.getReferencedTypes()) {
-      if (Comparing.equal(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
+      if (Objects.equals(type.getClassName(), baseName) && manager.areElementsEquivalent(baseClass, type.resolve())) {
         return true;
       }
     }
@@ -1091,8 +1067,15 @@ public class PsiClassImplUtil {
         PsiTypeParameter p1 = (PsiTypeParameter)aClass;
         PsiTypeParameter p2 = (PsiTypeParameter)another;
 
-        return p1.getIndex() == p2.getIndex() &&
-               (aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner()) || TypeConversionUtil.areSameFreshVariables(p1, p2));
+        if (p1.getIndex() != p2.getIndex()) {
+          return false;
+        }
+        if (TypeConversionUtil.areSameFreshVariables(p1, p2)) {
+          return true;
+        }
+
+        return !Boolean.FALSE.equals(RecursionManager.doPreventingRecursion(Pair.create(p1, p2), true, () ->
+          aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner())));
       }
       else {
         return false;
@@ -1192,7 +1175,7 @@ public class PsiClassImplUtil {
     visited.add(type2.getCanonicalText());
 
     if (class1 instanceof PsiTypeParameter && class2 instanceof PsiTypeParameter) {
-      if (!(Comparing.equal(class1.getName(), class2.getName()) && ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex())) return false;
+      if (!(Objects.equals(class1.getName(), class2.getName()) && ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex())) return false;
       final PsiClassType[] eTypes1 = class1.getExtendsListTypes();
       final PsiClassType[] eTypes2 = class2.getExtendsListTypes();
       if (eTypes1.length != eTypes2.length) return false;

@@ -29,7 +29,7 @@ public class JsonLiteralApiTest extends JsonTestCase {
     return new JsonElementGenerator(getProject()).createStringLiteral(unescapedContent);
   }
 
-  private void checkFragments(@NotNull String rawStringLiteral, @NotNull Pair<TextRange, String>... fragments) {
+  private void checkFragments(@NotNull String rawStringLiteral, Pair<TextRange, String> @NotNull ... fragments) {
     final List<Pair<TextRange, String>> actual = createStringLiteralFromText(rawStringLiteral).getTextFragments();
     final List<Pair<TextRange, String>> expected = Arrays.asList(fragments);
     assertEquals(expected, actual);

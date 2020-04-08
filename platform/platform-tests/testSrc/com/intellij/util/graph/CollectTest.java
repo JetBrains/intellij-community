@@ -63,7 +63,7 @@ public class CollectTest extends GraphTestCase {
 
   private static void doTest(final @NotNull Map<String, String> graph,
                              final @NotNull String node,
-                             final @NotNull String... expected) {
+                             final String @NotNull ... expected) {
     Set<String> nodes = new THashSet<>();
     getAlgorithmsInstance().collectOutsRecursively(initGraph(graph), node, nodes);
     assertThat(nodes).containsExactlyInAnyOrder(expected);

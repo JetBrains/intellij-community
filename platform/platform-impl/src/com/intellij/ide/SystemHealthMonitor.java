@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
@@ -35,16 +36,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
-  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
+  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true, null, null,
+                                                                       null, PluginManagerCore.CORE_ID);
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
+    checkPluginDirectory();
     checkRuntime();
     checkReservedCodeCacheSize();
     checkSignalBlocking();
     startDiskSpaceMonitoring();
+  }
+
+  private static void checkPluginDirectory() {
+    if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
+      if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
+        showNotification("implicit.plugin.directory.path", null);
+      }
+      if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
+        showNotification("implicit.log.directory.path", null);
+      }
+    }
   }
 
   private static void checkRuntime() {
@@ -62,7 +76,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
           (bundledJdk = JdkBundle.createBundled()) != null &&
           bundledJdk.isOperational();
 
-        NotificationAction switchAction = new NotificationAction("Switch") {
+        NotificationAction switchAction = new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.switch")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();
@@ -158,14 +172,14 @@ final class SystemHealthMonitor extends PreloadingActivity {
     final AtomicBoolean reported = new AtomicBoolean();
     final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<>();
 
-    JobScheduler.getScheduler().schedule(new Runnable() {
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(new Runnable() {
       private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
       private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/sec is near max SSD sequential write speed
 
       @Override
       public void run() {
         if (!reported.get()) {
-          Future<Long> future = ourFreeSpaceCalculation.get();
+          Future<@Nullable Long> future = ourFreeSpaceCalculation.get();
           if (future == null) {
             ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
               // file.getUsableSpace() can fail and return 0 e.g. after MacOSX restart or awakening from sleep
@@ -175,7 +189,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
                 TimeoutUtil.sleep(5000);  // hopefully we will not hummer disk too much
                 fileUsableSpace = file.getUsableSpace();
               }
-
               return fileUsableSpace;
             }));
           }
@@ -185,11 +198,13 @@ final class SystemHealthMonitor extends PreloadingActivity {
           }
 
           try {
-            final long fileUsableSpace = future.get();
-            final long timeout = Math.min(3600, Math.max(5, (fileUsableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS));
+            Long result = future.get();
+            if (result == null) return;
             ourFreeSpaceCalculation.set(null);
 
-            if (fileUsableSpace < LOW_DISK_SPACE_THRESHOLD) {
+            long usableSpace = result;
+            long timeout = Math.min(3600, Math.max(5, (usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS));
+            if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
               if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
                 ourFreeSpaceCalculation.set(future);
                 restart(1);
@@ -201,9 +216,9 @@ final class SystemHealthMonitor extends PreloadingActivity {
               SwingUtilities.invokeLater(() -> {
                 String productName = ApplicationNamesInfo.getInstance().getFullProductName();
                 String message = IdeBundle.message("low.disk.space.message", productName);
-                if (fileUsableSpace < 100 * 1024) {
-                  LOG.warn(message + " (" + fileUsableSpace + ")");
-                  Messages.showErrorDialog(message, "Fatal Configuration Problem");
+                if (usableSpace < 100 * 1024) {
+                  LOG.warn(message + " (" + usableSpace + ")");
+                  Messages.showErrorDialog(message, IdeBundle.message("dialog.title.fatal.configuration.problem"));
                   reported.compareAndSet(true, false);
                   restart(timeout);
                 }
@@ -226,7 +241,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       }
 
       private void restart(long timeout) {
-        JobScheduler.getScheduler().schedule(this, timeout, TimeUnit.SECONDS);
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(this, timeout, TimeUnit.SECONDS);
       }
     }, 1, TimeUnit.SECONDS);
   }

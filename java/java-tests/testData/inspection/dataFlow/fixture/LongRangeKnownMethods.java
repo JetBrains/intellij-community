@@ -38,7 +38,7 @@ public class LongRangeKnownMethods {
   }
 
   void test(String s) {
-    if (<warning descr="Condition 's.isEmpty() && s.length() > 2' is always 'false'">s.isEmpty() && <warning descr="Condition 's.length() > 2' is always 'false' when reached">s.length() > 2</warning></warning>) {
+    if (<warning descr="Condition 's.isEmpty() && s.length() > 2' is always 'false'">s.isEmpty() && <warning descr="Condition 's.length() > 2' is always 'false' when reached"><warning descr="Result of 's.length()' is always '0'">s.length()</warning> > 2</warning></warning>) {
       System.out.println("Never");
     }
   }

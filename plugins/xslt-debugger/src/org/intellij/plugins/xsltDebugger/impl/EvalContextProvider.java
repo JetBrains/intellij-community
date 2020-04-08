@@ -64,8 +64,7 @@ public class EvalContextProvider extends ContextProvider {
   public VariableContext getVariableContext() {
     return new SimpleVariableContext() {
       @Override
-      @NotNull
-      public String[] getVariablesInScope(XPathElement element) {
+      public String @NotNull [] getVariablesInScope(XPathElement element) {
         final int size = myVariables.size();
         final ArrayList<String> vars = new ArrayList<>(size);
         for (Debugger.Variable myVariable : myVariables) {

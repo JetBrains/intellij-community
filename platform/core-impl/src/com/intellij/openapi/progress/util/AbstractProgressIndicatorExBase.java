@@ -27,7 +27,7 @@ import java.util.Collection;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private final boolean myReusable;
-  @Nullable private volatile ProgressIndicatorEx[] myStateDelegates;
+  private volatile ProgressIndicatorEx @Nullable [] myStateDelegates;
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
   private TaskInfo myOwnerTask;
@@ -204,6 +204,12 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
         action.execute(each);
       }
     }
+  }
+
+  @Override
+  public void initStateFrom(@NotNull ProgressIndicator indicator) {
+    super.initStateFrom(indicator);
+    delegate(it -> it.initStateFrom(this));
   }
 
   protected void onProgressChange() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -36,7 +37,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     Arrays.sort(plugins, (o1, o2) -> o1.getPluginName().compareToIgnoreCase(o2.getPluginName()));
     myUploadedPlugins = plugins;
     myAllPlugins = allPlugins;
-    setTitle("Choose Plugins to Install or Enable");
+    setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
     init();
   }
 
@@ -59,6 +60,12 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    if (doInstallPlugins()) {
+      super.doOKAction();
+    }
+  }
+
+  public boolean doInstallPlugins() {
     Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
     List<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myUploadedPlugins) {
@@ -72,7 +79,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     }
 
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(nodes)) {
-      return;
+      return false;
     }
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
@@ -96,6 +103,6 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
         notifyRunnable.run();
       }
     }
-    super.doOKAction();
+    return true;
   }
 }

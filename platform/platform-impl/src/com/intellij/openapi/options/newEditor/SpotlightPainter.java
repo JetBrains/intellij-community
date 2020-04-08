@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
-import com.intellij.ide.ui.search.ComponentHighligtingListener;
+import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,13 +17,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 
-/**
- * @author Sergey.Malenkov
- */
-abstract class SpotlightPainter extends AbstractPainter implements ComponentHighligtingListener {
-  private final IdentityHashMap<Configurable, String> myConfigurableOption = new IdentityHashMap<>();
+abstract class SpotlightPainter extends AbstractPainter implements ComponentHighlightingListener {
+  private final HashMap<String, String> myConfigurableOption = new HashMap<>();
   private final MergingUpdateQueue myQueue;
   private final GlassPanel myGlassPanel;
   private final JComponent myTarget;
@@ -35,7 +32,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
     myTarget = target;
     IdeGlassPaneUtil.installPainter(target, this, parent);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parent);
-    connection.subscribe(ComponentHighligtingListener.TOPIC, this);
+    connection.subscribe(ComponentHighlightingListener.TOPIC, this);
   }
 
   @Override
@@ -70,16 +67,16 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
       myGlassPanel.clear();
       String text = filter.getFilterText();
       myVisible = !text.isEmpty();
+      SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
       try {
-        SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
         SearchUtil.lightOptions(searchable, component, text);
         Runnable search = searchable.enableSearch(text); // execute for empty string too
-        if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(configurable))) {
+        if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(searchable.getId()))) {
           search.run();
         }
       }
       finally {
-        myConfigurableOption.put(configurable, text);
+        myConfigurableOption.put(searchable.getId(), text);
       }
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) {

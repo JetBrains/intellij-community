@@ -26,7 +26,6 @@ import java.util.Collection;
  *
  * @see org.jetbrains.jps.incremental.TargetBuilder#build
  * @see org.jetbrains.jps.incremental.ModuleLevelBuilder#build
- * @author nik
  */
 public interface DirtyFilesHolder<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
   void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException;

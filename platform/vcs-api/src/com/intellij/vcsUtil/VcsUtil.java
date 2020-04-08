@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -210,8 +211,7 @@ public class VcsUtil {
     });
   }
 
-  @Nullable
-  public static byte[] getFileByteContent(@NotNull File file) {
+  public static byte @Nullable [] getFileByteContent(@NotNull File file) {
     try {
       return FileUtil.loadFileBytes(file);
     }
@@ -356,8 +356,7 @@ public class VcsUtil {
    * @return {@code VirtualFile}s available in the current context.
    *         Returns empty array if there are no available files.
    */
-  @NotNull
-  public static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
+  public static VirtualFile @NotNull [] getVirtualFiles(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return files == null ? VirtualFile.EMPTY_ARRAY : files;
   }
@@ -393,7 +392,7 @@ public class VcsUtil {
   }
 
   public static <T> T computeWithModalProgress(@Nullable Project project,
-                                               @NotNull String title,
+                                               @NotNull @Nls String title,
                                                boolean canBeCancelled,
                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends VcsException> computable)
     throws VcsException {
@@ -538,7 +537,7 @@ public class VcsUtil {
     List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);
     for (Iterator<VcsDirectoryMapping> iterator = mappings.iterator(); iterator.hasNext(); ) {
       VcsDirectoryMapping mapping = iterator.next();
-      if (mapping.isDefaultMapping() && StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+      if (mapping.isDefaultMapping() && mapping.isNoneMapping()) {
         LOG.debug("Removing <Project> -> <None> mapping");
         iterator.remove();
       }

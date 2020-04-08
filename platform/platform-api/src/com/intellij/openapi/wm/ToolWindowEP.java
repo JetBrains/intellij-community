@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.diagnostic.PluginException;
@@ -14,24 +14,24 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
 public class ToolWindowEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(ToolWindowEP.class);
 
   public static final ExtensionPointName<ToolWindowEP> EP_NAME = new ExtensionPointName<>("com.intellij.toolWindow");
 
-  protected PluginDescriptor pluginDescriptor;
+  private PluginDescriptor pluginDescriptor;
 
-  @Attribute("id")
+  @Attribute
   public String id;
 
   /**
    * The side of the screen on which the toolwindow is displayed ("left", "right" or "bottom").
    */
-  @Attribute("anchor")
+  @Attribute
   public String anchor;
+
+  @Attribute
+  public boolean side;
 
   /**
    * The resource path of the icon displayed on the toolwindow button. Toolwindow icons must have the size of 13x13 pixels.
@@ -53,20 +53,20 @@ public class ToolWindowEP implements PluginAware {
   /**
    * The name of the class implementing {@link ToolWindowFactory}, used to create the toolwindow contents.
    */
-  @Attribute("factoryClass")
+  @Attribute
   public String factoryClass;
 
   /**
    * @deprecated Implement {@link ToolWindowFactory#isApplicable(Project)} instead.
    */
-  @Attribute("conditionClass")
+  @Attribute
   @Deprecated
   public String conditionClass;
 
-  @Attribute("secondary")
+  @Attribute
   public boolean secondary;
 
-  @Attribute("canCloseContents")
+  @Attribute
   public boolean canCloseContents;
 
   private Class<? extends ToolWindowFactory> myFactoryClass;
@@ -84,7 +84,15 @@ public class ToolWindowEP implements PluginAware {
     pluginDescriptor = value;
   }
 
+  /**
+   * @deprecated Do not use ToolWindowEP.
+   */
+  @Deprecated
   public ToolWindowFactory getToolWindowFactory() {
+    return getToolWindowFactory(getPluginDescriptor());
+  }
+
+  public ToolWindowFactory getToolWindowFactory(@NotNull PluginDescriptor pluginDescriptor) {
     ToolWindowFactory factory = myFactory;
     if (factory != null) {
       return factory;
@@ -115,8 +123,7 @@ public class ToolWindowEP implements PluginAware {
     return factory;
   }
 
-  @Nullable
-  public Class<? extends ToolWindowFactory> getFactoryClass() {
+  public @Nullable Class<? extends ToolWindowFactory> getFactoryClass(@NotNull PluginDescriptor pluginDescriptor) {
     if (myFactoryClass == null) {
       if (factoryClass == null) {
         LOG.error(new PluginException("No toolwindow factory specified for " + id, pluginDescriptor.getPluginId()));
@@ -135,8 +142,15 @@ public class ToolWindowEP implements PluginAware {
     return myFactoryClass;
   }
 
-  @Nullable
-  public Condition<Project> getCondition() {
+  /**
+   * @deprecated Do not use ToolWindowEP.
+   */
+  @Deprecated
+  public @Nullable Condition<Project> getCondition() {
+    return getCondition(getPluginDescriptor());
+  }
+
+  public @Nullable Condition<Project> getCondition(@NotNull PluginDescriptor pluginDescriptor) {
     if (conditionClass == null) {
       return null;
     }

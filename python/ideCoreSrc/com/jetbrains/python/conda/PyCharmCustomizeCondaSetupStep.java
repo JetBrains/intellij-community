@@ -21,10 +21,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
+import com.intellij.tools.ToolsBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PyCharmCommunityBundle;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +58,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
     myProgressBar.setStringPainted(true);
     myProgressBar.setIndeterminate(true);
 
-    myCancelLink = new LinkLabel("Cancel", null);
+    myCancelLink = new LinkLabel(PyCharmCommunityBundle.message("conda.setup.cancel.link.text"), null);
     myCancelLink.setVisible(false);
     myCancelLink.setListener((aSource, aLinkData) -> {
       myProgressIndicator.cancel();
@@ -116,7 +118,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
   private void lockElementsOnInstall() {
     myInstallButton.setEnabled(false);
     mySetupCondaFileChooser.setEnabled(false);
-    myProgressBar.setString("Installing...");
+    myProgressBar.setString(PyCharmCommunityBundle.message("conda.setup.installing.progress.text"));
     myProgressPanel.setVisible(true);
     myCancelLink.setVisible(true);
   }
@@ -154,7 +156,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
         int exitCode = processOutput[0].getExitCode();
 
         if (exitCode == 0) {
-          myInstallButton.setText("Installed");
+          myInstallButton.setText(PyCharmCommunityBundle.message("conda.setup.install.button.installed.text"));
         }
         else {
           showErrorDialog(processOutput[0].getStderr(), true);
@@ -207,7 +209,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
 
   @Override
   public String getTitle() {
-    return "Featured tools";
+    return PyCharmCommunityBundle.message("conda.setup.wizard.step.title");
   }
 
   @Override
@@ -217,7 +219,8 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
 
   @Override
   protected String getHTMLFooter() {
-    return "Miniconda can be installed later via Tools | " + ActionsBundle.message("action.SetupMiniconda.actionNameWithDots");
+    return PyCharmCommunityBundle.message("conda.setup.wizard.step.footer.content", ToolsBundle.message("tools.settings"),
+                                          ActionsBundle.message("action.SetupMiniconda.actionNameWithDots"));
   }
 
   private static void showErrorDialog(@NotNull String message, boolean log) {

@@ -105,8 +105,7 @@ interface JavaSourceRootEntity : TypedEntity {
   val packagePrefix: String
 }
 
-fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? =
-  referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
+fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
 
 interface JavaResourceRootEntity : TypedEntity {
   val sourceRoot: SourceRootEntity
@@ -123,12 +122,24 @@ interface CustomSourceRootPropertiesEntity : TypedEntity {
 
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
 
-interface ContentRootEntity : TypedEntity {
+interface ContentRootEntity : TypedEntity, ReferableTypedEntity {
   val url: VirtualFileUrl
   val excludedUrls: List<VirtualFileUrl>
   val excludedPatterns: List<String>
   val module: ModuleEntity
 }
+
+/**
+ * This entity stores order of artifacts in file. This is needed to ensure that source roots are saved in the same order to avoid
+ * unnecessary modifications of file.
+ */
+interface SourceRootOrderEntity : ModifiableTypedEntity<SourceRootOrderEntity> {
+  var orderOfSourceRoots: List<VirtualFileUrl>
+
+  var contentRootEntity: ContentRootEntity
+}
+
+fun ContentRootEntity.getSourceRootOrder() = referrers(SourceRootOrderEntity::contentRootEntity).firstOrNull()
 
 fun ModuleEntity.getModuleLibraries(storage: TypedEntityStorage): Sequence<LibraryEntity> {
   return storage.entities(LibraryEntity::class.java).filter { (it.persistentId().tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
@@ -193,13 +204,24 @@ interface SdkEntity : TypedEntity {
   val homeUrl: VirtualFileUrl
 }
 
-interface FacetEntity : TypedEntity {
+interface FacetEntity : TypedEntityWithPersistentId, ReferableTypedEntity {
   val name: String
   val facetType: String
   val configurationXmlTag: String?
   val module: ModuleEntity
   val underlyingFacet: FacetEntity?
+
+  @JvmDefault
+  override fun persistentId(): FacetId = FacetId(name, facetType, module.persistentId())
 }
+
+data class FacetId(val name: String, val type: String, override val parentId: ModuleId) : PersistentEntityId<FacetEntity>() {
+  override val presentableName: String
+    get() = name
+}
+
+val FacetEntity.subFacets: Sequence<FacetEntity>
+  get() = referrers(FacetEntity::underlyingFacet)
 
 val ModuleEntity.facets: Sequence<FacetEntity>
   get() = referrers(FacetEntity::module)

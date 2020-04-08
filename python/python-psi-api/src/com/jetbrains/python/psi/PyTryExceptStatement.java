@@ -25,8 +25,7 @@ public interface PyTryExceptStatement extends PyStatementWithElse {
   @NotNull
   PyTryPart getTryPart();
 
-  @NotNull
-  PyExceptPart[] getExceptParts();
+  PyExceptPart @NotNull [] getExceptParts();
 
   @Nullable
   PyFinallyPart getFinallyPart();

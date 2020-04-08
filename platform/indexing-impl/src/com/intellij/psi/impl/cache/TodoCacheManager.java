@@ -37,8 +37,7 @@ public interface TodoCacheManager {
   /**
    * @return all VirtualFile's that contain todoItems under project roots
    */
-  @NotNull
-  PsiFile[] getFilesWithTodoItems();
+  PsiFile @NotNull [] getFilesWithTodoItems();
 
   /**
    * @return -1 if it's not known

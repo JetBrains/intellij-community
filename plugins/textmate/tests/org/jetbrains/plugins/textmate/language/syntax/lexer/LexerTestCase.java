@@ -103,7 +103,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     StringBuilder output = new StringBuilder();
     String text = sourceData.replaceAll("$(\\n+)", "");
     TextMateLanguageDescriptor languageDescriptor = new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope));
-    Lexer lexer = new TextMateHighlightingLexer(languageDescriptor.getScopeName(), languageDescriptor.getRootSyntaxNode());
+    Lexer lexer = new TextMateHighlightingLexer(languageDescriptor.getScopeName(), languageDescriptor.getRootSyntaxNode(), -1);
     lexer.start(text);
     while (lexer.getTokenType() != null) {
       final int s = lexer.getTokenStart();

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -94,7 +95,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
   public void testFromSrcToExternal() {
     myFixture.configureByFiles("src/fromSrc/Foo.java", "content/anno/fromSrc/annotations.xml");
 
-    IntentionAction action = myFixture.findSingleIntention("Annotate externally");
+    IntentionAction action = myFixture.findSingleIntention(JavaBundle.message("intention.text.annotate.externally"));
     assertNotNull(action);
 
     myFixture.launchAction(action);

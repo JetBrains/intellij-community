@@ -46,6 +46,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   private boolean invertContainsConstraint;
   private boolean invertWithinConstraint;
 
+  @NotNull private String contextConstraint = "";
+
   @NonNls private static final String REFERENCE_CONDITION = "reference";
   @NonNls private static final String NAME_OF_EXPRTYPE = "nameOfExprType";
   @NonNls private static final String NAME_OF_FORMALTYPE = "nameOfFormalType";
@@ -66,6 +68,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   @NonNls private static final String WITHIN_CONDITION = "within";
   @NonNls private static final String CONTAINS_CONDITION = "contains";
   @NonNls private static final String TARGET = "target";
+  @NonNls private static final String CONTEXT = "context";
 
   @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
   @NonNls private static final String TRUE = Boolean.TRUE.toString();
@@ -101,6 +104,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     containsConstraint = constraint.containsConstraint;
     invertContainsConstraint = constraint.invertContainsConstraint;
     invertWithinConstraint = constraint.invertWithinConstraint;
+    contextConstraint = constraint.contextConstraint;
   }
 
   @Override
@@ -331,6 +335,15 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.formalArgTypeWithinHierarchy = formalArgTypeWithinHierarchy;
   }
 
+  @NotNull
+  public String getContextConstraint() {
+    return contextConstraint;
+  }
+
+  public void setContextConstraint(@NotNull String contextConstraint) {
+    this.contextConstraint = contextConstraint;
+  }
+
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchVariableConstraint)) return false;
@@ -361,6 +374,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (!containsConstraint.equals(matchVariableConstraint.containsConstraint)) return false;
     if (invertWithinConstraint != matchVariableConstraint.invertWithinConstraint) return false;
     if (invertContainsConstraint != matchVariableConstraint.invertContainsConstraint) return false;
+    if (!contextConstraint.equals(matchVariableConstraint.contextConstraint)) return false;
 
     return true;
   }
@@ -388,7 +402,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     result = 29 * result + (formalArgTypeWithinHierarchy ? 1 : 0);
     result = 29 * result + withinConstraint.hashCode();
     result = 29 * result + containsConstraint.hashCode();
-    
+    result = 29 * result + contextConstraint.hashCode();
+
     if (invertContainsConstraint) result = 29 * result + 1;
     if (invertWithinConstraint) result = 29 * result + 1;
     return result;
@@ -428,6 +443,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     invertWithinConstraint = getBooleanValue(element, NEGATE_WITHIN_CONDITION, false);
 
     partOfSearchResults = getBooleanValue(element, TARGET, false);
+
+    contextConstraint = StringUtil.notNullize(element.getAttributeValue(CONTEXT));
   }
 
   public static boolean getBooleanValue(Element element, String attributeName, boolean defaultValue) {
@@ -480,6 +497,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (invertWithinConstraint) element.setAttribute(NEGATE_WITHIN_CONDITION, TRUE);
     element.setAttribute(WITHIN_CONDITION, withinConstraint);
     element.setAttribute(CONTAINS_CONDITION, containsConstraint);
+
+    if (!contextConstraint.isEmpty()) element.setAttribute(CONTEXT, contextConstraint);
   }
 
   @NotNull

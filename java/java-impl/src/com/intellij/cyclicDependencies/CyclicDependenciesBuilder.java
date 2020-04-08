@@ -16,7 +16,7 @@
 package com.intellij.cyclicDependencies;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -57,7 +57,7 @@ public class CyclicDependenciesBuilder{
 
       @Override
       public String getInitialUsagesPosition() {
-        return AnalysisScopeBundle.message("cyclic.dependencies.usage.view.initial.text");
+        return JavaBundle.message("cyclic.dependencies.usage.view.initial.text");
       }
     };
   }
@@ -137,7 +137,7 @@ public class CyclicDependenciesBuilder{
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
-      indicator.setText(AnalysisScopeBundle.message("cyclic.dependencies.progress.text"));
+      indicator.setText(JavaBundle.message("cyclic.dependencies.progress.text"));
       indicator.setText2("");
       indicator.setIndeterminate(true);
     }

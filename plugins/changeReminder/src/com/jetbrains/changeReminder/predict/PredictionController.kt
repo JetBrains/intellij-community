@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.Disposable
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.data.SingleTaskController
+import com.jetbrains.changeReminder.ChangeReminderBundle
 
 internal abstract class PredictionController(private val project: Project,
                                              name: String,
@@ -22,7 +23,10 @@ internal abstract class PredictionController(private val project: Project,
   override fun cancelRunningTasks(requests: Array<out PredictionRequest>) = true
 
   override fun startNewBackgroundTask(): SingleTask {
-    val task: Task.Backgroundable = object : Task.Backgroundable(project, "ChangeReminder Prediction Calculating") {
+    val task: Task.Backgroundable = object : Task.Backgroundable(
+      project,
+      ChangeReminderBundle.message("prediction.controller.task.background.title")
+    ) {
       override fun run(indicator: ProgressIndicator) {
         inProgress = true
         var predictionData: PredictionData? = null

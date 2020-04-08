@@ -15,16 +15,15 @@ import java.util.concurrent.FutureTask;
 
 public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
   public static final String COMMAND_NAME = "Cleanup code";
-  public static final String PROGRESS_TEXT = CodeInsightBundle.message("process.cleanup.code");
 
   private SelectionModel mySelectionModel = null;
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
-    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    super(previousProcessor, COMMAND_NAME, getProgressText());
   }
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
-    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    super(previousProcessor, COMMAND_NAME, getProgressText());
     mySelectionModel = selectionModel;
   }
 
@@ -59,5 +58,9 @@ public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
       }
     }
     return false;
+  }
+
+  public static String getProgressText() {
+    return CodeInsightBundle.message("process.cleanup.code");
   }
 }

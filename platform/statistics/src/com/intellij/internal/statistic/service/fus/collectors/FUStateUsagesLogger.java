@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,19 +29,18 @@ import java.util.Set;
 public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   public static final Object LOCK = new Object();
 
-  /**
-   * System event which indicates that the collector was called.
-   * Used to calculate metric baseline.
-   */
-  private static final String INVOKED = "invoked";
-
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
   public void logProjectStates(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     synchronized (LOCK) {
       for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
         final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-        logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getMetrics(project, indicator));
+        try {
+          logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getMetrics(project, indicator));
+        }
+        catch (Throwable th) {
+          logCollectingUsageFailed(project, group, th);
+        }
       }
     }
   }
@@ -49,7 +49,12 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     synchronized (LOCK) {
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
         final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-        logUsagesAsStateEvents(null, group, usagesCollector.getData(), Promises.resolvedPromise(usagesCollector.getMetrics()));
+        try {
+          logUsagesAsStateEvents(null, group, usagesCollector.getData(), Promises.resolvedPromise(usagesCollector.getMetrics()));
+        }
+        catch (Throwable th) {
+          logCollectingUsageFailed(null, group, th);
+        }
       }
     }
   }
@@ -71,8 +76,15 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
           logger.logState(group, metric.getEventId(), eventData);
         }
       }
-      logger.logState(group, INVOKED, new FeatureUsageData().addProject(project).build());
+      logger.logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, new FeatureUsageData().addProject(project).build());
     });
+  }
+
+  private static void logCollectingUsageFailed(@Nullable Project project, @NotNull EventLogGroup group, @NotNull Throwable error) {
+    if (project != null && project.isDisposed()) {
+      return;
+    }
+    FeatureUsageLogger.INSTANCE.logState(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED, new FeatureUsageData().addProject(project).build());
   }
 
   @Nullable
@@ -107,7 +119,7 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
    */
   public static void logStateEvent(@NotNull EventLogGroup group, @NotNull String event, @NotNull FeatureUsageData data) {
     FeatureUsageLogger.INSTANCE.logState(group, event, data.build());
-    FeatureUsageLogger.INSTANCE.logState(group, INVOKED);
+    FeatureUsageLogger.INSTANCE.logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED);
   }
 
   /**
@@ -126,6 +138,6 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     for (MetricEvent event : events) {
       FeatureUsageLogger.INSTANCE.logState(group, event.getEventId(), event.getData().build());
     }
-    FeatureUsageLogger.INSTANCE.logState(group, INVOKED);
+    FeatureUsageLogger.INSTANCE.logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED);
   }
 }

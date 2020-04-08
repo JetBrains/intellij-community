@@ -71,7 +71,7 @@ public class RegexUtil {
    * @param path  to check
    * @return path contains all parts
    */
-  public static boolean matchAllParts(@Nullable String[] parts, @Nullable String path) {
+  public static boolean matchAllParts(String @Nullable [] parts, @Nullable String path) {
     if (parts == null || path == null) {
       return false;
     }
@@ -94,7 +94,7 @@ public class RegexUtil {
    * @param path  to check
    * @return path contains any of the parts
    */
-  public static boolean matchAnyPart(@Nullable String[] parts, @Nullable String path) {
+  public static boolean matchAnyPart(String @Nullable [] parts, @Nullable String path) {
     if (parts == null || path == null) {
       return false;
     }
@@ -114,8 +114,7 @@ public class RegexUtil {
    * @param pattern to handle
    * @return extracted parts
    */
-  @NotNull
-  public static String[] getParts(@Nullable Pattern pattern) {
+  public static String @NotNull [] getParts(@Nullable Pattern pattern) {
     if (pattern == null) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }

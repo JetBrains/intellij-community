@@ -42,7 +42,7 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
   public GrMethodStub(StubElement parent,
                       StringRef name,
                       final String[] annotations,
-                      @NotNull final String[] namedParameters,
+                      final String @NotNull [] namedParameters,
                       @NotNull GrMethodElementType elementType,
                       @Nullable String typeText,
                       byte flags) {
@@ -64,8 +64,7 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
     return myAnnotations;
   }
 
-  @NotNull
-  public String[] getNamedParameters() {
+  public String @NotNull [] getNamedParameters() {
     return myNamedParameters;
   }
 

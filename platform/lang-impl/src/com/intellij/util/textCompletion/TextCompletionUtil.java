@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.textCompletion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,13 +14,18 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LanguageTextField;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class TextCompletionUtil {
   public static final Key<TextCompletionProvider> COMPLETING_TEXT_FIELD_KEY = Key.create("COMPLETING_TEXT_FIELD_KEY");
@@ -60,10 +66,23 @@ public class TextCompletionUtil {
             AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
             return;
           }
-          if (toShowHintRef.get() && editor.getDocument().getText().isEmpty()) {
+          if (toShowHintRef.get() && editor.getDocument().getText().isEmpty() && !hasValidationInfo(editor)) {
             ApplicationManager.getApplication().invokeLater(
-              () -> HintManager.getInstance().showInformationHint(editor, "Code completion available ( " + completionShortcutText + " )"));
+              () -> HintManager.getInstance().showInformationHint(editor, LangBundle.message("hint.text.code.completion.available",
+                                                                                             completionShortcutText)));
           }
+        }
+
+        private boolean hasValidationInfo(@NotNull Editor editor) {
+          for (Component parent : UIUtil.uiParents(editor.getComponent(), false)) {
+            if (parent instanceof JComponent) {
+              ComponentValidator validator = ComponentValidator.getInstance((JComponent)parent).orElse(null);
+              if (validator != null && validator.getValidationInfo() != null) {
+                return true;
+              }
+            }
+          }
+          return false;
         }
 
         @Override

@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +47,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener, Disposable parent) {
-    // to prevent field to be infinitely resized in grid-box layouts
-    this(Experiments.getInstance().isFeatureEnabled("inline.browse.button") ? new ExtendableTextField(10) : new JBTextField(10),
+    this(new ExtendableTextField(10), // to prevent field to be infinitely resized in grid-box layouts
          browseActionListener, parent);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     installPathCompletion(fileChooserDescriptor);
@@ -88,7 +87,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   }
 
   @Override
-  public void setText(@Nullable String text){
+  public void setText(@Nls @Nullable String text){
     getTextField().setText(text);
   }
 

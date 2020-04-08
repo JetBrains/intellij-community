@@ -20,8 +20,7 @@ public class CommandLineArgumentsProvider {
     /**
    * @return Commands to execute (one command corresponds to one add argument)
    */
-  @NotNull
-  public String[] getArguments() { return ArrayUtilRt.EMPTY_STRING_ARRAY; }
+  public String @NotNull [] getArguments() { return ArrayUtilRt.EMPTY_STRING_ARRAY; }
 
   public boolean passParentEnvs() { return false; }
 

@@ -29,13 +29,11 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionEngine {
@@ -47,9 +45,7 @@ public class InspectionEngine {
                                                                  @NotNull ProblemsHolder holder,
                                                                  boolean isOnTheFly,
                                                                  @NotNull LocalInspectionToolSession session,
-                                                                 @NotNull List<? extends PsiElement> elements,
-                                                                 @NotNull Set<String> elementDialectIds,
-                                                                 @Nullable("null means all accepted") Set<String> dialectIdsSpecifiedForTool) {
+                                                                 @NotNull List<? extends PsiElement> elements) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if (visitor == null) {
@@ -61,34 +57,18 @@ public class InspectionEngine {
     // if inspection returned empty visitor then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, isOnTheFly);
-      acceptElements(elements, visitor, elementDialectIds, dialectIdsSpecifiedForTool);
+      acceptElements(elements, visitor);
     }
     return visitor;
   }
 
-  public static void acceptElements(@NotNull List<? extends PsiElement> elements,
-                                    @NotNull PsiElementVisitor elementVisitor,
-                                    @NotNull Set<String> elementDialectIds,
-                                    @Nullable("null means all accepted") Set<String> dialectIdsSpecifiedForTool) {
-    if (dialectIdsSpecifiedForTool != null && !intersect(elementDialectIds, dialectIdsSpecifiedForTool)) return;
+  public static void acceptElements(@NotNull List<? extends PsiElement> elements, @NotNull PsiElementVisitor elementVisitor) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
       element.accept(elementVisitor);
       ProgressManager.checkCanceled();
     }
-  }
-
-  private static boolean intersect(@NotNull Set<String> ids1, @NotNull Set<String> ids2) {
-    if (ids1.size() > ids2.size()) {
-      Set<String> tmp = ids1;
-      ids1 = ids2;
-      ids2 = tmp;
-    }
-    for (String id : ids1) {
-      if (ids2.contains(id)) return true;
-    }
-    return false;
   }
 
   @NotNull
@@ -138,14 +118,12 @@ public class InspectionEngine {
     TextRange range = file.getTextRange();
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, range.getStartOffset(), range.getEndOffset());
 
-    Map<LocalInspectionToolWrapper, Set<String>> toolToSpecifiedDialectIds = getToolsToSpecifiedLanguages(toolWrappers);
-    List<Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedDialectIds.entrySet());
+    toolWrappers = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
     final Map<String, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
-    Processor<Entry<LocalInspectionToolWrapper, Set<String>>> processor = entry -> {
+    Processor<LocalInspectionToolWrapper> processor = wrapper -> {
       ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
-      final LocalInspectionTool tool = entry.getKey().getTool();
-      Set<String> dialectIdsSpecifiedForTool = entry.getValue();
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, elementDialectIds, dialectIdsSpecifiedForTool);
+      LocalInspectionTool tool = wrapper.getTool();
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
 
       tool.inspectionFinished(session, holder);
 
@@ -158,14 +136,14 @@ public class InspectionEngine {
 
       return true;
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(toolWrappers, indicator, processor);
 
     return resultDescriptors;
   }
 
   @NotNull
   public static List<ProblemDescriptor> runInspectionOnFile(@NotNull final PsiFile file,
-                                                            @NotNull InspectionToolWrapper toolWrapper,
+                                                            @NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                                             @NotNull final GlobalInspectionContext inspectionContext) {
     final InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
     toolWrapper.initialize(inspectionContext);
@@ -198,7 +176,7 @@ public class InspectionEngine {
             }
 
             @Override
-            public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
+            public void addProblemElement(@Nullable RefEntity refEntity, CommonProblemDescriptor @NotNull ... commonProblemDescriptors) {
               if (!(refEntity instanceof RefElement)) return;
               PsiElement element = ((RefElement)refEntity).getPsiElement();
               convertToProblemDescriptors(element, commonProblemDescriptors, descriptors);
@@ -240,7 +218,7 @@ public class InspectionEngine {
   }
 
   private static void convertToProblemDescriptors(@NotNull PsiElement element,
-                                                  @NotNull CommonProblemDescriptor[] commonProblemDescriptors,
+                                                  CommonProblemDescriptor @NotNull [] commonProblemDescriptors,
                                                   @NotNull List<? super ProblemDescriptor> descriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
       if (common instanceof ProblemDescriptor) {
@@ -255,24 +233,24 @@ public class InspectionEngine {
     }
   }
 
-  // returns map tool -> set of languages and dialects for that tool specified in plugin.xml
   @NotNull
-  public static Map<LocalInspectionToolWrapper, Set<String>> getToolsToSpecifiedLanguages(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers) {
-    Map<LocalInspectionToolWrapper, Set<String>> toolToLanguages = new THashMap<>();
-    for (LocalInspectionToolWrapper wrapper : toolWrappers) {
-      ProgressManager.checkCanceled();
-      Set<String> specifiedLangIds = getDialectIdsSpecifiedForTool(wrapper);
-      toolToLanguages.put(wrapper, specifiedLangIds);
-    }
-    return toolToLanguages;
+  public static List<LocalInspectionToolWrapper> filterToolsApplicableByLanguage(@NotNull Collection<? extends LocalInspectionToolWrapper> tools,
+                                                                                 @NotNull Set<String> elementDialectIds) {
+    Map<String, Boolean> resultsWithDialects = new HashMap<>();
+    Map<String, Boolean> resultsNoDialects = new HashMap<>();
+    return ContainerUtil.filter(tools, tool -> {
+      String language = tool.getLanguage();
+      if (language == null) return true;
+
+      boolean applyToDialects = tool.applyToDialects();
+      Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
+      return map.computeIfAbsent(language, __ ->
+        ContainerUtil.intersects(elementDialectIds, getDialectIdsSpecifiedForTool(language, applyToDialects)));
+    });
   }
 
-  @Nullable("null means not specified")
-  public static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
-    String langId = wrapper.getLanguage();
-    if (langId == null) {
-      return null;
-    }
+  @NotNull
+  private static Set<String> getDialectIdsSpecifiedForTool(String langId, boolean applyToDialects) {
     Language language = Language.findLanguageByID(langId);
     Set<String> result;
     if (language == null) {
@@ -283,24 +261,23 @@ public class InspectionEngine {
       Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
       result = new THashSet<>();
       for (Language matchingLanguage : matchingLanguages) {
-        result.addAll(getLanguageWithDialects(wrapper, matchingLanguage));
+        result.addAll(getLanguageWithDialects(matchingLanguage, applyToDialects));
       }
     }
     else {
-      result = getLanguageWithDialects(wrapper, language);
+      result = getLanguageWithDialects(language, applyToDialects);
     }
     return result;
   }
 
   @NotNull
-  private static Set<String> getLanguageWithDialects(@NotNull LocalInspectionToolWrapper wrapper, @NotNull Language language) {
+  private static Set<String> getLanguageWithDialects(@NotNull Language language, boolean applyToDialects) {
     List<Language> dialects = language.getDialects();
-    boolean applyToDialects = wrapper.applyToDialects();
-    Set<String> result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
+    if (!applyToDialects || dialects.isEmpty()) return Collections.singleton(language.getID());
+
+    Set<String> result = new THashSet<>(1 + dialects.size());
     result.add(language.getID());
-    if (applyToDialects) {
-      addDialects(language, result);
-    }
+    addDialects(language, result);
     return result;
   }
 

@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class VariableInitializationChecker {
 
-  private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, @NotNull Instruction[] controlFlow) {
+  private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, Instruction @NotNull [] controlFlow) {
     DFAEngine<Data> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(VariableDescriptorFactory.createDescriptor(var)), new MySemilattice());
     final List<Data> result = engine.performDFAWithTimeout();
     if (result == null) return false;
@@ -34,7 +34,7 @@ public class VariableInitializationChecker {
 
   public static boolean isVariableDefinitelyInitializedCached(@NotNull GrVariable var,
                                                               @NotNull GroovyPsiElement context,
-                                                              @NotNull Instruction[] controlFlow) {
+                                                              Instruction @NotNull [] controlFlow) {
     Map<GroovyPsiElement, Boolean> map = CachedValuesManager.getCachedValue(var, () -> Result.create(new HashMap<>(), var));
 
     final Boolean cached = map.get(context);

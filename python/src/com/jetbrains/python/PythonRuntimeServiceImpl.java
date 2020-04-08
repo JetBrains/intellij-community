@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -35,7 +35,7 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
 
   @Override
   public boolean isInScratchFile(@NotNull PsiElement element) {
-    return ScratchFileService.isInScratchRoot(PsiUtilCore.getVirtualFile(element));
+    return ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element));
   }
 
   @Nullable

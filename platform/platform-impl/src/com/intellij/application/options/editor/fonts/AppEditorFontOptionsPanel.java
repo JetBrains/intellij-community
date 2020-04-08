@@ -179,7 +179,7 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
       final Configurable colorSchemeConfigurable = allSettings.find(ColorAndFontOptions.ID);
       if (colorSchemeConfigurable instanceof ColorAndFontOptions) {
         Configurable fontOptions =
-          ((ColorAndFontOptions)colorSchemeConfigurable).findSubConfigurable(ColorAndFontOptions.FONT_CONFIGURABLE_NAME);
+          ((ColorAndFontOptions)colorSchemeConfigurable).findSubConfigurable(ColorAndFontOptions.getFontConfigurableName());
         if (fontOptions != null) {
           allSettings.select(fontOptions);
         }

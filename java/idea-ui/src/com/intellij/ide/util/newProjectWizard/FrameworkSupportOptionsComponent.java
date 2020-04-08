@@ -26,9 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworkSupportOptionsComponent {
   private final JPanel myMainPanel;
   private final FrameworkSupportModelBase myModel;

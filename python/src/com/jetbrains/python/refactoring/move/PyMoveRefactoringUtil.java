@@ -31,7 +31,7 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public class PyMoveRefactoringUtil {
    */
   public static void checkValidImportableFile(@NotNull PsiElement anchor, @NotNull VirtualFile file) {
     final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
-    if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
+    if (!PyPsiRefactoringUtil.isValidQualifiedName(qName)) {
       throw new IncorrectOperationException(PyBundle.message("refactoring.move.error.cannot.use.module.name.$0", file.getName()));
     }
   }

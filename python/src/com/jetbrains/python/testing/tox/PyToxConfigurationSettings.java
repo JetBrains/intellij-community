@@ -42,8 +42,7 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
     s.setRunOnlyEnvs(asArray(myRunOnlyTestsField));
   }
 
-  @NotNull
-  private static String[] asArray(@NotNull final JTextComponent field) {
+  private static String @NotNull [] asArray(@NotNull final JTextComponent field) {
     final String text = field.getText();
     if (text.isEmpty()) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
@@ -59,7 +58,7 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
   }
 
   @Nullable
-  private static String fromArray(@NotNull final String... arguments) {
+  private static String fromArray(final String @NotNull ... arguments) {
     return StringUtil.join(arguments, " ");
   }
 

@@ -36,6 +36,15 @@ public interface ToolWindowManagerListener extends EventListener {
   }
 
   /**
+   * Invoked when tool window with specified {@code id} is shown.
+   *
+   * @param id {@code id} of shown tool window.
+   * @param toolWindow shown tool window
+   */
+  default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
+  }
+
+  /**
    * @deprecated Use {{@link #stateChanged(ToolWindowManager)}}
    */
   @Deprecated

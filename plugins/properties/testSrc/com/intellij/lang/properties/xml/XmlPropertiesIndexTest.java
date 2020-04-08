@@ -26,6 +26,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContentImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import java.util.Map;
  */
 public class XmlPropertiesIndexTest extends BasePlatformTestCase {
 
-  public void testIndex() {
+  public void testIndex() throws IOException {
     PsiFile psiFile = myFixture.configureByFile("foo.xml");
     final VirtualFile file = psiFile.getVirtualFile();
     Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(FileContentImpl.createByFile(file));
@@ -58,7 +59,7 @@ public class XmlPropertiesIndexTest extends BasePlatformTestCase {
     assertEquals("bar", assertOneElement(values));
   }
 
-  public void testSystemId() {
+  public void testSystemId() throws IOException {
     PsiFile psiFile = myFixture.configureByFile("wrong.xml");
     final VirtualFile file = psiFile.getVirtualFile();
     Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(FileContentImpl.createByFile(file));

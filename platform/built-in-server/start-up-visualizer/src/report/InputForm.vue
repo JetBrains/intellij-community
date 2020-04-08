@@ -1,4 +1,4 @@
-<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<!-- Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
   <el-row :gutter="16">
     <el-col :span="10">
@@ -35,6 +35,7 @@
   import {AppStateModule} from "@/state/state"
   import {loadJson} from "@/httpUtil"
   import {Location} from "vue-router"
+  import {Dictionary} from "vue-router/types/router"
 
   @Component
   export default class InputForm extends Vue {
@@ -88,7 +89,7 @@
       this.loadReportUrlIfSpecified(this.$route)
     }
 
-    loadReportUrlIfSpecified(location: Location) {
+    loadReportUrlIfSpecified(location: { query?: Dictionary<string | (string | null)[] | null | undefined> }) {
       const reportUrl = location.query == null ? "" : location.query.reportUrl as string
       if (reportUrl != null && reportUrl.length > 0 && this.lastReportUrl !== reportUrl) {
         this.isFetching = true

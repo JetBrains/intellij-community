@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
@@ -41,6 +40,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private boolean mySelectSearchByNameTab = false;
 
   public TreeFileChooserDialog(@NotNull Project project,
-                               String title,
+                               @NlsContexts.DialogTitle String title,
                                @Nullable final PsiFile initialFile,
                                @Nullable FileType fileType,
                                @Nullable PsiFileFilter filter,
@@ -112,29 +112,13 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
     final ProjectAbstractTreeStructureBase treeStructure = new AbstractProjectTreeStructure(myProject) {
       @Override
-      public boolean isFlattenPackages() {
-        return false;
-      }
-
-      @Override
-      public boolean isShowMembers() {
-        return false;
-      }
-
-      @Override
       public boolean isHideEmptyMiddlePackages() {
         return true;
       }
 
-      @NotNull
       @Override
-      public Object[] getChildElements(@NotNull final Object element) {
+      public Object @NotNull [] getChildElements(@NotNull final Object element) {
         return filterFiles(super.getChildElements(element));
-      }
-
-      @Override
-      public boolean isAbbreviatePackageNames() {
-        return false;
       }
 
       @Override
@@ -173,7 +157,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         if (path != null && myTree.isPathSelected(path)) {
           doOKAction();
@@ -201,8 +185,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     if (myInitialFile != null) {
       name = myInitialFile.getName();
     }
-    PsiElement context = myInitialFile;
-    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true, context) {
+    myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true, myInitialFile) {
       @Override
       protected void close(final boolean isOk) {
         super.close(isOk);
@@ -339,8 +322,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private final class MyGotoFileModel implements ChooseByNameModel, DumbAware {
     private final int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
     @Override
-    @NotNull
-    public Object[] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
+    public Object @NotNull [] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
       GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
       final PsiFile[] psiFiles = FilenameIndex.getFilesByName(myProject, name, scope);
       return filterFiles(psiFiles);
@@ -385,8 +367,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     @Override
-    @NotNull
-    public String[] getNames(final boolean checkBoxState) {
+    public String @NotNull [] getNames(final boolean checkBoxState) {
       final String[] fileNames;
       if (myFileType != null && myProject != null) {
         GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
@@ -432,8 +413,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     @Override
-    @NotNull
-    public String[] getSeparators() {
+    public String @NotNull [] getSeparators() {
       return new String[] {"/", "\\"};
     }
 

@@ -2,11 +2,10 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.FinishEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -20,7 +19,6 @@ public class MavenSpyOutputParser {
   private final static String SEPARATOR = "-[IJ]-";
   private final static String NEWLINE = "-[N]-";
   public static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
-  private final IntObjectMap<MavenParsingContext.MavenExecutionEntry> threadProjectMap = ContainerUtil.createConcurrentIntObjectMap();
   private final Set<String> downloadingMap = new HashSet<>();
   private final MavenParsingContext myContext;
 
@@ -101,9 +99,10 @@ public class MavenSpyOutputParser {
       case "MojoFailed": {
         stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
-        if(mojoExecution == null){
+        if (mojoExecution == null) {
           MavenLog.LOG.debug("Not found id for " + parameters);
-        } else {
+        }
+        else {
           messageConsumer.accept(
             new FinishEventImpl(mojoExecution.getId(), mojoExecution.getParentId(), System.currentTimeMillis(), mojoExecution.getName(),
                                 new MavenTaskFailedResultImpl(parameters.get("error"))));
@@ -143,7 +142,7 @@ public class MavenSpyOutputParser {
       }
 
       case "ARTIFACT_DOWNLOADING": {
-        artifactDownloaded(threadId, parameters, messageConsumer);
+        artifactDownloading(threadId, parameters, messageConsumer);
       }
     }
   }
@@ -164,7 +163,7 @@ public class MavenSpyOutputParser {
     return result;
   }
 
-  private void artifactDownloaded(int threadId, Map<String, String> parameters, Consumer<? super BuildEvent> messageConsumer) {
+  private void artifactDownloading(int threadId, Map<String, String> parameters, Consumer<? super BuildEvent> messageConsumer) {
     String artifactCoord = parameters.get("artifactCoord");
     if (artifactCoord == null || !downloadingMap.add(artifactCoord)) {
       return;
@@ -186,15 +185,18 @@ public class MavenSpyOutputParser {
     if (error != null || downloadingMap.contains(artifactCoord)) {
       MavenParsingContext.MavenExecutionEntry parent = startFakeDownloadNodeIfNotStarted(threadId, parameters, messageConsumer);
       if (error != null) {
-        if(downloadingMap.remove(artifactCoord)){
+        if (downloadingMap.remove(artifactCoord)) {
           messageConsumer
             .accept(new FinishEventImpl(getDownloadId(artifactCoord), parent.getId(), System.currentTimeMillis(), artifactCoord,
                                         new FailureResultImpl(error, null)));
-        } else {
-          messageConsumer
-            .accept(new MessageEventImpl(parent.getId(), MessageEvent.Kind.ERROR, "Error", error, error));
         }
-
+        else {
+          Object eventId = new Object();
+          messageConsumer
+            .accept(new StartEventImpl(eventId, parent.getId(), System.currentTimeMillis(), error));
+          messageConsumer
+            .accept(new FinishEventImpl(eventId, parent.getId(), System.currentTimeMillis(), error, new FailureResultImpl()));
+        }
       }
       else {
         messageConsumer
@@ -210,8 +212,8 @@ public class MavenSpyOutputParser {
   }
 
   private MavenParsingContext.MavenExecutionEntry startFakeDownloadNodeIfNotStarted(int threadId,
-                                                                                   Map<String, String> parameters,
-                                                                                   Consumer<? super BuildEvent> messageConsumer) {
+                                                                                    Map<String, String> parameters,
+                                                                                    Consumer<? super BuildEvent> messageConsumer) {
     MavenParsingContext.NodeExecutionEntry parentMojo = myContext.getNode(threadId, DOWNLOAD_DEPENDENCIES_NAME, false);
     if (parentMojo != null) {
       return parentMojo;
@@ -270,7 +272,7 @@ public class MavenSpyOutputParser {
     messageConsumer
       .accept(
         new FinishEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName(),
-                            new DerivedResultImpl()));
+                            new SuccessResultImpl()));
     execution.complete();
   }
 }

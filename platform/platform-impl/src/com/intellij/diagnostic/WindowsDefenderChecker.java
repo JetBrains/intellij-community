@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl;
 import com.intellij.util.Restarter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -69,26 +70,50 @@ public class WindowsDefenderChecker {
   public CheckResult checkWindowsDefender(@NotNull Project project) {
     final Boolean windowsDefenderActive = isWindowsDefenderActive();
     if (windowsDefenderActive == null || !windowsDefenderActive) {
+      LOG.info("Windows Defender status: not used");
       return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
     }
 
     RealtimeScanningStatus scanningStatus = getRealtimeScanningEnabled();
     if (scanningStatus == RealtimeScanningStatus.SCANNING_ENABLED) {
-      final Collection<String> processes = getExcludedProcesses();
-      final File exe = Restarter.getIdeStarter();
-      if (exe != null && processes != null &&
-          processes.contains(exe.getName().toLowerCase(Locale.ENGLISH)) &&
-          processes.contains("java.exe")) {
+      final Collection<String> excludedProcesses = getExcludedProcesses();
+      final List<File> processesToCheck = getProcessesToCheck();
+      if (excludedProcesses != null &&
+          ContainerUtil.all(processesToCheck, (exe) -> excludedProcesses.contains(exe.getName().toLowerCase(Locale.ENGLISH))) &&
+          excludedProcesses.contains("java.exe")) {
+        LOG.info("Windows Defender status: all relevant processes excluded from real-time scanning");
         return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
       }
 
       List<Pattern> excludedPatterns = getExcludedPatterns();
       if (excludedPatterns != null) {
         Map<Path, Boolean> pathStatuses = checkPathsExcluded(getImportantPaths(project), excludedPatterns);
+        boolean anyPathNotExcluded = !ContainerUtil.all(pathStatuses.values(), Boolean::booleanValue);
+        if (anyPathNotExcluded) {
+          LOG.info("Windows Defender status: some relevant paths not excluded from real-time scanning, notifying user");
+        }
+        else {
+          LOG.info("Windows Defender status: all relevant paths excluded from real-time scanning");
+        }
         return new CheckResult(scanningStatus, pathStatuses);
       }
     }
+    LOG.info("Windows Defender status: real-time scanning disabled");
     return new CheckResult(scanningStatus, Collections.emptyMap());
+  }
+
+  @NotNull
+  protected List<File> getProcessesToCheck() {
+    List<File> result = new ArrayList<>();
+    File ideStarter = Restarter.getIdeStarter();
+    if (ideStarter != null) {
+      result.add(ideStarter);
+    }
+    File fsNotifier = NativeFileWatcherImpl.getFSNotifierExecutable();
+    if (fsNotifier != null) {
+      result.add(fsNotifier);
+    }
+    return result;
   }
 
   private static Boolean isWindowsDefenderActive() {

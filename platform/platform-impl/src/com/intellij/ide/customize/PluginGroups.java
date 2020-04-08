@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import icons.PlatformImplIcons;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,7 @@ public class PluginGroups {
 
   static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
-  private final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
+  private final List<Group> myTree = new ArrayList<>();
   private final Map<String, String> myFeaturedPlugins = new LinkedHashMap<>();
 
   private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<>();
@@ -68,7 +70,12 @@ public class PluginGroups {
     worker.execute();
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
-    initGroups(myTree, myFeaturedPlugins);
+    Map<String, Pair<Icon, List<String>>> treeMap = new LinkedHashMap<>();
+    initGroups(treeMap, myFeaturedPlugins);
+    for (Entry<String, Pair<Icon, List<String>>> entry : treeMap.entrySet()) {
+      myTree.add(new Group(entry.getKey(), entry.getValue().getFirst(), null, entry.getValue().getSecond()));
+    }
+
     initCloudPlugins();
   }
 
@@ -102,9 +109,18 @@ public class PluginGroups {
     }
   }
 
-  protected void
-  initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
-    tree.put(CORE, Pair.create(null, Arrays.asList(
+  /**
+   * @deprecated use {@link #initGroups(List, Map)} instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
+    initGroups(myTree, myFeaturedPlugins);
+  }
+
+  protected void initGroups(@NotNull List<Group> groups, @NotNull Map<String, String> featuredPlugins) {
+    groups.add(new Group(CORE, null, null, Arrays.asList(
       "com.intellij.copyright",
       "com.intellij.java-i18n",
       "org.intellij.intelliLang",
@@ -113,7 +129,7 @@ public class PluginGroups {
       "Type Migration",
       "ZKM"
     )));
-    tree.put("Java Frameworks", Pair.create(PlatformImplIcons.JavaFrameworks, Arrays.asList(
+    groups.add(new Group("Java Frameworks", PlatformImplIcons.JavaFrameworks, null, Arrays.asList(
       "Spring:com.intellij.spring.batch," +
       "com.intellij.spring.data," +
       "com.intellij.spring.integration," +
@@ -132,11 +148,10 @@ public class PluginGroups {
       "com.jetbrains.restWebServices," +
       "Web Services (JAX-WS)," +
       "com.intellij.javaee.webSocket," +
-      "com.intellij.jsp," +
-      "com.intellij.persistence",
+      "com.intellij.jsp",
 
       "com.intellij.hibernate",
-      "com.intellij.frameworks.reactor",
+      "com.intellij.reactivestreams",
       "com.intellij.frameworks.java.sql",
       // preview ends
 
@@ -146,7 +161,6 @@ public class PluginGroups {
       "com.intellij.quarkus",
       "com.intellij.helidon",
 
-      "com.intellij.appengine",
       "com.intellij.gwt",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
@@ -159,37 +173,42 @@ public class PluginGroups {
       "com.intellij.aspectj",
       "Osmorc"
     )));
-    tree.put("Build Tools", Pair.create(PlatformImplIcons.BuildTools, Arrays.asList(
+    groups.add(new Group("Build Tools", PlatformImplIcons.BuildTools, null, Arrays.asList(
       "AntSupport",
       "Maven:org.jetbrains.idea.maven,org.jetbrains.idea.maven.ext",
       "org.jetbrains.plugins.gradle"
     )));
-    tree.put("Web Development", Pair.create(PlatformImplIcons.WebDevelopment, Arrays.asList(
+    groups.add(new Group("JavaScript Development", PlatformImplIcons.WebDevelopment,
+                         "HTML, style sheets, JavaScript, TypeScript, Node.js...", Arrays.asList(
       "HTML:HtmlTools,W3Validators",
-      "org.jetbrains.plugins.haml",
-      "com.jetbrains.plugins.jade",
+      "JavaScript and TypeScript:JavaScript,JavaScriptDebugger,JSIntentionPowerPack",
+      "Node.js:NodeJS",
+
       "com.intellij.css",
       "org.jetbrains.plugins.less",
       "org.jetbrains.plugins.sass",
+
       "org.jetbrains.plugins.stylus",
-      "JavaScript:JavaScript,JavaScriptDebugger,JSIntentionPowerPack",//TODO: Inspection-JS
+      "org.jetbrains.plugins.haml",
+      "AngularJS",
+
       "org.coffeescript",
       "com.intellij.flex",
-      "com.intellij.plugins.html.instantEditing",
       "com.jetbrains.restClient",
+
       "com.intellij.swagger"
     )));
 
-    addVcsGroup(tree);
+    addVcsGroup(groups);
 
-    tree.put("Test Tools", Pair.create(PlatformImplIcons.TestTools, Arrays.asList(
+    groups.add(new Group("Test Tools", PlatformImplIcons.TestTools, null, Arrays.asList(
       "JUnit",
       "TestNG-J",
       "cucumber-java",
       "cucumber",
       "Coverage:Coverage,Emma"
     )));
-    tree.put("Application Servers", Pair.create(PlatformImplIcons.ApplicationServers, Arrays.asList(
+    groups.add(new Group("Application Servers", PlatformImplIcons.ApplicationServers, null, Arrays.asList(
       "com.intellij.javaee.view",
       "Geronimo",
       "GlassFish",
@@ -202,21 +221,18 @@ public class PluginGroups {
       "com.intellij.dmserver",
       "JSR45Plugin"
     )));
-    tree.put("Clouds", Pair.create(PlatformImplIcons.Clouds, Collections.singletonList(
-      "CloudFoundry"
-    )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)
-    tree.put("Swing", Pair.create(PlatformImplIcons.Swing, Collections.singletonList(
+    groups.add(new Group("Swing", PlatformImplIcons.Swing, null, Collections.singletonList(
       "com.intellij.uiDesigner"//TODO JavaFX?
     )));
-    tree.put("Android", Pair.create(PlatformImplIcons.Android, Arrays.asList(
+    groups.add(new Group("Android", PlatformImplIcons.Android, null, Arrays.asList(
       "org.jetbrains.android",
       "com.intellij.android-designer")));
-    tree.put("Database Tools", Pair.create(PlatformImplIcons.DatabaseTools, Collections.singletonList(
+    groups.add(new Group("Database Tools", PlatformImplIcons.DatabaseTools, null, Collections.singletonList(
       "com.intellij.database"
     )));
-    tree.put("Other Tools", Pair.create(PlatformImplIcons.OtherTools, Arrays.asList(
+    groups.add(new Group("Other Tools", PlatformImplIcons.OtherTools, null, Arrays.asList(
       "ByteCodeViewer",
       "com.intellij.dsm",
       "org.jetbrains.idea.eclipse",
@@ -228,7 +244,7 @@ public class PluginGroups {
       "org.jetbrains.plugins.yaml",
       "XSLT and XPath:XPathView,XSLT-Debugger"
     )));
-    tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Collections.singletonList("DevKit")));
+    groups.add(new Group("Plugin Development", PlatformImplIcons.PluginDevelopment, null, Collections.singletonList("DevKit")));
 
     initFeaturedPlugins(featuredPlugins);
   }
@@ -243,8 +259,8 @@ public class PluginGroups {
     addTrainingPlugin(featuredPlugins);
   }
 
-  protected static void addVcsGroup(Map<String, Pair<Icon, List<String>>> tree) {
-    tree.put("Version Controls", Pair.create(PlatformImplIcons.VersionControls, Arrays.asList(
+  protected static void addVcsGroup(@NotNull List<Group> groups) {
+    groups.add(new Group("Version Controls", PlatformImplIcons.VersionControls, null, Arrays.asList(
       "CVS",
       "Git4Idea",
       "org.jetbrains.plugins.github",
@@ -290,19 +306,19 @@ public class PluginGroups {
 
   public static void addTeamCityPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("TeamCity Integration",
-                        "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:Jetbrains TeamCity Plugin");
+                        "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:JetBrains TeamCity Plugin");
   }
 
   private void initIfNeeded() {
     if (myInitialized) return;
     myInitialized = true;
-    for (Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
-      final String group = entry.getKey();
+    for (Group g : myTree) {
+      final String group = g.getName();
       if (CORE.equals(group)) continue;
 
       List<IdSet> idSets = new ArrayList<>();
       StringBuilder description = new StringBuilder();
-      for (String idDescription : entry.getValue().getSecond()) {
+      for (String idDescription : g.getPluginIdDescription()) {
         IdSet idSet = new IdSet(this, idDescription);
         String idSetTitle = idSet.getTitle();
         if (idSetTitle == null) continue;
@@ -318,12 +334,17 @@ public class PluginGroups {
         int lastWord = description.lastIndexOf(",", MAX_DESCR_LENGTH);
         description.delete(lastWord, description.length()).append("...");
       }
+      String groupDescription = g.getDescription();
+      if (groupDescription != null) {
+        description = new StringBuilder(groupDescription);
+      }
       description.insert(0, "<html><body><center><i>");
       myDescriptions.put(group, description.toString());
     }
   }
 
-  Map<String, Pair<Icon, List<String>>> getTree() {
+  @NotNull
+  List<Group> getTree() {
     initIfNeeded();
     return myTree;
   }
@@ -463,5 +484,39 @@ public class PluginGroups {
       }
     }
     return result;
+  }
+
+  public static class Group {
+    private final String myName;
+    private final Icon myIcon;
+    private final String myDescription;
+    private final List<String> myPluginIdDescription;
+
+    public Group(@NonNls @NotNull String name, @Nullable Icon icon, @Nullable String description, @NonNls @NotNull List<String> pluginIdDescription) {
+      myName = name;
+      myIcon = icon;
+      myDescription = description;
+      myPluginIdDescription = pluginIdDescription;
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @Nullable
+    public Icon getIcon() {
+      return myIcon;
+    }
+
+    @Nullable
+    public String getDescription() {
+      return myDescription;
+    }
+
+    @NotNull
+    public List<String> getPluginIdDescription() {
+      return myPluginIdDescription;
+    }
   }
 }

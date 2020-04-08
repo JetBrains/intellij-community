@@ -1,15 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.lang.jvm.JvmParameter
+import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -17,13 +19,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
-import org.jetbrains.plugins.groovy.lang.typing.box
 
 
 class NameGenerator(private val postfix: String = "",
@@ -86,8 +88,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
   val manager = resolve()?.manager ?: return this
   val factory = GroovyPsiElementFactory.getInstance(manager.project)
   return accept(object : PsiTypeMapper() {
-    override fun visitClassType(classType: PsiClassType?): PsiType? {
-      classType ?: return classType
+    override fun visitClassType(classType: PsiClassType): PsiType? {
       val mappedParameters = classType.parameters.map {
         val accepted = it.accept(this)
         when {
@@ -117,8 +118,8 @@ fun PsiType?.isClosureTypeDeep(): Boolean {
 tailrec fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
   if (recursionDepth == 0) {
     return type.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType?): PsiType? {
-        return classType?.rawType()
+      override fun visitClassType(classType: PsiClassType): PsiType? {
+        return classType.rawType()
       }
     })
   }
@@ -150,6 +151,9 @@ fun PsiType?.typeParameter(): PsiTypeParameter? {
 
 fun findOverridableMethod(method: GrMethod): PsiMethod? {
   val clazz = method.containingClass ?: return null
+  if (method.project.isDefault) {
+    return null
+  }
   val superMethods = method.findSuperMethods()
   val hasJavaLangOverride = method.annotations.any { it.qualifiedName == JAVA_LANG_OVERRIDE }
   if (hasJavaLangOverride && superMethods.isNotEmpty()) {
@@ -175,28 +179,51 @@ private fun methodsAgree(pattern: PsiMethod,
   if (pattern.name != tested.name || tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
     return false
   }
-  val parameterList = pattern.parameters.zip(tested.parameters)
-  return parameterList.all { (patternParameter, testedParameter) ->
-    val boxedPatternParameter = (patternParameter.type as? PsiPrimitiveType)?.box(tested) ?: patternParameter.type
-    testedParameter.typeElement == null ||
-    (testedParameter.type.box(tested) as PsiClassType).erasure() == (boxedPatternParameter as? PsiClassType)?.erasure()
+  val parameterList: List<Pair<JvmParameter?, GrParameter?>> = pattern.parameters.zip(tested.parameters)
+  return parameterList.all { (patternParameter: JvmParameter?, testedParameter: GrParameter?) ->
+    if (testedParameter?.typeElement == null) return@all true
+    val patternType: JvmType? = patternParameter?.type
+    val erasedPatternType = if (patternType is PsiType) patternType.erasure() else patternType
+    val erasedTestedType = testedParameter.type.erasure()
+    erasedPatternType == erasedTestedType
   }
 }
 
-fun PsiClassType.erasure(): PsiClassType {
-  val raw = rawType()
-  val typeParameter = raw.typeParameter()
-  return if (typeParameter != null) {
-    typeParameter.extendsListTypes.firstOrNull()?.erasure() ?: getJavaLangObject(typeParameter)
+private fun PsiType.erasure(): PsiType {
+  return TypeConversionUtil.erasure(this)
+}
+
+private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
+  fun getContainingClassesMutable(startClass: PsiClass?): MutableList<PsiClass> {
+    startClass ?: return mutableListOf()
+    val enclosingClass = startClass.containingClass ?: return mutableListOf(startClass)
+    return getContainingClassesMutable(enclosingClass).apply { add(startClass) }
   }
-  else {
-    raw
+  return getContainingClassesMutable(startClass)
+}
+
+private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int> {
+  val text = method.containingFile.text
+  val containingClasses = getContainingClasses(method.containingClass)
+  val classRepresentations = mutableListOf<String>()
+  val fieldRepresentations = mutableListOf<String>()
+  for (containingClass in containingClasses) {
+    fieldRepresentations.add(containingClass.fields.joinToString("\n") { (it.typeElement?.text ?: "def") + " " + it.text })
+    val startOffset = containingClass.textRange.startOffset
+    val lBraceOffset = containingClass.lBrace?.textOffset ?: startOffset
+    classRepresentations.add(text.substring(startOffset until lBraceOffset))
   }
+  val header = classRepresentations.zip(fieldRepresentations)
+    .joinToString("") { (classDef, fields) -> "$classDef {\n $fields \n " }
+  val footer = " } ".repeat(containingClasses.size)
+  return header + method.text + footer to (header.length)
 }
 
 fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null): GrMethod? {
-  val virtualFile = method.containingFile.copy() as? GroovyFile ?: return null
-  val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: return null
+  val (fileText, offset) = buildVirtualEnvironmentForMethod(method)
+  val factory = GroovyPsiElementFactory.getInstance(method.project)
+  val newFile = factory.createGroovyFile(fileText, false, method)
+  val newMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
   if (newMethod.hasTypeParameters()) {
     if (typeParameterList != null) {
       newMethod.typeParameterList!!.replace(typeParameterList)
@@ -207,20 +234,22 @@ fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterLis
       newMethod.addAfter(typeParameterList, newMethod.firstChild)
     }
     else {
-      newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)
+      newMethod.addAfter(factory.createTypeParameterList(), newMethod.firstChild)
     }
   }
   return newMethod
 }
 
-fun convertToGroovyMethod(method: PsiMethod): GrMethod {
+fun convertToGroovyMethod(method: PsiMethod): GrMethod? {
   // because method may be ClsMethod
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   return if (method.isConstructor) {
-    factory.createConstructorFromText(method.name, method.text, method)
+    val constructorBody = method.body?.text ?: return null
+    factory.createConstructorFromText(method.name, constructorBody, method)
   }
   else {
-    factory.createMethodFromText(method.text, method)
+    val methodText = method.text ?: return null
+    factory.createMethodFromText(methodText, method)
   }
 }
 
@@ -234,8 +263,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
   val unboundedWildcard = PsiWildcardType.createUnbounded(method.manager)
 
   class ForeignTypeParameterEraser : PsiTypeMapper() {
-    override fun visitClassType(classType: PsiClassType?): PsiType? {
-      classType ?: return classType
+    override fun visitClassType(classType: PsiClassType): PsiType? {
       val typeParameter = classType.typeParameter()
       if (typeParameter != null && typeParameter !in allowedTypeParameters) {
         return (compress(typeParameter.extendsListTypes.asList()) ?: getJavaLangObject(method)).accept(this)
@@ -247,12 +275,11 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
       }
     }
 
-    override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
-      return compress(intersectionType?.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
+    override fun visitIntersectionType(intersectionType: PsiIntersectionType): PsiType? {
+      return compress(intersectionType.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
     }
 
-    override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
-      wildcardType ?: return null
+    override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType? {
       val bound = wildcardType.bound?.accept(this) ?: return wildcardType
       return when {
         wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, bound)
@@ -281,8 +308,7 @@ fun compress(types: List<PsiType>?): PsiType? {
 }
 
 fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
-  method.typeParameters.asList() + (method.containingClass?.run { listOf(this) + supers }?.flatMap { it.typeParameters.asList() }
-                                    ?: emptyList())
+  method.typeParameters.asList() + (getContainingClasses(method.containingClass).flatMap { it.typeParameters.asList() })
 
 fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
   val virtualTypeParameters = allOuterTypeParameters(virtualMethod)

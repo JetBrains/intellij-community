@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -161,7 +162,7 @@ public class MarkerType {
   }
 
   @NotNull
-  private static String getImplementationTooltip(@NotNull String prefix, @NotNull PsiElement... elements) {
+  private static String getImplementationTooltip(@NotNull String prefix, PsiElement @NotNull ... elements) {
     return getImplementationTooltip(Arrays.asList(elements), prefix);
   }
 
@@ -183,14 +184,13 @@ public class MarkerType {
   private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
     PsiMethod superMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
     if (superMethod == null) return;
-    PsiElementListNavigator.openTargets(e, new NavigatablePsiElement[]{superMethod},
+    PsiElementListNavigator.openTargets(e, new PsiMethod[]{superMethod},
                                         DaemonBundle.message("navigation.title.super.method", method.getName()),
                                         DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(false));
   }
 
-  @NotNull
-  private static PsiMethod[] composeSuperMethods(@NotNull PsiMethod method, boolean acceptSelf) {
+  private static PsiMethod @NotNull [] composeSuperMethods(@NotNull PsiMethod method, boolean acceptSelf) {
     PsiElement[] superElements = FindSuperElementsHelper.findSuperElements(method);
 
     PsiMethod[] superMethods = ContainerUtil.map(superElements, element -> (PsiMethod)element, PsiMethod.EMPTY_ARRAY);
@@ -252,7 +252,7 @@ public class MarkerType {
   private static void navigateToOverriddenMethod(MouseEvent e, @NotNull final PsiMethod method) {
     if (DumbService.isDumb(method.getProject())) {
       DumbService.getInstance(method.getProject()).showDumbModeNotification(
-        "Navigation to overriding classes is not possible during index update");
+        JavaBundle.message("notification.navigation.to.overriding.classes"));
       return;
     }
 
@@ -279,7 +279,7 @@ public class MarkerType {
     if (overridings.isEmpty()) return;
     boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(methodOverriders);
     MethodOrFunctionalExpressionCellRenderer renderer = new MethodOrFunctionalExpressionCellRenderer(showMethodNames);
-    Collections.sort(overridings, renderer.getComparator());
+    overridings.sort(renderer.getComparator());
     final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
     PsiElementListNavigator.openTargets(e, overridings.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), methodsUpdater.getCaption(overridings.size()), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
   }
@@ -330,7 +330,8 @@ public class MarkerType {
                                                @NotNull final PsiClass aClass,
                                                PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
     if (DumbService.isDumb(aClass.getProject())) {
-      DumbService.getInstance(aClass.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
+      DumbService.getInstance(aClass.getProject()).showDumbModeNotification(
+        JavaBundle.message("notification.navigation.to.overriding.methods"));
       return;
     }
 
@@ -350,7 +351,7 @@ public class MarkerType {
     ContainerUtil.addIfNotNull(inheritors, collectExprProcessor.getFoundElement());
     if (inheritors.isEmpty()) return;
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
-    Collections.sort(inheritors, renderer.getComparator());
+    inheritors.sort(renderer.getComparator());
     PsiElementListNavigator.openTargets(e, inheritors.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 

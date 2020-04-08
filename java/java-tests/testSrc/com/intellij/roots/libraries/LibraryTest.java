@@ -7,6 +7,7 @@ import com.intellij.java.codeInsight.daemon.quickFix.OrderEntryTest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -89,7 +90,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
       Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localJDomSources)));
 
     assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isGreaterThan(moduleModificationCount);
-    assertThat(serializeLibraries()).isEqualTo(
+    assertThat(serializeLibraries(myProject)).isEqualTo(
       "<library name=\"junit\">\n" +
       "  <CLASSES>\n" +
       "    <root url=\"file://$PROJECT_DIR$/jdom-2.0.6.jar\" />\n" +
@@ -281,7 +282,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     model.addRoot("file://native-lib-root", NativeLibraryOrderRootType.getInstance());
     commit(model);
 
-    assertThat(serializeLibraries()).isEqualTo(
+    assertThat(serializeLibraries(myProject)).isEqualTo(
       "<library name=\"native\">\n" +
       "  <CLASSES />\n" +
       "  <JAVADOC />\n" +
@@ -307,7 +308,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
     commit(model);
 
-    assertThat(serializeLibraries()).isEqualTo(
+    assertThat(serializeLibraries(myProject)).isEqualTo(
       "<library name=\"jarDirs\">\n" +
       "  <CLASSES>\n" +
       "    <root url=\"file://jar-dir\" />\n" +
@@ -324,12 +325,12 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     );
   }
 
-  private String serializeLibraries() {
-    StoreUtil.saveSettings(myProject);
+  static String serializeLibraries(Project project) {
+    StoreUtil.saveSettings(project);
 
     try {
       StringBuilder sb = new StringBuilder();
-      Element root = JDOMUtil.load(new File(myProject.getProjectFilePath()));
+      Element root = JDOMUtil.load(new File(project.getProjectFilePath()));
       for (Element componentElement : root.getChildren("component")) {
         if ("libraryTable".equals(componentElement.getAttributeValue("name"))) {
           for (Element libraryElement : componentElement.getChildren("library")) {

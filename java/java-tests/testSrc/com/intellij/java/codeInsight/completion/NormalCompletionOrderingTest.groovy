@@ -270,6 +270,12 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems 0, 'constx1', 'constx2', 'const1', 'const2'
   }
 
+  void testPreferExpectedEnumConstantsInComparison() {
+    checkPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
+    incUseCount(lookup, myFixture.lookupElementStrings.indexOf('String')) // select some unrelated class
+    assertPreferredItems 0, 'MyEnum.const1', 'MyEnum', 'MyEnum.const2'
+  }
+
   void testPreferElse() {
     checkPreferredItems(0, "else", "element")
   }

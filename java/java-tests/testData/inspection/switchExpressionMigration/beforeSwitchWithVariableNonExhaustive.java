@@ -2,7 +2,7 @@
 import java.util.*;
 
 class SwitchExpressionMigration {
-  private static void m() {
+  private static void m(String s) {
     int result;
     switch<caret>(s) {
       case "a": result = 1; break;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.usageView.UsageViewBundle;
@@ -13,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Enumeration;
 
-/**
- * @author max
- */
 public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   private final UsageViewImpl myUsageView;
   @NotNull

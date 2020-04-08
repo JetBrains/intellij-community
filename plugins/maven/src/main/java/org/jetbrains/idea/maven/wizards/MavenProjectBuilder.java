@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.impl.NewProjectUtil;
@@ -49,8 +49,7 @@ import static icons.OpenapiIcons.RepositoryLibraryLogo;
  * Use {@link com.intellij.ide.actions.ImportModuleAction#doImport} to import (attach) a new project.
  * Use {@link com.intellij.ide.impl.ProjectUtil#openOrImport} to open (import) a new project.
  */
-public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> implements DeprecatedProjectBuilderForImport {
-
+public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> implements DeprecatedProjectBuilderForImport {
   private static final Logger LOG = Logger.getInstance(MavenProjectBuilder.class);
 
   private static class Parameters {

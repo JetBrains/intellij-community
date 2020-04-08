@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -168,10 +168,10 @@ public abstract class LRUPopupBuilder<T> {
       }
     }
     if (myComparator != null) {
-      Collections.sort(items, myComparator);
+      items.sort(myComparator);
     }
     if (!lru.isEmpty()) {
-      Collections.sort(lru, Comparator.comparingInt(o -> ids.indexOf(getStorageId(o))));
+      lru.sort(Comparator.comparingInt(o -> ids.indexOf(getStorageId(o))));
     }
     T separator1 = !lru.isEmpty() && !items.isEmpty()? items.get(0) : null;
     T separator2 = !lru.isEmpty() || !items.isEmpty()? ContainerUtil.getFirstItem(extra) : null;
@@ -243,8 +243,7 @@ public abstract class LRUPopupBuilder<T> {
     return popup;
   }
 
-  @NotNull
-  private String[] restoreLRUItems() {
+  private String @NotNull [] restoreLRUItems() {
     return ObjectUtils.notNull(myPropertiesComponent.getValues(getLRUKey()), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
@@ -270,7 +269,7 @@ public abstract class LRUPopupBuilder<T> {
 
   private static void changeLanguageWithUndo(@NotNull Project project,
                                              @NotNull Language t,
-                                             @NotNull VirtualFile[] sortedFiles,
+                                             VirtualFile @NotNull [] sortedFiles,
                                              @NotNull PerFileMappings<Language> mappings) throws UnexpectedUndoException {
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Arrays.asList(sortedFiles));
     if (status.hasReadonlyFiles()) return;

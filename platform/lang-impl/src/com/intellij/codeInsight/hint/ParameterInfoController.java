@@ -19,12 +19,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,6 @@ import com.intellij.openapi.ui.popup.Balloon.Position;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,8 +42,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -59,14 +55,20 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Consumer;
+
+import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
 
 public class ParameterInfoController extends UserDataHolderBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(ParameterInfoController.class);
   private static final String WHITESPACE = " \t";
+
+  private static final String LOADING_TAG = "loading";
+  private static final String COMPONENT_TAG = "component";
+
   private final Project myProject;
   @NotNull private final Editor myEditor;
 
@@ -95,8 +97,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     for (int i = 0; i < allControllers.size(); ++i) {
       ParameterInfoController controller = allControllers.get(i);
 
-      if (controller.myLbraceMarker.getStartOffset() == offset) {
-        if (controller.myKeepOnHintHidden || controller.myHint.isVisible()) return controller;
+      int lbraceOffset = controller.myLbraceMarker.getStartOffset();
+      if (lbraceOffset == offset) {
+        if (controller.myKeepOnHintHidden || controller.myHint.isVisible()
+          || ApplicationManager.getApplication().isHeadlessEnvironment()) return controller;
         Disposer.dispose(controller);
         //noinspection AssignmentToForLoopParameter
         --i;
@@ -222,14 +226,16 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
     if (myHint.isVisible()) {
-      myHint.getComponent().remove(myComponent);
+      JComponent myHintComponent = myHint.getComponent();
+      myHintComponent.removeAll();
       hideHint();
       myHint = createHint();
     }
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
 
-    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(),
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), caretOffset,
                                                              null, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
@@ -243,6 +249,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
 
     Editor editorToShow = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+
+    //update presentation of descriptors synchronously
+    myComponent.update(mySingleParameterInfo);
+
     // is case of injection we need to calculate position for EditorWindow
     // also we need to show the hint in the main editor because of intention bulb
     HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), flags, 0, false, hintHint);
@@ -365,36 +375,17 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
   private void executeFindElementForUpdatingParameterInfo(UpdateParameterInfoContext context,
                                                           @NotNull Consumer<PsiElement> elementForUpdatingConsumer) {
-    final Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-    ProgressManager.getInstance().run(
-      new Task.Backgroundable(myProject, CodeInsightBundle.message("parameter.info.progress.title"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          assert !ApplicationManager.getApplication().isDispatchThread() :
-            "Show parameter info on dispatcher thread leads to live lock";
-
-          final VisibleAreaListener visibleAreaListener = e -> indicator.cancel();
-
-          myEditor.getScrollingModel().addVisibleAreaListener(visibleAreaListener);
-
-          ProgressIndicatorUtils.awaitWithCheckCanceled(
+    runTask(myProject,
             ReadAction
               .nonBlocking(() -> {
                 return myHandler.findElementForUpdatingParameterInfo(context);
               }).withDocumentsCommitted(myProject)
-              .cancelWith(indicator)
               .expireWhen(() -> getCurrentOffset() != context.getOffset())
-              .coalesceBy(ParameterInfoController.this)
-              .expireWith(ParameterInfoController.this)
-              .finishOnUiThread(ModalityState.defaultModalityState(), elementForUpdating -> {
-                if (Objects.equals(focusOwner, IdeFocusManager.getInstance(myProject).getFocusOwner())) {
-                  elementForUpdatingConsumer.consume(elementForUpdating);
-                }
-              })
-              .submit(AppExecutorUtil.getAppExecutorService())
-              .onProcessed(ignore -> myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener)));
-        }
-      });
+              .coalesceBy(this)
+              .expireWith(this),
+            elementForUpdatingConsumer,
+            null,
+            myEditor);
   }
 
   private void executeUpdateParameterInfo(PsiElement elementForUpdating,
@@ -406,44 +397,31 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
       return;
     }
 
-    final Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-    ProgressManager.getInstance().run(
-      new Task.Backgroundable(myProject, CodeInsightBundle.message("parameter.info.progress.title"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          assert !ApplicationManager.getApplication().isDispatchThread() :
-            "Show parameter info on dispatcher thread leads to live lock";
-
-          final VisibleAreaListener visibleAreaListener = e -> indicator.cancel();
-
-          myEditor.getScrollingModel().addVisibleAreaListener(visibleAreaListener);
-
-          ProgressIndicatorUtils.awaitWithCheckCanceled(ReadAction
-            .nonBlocking(() -> {
-              try {
-                myHandler.updateParameterInfo(elementForUpdating, context);
-                return elementForUpdating;
-              }
-              catch (IndexNotReadyException e) {
-                DumbService.getInstance(myProject)
-                  .showDumbModeNotification(CodeInsightBundle.message("parameter.info.indexing.mode.not.supported"));
-              }
-              return null;
-            })
-            .withDocumentsCommitted(myProject)
-            .cancelWith(indicator)
-            .expireWhen(() -> !myKeepOnHintHidden && !myHint.isVisible() || getCurrentOffset() != context.getOffset() || !elementForUpdating.isValid())
-            .expireWith(ParameterInfoController.this)
-            .finishOnUiThread(ModalityState.defaultModalityState(), element -> {
-              if (element != null && continuation != null && Objects.equals(focusOwner, IdeFocusManager.getInstance(myProject).getFocusOwner())) {
+    runTask(myProject,
+            ReadAction.nonBlocking(() -> {
+                try {
+                  myHandler.updateParameterInfo(elementForUpdating, context);
+                  return elementForUpdating;
+                }
+                catch (IndexNotReadyException e) {
+                  DumbService.getInstance(myProject)
+                    .showDumbModeNotification(CodeInsightBundle.message("parameter.info.indexing.mode.not.supported"));
+                }
+                return null;
+              })
+              .withDocumentsCommitted(myProject)
+              .expireWhen(() -> !myKeepOnHintHidden && !myHint.isVisible() && !ApplicationManager.getApplication().isHeadlessEnvironment() ||
+                                getCurrentOffset() != context.getOffset() ||
+                                !elementForUpdating.isValid())
+              .expireWith(this),
+            element -> {
+              if (element != null && continuation != null) {
                 context.applyUIChanges();
                 continuation.run();
               }
-            })
-            .submit(AppExecutorUtil.getAppExecutorService())
-            .onProcessed(ignore -> myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener)));
-        }
-      });
+            },
+            null,
+            myEditor);
   }
 
   @HintManager.PositionFlags

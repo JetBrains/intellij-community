@@ -19,8 +19,6 @@ import groovy.transform.CompileStatic
 
 /**
  * All paths are absolute and use '/' as a separator
- *
- * @author nik
  */
 @CompileStatic
 abstract class BuildPaths {

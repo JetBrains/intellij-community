@@ -18,8 +18,12 @@ package com.intellij.codeInsight.intention;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * An interface that {@link IntentionAction} and {@link com.intellij.codeInspection.LocalQuickFix} share.
@@ -42,5 +46,27 @@ public interface FileModifier extends WriteActionAware {
   @Nullable
   default PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return startInWriteAction() ? currentFile : null;
+  }
+
+  /**
+   * Returns the equivalent file modifier that could be applied to the 
+   * non-physical copy of the file used to preview the modification.
+   * May return itself if the action doesn't depend on the file.
+   *
+   * @param target target non-physical file 
+   * @return the action that could be applied to the non-physical copy of the file.
+   * Returns null if operation is not supported.
+   */
+  default @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    if (!startInWriteAction()) return null;
+    for (Field field : ReflectionUtil.collectFields(((Object)this).getClass())) {
+      if (Modifier.isStatic(field.getModifiers())) continue;
+      Class<?> type = field.getType();
+      if (type.isPrimitive() || type.isEnum() || type.equals(String.class) ||
+          type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class)) continue;
+      return null;
+    }
+    // No PSI-specific state: it's safe to apply this action to a file copy
+    return this;
   }
 }

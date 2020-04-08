@@ -26,9 +26,8 @@ class MethodNode extends FragmentNode {
     setAllowsChildren(false);
   }
 
-  @NotNull
   @Override
-  protected TextChunk[] createTextChunks(@NotNull PsiElement element) {
+  protected TextChunk @NotNull [] createTextChunks(@NotNull PsiElement element) {
     assert element instanceof PsiMethod;
     Project project = element.getProject();
 

@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypeParameterList
-import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCall
 import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
 import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
@@ -40,9 +39,9 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
 
   fun extractClosuresFromOuterCalls(method: GrMethod,
                                     virtualMethod: GrMethod,
-                                    scope: SearchScope): List<GrParameter> {
+                                    callReferences: List<PsiReference>): List<GrParameter> {
     val visitedParameters = mutableListOf<GrParameter>()
-    for ((parameter, calls) in collectClosureArguments(method, virtualMethod, scope)) {
+    for ((parameter, calls) in collectClosureArguments(method, virtualMethod, callReferences)) {
       // todo: default-valued parameters
       val closableBlockCalls = calls.filterIsInstance<GrClosableBlock>().takeIf { it.isNotEmpty() } ?: continue
       visitedParameters.add(parameter)
@@ -64,7 +63,7 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
     for (call in callUsages) {
       val argumentMapping = (call.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: continue
       val argument = argumentMapping.expectedTypes.find { it.second.isReferenceTo(parameter) }?.second ?: continue
-      val targetParameter = argumentMapping.targetParameter(argument) as? GrParameter ?: continue
+      val targetParameter = argumentMapping.targetParameter(argument)?.psi as? GrParameter ?: continue
       val closureParamsAnno = targetParameter.modifierList.findAnnotation(GROOVY_TRANSFORM_STC_CLOSURE_PARAMS) ?: continue
       acceptParameter(parameter, availableParameterNumber(closureParamsAnno), emptyList())
       break
@@ -78,9 +77,9 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
 
   private fun collectClosureArguments(originalMethod: GrMethod,
                                       virtualMethod: GrMethod,
-                                      scope: SearchScope): Map<GrParameter, List<GrExpression>> {
+                                      callReferences: List<PsiReference>): Map<GrParameter, List<GrExpression>> {
     val untypedParameters = originalMethod.parameters.filter { it.typeElement == null }
-    val allArgumentExpressions = extractArgumentExpressions(originalMethod, untypedParameters, scope)
+    val allArgumentExpressions = extractArgumentExpressions(untypedParameters, callReferences)
     val proxyMapping = setUpParameterMapping(originalMethod, virtualMethod)
     return allArgumentExpressions.mapNotNull { (parameter, arguments) ->
       if (arguments.any { !(it.type.isClosureTypeDeep() || it is GrClosableBlock) }) {
@@ -98,16 +97,15 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
       this is ExpressionArgument && expression.reference?.resolve() == element
   }
 
-  private fun extractArgumentExpressions(method: GrMethod,
-                                         targetParameters: Collection<GrParameter>,
-                                         scope: SearchScope): Map<GrParameter, List<GrExpression>> {
+  private fun extractArgumentExpressions(targetParameters: Collection<GrParameter>,
+                                         callReferences: List<PsiReference>): Map<GrParameter, List<GrExpression>> {
     val expressionStorage = mutableMapOf<GrParameter, MutableList<GrExpression>>()
     targetParameters.forEach { expressionStorage[it] = mutableListOf() }
-    for (call in ReferencesSearch.search(method, scope).findAll().mapNotNull { it.element.parent as? GrCall }) {
+    for (call in callReferences.mapNotNull { it.element.parent as? GrCall }) {
       val mapping = (call.advancedResolve() as? GroovyMethodResult)?.candidate?.argumentMapping ?: continue
       mapping.expectedTypes.forEach { (_, arg) ->
         val expression = (arg as? ExpressionArgument)?.expression ?: return@forEach
-        val targetParameter = mapping.targetParameter(arg) ?: return@forEach
+        val targetParameter = mapping.targetParameter(arg)?.psi ?: return@forEach
         expressionStorage[targetParameter]?.add(expression)
       }
     }

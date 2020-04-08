@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,11 +6,11 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableCellState;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
@@ -181,6 +182,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       myReferencePainter = new LabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
+      setCellState(new BorderlessTableCellState());
 
       myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
@@ -228,14 +230,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       setPaintFocusBorder(false);
       acquireState(myGraphTable, isSelected, hasFocus, row, column);
       getCellState().updateRenderer(this);
-      setBorder(null);
 
       myGraphImage = getGraphImage(cell.getPrintElements());
 
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
-      Color baseForeground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
+      Color baseForeground = Objects.requireNonNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
 
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
@@ -355,6 +356,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
      */
     int getWidth() {
       return myWidth;
+    }
+  }
+
+  public static class BorderlessTableCellState extends TableCellState {
+    @Override
+    protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
+      return null;
     }
   }
 }

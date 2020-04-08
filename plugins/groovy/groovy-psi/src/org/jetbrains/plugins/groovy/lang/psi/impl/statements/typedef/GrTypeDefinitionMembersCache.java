@@ -78,8 +78,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     return getTransformationResult().getFields().clone();
   }
 
-  @NotNull
-  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
     return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] extendsTypes = getTransformationResult().getExtendsTypes();
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
@@ -89,8 +88,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     }).clone();
   }
 
-  @NotNull
-  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
+  public PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic) {
     return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] implementsTypes = getTransformationResult().getImplementsTypes();
       return CachedValueProvider.Result.create(implementsTypes, myDependencies);

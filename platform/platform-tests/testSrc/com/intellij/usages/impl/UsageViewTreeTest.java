@@ -18,11 +18,9 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class UsageViewTreeTest extends UsefulTestCase {
   private TestFixtureBuilder<IdeaProjectTestFixture> myFixtureBuilder;
   private CodeInsightTestFixture myFixture;
@@ -74,6 +72,25 @@ public class UsageViewTreeTest extends UsefulTestCase {
                                                           "     1hello\n");
       return null;
     });
+  }
+
+  public void testGroupByDirectoryStructureMustMaintainNestedDirectories() throws Exception {
+    addModule("xxx.main");
+    UsageViewSettings.getInstance().setGroupByPackage(true);
+    UsageViewSettings.getInstance().setGroupByDirectoryStructure(true); // must ignore group by package
+    PsiFile file = myFixture.addFileToProject("xxx.main/x/i1/A.txt", "hello");
+    PsiFile file2 = myFixture.addFileToProject("xxx.main/y/B.txt", "hello");
+    assertEquals("Usage (2 usages)\n" +
+                 " Non-code usages (2 usages)\n" +
+                 "  xxx.main (2 usages)\n" +
+                 "   x (1 usage)\n" +
+                 "    i1 (1 usage)\n" +
+                 "     A.txt (1 usage)\n" +
+                 "      1hello\n" +
+                 "   y (1 usage)\n" +
+                 "    B.txt (1 usage)\n" +
+                 "     1hello\n"
+      , myFixture.getUsageViewTreeTextRepresentation(Arrays.asList(new UsageInfo(file), new UsageInfo(file2))));
   }
 
   private void assertUsageViewStructureEquals(@NotNull UsageInfo usage, String expected) {

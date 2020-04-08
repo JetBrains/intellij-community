@@ -205,9 +205,8 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  @NotNull
-  public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
-                                                    @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
+  public DfaInstructionState @NotNull [] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
+                                                              @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
     return controlTransferInstruction.getTransfer().dispatch(state, runner).toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 

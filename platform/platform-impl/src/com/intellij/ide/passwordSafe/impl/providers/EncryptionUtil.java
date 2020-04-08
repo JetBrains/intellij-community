@@ -84,8 +84,7 @@ public class EncryptionUtil {
    * @param rawKey   the raw key to encrypt
    * @return the encrypted key
    */
-  @NotNull
-  public static byte[] encryptKey(@NotNull byte[] password, byte[] rawKey) {
+  public static byte @NotNull [] encryptKey(byte @NotNull [] password, byte[] rawKey) {
     try {
       Cipher c = Cipher.getInstance(ENCRYPT_KEY_ALGORITHM);
       c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_KEY);

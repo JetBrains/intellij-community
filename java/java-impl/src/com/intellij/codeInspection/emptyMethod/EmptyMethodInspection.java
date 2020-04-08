@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
@@ -11,6 +10,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,11 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author max
- */
 public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
-  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
   private static final ExtensionPointName<Condition<RefMethod>> CAN_BE_EMPTY_EP = new ExtensionPointName<>("com.intellij.canBeEmpty");
@@ -46,16 +42,14 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   @SuppressWarnings("PublicField")
   public boolean commentsAreContent = false;
-  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   private static final Logger LOG = Logger.getInstance(EmptyMethodInspection.class);
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext,
-                                                @NotNull ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext,
+                                                           @NotNull ProblemDescriptionsProcessor processor) {
     if (!(refEntity instanceof RefMethod)) {
       return null;
     }
@@ -93,29 +87,29 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         }
       }
       if (refSuper == null || refUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
-        message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
+        message = JavaBundle.message("inspection.empty.method.problem.descriptor");
       }
     }
     else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
 
-      message = InspectionsBundle.message("inspection.empty.method.problem.descriptor1");
+      message = JavaBundle.message("inspection.empty.method.problem.descriptor1");
     }
     else if (areAllImplementationsEmpty(refMethod) && refSuper == null) {
       if (refMethod.hasBody()) {
         if (refMethod.getDerivedMethods().isEmpty()) {
           if (refMethod.getSuperMethods().isEmpty()) {
-            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
+            message = JavaBundle.message("inspection.empty.method.problem.descriptor2");
           }
         }
         else {
           needToDeleteHierarchy = true;
-          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor3");
+          message = JavaBundle.message("inspection.empty.method.problem.descriptor3");
         }
       }
       else {
         if (!refMethod.getDerivedMethods().isEmpty()) {
           needToDeleteHierarchy = true;
-          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
+          message = JavaBundle.message("inspection.empty.method.problem.descriptor4");
         }
       }
     }
@@ -235,7 +229,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -273,10 +267,10 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel listPanel = SpecialAnnotationsUtil
-      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
+      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, JavaBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
-    panel.add(new SingleCheckboxOptionsPanel("Comments and javadoc count as content", this, "commentsAreContent"), BorderLayout.NORTH);
+    panel.add(new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.comments.and.javadoc.count.as.content"), this, "commentsAreContent"), BorderLayout.NORTH);
     panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }
@@ -291,7 +285,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return QUICK_FIX_NAME;
+      return getQuickFixName();
     }
 
     @Override
@@ -328,7 +322,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return QUICK_FIX_NAME;
+      return getQuickFixName();
     }
 
     @Override
@@ -353,7 +347,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project,
-                         @NotNull final CommonProblemDescriptor[] descriptors,
+                         final CommonProblemDescriptor @NotNull [] descriptors,
                          @NotNull final List<PsiElement> psiElementsToIgnore,
                          @Nullable final Runnable refreshViews) {
       for (CommonProblemDescriptor descriptor : descriptors) {
@@ -370,5 +364,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       }
       ApplicationManager.getApplication().invokeLater(() -> SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews), project.getDisposed());
     }
+  }
+
+  private static String getQuickFixName() {
+    return JavaBundle.message("inspection.empty.method.delete.quickfix");
   }
 }

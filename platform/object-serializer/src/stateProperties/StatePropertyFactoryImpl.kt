@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
@@ -33,9 +33,15 @@ internal class StatePropertyFactoryImpl : StatePropertyFactory {
 
   override fun int(defaultValue: Int) = IntStoredProperty(defaultValue, null)
 
-  override fun stringSet() = CollectionStoredProperty<String, MutableSet<String>>(THashSet())
+  override fun stringSet(defaultValue: String?): CollectionStoredProperty<String, MutableSet<String>> {
+    val collection = THashSet<String>()
+    defaultValue?.let {
+      collection.add(defaultValue)
+    }
+    return CollectionStoredProperty<String, MutableSet<String>>(collection, defaultValue)
+  }
 
-  override fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = CollectionStoredProperty(TreeSet())
+  override fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = CollectionStoredProperty(TreeSet(), null)
 
   override fun <T : Enum<*>> enum(defaultValue: T?, clazz: Class<T>): StoredPropertyBase<T?> = EnumStoredProperty(defaultValue, clazz)
 }

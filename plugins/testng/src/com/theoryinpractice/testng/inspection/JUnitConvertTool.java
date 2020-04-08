@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "TestNG";
+    return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @NotNull
@@ -55,11 +56,10 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotations(psiClass)) {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
+      ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, TestngBundle.message("test.case.can.be.converted.to.testng"),
                                                                      new JUnitConverterQuickFix(),
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       return new ProblemDescriptor[]{descriptor};

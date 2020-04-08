@@ -4,6 +4,7 @@ package com.intellij.lang.properties.psi;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -11,7 +12,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public abstract class ResourceBundleManager {
   private static final ExtensionPointName<ResourceBundleManager> RESOURCE_BUNDLE_MANAGER = ExtensionPointName.create("com.intellij.java-i18n.resourceBundleManager");
@@ -27,8 +31,8 @@ public abstract class ResourceBundleManager {
   @Nullable
   public abstract PsiClass getResourceBundle();
 
-  public List<String> suggestPropertiesFiles(){
-    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
+  public List<String> suggestPropertiesFiles(@NotNull Set<Module> contextModules){
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject, contextModules);
   }
 
   @Nullable
@@ -42,20 +46,41 @@ public abstract class ResourceBundleManager {
   @Nullable @NonNls
   public abstract String getConcatenationTemplateName();
 
-  public abstract boolean isActive(PsiFile context) throws ResourceBundleNotFoundException;
+  public abstract boolean isActive(@NotNull PsiFile context) throws ResourceBundleNotFoundException;
 
   public abstract boolean canShowJavaCodeInfo();
 
   @Nullable
-  public static ResourceBundleManager getManager(PsiFile context) throws ResourceBundleNotFoundException {
-    final Project project = context.getProject();
+  public static ResourceBundleManager getManager(@NotNull PsiFile context) throws ResourceBundleNotFoundException {
+    return getManager(Collections.singletonList(context), context.getProject());
+  }
+
+  @Nullable
+  public static ResourceBundleManager getManager(@NotNull Collection<PsiFile> contexts, @NotNull Project project) throws ResourceBundleNotFoundException {
+    ResourceBundleManager result = null;
     for (ResourceBundleManager manager : RESOURCE_BUNDLE_MANAGER.getExtensions(project)) {
-      if (manager.isActive(context)) {
-        return manager;
+      if (isActiveForAny(manager, contexts)) {
+        if (result != null) {
+          //multiple managers are active
+          return null;
+        }
+        result = manager;
       }
     }
+    if (result != null) {
+      return result;
+    }
     final DefaultResourceBundleManager manager = new DefaultResourceBundleManager(project);
-    return manager.isActive(context) ? manager : null;
+    return isActiveForAny(manager, contexts) ? manager : null;
+  }
+
+  private static boolean isActiveForAny(ResourceBundleManager manager, Collection<PsiFile> contexts) throws ResourceBundleNotFoundException {
+    for (PsiFile context : contexts) {
+      if (manager.isActive(context)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

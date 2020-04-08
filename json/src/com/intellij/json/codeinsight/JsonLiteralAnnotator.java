@@ -9,6 +9,7 @@ import com.intellij.json.psi.JsonReferenceExpression;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -41,7 +42,7 @@ public class JsonLiteralAnnotator implements Annotator {
 
       // Check that string literal is closed properly
       if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || JsonPsiUtil.isEscapedChar(text, length - 1)) {
-        holder.createErrorAnnotation(element, JsonBundle.message("syntax.error.missing.closing.quote"));
+        holder.newAnnotation(HighlightSeverity.ERROR, JsonBundle.message("syntax.error.missing.closing.quote")).create();
       }
 
       // Check escapes
@@ -51,7 +52,7 @@ public class JsonLiteralAnnotator implements Annotator {
           if (!checker.isApplicable(element)) continue;
           Pair<TextRange, String> error = checker.getErrorForStringFragment(fragment, stringLiteral);
           if (error != null) {
-            holder.createErrorAnnotation(error.getFirst().shiftRight(elementOffset), error.second);
+            holder.newAnnotation(HighlightSeverity.ERROR, error.second).range(error.getFirst().shiftRight(elementOffset)).create();
           }
         }
       }
@@ -65,7 +66,7 @@ public class JsonLiteralAnnotator implements Annotator {
         }
         String error = checker.getErrorForNumericLiteral(text);
         if (error != null) {
-          holder.createErrorAnnotation(element, error);
+          holder.newAnnotation(HighlightSeverity.ERROR, error).create();
         }
       }
     }
@@ -73,7 +74,12 @@ public class JsonLiteralAnnotator implements Annotator {
 
   private static void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (JsonPsiUtil.isPropertyKey(element)) {
-      holder.createInfoAnnotation(element, Holder.DEBUG ? "property key" : null).setTextAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY);
+      if (Holder.DEBUG) {
+        holder.newAnnotation(HighlightSeverity.INFORMATION, JsonBundle.message("annotation.property.key")).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
+      }
+      else {
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
+      }
     }
   }
 }

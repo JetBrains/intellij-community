@@ -357,7 +357,7 @@ public class GridInsertLocation extends GridDropLocation {
   @Override
   public void processDrop(final GuiEditor editor,
                           final RadComponent[] components,
-                          @Nullable final GridConstraints[] constraintsToAdjust,
+                          final GridConstraints @Nullable [] constraintsToAdjust,
                           final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
@@ -414,7 +414,7 @@ public class GridInsertLocation extends GridDropLocation {
     return cell;
   }
 
-  private static void checkAdjustConstraints(@Nullable final GridConstraints[] constraintsToAdjust,
+  private static void checkAdjustConstraints(final GridConstraints @Nullable [] constraintsToAdjust,
                                              final boolean isRow,
                                              final int index, final int count) {
     if (constraintsToAdjust != null) {

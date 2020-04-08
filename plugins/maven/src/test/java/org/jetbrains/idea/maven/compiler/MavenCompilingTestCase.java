@@ -31,9 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author nik
- */
 public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   protected void compileModules(final String... moduleNames) {
     compile(createModulesCompileScope(moduleNames));

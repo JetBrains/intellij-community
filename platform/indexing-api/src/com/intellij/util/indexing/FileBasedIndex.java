@@ -32,10 +32,6 @@ import java.util.Set;
 public abstract class FileBasedIndex {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
 
-  public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, @NotNull ProgressIndicator indicator) {
-    iterateIndexableFiles(processor, project, indicator);
-  }
-
   /**
    * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.
    */
@@ -65,7 +61,7 @@ public abstract class FileBasedIndex {
   }
 
   /**
-   * @deprecated see {@link ManagingFS#findFileById(int)}
+   * @deprecated see {@link com.intellij.openapi.vfs.newvfs.ManagingFS#findFileById(int)}
    */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
   @Deprecated
   public abstract VirtualFile findFileById(Project project, int id);
@@ -136,9 +132,20 @@ public abstract class FileBasedIndex {
                                                  @NotNull Processor<? super VirtualFile> processor,
                                                  @NotNull GlobalSearchScope filter);
 
+  /**
+   * Executes command and allow its to have an index access in dumb mode.
+   * Inside the command it's safe to call index related stuff and
+   * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
+   *
+   * <p> In smart mode, the behavior is similar to direct command execution
+   *
+   * @param command - a command to execute
+   * @param project - project where dumb mode will be ignored
+   * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
+   *                           or any data from index is fine (even outdated and not yet updated)?
+   */
   @ApiStatus.Experimental
-  @ApiStatus.Internal
-  public void ignoreDumbMode(@NotNull Runnable runnable,
+  public void ignoreDumbMode(@NotNull Runnable command,
                              @NotNull Project project,
                              @NotNull DumbModeAccessType dumbModeAccessType) {
     throw new UnsupportedOperationException();
@@ -153,43 +160,41 @@ public abstract class FileBasedIndex {
     return processAllKeys(indexId, processor, scope.getProject());
   }
 
-  @ApiStatus.Experimental
   @NotNull
   public abstract <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
 
-  public static void iterateRecursively(@Nullable final VirtualFile root,
+  public static void iterateRecursively(@NotNull final VirtualFile root,
                                         @NotNull final ContentIterator processor,
                                         @Nullable final ProgressIndicator indicator,
                                         @Nullable final Set<? super VirtualFile> visitedRoots,
                                         @Nullable final ProjectFileIndex projectFileIndex) {
-    if (root == null) {
-      return;
-    }
+    VirtualFileFilter acceptFilter = file -> {
+      if (indicator != null) {
+        indicator.checkCanceled();
+      }
+      if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
+        return false;
+      }
+      return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
+    };
 
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!acceptsFile(file)) return false;
+    VirtualFileFilter symlinkFilter = file -> {
+      if (acceptFilter.accept(file)) {
         if (file.is(VFileProperty.SYMLINK)) {
-          if(!Registry.is("indexer.follows.symlinks")) return false;
+          if (!Registry.is("indexer.follows.symlinks")) {
+            return false;
+          }
           VirtualFile canonicalFile = file.getCanonicalFile();
-
           if (canonicalFile != null) {
-            if(!acceptsFile(canonicalFile)) return false;
+            return acceptFilter.accept(canonicalFile);
           }
         }
-
-        processor.processFile(file);
         return true;
       }
+      return false;
+    };
 
-      private boolean acceptsFile(@NotNull VirtualFile file) {
-        if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
-          return false;
-        }
-        return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
-      }
-    });
+    VfsUtilCore.iterateChildrenRecursively(root, symlinkFilter, processor);
   }
 
   public void invalidateCaches() {
@@ -222,7 +227,6 @@ public abstract class FileBasedIndex {
   @Deprecated
   public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
-  // TODO we should rebuild index automatically if this option is changed
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
 

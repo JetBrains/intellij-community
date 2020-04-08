@@ -40,20 +40,18 @@ public class XmlTagValueImpl implements XmlTagValue{
   private volatile String myText;
   private volatile String myTrimmedText;
 
-  public XmlTagValueImpl(@NotNull XmlTagChild[] bodyElements, @NotNull XmlTag tag) {
+  public XmlTagValueImpl(XmlTagChild @NotNull [] bodyElements, @NotNull XmlTag tag) {
     myTag = tag;
     myElements = bodyElements;
   }
 
   @Override
-  @NotNull
-  public XmlTagChild[] getChildren() {
+  public XmlTagChild @NotNull [] getChildren() {
     return myElements;
   }
 
   @Override
-  @NotNull
-  public XmlText[] getTextElements() {
+  public XmlText @NotNull [] getTextElements() {
     XmlText[] textElements = myTextElements;
     if (textElements == null) {
       textElements = Arrays.stream(myElements)

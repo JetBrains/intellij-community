@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
-*/
 public class MockFacetConfiguration implements FacetConfiguration {
   private final List<VirtualFile> myRoots = new ArrayList<>();
   private String myData = "";

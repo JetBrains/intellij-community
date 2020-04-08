@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -71,7 +72,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.InternalPromiseUtil;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -87,6 +87,10 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
@@ -235,14 +239,28 @@ public class PlatformTestUtil {
     }
   }
 
-  public static void assertTreeEqual(JTree tree, @NonNls String expected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NonNls String expected) {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
-    String treeStringPresentation = print(tree, checkSelected);
-    assertEquals(expected.trim(), treeStringPresentation.trim());
+  public static void assertTreeEqual(@NotNull JTree tree, String expected, boolean checkSelected) {
+    assertTreeEqual(tree, expected, checkSelected, false);
   }
+
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
+    String treeStringPresentation = print(tree, checkSelected);
+    if (ignoreOrder) {
+      String[] lines = treeStringPresentation.split("\n");
+      for (String line : lines) {
+        if (!expected.contains(line + "\n")) {
+          fail("Missing node: " + line);
+        }
+      }
+    } else {
+      assertEquals(expected.trim(), treeStringPresentation.trim());
+    }
+  }
+
 
   public static void expand(JTree tree, int... rows) {
     for (int row : rows) {
@@ -345,10 +363,11 @@ public class PlatformTestUtil {
       }
       catch (TimeoutException ignore) {
       }
-      catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
+      catch (Exception e) {
         if (assertSucceeded) {
           throw new AssertionError(e);
-        } else {
+        }
+        else {
           return null;
         }
       }
@@ -424,7 +443,8 @@ public class PlatformTestUtil {
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
                                    "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
-                                   "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
+                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue() +
+                                   "\n invocatorWtQueue=" + LaterInvocator.getLaterInvocatorWtQueue()
           );
         }
       }
@@ -515,7 +535,7 @@ public class PlatformTestUtil {
       List<?> list = new ArrayList<>(Arrays.asList(children));
       @SuppressWarnings({"unchecked"})
       Comparator<Object> c = (Comparator<Object>)comparator;
-      Collections.sort(list, c);
+      list.sort(c);
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
@@ -1070,5 +1090,27 @@ public class PlatformTestUtil {
     }
     int offset = psiFile.getText().indexOf(signature);
     return psiFile.findElementAt(offset);
+  }
+
+  public static void useAppConfigDir(ThrowableRunnable<? extends Exception> task) throws Exception {
+    Path configDir = PathManager.getConfigDir();
+    Path configCopy;
+    if (Files.exists(configDir)) {
+      configCopy = Files.move(configDir, Paths.get(configDir + "_bak"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    }
+    else {
+      FileUtil.delete(configDir);
+      configCopy = null;
+    }
+
+    try {
+      task.run();
+    }
+    finally {
+      FileUtil.delete(configDir);
+      if (configCopy != null) {
+        Files.move(configCopy, configDir, StandardCopyOption.ATOMIC_MOVE);
+      }
+    }
   }
 }

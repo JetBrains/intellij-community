@@ -13,16 +13,19 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestApplicationManager;
-import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 import java.util.function.Function;
@@ -37,10 +40,8 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
       @NotNull
       @Override
       public DataContext getDataContext(Component component) {
-        if (component instanceof SearchReplaceComponent) {
-          return ((SearchReplaceComponent)component)::getData;
-        }
-        return super.getDataContext(component);
+        SearchReplaceComponent searchReplace = ComponentUtil.getParentOfType(SearchReplaceComponent.class, component);
+        return searchReplace != null ? searchReplace::getData : super.getDataContext(component);
       }
     }, getTestRootDisposable());
     super.setUp();
@@ -89,15 +90,15 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     assertEquals(ActionButtonComponent.NORMAL, actions.get(ToggleSelectionOnlyAction.class).getPopState());
     assertTrue(actions.get(AddOccurrenceAction.class).isEnabled());
     assertTrue(actions.get(RemoveOccurrenceAction.class).isEnabled());
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 4), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 2, 4), component.getStatusText());
     checkResultByText("first foo\n<selection>foo</selection> bar baz\n" +
                       "baz bar foo\nlast foo");
     model.setGlobal(false); // restore selection
     checkResultByText(origText);
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 2), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 2), component.getStatusText());
     // React on selection change
     editor.getSelectionModel().setSelection(0, editor.getDocument().getLineEndOffset(2));
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 3), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 2, 3), component.getStatusText());
     editor.getSelectionModel().removeSelection();
     assertEquals(ApplicationBundle.message("editorsearch.noselection"), component.getStatusText());
 
@@ -186,6 +187,14 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     assertEquals("baz bar", session.getComponent().getSearchTextComponent().getText());
   }
 
+  private static ActionButton findActionButton(JComponent component, @NonNls @NotNull String bundleKey) {
+    String text = TextWithMnemonic.parse(FindBundle.message(bundleKey)).getText();
+    return ContainerUtil.find(UIUtil.findComponentsOfType(component, ActionButton.class),
+                              button -> {
+                                return text.equals(button.getAction().getTemplatePresentation().getText());
+                              });
+  }
+
   public void testFindRegexp() {
     String origText = "first foo\nfoo bar baz\nbaz bar foo\nlast foo";
     init(origText);
@@ -193,21 +202,19 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     EditorSearchSession session = getEditorSearchComponent();
     FindModel model = session.getFindModel();
     SearchReplaceComponent component = session.getComponent();
-    JBCheckBox checkBox = ContainerUtil.find(UIUtil.findComponentsOfType(component, JBCheckBox.class),
-                                             cb -> cb.getText().equals("Regex"));
-
+    ActionButton actionButton = findActionButton(component, "find.regex");
     assertFalse(model.isRegularExpressions()); // default is false
-    assertFalse(checkBox.isSelected());
+    assertFalse(actionButton.isSelected());
     model.setStringToFind("[");
     assertEquals(ApplicationBundle.message("editorsearch.matches", 0), component.getStatusText());
 
     model.setRegularExpressions(true);
-    assertTrue(checkBox.isSelected());
+    assertTrue(actionButton.isSelected());
     assertEquals(SearchSession.INCORRECT_REGEX_MESSAGE, component.getStatusText());
     model.setStringToFind("|");
     assertEquals(ApplicationBundle.message("editorsearch.empty.string.matches"), component.getStatusText());
     model.setStringToFind("ba.?");
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 4), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 4), component.getStatusText());
   }
 
   public void testFindWholeWords() {
@@ -217,16 +224,15 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     EditorSearchSession session = getEditorSearchComponent();
     FindModel model = session.getFindModel();
     SearchReplaceComponent component = session.getComponent();
-    JBCheckBox checkBox = ContainerUtil.find(UIUtil.findComponentsOfType(component, JBCheckBox.class),
-                                             cb -> cb.getText().equals("Words"));
+    ActionButton actionButton = findActionButton(component, "find.whole.words");
 
     assertFalse(model.isWholeWordsOnly()); // default is false
-    assertFalse(checkBox.isSelected());
+    assertFalse(actionButton.isSelected());
     model.setStringToFind("abc");
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 2), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 2), component.getStatusText());
     model.setWholeWordsOnly(true);
-    assertTrue(checkBox.isSelected());
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 1), component.getStatusText());
+    assertTrue(actionButton.isSelected());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 1), component.getStatusText());
   }
 
   public void testFindCaseSensitive() {
@@ -236,16 +242,15 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     EditorSearchSession session = getEditorSearchComponent();
     FindModel model = session.getFindModel();
     SearchReplaceComponent component = session.getComponent();
-    JBCheckBox checkBox = ContainerUtil.find(UIUtil.findComponentsOfType(component, JBCheckBox.class),
-                                             cb -> cb.getText().equals("Match Case"));
+    ActionButton actionButton = findActionButton(component, "find.case.sensitive");
 
     assertFalse(model.isCaseSensitive()); // default is false
-    assertFalse(checkBox.isSelected());
+    assertFalse(actionButton.isSelected());
     model.setStringToFind("ab");
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 4), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 4), component.getStatusText());
     model.setCaseSensitive(true);
-    assertTrue(checkBox.isSelected());
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 1), component.getStatusText());
+    assertTrue(actionButton.isSelected());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 1), component.getStatusText());
   }
 
   public void testNextFromFoldedRegion() {

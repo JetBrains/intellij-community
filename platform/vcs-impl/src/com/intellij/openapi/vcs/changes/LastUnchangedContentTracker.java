@@ -73,8 +73,7 @@ public class LastUnchangedContentTracker {
     file.putUserData(VCS_INVALID_FILE_STATUS, null);
   }
 
-  @Nullable
-  public static byte[] getLastUnchangedContent(@NotNull VirtualFile file) {
+  public static byte @Nullable [] getLastUnchangedContent(@NotNull VirtualFile file) {
     final Integer id = getSavedContentId(file);
     try {
       return id == null ? null : getFS().contentsToByteArray(id);

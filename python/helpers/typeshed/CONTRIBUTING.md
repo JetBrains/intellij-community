@@ -13,12 +13,9 @@ are important to the project's success.
 3. [Prepare your changes](#preparing-changes):
     * Small fixes and additions can be submitted directly as pull requests,
       but [contact us](#discussion) before starting significant work.
-    * IMPORTANT: For new libraries, [get permission from the library owner first](#adding-a-new-library).
     * Create your stubs [conforming to the coding style](#stub-file-coding-style).
     * Make sure your tests pass cleanly on `mypy`, `pytype`, and `flake8`.
-4. [Submit your changes](#submitting-changes):
-    * Open a pull request
-    * For new libraries, [include a reference to where you got permission](#adding-a-new-library)
+4. [Submit your changes](#submitting-changes) by opening a pull request.
 5. You can expect a reply within a few days:
     * Diffs are merged when considered ready by the core team.
     * Feel free to ping the core team if your pull request goes without
@@ -104,21 +101,6 @@ recommend starting by opening an issue laying out what you want to do.
 That lets a conversation happen early in case other contributors disagree
 with what you'd like to do or have ideas that will help you do it.
 
-### Adding a new library
-
-If you want to submit type stubs for a new library, you need to
-**contact the maintainers of the original library** first to let them
-know and **get their permission**.  Do it by opening an issue on their
-project's bug tracker.  This gives them the opportunity to
-consider adopting type hints directly in their codebase (which you
-should prefer to external type stubs).  When the project owners agree
-for you to submit stubs here or you do not receive a reply within
-one month, open a pull request **referencing the
-issue where you asked for permission**.
-
-Make sure your changes pass the tests (the [README](README.md#running-the-tests)
-has more information).
-
 ### What to include
 
 Stubs should include the complete interface (classes, functions,
@@ -174,7 +156,7 @@ annotated function `bar()`:
 def __getattr__(name: str) -> Any: ...  # incomplete
 
 class Foo:
-    def __getattr__(self, name: str) -> Any:  # incomplete
+    def __getattr__(self, name: str) -> Any: ...  # incomplete
     x: int
     y: str
 
@@ -390,3 +372,4 @@ Core developers should follow these rules when processing pull requests:
 * Delete branches for merged PRs (by core devs pushing to the main repo).
 * Make sure commit messages to master are meaningful. For example, remove irrelevant
   intermediate commit messages.
+* If stubs for a new library are submitted, notify the library's maintainers.

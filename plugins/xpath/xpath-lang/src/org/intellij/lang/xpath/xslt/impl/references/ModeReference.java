@@ -70,8 +70,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final PsiFile containingFile = myAttribute.getContainingFile();
     if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile)) {
       final List<Object> l = new ArrayList<>();
@@ -107,8 +106,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     final PsiFile containingFile = myAttribute.getContainingFile();
     if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile) && myImplicitModeElement.getQName() != null) {
       return PsiElementResolveResult.createResults(ResolveUtil.collect(getMatcher()));
@@ -216,16 +214,14 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
       super(attribute);
     }
 
-    @Nullable
     @Override
-    public LocalQuickFix[] getQuickFixes() {
+    public LocalQuickFix @Nullable [] getQuickFixes() {
       // TODO: This should actually scan all (reachable) xslt files for mode-declarations with the same local name
       return LocalQuickFix.EMPTY_ARRAY;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       return getPrefixCompletions(myAttribute);
     }
   }

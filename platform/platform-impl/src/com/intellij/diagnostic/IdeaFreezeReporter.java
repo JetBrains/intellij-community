@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
@@ -90,10 +92,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
               if (message != null && throwable != null && !attachments.isEmpty()) {
                 IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
-                Object data = event.getData();
-                if (data instanceof AbstractMessage) {
-                  ((AbstractMessage)data).setAppInfo(appinfo);
-                }
+                setAppInfo(event, appinfo);
                 report(event);
               }
             }
@@ -104,6 +103,13 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         }
       });
     });
+  }
+
+  static void setAppInfo(IdeaLoggingEvent event, String appinfo) {
+    Object data = event.getData();
+    if (data instanceof AbstractMessage) {
+      ((AbstractMessage)data).setAppInfo(appinfo);
+    }
   }
 
   private static Attachment createReportAttachment(int lengthInSeconds, String text) {
@@ -123,10 +129,12 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
   }
 
-  private static void cleanup(File dir) {
-    FileUtil.delete(new File(dir, MESSAGE_FILE_NAME));
-    FileUtil.delete(new File(dir, THROWABLE_FILE_NAME));
-    FileUtil.delete(new File(dir, APPINFO_FILE_NAME));
+  private static void cleanup(@Nullable File dir) {
+    if (dir != null) {
+      FileUtil.delete(new File(dir, MESSAGE_FILE_NAME));
+      FileUtil.delete(new File(dir, THROWABLE_FILE_NAME));
+      FileUtil.delete(new File(dir, APPINFO_FILE_NAME));
+    }
   }
 
   @Override
@@ -163,13 +171,17 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(dir, THROWABLE_FILE_NAME)))) {
             oos.writeObject(event.getThrowable());
           }
-          File appInfoFile = new File(dir, APPINFO_FILE_NAME);
-          if (!appInfoFile.exists()) {
-            FileUtil.writeToFile(appInfoFile, ITNProxy.getAppInfoString());
-          }
+          saveAppInfo(dir, false);
         }
         catch (IOException ignored) { }
       }
+    }
+  }
+
+  static void saveAppInfo(File dir, boolean overwrite) throws IOException {
+    File appInfoFile = new File(dir, APPINFO_FILE_NAME);
+    if (overwrite || !appInfoFile.exists()) {
+      FileUtil.writeToFile(appInfoFile, ITNProxy.getAppInfoString());
     }
   }
 
@@ -201,10 +213,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     reset();
   }
 
-  private static void report(IdeaLoggingEvent event) {
+  static void report(IdeaLoggingEvent event) {
     if (event != null) {
       Throwable t = event.getThrowable();
-      if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
+      if (IdeErrorsDialog.getSubmitter(t, PluginUtil.getInstance().findPluginId(t)) instanceof ITNReporter) { // only report to JB
         MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }
@@ -295,12 +307,18 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     String reportText = root.dump();
 
     try {
-      FileUtil.writeToFile(new File(reportDir, REPORT_PREFIX + ".txt"), reportText);
+      if (reportDir != null) {
+        FileUtil.writeToFile(new File(reportDir, REPORT_PREFIX + ".txt"), reportText);
+      }
     }
     catch (IOException ignored) {
     }
 
     if (!ContainerUtil.isEmpty(commonStack)) {
+      if (commonStack.stream().anyMatch(IdeaFreezeReporter::skippedFrame)) {
+        return null;
+      }
+
       String edtNote = allInEdt ? "in EDT " : "";
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
                        (finished ? "" : myAppClosing ? "IDE is closing. " : "IDE KILLED! ") +
@@ -325,6 +343,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                                     ContainerUtil.append(attachments, report).toArray(Attachment.EMPTY_ARRAY));
     }
     return null;
+  }
+
+  private static boolean skippedFrame(StackTraceElement e) {
+    return ApplicationImpl.class.getName().equals(e.getClassName()) && "runEdtProgressWriteAction".equals(e.getMethodName());
   }
 
   private static int countClassLoading(List<ThreadInfo> causeThreads) {

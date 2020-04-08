@@ -9,5 +9,9 @@ import org.jetbrains.annotations.NotNull;
 public interface CompletionContext {
   @NotNull
   CompletionType getCompletionType();
+
   int getInvocationCount();
+
+  @NotNull
+  String getCompletionPrefix();
 }

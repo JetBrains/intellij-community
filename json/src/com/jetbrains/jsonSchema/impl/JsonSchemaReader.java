@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 
+import com.intellij.json.JsonBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -54,13 +55,13 @@ public class JsonSchemaReader {
   @NotNull
   public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile file) throws Exception {
     if (!file.isValid()) {
-      throw new Exception(String.format("Can not load JSON Schema file '%s'", file.getName()));
+      throw new Exception(JsonBundle.message("schema.reader.cant.load.file", file.getName()));
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     JsonSchemaObject object = psiFile == null ? null : new JsonSchemaReader(file).read(psiFile);
     if (object == null) {
-      throw new Exception(String.format("Can not load code model for JSON Schema file '%s'", file.getName()));
+      throw new Exception(JsonBundle.message("schema.reader.cant.load.model", file.getName()));
     }
     return object;
   }
@@ -70,15 +71,15 @@ public class JsonSchemaReader {
     final long length = file.getLength();
     final String fileName = file.getName();
     if (length > MAX_SCHEMA_LENGTH) {
-      return String.format("JSON schema was not loaded from '%s' because it's too large (file size is %d bytes).", fileName, length);
+      return JsonBundle.message("schema.reader.file.too.large", fileName, length);
     }
     if (length == 0) {
-      return String.format("JSON schema was not loaded from '%s'. File is empty.", fileName);
+      return JsonBundle.message("schema.reader.file.empty", fileName);
     }
     try {
       readFromFile(project, file);
     } catch (Exception e) {
-      final String message = String.format("JSON Schema not found or contain error in '%s': %s", fileName, e.getMessage());
+      final String message = JsonBundle.message("schema.reader.file.not.found.or.error", fileName, e.getMessage());
       LOG.info(message);
       return message;
     }

@@ -54,7 +54,7 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
         methods = SuperMethodWarningUtil.getTargetMethodCandidates(method, Collections.emptyList());
       }
       else {
-        methods = SuperMethodWarningUtil.checkSuperMethods(method, JavaFindUsagesHandler.ACTION_STRING);
+        methods = SuperMethodWarningUtil.checkSuperMethods(method, JavaFindUsagesHandler.getActionString());
       }
 
       if (methods.length > 1) {

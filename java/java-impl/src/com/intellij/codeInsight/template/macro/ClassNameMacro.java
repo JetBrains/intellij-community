@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,11 +29,11 @@ public class ClassNameMacro extends Macro {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.classname");
+    return JavaBundle.message("macro.classname");
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     int templateStartOffset = context.getTemplateStartOffset();
     int offset = templateStartOffset > 0 ? context.getTemplateStartOffset() - 1 : context.getTemplateStartOffset();
     PsiElement place = context.getPsiElementAtStartOffset();

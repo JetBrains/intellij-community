@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -40,11 +40,8 @@ import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class FileTreeModel extends AbstractTreeModel implements Identifiable, InvokerSupplier {
-  private final Invoker invoker = new Invoker.Background(this);
+  private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final State state;
   private volatile List<Root> roots;
 

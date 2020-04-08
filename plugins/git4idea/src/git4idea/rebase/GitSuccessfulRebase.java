@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,46 +32,48 @@ class GitSuccessfulRebase extends GitRebaseStatus {
       @NotNull
       @Override
       public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
-        String msg;
         if (withCheckout) {
-          msg = "Checked out" + mention(currentBranch) + " and rebased it";
+          return GitBundle.message(
+            "rebase.notification.successful.rebased.checkout.message",
+            convertBooleanToInt(currentBranch != null), currentBranch,
+            convertBooleanToInt(baseBranch != null), baseBranch);
         }
         else {
-          msg = "Rebased" + mention(currentBranch);
+          return GitBundle.message(
+            "rebase.notification.successful.rebased.message",
+            convertBooleanToInt(currentBranch != null), currentBranch,
+            convertBooleanToInt(baseBranch != null), baseBranch);
         }
-        if (baseBranch != null) msg += " on " + baseBranch;
-        return msg;
       }
     },
     UP_TO_DATE {
       @NotNull
       @Override
       public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
-        String msg = currentBranch != null ? currentBranch + " is up-to-date" : "Up-to-date";
-        if (baseBranch != null) msg += " with " + baseBranch;
-        return msg;
+        return GitBundle.message(
+          "rebase.notification.successful.up.to.date.message",
+          convertBooleanToInt(currentBranch != null), currentBranch,
+          convertBooleanToInt(baseBranch != null), baseBranch);
       }
     },
     FAST_FORWARDED {
       @NotNull
       @Override
       public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
-        String msg;
         if (withCheckout) {
-          msg = "Checked out" + mention(currentBranch) + " and fast-forwarded it";
+          return GitBundle.message(
+            "rebase.notification.successful.fast.forwarded.checkout.message",
+            convertBooleanToInt(currentBranch != null), currentBranch,
+            convertBooleanToInt(baseBranch != null), baseBranch);
         }
         else {
-          msg = "Fast-forwarded" + mention(currentBranch);
+          return GitBundle.message(
+            "rebase.notification.successful.fast.forwarded.message",
+            convertBooleanToInt(currentBranch != null), currentBranch,
+            convertBooleanToInt(baseBranch != null), baseBranch);
         }
-        if (baseBranch != null) msg += " to " + baseBranch;
-        return msg;
       }
     };
-
-    @NotNull
-    private static String mention(@Nullable String currentBranch) {
-      return currentBranch != null ? " " + currentBranch : "";
-    }
 
     @NotNull
     abstract String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout);
@@ -100,6 +89,10 @@ class GitSuccessfulRebase extends GitRebaseStatus {
         }
       }
       return REBASED;
+    }
+
+    private static int convertBooleanToInt(boolean expression) {
+      return expression ? 1 : 0;
     }
   }
 }

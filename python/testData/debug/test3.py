@@ -18,7 +18,7 @@ try:
     try:
         print(zoo(1).foo(2)) #we got ZeroDivision here
     finally:
-        print(zoo(0).foo(2))
+        print(zoo(0).foo(4))
 except:
     pass
 

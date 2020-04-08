@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.BootstrapClassLoaderUtil;
@@ -53,6 +53,7 @@ public final class Main {
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean hasGraphics = true;
+  private static boolean isLightEdit;
 
   private Main() { }
 
@@ -131,16 +132,21 @@ public final class Main {
     return isCommandLine;
   }
 
-  public static void setFlags(@NotNull String[] args) {
+  public static boolean isLightEdit() {
+    return isLightEdit;
+  }
+
+  public static void setFlags(String @NotNull [] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (args.length > 0 && Files.isRegularFile(Paths.get(args[0])));
   }
 
-  public static boolean isHeadless(@NotNull String[] args) {
-    if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
+  public static boolean isHeadless(String @NotNull [] args) {
+    if (Boolean.getBoolean(AWT_HEADLESS)) {
       return true;
     }
 

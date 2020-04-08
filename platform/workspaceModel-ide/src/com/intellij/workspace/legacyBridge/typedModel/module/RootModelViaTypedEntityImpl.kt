@@ -17,6 +17,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import java.util.*
@@ -38,12 +39,15 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
 
   val moduleEntity: ModuleEntity? = storage.resolve(moduleEntityId)
 
-  private val orderEntriesArray by lazy {
-    val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyArray<OrderEntry>()
-    moduleEntity.dependencies.mapIndexed { index, e ->
-      toOrderEntry(e, index)
-    }.toTypedArray()
-  }
+  private val orderEntriesArray: Array<OrderEntry>
+    get() {
+      // This variable should not be cached unless
+      //   com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent.moduleLibraries is mutable
+      val moduleEntity = storage.resolve(moduleEntityId) ?: return emptyArray()
+      return moduleEntity.dependencies.mapIndexed { index, e ->
+        toOrderEntry(e, index)
+      }.toTypedArray()
+    }
 
   val contentEntities: List<ContentRootEntity> by lazy {
     val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyList<ContentRootEntity>()
@@ -79,6 +83,10 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
           get() = moduleEntity.entitySource
 
         override fun hasEqualProperties(e: TypedEntity): Boolean = throw UnsupportedOperationException()
+
+        override fun <R : TypedEntity> referrers(
+          entityClass: Class<R>, propertyName: String
+        ): Sequence<R> = throw UnsupportedOperationException()
       }.also { contentEntries.add(it) }
 
       contentEntry.url
@@ -91,6 +99,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
 
   private val disposed = AtomicReference<Throwable>(null)
   override fun dispose() {
+    (filePointerProvider as? LegacyBridgeFilePointerProviderImpl)?.disposeAndClearCaches()
     val disposedStackTrace = disposed.getAndSet(Throwable())
     if (disposedStackTrace != null) throw IllegalStateException("${javaClass.name} was already disposed", disposedStackTrace)
   }
@@ -131,14 +140,14 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
     else null
 
     return when (item) {
-      is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryViaTypedEntity(this, index, item, updater)
+      is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryViaTypedEntity(module, index, item, updater)
       is ModuleDependencyItem.Exportable.LibraryDependency -> {
         val library = moduleLibraryTable.libraries.firstOrNull { (it as? LegacyBridgeLibrary)?.libraryId == item.library }
-        LibraryOrderEntryViaTypedEntity(this, index, item, library, updater)
+        LibraryOrderEntryViaTypedEntity(module, index, item, library, updater)
       }
-      is ModuleDependencyItem.SdkDependency -> SdkOrderEntryViaTypedEntity(this, index, item)
-      is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryViaTypedEntity(this, index, item)
-      is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryViaTypedEntity(this, index, item)
+      is ModuleDependencyItem.SdkDependency -> SdkOrderEntryViaTypedEntity(module, index, item)
+      is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryViaTypedEntity(module, index, item)
+      is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryViaTypedEntity(module, index, item)
     }
   }
 

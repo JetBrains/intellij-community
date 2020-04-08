@@ -28,8 +28,6 @@ import java.util.Set;
 /**
  * Implement this class to customize how Java files are compiled. Implementations are registered as Java services, by creating
  * a file META-INF/services/org.jetbrains.jps.builders.java.JavaBuilderExtension containing the qualified name of your implementation class.
- *
- * @author nik
  */
 public abstract class JavaBuilderExtension {
   /**
@@ -48,10 +46,13 @@ public abstract class JavaBuilderExtension {
   }
 
   /**
+   * @deprecated is not called anymore from dependency analysis, as the constant information is obtained directly from javac's AST
+   *
    * Override this method to provide additional constant search capabilities that would augment the logic already built into the java builder
    * Results from ConstantAffectionResolver extensions will be combined with the results found by the java ConstantAffectionResolver.
    * The implementation should expect asynchronous execution.
    */
+  @Deprecated
   @Nullable
   public Callbacks.ConstantAffectionResolver getConstantSearch(CompileContext context) {
     return null;

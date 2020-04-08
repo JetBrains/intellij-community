@@ -15,20 +15,26 @@
  */
 package org.intellij.plugins.markdown;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-public class MarkdownBundle {
-  @NotNull
-  private static final String BUNDLE_NAME = "org.intellij.plugins.markdown.bundle.MarkdownBundle";
-  @NotNull
-  private static final ResourceBundle BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+public class MarkdownBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.MarkdownBundle";
+  private static final MarkdownBundle INSTANCE = new MarkdownBundle();
+
+  private MarkdownBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {
-    return CommonBundle.message(BUNDLE, key, params);
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

@@ -57,7 +57,7 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
   }
 
   private void doTest(@NotNull GenericType producerAfterType,
-                      @NotNull GenericType... intermediateAfterTypes) {
+                      GenericType @NotNull ... intermediateAfterTypes) {
     final PsiElement elementAtCaret = configureAndGetElementAtCaret();
     assertNotNull(elementAtCaret);
     final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);

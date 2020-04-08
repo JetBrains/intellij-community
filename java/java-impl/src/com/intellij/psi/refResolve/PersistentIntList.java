@@ -224,8 +224,7 @@ class PersistentIntList implements Disposable {
     }
   }
 
-  @NotNull
-  public synchronized int[] get(final int id) {
+  public synchronized int @NotNull [] get(final int id) {
     assertPointer(id);
     try {
       if (id >= pointers.size) {
@@ -240,7 +239,7 @@ class PersistentIntList implements Disposable {
     }
   }
 
-  public synchronized void addAll(final int id, @NotNull final int[] values) {
+  public synchronized void addAll(final int id, final int @NotNull [] values) {
     assert 0 < values.length && values.length <= MAX_LIST_LENGTH : values.length;
     assert id > 0;
     Arrays.sort(values);

@@ -6,9 +6,6 @@ import com.intellij.util.io.directoryContent
 import org.junit.Test
 import java.io.File
 
-/**
- * @author nik
- */
 class UpdateZipFromFileTest {
   @Test
   fun `add entry`() {

@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +18,7 @@ import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Alexander Lobas
@@ -38,7 +38,7 @@ public class SceneBuilderInfo {
   public boolean equals(Object object) {
     if (object instanceof SceneBuilderInfo) {
       SceneBuilderInfo info = (SceneBuilderInfo)object;
-      return Comparing.equal(path, info.path) && Comparing.equal(libPath, info.libPath);
+      return Objects.equals(path, info.path) && Objects.equals(libPath, info.libPath);
     }
     return false;
   }

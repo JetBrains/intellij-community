@@ -1,40 +1,44 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.branch.GroupingKey
+import com.intellij.dvcs.branch.isGroupingEnabled
 import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
+import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
+import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.util.ui.tree.WideSelectionTreeUI
+import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
-import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.KeyStroke
 import javax.swing.TransferHandler
 import javax.swing.border.Border
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreePath
 
-internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataProvider {
+internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
   var doubleClickHandler: (BranchTreeNode) -> Unit = {}
-  var keyPressHandler: (BranchTreeNode) -> Unit = {}
   var searchField: SearchTextField? = null
 
   init {
@@ -43,7 +47,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
     setShowsRootHandles(true)
     isOpaque = false
     installDoubleClickHandler()
-    installF2KeyPressHandler()
+    SmartExpander.installOn(this)
     initDnD()
   }
 
@@ -61,19 +65,28 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
       val descriptor = value.getNodeDescriptor()
 
       val branchInfo = descriptor.branchInfo
-      if (branchInfo != null && descriptor.type == NodeType.BRANCH) {
-        when {
-          branchInfo.isCurrent -> {
-            icon = if (branchInfo.isFavorite) DvcsImplIcons.CurrentBranchFavoriteLabel else DvcsImplIcons.CurrentBranchLabel
-          }
-          branchInfo.isFavorite -> {
-            icon = AllIcons.Nodes.Favorite
-          }
-          else -> {
-            icon = EmptyIcon.ICON_16
-          }
+      val isBranchNode = descriptor.type == NodeType.BRANCH
+      val isGroupNode = descriptor.type == NodeType.GROUP_NODE
+
+      icon = when {
+        isBranchNode && branchInfo != null && branchInfo.isCurrent && branchInfo.isFavorite -> {
+          DvcsImplIcons.CurrentBranchFavoriteLabel
         }
+        isBranchNode && branchInfo != null && branchInfo.isCurrent -> {
+          DvcsImplIcons.CurrentBranchLabel
+        }
+        isBranchNode && branchInfo != null && branchInfo.isFavorite -> {
+          AllIcons.Nodes.Favorite
+        }
+        isBranchNode -> {
+          EmptyIcon.ICON_16
+        }
+        isGroupNode -> {
+          PlatformIcons.FOLDER_ICON
+        }
+        else -> null
       }
+
       append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
       if (branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
@@ -89,20 +102,14 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
   private fun installDoubleClickHandler() {
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        val clickPath =
-          (if (WideSelectionTreeUI.isWideSelection(this@BranchesTreeComponent))
-            getClosestPathForLocation(e.x, e.y)
-          else
-            getPathForLocation(e.x, e.y))
-          ?: return false
+        val clickPath = getClosestPathForLocation(e.x, e.y) ?: return false
         val selectionPath = selectionPath
         if (selectionPath == null || clickPath != selectionPath) return false
         val node = (selectionPath.lastPathComponent as? BranchTreeNode) ?: return false
-        if (model.isLeaf(node) || getToggleClickCount() != e.clickCount) {
-          doubleClickHandler(node)
-          return true
-        }
-        return false
+        if (isToggleEvent(this@BranchesTreeComponent, e)) return false
+
+        doubleClickHandler(node)
+        return true
       }
     }.installOn(this)
   }
@@ -111,24 +118,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
     if (!GraphicsEnvironment.isHeadless()) {
       transferHandler = BRANCH_TREE_TRANSFER_HANDLER
     }
-  }
-
-  private fun installF2KeyPressHandler() {
-    registerKeyboardAction({
-                             val selectionPaths = selectionPaths ?: return@registerKeyboardAction
-                             if (selectionPaths.size != 1) return@registerKeyboardAction
-                             val node = selectionPaths.firstOrNull()?.lastPathComponent as? BranchTreeNode
-                             if (node != null) {
-                               keyPressHandler(node)
-                             }
-                           }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), JComponent.WHEN_FOCUSED)
-  }
-
-  override fun getData(dataId: String): Any? {
-    if (GIT_BRANCHES.`is`(dataId)) {
-      return getSelectedBranches()
-    }
-    return null
   }
 
   fun getSelectedBranches(): Set<BranchInfo> {
@@ -151,27 +140,31 @@ internal class FilteringBranchesTree(project: Project,
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
+  private val branchFilter: (BranchInfo) -> Boolean =
+    { branch -> !uiController.showOnlyMy || branch.isMy == ThreeState.YES }
+  private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
+                                                          remoteBranchesNode.getNodeDescriptor())
 
-  private val localBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
-  private val remoteBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
-  private val nodeDescriptorsToNodes = hashMapOf<BranchNodeDescriptor, BranchTreeNode>()
+  private var localNodeExist = false
+  private var remoteNodeExist = false
 
-  private val baseNodeDescriptorsToNodes =
-    mapOf(
-      rootNode.getNodeDescriptor() to rootNode,
-      localBranchesNode.getNodeDescriptor() to localBranchesNode,
-      remoteBranchesNode.getNodeDescriptor() to remoteBranchesNode
-    )
+  private var useDirectoryGrouping = GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY)
+
+  fun toggleDirectoryGrouping(state: Boolean) {
+    useDirectoryGrouping = state
+    refreshTree()
+  }
 
   init {
     runInEdt {
       PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
       setupTreeExpansionListener()
+      project.service<BranchesTreeStateHolder>().setTree(this)
     }
   }
 
-  override fun installSearchField(isOpaque: Boolean, textFieldBorder: Border?): SearchTextField {
-    val searchField = super.installSearchField(isOpaque, textFieldBorder)
+  override fun installSearchField(textFieldBorder: Border?): SearchTextField {
+    val searchField = super.installSearchField(textFieldBorder)
     component.searchField = searchField
     return searchField
   }
@@ -196,46 +189,69 @@ internal class FilteringBranchesTree(project: Project,
     TreeUtil.restoreExpandedPaths(component, expandedPaths.toList())
   }
 
-  override fun updateExpandedPathsOnSpeedSearchUpdateComplete() {
+  override fun onSpeedSearchUpdateComplete() {
     restorePreviouslyExpandedPaths()
+    updateSpeedSearchBackground()
   }
+
+  private fun updateSpeedSearchBackground() {
+    val speedSearch = searchModel.speedSearchSupply as? SpeedSearch ?: return
+    val textEditor = component.searchField?.textEditor ?: return
+    if (isEmptyModel()) {
+      textEditor.isOpaque = true
+      speedSearch.noHits()
+    }
+    else {
+      textEditor.isOpaque = false
+      textEditor.background = UIUtil.getTextFieldBackground()
+    }
+  }
+
+  private fun isEmptyModel() = searchModel.isLeaf(localBranchesNode) && searchModel.isLeaf(remoteBranchesNode)
 
   override fun getNodeClass() = BranchTreeNode::class.java
 
-  override fun createNode(nodeDescriptor: BranchNodeDescriptor) = nodeDescriptorsToNodes[nodeDescriptor] ?: BranchTreeNode(nodeDescriptor)
+  override fun createNode(nodeDescriptor: BranchNodeDescriptor) =
+    when (nodeDescriptor.type) {
+      NodeType.LOCAL_ROOT -> localBranchesNode
+      NodeType.REMOTE_ROOT -> remoteBranchesNode
+      else -> BranchTreeNode(nodeDescriptor)
+    }
 
   override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
     when (nodeDescriptor.type) {
-      NodeType.ROOT -> getRootNodeDescriptors(localBranchesDescriptors.isNotEmpty(), remoteBranchesDescriptors.isNotEmpty())
-      NodeType.LOCAL_ROOT -> localBranchesDescriptors.filterByMyBranches()
-      NodeType.REMOTE_ROOT -> remoteBranchesDescriptors.filterByMyBranches()
-      else -> mutableListOf() //leaf branch node
+      NodeType.ROOT -> getRootNodeDescriptors()
+      NodeType.LOCAL_ROOT -> localBranchesNode.getNodeDescriptor().getDirectChildren()
+      NodeType.REMOTE_ROOT -> remoteBranchesNode.getNodeDescriptor().getDirectChildren()
+      NodeType.GROUP_NODE -> nodeDescriptor.getDirectChildren()
+      else -> emptyList() //leaf branch node
     }
 
-  private fun Iterable<BranchNodeDescriptor>.filterByMyBranches() =
-    filter { !uiController.showOnlyMy || it.branchInfo?.isMy == ThreeState.YES }
+  private fun BranchNodeDescriptor.getDirectChildren() = nodeDescriptorsModel.getChildrenForParent(this)
 
   override fun rebuildTree(initial: Boolean): Boolean {
     val rebuilded = buildTreeNodesIfNeeded()
-    expandedPaths.addAll(TreeUtil.collectExpandedPaths(tree))
+    val treeState = project.service<BranchesTreeStateHolder>()
+    if (!initial) {
+      treeState.createNewState()
+    }
     searchModel.updateStructure()
     if (initial) {
-      TreeUtil.expand(tree, 2)
+      treeState.applyStateToTreeOrExpandAll()
     }
     else {
-      restorePreviouslyExpandedPaths()
+      treeState.applyStateToTree()
     }
 
     return rebuilded
   }
 
   fun refreshTree() {
-    expandedPaths.addAll(TreeUtil.collectExpandedPaths(tree))
-    val selectionPaths = tree.selectionModel.selectionPaths
-    refreshTreeNodesFromModel()
+    val treeState = project.service<BranchesTreeStateHolder>()
+    treeState.createNewState()
+    refreshNodeDescriptorsModel()
     searchModel.updateStructure()
-    restorePreviouslyExpandedPaths()
-    tree.selectionModel.selectionPaths = selectionPaths
+    treeState.applyStateToTree()
   }
 
   private fun buildTreeNodesIfNeeded(): Boolean {
@@ -243,48 +259,30 @@ internal class FilteringBranchesTree(project: Project,
       val changed = checkForBranchesUpdate()
       if (!changed) return false
 
-      refreshTreeNodesFromModel()
+      refreshNodeDescriptorsModel()
 
       return changed
     }
   }
 
-  private fun refreshTreeNodesFromModel() {
+  private fun refreshNodeDescriptorsModel() {
     with(uiController) {
-      nodeDescriptorsToNodes.clear()
-      localBranchesDescriptors.clear()
-      remoteBranchesDescriptors.clear()
+      nodeDescriptorsModel.clear()
 
-      localBranchesDescriptors += localBranches.toNodeDescriptors()
-      remoteBranchesDescriptors += remoteBranches.toNodeDescriptors()
-      nodeDescriptorsToNodes += baseNodeDescriptorsToNodes
-      nodeDescriptorsToNodes += localBranchesDescriptors.associateWith(::BranchTreeNode)
-      nodeDescriptorsToNodes += remoteBranchesDescriptors.associateWith(::BranchTreeNode)
+      localNodeExist = localBranches.isNotEmpty()
+      remoteNodeExist = remoteBranches.isNotEmpty()
+
+      nodeDescriptorsModel.populateFrom((localBranches.asSequence() + remoteBranches.asSequence()).filter(branchFilter), useDirectoryGrouping)
     }
   }
 
-  override fun getText(nodeDescriptor: BranchNodeDescriptor?) = nodeDescriptor?.branchInfo?.branchName
+  override fun getText(nodeDescriptor: BranchNodeDescriptor?) = nodeDescriptor?.branchInfo?.branchName ?: nodeDescriptor?.displayName
 
-  private fun getRootNodeDescriptors(localNodeExist: Boolean, remoteNodeExist: Boolean) =
+  private fun getRootNodeDescriptors() =
     mutableListOf<BranchNodeDescriptor>().apply {
       if (localNodeExist) add(localBranchesNode.getNodeDescriptor())
       if (remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
     }
-}
-
-internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1, d2 ->
-  val b1 = d1.branchInfo
-  val b2 = d2.branchInfo
-  if (b1 == null || b2 == null) d1.type.compareTo(d2.type)
-  else if (b1.isCurrent && !b2.isCurrent) -1
-  else if (!b1.isCurrent && b2.isCurrent) 1
-  else if (b1.isFavorite && !b2.isFavorite) -1
-  else if (!b1.isFavorite && b2.isFavorite) 1
-  else if (b1.isLocal && !b2.isLocal) -1
-  else if (!b1.isLocal && b2.isLocal) 1
-  else {
-    b1.branchName.compareTo(b2.branchName)
-  }
 }
 
 private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
@@ -301,4 +299,45 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   }
 
   override fun getSourceActions(c: JComponent) = COPY_OR_MOVE
+}
+
+@State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
+  private lateinit var branchesTree: FilteringBranchesTree
+  private lateinit var treeState: TreeState
+
+  override fun getState(): TreeState? {
+    createNewState()
+    if (::treeState.isInitialized) {
+      return treeState
+    }
+    return null
+  }
+
+  override fun loadState(state: TreeState) {
+    treeState = state
+  }
+
+  fun createNewState() {
+    if (::branchesTree.isInitialized) {
+      treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
+    }
+  }
+
+  fun applyStateToTree(ifNoStatePresent: () -> Unit = {}) {
+    if (!::branchesTree.isInitialized) return
+
+    if (::treeState.isInitialized) {
+      treeState.applyTo(branchesTree.tree)
+    }
+    else {
+      ifNoStatePresent()
+    }
+  }
+
+  fun applyStateToTreeOrExpandAll() = applyStateToTree { TreeUtil.expandAll(branchesTree.tree) }
+
+  fun setTree(tree: FilteringBranchesTree) {
+    branchesTree = tree
+  }
 }

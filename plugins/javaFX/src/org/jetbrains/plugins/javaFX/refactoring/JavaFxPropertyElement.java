@@ -8,6 +8,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
 /**
@@ -29,7 +30,7 @@ public class JavaFxPropertyElement extends BeanPropertyElement {
 
   @Override
   public String getTypeName() {
-    return "property";
+    return JavaFXBundle.message("javafx.refactoring.property.element.type.name");
   }
 
   @NotNull

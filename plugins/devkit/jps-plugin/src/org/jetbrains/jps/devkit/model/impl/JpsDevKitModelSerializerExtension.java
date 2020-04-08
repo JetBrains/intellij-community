@@ -18,9 +18,6 @@ import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerialize
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override

@@ -26,6 +26,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.actions.GitSingleCommitActionGroup;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -44,13 +45,12 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
     setPopup(false);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@NotNull AnActionEvent e,
-                                @NotNull Project project,
-                                @NotNull VcsLog log,
-                                @NotNull GitRepository root,
-                                @NotNull CommitId commit) {
+  public AnAction @NotNull [] getChildren(@NotNull AnActionEvent e,
+                                          @NotNull Project project,
+                                          @NotNull VcsLog log,
+                                          @NotNull GitRepository root,
+                                          @NotNull CommitId commit) {
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     List<VcsRef> refs = e.getData(VcsLogDataKeys.VCS_LOG_REFS);
     if (logUI == null || refs == null) {
@@ -97,7 +97,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
         branchActionGroups.add(createBranchGroup(project, ref, root, allRepositories, commonBranches, settings, showBranchesPopup));
       }
 
-      DefaultActionGroup branchesGroup = new DefaultActionGroup("Branches", branchActionGroups);
+      DefaultActionGroup branchesGroup = new DefaultActionGroup(GitBundle.message("branches.branches"), branchActionGroups);
       branchesGroup.setPopup(showBranchesPopup);
       groups.add(branchesGroup);
     }
@@ -110,7 +110,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
         tagActionGroups.add(createTagGroup(project, ref, root, showTagsPopup));
       }
 
-      DefaultActionGroup tagsGroup = new DefaultActionGroup("Tags", tagActionGroups);
+      DefaultActionGroup tagsGroup = new DefaultActionGroup(GitBundle.message("branches.tags"), tagActionGroups);
       tagsGroup.setPopup(showTagsPopup);
       groups.add(tagsGroup);
     }
@@ -134,7 +134,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
 
     if (isSyncBranch) {
       ActionGroup allReposActions = createBranchActions(project, allRepositories, ref, repository, isLocal);
-      allReposActions.getTemplatePresentation().setText("In All Repositories");
+      allReposActions.getTemplatePresentation().setText(GitBundle.message("in.branches.all.repositories"));
       allReposActions.setPopup(true);
       actions.add(allReposActions);
       actions.add(Separator.getInstance());
@@ -144,7 +144,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
     singleRepoActions.setPopup(false);
     actions.add(singleRepoActions);
 
-    String text = showBranchesPopup ? ref.getName() : "Branch '" + ref.getName() + "'";
+    String text = showBranchesPopup ? ref.getName() : GitBundle.message("branches.branch.0", ref.getName());
     ActionGroup group = new DefaultActionGroup(actions);
     group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);
@@ -159,7 +159,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
     ActionGroup singleRepoActions = createTagActions(project, Collections.singletonList(repository), ref);
     singleRepoActions.setPopup(false);
 
-    String text = showTagsPopup ? ref.getName() : "Tag '" + ref.getName() + "'";
+    String text = showTagsPopup ? ref.getName() : GitBundle.message("branches.tag.0", ref.getName());
     ActionGroup group = new DefaultActionGroup(singleRepoActions);
     group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);

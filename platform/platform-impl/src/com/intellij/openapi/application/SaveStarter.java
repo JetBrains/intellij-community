@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
+import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,7 @@ final class SaveStarter extends ApplicationStarterBase {
 
   @Override
   public String getUsageMessage() {
-    return "Wrong number of arguments. Usage: <ide executable> save";
+    return IdeBundle.message("wrong.number.of.arguments.usage.ide.executable.save");
   }
 
   @NotNull

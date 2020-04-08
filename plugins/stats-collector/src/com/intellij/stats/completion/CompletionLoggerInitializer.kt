@@ -4,9 +4,11 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.reporting.isUnitTestMode
+import com.intellij.stats.CompletionStatsPolicy
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.storage.factors.MutableLookupStorage
 import kotlin.random.Random
@@ -22,7 +24,10 @@ class CompletionLoggerInitializer(private val actionListener: LookupActionsListe
       "php" to 0.2,
       "kotlin" to 0.2,
       "java" to 0.1,
-      "ecmascript 6" to 0.2
+      "ecmascript 6" to 0.2,
+      "typescript" to 0.5,
+      "c/c++" to 0.5,
+      "c#" to 0.1
     )
   }
 
@@ -56,7 +61,7 @@ class CompletionLoggerInitializer(private val actionListener: LookupActionsListe
   }
 
   private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus, language: Language): Boolean {
-    if (CompletionTrackerDisabler.isDisabled()) return false
+    if (CompletionStatsPolicy.isStatsLogDisabled(language) || !getPluginInfo(language::class.java).isSafeToReport()) return false
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || experimentHelper.isExperimentOnCurrentIDE()) return true
 

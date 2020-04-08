@@ -15,16 +15,15 @@
  */
 package com.intellij.diff.comparison;
 
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 
 public class DiffTooBigException extends ProcessCanceledException {
-  public static final String MESSAGE = "File is too big and there are too many changes.";
-
   public DiffTooBigException() {
   }
 
   @Override
   public String getMessage() {
-    return MESSAGE;
+    return DiffBundle.message("file.is.too.big.and.there.are.too.many.changes");
   }
 }

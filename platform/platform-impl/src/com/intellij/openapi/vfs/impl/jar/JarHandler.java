@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
@@ -35,12 +35,8 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.util.zip.ZipFile;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
-/**
- * @author max
- */
 public class JarHandler extends ZipHandler {
   private static final Logger LOG = Logger.getInstance(JarHandler.class);
 
@@ -217,7 +213,7 @@ public class JarHandler extends ZipHandler {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.pushState();
-      progress.setText(VfsBundle.message("jar.copy.progress", original.getPath()));
+      progress.setText(IdeBundle.message("jar.copy.progress", original.getPath()));
       progress.setFraction(0);
     }
 
@@ -335,23 +331,24 @@ public class JarHandler extends ZipHandler {
       // - Collect librarySnapshot -> projectLibraryPaths and existing projectLibraryPath -> librarySnapshot
       // - Remove all projectLibraryPaths that doesn't exist from persistent mapping
       // - Remove jar library snapshots that have no projectLibraryPath
-      Set<String> availableLibrarySnapshots = newTroveSet(assertNotNull(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          int lastDotPosition = name.lastIndexOf('.');
-          if (lastDotPosition == -1) return false;
-          String extension = name.substring(lastDotPosition + 1);
-          if (extension.length() != 40 || !consistsOfHexLetters(extension)) return false;
-          return true;
-        }
-
-        private boolean consistsOfHexLetters(String extension) {
-          for (int i = 0; i < extension.length(); ++i) {
-            if (Character.digit(extension.charAt(i), 16) == -1) return false;
+      Set<String> availableLibrarySnapshots = newTroveSet(
+        Objects.requireNonNull(snapshotInfoFile.getParentFile().list(new FilenameFilter() {
+          @Override
+          public boolean accept(File dir, String name) {
+            int lastDotPosition = name.lastIndexOf('.');
+            if (lastDotPosition == -1) return false;
+            String extension = name.substring(lastDotPosition + 1);
+            if (extension.length() != 40 || !consistsOfHexLetters(extension)) return false;
+            return true;
           }
-          return true;
-        }
-      })));
+
+          private boolean consistsOfHexLetters(String extension) {
+            for (int i = 0; i < extension.length(); ++i) {
+              if (Character.digit(extension.charAt(i), 16) == -1) return false;
+            }
+            return true;
+          }
+        })));
 
       final List<String> invalidLibraryFilePaths = new ArrayList<>();
       final List<String> allLibraryFilePaths = new ArrayList<>();
@@ -438,7 +435,7 @@ public class JarHandler extends ZipHandler {
     @NotNull
     @Override
     protected NotificationGroup compute() {
-      return NotificationGroup.balloonGroup(VfsBundle.message("jar.copy.error.title"));
+      return NotificationGroup.balloonGroup("Error Copying File", IdeBundle.message("jar.copy.error.title"));
     }
   };
 
@@ -448,7 +445,7 @@ public class JarHandler extends ZipHandler {
     String path = original.getPath();
     myFileSystem.setNoCopyJarForPath(path);
 
-    String message = VfsBundle.message("jar.copy.error.message", path, target.getPath(), e.getMessage());
+    String message = IdeBundle.message("jar.copy.error.message", path, target.getPath(), e.getMessage());
     ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
   }
 }

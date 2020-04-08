@@ -214,17 +214,17 @@ public final class ModelMergerImpl implements ModelMerger {
 
 
   private <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
-    final Set<Class> commonClasses = getCommonClasses(new THashSet<>(), implementations);
+    final Set<Class<?>> commonClasses = getCommonClasses(new THashSet<>(), implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     return AdvancedProxy.createProxy(handler, null, commonClasses.toArray(ArrayUtil.EMPTY_CLASS_ARRAY));
   }
 
-  private static <T extends Collection<Class>> T getCommonClasses(final T result, final Object... implementations) {
+  private static <T extends Collection<Class<?>>> T getCommonClasses(final T result, final Object... implementations) {
     if (implementations.length > 0) {
       DomUtil.getAllInterfaces(implementations[0].getClass(), result);
       for (int i = 1; i < implementations.length; i++) {
-        final ArrayList<Class> list1 = new ArrayList<>();
+        final ArrayList<Class<?>> list1 = new ArrayList<>();
         DomUtil.getAllInterfaces(implementations[i].getClass(), list1);
         result.retainAll(list1);
       }

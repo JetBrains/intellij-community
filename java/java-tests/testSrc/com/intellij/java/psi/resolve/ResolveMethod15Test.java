@@ -647,6 +647,14 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     assertNull(result.getElement());
   }
 
+  public void testStaticImportOnEnumValues() throws Exception {
+    JavaResolveResult result = ((PsiJavaReference)configureByFile()).advancedResolve(true);
+    PsiMethod method = (PsiMethod)result.getElement();
+    assertNotNull(method);
+    PsiClass containingClass = method.getContainingClass();
+    assertEquals("RetentionPolicy", containingClass.getName());
+  }
+
   private static void assertResolvesToMethodInClass(JavaResolveResult result, @NonNls String name) {
     PsiMethod method = (PsiMethod)result.getElement();
     assertNotNull(method);

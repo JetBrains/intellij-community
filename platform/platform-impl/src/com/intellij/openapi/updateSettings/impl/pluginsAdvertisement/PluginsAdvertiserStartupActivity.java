@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
@@ -125,7 +126,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         message = getAddressedMessagePresentation(plugins, disabledPlugins, features);
         if (!disabledPlugins.isEmpty()) {
           notificationActions.add(NotificationAction.createSimpleExpiring(
-            "Enable Plugins...", () -> {
+            IdeBundle.message("plugins.advertiser.action.enable.plugins"), () -> {
               FeatureUsageData data = new FeatureUsageData()
                 .addData("source", "notification")
                 .addData("plugins", ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId().getIdString()));
@@ -135,14 +136,14 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         }
         else {
           notificationActions.add(NotificationAction.createSimpleExpiring(
-            "Configure Plugins...", () -> {
+            IdeBundle.message("plugins.advertiser.action.configure.plugins"), () -> {
               FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
               FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "configure.plugins", data);
               new PluginsAdvertiserDialog(project, plugins.toArray(new PluginDownloader[0]), allPlugins).show();
             }));
         }
         notificationActions.add(NotificationAction.createSimpleExpiring(
-          "Ignore Unknown Features",
+          IdeBundle.message("plugins.advertiser.action.ignore.unknown.features"),
           () -> {
             FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
             FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.unknown.features", data);
@@ -153,16 +154,15 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
           }));
       }
       else if (bundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
-        message = "Features covered by " + PluginsAdvertiser.IDEA_ULTIMATE_EDITION +
-                  " (" + StringUtil.join(bundledPlugin, ", ") + ") are detected";
+        message = IdeBundle.message("plugins.advertiser.ultimate.features.detected", StringUtil.join(bundledPlugin, ", "));
         notificationActions.add(NotificationAction.createSimpleExpiring(
-          PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, () -> {
+          IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
             FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
             FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page", data);
             PluginsAdvertiser.openDownloadPage();
           }));
         notificationActions.add(NotificationAction.createSimpleExpiring(
-          PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, () -> {
+          IdeBundle.message("plugins.advertiser.action.ignore.ultimate"), () -> {
             FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
             FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.ultimate", data);
             PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");

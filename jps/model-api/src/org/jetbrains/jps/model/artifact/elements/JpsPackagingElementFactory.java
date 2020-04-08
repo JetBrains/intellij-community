@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifactReference;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-/**
- * @author nik
- */
 public abstract class JpsPackagingElementFactory {
   public abstract JpsCompositePackagingElement getOrCreateDirectory(@NotNull JpsCompositePackagingElement root, @NotNull String path);
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -28,26 +29,25 @@ import java.util.regex.Pattern;
  */
 @State(name = "PythonDocumentationMap", storages = @Storage("other.xml"))
 public class PythonDocumentationMap implements PersistentStateComponent<PythonDocumentationMap.State> {
+  private static final ImmutableMap<String, String> DEFAULT_ENTRIES = ImmutableMap.<String, String>builder()
+    .put("PyQt4", "http://pyqt.sourceforge.net/Docs/PyQt4/{class.name.lower}.html#{function.name}")
+    .put("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionToProperty.name}{functionIsProperty?-prop}")
+    .put("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}")
+    .put("gtk","http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}")
+    .put("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}")
+    .put("kivy", "http://kivy.org/docs/api-{module.name}.html")
+    .put("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}")
+    .put("pyramid", "http://docs.pylonsproject.org/projects/pyramid/en/latest/api/{module.basename}.html#{element.qname}")
+    .put("flask", "http://flask.pocoo.org/docs/latest/api/#{element.qname}")
+    .put("pandas", "https://pandas.pydata.org/pandas-docs/stable/generated/{element.qname}.html")
+    .build();
 
   public static PythonDocumentationMap getInstance() {
     return ServiceManager.getService(PythonDocumentationMap.class);
   }
 
   public static class State {
-    private Map<String, String> myEntries = Maps.newHashMap();
-
-    public State() {
-      addEntry("PyQt4", "http://pyqt.sourceforge.net/Docs/PyQt4/{class.name.lower}.html#{function.name}");
-      addEntry("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionToProperty.name}{functionIsProperty?-prop}");
-      addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
-      addEntry("gtk","http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
-      addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
-      addEntry("kivy", "http://kivy.org/docs/api-{module.name}.html");
-      addEntry("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}");
-      addEntry("pyramid", "http://docs.pylonsproject.org/projects/pyramid/en/latest/api/{module.basename}.html#{element.qname}");
-      addEntry("flask", "http://flask.pocoo.org/docs/latest/api/#{element.qname}");
-      addEntry("pandas", "https://pandas.pydata.org/pandas-docs/stable/generated/{element.qname}.html");
-    }
+    private Map<String, String> myEntries = Maps.newHashMap(DEFAULT_ENTRIES);
 
     public Map<String, String> getEntries() {
       return myEntries;
@@ -69,10 +69,6 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     @Override
     public int hashCode() {
       return myEntries != null ? myEntries.hashCode() : 0;
-    }
-
-    private void addEntry(String qName, String pattern) {
-      myEntries.put(qName, pattern);
     }
   }
 
@@ -98,8 +94,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
-    State defaultState = new State();
-    state.getEntries().putAll(defaultState.getEntries());
+    state.getEntries().putAll(DEFAULT_ENTRIES);
   }
 
   public Map<String, String> getEntries() {
@@ -118,6 +113,11 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       }
     }
     return null;
+  }
+
+  public boolean isUserDefinedUrl(@NotNull String url) {
+    return ContainerUtil.exists(getEntries().values(),
+                                pattern -> url.startsWith(rootForPattern(pattern)) && !DEFAULT_ENTRIES.containsValue(pattern));
   }
 
   private static String rootForPattern(String urlPattern) {

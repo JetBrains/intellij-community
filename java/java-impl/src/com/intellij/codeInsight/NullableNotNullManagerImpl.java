@@ -55,14 +55,14 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
-  public void setNotNulls(@NotNull String... annotations) {
+  public void setNotNulls(String @NotNull ... annotations) {
     myNotNulls.clear();
     Collections.addAll(myNotNulls, annotations);
     normalizeDefaults();
   }
 
   @Override
-  public void setNullables(@NotNull String... annotations) {
+  public void setNullables(String @NotNull ... annotations) {
     myNullables.clear();
     Collections.addAll(myNullables, annotations);
     normalizeDefaults();
@@ -241,7 +241,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   @Nullable
   NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
-                                              @NotNull PsiAnnotation.TargetType[] placeTargetTypes,
+                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                               PsiModifierListOwner owner, boolean superPackage) {
     PsiModifierList modifierList = container.getModifierList();
     if (modifierList == null) return null;
@@ -267,7 +267,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Nullable
-  private NullabilityAnnotationInfo checkNullityDefault(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType[] placeTargetTypes, boolean superPackage) {
+  private NullabilityAnnotationInfo checkNullityDefault(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType @NotNull [] placeTargetTypes, boolean superPackage) {
     for (AnnotationPackageSupport support : myAnnotationSupports) {
       NullabilityAnnotationInfo info = support.getNullabilityByContainerAnnotation(annotation, placeTargetTypes, superPackage);
       if (info != null) {

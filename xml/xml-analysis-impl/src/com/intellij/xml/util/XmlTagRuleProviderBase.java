@@ -15,11 +15,11 @@
  */
 package com.intellij.xml.util;
 
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
-import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlTagRuleProvider;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -229,7 +230,8 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
         }
       }
 
-      holder.registerProblem(tagNameElement, "Tag should have one of following attributes: " + StringUtil.join(myAttributeNames, ", "),
+      holder.registerProblem(tagNameElement,
+                             XmlAnalysisBundle.message("tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
                              myProblemHighlightType,
                              fixes);
     }

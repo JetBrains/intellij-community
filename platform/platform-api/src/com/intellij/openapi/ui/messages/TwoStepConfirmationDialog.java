@@ -2,7 +2,7 @@
 package com.intellij.openapi.ui.messages;
 
 import com.intellij.util.PairFunction;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,10 +15,10 @@ public class TwoStepConfirmationDialog extends MessageDialog {
   private final boolean myChecked;
   private final PairFunction<? super Integer, ? super JCheckBox, Integer> myExitFunc;
 
-  public TwoStepConfirmationDialog(String message,
-                                   @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                   @NotNull String[] options,
-                                   String checkboxText,
+  public TwoStepConfirmationDialog(@NlsContexts.DialogMessage String message,
+                                   @NlsContexts.DialogTitle String title,
+                                   String @NotNull [] options,
+                                   @NlsContexts.Checkbox String checkboxText,
                                    boolean checked,
                                    final int defaultOptionIndexed,
                                    final int focusedOptionIndex,

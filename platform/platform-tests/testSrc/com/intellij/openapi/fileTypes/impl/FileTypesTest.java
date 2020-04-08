@@ -55,7 +55,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-@SuppressWarnings("ConstantConditions")
 public class FileTypesTest extends HeavyPlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
@@ -74,7 +73,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       FileTypeManagerImpl.reDetectAsync(false);
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.initializeComponent();
     }
     catch (Throwable e) {
@@ -84,6 +83,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager = null;
       super.tearDown();
     }
+  }
+
+  private void initStandardFileTypes() {
+    myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
+    myFileTypeManager.initStandardFileTypes();
   }
 
   public void testMaskExclude() {
@@ -303,11 +307,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       public int getDesiredContentPrefixLength() {
         return 48;
       }
-
-      @Override
-      public int getVersion() {
-        return 0;
-      }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
     myFileTypeManager.toLog = true;
@@ -362,13 +361,14 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   private void doReassignTest(FileType fileType, String extension) {
     try {
+      myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(fileType, "*." + extension));
 
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
 
       Element element = myFileTypeManager.getState();
 
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -394,7 +394,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Element state = myFileTypeManager.getState();
 
     myFileTypeManager.getRemovedMappingTracker().clear();
-    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.clearForTests();
+    initStandardFileTypes();
     myFileTypeManager.loadState(state);
     myFileTypeManager.initializeComponent();
 
@@ -420,7 +421,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Element state = myFileTypeManager.getState();
 
     myFileTypeManager.getRemovedMappingTracker().clear();
-    myFileTypeManager.initStandardFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.loadState(state);
     myFileTypeManager.initializeComponent();
 
@@ -499,7 +500,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         consumer.consume(typeFromPlugin, "fromPlugin");
       }
     }, getTestRootDisposable());
-    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.getRegisteredFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.loadState(element);
 
     myFileTypeManager.initializeComponent();
@@ -521,7 +523,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     try {
       myFileTypeManager.clearForTests();
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -534,7 +536,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       Disposer.dispose(disposable);
       disposable = null;
       myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -544,7 +546,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       disposable = Disposer.newDisposable();
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
       myFileTypeManager.clearForTests();
-      myFileTypeManager.initStandardFileTypes();
+      initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
 
@@ -561,7 +563,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   // IDEA-139409 Persistent message "File type recognized: File extension *.vm was reassigned to VTL"
   public void testReassign() throws Exception {
     myFileTypeManager.clearForTests();
-    myFileTypeManager.initStandardFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.initializeComponent();
 
     Element element = JDOMUtil.load(
@@ -595,7 +597,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(idl, extension));
 
     myFileTypeManager.clearForTests();
-    myFileTypeManager.initStandardFileTypes();
+    initStandardFileTypes();
     myFileTypeManager.loadState(element);
     myFileTypeManager.initializeComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
@@ -622,11 +624,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       @Override
       public int getDesiredContentPrefixLength() {
         return 48;
-      }
-
-      @Override
-      public int getVersion() {
-        return 0;
       }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
@@ -834,11 +831,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       public int getDesiredContentPrefixLength() {
         return "#!archive".length();
       }
-
-      @Override
-      public int getVersion() {
-        return 0;
-      }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
 
@@ -848,7 +840,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEquals(1, detectorCalls.get());
   }
 
-  public void testUniqueLanguage() {
+  public void testEveryLanguageHasOnePrimaryFileType() {
     Map<String, LanguageFileType> map = new HashMap<>();
     for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       if (!(type instanceof LanguageFileType)) continue;
@@ -892,7 +884,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
     
-    VirtualFile file = createTempFile(extension, null, "", CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("x."+extension, null, "", CharsetToolkit.UTF8_CHARSET);
     assertEquals(replaceableFileType, file.getFileType());
   }
 
@@ -945,7 +937,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
       @Nullable
       @Override
-      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+      public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
         return null;
       }
     };
@@ -960,7 +952,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @NotNull
     @Override
     public String getName() {
-      return "PlainTextLike files";
+      return "PlainTextLike Replaceable";
     }
 
     @NotNull
@@ -993,8 +985,21 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     @Nullable
     @Override
-    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
       return null;
+    }
+  }
+
+  public void testHashBangPatternsCanBeConfiguredDynamically() throws IOException {
+    VirtualFile file0 = createTempFile("xxxx", null, "#!/usr/bin/gogogo\na=b", CharsetToolkit.UTF8_CHARSET);
+    assertEquals(StdFileTypes.PLAIN_TEXT, file0.getFileType());
+    myFileTypeManager.getExtensionMap().addHashBangPattern("gogogo", StdFileTypes.PROPERTIES);
+    try {
+      VirtualFile file = createTempFile("xxxx", null, "#!/usr/bin/gogogo\na=b", CharsetToolkit.UTF8_CHARSET);
+      assertEquals(StdFileTypes.PROPERTIES, file.getFileType());
+    }
+    finally {
+      myFileTypeManager.getExtensionMap().removeHashBangPattern("gogogo", StdFileTypes.PROPERTIES);
     }
   }
 }

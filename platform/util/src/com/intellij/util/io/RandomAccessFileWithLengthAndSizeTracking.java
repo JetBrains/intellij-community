@@ -21,8 +21,11 @@ import com.intellij.util.SystemProperties;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+
+import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
 /**
  * Replacement of read-write random-access file with shadow file pointer / size, valid when file manipulations happen in with this class only.
@@ -37,10 +40,14 @@ class RandomAccessFileWithLengthAndSizeTracking {
   private volatile long mySize;
   private volatile long myPointer;
 
-  RandomAccessFileWithLengthAndSizeTracking(Path name) throws IOException {
-    myChannel = FileChannel.open(name, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+  RandomAccessFileWithLengthAndSizeTracking(Path path) throws IOException {
+    Path parent = path.getParent();
+    if (!Files.exists(parent)) {
+      Files.createDirectories(parent);
+    }
+    myChannel = unInterruptible(FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
     mySize = myChannel.size();
-    myPath = name;
+    myPath = path;
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Inst:" + this + "," + Thread.currentThread() + "," + getClass().getClassLoader());

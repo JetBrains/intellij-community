@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -42,6 +43,7 @@ public class HintUtil {
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
   public static final ColorKey RECENT_LOCATIONS_SELECTION_KEY = ColorKey.createColorKey("RECENT_LOCATIONS_SELECTION", new JBColor(0xE9EEF5, 0x383838));
+  public static final ColorKey PROMOTION_PANE_KEY = ColorKey.createColorKey("PROMOTION_PANE", new JBColor(0xE6EDF7, 0x3B4C57));
 
   private HintUtil() {
   }
@@ -66,11 +68,11 @@ public class HintUtil {
     return notNull(colorsScheme.getColor(RECENT_LOCATIONS_SELECTION_KEY), RECENT_LOCATIONS_SELECTION_KEY.getDefaultColor());
   }
 
-  public static JComponent createInformationLabel(@NotNull String text) {
+  public static JComponent createInformationLabel(@NotNull @HintText String text) {
     return createInformationLabel(text, null, null, null);
   }
 
-  public static JComponent createInformationLabel(@NotNull String text,
+  public static JComponent createInformationLabel(@NotNull @HintText String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
                                                   @Nullable MouseListener mouseListener,
                                                   @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
@@ -104,12 +106,12 @@ public class HintUtil {
     return createInformationLabel(text, null);
   }
 
-  public static JComponent createQuestionLabel(String text) {
+  public static JComponent createQuestionLabel(@HintText String text) {
     final Icon icon = AllIcons.General.ContextHelp;
     return createQuestionLabel(text, icon);
   }
 
-  public static JComponent createQuestionLabel(String text, Icon icon) {
+  public static JComponent createQuestionLabel(@HintText String text, Icon icon) {
     Color bg = getQuestionColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
       .setTextFg(JBColor.foreground())
@@ -152,7 +154,7 @@ public class HintUtil {
     return new HintLabel(component);
   }
 
-  public static JComponent createErrorLabel(@NotNull String text,
+  public static JComponent createErrorLabel(@NotNull @HintText String text,
                                             @Nullable HyperlinkListener hyperlinkListener,
                                             @Nullable MouseListener mouseListener,
                                             @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
@@ -168,12 +170,12 @@ public class HintUtil {
   }
 
   @NotNull
-  public static JComponent createErrorLabel(@NotNull String text) {
+  public static JComponent createErrorLabel(@NotNull @HintText String text) {
     return createErrorLabel(text, null, null, null);
   }
 
   @NotNull
-  private static HintLabel createLabel(String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
+  private static HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(icon);
@@ -208,7 +210,7 @@ public class HintUtil {
   }
 
   @NotNull
-  public static String prepareHintText(@NotNull String text, @NotNull HintHint hintHint) {
+  public static String prepareHintText(@NotNull @HintText String text, @NotNull HintHint hintHint) {
     return prepareHintText(new Html(text), hintHint);
   }
 
@@ -217,7 +219,9 @@ public class HintUtil {
     return String.format(
       "<html><head>%s</head><body>%s</body></html>",
       UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()),
-      htmlBody
+      // U+200B is a 'zero width space' character. It's not rendered by itself, but its presence in the content makes JEditorPane use more
+      // advanced line breaking algorithm (see javax.swing.text.GlyphView#getBreaker())
+      htmlBody + (text.isEagerWrap() ? "\u200b" : "")
     );
   }
 

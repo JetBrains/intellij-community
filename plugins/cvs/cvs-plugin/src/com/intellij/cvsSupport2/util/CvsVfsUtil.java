@@ -69,8 +69,7 @@ public class CvsVfsUtil {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
-  @NotNull
-  public static VirtualFile[] getChildrenOf(final VirtualFile directory) {
+  public static VirtualFile @NotNull [] getChildrenOf(final VirtualFile directory) {
     if (!directory.isValid()) {
       return VirtualFile.EMPTY_ARRAY;
     }

@@ -26,9 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-/**
- * @author nik
- */
 public class DirectoryIndexForUnloadedModuleTest extends DirectoryIndexTestCase {
   public void testUnloadedModule() throws IOException {
     Module unloadedModule = createModule("unloaded");

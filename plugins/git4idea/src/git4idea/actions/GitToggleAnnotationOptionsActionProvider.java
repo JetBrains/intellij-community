@@ -18,6 +18,7 @@ import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +40,12 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final FileAnnotation myAnnotation;
 
     MyGroup(@NotNull FileAnnotation annotation) {
-      super("Options", true);
+      super(GitBundle.message("annotations.options.group"), true);
       myAnnotation = annotation;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (myAnnotation instanceof GitFileAnnotation) {
         return new AnAction[]{
           new ToggleIgnoreWhitespaces(myAnnotation.getProject()),
@@ -62,8 +62,8 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
     private ToggleCommitDate() {
-      super(VcsBundle.message("prefer.commit.timestamp.action.text"),
-            VcsBundle.message("prefer.commit.timestamp.action.description"), null);
+      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text"),
+            VcsBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleIgnoreWhitespaces(@NotNull Project project) {
-      super("Ignore Whitespaces");
+      super(GitBundle.message("annotations.options.ignore.whitespaces"));
       myProject = project;
     }
 
@@ -103,7 +103,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleInnerMovementsWhitespaces(@NotNull Project project) {
-      super("Detect Movements Within File");
+      super(GitBundle.message("annotations.options.detect.movements.within.file"));
       myProject = project;
     }
 
@@ -129,7 +129,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleOuterMovementsWhitespaces(@NotNull Project project) {
-      super("Detect Movements Across Files");
+      super(GitBundle.message("annotations.options.detect.movements.across.files"));
       myProject = project;
     }
 

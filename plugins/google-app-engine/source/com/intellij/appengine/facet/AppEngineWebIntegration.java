@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class AppEngineWebIntegration {
   public static AppEngineWebIntegration getInstance() {
     return ServiceManager.getService(AppEngineWebIntegration.class);

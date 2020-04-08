@@ -15,31 +15,31 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.MultiValuesMap
+
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
- *
- * @author nik
  */
 @CompileStatic
 abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
-  final MultiValuesMap<String, String> moduleJars = new MultiValuesMap<>(true)
+  final MultiMap<String, String> moduleJars = MultiMap.createLinkedSet()
   /** artifact name to relative output path */
   final Map<String, String> includedArtifacts = [:]
   /** list of additional resources which should be included into the distribution */
   final List<ModuleResourceData> resourcePaths = []
   /** module name to entries which should be excluded from its output */
-  final MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
-  final List<ProjectLibraryData> includedProjectLibraries = []
-  final List<ModuleLibraryData> includedModuleLibraries = []
+  final MultiMap<String, String> moduleExcludes = MultiMap.createLinked()
+  final LinkedHashSet<ProjectLibraryData> includedProjectLibraries = []
+  final LinkedHashSet<ModuleLibraryData> includedModuleLibraries = []
+  final MultiMap<String, String> excludedModuleLibraries = MultiMap.createLinked()
   /** JAR name -> name of project library which content should be unpacked */
-  final MultiValuesMap<String, String> projectLibrariesToUnpack = new MultiValuesMap<>()
+  final MultiMap<String, String> projectLibrariesToUnpack = MultiMap.createLinked()
   /** module name -> name of JAR (or path relative to 'lib' directory) where localizable resources will be placed*/
   protected final Map<String, String> localizableResourcesJars = new LinkedHashMap<>()
   final List<String> modulesWithExcludedModuleLibraries = []

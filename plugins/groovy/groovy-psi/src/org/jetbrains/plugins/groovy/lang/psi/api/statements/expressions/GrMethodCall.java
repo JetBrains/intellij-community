@@ -19,6 +19,9 @@ public interface GrMethodCall extends GrCallExpression, NavigationItem {
   @Nullable
   GroovyMethodCallReference getExplicitCallReference();
 
+  @Nullable
+  GroovyMethodCallReference getCallReference();
+
   @NotNull
   GrExpression getInvokedExpression();
 

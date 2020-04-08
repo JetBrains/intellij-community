@@ -40,14 +40,12 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     myEditable = new MyEditable();
   }
 
-  @NotNull
-  protected PsiElement[] getSelectedElements() {
+  protected PsiElement @NotNull [] getSelectedElements() {
     DataContext dataContext = DataManager.getInstance().getDataContext(myKeyReceiver);
     return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private PsiElement[] getValidSelectedElements() {
+  private PsiElement @NotNull [] getValidSelectedElements() {
     PsiElement[] selectedElements = getSelectedElements();
     for (PsiElement element : selectedElements) {
       if (element == null || !element.isValid()) {
@@ -136,25 +134,25 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;
 
-      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
-      try {
-        final Module module = LangDataKeys.MODULE.getData(dataContext);
-        PsiElement target = getPasteTarget(dataContext, module);
-        if (isCopied[0]) {
-          pasteAfterCopy(elements, module, target, true);
+      return DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> {
+        try {
+          final Module module = LangDataKeys.MODULE.getData(dataContext);
+          PsiElement target = getPasteTarget(dataContext, module);
+          if (isCopied[0]) {
+            pasteAfterCopy(elements, module, target, true);
+          }
+          else if (MoveHandler.canMove(elements, target)) {
+            pasteAfterCut(dataContext, elements, target);
+          }
+          else {
+            return false;
+          }
         }
-        else if (MoveHandler.canMove(elements, target)) {
-          pasteAfterCut(dataContext, elements, target);
+        finally {
+          updateView();
         }
-        else {
-          return false;
-        }
-      }
-      finally {
-        DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
-        updateView();
-      }
-      return true;
+        return true;
+      });
     }
 
     private PsiElement getPasteTarget(@NotNull DataContext dataContext, @Nullable Module module) {

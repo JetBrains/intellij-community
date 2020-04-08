@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
 import com.intellij.model.search.LeafOccurrenceMapper
@@ -10,21 +10,21 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 
-internal class SearchWordQuery<T>(
+internal class SearchWordQuery<R>(
   private val myParameters: SearchWordQueryBuilderImpl.Parameters,
-  private val mapper: LeafOccurrenceMapper<T>
-) : AbstractDecomposableQuery<T>() {
+  private val mapper: LeafOccurrenceMapper<R>
+) : AbstractDecomposableQuery<R>() {
 
-  override fun processResults(consumer: Processor<in T>): Boolean {
+  override fun processResults(consumer: Processor<in R>): Boolean {
     return runSearch(myParameters.project, this, consumer)
   }
 
-  override fun decompose(): PrimitiveRequests<T> {
+  override fun decompose(): Requests<R> {
     val searchScope = myParameters.searchScope
     if (!makesSenseToSearch(searchScope)) {
-      return PrimitiveRequests.empty()
+      return Requests.empty()
     }
-    return PrimitiveRequests(Requests(wordRequests = listOf(
+    return Requests(wordRequests = listOf(
       WordRequest(
         WordRequestInfoImpl(
           myParameters.word,
@@ -34,9 +34,9 @@ internal class SearchWordQuery<T>(
           myParameters.containerName
         ),
         myParameters.injection,
-        mapper.asTransformation()
+        xValueTransform(mapper.asTransformation())
       )
-    )))
+    ))
   }
 
   private fun makesSenseToSearch(searchScope: SearchScope): Boolean {

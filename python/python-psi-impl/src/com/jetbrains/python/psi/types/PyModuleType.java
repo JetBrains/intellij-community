@@ -21,10 +21,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.completion.PyCompletionUtilsKt;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.ResolveResultList;
@@ -419,8 +419,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     for (PyModuleMembersProvider provider : PyModuleMembersProvider.EP_NAME.getExtensionList()) {
       for (PyCustomMember member : provider.getMembers(myModule, point, typeEvalContext)) {
         final String name = member.getName();
-        if (namesAlready != null) {
-          namesAlready.add(name);
+        if (namesAlready != null && !namesAlready.add(name)) {
+          continue;
         }
         if (PyUtil.isClassPrivateName(name)) {
           continue;

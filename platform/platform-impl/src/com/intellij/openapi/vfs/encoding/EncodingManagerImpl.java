@@ -248,6 +248,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void clearDocumentQueue() {
+    if (((BoundedTaskExecutor)changedDocumentExecutor).isEmpty()) return;
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call clearDocumentQueue() from under write action because some queued detectors require read action");
     }

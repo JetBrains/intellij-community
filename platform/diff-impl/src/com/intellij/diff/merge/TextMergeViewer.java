@@ -250,9 +250,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected List<AnAction> createToolbarActions() {
       List<AnAction> group = new ArrayList<>();
 
-      DefaultActionGroup diffGroup = new DefaultActionGroup("Compare Contents", true);
+      DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> DiffBundle.message("group.compare.contents.text"));
       diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
-      diffGroup.add(Separator.create("Compare Contents"));
+      diffGroup.add(Separator.create(DiffBundle.message("group.compare.contents.text")));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE, true));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE, true));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, true));
@@ -261,10 +261,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.RIGHT));
       group.add(diffGroup);
 
-      group.add(new Separator("Apply non-conflicting changes:"));
-      group.add(new ApplyNonConflictsAction(ThreeSide.LEFT, "Left"));
-      group.add(new ApplyNonConflictsAction(ThreeSide.BASE, "All"));
-      group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT, "Right"));
+      group.add(new Separator(DiffBundle.messagePointer("action.Anonymous.text.apply.non.conflicting.changes")));
+      group.add(new ApplyNonConflictsAction(ThreeSide.LEFT, DiffBundle.message("action.merge.apply.non.conflicts.left.text")));
+      group.add(new ApplyNonConflictsAction(ThreeSide.BASE, DiffBundle.message("action.merge.apply.non.conflicts.all.text")));
+      group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT, DiffBundle.message("action.merge.apply.non.conflicts.right.text")));
       group.add(new MagicResolvedConflictsAction());
 
       group.add(Separator.getInstance());
@@ -313,7 +313,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         public void actionPerformed(ActionEvent e) {
           if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) &&
               !MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
-                                                         result == MergeResult.LEFT ? "Accept Left" : "Accept Right",
+                                                         result == MergeResult.LEFT
+                                                         ? DiffBundle.message("button.merge.resolve.accept.left")
+                                                         : DiffBundle.message("button.merge.resolve.accept.right"),
                                                          myContentModified)) {
             return;
           }
@@ -322,8 +324,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
               Messages.showConfirmationDialog(myPanel.getRootPane(),
                                               DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
                                               DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                              "Apply Changes and Mark Resolved",
-                                              "Continue Merge") != Messages.YES) {
+                                              DiffBundle.message("apply.changes.and.mark.resolved"),
+                                              DiffBundle.message("continue.merge")) != Messages.YES) {
             return;
           }
           if (result == MergeResult.CANCEL &&
@@ -350,8 +352,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       if (myContentModified) {
         if (Messages.showYesNoDialog(myProject,
-                                     "Changing highlighting requires the file merge restart. Discard unsaved changes and restart merge anyway?",
-                                     "Update Highlighting Settings", "Discard Changes and Restart Merge", "Continue Merge",
+                                     DiffBundle.message("changing.highlighting.requires.the.file.merge.restart"),
+                                     DiffBundle.message("update.highlighting.settings"),
+                                     DiffBundle.message("discard.changes.and.restart.merge"),
+                                     DiffBundle.message("continue.merge"),
                                      Messages.getQuestionIcon()) != Messages.YES) {
           getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
           return;
@@ -366,7 +370,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       final Document baseDocument = ThreeSide.BASE.select(myMergeRequest.getContents()).getDocument();
       final Document outputDocument = myMergeRequest.getOutputContent().getDocument();
 
-      return DiffUtil.executeWriteCommand(outputDocument, getProject(), "Init merge content", () -> {
+      return DiffUtil.executeWriteCommand(outputDocument, getProject(), DiffBundle.message("message.init.merge.content.command"), () -> {
         outputDocument.setText(baseDocument.getCharsSequence());
 
         DiffUtil.putNonundoableOperation(getProject(), outputDocument);
@@ -467,7 +471,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       if (!success) {
         fragments = Collections.emptyList();
         conflictTypes = Collections.emptyList();
-        myPanel.addNotification(DiffNotifications.createNotification("Can't resolve conflicts in a read-only file"));
+        myPanel
+          .addNotification(DiffNotifications.createNotification(DiffBundle.message("error.cant.resolve.conflicts.in.a.read.only.file")));
       }
 
       myModel.setChanges(ContainerUtil.map(fragments, f -> new LineRange(f.getStartLine(ThreeSide.BASE),
@@ -737,7 +742,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     /*
      * affected changes should be sorted
      */
-    public boolean executeMergeCommand(@Nullable String commandName,
+    public boolean executeMergeCommand(@Nullable @Nls String commandName,
                                        boolean underBulkUpdate,
                                        @Nullable List<? extends TextMergeChange> affected,
                                        @NotNull Runnable task) {
@@ -754,7 +759,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, underBulkUpdate, affectedIndexes, task);
     }
 
-    public boolean executeMergeCommand(@Nullable String commandName,
+    public boolean executeMergeCommand(@Nullable @Nls String commandName,
                                        @Nullable List<? extends TextMergeChange> affected,
                                        @NotNull Runnable task) {
       return executeMergeCommand(commandName, false, affected, task);
@@ -881,7 +886,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private void applyNonConflictedChanges(@NotNull ThreeSide side) {
-      executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
+      executeMergeCommand(DiffBundle.message("merge.dialog.apply.non.conflicted.changes.command"), true, null, () -> {
         List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
         for (TextMergeChange change : allChanges) {
           if (!change.isConflict()) {
@@ -899,7 +904,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private void applyResolvableConflictedChanges() {
-      executeMergeCommand("Resolve Simple Conflicted Changes", true, null, () -> {
+      executeMergeCommand(DiffBundle.message("message.resolve.simple.conflicts.command"), true, null, () -> {
         List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
         for (TextMergeChange change : allChanges) {
           resolveChangeAutomatically(change, ThreeSide.BASE);
@@ -1002,7 +1007,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         final List<TextMergeChange> selectedChanges = getSelectedChanges(side);
         if (selectedChanges.isEmpty()) return;
 
-        String title = e.getPresentation().getText() + " in merge";
+        String title = DiffBundle.message("message.do.in.merge.command", e.getPresentation().getText());
 
         executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> apply(side, selectedChanges));
       }
@@ -1027,6 +1032,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         return DiffUtil.isSelectedByLine(lines, line1, line2);
       }
 
+      @Nls
       protected abstract String getText(@NotNull ThreeSide side);
 
       protected abstract boolean isVisible(@NotNull ThreeSide side);
@@ -1047,7 +1053,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected String getText(@NotNull ThreeSide side) {
-        return "Ignore";
+        return DiffBundle.message("action.presentation.merge.ignore.text");
       }
 
       @Override
@@ -1075,7 +1081,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected String getText(@NotNull ThreeSide side) {
-        return "Ignore";
+        return DiffBundle.message("action.presentation.merge.ignore.text");
       }
 
       @Override
@@ -1106,7 +1112,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected String getText(@NotNull ThreeSide side) {
-        return side != ThreeSide.BASE ? "Accept" : getTemplatePresentation().getText();
+        return side != ThreeSide.BASE ? DiffBundle.message("action.presentation.diff.accept.text") : getTemplatePresentation().getText();
       }
 
       @Override
@@ -1137,7 +1143,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected String getText(@NotNull ThreeSide side) {
-        return mySide.select("Resolve using Left", "Resolve using Right");
+        return DiffBundle.message("action.presentation.merge.resolve.using.side.text", mySide.getIndex());
       }
 
       @Override
@@ -1166,7 +1172,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected String getText(@NotNull ThreeSide side) {
-        return "Resolve Automatically";
+        return DiffBundle.message("action.presentation.merge.resolve.automatically.text");
       }
 
       @Override
@@ -1191,7 +1197,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     public class ApplyNonConflictsAction extends DumbAwareAction {
       @NotNull private final ThreeSide mySide;
 
-      public ApplyNonConflictsAction(@NotNull ThreeSide side, @NotNull String text) {
+      public ApplyNonConflictsAction(@NotNull ThreeSide side, @NotNull @Nls String text) {
         String id = side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right");
         ActionUtil.copyFrom(this, id);
         mySide = side;

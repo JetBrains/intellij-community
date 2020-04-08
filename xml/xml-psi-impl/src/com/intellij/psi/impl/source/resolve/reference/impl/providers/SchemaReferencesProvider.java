@@ -107,8 +107,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
     final String attrName = ((XmlAttribute)parent).getName();

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -25,16 +26,15 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
-  private val tooltip = CheckoutProvider.EXTENSION_POINT_NAME.extensions
-    .map { it.vcsName }
-    .joinToString { it.replace("_".toRegex(), "") }
 
   override fun getIcon(): Icon = AllIcons.Welcome.FromVCS
 
-  override fun getName() = "Repository URL"
+  override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
 
   override fun getTooltip(): String? {
-    return tooltip
+    return CheckoutProvider.EXTENSION_POINT_NAME.extensions
+      .map { it.vcsName }
+      .joinToString { it.replace("_", "") }
   }
 
   override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
@@ -48,7 +48,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
   class RepositoryUrlMainExtensionComponent(private val project: Project,
                                             private val modalityState: ModalityState) : VcsCloneDialogExtensionComponent() {
     override fun onComponentSelected() {
-      dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: "Clone")
+      dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: VcsBundle.message("clone.dialog.clone.button"))
       dialogStateListener.onOkActionEnabled(true)
 
       getCurrentVcsComponent()?.onComponentSelected(dialogStateListener)
@@ -64,7 +64,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
     init {
       val northPanel = panel {
-        row("Version control:") {
+        row(VcsBundle.message("vcs.common.labels.version.control")) {
           comboBox()
         }
       }

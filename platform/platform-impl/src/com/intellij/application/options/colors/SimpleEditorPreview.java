@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -64,7 +64,7 @@ public class SimpleEditorPreview implements PreviewPanel {
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
-      10, 3, -1, myOptions.getSelectedScheme(), false);
+      myOptions.getSelectedScheme(), false);
     if (page instanceof EditorCustomization) {
       ((EditorCustomization)page).customize(myEditor);
     }
@@ -276,7 +276,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(page);
 
     // sort highlights to avoid overlappings
-    Collections.sort(highlights, Comparator.comparingInt(HighlightData::getStartOffset));
+    highlights.sort(Comparator.comparingInt(HighlightData::getStartOffset));
     for (int i = highlights.size() - 1; i >= 0; i--) {
       HighlightData highlightData = highlights.get(i);
       int startOffset = highlightData.getStartOffset();
@@ -328,7 +328,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   @NotNull
   private List<HighlightData> setupRainbowHighlighting(@NotNull final RainbowColorSettingsPage page,
                                                        @NotNull final List<HighlightData> initialMarkup,
-                                                       @NotNull final TextAttributesKey[] rainbowTempKeys,
+                                                       final TextAttributesKey @NotNull [] rainbowTempKeys,
                                                        boolean isRainbowOn) {
     int colorCount = rainbowTempKeys.length;
     if (colorCount == 0) {
@@ -391,7 +391,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   }
 
   @NotNull
-  private HighlightData getRainbowTemp(@NotNull TextAttributesKey[] rainbowTempKeys,
+  private HighlightData getRainbowTemp(TextAttributesKey @NotNull [] rainbowTempKeys,
                                        int startOffset, int endOffset) {
     String id = myEditor.getDocument().getText(TextRange.create(startOffset, endOffset));
     int index = UsedColors.getOrAddColorIndex((EditorImpl)myEditor, id, rainbowTempKeys.length);

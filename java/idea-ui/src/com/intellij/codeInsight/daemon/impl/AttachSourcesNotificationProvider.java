@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeEditor.JavaEditorFileSwapper;
 import com.intellij.codeInsight.AttachSourcesProvider;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +17,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -48,7 +49,10 @@ import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -71,7 +75,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
     final EditorNotificationPanel panel = new EditorNotificationPanel();
 
-    String text = ProjectBundle.message("class.file.decompiled.text");
+    String text = JavaUiBundle.message("class.file.decompiled.text");
     String classInfo = getClassFileInfo(file);
     if (classInfo != null) text += ", " + classInfo;
     panel.setText(text);
@@ -101,7 +105,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           }
         }
 
-        Collections.sort(actions, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+        actions.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
         AttachSourcesProvider.AttachSourcesAction defaultAction;
         if (findSourceFileInSameJar(file) != null) {
@@ -117,7 +121,8 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
             List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
             if (!Comparing.equal(libraries, entries)) {
-              Messages.showErrorDialog(project, "Can't find library for " + file.getName(), "Error");
+              Messages.showErrorDialog(project, JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
+                                       CommonBundle.message("title.error"));
               return;
             }
 
@@ -129,7 +134,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       }
     }
     else {
-      panel.createActionLabel(ProjectBundle.message("class.file.open.source.action"), () -> {
+      panel.createActionLabel(JavaUiBundle.message("class.file.open.source.action"), () -> {
         if (sourceFile.isValid()) {
           OpenFileDescriptor descriptor = new OpenFileDescriptor(project, sourceFile);
           FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
@@ -197,12 +202,12 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
     @Override
     public String getName() {
-      return ProjectBundle.message("module.libraries.attach.sources.button");
+      return JavaUiBundle.message("module.libraries.attach.sources.button");
     }
 
     @Override
     public String getBusyText() {
-      return ProjectBundle.message("library.attach.sources.action.busy.text");
+      return JavaUiBundle.message("library.attach.sources.action.busy.text");
     }
 
     @Override
@@ -249,19 +254,19 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
     @Override
     public String getName() {
-      return ProjectBundle.message("module.libraries.choose.sources.button");
+      return JavaUiBundle.message("module.libraries.choose.sources.button");
     }
 
     @Override
     public String getBusyText() {
-      return ProjectBundle.message("library.attach.sources.action.busy.text");
+      return JavaUiBundle.message("library.attach.sources.action.busy.text");
     }
 
     @Override
     public ActionCallback perform(final List<LibraryOrderEntry> libraries) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-      descriptor.setTitle(ProjectBundle.message("library.attach.sources.action"));
-      descriptor.setDescription(ProjectBundle.message("library.attach.sources.description"));
+      descriptor.setTitle(JavaUiBundle.message("library.attach.sources.action"));
+      descriptor.setDescription(JavaUiBundle.message("library.attach.sources.description"));
       Library firstLibrary = libraries.get(0).getLibrary();
       VirtualFile[] roots = firstLibrary != null ? firstLibrary.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
       VirtualFile[] candidates = FileChooser.chooseFiles(descriptor, myProject, roots.length == 0 ? null : VfsUtil.getLocalFile(roots[0]));
@@ -278,7 +283,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       }
       else {
         librariesToAppendSourcesTo.put(null, null);
-        String title = ProjectBundle.message("library.choose.one.to.attach");
+        String title = JavaUiBundle.message("library.choose.one.to.attach");
         List<LibraryOrderEntry> entries = new ArrayList<>(librariesToAppendSourcesTo.values());
         JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryOrderEntry>(title, entries) {
           @Override

@@ -36,10 +36,8 @@ import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
@@ -65,6 +63,7 @@ public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   protected final MockApplication myApplication;
   private final CoreLocalFileSystem myLocalFileSystem;
+  @NotNull
   protected final VirtualFileSystem myJarFileSystem;
   private final VirtualFileSystem myJrtFileSystem;
   @NotNull private final Disposable myParentDisposable;
@@ -110,7 +109,6 @@ public class CoreApplicationEnvironment {
     registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     registerApplicationService(StubTreeLoader.class, new CoreStubTreeLoader());
     registerApplicationService(PsiReferenceService.class, new PsiReferenceServiceImpl());
-    registerApplicationService(MetaDataRegistrar.class, new MetaRegistry());
     registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());

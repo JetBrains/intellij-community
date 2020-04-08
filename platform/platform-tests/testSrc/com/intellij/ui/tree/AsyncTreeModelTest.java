@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -640,7 +640,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static final class EventDispatchThreadModel extends SlowModel implements InvokerSupplier {
-    private final Invoker invoker = new Invoker.EDT(this);
+    private final Invoker invoker = Invoker.forEventDispatchThread(this);
 
     private EventDispatchThreadModel(long delay, Supplier<TreeNode> root) {
       super(delay, root);
@@ -654,7 +654,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static final class BackgroundThreadModel extends SlowModel implements InvokerSupplier {
-    private final Invoker invoker = new Invoker.Background(this);
+    private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
 
     private BackgroundThreadModel(long delay, Supplier<TreeNode> root) {
       super(delay, root);
@@ -668,7 +668,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static final class BackgroundPoolModel extends SlowModel implements InvokerSupplier {
-    private final Invoker invoker = new Invoker.Background(this, 10);
+    private final Invoker invoker = Invoker.forBackgroundPoolWithReadAction(this);
 
     private BackgroundPoolModel(long delay, Supplier<TreeNode> root) {
       super(delay, root);
@@ -736,7 +736,7 @@ public final class AsyncTreeModelTest {
 
   private static void testNodePreservingOnEventDispatchThread(boolean showLoadingNode) {
     testNodePreserving(showLoadingNode, new GroupModel() {
-      private final Invoker invoker = new Invoker.EDT(this);
+      private final Invoker invoker = Invoker.forEventDispatchThread(this);
 
       @NotNull
       @Override
@@ -754,7 +754,7 @@ public final class AsyncTreeModelTest {
 
   private static void testNodePreservingOnBackgroundThread(boolean showLoadingNode) {
     testNodePreserving(showLoadingNode, new GroupModel() {
-      private final Invoker invoker = new Invoker.Background(this);
+      private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
 
       @NotNull
       @Override
@@ -772,7 +772,7 @@ public final class AsyncTreeModelTest {
 
   private static void testNodePreservingOnBackgroundPool(boolean showLoadingNode) {
     testNodePreserving(showLoadingNode, new GroupModel() {
-      private final Invoker invoker = new Invoker.Background(this, 10);
+      private final Invoker invoker = Invoker.forBackgroundPoolWithReadAction(this);
 
       @NotNull
       @Override

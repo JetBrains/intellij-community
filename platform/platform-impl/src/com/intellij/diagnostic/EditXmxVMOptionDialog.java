@@ -2,7 +2,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,12 +29,12 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
 
   public EditXmxVMOptionDialog(long unusedMemory, long totalMemory) {
     this();
-    mySettingsFileHintLabel.setText(IdeBundle.message("change.memory.usage", unusedMemory / 1024 / 1024, totalMemory / 1024 / 1024));
+    mySettingsFileHintLabel.setText(DiagnosticBundle.message("change.memory.usage", unusedMemory / 1024 / 1024, totalMemory / 1024 / 1024));
   }
 
   public EditXmxVMOptionDialog() {
     super(false);
-    setTitle(IdeBundle.message("change.memory.title"));
+    setTitle(DiagnosticBundle.message("change.memory.title"));
 
     mySettingsFileHintLabel.setIcon(AllIcons.General.Warning);
 
@@ -62,7 +61,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
     File file = VMOptions.getWriteFile();
     if (file != null) {
       mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.getPath()));
-      myMessageLabel.setText(IdeBundle.message("change.memory.restart"));
+      myMessageLabel.setText(DiagnosticBundle.message("change.memory.restart"));
 
       int newMemory;
       if (SystemInfo.is64Bit) {
@@ -74,7 +73,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
       myHeapSizeField.setText(String.valueOf(newMemory));
     }
     else {
-      myMessageLabel.setText(IdeBundle.message("change.memory.nofile"));
+      myMessageLabel.setText(DiagnosticBundle.message("change.memory.nofile"));
       mySettingsFileHintLabel.setVisible(false);
       myHeapSizeField.setEnabled(false);
       myShutdownAction.setEnabled(false);
@@ -89,9 +88,8 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
     return myContentPane;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{myShutdownAction, myIgnoreAction};
   }
 
@@ -122,18 +120,18 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
       try {
         int heapSize = Integer.parseInt(myHeapSizeField.getText());
         if (heapSize < 256) {
-          mySettingsFileHintLabel.setText(IdeBundle.message("change.memory.low"));
+          mySettingsFileHintLabel.setText(DiagnosticBundle.message("change.memory.low"));
           return false;
         }
         if (heapSize > 800 && !SystemInfo.is64Bit) {
-          mySettingsFileHintLabel.setText(IdeBundle.message("change.memory.large"));
+          mySettingsFileHintLabel.setText(DiagnosticBundle.message("change.memory.large"));
           return false;
         }
         VMOptions.writeOption(VMOptions.MemoryKind.HEAP, heapSize);
         return true;
       }
       catch (NumberFormatException ignored) {
-        mySettingsFileHintLabel.setText(IdeBundle.message("change.memory.integer"));
+        mySettingsFileHintLabel.setText(DiagnosticBundle.message("change.memory.integer"));
         return false;
       }
     }

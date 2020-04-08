@@ -367,6 +367,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
         return getDisplayName();
       }
     }, getTestRootDisposable());
+    myFixture.enableInspections(myVisibilityInspection.getSharedLocalInspectionTool());
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
   }
@@ -423,6 +424,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
         return getDisplayName();
       }
     }, getTestRootDisposable());
+    myFixture.enableInspections(myVisibilityInspection.getSharedLocalInspectionTool());
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
   }

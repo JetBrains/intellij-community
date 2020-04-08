@@ -32,8 +32,7 @@ public interface PsiModifierListOwner extends PsiElement {
    */
   boolean hasModifierProperty(@PsiModifier.ModifierConstant @NonNls @NotNull String name);
 
-  @NotNull
-  default PsiAnnotation[] getAnnotations() {
+  default PsiAnnotation @NotNull [] getAnnotations() {
     return PsiJvmConversionHelper.getListAnnotations(this);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -48,9 +48,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
-/**
- * @author nik
- */
 public final class ConversionContextImpl implements ConversionContext {
   private static final Logger LOG = Logger.getInstance(ConversionContextImpl.class);
   private static final String PROJECT_FILE_VERSION_COMPONENT_NAME = "ProjectFileVersion";
@@ -533,7 +530,7 @@ public final class ConversionContextImpl implements ConversionContext {
       ComponentManagerSettings settings = getProjectFileVersionSettings();
       if (settings != null) {
         List<String> performedConversionsList = new ArrayList<>(performedConversions);
-        Collections.sort(performedConversionsList, String.CASE_INSENSITIVE_ORDER);
+        performedConversionsList.sort(String.CASE_INSENSITIVE_ORDER);
         Element element = JDomSerializationUtil.findOrCreateComponentElement(settings.getRootElement(), PROJECT_FILE_VERSION_COMPONENT_NAME);
         XmlSerializer.serializeInto(new ProjectFileVersionState(performedConversionsList), element);
       }
@@ -590,8 +587,7 @@ public final class ConversionContextImpl implements ConversionContext {
     return myArtifactsSettings;
   }
 
-  @NotNull
-  private File[] getSettingsXmlFiles(@NotNull String dirName) {
+  private File @NotNull [] getSettingsXmlFiles(@NotNull String dirName) {
     Path librariesDir = mySettingsBaseDir.resolve(dirName);
     return ObjectUtils.notNull(librariesDir.toFile().listFiles(FileFilters.filesWithExtension("xml")), ArrayUtilRt.EMPTY_FILE_ARRAY);
   }

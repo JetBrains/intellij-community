@@ -24,9 +24,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
-/**
- * @author nik
- */
 public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
 
   public void testCleanOutput() {
@@ -40,7 +37,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
   }
 
   public void testDoNotCleanOnRebuildIfOptionIsSwitchedOff() {
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).setClearOutputDirectoryOnRebuild(false);
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).setClearOutputDirectoryOnRebuild(false);
     JpsArtifact a = addArtifact(root().fileCopy(createFile("a.txt")));
     buildArtifacts(a);
     createFileInArtifactOutput(a, "b.txt");

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -48,7 +49,7 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Trim line markers";
+    return XmlBundle.message("emmet.filter.trim.line.markers");
   }
 
   @NotNull

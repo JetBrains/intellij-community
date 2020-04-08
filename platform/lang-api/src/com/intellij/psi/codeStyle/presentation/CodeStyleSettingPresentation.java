@@ -127,10 +127,12 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("BLANK_LINES_BEFORE_CLASS_END", ApplicationBundle.message("editbox.blanklines.before.class.end")),
       new CodeStyleSettingPresentation("BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER",
                                        ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header")),
-      new CodeStyleSettingPresentation("BLANK_LINES_AROUND_FIELD_IN_INTERFACE", "Around field in interface:"),
+      new CodeStyleSettingPresentation("BLANK_LINES_AROUND_FIELD_IN_INTERFACE",
+                                       ApplicationBundle.message("editbox.blanklines.around.field.in.interface")),
       //TODO why is this not loaded from bundle??
       new CodeStyleSettingPresentation("BLANK_LINES_AROUND_FIELD", ApplicationBundle.message("editbox.blanklines.around.field")),
-      new CodeStyleSettingPresentation("BLANK_LINES_AROUND_METHOD_IN_INTERFACE", "Around method in interface:"),
+      new CodeStyleSettingPresentation("BLANK_LINES_AROUND_METHOD_IN_INTERFACE",
+                                       ApplicationBundle.message("editbox.blanklines.around.method.in.interface")),
       //TODO why is this not loaded from bundle??
       new CodeStyleSettingPresentation("BLANK_LINES_AROUND_METHOD", ApplicationBundle.message("editbox.blanklines.around.method")),
       new CodeStyleSettingPresentation("BLANK_LINES_BEFORE_METHOD_BODY",

@@ -191,4 +191,10 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   public Properties getMetaProperties()  {
     return myDelegate.getMetaProperties();
   }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return myDelegate.getDisplayName();
+  }
 }

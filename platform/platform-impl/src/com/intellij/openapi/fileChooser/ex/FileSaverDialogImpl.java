@@ -6,11 +6,13 @@ import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +102,10 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     if (!correctExt) {
-      path += "." + myExtensions.getSelectedItem();
+      final String selectedExtension = ObjectUtils.doIfNotNull(myExtensions.getSelectedItem(), item -> item.toString());
+      if (!StringUtil.isEmpty(selectedExtension)) {
+        path += "." + selectedExtension;
+      }
     }
 
     return new File(path);

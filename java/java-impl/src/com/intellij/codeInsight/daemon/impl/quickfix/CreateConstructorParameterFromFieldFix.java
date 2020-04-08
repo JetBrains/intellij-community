@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -73,7 +59,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    if (getFieldsToFix().size() > 1 && myConstructorsLength <= 1) return "Add constructor parameters";
+    if (getFieldsToFix().size() > 1 && myConstructorsLength <= 1) return QuickFixBundle.message("add.constructor.parameters");
     return QuickFixBundle.message("add.constructor.parameter.name");
   }
 
@@ -135,7 +121,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         elements = Arrays.asList(members);
       } else {
         final MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(members, false, true, project);
-        chooser.setTitle("Choose Constructors to Add Parameter to");
+        chooser.setTitle(QuickFixBundle.message("choose.constructors.to.add.parameter.to"));
         chooser.show();
         elements = chooser.getSelectedElements();
         if (elements == null) return;
@@ -166,7 +152,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
             members[i++] = new PsiFieldMember(field);
           }
           MemberChooser<PsiElementClassMember> chooser = new MemberChooser<>(members, false, true, project);
-          chooser.setTitle("Choose Fields to Generate Constructor Parameters for");
+          chooser.setTitle(QuickFixBundle.message("choose.fields.to.generate.constructor.parameters.for"));
           chooser.show();
           if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
           final List<PsiElementClassMember> selectedElements = chooser.getSelectedElements();
@@ -241,7 +227,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     ParameterInfoImpl[] newParamInfos = new ParameterInfoImpl[parameters.length + fields.length];
     final List<PsiVariable> params = new ArrayList<>(Arrays.asList(parameters));
     Collections.addAll(params, fields);
-    Collections.sort(params, new FieldParameterComparator(parameterList));
+    params.sort(new FieldParameterComparator(parameterList));
 
     int i = 0;
     final Map<PsiField, String> usedFields = new HashMap<>();
@@ -255,13 +241,19 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
       if (param instanceof PsiParameter) {
-        newParamInfos[i++] = new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)param), param.getName(), paramType, param.getName());
+        newParamInfos[i++] = ParameterInfoImpl.create(parameterList.getParameterIndex((PsiParameter)param))
+          .withName(param.getName())
+          .withType(paramType)
+          .withDefaultValue(param.getName());
       } else {
         try {
           settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(paramType).size() > 1;
           final String uniqueParameterName = getUniqueParameterName(parameters, param, usedFields);
           usedFields.put((PsiField)param, uniqueParameterName);
-          newParamInfos[i++] = new ParameterInfoImpl(-1, uniqueParameterName, paramType, uniqueParameterName);
+          newParamInfos[i++] = ParameterInfoImpl.createNew()
+            .withName(uniqueParameterName)
+            .withType(paramType)
+            .withDefaultValue(uniqueParameterName);
         }
         finally {
           settings.PREFER_LONGER_NAMES = preferLongerNames;
@@ -356,7 +348,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       }
     }
     for (int i = 0; i < newParameters.length; i++) {
-      if (parameterInfos[i].getOldIndex() == -1) {
+      if (parameterInfos[i].isNew()) {
         final PsiParameter parameter = newParameters[i];
         final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter);
         if (type.isAssignableFrom(paramType)){

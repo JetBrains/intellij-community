@@ -23,9 +23,8 @@ public class UseBulkOperationInspectionTest extends LightQuickFixParameterizedTe
     }
   };
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     UseBulkOperationInspection inspection = new UseBulkOperationInspection();
     inspection.USE_ARRAYS_AS_LIST = true;
     return new LocalInspectionTool[]{

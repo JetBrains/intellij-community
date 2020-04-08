@@ -28,10 +28,10 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class TextComponentScrollingModel implements ScrollingModel {
+class TextComponentScrollingModel implements ScrollingModel {
   private final JTextComponent myTextComponent;
 
-  public TextComponentScrollingModel(@NotNull JTextComponent textComponent) {
+  TextComponentScrollingModel(@NotNull JTextComponent textComponent) {
     myTextComponent = textComponent;
   }
 

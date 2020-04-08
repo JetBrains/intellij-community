@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.console.ConsoleHistoryModel.Entry;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.idea.ActionsBundle;
@@ -98,7 +99,7 @@ public class ConsoleHistoryController implements Disposable {
   public void dispose() {
   }
 
-  //@Nullable
+  @Nullable
   public static ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
     return ourControllers.get(console);
   }
@@ -382,7 +383,7 @@ public class ConsoleHistoryController implements Disposable {
             StringUtil.convertLineSeparators(text), false, true);
           VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
           if (virtualFile instanceof LightVirtualFile) ((LightVirtualFile)virtualFile).setWritable(false);
-          Document document = ObjectUtils.notNull(FileDocumentManager.getInstance().getDocument(virtualFile));
+          Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(virtualFile));
           EditorFactory editorFactory = EditorFactory.getInstance();
           EditorEx editor = (EditorEx)editorFactory.createViewer(document, project);
           editor.getSettings().setFoldingOutlineShown(false);
@@ -499,8 +500,8 @@ public class ConsoleHistoryController implements Disposable {
     catch (final IOException e) {
       LOG.warn(e);
       ApplicationManager.getApplication().invokeLater(() -> {
-        String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
-        Messages.showErrorDialog(message, "Unable to Open File");
+        String message = ExecutionBundle.message("dialog.message.unable.to.open.file", rootType.getId(), pathName, e.getLocalizedMessage());
+        Messages.showErrorDialog(message, ExecutionBundle.message("dialog.title.unable.to.open.file"));
       });
       return null;
     }

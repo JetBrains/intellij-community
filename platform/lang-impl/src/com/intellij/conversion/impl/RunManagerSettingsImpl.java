@@ -18,9 +18,6 @@ import java.util.List;
 
 import static com.intellij.execution.impl.RunManagerImplKt.PROJECT_RUN_MANAGER_COMPONENT_NAME;
 
-/**
- * @author nik
- */
 public class RunManagerSettingsImpl implements RunManagerSettings {
   @NonNls public static final String RUN_MANAGER_COMPONENT_NAME = "RunManager";
   @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
@@ -28,7 +25,7 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
   private SettingsXmlFile myProjectFile;
   private final List<SettingsXmlFile> mySharedConfigurationFiles;
 
-  public RunManagerSettingsImpl(@NotNull Path workspaceFile, @Nullable Path projectFile, @Nullable File[] sharedConfigurationFiles,
+  public RunManagerSettingsImpl(@NotNull Path workspaceFile, @Nullable Path projectFile, File @Nullable [] sharedConfigurationFiles,
                                 ConversionContextImpl context) throws CannotConvertException {
     if (Files.exists(workspaceFile)) {
       myWorkspaceFile = context.getOrCreateFile(workspaceFile);

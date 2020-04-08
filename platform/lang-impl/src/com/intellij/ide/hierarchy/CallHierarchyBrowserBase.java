@@ -25,12 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static final String CALLEE_TYPE = IdeBundle.message("title.hierarchy.callees.of");
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static final String CALLER_TYPE = IdeBundle.message("title.hierarchy.callers.of");
+  public static final String CALLEE_TYPE = "Callees of {0}";
+  public static final String CALLER_TYPE = "Callers of {0}";
 
   private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
 
@@ -54,10 +55,10 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.caller.methods.hierarchy"),
                                                  IdeBundle.message("action.caller.methods.hierarchy"),
-                                                 AllIcons.Hierarchy.Supertypes, CALLER_TYPE));
+                                                 AllIcons.Hierarchy.Supertypes, getCallerType()));
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.callee.methods.hierarchy"),
                                                  IdeBundle.message("action.callee.methods.hierarchy"),
-                                                 AllIcons.Hierarchy.Subtypes, CALLEE_TYPE));
+                                                 AllIcons.Hierarchy.Subtypes, getCalleeType()));
     actionGroup.add(new AlphaSortAction());
     actionGroup.add(new ChangeScopeAction());
   }
@@ -78,6 +79,14 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   @NotNull
   protected String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.next.occurence.name");
+  }
+
+  @Override
+  protected Map<String, Supplier<String>> getPresentableNameMap() {
+    HashMap<String, Supplier<String>> map = new HashMap<>();
+    map.put(CALLER_TYPE, CallHierarchyBrowserBase::getCallerType);
+    map.put(CALLEE_TYPE, CallHierarchyBrowserBase::getCalleeType);
+    return map;
   }
 
   private class ChangeViewTypeActionBase extends ToggleAction {
@@ -110,7 +119,17 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
     }
+  }
+
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public static String getCalleeType() {
+    return IdeBundle.message("title.hierarchy.callees.of");
+  }
+
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public static String getCallerType() {
+    return IdeBundle.message("title.hierarchy.callers.of");
   }
 }

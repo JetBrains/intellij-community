@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.structureView;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
@@ -57,6 +57,6 @@ public class PyFieldsFilter implements Filter {
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.fields"), null, PlatformIcons.FIELD_ICON);
+    return new ActionPresentationData(StructureViewBundle.message("action.structureview.show.fields"), null, PlatformIcons.FIELD_ICON);
   }
 }

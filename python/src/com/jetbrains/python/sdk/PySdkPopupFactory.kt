@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.SwingHelper
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -23,10 +24,12 @@ import java.util.function.Consumer
 class PySdkPopupFactory(val project: Project, val module: Module) {
 
   companion object {
-    fun nameInPopup(sdk: Sdk): String {
+    private fun nameInPopup(sdk: Sdk): String {
       val (_, primary, secondary) = name(sdk)
       return if (secondary == null) primary else "$primary [$secondary]"
     }
+
+    fun shortenNameInPopup(sdk: Sdk, maxLength: Int) = nameInPopup(sdk).trimMiddle(maxLength)
 
     fun descriptionInPopup(sdk: Sdk) = "${nameInPopup(sdk)} [${path(sdk)}]".trimMiddle(150)
 
@@ -72,7 +75,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
 
     val currentSdk = module.pythonSdk
     return JBPopupFactory.getInstance().createActionGroupPopup(
-      "Project Interpreter",
+      PyBundle.message("python.sdk.popup.title"),
       group,
       context,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
@@ -84,8 +87,6 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     ).apply { setHandleAutoSelectionBeforeShow(true) }
   }
 
-  private fun shortenNameInPopup(sdk: Sdk) = nameInPopup(sdk).trimMiddle(100)
-
   private fun switchToSdk(sdk: Sdk) {
     (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
     project.pythonSdk = sdk
@@ -96,19 +97,21 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
 
     init {
       val presentation = templatePresentation
-      presentation.setText(shortenNameInPopup(sdk), false)
-      presentation.description = "Switch to ${descriptionInPopup(sdk)}]"
+      presentation.setText(shortenNameInPopup(sdk, 100), false)
+      presentation.description = PyBundle.message("python.sdk.switch.to", descriptionInPopup(sdk))
       presentation.icon = icon(sdk)
     }
 
     override fun actionPerformed(e: AnActionEvent) = switchToSdk(sdk)
   }
 
-  private inner class InterpreterSettingsAction : DumbAwareAction("Interpreter Settings...") {
-    override fun actionPerformed(e: AnActionEvent) = PyInterpreterInspection.InterpreterSettingsQuickFix.showProjectInterpreterDialog(project)
+  private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.interpreter.settings")) {
+    override fun actionPerformed(e: AnActionEvent) {
+      PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
+    }
   }
 
-  private inner class AddInterpreterAction : DumbAwareAction("Add Interpreter...") {
+  private inner class AddInterpreterAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.add.interpreter")) {
 
     override fun actionPerformed(e: AnActionEvent) {
       val model = PyConfigurableInterpreterList.getInstance(project).model

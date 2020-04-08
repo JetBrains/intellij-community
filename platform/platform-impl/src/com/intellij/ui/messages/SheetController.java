@@ -139,7 +139,7 @@ public class SheetController implements Disposable {
     myDefaultButton = (defaultButtonIndex == -1) ? buttons[0] : buttons[defaultButtonIndex];
 
     if (myResult == null) {
-      myResult = Messages.CANCEL_BUTTON;
+      myResult = Messages.getCancelButton();
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);

@@ -34,8 +34,6 @@ import java.util.List;
 
 /**
  * Provides facet-based framework support.
- *
- * @author nik
  */
 public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extends FrameworkSupportProviderBase {
   private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkSupportProvider.class);

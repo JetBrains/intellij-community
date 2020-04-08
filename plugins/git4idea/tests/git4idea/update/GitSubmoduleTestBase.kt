@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
-import git4idea.config.GitVcsSettings
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.test.GitPlatformTest
 import git4idea.test.git
 import git4idea.test.setupDefaultUsername
@@ -12,7 +12,7 @@ import java.io.File
 
 abstract class GitSubmoduleTestBase : GitPlatformTest() {
 
-  override fun getDefaultSaveChangesPolicy(): GitVcsSettings.SaveChangesPolicy = GitVcsSettings.SaveChangesPolicy.STASH
+  override fun getDefaultSaveChangesPolicy(): GitSaveChangesPolicy = GitSaveChangesPolicy.STASH
 
   protected fun createPlainRepo(repoName: String): RepositoryAndParent {
     LOG.info("----- creating plain repository $repoName -----")

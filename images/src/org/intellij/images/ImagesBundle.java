@@ -20,14 +20,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class ImagesBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "org.intellij.images.ImagesBundle";
+  @NonNls private static final String BUNDLE = "messages.ImagesBundle";
   private static final ImagesBundle INSTANCE = new ImagesBundle();
 
   private ImagesBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

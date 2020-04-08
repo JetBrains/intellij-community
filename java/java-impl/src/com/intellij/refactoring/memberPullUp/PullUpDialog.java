@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -54,7 +55,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   }
 
   public PullUpDialog(Project project, PsiClass aClass, List<PsiClass> superClasses, MemberInfoStorage memberInfoStorage, Callback callback) {
-    super(project, aClass, superClasses, memberInfoStorage, JavaPullUpHandler.REFACTORING_NAME);
+    super(project, aClass, superClasses, memberInfoStorage, JavaPullUpHandler.getRefactoringName());
     myCallback = callback;
 
     init();
@@ -144,7 +145,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
 
   @Override
   protected void addCustomElementsToCentralPanel(JPanel panel) {
-    myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("javadoc.for.abstracts"));
+    myJavaDocPanel = new DocCommentPanel(JavaRefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     updateAbstractState();

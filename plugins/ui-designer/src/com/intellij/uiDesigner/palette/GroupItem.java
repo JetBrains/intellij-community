@@ -78,7 +78,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
    * @return read-only list of items that belong to the group.
    */
   @Override
-  @NotNull public ComponentItem[] getItems() {
+  public ComponentItem @NotNull [] getItems() {
     return myItems.toArray(new ComponentItem[0]);
   }
 

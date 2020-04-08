@@ -28,9 +28,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class TreeInplaceEditor implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance(TreeInplaceEditor.class);
   private JComponent myInplaceEditorComponent;

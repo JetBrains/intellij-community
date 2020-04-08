@@ -183,8 +183,7 @@ public final class EditorUtil {
 
   public static int getVisualLineEndOffset(@NotNull Editor editor, int line) {
     VisualPosition endLineVisualPosition = new VisualPosition(line, getLastVisualLineColumnNumber(editor, line));
-    LogicalPosition endLineLogicalPosition = editor.visualToLogicalPosition(endLineVisualPosition);
-    return editor.logicalPositionToOffset(endLineLogicalPosition);
+    return editor.visualPositionToOffset(endLineVisualPosition);
   }
 
   public static float calcVerticalScrollProportion(@NotNull Editor editor) {
@@ -207,13 +206,13 @@ public final class EditorUtil {
   }
 
   public static int calcRelativeCaretPosition(@NotNull Editor editor) {
-    int caretY = editor.getCaretModel().getVisualPosition().line * editor.getLineHeight();
+    int caretY = editor.visualLineToY(editor.getCaretModel().getVisualPosition().line);
     int viewAreaPosition = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
     return caretY - viewAreaPosition;
   }
 
   public static void setRelativeCaretPosition(@NotNull Editor editor, int position) {
-    int caretY = editor.getCaretModel().getVisualPosition().line * editor.getLineHeight();
+    int caretY = editor.visualLineToY(editor.getCaretModel().getVisualPosition().line);
     editor.getScrollingModel().scrollVertically(caretY - position);
   }
 
@@ -553,10 +552,16 @@ public final class EditorUtil {
    * Finds the start offset of visual line at which given offset is located, not taking soft wraps into account.
    */
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset) {
+    return getNotFoldedLineStartOffset(editor, offset, false);
+  }
+
+  public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset, boolean stopAtInvisibleFoldRegions) {
     while(true) {
       offset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
-      if (foldRegion == null || foldRegion.getStartOffset() >= offset) {
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getStartOffset() >= offset) {
         break;
       }
       offset = foldRegion.getStartOffset();
@@ -568,10 +573,16 @@ public final class EditorUtil {
    * Finds the end offset of visual line at which given offset is located, not taking soft wraps into account.
    */
   public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int offset) {
+    return getNotFoldedLineEndOffset(editor, offset, false);
+  }
+
+  public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int offset, boolean stopAtInvisibleFoldRegions) {
     while(true) {
       offset = getLineEndOffset(offset, editor.getDocument());
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
-      if (foldRegion == null || foldRegion.getEndOffset() <= offset) {
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getEndOffset() <= offset) {
         break;
       }
       offset = foldRegion.getEndOffset();
@@ -668,6 +679,17 @@ public final class EditorUtil {
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 
+  /**
+   * Maps {@code y} to a logical line in editor (in the same way as {@link #yPositionToLogicalLine(Editor, int)} does), except that for
+   * coordinates, corresponding to block inlay locations, {@code -1} is returned.
+   */
+  public static int yToLogicalLineNoBlockInlays(@NotNull Editor editor, int y) {
+    int visualLine = editor.yToVisualLine(y);
+    int visualLineStartY = editor.visualLineToY(visualLine);
+    if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
+    return visualLine > 0 ? editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line : 0;
+  }
+
   public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     if (offset < 0 || offset > document.getTextLength()) {
@@ -750,7 +772,9 @@ public final class EditorUtil {
     // for injected editors disposal will happen only when host editor is disposed,
     // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
     Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-    if (hostEditor instanceof EditorImpl) Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
+    if (hostEditor instanceof EditorImpl) {
+      Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
+    }
     else LOG.warn("Cannot watch for disposal of " + editor);
   }
 
@@ -834,6 +858,24 @@ public final class EditorUtil {
       sum += inlay.getHeightInPixels();
     }
     return sum;
+  }
+
+  public static int getInlaysHeight(@NotNull Editor editor, int visualLine, boolean above) {
+    return getTotalInlaysHeight(editor.getInlayModel().getBlockElementsForVisualLine(visualLine, above));
+  }
+
+  /**
+   * Returns top Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
+   */
+  public static int getVisualLineAreaStartY(@NotNull Editor editor, int visualLine) {
+    return editor.visualLineToY(visualLine) - getInlaysHeight(editor, visualLine, true);
+  }
+
+  /**
+   * Returns bottom Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
+   */
+  public static int getVisualLineAreaEndY(@NotNull Editor editor, int visualLine) {
+    return editor.visualLineToY(visualLine) + editor.getLineHeight() + getInlaysHeight(editor, visualLine, false);
   }
 
   /**

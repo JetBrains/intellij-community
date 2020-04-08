@@ -4,6 +4,9 @@ package com.intellij.ui;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -44,7 +47,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   private static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.GRAY), JBUI.insets(1));
   private static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(UIUtil.getToolTipBackground().brighter(), Gray._111));
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
   private static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
 
   private SearchPopup mySearchPopup;
@@ -63,7 +66,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   private Disposable myListenerDisposable;
 
-  public SpeedSearchBase(Comp component) {
+  public SpeedSearchBase(@NotNull Comp component) {
     myComponent = component;
 
     myComponent.addComponentListener(new ComponentAdapter() {
@@ -155,8 +158,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
    */
   protected abstract int getSelectedIndex();
 
-  @NotNull
-  protected abstract Object[] getAllElements();
+  protected abstract Object @NotNull [] getAllElements();
 
   @Nullable
   protected abstract String getElementText(Object element);
@@ -246,7 +248,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  private Object findPreviousElement(String s) {
+  private Object findPreviousElement(@NotNull String s) {
     final int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) return null;
     final ListIterator<?> it = getElementIterator(selectedIndex);
@@ -276,7 +278,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  protected Object findElement(String s) {
+  protected Object findElement(@NotNull String s) {
     int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) {
       selectedIndex = 0;
@@ -348,6 +350,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
+  private void logEvent(UIEventId id) {
+    FeatureUsageData data = new FeatureUsageData();
+    data.addData("class", myComponent.getClass().getName());
+    UIEventLogger.logUIEvent(id, data);
+  }
 
   public Comp getComponent() {
     return myComponent;
@@ -375,6 +382,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public boolean adjustSelection(int keyCode, @NotNull String searchQuery) {
     if (isUpDownHomeEnd(keyCode)) {
+      logEvent(UIEventId.IncrementalSearchNextPrevItemSelected);
       Object element = findTargetElement(keyCode, searchQuery);
       if (element != null) {
         selectElement(element, searchQuery);
@@ -385,7 +393,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  private Object findTargetElement(int keyCode, String searchPrefix) {
+  private Object findTargetElement(int keyCode, @NotNull String searchPrefix) {
     if (keyCode == KeyEvent.VK_UP) {
       return findPreviousElement(searchPrefix);
     }
@@ -463,6 +471,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           }
         }
         else {
+          logEvent(UIEventId.IncrementalSearchKeyTyped);
           element = findElement(s);
         }
         updateSelection(element);
@@ -572,6 +581,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       project = null;
     }
     if (mySearchPopup != null) {
+      logEvent(UIEventId.IncrementalSearchCancelled);
       if (myPopupLayeredPane != null) {
         myPopupLayeredPane.remove(mySearchPopup);
         myPopupLayeredPane.validate();
@@ -586,6 +596,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");
+      logEvent(UIEventId.IncrementalSearchActivated);
     }
 
     mySearchPopup = myComponent.isShowing() ? searchPopup : null;

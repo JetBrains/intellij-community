@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.tree.render.CompoundTypeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
@@ -46,7 +46,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
     myNameField = new JTextField();
     myNameFieldPanel = new JPanel(new BorderLayout());
-    myNameFieldPanel.add(new JLabel(DebuggerBundle.message("label.user.renderers.configurable.renderer.name")), BorderLayout.WEST);
+    myNameFieldPanel.add(new JLabel(JavaDebuggerBundle.message("label.user.renderers.configurable.renderer.name")), BorderLayout.WEST);
     myNameFieldPanel.add(myNameField, BorderLayout.CENTER);
     myNameFieldPanel.setVisible(false);
 
@@ -82,7 +82,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   }
 
   private void setupRenderersList() {
-    myRendererChooser.getEmptyText().setText(DebuggerBundle.message("text.user.renderers.configurable.no.renderers"));
+    myRendererChooser.getEmptyText().setText(JavaDebuggerBundle.message("text.user.renderers.configurable.no.renderers"));
 
     myRendererChooser.addElementsMarkListener((ElementsChooser.ElementsMarkListener<NodeRenderer>)NodeRenderer::setEnabled);
     myRendererChooser.addListSelectionListener(e -> {
@@ -176,10 +176,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   }
 
   private class AddAction implements AnActionButtonRunnable {
-    //public AddAction() {
-    //  super(DebuggerBundle.message("button.add"), DebuggerBundle.message("user.renderers.configurable.button.description.add"), ADD_ICON);
-    //}
-
     @Override
     public void run(AnActionButton button) {
       NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundTypeRenderer.UNIQUE_ID);
@@ -189,11 +185,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   }
 
   private class RemoveAction implements AnActionButtonRunnable {
-    //public RemoveAction() {
-    //  super(DebuggerBundle.message("button.remove"), DebuggerBundle.message("user.renderers.configurable.button.description.remove"), REMOVE_ICON);
-    //}
-
-
     @Override
     public void run(AnActionButton button) {
       myRendererChooser.getSelectedElements().forEach(myRendererChooser::removeElement);
@@ -202,7 +193,8 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
 
   private class CopyAction extends AnActionButton {
     CopyAction() {
-      super(DebuggerBundle.message("button.copy"), DebuggerBundle.message("user.renderers.configurable.button.description.copy"), PlatformIcons.COPY_ICON);
+      super(JavaDebuggerBundle.messagePointer("button.copy"), JavaDebuggerBundle
+        .messagePointer("user.renderers.configurable.button.description.copy"), PlatformIcons.COPY_ICON);
     }
 
     @Override
@@ -224,9 +216,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     private final boolean myMoveUp;
 
     MoveAction(boolean up) {
-      //super(up? DebuggerBundle.message("button.move.up") : DebuggerBundle.message("button.move.down"),
-      //      up? DebuggerBundle.message("user.renderers.configurable.button.description.move.up") : DebuggerBundle.message("user.renderers.configurable.button.description.move.down"),
-      //      up? UP_ICON : DOWN_ICON );
       myMoveUp = up;
     }
 

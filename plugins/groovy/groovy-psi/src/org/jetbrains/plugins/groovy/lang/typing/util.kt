@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TypeUtils")
 
 package org.jetbrains.plugins.groovy.lang.typing
@@ -21,6 +21,27 @@ fun PsiType.box(context: GroovyPsiElement): PsiType? {
   if (this !is PsiPrimitiveType || this == PsiType.NULL) return this
   val typeName = boxedTypeName ?: error("This type is not NULL and still doesn't have boxed type name")
   return TypesUtil.createType(typeName, context)
+}
+
+fun getReadPropertyType(result: GroovyResolveResult): PsiType? {
+  val baseType = getReadPropertyBaseType(result) ?: return null
+  return result.substitutor.substitute(baseType)
+}
+
+private fun getReadPropertyBaseType(result: GroovyResolveResult): PsiType? {
+  val resolved = result.element ?: return null
+  if (resolved is GroovyProperty) {
+    return resolved.propertyType
+  }
+  else if (resolved is PsiVariable) {
+    return resolved.type
+  }
+  else if (resolved is PsiMethod) {
+    if (resolved.checkKind(PropertyKind.GETTER) || resolved.checkKind(PropertyKind.BOOLEAN_GETTER)) {
+      return resolved.returnType
+    }
+  }
+  return null
 }
 
 fun getWritePropertyType(result: GroovyResolveResult): PsiType? {

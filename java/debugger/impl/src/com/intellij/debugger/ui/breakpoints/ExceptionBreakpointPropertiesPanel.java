@@ -20,7 +20,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -50,8 +50,8 @@ public class ExceptionBreakpointPropertiesPanel extends XBreakpointCustomPropert
   @NotNull
   @Override
   public JComponent getComponent() {
-    myNotifyCaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.caught.exception"));
-    myNotifyUncaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.uncaught.exception"));
+    myNotifyCaughtCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.exception.breakpoint.properties.panel.caught.exception"));
+    myNotifyUncaughtCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.exception.breakpoint.properties.panel.uncaught.exception"));
     DialogUtil.registerMnemonic(myNotifyCaughtCheckBox);
     DialogUtil.registerMnemonic(myNotifyUncaughtCheckBox);
 
@@ -71,7 +71,7 @@ public class ExceptionBreakpointPropertiesPanel extends XBreakpointCustomPropert
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
     _panel.setBorder(IdeBorderFactory.createTitledBorder(
-      DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
+      JavaDebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
 
     ActionListener listener = new ActionListener() {
       @Override

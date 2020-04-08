@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.EventObject;
 
-/**
- * @author nik
- */
 public abstract class XDebugView implements Disposable {
   public enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 

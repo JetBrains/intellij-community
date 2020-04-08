@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerUtil {
   public static XDebuggerUtil getInstance() {
     return ServiceManager.getService(XDebuggerUtil.class);

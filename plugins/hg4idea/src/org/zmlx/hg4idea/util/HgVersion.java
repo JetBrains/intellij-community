@@ -31,12 +31,6 @@ public final class HgVersion implements Comparable<HgVersion> {
   public static final HgVersion MIN = new HgVersion(2, 0, 1);
   public static final HgVersion AMEND_SUPPORTED = new HgVersion(2, 2, 0);
 
-  /**
-   * Mercurial 5.2. is the first version that officially supports python3
-   * https://www.mercurial-scm.org/wiki/Python3
-   */
-  public static final HgVersion PYTHON3 = new HgVersion(5, 2, 0);
-
   // before 2.3 build in func not supported
   // since 2.3 - 2.5.3 hg has bug with join function with file_copies
   // see http://mercurial.808500.n3.nabble.com/Bug-3887-New-hg-log-template-quot-rev-join-file-copies-n-quot-prints-literal-quot-sourcename-quot-fos-td4000129.html
@@ -134,10 +128,6 @@ public final class HgVersion implements Comparable<HgVersion> {
    */
   public boolean isSupported() {
     return compareTo(MIN) >= 0;
-  }
-
-  public boolean isPython3() {
-    return compareTo(PYTHON3) >= 0;
   }
 
   public boolean isAmendSupported() {

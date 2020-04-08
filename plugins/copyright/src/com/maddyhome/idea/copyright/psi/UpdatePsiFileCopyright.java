@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.psi;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
@@ -34,7 +35,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
-import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
     PsiManager manager = PsiManager.getInstance(project);
     file = manager.findFile(root);
-    FileType type = FileTypeUtil.getInstance().getFileTypeByFile(root);
+    FileType type = root.getFileType();
     langOpts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(type.getName());
   }
 
@@ -337,7 +337,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   protected void processActions(final boolean allowReplacement) throws IncorrectOperationException {
-    WriteCommandAction.writeCommandAction(file.getProject()).withName("Update copyright").run(() -> {
+    WriteCommandAction.writeCommandAction(file.getProject()).withName(CopyrightBundle.message("command.name.update.copyright")).run(() -> {
       Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
       if (doc != null) {
         PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);

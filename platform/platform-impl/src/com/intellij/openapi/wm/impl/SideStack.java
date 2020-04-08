@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +26,9 @@ final class SideStack {
     stack.push(info.copy());
   }
 
-  WindowInfoImpl pop(final ToolWindowAnchor anchor) {
+  WindowInfoImpl pop(@NotNull ToolWindowAnchor anchor) {
     for (int i = stack.size() - 1; true; i--) {
-      final WindowInfoImpl info = stack.get(i);
+      WindowInfoImpl info = stack.get(i);
       if (anchor == info.getAnchor()) {
         stack.remove(i);
         return info;
@@ -40,7 +40,7 @@ final class SideStack {
    * @return {@code true} if and only if there is window in the state with the same
    *         {@code anchor} as the specified {@code info}.
    */
-  boolean isEmpty(final ToolWindowAnchor anchor) {
+  boolean isEmpty(@NotNull ToolWindowAnchor anchor) {
     for (int i = stack.size() - 1; i > -1; i--) {
       WindowInfoImpl info = stack.get(i);
       if (anchor == info.getAnchor()) {
@@ -53,7 +53,7 @@ final class SideStack {
   /**
    * Removes all {@code WindowInfo}s with the specified {@code id}.
    */
-  void remove(final String id) {
+  void remove(String id) {
     stack.removeIf(info -> id.equals(info.getId()));
   }
 

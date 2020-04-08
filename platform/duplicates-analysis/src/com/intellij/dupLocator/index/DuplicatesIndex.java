@@ -130,7 +130,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
 
           ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
             @Override
-            public void process(int hash, int hash2, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes) {
+            public void process(int hash, int hash2, @NotNull LighterAST ast, LighterASTNode @NotNull ... nodes) {
               TIntArrayList list = result.get(hash);
               if (list == null) {
                 result.put(hash, list = new TIntArrayList(2));

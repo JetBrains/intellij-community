@@ -12,6 +12,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -32,6 +33,7 @@ import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalPanel;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +48,7 @@ import java.util.function.Consumer;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
-  private static final String[] ACTIONS_TO_SKIP = new String[]{
+  private static final @NonNls String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
     "ActivateMessagesToolWindow",
     "ActivateProjectToolWindow",
@@ -322,10 +324,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     mySettingsProvider.removeListener(this);
   }
 
-  public static void refreshAfterExecution() {
+  private static void refreshAfterExecution() {
     if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       //we need to refresh local file system after a command has been executed in the terminal
-      LocalFileSystem.getInstance().refresh(true);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        LocalFileSystem.getInstance().refresh(true);
+      }, ModalityState.NON_MODAL); // for write-safe context
     }
   }
 

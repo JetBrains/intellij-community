@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiElement;
@@ -39,7 +39,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
 
   @Override
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
-    return CodeInsightBundle.message("error.cannot.resolve.default.message", s);
+    return AnalysisBundle.message("error.cannot.resolve.default.message", s);
   }
 
   /**

@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
@@ -56,7 +56,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
                 element instanceof XmlTag
                 && !selectedRange.contains(elementRange)
                 && (!elementRange.contains(selectedRange) || !((XmlTag)element).getValue().getTextRange().contains(selectedRange))) {
-              throw new IncorrectOperationException(CodeInsightBundle.message("i18nize.jsp.error"));
+              throw new IncorrectOperationException(JavaI18nBundle.message("i18nize.jsp.error"));
             }
           }
           super.visitElement(element);

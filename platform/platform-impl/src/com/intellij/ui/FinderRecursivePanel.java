@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -33,6 +34,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,8 +156,9 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   @NotNull
   protected abstract List<T> getListItems();
 
+  @Nls
   protected String getListEmptyText() {
-    return "No entries";
+    return IdeBundle.message("empty.text.no.entries");
   }
 
   @NotNull
@@ -205,7 +208,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   @Nullable
   protected JComponent createDefaultRightComponent() {
-    return new JBPanelWithEmptyText().withEmptyText("Nothing selected");
+    return new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.nothing.selected"));
   }
 
   protected JComponent createLeftComponent() {
@@ -262,7 +265,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   private void installListActions(JBList list) {
-    AnAction previousPanelAction = new AnAction("Previous", null, AllIcons.Actions.Back) {
+    AnAction previousPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.previous"), AllIcons.Actions.Back) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!isRootPanel());
@@ -276,7 +279,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     previousPanelAction.registerCustomShortcutSet(KeyEvent.VK_LEFT, 0, list);
 
-    AnAction nextPanelAction = new AnAction("Next", null, AllIcons.Actions.Forward) {
+    AnAction nextPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.next"), AllIcons.Actions.Forward) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final T value = getSelectedValue();
@@ -293,7 +296,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     };
     nextPanelAction.registerCustomShortcutSet(KeyEvent.VK_RIGHT, 0, list);
 
-    AnAction editAction = new AnAction("Edit", null, AllIcons.Actions.Edit) {
+    AnAction editAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.edit"), AllIcons.Actions.Edit) {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -336,7 +339,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   private void installEditOnDoubleClick(JBList list) {
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         performEditAction();
         return true;
       }
@@ -726,9 +729,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
         childrenLabel.setBackground(bg);
 
         final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground(true));
-        childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
-                                                  : AllIcons.Icons.Ide.NextStep
-                                         : AllIcons.Icons.Ide.NextStepGrayed);
+        childrenLabel.setIcon(isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                     : AllIcons.Icons.Ide.NextStep);
         result.add(this, BorderLayout.CENTER);
         result.add(childrenLabel, BorderLayout.EAST);
         return result;

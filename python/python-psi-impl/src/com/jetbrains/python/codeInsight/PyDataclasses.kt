@@ -122,7 +122,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
 
       val mapping = PyCallExpressionHelper.mapArguments(
         decorator,
-        toMarkedCallee(decoratorAndTypeAndMarkedCallee.third),
+        PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, null),
         context ?: TypeEvalContext.codeInsightFallback(cls.project)
       )
 
@@ -156,11 +156,6 @@ private fun parseDataclassParametersFromStub(stub: PyDataclassStub?): PyDataclas
     )
   }
 }
-
-private fun toMarkedCallee(parameters: List<PyCallableParameter>): PyCallExpression.PyMarkedCallee {
-  return PyCallExpression.PyMarkedCallee(PyCallableTypeImpl(parameters, null), null, null, 0, false, 0)
-}
-
 
 /**
  * Data describing dataclass.

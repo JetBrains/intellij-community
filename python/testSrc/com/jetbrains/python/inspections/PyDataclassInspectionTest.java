@@ -296,6 +296,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-40018
+  public void testInheritingDefaultArgumentThroughEmptyDataclass() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(

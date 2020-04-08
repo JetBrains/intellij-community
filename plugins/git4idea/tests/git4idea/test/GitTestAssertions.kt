@@ -7,7 +7,10 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.HeavyPlatformTestCase.assertOrderedEquals
@@ -105,7 +108,7 @@ fun ChangeListManager.assertNoChanges() {
 
 fun ChangeListManager.assertOnlyDefaultChangelist() {
   HeavyPlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
-  HeavyPlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.DEFAULT_NAME, defaultChangeList.name)
+  HeavyPlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.getDefaultName(), defaultChangeList.name)
 }
 
 fun ChangeListManager.waitScheduledChangelistDeletions() {
@@ -129,9 +132,6 @@ fun ChangeListManager.assertChanges(changes: ChangesBuilder.() -> Unit): List<Ch
 
   val cb = ChangesBuilder()
   cb.changes()
-
-  VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-  ensureUpToDate()
 
   val vcsChanges = allChanges
   val allChanges = mutableListOf<Change>()

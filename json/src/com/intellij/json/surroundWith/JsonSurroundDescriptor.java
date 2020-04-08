@@ -24,9 +24,8 @@ public class JsonSurroundDescriptor implements SurroundDescriptor {
     new JsonWithQuotesSurrounder()
   };
 
-  @NotNull
   @Override
-  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     PsiElement firstElement = file.findElementAt(startOffset);
     PsiElement lastElement = file.findElementAt(endOffset - 1);
 
@@ -58,8 +57,7 @@ public class JsonSurroundDescriptor implements SurroundDescriptor {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
-  private static <T extends PsiElement> PsiElement[] collectElements(int endOffset, @NotNull T property, @NotNull Class<T> kind) {
+  private static <T extends PsiElement> PsiElement @NotNull [] collectElements(int endOffset, @NotNull T property, @NotNull Class<T> kind) {
     final List<T> properties = ContainerUtil.newArrayList(property);
     PsiElement nextSibling = property.getNextSibling();
     while (nextSibling != null && nextSibling.getTextRange().getEndOffset() <= endOffset) {
@@ -71,9 +69,8 @@ public class JsonSurroundDescriptor implements SurroundDescriptor {
     return properties.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Surrounder[] getSurrounders() {
+  public Surrounder @NotNull [] getSurrounders() {
     return ourSurrounders;
   }
 

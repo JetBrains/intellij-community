@@ -44,7 +44,7 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
 
     private final List<String> myDetectionStrings;
 
-    Event(@NotNull String... detectionStrings) {
+    Event(String @NotNull ... detectionStrings) {
       myDetectionStrings = Arrays.asList(detectionStrings);
     }
 

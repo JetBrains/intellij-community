@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
@@ -15,12 +15,11 @@ import java.util.Objects;
 public final class SelectInManager  {
   private final Project myProject;
   private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
-  @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
-  @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");
-  @NonNls public static final String COMMANDER = IdeBundle.message("select.in.commander");
-  @NonNls public static final String FAVORITES = IdeBundle.message("select.in.favorites");
-  @NonNls public static final String NAV_BAR = IdeBundle.message("select.in.nav.bar");
-  @NonNls public static final String SCOPE = IdeBundle.message("select.in.scope");
+  /**
+   * @deprecated Use {@link #getProject()} instead
+   */
+  @Deprecated
+  @NonNls public static final String PROJECT = getProject();
 
   public SelectInManager(@NotNull Project project) {
     myProject = project;
@@ -49,8 +48,7 @@ public final class SelectInManager  {
     return targets;
   }
 
-  @NotNull
-  public SelectInTarget[] getTargets() {
+  public SelectInTarget @NotNull [] getTargets() {
     return getTargetList().toArray(new SelectInTarget[0]);
   }
 
@@ -78,5 +76,29 @@ public final class SelectInManager  {
     public int compare(final SelectInTarget o1, final SelectInTarget o2) {
       return Float.compare(o1.getWeight(), o2.getWeight());
     }
+  }
+
+  public static String getProject() {
+    return IdeBundle.message("select.in.project");
+  }
+
+  public static String getPackages() {
+    return IdeBundle.message("select.in.packages");
+  }
+
+  public static String getCommander() {
+    return IdeBundle.message("select.in.commander");
+  }
+
+  public static String getFavorites() {
+    return IdeBundle.message("select.in.favorites");
+  }
+
+  public static String getNavBar() {
+    return IdeBundle.message("select.in.nav.bar");
+  }
+
+  public static String getScope() {
+    return IdeBundle.message("select.in.scope");
   }
 }

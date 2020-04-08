@@ -9,18 +9,20 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 @State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
-    @JvmField val CONTEXT_RANGE_MODE_LABELS: Array<String> = arrayOf("1", "2", "4", "8", "Disable")
+    @JvmField val CONTEXT_RANGE_MODE_LABELS: Array<String> = arrayOf("1", "2", "4", "8", DiffBundle.message("configurable.diff.collapse.unchanged.ranges.disable"))
   }
 
   data class SharedSettings(
@@ -155,7 +157,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     }
   }
 
-  fun getSettings(place: String?): TextDiffSettings {
+  fun getSettings(@NonNls place: String?): TextDiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
     val placeSettings = myState.PLACES_MAP.getOrPut(placeKey) { defaultPlaceSettings(placeKey) }
     return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings, placeKey)

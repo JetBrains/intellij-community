@@ -262,7 +262,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @NotNull
   public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
-                                                      @NotNull LocalInspectionTool[] localInspectionTools,
+                                                      LocalInspectionTool @NotNull [] localInspectionTools,
                                                       @NotNull Disposable parentDisposable) {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
@@ -333,7 +333,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return Pair.createNonNull(project, ourModule);
   }
 
-  protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
+  protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
@@ -345,8 +345,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     InspectionsKt.enableInspectionTool(getProject(), tool, getTestRootDisposable());
   }
 
-  @NotNull
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return LocalInspectionTool.EMPTY_ARRAY;
   }
 
@@ -492,30 +491,38 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     runBareImpl(this::startRunAndTear);
   }
 
-  protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
+  protected void runBareImpl(ThrowableRunnable<?> start) throws Throwable {
     if (!shouldRunTest()) {
       return;
     }
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    ThrowableRunnable<Throwable> testRunnable = () -> {
       try {
         start.run();
       }
       finally {
-        try {
-          Application application = ApplicationManager.getApplication();
-          if (application instanceof ApplicationEx) {
-            HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
+        EdtTestUtil.runInEdtAndWait(() -> {
+          try {
+            Application application = ApplicationManager.getApplication();
+            if (application instanceof ApplicationEx) {
+              HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
+            }
+            resetAllFields();
           }
-          resetAllFields();
-        }
-        catch (Throwable e) {
-          //noinspection CallToPrintStackTrace
-          e.printStackTrace();
-        }
+          catch (Throwable e) {
+            //noinspection CallToPrintStackTrace
+            e.printStackTrace();
+          }
+        });
       }
-    });
+    };
+    if (runInDispatchThread()) {
+      EdtTestUtil.runInEdtAndWait(testRunnable);
+    }
+    else {
+      testRunnable.run();
+    }
 
     // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
@@ -535,7 +542,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     finally {
       //try{
-      tearDown();
+      EdtTestUtil.runInEdtAndWait(() -> tearDown());
       //}
       //catch(Throwable th){
       //th.printStackTrace();
@@ -720,6 +727,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     private boolean areJdksEqual(final Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
+      if (!mySdk.getName().equals(newSdk.getName())) return false;
 
       OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
       for (OrderRootType rootType : rootTypes) {

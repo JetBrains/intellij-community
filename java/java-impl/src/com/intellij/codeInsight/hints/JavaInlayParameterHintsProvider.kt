@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
+import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -97,35 +98,39 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   )
   
   val showIfMethodNameContainsParameterName: Option = Option("java.method.name.contains.parameter.name",
-                                                             "Parameters with names that are contained in the method name",
+                                                             JavaBundle.messagePointer(
+                                                               "settings.inlay.java.parameters.with.names.that.are.contained.in.the.method.name"),
                                                              false)
   
   val showForParamsWithSameType: Option = Option("java.multiple.params.same.type",
-                                                 "Non-literals in case of multiple parameters with the same type",
+                                                 JavaBundle.messagePointer(
+                                                   "settings.inlay.java.non.literals.in.case.of.multiple.parameters.with.the.same.type"),
                                                  false)
   
   val showForBuilderLikeMethods: Option = Option("java.build.like.method",
-                                                 "Builder-like methods",
+                                                 JavaBundle.messagePointer("settings.inlay.java.builder.like.methods"),
                                                  false)
 
 
   val ignoreOneCharOneDigitHints: Option = Option("java.simple.sequentially.numbered",
-                                                  "Methods with same-named numbered parameters",
+                                                  JavaBundle.messagePointer(
+                                                    "settings.inlay.java.methods.with.same.named.numbered.parameters"),
                                                   false)
 
   val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
-                                                           "Complex expressions: binary, functional, array access and other",
+                                                           JavaBundle.messagePointer(
+                                                             "settings.inlay.java.complex.expressions.binary.functional.array.access.and.other"),
                                                            false).also {
-    it.extendedDescription = "Array initializer, switch, conditional, reference, instance " +
-                             "of, assignment, call, qualified, type cast, class object access expressions."
+    it.extendedDescriptionSupplier = JavaBundle.messagePointer(
+      "settings.inlay.java.show.parameter.hints.when.expression.type.is.clear.description")
   }
 
   val isShowHintsForEnumConstants: Option = Option("java.enums",
-                                                           "Enum constants",
-                                                           true)
+                                                   JavaBundle.messagePointer("settings.inlay.java.enum.constants"),
+                                                   true)
 
   val isShowHintsForNewExpressions: Option = Option("java.new.expr",
-                                                    "'New' expressions",
+                                                    JavaBundle.messagePointer("settings.inlay.java.new.expressions"),
                                                     true)
 
   override fun getSupportedOptions(): List<Option> {
@@ -149,6 +154,6 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   }
 
   override fun getMainCheckboxText(): String {
-    return "Show parameter hints for:"
+    return JavaBundle.message("settings.inlay.java.show.parameter.hints.for")
   }
 }

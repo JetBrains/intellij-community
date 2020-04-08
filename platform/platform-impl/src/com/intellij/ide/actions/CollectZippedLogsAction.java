@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -43,7 +44,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
     if (!doNotShowDialog) {
       Messages.showIdeaMessageDialog(
-        project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
+        project, IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"),
+        IdeBundle.message("dialog.title.sensitive.data"),
         new String[]{"Show in " + RevealFileAction.getFileManagerName()}, 1, Messages.getWarningIcon(),
         new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
@@ -55,6 +57,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
+        PerformanceWatcher.getInstance().dumpThreads("", false);
+
         final StringBuilder troubleshooting = collectInfoFromExtensions(project);
         final File zippedLogsFile = createZip(troubleshooting);
         if (RevealFileAction.isSupported()) {
@@ -63,7 +67,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
         else {
           final Notification logNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
-                                                                "Log file is created: " + zippedLogsFile.getAbsolutePath(),
+                                                                IdeBundle.message("notification.content.log.file.is.created.0",
+                                                                                  zippedLogsFile.getAbsolutePath()),
                                                                 NotificationType.INFORMATION);
           Notifications.Bus.notify(logNotification);
         }
@@ -71,11 +76,12 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       catch (final IOException exception) {
         final Notification errorNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
-                                                                "Can't create zip file with logs: " + exception.getLocalizedMessage(),
+                                                                IdeBundle.message("notification.content.can.t.create.zip.file.with.logs.0",
+                                                                                  exception.getLocalizedMessage()),
                                                                 NotificationType.ERROR);
         Notifications.Bus.notify(errorNotification);
       }
-    }, "Collecting Logs", false, project);
+    }, IdeBundle.message("progress.title.collecting.logs"), false, project);
   }
 
   @NotNull
@@ -123,16 +129,5 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   @NotNull
   private static String getDate() {
     return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    presentation.setText(getActionName());
-  }
-
-  @NotNull
-  private static String getActionName() {
-    return "Compress Logs and Show in " + RevealFileAction.getFileManagerName();
   }
 }

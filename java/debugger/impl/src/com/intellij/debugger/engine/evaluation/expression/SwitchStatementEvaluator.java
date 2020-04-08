@@ -1,16 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author egor
- */
 public class SwitchStatementEvaluator implements Evaluator {
   private final Evaluator myExpressionEvaluator;
   private final Evaluator[] myBodyEvaluators;
@@ -43,7 +40,7 @@ public class SwitchStatementEvaluator implements Evaluator {
       }
     }
     catch (BreakException e) {
-      if (!Comparing.equal(e.getLabelName(), myLabelName)) {
+      if (!Objects.equals(e.getLabelName(), myLabelName)) {
         throw e;
       }
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
@@ -27,10 +28,11 @@ class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   }
 
   @Override
-  void doUpdateSize() {
+  void doUpdate() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels <= 0) {
-      throw new IllegalArgumentException("Positive width should be defined for an after-line-end element");
+      throw PluginException.createByClass("Positive width should be defined for an after-line-end element by " + myRenderer, null,
+                                          myRenderer.getClass());
     }
   }
 

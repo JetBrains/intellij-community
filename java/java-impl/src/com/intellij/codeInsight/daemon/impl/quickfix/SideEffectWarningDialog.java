@@ -40,9 +40,8 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<AbstractAction> actions = new ArrayList<>();
     myRemoveAllAction = new AbstractAction() {
       {

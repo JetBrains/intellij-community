@@ -14,7 +14,7 @@ public class Main {
   }
 
   static void testCounting(List<String> list) {
-    Map<Integer, Long> map = list.stream().collect(Collectors.groupingBy(String::length, Collectors.counting()));
+    Map<Integer, Long> map = list.stream().collect(Collectors.groupingBy(String::length, (Collectors.counting())));
     System.out.println(map);
   }
 

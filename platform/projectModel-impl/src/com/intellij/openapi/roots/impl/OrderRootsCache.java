@@ -21,9 +21,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-/**
- * @author nik
- */
 @ApiStatus.Internal
 public class OrderRootsCache {
   private final AtomicReference<ConcurrentMap<CacheKey, VirtualFilePointerContainer>> myRoots = new AtomicReference<>();
@@ -73,21 +70,19 @@ public class OrderRootsCache {
     return cached == EMPTY ? null : cached;
   }
 
-  @NotNull
-  VirtualFile[] getOrComputeRoots(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+  VirtualFile @NotNull [] getOrComputeRoots(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
     VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
     return container == null ? VirtualFile.EMPTY_ARRAY : container.getFiles();
   }
 
-  @NotNull
-  String[] getOrComputeUrls(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+  String @NotNull [] getOrComputeUrls(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
     VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
     return container == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : container.getUrls();
   }
 
   @ApiStatus.Internal
   public void clearCache() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     disposePointers();
     myRoots.set(null);
   }

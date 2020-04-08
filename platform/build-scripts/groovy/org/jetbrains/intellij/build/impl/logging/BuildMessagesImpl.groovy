@@ -12,9 +12,6 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.BiFunction
-/**
- * @author nik
- */
 @CompileStatic
 class BuildMessagesImpl implements BuildMessages {
   private final BuildMessageLogger logger
@@ -32,7 +29,7 @@ class BuildMessagesImpl implements BuildMessages {
     def registered = antProject.getReference(key)
     if (registered != null) return registered as BuildMessagesImpl
 
-    boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
+    boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null
     disableAntLogging(antProject)
     BiFunction<String, AntTaskLogger, BuildMessageLogger> mainLoggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
     def debugLogger = new DebugLogger()

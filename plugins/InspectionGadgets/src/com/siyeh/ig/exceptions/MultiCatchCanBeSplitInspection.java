@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.Objects;
 
 public class MultiCatchCanBeSplitInspection extends BaseInspection {
 
@@ -72,7 +72,7 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
     for (PsiType disjunction : ((PsiDisjunctionType)type).getDisjunctions()) {
       final PsiCatchSection copy = (PsiCatchSection)catchSection.copy();
 
-      final PsiTypeElement typeElement = assertNotNull(assertNotNull(copy.getParameter()).getTypeElement());
+      final PsiTypeElement typeElement = Objects.requireNonNull(Objects.requireNonNull(copy.getParameter()).getTypeElement());
       final PsiTypeElement newTypeElement = factory.createTypeElementFromText(disjunction.getCanonicalText(true), catchSection);
       final PsiElement replaced = typeElement.replace(newTypeElement);
 

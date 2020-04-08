@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHandler {
   private final ConsoleView myConsole;
   private boolean myClosed = false;

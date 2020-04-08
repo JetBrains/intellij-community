@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {addExportMenu, StatChartManager} from "@/charts/ChartManager"
@@ -7,6 +7,7 @@ import {GroupedMetricResponse} from "@/aggregatedStats/model"
 // todo https://www.amcharts.com/demos/variance-indicators/
 export class ClusteredChartManager implements StatChartManager {
   private readonly chart: am4charts.XYChart
+  private currentChartTitle: string | null = null
 
   constructor(container: HTMLElement) {
     this.chart = am4core.create(container, am4charts.XYChart)
@@ -42,8 +43,6 @@ export class ClusteredChartManager implements StatChartManager {
     label.tooltipText = "{category}"
   }
 
-  private currentChartTitle: string | null = null
-
   setChartTitle(value: string) {
     if (this.currentChartTitle === value) {
       return
@@ -69,7 +68,7 @@ export class ClusteredChartManager implements StatChartManager {
       let series = oldSeries.get(groupName)
       if (series == null) {
         series = new am4charts.ColumnSeries()
-        this.configureSeries(groupName, series)
+        ClusteredChartManager.configureSeries(groupName, series)
         chart.series.push(series)
       }
       else {
@@ -79,16 +78,18 @@ export class ClusteredChartManager implements StatChartManager {
 
     chart.xAxes.getIndex(0)!!.renderer.labels.template.maxWidth = data.groupNames.length > 4 ? 120 : 180
 
-    oldSeries.forEach(value => {
-      console.log("dispose series", value.name)
-      chart.series.removeIndex(chart.series.indexOf(value))
-      value.dispose()
-    })
+    if (oldSeries.size > 0) {
+      console.info("dispose series", Array.from(oldSeries.keys()))
+      for (const series of oldSeries.values()) {
+        chart.series.removeIndex(chart.series.indexOf(series))
+        series.dispose()
+      }
+    }
 
     chart.data = data.data
   }
 
-  private configureSeries(groupName: string, series: am4charts.ColumnSeries) {
+  private static configureSeries(groupName: string, series: am4charts.ColumnSeries) {
     series.name = groupName
     series.dataFields.valueY = groupName
     series.dataFields.categoryX = "metric"

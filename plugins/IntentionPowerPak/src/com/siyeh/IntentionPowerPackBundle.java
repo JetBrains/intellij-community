@@ -20,15 +20,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class IntentionPowerPackBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.siyeh.IntentionPowerPackBundle";
+  @NonNls private static final String BUNDLE = "messages.IntentionPowerPackBundle";
   private static final IntentionPowerPackBundle INSTANCE = new IntentionPowerPackBundle();
 
   private IntentionPowerPackBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 
   public static String defaultableMessage(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -49,8 +48,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author Konstantin Bulenkov
  */
 public abstract class PluginManagerMain {
-  public static final Logger LOG = Logger.getInstance(PluginManagerMain.class);
-
   private static final String TEXT_SUFFIX = "</body></html>";
   private static final String HTML_PREFIX = "<a href=\"";
   private static final String HTML_SUFFIX = "</a>";
@@ -286,8 +283,9 @@ public abstract class PluginManagerMain {
       int result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
         result =
-          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), "Dependent Plugins Found", "Enable all",
-                                         "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
+          Messages.showYesNoCancelDialog(XmlStringUtil.wrapInHtml(message), IdeBundle.message("dialog.title.dependent.plugins.found"),
+                                         IdeBundle.message("button.enable.all"),
+                                         IdeBundle.message("button.enable.updated.plugin.0", disabled.size()), CommonBundle.getCancelButtonText(),
                                          Messages.getQuestionIcon());
         if (result == Messages.CANCEL) return false;
       }
@@ -301,7 +299,7 @@ public abstract class PluginManagerMain {
                      StringUtil.pluralize("dependency", disabledDependants.size());
         }
         message += "?";
-        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), "Dependent Plugins Found", Messages.getQuestionIcon());
+        result = Messages.showYesNoDialog(XmlStringUtil.wrapInHtml(message), IdeBundle.message("dialog.title.dependent.plugins.found"), Messages.getQuestionIcon());
         if (result == Messages.NO) return false;
       }
 
@@ -366,8 +364,9 @@ public abstract class PluginManagerMain {
       return true;
     }
 
+    PluginManager pluginManager = PluginManager.getInstance();
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (!PluginManager.isDevelopedByJetBrains(descriptor)) {
+      if (!pluginManager.isDevelopedByJetBrains(descriptor)) {
         String title = IdeBundle.message("third.party.plugins.privacy.note.title");
         String message = IdeBundle.message("third.party.plugins.privacy.note.message");
         String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");

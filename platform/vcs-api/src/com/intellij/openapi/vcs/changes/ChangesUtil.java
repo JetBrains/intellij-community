@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -33,9 +32,6 @@ import static java.util.Objects.hash;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
-/**
- * @author max
- */
 public class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
@@ -166,18 +162,15 @@ public class ChangesUtil {
       .filter(Objects::nonNull);
   }
 
-  @NotNull
-  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
+  public static VirtualFile @NotNull [] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return getFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
-  @NotNull
-  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull VirtualFile[] files) {
+  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, VirtualFile @NotNull [] files) {
     return getNavigatableArray(project, Stream.of(files));
   }
 
-  @NotNull
-  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
+  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
     return files
       .filter(file -> !file.isDirectory())
       .map(file -> new OpenFileDescriptor(project, file))
@@ -185,7 +178,7 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
+  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, Change @Nullable [] changes) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     String changeListName = manager.getChangeListNameIfOnlyOne(changes);
 
@@ -363,7 +356,7 @@ public class ChangesUtil {
     FilePath before = getBeforePath(change);
     FilePath after = getAfterPath(change);
     return before == null
-           ? ObjectUtils.assertNotNull(after).getIOFile()
+           ? Objects.requireNonNull(after).getIOFile()
            : after == null ? before.getIOFile() : FileUtil.findAncestor(before.getIOFile(), after.getIOFile());
   }
 }

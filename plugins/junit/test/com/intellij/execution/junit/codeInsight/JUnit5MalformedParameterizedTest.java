@@ -31,60 +31,7 @@ public class JUnit5MalformedParameterizedTest extends LightJavaInspectionTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    addEnvironmentClass("package org.junit.platform.commons.annotation;\n" +
-                        "public @interface Testable {}");
-    addEnvironmentClass("package org.junit.jupiter.params;\n" +
-                        "@org.junit.platform.commons.annotation.Testable\n" +
-                        "public @interface ParameterizedTest {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "@org.junit.platform.commons.annotation.Testable\n" +
-                        "public @interface Test {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public interface TestInfo {}");
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public interface TestReporter {}");
-    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public @interface MethodSource {String[] value();}");
-    addEnvironmentClass("package org.junit.jupiter.params.provider;" +
-                        "public @interface EnumSource {" +
-                        " Class<? extends Enum<?>> value();" +
-                        " String[] names() default {};" +
-                        " Mode mode() default Mode.INCLUDE;" +
-                        " enum Mode {" +
-                        "  INCLUDE," +
-                        "  EXCLUDE," +
-                        "  MATCH_ALL," +
-                        "  MATCH_ANY }" +
-                        "}");
-    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "@ArgumentsSource(ValueArgumentsProvider.class)\n" +
-                        "public @interface ValueSource {\n" +
-                        "String[] strings() default {};\n" +
-                        "int[] ints() default {};\n" +
-                        "long[] longs() default {};\n" +
-                        "double[] doubles() default {};\n" +
-                        "}\n");
-    addEnvironmentClass("package org.junit.jupiter.api.extension;\n" +
-                        "public @interface ExtendWith {\n" +
-                        "  Class[] value();\n" +
-                        "}\n");
-    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public @interface CsvSource {String[] value();}");
-    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public interface Arguments {static Arguments of(Object... arguments){}}\n");
-
-    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public @interface ArgumentsSource {}");
-
-    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public @interface ArgumentsSources {\n" + 
-                         " ArgumentsSource[] value();\n" + 
-                         "}\n");
-
-    addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public @interface TestInstance {\n" +
-                        "enum Lifecycle {PER_CLASS, PER_METHOD;}\n" +
-                        "Lifecycle value();}");
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
   }
 
   public void testMalformedSources() { doTest(); }

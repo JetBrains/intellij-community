@@ -28,9 +28,6 @@ import java.io.IOException;
 import java.util.EventListener;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ClientLibraryManager {
   @NotNull
   public static ClientLibraryManager getInstance() {

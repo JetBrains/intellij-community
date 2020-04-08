@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyWithWhileSurrounder extends PyStatementSurrounder{
   @Override
   @Nullable
-  protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+  protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException {
     PyWhileStatement whileStatement =
       PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyWhileStatement.class, "while True:\n    ");

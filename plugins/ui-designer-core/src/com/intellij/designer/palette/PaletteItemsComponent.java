@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.palette;
 
 import com.intellij.designer.componentTree.TreeTransfer;
@@ -8,7 +8,6 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -150,20 +149,6 @@ public class PaletteItemsComponent extends JBList {
       @Override
       public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
         return null;
-      }
-
-      @Nullable
-      @Override
-      public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-        return null;
-      }
-
-      @Override
-      public void dragDropEnd() {
-      }
-
-      @Override
-      public void dropActionChanged(int gestureModifiers) {
       }
     }, this);
 

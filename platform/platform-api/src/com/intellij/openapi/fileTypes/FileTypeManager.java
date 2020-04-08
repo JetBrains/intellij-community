@@ -57,7 +57,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
-  public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
+  public final void registerFileType(@NotNull FileType type, @NonNls String @Nullable ... defaultAssociatedExtensions) {
     List<FileNameMatcher> matchers = new ArrayList<>();
     if (defaultAssociatedExtensions != null) {
       for (String extension : defaultAssociatedExtensions) {
@@ -84,8 +84,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated since more generic way of associations using wildcards exist, not every association matches extension paradigm
    */
   @Deprecated
-  @NotNull
-  public abstract String[] getAssociatedExtensions(@NotNull FileType type);
+  public abstract String @NotNull [] getAssociatedExtensions(@NotNull FileType type);
 
 
   @NotNull

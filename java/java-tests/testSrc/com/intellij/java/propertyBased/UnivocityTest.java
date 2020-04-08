@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -24,7 +23,6 @@ import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Assume;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -33,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
-public class UnivocityTest extends AbstractApplyAndRevertTestCase {
+public class UnivocityTest extends BaseUnivocityTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -122,18 +120,6 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
 
           env1.executeCommands(IntDistribution.uniform(1, 7), Generator.frequency(actionWeights));
         }))));
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    File file = new File(PathManager.getHomePath(), "univocity-parsers");
-    if (!file.exists()) {
-      fail("Cannot find univocity project:\n" +
-           "  execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git\n" +
-           "  open the just cloned univocity-parsers project in IntelliJ IDEA, let it download all the libraries, close the IDE\n" +
-           "  execute this in univocity-parsers directory: git reset HEAD --hard");
-    }
-    return file.getAbsolutePath();
   }
 
   private static class AddImportExternally extends ActionOnFile {

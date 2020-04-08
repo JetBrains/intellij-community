@@ -24,8 +24,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
  *
  * Implementations of this class are registered as Java services, by creating a file
  * META-INF/services/org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider containing the qualified name of your implementation class.
- *
- * @author nik
  */
 public abstract class ExcludedJavaSourceRootProvider {
   public abstract boolean isExcludedFromCompilation(@NotNull JpsModule module, @NotNull JpsModuleSourceRoot root);

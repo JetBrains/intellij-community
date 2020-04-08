@@ -54,8 +54,7 @@ public abstract class LightElement extends PsiElementBase {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -81,8 +80,7 @@ public abstract class LightElement extends PsiElementBase {
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return getText().toCharArray();
   }
 

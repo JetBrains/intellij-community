@@ -40,8 +40,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
   }
 
   @Override
-  @NotNull
-  public PyImportElement[] getImportElements() {
+  public PyImportElement @NotNull [] getImportElements() {
     final PyImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, count -> new PyImportElement[count]);
@@ -74,7 +73,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
    * @return list of qualified names
    */
   @NotNull
-  public static List<String> getImportElementNames(@NotNull final PyImportElement... elements) {
+  public static List<String> getImportElementNames(final PyImportElement @NotNull ... elements) {
     final List<String> result = new ArrayList<>(elements.length);
     for (final PyImportElement element : elements) {
       final QualifiedName qName = element.getImportedQName();

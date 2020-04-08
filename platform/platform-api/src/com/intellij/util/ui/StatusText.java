@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,11 @@ import java.util.List;
 
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
-  public static final String DEFAULT_EMPTY_TEXT = UIBundle.message("message.nothingToShow");
+  /**
+   * @deprecated Use {@link #getDefaultEmptyText()} instead
+   */
+  @Deprecated
+  public static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
 
   private static final int Y_GAP = 2;
 
@@ -83,7 +88,7 @@ public abstract class StatusText {
 
     myComponent.setOpaque(false);
     myComponent.setFont(UIUtil.getLabelFont());
-    setText(DEFAULT_EMPTY_TEXT, DEFAULT_ATTRIBUTES);
+    setText(getDefaultEmptyText(), DEFAULT_ATTRIBUTES);
     myIsDefaultText = true;
 
     mySecondaryComponent.setOpaque(false);
@@ -174,11 +179,11 @@ public abstract class StatusText {
     return myText;
   }
 
-  public StatusText setText(String text) {
+  public StatusText setText(@NlsContexts.StatusText String text) {
     return setText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText setText(String text, SimpleTextAttributes attrs) {
+  public StatusText setText(@NlsContexts.StatusText String text, SimpleTextAttributes attrs) {
     return clear().appendText(text, attrs);
   }
 
@@ -197,15 +202,15 @@ public abstract class StatusText {
     if (myOwner != null && isStatusVisible()) myOwner.repaint();
   }
 
-  public StatusText appendText(String text) {
+  public StatusText appendText(@NlsContexts.StatusText String text) {
     return appendText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs) {
+  public StatusText appendText(@NlsContexts.StatusText String text, SimpleTextAttributes attrs) {
     return appendText(text, attrs, null);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  public StatusText appendText(@NlsContexts.StatusText String text, SimpleTextAttributes attrs, ActionListener listener) {
     if (myIsDefaultText) {
       clear();
       myIsDefaultText = false;
@@ -226,7 +231,7 @@ public abstract class StatusText {
   }
 
   @NotNull
-  public StatusText appendSecondaryText(@NotNull String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+  public StatusText appendSecondaryText(@NotNull @NlsContexts.StatusText String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
     mySecondaryComponent.append(text, attrs);
     mySecondaryListeners.add(listener);
     if (listener != null) {
@@ -333,5 +338,9 @@ public abstract class StatusText {
 
   public boolean isVerticalFlow() {
     return myVerticalFlow;
+  }
+
+  public static String getDefaultEmptyText() {
+    return UIBundle.message("message.nothingToShow");
   }
 }

@@ -54,8 +54,7 @@ class VirtualFileDataImpl extends VirtualFileImpl {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return myContents;
   }
 

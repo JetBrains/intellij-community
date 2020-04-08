@@ -12,7 +12,7 @@ public final class ImplementationConflictException extends RuntimeException {
   @NotNull
   private final Collection<Class<?>> myConflictingClasses;
 
-  public ImplementationConflictException(String message, Throwable cause, @NotNull Object ...implementationObjects) {
+  public ImplementationConflictException(String message, Throwable cause, Object @NotNull ... implementationObjects) {
     super(message, cause);
     final List<Class<?>> classes = new ArrayList<>(implementationObjects.length);
     for (Object object : implementationObjects) {

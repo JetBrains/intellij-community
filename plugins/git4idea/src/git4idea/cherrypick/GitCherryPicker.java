@@ -2,6 +2,7 @@
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,6 +21,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import kotlin.Unit;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -102,10 +104,12 @@ public class GitCherryPicker extends VcsCherryPicker {
     return GitVcs.getKey();
   }
 
-  @NotNull
+
   @Override
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getActionTitle() {
-    return "Cherry-Pick";
+    return DvcsBundle.message("cherry.pick.action.text");
   }
 
   private static boolean isAutoCommit() {
@@ -114,6 +118,6 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Override
   public boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots) {
-    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRoot(r) != null);
+    return roots.stream().allMatch(r -> myRepositoryManager.getRepositoryForRootQuick(r) != null);
   }
 }

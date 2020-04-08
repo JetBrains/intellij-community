@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.pycharm.community.customization.impl" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="tips-pycharm-community" level="project" />
   </component>
 </module>

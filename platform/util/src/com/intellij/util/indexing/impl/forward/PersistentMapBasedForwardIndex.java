@@ -72,14 +72,7 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
 
   @Override
   public void clear() throws IOException {
-    Path baseFile = myPersistentMap.getBaseFile();
-    try {
-      myPersistentMap.close();
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    PersistentHashMap.deleteFilesStartingWith(baseFile.toFile());
+    PersistentHashMap.deleteMap(myPersistentMap);
     myPersistentMap = createMap(myMapFile);
   }
 

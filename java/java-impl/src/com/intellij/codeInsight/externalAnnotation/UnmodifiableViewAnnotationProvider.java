@@ -24,9 +24,8 @@ public class UnmodifiableViewAnnotationProvider implements AnnotationProvider {
            !ClassUtils.isImmutable(((PsiMethod)owner).getReturnType());
   }
 
-  @NotNull
   @Override
-  public String[] getAnnotationsToRemove(Project project) {
+  public String @NotNull [] getAnnotationsToRemove(Project project) {
     return new String[]{Mutability.UNMODIFIABLE_ANNOTATION};
   }
 }

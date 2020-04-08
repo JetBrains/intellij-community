@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
@@ -8,7 +8,7 @@ import {ChartConfigurator} from "@/aggregatedStats/ChartConfigurator"
 import * as am4plugins_annotation from "@amcharts/amcharts4/plugins/annotation"
 
 export class LineChartManager implements StatChartManager {
-  private readonly chart: am4charts.XYChart
+  readonly chart: am4charts.XYChart
 
   constructor(container: HTMLElement,
               private chartSettings: ChartSettings,

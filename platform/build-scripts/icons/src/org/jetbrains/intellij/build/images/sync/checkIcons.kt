@@ -19,8 +19,6 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   // required to load com.intellij.ide.plugins.newui.PluginLogo
   System.setProperty("java.awt.headless", "true")
   logger = loggerImpl
-  context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
-  context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
   callWithTimer("Searching for changed icons..") {
     when {
@@ -34,10 +32,10 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
     }
   }
   syncDevRepo(context)
+  findCommitsToSync(context)
   when {
     !context.devIconsSyncAll && !context.iconsSyncRequired() && !context.devSyncRequired() -> log("No changes are found")
     isUnderTeamCity() -> {
-      findCommitsToSync(context)
       if (context.devCommitsToSync.isNotEmpty()) try {
         push(context)
       }
@@ -50,19 +48,18 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
         throw e
       }
       if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
-        createReviewForDev(context)?.also {
-          context.createdReviews = listOf(it)
-        }
+        commitAndPush(context)
       }
     }
     else -> syncIconsRepo(context)
   }
   val report = report(context, skippedDirs.size)
-  if (isUnderTeamCity() &&
-      (context.isFail() ||
-       // reviews should be created
-       context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty())) context.doFail(report)
-  else log(report)
+  if (isUnderTeamCity() && context.isFail()) {
+    context.doFail(report)
+  }
+  else {
+    log(report)
+  }
 }
 
 private fun push(context: Context) {
@@ -73,14 +70,9 @@ private fun push(context: Context) {
         val devCommitsLinks = context.devCommitsToSync
           .values.asSequence().flatten()
           .filter { it.committer == pushedCommit.committer }
-          .map {
-            commitUrl(UPSOURCE_DEV_PROJECT_ID, it)?.let { url ->
-              slackLink("'${it.subject}'", url)
-            } ?: "'${it.subject}'"
-          }.joinToString()
-        val commitUrl = commitUrl(UPSOURCE_ICONS_PROJECT_ID, pushedCommit)
-        val synced = commitUrl?.let { slackLink("synced", it) } ?: "synced"
-        "Icons from $devCommitsLinks are $synced"
+          .map { "'${it.subject}'" }
+          .joinToString()
+        "Icons from $devCommitsLinks are synced"
       }, context, success = true
     )
   }
@@ -131,9 +123,12 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
 
 private fun searchForChangedIconsByDesigners(context: Context) {
   if (!isUnderTeamCity()) gitPull(context.iconsRepo)
-  fun asIcons(files: Collection<String>) = files
+  fun asIcons(files: Collection<String>) = files.asSequence()
     .filter { ImageExtension.fromName(it) != null }
-    .map { context.iconsRepo.resolve(it).toRelativeString(context.iconsRepoDir) }
+    .map(context.iconsRepo::resolve)
+    .filter(context.iconsFilter)
+    .map { it.toRelativeString(context.iconsRepoDir) }
+    .toList()
   ArrayList(context.iconsCommitHashesToSync).map {
     commitInfo(context.iconsRepo, it) ?: error("Commit $it is not found in ${context.iconsRepoName}")
   }.sortedBy(CommitInfo::timestamp).forEach {
@@ -188,10 +183,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
 
 private fun readIconsRepo(context: Context) = protectStdErr {
   val (iconsRepo, iconsRepoDir) = context.iconsRepo to context.iconsRepoDir
-  listGitObjects(iconsRepo, iconsRepoDir) { file ->
-    // read icon hashes
-    Icon(file).isValid
-  }.also {
+  listGitObjects(iconsRepo, iconsRepoDir, context.iconsFilter).also {
     if (it.isEmpty()) log("${context.iconsRepoName} repo doesn't contain icons")
   }
 }

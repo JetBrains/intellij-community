@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
@@ -22,13 +23,14 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.ImageUtil;
-import com.sun.javafx.application.PlatformImpl;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -215,14 +217,18 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-      // JCEF/JBR11 is not compliant with JFX
-      if (!Registry.is("ide.browser.jcef.enabled")) {
-        // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
+      // JCEF/JBR11 is not compliant with JavaFX
+      //noinspection deprecation
+      if (!JBCefApp.isEnabled()) {
+        // NOTE: Linux implementation of JavaFX starts native main loop with GtkApplication._runLoop()
         try {
-          PlatformImpl.startup(() -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+          Class<?> platformImpl = Class.forName("com.sun.javafx.application.PlatformImpl");
+          Method startup = platformImpl.getMethod("startup", Runnable.class);
+          Runnable r = () -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
+          startup.invoke(null, r);
         }
         catch (Throwable e) {
-          LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
+          LOG.info("can't start main loop via JavaFX (will run it manually): " + e.getMessage());
           final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
                                              "GlobalMenuLinux loop");
           glibMain.start();
@@ -796,7 +802,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (!SystemInfo.isLinux ||
         ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ||
         Registry.is("linux.native.menu.force.disable") ||
-        !Experiments.getInstance().isFeatureEnabled("linux.native.menu") ||
+        (LoadingState.COMPONENTS_REGISTERED.isOccurred() && !Experiments.getInstance().isFeatureEnabled("linux.native.menu")) ||
         !JnaLoader.isLoaded() ||
         isUnderVMWithSwiftPluginInstalled()) {
       return null;
@@ -1334,7 +1340,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static void _trace(String fmt, Object... args) {
+  private static void _trace(@NonNls String fmt, Object... args) {
     if (!TRACE_ENABLED) {
       return;
     }
@@ -1342,7 +1348,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     _trace(msg);
   }
 
-  private static void _trace(String msg) {
+  private static void _trace(@NonNls String msg) {
     if (!TRACE_ENABLED) {
       return;
     }

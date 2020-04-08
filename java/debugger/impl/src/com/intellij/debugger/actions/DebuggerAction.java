@@ -84,8 +84,7 @@ public abstract class DebuggerAction extends AnAction {
     return (DebuggerTreeNodeImpl)component;
   }
 
-  @Nullable
-  public static DebuggerTreeNodeImpl[] getSelectedNodes(DataContext dataContext) {
+  public static DebuggerTreeNodeImpl @Nullable [] getSelectedNodes(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
     if(tree == null) return null;
     TreePath[] paths = tree.getSelectionPaths();
@@ -123,7 +122,7 @@ public abstract class DebuggerAction extends AnAction {
   public static Disposable installEditAction(final JTree tree, String actionName) {
     final DoubleClickListener listener = new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (tree.getPathForLocation(e.getX(), e.getY()) == null) return false;
         DataContext dataContext = DataManager.getInstance().getDataContext(tree);
         GotoFrameSourceAction.doAction(dataContext);

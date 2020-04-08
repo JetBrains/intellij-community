@@ -57,12 +57,10 @@ public class BlockSupportImpl extends BlockSupport {
                               @NotNull final CharSequence newFileText,
                               @NotNull final ProgressIndicator indicator,
                               @NotNull CharSequence lastCommittedText) {
-    try (ReparseResult result = reparse(file, oldFileNode, changedPsiRange, newFileText, indicator, lastCommittedText)) {
-      return result.log;
-    }
+    return reparse(file, oldFileNode, changedPsiRange, newFileText, indicator, lastCommittedText).log;
   }
 
-  static class ReparseResult implements AutoCloseable {
+  static class ReparseResult {
     final DiffLog log;
     final ASTNode oldRoot;
     final ASTNode newRoot;
@@ -73,9 +71,6 @@ public class BlockSupportImpl extends BlockSupport {
       this.newRoot = newRoot;
     }
 
-    @Override
-    public void close() {
-    }
   }
   // return diff log, old node to replace, new node (in dummy file)
   // MUST call .close() on the returned result
@@ -232,13 +227,7 @@ public class BlockSupportImpl extends BlockSupport {
       DiffLog diffLog = new DiffLog();
       diffLog.appendReplaceFileElement(parent, (FileElement)holderElement.getFirstChildNode());
 
-      return new ReparseResult(diffLog, oldFileNode, holderElement) {
-        @Override
-        public void close() {
-          VirtualFile lightFile = dummyHolder.getViewProvider().getVirtualFile();
-          ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
-        }
-      };
+      return new ReparseResult(diffLog, oldFileNode, holderElement);
     }
     FileViewProvider viewProvider = fileImpl.getViewProvider();
     viewProvider.getLanguages();
@@ -266,12 +255,7 @@ public class BlockSupportImpl extends BlockSupport {
     }
     DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
 
-    return new ReparseResult(diffLog, oldFileElement, newFileElement) {
-      @Override
-      public void close() {
-        ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
-      }
-    };
+    return new ReparseResult(diffLog, oldFileElement, newFileElement);
   }
 
   @NotNull

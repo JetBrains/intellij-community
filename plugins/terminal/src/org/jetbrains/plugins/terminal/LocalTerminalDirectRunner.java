@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.ImmutableList;
@@ -41,9 +41,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-/**
- * @author traff
- */
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
@@ -51,8 +48,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
-  private static final ImmutableList<String> LOGIN_CLI_OPTIONS = ImmutableList.of("--login", "-l");
-  private static final String LOGIN_CLI_OPTION = LOGIN_CLI_OPTIONS.get(0);
+  private static final String LOGIN_CLI_OPTION = "--login";
+  private static final ImmutableList<String> LOGIN_CLI_OPTIONS = ImmutableList.of(LOGIN_CLI_OPTION, "-l");
   private static final String INTERACTIVE_CLI_OPTION = "-i";
   private static final String BASH_NAME = "bash";
   private static final String SH_NAME = "sh";
@@ -160,7 +157,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
     return createProcess(directory, null);
   }
 
@@ -244,8 +241,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
-  @NotNull
-  public static String[] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
+  public static String @NotNull [] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
     if (SystemInfo.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 
@@ -315,10 +311,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static boolean isLoginOptionAvailable(@NotNull String shellName) {
-    return shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME)) || shellName.equals(ZSH_NAME);
+    return isBashZshFish(shellName);
   }
 
   private static boolean isInteractiveOptionAvailable(@NotNull String shellName) {
+    return isBashZshFish(shellName);
+  }
+
+  private static boolean isBashZshFish(@NotNull String shellName) {
     return shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME)) ||
            shellName.equals(ZSH_NAME) || shellName.equals(FISH_NAME);
   }

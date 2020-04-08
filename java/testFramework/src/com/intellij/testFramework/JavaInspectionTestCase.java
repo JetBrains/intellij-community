@@ -54,7 +54,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     ep.presentation = UnusedDeclarationPresentation.class.getName();
     ep.implementationClass = UnusedDeclarationInspection.class.getName();
     ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
-    ep.displayName = UnusedDeclarationInspectionBase.DISPLAY_NAME;
+    ep.displayName = UnusedDeclarationInspectionBase.getDisplayNameText();
     return new GlobalInspectionToolWrapper(ep);
   }
 
@@ -92,7 +92,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
                      @NotNull InspectionToolWrapper<?,?> toolWrapper,
                      boolean checkRange,
                      boolean runDeadCodeFirst,
-                     @NotNull InspectionToolWrapper<?,?>... additional) {
+                     InspectionToolWrapper<?,?> @NotNull ... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
     final List<InspectionToolWrapper<?, ?>> tools = getTools(runDeadCodeFirst, toolWrapper, additional);
     GlobalInspectionContextImpl context = runTool(folderName, toolWrapper, tools);
@@ -137,7 +137,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   @NotNull
   private static List<InspectionToolWrapper<?, ?>> getTools(boolean runDeadCodeFirst,
                                                             @NotNull InspectionToolWrapper<?,?> toolWrapper,
-                                                            @NotNull InspectionToolWrapper<?,?>[] additional) {
+                                                            InspectionToolWrapper<?,?> @NotNull [] additional) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
     if (runDeadCodeFirst) {
       toolWrappers.add(getUnusedDeclarationWrapper());

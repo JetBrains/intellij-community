@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +42,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return "Libraries";
+    return JavaUiBundle.message("configurable.ProjectLibrariesConfigurable.display.name");
   }
 
   @Override
@@ -84,6 +84,6 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   @Override
   protected String getAddText() {
-    return ProjectBundle.message("add.new.project.library.text");
+    return JavaUiBundle.message("add.new.project.library.text");
   }
 }

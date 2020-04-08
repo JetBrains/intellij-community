@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
@@ -23,7 +24,7 @@ import javax.swing.*;
 
 import static java.lang.String.valueOf;
 
-public class ToggleDistractionFreeModeAction extends DumbAwareAction {
+public class ToggleDistractionFreeModeAction extends DumbAwareAction implements LightEditCompatible {
   private static final String key = "editor.distraction.free.mode";
 
   @Override

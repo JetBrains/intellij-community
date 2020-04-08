@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author max
- */
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
@@ -44,13 +41,16 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   }
 
   @Override
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
+  public JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     return context.getStdJobDescriptors().LOCAL_ANALYSIS_ARRAY;
   }
 
   public boolean isUnfair() {
     return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
+  }
+
+  public boolean isDynamicGroup() {
+    return myEP == null ? getTool() instanceof DynamicGroupTool : myEP.dynamicGroup;
   }
 
   @Override

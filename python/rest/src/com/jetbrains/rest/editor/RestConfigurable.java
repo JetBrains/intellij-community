@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class RestConfigurable implements SearchableConfigurable, Configurable.No
     myComboBox.setSelectedItem(RestSettings.getInstance().getCurrentPanel());
     LabeledComponent<JComponent> component = new LabeledComponent<>();
     component.setComponent(myComboBox);
-    component.setText("Preview panel:");
+    component.setText(RestBundle.message("preview.panel"));
     component.setLabelLocation(BorderLayout.WEST);
     myPanel.add(component, BorderLayout.NORTH);
   }
@@ -39,7 +40,7 @@ public class RestConfigurable implements SearchableConfigurable, Configurable.No
   @Nls
   @Override
   public String getDisplayName() {
-    return "ReStructured text";
+    return RestBundle.message("configurable.RestConfigurable.display.name");
   }
 
   @Override

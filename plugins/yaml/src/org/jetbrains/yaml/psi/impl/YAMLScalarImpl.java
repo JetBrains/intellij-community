@@ -68,8 +68,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 
@@ -170,7 +169,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
     @Override
     public boolean isOneLine() {
-      return myHost.isMultiline();
+      return !myHost.isMultiline();
     }
   }
 

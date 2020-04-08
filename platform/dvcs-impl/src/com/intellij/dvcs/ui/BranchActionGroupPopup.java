@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -36,13 +36,13 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.icons.AllIcons.General.CollapseComponentHover;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
-public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
+public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
   static final String BRANCH_POPUP = "BranchWidget";
   private Project myProject;
@@ -77,18 +77,19 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       createTitlePanelToolbar(myKey);
     }
+    setSpeedSearchAlwaysShown();
     myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
   }
 
   private void createTitlePanelToolbar(@NotNull String dimensionKey) {
     ActionGroup actionGroup = new LightActionGroup() {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return myToolbarActions.toArray(AnAction.EMPTY_ARRAY);
       }
     };
-    AnAction restoreSizeButton = new AnAction("Restore Size", null, CollapseComponentHover) {
+    AnAction restoreSizeButton =
+      new AnAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), CollapseComponentHover) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
@@ -102,9 +103,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     ActionGroup settingsGroup = new ActionGroup("Settings", true) {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return mySettingsActions.toArray(AnAction.EMPTY_ARRAY);
       }
 
@@ -150,7 +150,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     popupWindow.addComponentListener(windowListener);
-    addPopupListener(new JBPopupAdapter() {
+    addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         popupWindow.removeComponentListener(windowListener);
@@ -162,7 +162,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private void processOnSizeChanged() {
-    Dimension newSize = assertNotNull(getSize());
+    Dimension newSize = Objects.requireNonNull(getSize());
     int preferredHeight = getComponent().getPreferredSize().height;
     int realHeight = getComponent().getHeight();
     boolean shouldExpand = preferredHeight + myMeanRowHeight < realHeight;
@@ -464,7 +464,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       if (event != null && event.getSource() instanceof JComponent) {
         DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
         if (dataProvider != null) {
-          assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
+          Objects.requireNonNull(POPUP_MODEL.getData(dataProvider)).refilter();
         }
       }
     }

@@ -19,8 +19,7 @@ public abstract class NewRunConfigurationTreePopupFactory {
   @NotNull
   public abstract NodeDescriptor getRootElement();
 
-  @NotNull
-  protected final NodeDescriptor[] convertToDescriptors(@NotNull Project project, NodeDescriptor parent, Object[] elements) {
+  protected final NodeDescriptor @NotNull [] convertToDescriptors(@NotNull Project project, NodeDescriptor parent, Object[] elements) {
     ArrayList<NodeDescriptor> descriptors = new ArrayList<>();
     for (Object element : elements) {
       descriptors.add(createDescriptor(project, element, parent));

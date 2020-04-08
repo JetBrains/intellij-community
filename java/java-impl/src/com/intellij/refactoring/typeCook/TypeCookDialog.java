@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeCook;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ui.JBInsets;
@@ -17,8 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TypeCookDialog extends RefactoringDialog {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("generify.title");
-
   private final PsiElement[] myElements;
   private final JLabel myClassNameLabel = new JLabel();
   private final JCheckBox myCbDropCasts = new JCheckBox();
@@ -32,7 +30,7 @@ public class TypeCookDialog extends RefactoringDialog {
   public TypeCookDialog(Project project, PsiElement[] elements) {
     super(project, true);
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
 
     init();
 
@@ -95,12 +93,12 @@ public class TypeCookDialog extends RefactoringDialog {
         JavaRefactoringSettings.getInstance().TYPE_COOK_PRODUCE_WILDCARDS);
     }
 
-    myCbDropCasts.setText(RefactoringBundle.message("type.cook.drop.obsolete.casts"));
-    myCbPreserveRawArrays.setText(RefactoringBundle.message("type.cook.preserve.raw.arrays"));
-    myCbLeaveObjectParameterizedTypesRaw.setText(RefactoringBundle.message("type.cook.leave.object.parameterized.types.raw"));
-    myCbExhaustive.setText(RefactoringBundle.message("type.cook.perform.exhaustive.search"));
-    myCbCookObjects.setText(RefactoringBundle.message("type.cook.generify.objects"));
-    myCbCookToWildcards.setText(RefactoringBundle.message("type.cook.produce.wildcard.types"));
+    myCbDropCasts.setText(JavaRefactoringBundle.message("type.cook.drop.obsolete.casts"));
+    myCbPreserveRawArrays.setText(JavaRefactoringBundle.message("type.cook.preserve.raw.arrays"));
+    myCbLeaveObjectParameterizedTypesRaw.setText(JavaRefactoringBundle.message("type.cook.leave.object.parameterized.types.raw"));
+    myCbExhaustive.setText(JavaRefactoringBundle.message("type.cook.perform.exhaustive.search"));
+    myCbCookObjects.setText(JavaRefactoringBundle.message("type.cook.generify.objects"));
+    myCbCookToWildcards.setText(JavaRefactoringBundle.message("type.cook.produce.wildcard.types"));
 
     gbConstraints.insets = JBInsets.create(4, 8);
 
@@ -192,5 +190,9 @@ public class TypeCookDialog extends RefactoringDialog {
         return cookToWildcards;
       }
     };
+  }
+
+  public static String getRefactoringName() {
+    return JavaRefactoringBundle.message("generify.title");
   }
 }

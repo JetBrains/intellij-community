@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -39,8 +41,17 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.ui.scale.ScaleType.*;
 
+/**
+ * Provides access to icons used in the UI.
+ * <p/>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html">Working with Icons and Images</a>
+ * about supported formats, organization, and accessing icons in plugins.
+ *
+ * @see IconUtil
+ */
 public final class IconLoader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
+  private static final Logger LOG = Logger.getInstance(IconLoader.class);
+
   private static final String ICON_CACHE_URL_KEY = "ICON_CACHE_URL_KEY";
   // the key: Pair(ICON_CACHE_URL_KEY, url) or Pair(path, classLoader)
   private static final ConcurrentMap<Pair<String, Object>, CachedImageIcon> ourIconsCache =
@@ -708,8 +719,7 @@ public final class IconLoader {
       return myDarkOverridden == null ? ourTransform.get().isDark() : myDarkOverridden;
     }
 
-    @Nullable
-    private ImageFilter[] getFilters() {
+    private ImageFilter @Nullable [] getFilters() {
       ImageFilter global = ourTransform.get().getFilter();
       ImageFilter local = myLocalFilterSupplier != null ? myLocalFilterSupplier.get() : null;
       if (global != null && local != null) {
@@ -1036,6 +1046,20 @@ public final class IconLoader {
     }
   }
 
+  @NotNull
+  public static Icon createLazy(@NotNull Supplier<@NotNull Icon> producer) {
+    return new LazyIcon() {
+      @Override
+      @NotNull
+      protected Icon compute() {
+        return producer.get();
+      }
+    };
+  }
+
+  /**
+   * Consider using {@link #createLazy)}.
+   */
   public abstract static class LazyIcon extends ScaleContextSupport implements CopyableIcon, RetrievableIcon {
     private boolean myWasComputed;
     private volatile Icon myIcon;
@@ -1066,10 +1090,21 @@ public final class IconLoader {
     final synchronized Icon getOrComputeIcon() {
       Icon icon = myIcon;
       int newTransformModCount = ourTransformModCount.get();
-      if (!myWasComputed || myTransformModCount != newTransformModCount || icon == null) {
+      if (icon == null || !myWasComputed || myTransformModCount != newTransformModCount) {
         myTransformModCount = newTransformModCount;
         myWasComputed = true;
-        myIcon = icon = compute();
+        try {
+          icon = compute();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error("Cannot compute icon", e);
+          icon = AllIcons.Actions.Stub;
+        }
+
+        myIcon = icon;
       }
 
       return icon;
@@ -1141,10 +1176,10 @@ public final class IconLoader {
    */
   private static final class IconTransform {
     private final boolean myDark;
-    private final @NotNull IconPathPatcher[] myPatchers;
+    private final IconPathPatcher @NotNull [] myPatchers;
     private final @Nullable ImageFilter myFilter;
 
-    private IconTransform(boolean dark, @NotNull IconPathPatcher[] patchers, @Nullable ImageFilter filter) {
+    private IconTransform(boolean dark, IconPathPatcher @NotNull [] patchers, @Nullable ImageFilter filter) {
       myDark = dark;
       myPatchers = patchers;
       myFilter = filter;

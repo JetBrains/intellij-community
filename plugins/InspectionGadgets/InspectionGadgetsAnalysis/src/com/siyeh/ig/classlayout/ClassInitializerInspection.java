@@ -61,9 +61,8 @@ public class ClassInitializerInspection extends BaseInspection {
   }
 
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;

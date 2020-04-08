@@ -42,3 +42,6 @@ UFile (package = ) [public final enum EnumSwitchWithoutBreaks {...]
                                 UBreakExpression (label = null) [break] = Nothing(break)
                 UReturnExpression [return result] = Nothing
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Phi(3, 66))
+        UMethod (name = values) [public static fun values() : EnumSwitchWithoutBreaks[] = UastEmptyExpression]
+        UMethod (name = valueOf) [public static fun valueOf(name: java.lang.String) : EnumSwitchWithoutBreaks = UastEmptyExpression]
+            UParameter (name = name) [var name: java.lang.String]

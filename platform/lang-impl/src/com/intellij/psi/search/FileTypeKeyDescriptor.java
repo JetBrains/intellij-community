@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -8,16 +8,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.SubstitutedFileType;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Objects;
+import javax.swing.Icon;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
-    private static final FileType OUT_DATED_FILE_TYPE = new OutDatedFileType();
+    static final FileTypeKeyDescriptor INSTANCE = new FileTypeKeyDescriptor();
 
     @Override
     public int getHashCode(FileType value) {
@@ -26,8 +26,11 @@ class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
 
     @Override
     public boolean isEqual(FileType val1, FileType val2) {
-        if (val1 instanceof SubstitutedFileType) val1 = ((SubstitutedFileType)val1).getOriginalFileType();
-        if (val2 instanceof SubstitutedFileType) val2 = ((SubstitutedFileType)val2).getOriginalFileType();
+        if (val1 instanceof SubstitutedFileType) val1 = ((SubstitutedFileType)val1).getFileType();
+        if (val2 instanceof SubstitutedFileType) val2 = ((SubstitutedFileType)val2).getFileType();
+        if (val1 instanceof OutDatedFileType || val2 instanceof OutDatedFileType) {
+          return Objects.equals(val1.getName(), val2.getName());
+        }
         return Comparing.equal(val1, val2);
     }
 
@@ -40,14 +43,19 @@ class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
     public FileType read(@NotNull DataInput in) throws IOException {
         String read = EnumeratorStringDescriptor.INSTANCE.read(in);
         FileType fileType = FileTypeRegistry.getInstance().findFileTypeByName(read);
-        return fileType == null ? OUT_DATED_FILE_TYPE : fileType;
+        return fileType == null ? new OutDatedFileType(read) : fileType;
     }
 
     private static class OutDatedFileType implements FileType {
         @NotNull
+        private final String myName;
+
+        private OutDatedFileType(@NotNull String name) {myName = name;}
+
+        @NotNull
         @Override
         public String getName() {
-            throw new UnsupportedOperationException();
+            return myName;
         }
 
         @NotNull
@@ -80,7 +88,7 @@ class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
 
         @Nullable
         @Override
-        public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+        public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
             throw new UnsupportedOperationException();
         }
     }

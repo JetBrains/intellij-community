@@ -9,9 +9,6 @@ import groovy.transform.Immutable
 import groovy.xml.XmlUtil
 import org.jetbrains.intellij.build.BuildContext
 
-/**
- * @author nik
- */
 @CompileStatic
 class PluginRepositoryXmlGenerator {
   private final BuildContext buildContext
@@ -57,7 +54,13 @@ class PluginRepositoryXmlGenerator {
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
   private Plugin readPlugin(File pluginZip, File pluginXml, String buildNumber, File targetDirectory) {
-    def xml = new XmlParser().parse(pluginXml)
+    def xml
+    try {
+      xml = new XmlParser().parse(pluginXml)
+    } catch (Throwable t) {
+      throw new IllegalStateException("Unable to parse " + pluginXml, t)
+    }
+
     def versionNode = xml."idea-version"[0]
 
     def depends = new StringBuilder()

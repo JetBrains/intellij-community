@@ -1,186 +1,144 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.diff.util.Range
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.GitCommit
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
-import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
-import org.jetbrains.plugins.github.util.GHPatchHunkUtil
+import gnu.trove.THashMap
+import gnu.trove.TObjectHashingStrategy
+import org.jetbrains.plugins.github.api.data.GHCommit
+import java.util.*
+import kotlin.collections.LinkedHashMap
 
 class GHPRChangesProviderImpl(private val repository: GitRepository,
-                              baseRef: String, headRef: String,
-                              commits: List<GitCommit>, diffFile: String)
+                              mergeBaseRef: String,
+                              commitsWithDiffs: List<Triple<GHCommit, String, String>>)
   : GHPRChangesProvider {
 
-  override val lastCommitSha = headRef
-
   override val changes: List<Change>
-  private val patchesByChanges: Map<Change, TextFilePatch>
-  private val changesIndex: Map<Pair<String, String>, Change>
+  override val changesByCommits: Map<GHCommit, List<Change>>
+
+  private val diffDataByChange: Map<Change, GHPRChangeDiffData>
 
   init {
-    val mergeBaseRev =
-      GitHistoryUtils.getMergeBase(repository.project, repository.root, baseRef, headRef)?.rev
-      ?: error("Could not calculate merge base for PR branch")
+    changesByCommits = LinkedHashMap()
+    diffDataByChange = THashMap(object : TObjectHashingStrategy<Change> {
+      override fun equals(o1: Change?, o2: Change?) = o1 == o2 &&
+                                                      o1?.beforeRevision == o2?.beforeRevision &&
+                                                      o2?.afterRevision == o2?.afterRevision
 
-    val changesWithRenames = buildChangesWithRenames(commits)
+      override fun computeHashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
+    })
 
-    val patchReader = PatchReader(diffFile, true)
-    patchReader.parseAllPatches()
+    val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRChangeDiffData.FileHistory>()
+
+    var lastCommitSha = mergeBaseRef
+    var lastCumulativePatches: List<FilePatch>? = null
+
+    val commitsHashes = commitsWithDiffs.map { it.first.oid }
+    for ((commit, commitDiff, diffFromMergeBase) in commitsWithDiffs) {
+
+      val commitSha = commit.oid
+      val commitChanges = mutableListOf<Change>()
+      val commitPatches = readAllPatches(commitDiff)
+
+      val cumulativePatches = readAllPatches(diffFromMergeBase)
+
+      for (patch in commitPatches) {
+        val change = createChangeFromPatch(lastCommitSha, commitSha, patch)
+        commitChanges.add(change)
+
+        if (patch is TextFilePatch) {
+          val beforePath = patch.beforeName
+          val afterPath = patch.afterName
+
+          val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
+          val fileHistory = (historyBefore ?: GHPRChangeDiffData.FileHistory(commitsHashes)).apply {
+            append(commitSha, patch)
+          }
+          fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
+          val initialPath = fileHistory.initialFilePath
+
+          val cumulativePatch = findPatchByFilePaths(cumulativePatches, initialPath, afterPath) as? TextFilePatch
+          if (cumulativePatch == null) {
+            LOG.debug("Unable to find cumulative patch for commit patch")
+            continue
+          }
+
+          diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath,
+                                                               patch, cumulativePatch,
+                                                               fileHistory)
+        }
+      }
+      changesByCommits[commit] = commitChanges
+      lastCommitSha = commitSha
+      lastCumulativePatches = cumulativePatches
+    }
 
     changes = mutableListOf()
-    patchesByChanges = mutableMapOf()
-    changesIndex = mutableMapOf()
 
-    for (patch in patchReader.allPatches) {
-      val changeWithRenames = findChangeForPatch(changesWithRenames, patch)
-      if (changeWithRenames == null) {
-        LOG.info("Can't find change for patch $patch")
-        continue
-      }
+    val fileHistoriesBySummaryFilePath = fileHistoriesByLastKnownFilePath.mapKeys {
+      it.value.filePath
+    }
 
-      val change = changeWithRenames.createVcsChange(repository.project, mergeBaseRev, headRef)
-      if (change == null) {
-        LOG.info("Empty VCS change for patch $patch")
-        continue
-      }
+    lastCumulativePatches?.let {
+      for (patch in it) {
+        val change = createChangeFromPatch(mergeBaseRef, lastCommitSha, patch)
+        changes.add(change)
 
-      changes.add(change)
-      if (patch is TextFilePatch) {
-        patchesByChanges[change] = patch
-        for ((commit, filePath) in changeWithRenames.pathsByCommit) {
-          changesIndex[commit to convertFilePath(filePath)] = change
+        if (patch is TextFilePatch) {
+          val filePath = patch.filePath
+          val fileHistory = fileHistoriesBySummaryFilePath[filePath]
+          if (fileHistory == null) {
+            LOG.debug("Unable to find file history for cumulative patch for $filePath")
+            continue
+          }
+
+          diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommitSha, filePath,
+                                                                   patch, fileHistory)
         }
       }
     }
   }
 
-  override fun getFilePath(change: Change) = convertFilePath(ChangesUtil.getFilePath(change))
+  private fun createChangeFromPatch(beforeRef: String, afterRef: String, patch: FilePatch): Change {
+    val project = repository.project
+    val (beforePath, afterPath) = getPatchPaths(patch)
+    val beforeRevision = beforePath?.let { GitContentRevision.createRevision(it, GitRevisionNumber(beforeRef), project) }
+    val afterRevision = afterPath?.let { GitContentRevision.createRevision(it, GitRevisionNumber(afterRef), project) }
 
-  private fun convertFilePath(filePath: FilePath): String {
-    val root = repository.root.path
-    val file = filePath.path
-    return FileUtil.getRelativePath(root, file, '/', true)
-           ?: throw IllegalArgumentException("The file $filePath cannot be made relative to repository root $root")
+    return Change(beforeRevision, afterRevision)
   }
 
-  private fun buildChangesWithRenames(commits: List<GitCommit>): Collection<MutableChange> {
-    val changes = mutableMapOf<FilePath, MutableChange>()
-
-    var previousCommitHash: String? = null
-    for (commit in commits) {
-      val commitHash = commit.id.asString()
-      for (change in commit.changes) {
-        when (change.type) {
-          Change.Type.NEW -> {
-            val afterRevision = change.afterRevision as GitContentRevision
-            changes.getOrPut(afterRevision.file, ::MutableChange).apply {
-              firstRevision = null
-              lastRevision = afterRevision
-              pathsByCommit[commitHash] = afterRevision.file
-            }
-          }
-          Change.Type.DELETED -> {
-            val beforeRevision = change.beforeRevision as GitContentRevision
-            changes.getOrPut(beforeRevision.file, ::MutableChange).apply {
-              firstRevision = beforeRevision
-              lastRevision = null
-              pathsByCommit[commitHash] = beforeRevision.file
-            }
-          }
-          Change.Type.MODIFICATION -> {
-            val beforeRevision = change.beforeRevision as GitContentRevision
-            val afterRevision = change.afterRevision as GitContentRevision
-            changes.getOrPut(afterRevision.file) {
-              MutableChange().apply {
-                firstRevision = beforeRevision
-              }
-            }.apply {
-              lastRevision = afterRevision
-              pathsByCommit[commitHash] = afterRevision.file
-            }
-          }
-          Change.Type.MOVED -> {
-            val beforeRevision = change.beforeRevision as GitContentRevision
-            val afterRevision = change.afterRevision as GitContentRevision
-            val mutableChange =
-              (changes.remove(beforeRevision.file) ?: MutableChange().apply {
-                firstRevision = beforeRevision
-              }).apply {
-                lastRevision = afterRevision
-                pathsByCommit[commitHash] = afterRevision.file
-              }
-            changes[afterRevision.file] = mutableChange
-          }
-        }
-      }
-
-      if (previousCommitHash != null) {
-        for (chain in changes.values) {
-          if (chain.pathsByCommit[commitHash] == null) {
-            val previousName = chain.pathsByCommit[previousCommitHash]
-            if (previousName != null) {
-              chain.pathsByCommit[commitHash] = previousName
-            }
-          }
-        }
-      }
-      previousCommitHash = commitHash
-    }
-    return changes.values
-  }
-
-  override fun findDiffRanges(change: Change): List<Range>? {
-    val patch = patchesByChanges[change] ?: return null
-    return patch.hunks.map(GHPatchHunkUtil::getRange)
-  }
-
-  override fun findChange(commitSha: String, filePath: String) = changesIndex[commitSha to filePath]
-
-  override fun findFileLinesMapper(change: Change) = patchesByChanges[change]?.let { GHPRChangedFileLinesMapperImpl(it) }
-
-  override fun findDiffRangesWithoutContext(change: Change): List<Range>? {
-    val patch = patchesByChanges[change] ?: return null
-    return patch.hunks.map(GHPatchHunkUtil::getChangeOnlyRanges).flatten()
-  }
-
-  private fun findChangeForPatch(changes: Collection<MutableChange>, patch: FilePatch): MutableChange? {
+  private fun getPatchPaths(patch: FilePatch): Pair<FilePath?, FilePath?> {
     val beforeName = if (patch.isNewFile) null else patch.beforeName
     val afterName = if (patch.isDeletedFile) null else patch.afterName
 
-    val beforePath = beforeName?.let { VcsUtil.getFilePath(repository.root, it) }
-    val afterPath = afterName?.let { VcsUtil.getFilePath(repository.root, it) }
-
-    return changes.find { it.firstRevision?.file == beforePath && it.lastRevision?.file == afterPath }
+    return beforeName?.let { VcsUtil.getFilePath(repository.root, it) } to afterName?.let { VcsUtil.getFilePath(repository.root, it) }
   }
+
+  private fun findPatchByFilePaths(patches: Collection<FilePatch>, beforePath: String?, afterPath: String?): FilePatch? =
+    patches.find { (afterPath != null && it.afterName == afterPath) || (afterPath == null && it.beforeName == beforePath) }
+
+  override fun findChangeDiffData(change: Change) = diffDataByChange[change]
 
   companion object {
     private val LOG = logger<GHPRChangesProvider>()
-  }
 
-  private class MutableChange {
-    var firstRevision: GitContentRevision? = null
-    var lastRevision: GitContentRevision? = null
+    private val TextFilePatch.filePath
+      get() = (afterName ?: beforeName)!!
 
-    val pathsByCommit = mutableMapOf<String, FilePath>()
-
-    fun createVcsChange(project: Project, baseRef: String, headRef: String): Change? {
-      if (firstRevision == null && lastRevision == null) return null
-      val firstVcsRevision = firstRevision?.let { GitContentRevision.createRevision(it.file, GitRevisionNumber(baseRef), project) }
-      val lastVcsRevision = lastRevision?.let { GitContentRevision.createRevision(it.file, GitRevisionNumber(headRef), project) }
-      return Change(firstVcsRevision, lastVcsRevision)
+    private fun readAllPatches(diffFile: String): List<FilePatch> {
+      val reader = PatchReader(diffFile, true)
+      reader.parseAllPatches()
+      return reader.allPatches
     }
   }
 }

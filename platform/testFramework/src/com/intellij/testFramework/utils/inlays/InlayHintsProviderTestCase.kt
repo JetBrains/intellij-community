@@ -4,6 +4,7 @@ package com.intellij.testFramework.utils.inlays
 import com.intellij.codeInsight.hints.CollectorWithSettings
 import com.intellij.codeInsight.hints.InlayHintsProvider
 import com.intellij.codeInsight.hints.InlayHintsSinkImpl
+import com.intellij.codeInsight.hints.LinearOrderInlayRenderer
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
@@ -17,7 +18,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
 
     val file = myFixture.file!!
     val editor = myFixture.editor
-    val sink = InlayHintsSinkImpl(provider.key)
+    val sink = InlayHintsSinkImpl(editor)
     val collector = provider.getCollectorFor(file, editor, settings, sink) ?: error("Collector is expected")
     val collectorWithSettings = CollectorWithSettings(collector, provider.key, file.language, sink)
     collectorWithSettings.collectTraversingAndApply(editor, file, true)
@@ -56,13 +57,14 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     }
 
     override fun toString(): String {
-      val renderer = inlay.renderer as? PresentationRenderer ?: error("Only InlayPresentation based inlays supported")
+      val renderer = inlay.renderer
+      if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
       return buildString {
         append("<# ")
         if (type == InlayType.Block) {
           append("block ")
         }
-        append(renderer.presentation.toString())
+        append(renderer.toString())
         append(" #>")
         if (type == InlayType.Block) {
           append('\n')

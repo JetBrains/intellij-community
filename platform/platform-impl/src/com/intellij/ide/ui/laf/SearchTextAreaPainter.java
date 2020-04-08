@@ -7,7 +7,9 @@ import java.awt.*;
 
 /**
  * <code>SearchTextArea</code> paint helper
+ *
  */
+@Deprecated
 public interface SearchTextAreaPainter {
   @NotNull
   Border getBorder();

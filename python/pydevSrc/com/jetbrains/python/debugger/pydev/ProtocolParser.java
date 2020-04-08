@@ -315,6 +315,19 @@ public class ProtocolParser {
     return result.createArrayChunk();
   }
 
+  public static @NotNull List<Pair<String, Boolean>> parseSmartStepIntoVariants(String text) throws PyDebuggerException {
+    XppReader reader = openReader(text, false);
+    List<Pair<String, Boolean>> variants = Lists.newArrayList();
+    while (reader.hasMoreChildren()) {
+      reader.moveDown();
+      String variantName = read(reader, "name", true);
+      Boolean isVisited = read(reader, "isVisited", true).equals("true");
+      variants.add(Pair.create(variantName, isVisited));
+      reader.moveUp();
+    }
+    return variants;
+  }
+
   private static void parseArrayHeaderData(XppReader reader, ArrayChunkBuilder result) throws PyDebuggerException {
     List<String> rowHeaders = Lists.newArrayList();
     List<ArrayChunk.ColHeader> colHeaders = Lists.newArrayList();

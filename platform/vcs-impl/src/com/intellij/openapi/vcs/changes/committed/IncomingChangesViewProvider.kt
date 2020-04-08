@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.Disposable
@@ -7,17 +7,15 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.vcs.CachingCommittedChangesProvider
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.RepositoryLocation
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache.COMMITTED_TOPIC
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
+import java.util.function.Supplier
 
 class IncomingChangesViewProvider(private val project: Project) : ChangesViewContentProvider {
   private var browser: CommittedChangesTreeBrowser? = null
@@ -26,7 +24,7 @@ class IncomingChangesViewProvider(private val project: Project) : ChangesViewCon
     createIncomingChangesBrowser().let {
       browser = it
       content.component = it
-      content.disposer = Disposable { browser = null }
+      content.setDisposer(Disposable { browser = null })
 
       project.messageBus.connect(it).subscribe(COMMITTED_TOPIC, IncomingChangesListener())
 
@@ -89,8 +87,15 @@ class IncomingChangesViewProvider(private val project: Project) : ChangesViewCon
 
   class VisibilityPredicate : NotNullFunction<Project, Boolean> {
     override fun `fun`(project: Project): Boolean =
-      ProjectLevelVcsManager.getInstance(project).allActiveVcss
-        .map { it.committedChangesProvider }
-        .any { it is CachingCommittedChangesProvider<*, *> && it.supportsIncomingChanges() }
+      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isIncomingChangesAvailable(it) }
+  }
+
+  class DisplayNameSupplier : Supplier<String> {
+    override fun get(): String = VcsBundle.getString("incoming.changes.tab")
+  }
+
+  companion object {
+    fun isIncomingChangesAvailable(vcs: AbstractVcs): Boolean =
+      vcs.cachingCommittedChangesProvider?.supportsIncomingChanges() == true
   }
 }

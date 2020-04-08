@@ -74,7 +74,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private static final Set<Class> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
 
   protected boolean isReuseable() {
     return false;
@@ -251,7 +251,6 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     ModalityState modalityState = ModalityState.defaultModalityState();
 
     if (modalityProgress != null) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       modalityState = ((ModalityStateEx)modalityState).appendProgress(modalityProgress);
       ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(modalityState);
     }

@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -45,7 +46,7 @@ import java.awt.event.KeyEvent;
 
 public class CreateClassDialog extends DialogWrapper {
   private final JLabel myInformationLabel = new JLabel("#");
-  private final JLabel myPackageLabel = new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label"));
+  private final JLabel myPackageLabel = new JLabel(JavaBundle.message("dialog.create.class.destination.package.label"));
   private final ReferenceEditorComboWithBrowseButton myPackageComponent;
   private final JTextField myTfClassName = new MyTextField();
   private final Project myProject;
@@ -83,16 +84,16 @@ public class CreateClassDialog extends DialogWrapper {
     myModule = defaultModule;
     myClassName = targetClassName;
     myProject = project;
-    myPackageComponent = new PackageNameReferenceEditorCombo(targetPackageName, myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
+    myPackageComponent = new PackageNameReferenceEditorCombo(targetPackageName, myProject, RECENTS_KEY, JavaBundle.message("dialog.create.class.package.chooser.title"));
     myPackageComponent.setTextFieldPreferredWidth(40);
 
     init();
 
     if (!myClassNameEditable) {
-      setTitle(CodeInsightBundle.message("dialog.create.class.name", StringUtil.capitalize(kind.getDescription()), targetClassName));
+      setTitle(JavaBundle.message("dialog.create.class.name", StringUtil.capitalize(kind.getDescriptionAccusative()), targetClassName));
     }
     else {
-      myInformationLabel.setText(CodeInsightBundle.message("dialog.create.class.label", kind.getDescription()));
+      myInformationLabel.setText(JavaBundle.message("dialog.create.class.label", kind.getDescriptionAccusative()));
       setTitle(title);
     }
 

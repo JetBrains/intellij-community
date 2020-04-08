@@ -63,11 +63,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     void reload(boolean toExpand);
   }
 
-  public LineTooltipRenderer(@Nullable String text, @NotNull Object[] comparable) {
+  public LineTooltipRenderer(@Nullable String text, Object @NotNull [] comparable) {
     this(text, 0, comparable);
   }
 
-  public LineTooltipRenderer(@Nullable final String text, final int width, @NotNull Object[] comparable) {
+  public LineTooltipRenderer(@Nullable final String text, final int width, Object @NotNull [] comparable) {
     super(comparable);
     myCurrentWidth = width;
     myText = text;
@@ -75,7 +75,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   @NotNull
   private static JPanel createMainPanel(@NotNull final HintHint hintHint,
-                                        @NotNull JComponent pane,
+                                        @NotNull JScrollPane pane,
                                         @NotNull JEditorPane editorPane,
                                         boolean newLayout,
                                         boolean highlightActions,
@@ -95,11 +95,15 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       @Override
       public int getPreferredHeight(int width) {
         Dimension size = editorPane.getSize();
-        int sideComponentsWidth = getSideComponentWidth();
-        editorPane.setSize(width - leftBorder - rightBorder - sideComponentsWidth, Math.max(1, size.height));
+        int editorPaneInsets = leftBorder + rightBorder + getSideComponentWidth();
+        editorPane.setSize(width - editorPaneInsets, Math.max(1, size.height));
         int height;
         try {
           height = getPreferredSize().height;
+          if (width - editorPaneInsets < editorPane.getMinimumSize().width) {
+            JScrollBar scrollBar = pane.getHorizontalScrollBar();
+            if (scrollBar != null) height += scrollBar.getPreferredSize().height;
+          }
         }
         finally {
           editorPane.setSize(size);
@@ -207,8 +211,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     String textToDisplay = newLayout ? colorizeSeparators(dressedText) : dressedText;
-    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true), hintHint, layeredPane,
-                                                        limitWidthToScreen);
+    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true).setEagerWrap(true),
+                                                        hintHint, layeredPane, limitWidthToScreen);
     editorPane.putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
     hintHint.setContentActive(isContentAction(dressedText));
     if (!hintHint.isAwtTooltip()) {

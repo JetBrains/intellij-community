@@ -64,7 +64,7 @@ public class FunctionParsing extends Parsing {
   protected void parseReturnTypeAnnotation(boolean checkLanguageLevel) {
     if (myBuilder.getTokenType() == PyTokenTypes.RARROW) {
       if (checkLanguageLevel && myContext.getLanguageLevel().isPython2()) {
-        myBuilder.error("Return type annotations are unsupported in Python 2");
+        myBuilder.error(message("PARSE.function.return.type.annotations.py2"));
       }
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
@@ -177,7 +177,7 @@ public class FunctionParsing extends Parsing {
       boolean isStarParameter = atAnyOfTokens(PyTokenTypes.MULT, PyTokenTypes.EXP);
       if (!parseParameter(endToken, isLambda)) {
         if (afterStarParameter && myContext.getLanguageLevel().isOlderThan(LanguageLevel.PYTHON36)) {
-          myBuilder.error("expression expected");
+          myBuilder.error(message("PARSE.expected.expression"));
         }
         break;
       }
@@ -262,7 +262,7 @@ public class FunctionParsing extends Parsing {
   protected void parseParameterAnnotation(boolean checkLanguageLevel) {
     if (atToken(PyTokenTypes.COLON)) {
       if (checkLanguageLevel && myContext.getLanguageLevel().isPython2()) {
-        myBuilder.error("Type annotations are unsupported in Python 2");
+        myBuilder.error(message("PARSE.function.type.annotations.py2"));
       }
       PsiBuilder.Marker annotationMarker = myBuilder.mark();
       nextToken();

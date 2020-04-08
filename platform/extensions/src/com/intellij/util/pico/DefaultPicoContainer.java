@@ -46,6 +46,13 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return adapter;
   }
 
+  public void release() {
+    componentKeyToAdapterCache.clear();
+    classNameToAdapter.clear();
+    nonAssignableComponentAdapters.set(FList.emptyList());
+    componentAdapters.clear();
+  }
+
   @Nullable
   private ComponentAdapter getFromCache(final Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.get(componentKey);
@@ -269,6 +276,15 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     public void remove(@Nullable T element) {
       synchronized (lock) {
         copySyncSetIfExposedAsImmutable().remove(element);
+      }
+    }
+
+    public void clear() {
+      synchronized (lock) {
+        if (immutableSet != null) {
+          immutableSet = null;
+        }
+        synchronizedSet = new LinkedHashSet<>();
       }
     }
 

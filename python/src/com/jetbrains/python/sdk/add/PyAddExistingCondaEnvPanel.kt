@@ -25,9 +25,11 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associateWithModule
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.detectCondaEnvs
 import com.jetbrains.python.sdk.setupAssociated
 import icons.PythonIcons
@@ -44,7 +46,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
                                  private val existingSdks: List<Sdk>,
                                  override var newProjectPath: String?,
                                  context: UserDataHolder) : PyAddSdkPanel() {
-  override val panelName: String = "Existing environment"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
   private val sdkComboBox = PySdkPathChoosingComboBox()
   private val condaPathField = TextFieldWithBrowseButton().apply {
@@ -52,11 +54,11 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     if (path != null) {
       text = path
     }
-    addBrowseFolderListener("Select Path to Conda Executable", null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.conda.path.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
   }
 
-  private val makeSharedField = JBCheckBox("Make available to all projects")
+  private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   init {
     sdkComboBox.childComponent.addItemListener {
@@ -66,10 +68,14 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       }
     }
 
+    if (PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault) {
+      makeSharedField.isSelected = true
+    }
+
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Interpreter:", sdkComboBox)
-      .addLabeledComponent("Conda executable:", condaPathField)
+      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
+      .addLabeledComponent(PyBundle.message("python.sdk.conda.path"), condaPathField)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
@@ -78,7 +84,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     }
   }
 
-  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox), validateAnacondaPath())
+  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this), validateAnacondaPath())
 
   private fun validateAnacondaPath(): ValidationInfo? {
     val text = condaPathField.text

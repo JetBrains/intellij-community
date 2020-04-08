@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-/**
- * @author nik
- */
 public class GroovySourceRootDetector extends JavaSourceRootDetector {
   @NotNull
   @Override

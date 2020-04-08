@@ -56,6 +56,16 @@ internal class ImagePaths(val id: String,
   val scheduledForRemoval by lazy {
     flags.deprecation?.comment?.contains("to be removed") == true
   }
+  val scheduledForRemovalRelease by lazy {
+    val comment = flags.deprecation?.comment ?: return@lazy "2020.1"
+    val result = Regex("to be removed in (?:IDEA )?([0-9.]+)").find(comment) ?: return@lazy "2020.1"
+    val release = result.groupValues[1]
+
+    if (release == "2020")
+      "2020.1"
+    else
+      release
+  }
 }
 
 class ImageFlags(val skipped: Boolean,
@@ -281,7 +291,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
               val replacement = replacementString?.substringAfter('@')?.trim()
               val replacementContextClass = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
 
-              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass, replacementReference = null)
+              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass,
+                                                   replacementReference = computeReplacementReference(comment))
               answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
 
               if (!pattern.contains('*') && !pattern.startsWith('/')) {
@@ -297,12 +308,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     }
 
     private fun computeReplacementReference(comment: String?): String? {
-      if (className == null) {
-        return null
-      }
-
-      val result = StringUtil.nullize(comment?.substringAfter(" - use $className.", "")?.substringBefore(' ')?.trim()) ?: return null
-      return "$className.$result"
+      // allow only same class fields (IDEA-218345)
+      return StringUtil.nullize(comment?.substringAfter("use {@link #", "")?.substringBefore('}')?.trim())
     }
 
     private fun parse(robots: Path, vararg handlers: RobotFileHandler) {

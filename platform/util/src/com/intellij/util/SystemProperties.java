@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.TestOnly;
  * Utility wrappers for accessing system properties.
  *
  * @see SystemInfo
- * @author yole
  */
 public final class SystemProperties {
   private static String ourTestUserName;
@@ -91,13 +90,9 @@ public final class SystemProperties {
   /**
    * Returns the value of given property as a boolean, or {@code defaultValue} if the property is not specified or malformed.
    */
-  public static boolean getBooleanProperty(@NotNull final String key, final boolean defaultValue) {
-    final String value = System.getProperty(key);
-    if (value != null) {
-      return Boolean.parseBoolean(value);
-    }
-
-    return defaultValue;
+  public static boolean getBooleanProperty(@NotNull String key, boolean defaultValue) {
+    String value = System.getProperty(key);
+    return value == null ? defaultValue : Boolean.parseBoolean(value);
   }
 
   public static boolean is(String key) {

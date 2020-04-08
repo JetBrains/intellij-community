@@ -4,6 +4,7 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
@@ -66,9 +67,9 @@ public final class SystemShortcuts {
   public static final class ConflictItem {
     final @NotNull String mySysActionDesc;
     final @NotNull KeyStroke mySysKeyStroke;
-    final @NotNull String[] myActionIds;
+    final String @NotNull [] myActionIds;
 
-    public ConflictItem(@NotNull KeyStroke sysKeyStroke, @NotNull String sysActionDesc, @NotNull String[] actionIds) {
+    public ConflictItem(@NotNull KeyStroke sysKeyStroke, @NotNull String sysActionDesc, String @NotNull [] actionIds) {
       mySysKeyStroke = sysKeyStroke;
       mySysActionDesc = sysActionDesc;
       myActionIds = actionIds;
@@ -80,8 +81,7 @@ public final class SystemShortcuts {
     @NotNull
     public KeyStroke getSysKeyStroke() { return mySysKeyStroke; }
 
-    @NotNull
-    public String[] getActionIds() { return myActionIds; }
+    public String @NotNull [] getActionIds() { return myActionIds; }
 
     @Nullable
     String getUnmutedActionId(@NotNull MuteConflictsSettings settings) {
@@ -207,7 +207,7 @@ public final class SystemShortcuts {
     return result;
   }
 
-  public void onUserPressedShortcut(@NotNull Keymap keymap, @NotNull String[] actionIds, @NotNull KeyboardShortcut ksc) {
+  public void onUserPressedShortcut(@NotNull Keymap keymap, String @NotNull [] actionIds, @NotNull KeyboardShortcut ksc) {
     if (myNotifyCount > 0 || actionIds.length == 0) {
       return;
     }
@@ -280,10 +280,10 @@ public final class SystemShortcuts {
     }
 
     final Notification notification =
-      new Notification(ourNotificationGroupId, "Shortcuts conflicts", message, NotificationType.WARNING, null);
+      new Notification(ourNotificationGroupId, IdeBundle.message("notification.title.shortcuts.conflicts"), message, NotificationType.WARNING, null);
 
     if (hasOtherConflicts) {
-      final AnAction showKeymapPanelAction = DumbAwareAction.create("Modify shortcuts", e -> {
+      final AnAction showKeymapPanelAction = DumbAwareAction.create(IdeBundle.message("action.text.modify.shortcuts"), e -> {
                                                                       new EditKeymapsDialog(null, actionId, true).show();
                                                                       updateKeymapConflicts(myKeymap);
                                                                     }
@@ -291,7 +291,7 @@ public final class SystemShortcuts {
       notification.addAction(showKeymapPanelAction);
     }
     else {
-      final AnAction configureShortcut = DumbAwareAction.create("Modify shortcut", e -> {
+      final AnAction configureShortcut = DumbAwareAction.create(IdeBundle.message("action.text.modify.shortcut"), e -> {
         Component component = e.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT);
         if (component == null) {
           Window[] frames = Window.getWindows();
@@ -317,7 +317,7 @@ public final class SystemShortcuts {
     notification.addAction(muteAction);
 
     if (SystemInfo.isMac && !hasOtherConflicts) {
-      final AnAction changeSystemSettings = DumbAwareAction.create("Change system shortcuts", e -> {
+      final AnAction changeSystemSettings = DumbAwareAction.create(IdeBundle.message("action.text.change.system.shortcuts"), e -> {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           final GeneralCommandLine cmdLine = new GeneralCommandLine(
             "osascript",

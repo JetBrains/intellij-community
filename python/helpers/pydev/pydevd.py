@@ -7,6 +7,8 @@ import sys
 from contextlib import contextmanager
 import weakref
 
+from _pydevd_bundle.pydevd_collect_try_except_info import collect_return_info
+
 if sys.version_info[:2] < (2, 6):
     raise RuntimeError('The PyDev.Debugger requires Python 2.6 onwards to be run. If you need to use an older Python version, use an older version of the debugger.')
 
@@ -456,6 +458,8 @@ class PyDB(object):
         self.process_created_msg_received_events = dict()
         # the role PyDB plays in the communication with IDE
         self.communication_role = None
+
+        self.collect_return_info = collect_return_info
 
     def get_thread_local_trace_func(self):
         try:
@@ -1118,17 +1122,17 @@ class PyDB(object):
         # process any stepping instructions
         if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
             info.pydev_step_stop = None
-            info.pydev_smart_step_stop = None
+            info.pydev_smart_step_context.smart_step_stop = None
 
         elif info.pydev_step_cmd == CMD_STEP_OVER:
             info.pydev_step_stop = frame
-            info.pydev_smart_step_stop = None
+            info.pydev_smart_step_context.smart_step_stop = None
             self.set_trace_for_frame_and_parents(frame)
 
         elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
             self.set_trace_for_frame_and_parents(frame)
             info.pydev_step_stop = None
-            info.pydev_smart_step_stop = frame
+            info.pydev_smart_step_context.smart_step_stop = frame
 
         elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT:
             self.set_trace_for_frame_and_parents(frame)

@@ -1,6 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.NlsActions.ActionDescription;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +29,7 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier, @Nullable Icon icon) {
-    super(null, null, icon);
+    super(() -> null, () -> null, icon);
     this.optionSupplier = optionSupplier;
   }
 
@@ -50,17 +53,29 @@ public class ToggleOptionAction extends ToggleAction {
     presentation.setEnabledAndVisible(supported);
     if (supported) {
       Toggleable.setSelected(presentation, option.isSelected());
-      presentation.setText(option.getName());
-      presentation.setDescription(option.getDescription());
+      String name = option.getName();
+      if (name != null) presentation.setText(name);
+      String description = option.getDescription();
+      if (description != null) presentation.setDescription(description);
       if (ActionPlaces.isPopupPlace(event.getPlace())) presentation.setIcon(null);
     }
   }
 
   public interface Option {
-    @NotNull
-    String getName();
-
+    /**
+     * @return a not null string to override an action name
+     */
     @Nullable
+    @ActionText
+    default String getName() {
+      return null;
+    }
+
+    /**
+     * @return a not null string to override an action description
+     */
+    @Nullable
+    @ActionDescription
     default String getDescription() {
       return null;
     }

@@ -18,8 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ThrowsUsageTargetProvider implements UsageTargetProvider {
   @Override
-  @Nullable
-  public UsageTarget[] getTargets(@NotNull Editor editor, @NotNull final PsiFile file) {
+  public UsageTarget @Nullable [] getTargets(@NotNull Editor editor, @NotNull final PsiFile file) {
     PsiElement element = file.findElementAt(TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset()));
     if (element == null) return null;
 

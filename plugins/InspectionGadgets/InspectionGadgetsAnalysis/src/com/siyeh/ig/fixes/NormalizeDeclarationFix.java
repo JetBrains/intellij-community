@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
     if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod) && !(element instanceof PsiDeclarationStatement)) {
       element = element.getParent();
     }
-    if (element instanceof PsiParameter) {
+    if (element instanceof PsiParameter || element instanceof PsiRecordComponent) {
       JavaSharedImplUtil.normalizeBrackets((PsiVariable)element);
       return;
     }

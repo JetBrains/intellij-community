@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
@@ -68,7 +68,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
       return getCastableRuntimeType(project, value);
     }
 
-    throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.surrounded.expression.null"));
+    throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.surrounded.expression.null"));
   }
 
   @Nullable

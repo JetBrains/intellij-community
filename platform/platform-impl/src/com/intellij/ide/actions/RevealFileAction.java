@@ -3,22 +3,24 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -26,6 +28,7 @@ import com.intellij.util.SystemProperties;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,14 +42,12 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
-
 /**
  * This helpful action opens a file or directory in a system file manager.
  *
  * @see ShowFilePathAction
  */
-public class RevealFileAction extends DumbAwareAction {
+public class RevealFileAction extends DumbAwareAction implements LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
@@ -185,7 +186,7 @@ public class RevealFileAction extends DumbAwareAction {
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       LOG.debug("opening " + dir + " via Desktop API");
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProcessIOExecutorService.INSTANCE.execute(() -> {
         try {
           Desktop.getDesktop().open(new File(dir));
         }
@@ -195,7 +196,8 @@ public class RevealFileAction extends DumbAwareAction {
       });
     }
     else {
-      Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
+      Messages.showErrorDialog(IdeBundle.message("message.this.action.isn.t.supported.on.the.current.platform"),
+                               IdeBundle.message("dialog.title.cannot.open.file"));
     }
   }
 
@@ -213,10 +215,10 @@ public class RevealFileAction extends DumbAwareAction {
     return path;
   }
 
-  private static void spawn(String... command) {
+  private static void spawn(@NonNls String... command) {
     LOG.debug(Arrays.toString(command));
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {
@@ -246,37 +248,37 @@ public class RevealFileAction extends DumbAwareAction {
       SystemInfo.isMac ? "Finder" :
       SystemInfo.isWindows ? "Explorer" :
       readDesktopEntryKey("Name").orElse("File Manager");
-  }
-  private static Optional<String> readDesktopEntryKey(String key) {
-    if (SystemInfo.hasXdgMime()) {
-      String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-      if (appName != null && appName.endsWith(".desktop")) {
-        return Stream.of(getXdgDataDirectories().split(":"))
-          .map(dir -> new File(dir, "applications/" + appName))
-          .filter(File::exists)
-          .findFirst()
-          .map(file -> readDesktopEntryKey(file, key));
+
+    private static Optional<String> readDesktopEntryKey(@NonNls String key) {
+      if (SystemInfo.hasXdgMime()) {
+        String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
+        if (appName != null && appName.endsWith(".desktop")) {
+          return Stream.of(getXdgDataDirectories().split(":"))
+            .map(dir -> new File(dir, "applications/" + appName))
+            .filter(File::exists)
+            .findFirst()
+            .map(file -> readDesktopEntryKey(file, key));
+        }
       }
+
+      return Optional.empty();
     }
 
-    return Optional.empty();
-  }
-
-  private static String getXdgDataDirectories() {
-    String dataHome = System.getenv("XDG_DATA_HOME");
-    String dataDirs = System.getenv("XDG_DATA_DIRS");
-    return defaultIfEmpty(dataHome, SystemProperties.getUserHome() + "/.local/share") + ':' + defaultIfEmpty(dataDirs, "/usr/local/share:/usr/share");
-  }
-
-  private static String readDesktopEntryKey(File file, String key) {
-    LOG.debug("looking for '" + key + "' in " + file);
-    String prefix = key + '=';
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-      return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
+    private static String getXdgDataDirectories() {
+      return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
+             StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
     }
-    catch (IOException | UncheckedIOException e) {
-      LOG.info("Cannot read: " + file, e);
-      return null;
+
+    private static String readDesktopEntryKey(File file, String key) {
+      LOG.debug("looking for '" + key + "' in " + file);
+      String prefix = key + '=';
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+        return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
+      }
+      catch (IOException | UncheckedIOException e) {
+        LOG.info("Cannot read: " + file, e);
+        return null;
+      }
     }
   }
 }

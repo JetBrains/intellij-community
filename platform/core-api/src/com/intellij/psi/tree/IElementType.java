@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -41,9 +42,8 @@ public class IElementType {
   private static final short MAX_INDEXED_TYPES = 15000;
 
   private static short size; // guarded by lock
-  @NotNull
-  private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @SuppressWarnings("RedundantStringConstructorCall")
+  private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
+  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
   private static final Object lock = new String("registry lock");
 
   static {
@@ -53,13 +53,21 @@ public class IElementType {
     push(init);
   }
 
-  @NotNull
-  static IElementType[] push(@NotNull IElementType[] types) {
+  static IElementType @NotNull [] push(IElementType @NotNull [] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;
       ourRegistry = types;
       size = (short)ContainerUtil.skipNulls(Arrays.asList(ourRegistry)).size();
       return oldRegistry;
+    }
+  }
+
+  public static void unregisterElementTypes(@NotNull ClassLoader loader) {
+    for (int i = 0; i < ourRegistry.length; i++) {
+      IElementType type = ourRegistry[i];
+      if (type != null && type.getClass().getClassLoader() == loader) {
+        ourRegistry[i] = null;
+      }
     }
   }
 
@@ -73,6 +81,7 @@ public class IElementType {
   }
 
   private final short myIndex;
+  @NonNls
   @NotNull
   private final String myDebugName;
   @NotNull
@@ -84,7 +93,7 @@ public class IElementType {
    * @param debugName the name of the element type, used for debugging purposes.
    * @param language  the language with which the element type is associated.
    */
-  public IElementType(@NotNull String debugName, @Nullable Language language) {
+  public IElementType(@NonNls @NotNull String debugName, @Nullable Language language) {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
@@ -97,7 +106,7 @@ public class IElementType {
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
-  protected IElementType(@NotNull String debugName, @Nullable Language language, boolean register) {
+  protected IElementType(@NonNls @NotNull String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
@@ -212,8 +221,7 @@ public class IElementType {
    * @param p the predicate which should be matched by the element types.
    * @return the array of matching element types.
    */
-  @NotNull
-  public static IElementType[] enumerate(@NotNull Predicate p) {
+  public static IElementType @NotNull [] enumerate(@NotNull Predicate p) {
     List<IElementType> matches = new ArrayList<>();
     for (IElementType value : ourRegistry) {
       if (value != null && p.matches(value)) {

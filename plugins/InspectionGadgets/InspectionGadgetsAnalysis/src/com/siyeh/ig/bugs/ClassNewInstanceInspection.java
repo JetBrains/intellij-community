@@ -2,6 +2,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -45,8 +46,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "class.new.instance.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Class.getConstructor().newInstance()");
     }
 
     @Override

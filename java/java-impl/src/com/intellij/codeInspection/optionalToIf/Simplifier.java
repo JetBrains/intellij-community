@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -116,10 +117,8 @@ interface Simplifier {
       return new Check(disjunction, check.myInstructions, null);
     }
 
-    @Contract("null -> null")
     private static Instruction getSingleInstruction(@NotNull Check check) {
-      List<Instruction> instructions = check.myInstructions;
-      return instructions.size() == 1 ? instructions.get(0) : null;
+      return ContainerUtil.getOnlyItem(check.myInstructions);
     }
   }
 

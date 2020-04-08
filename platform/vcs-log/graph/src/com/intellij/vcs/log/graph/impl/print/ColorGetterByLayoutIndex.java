@@ -40,30 +40,32 @@ public class ColorGetterByLayoutIndex<CommitId> {
 
   public int getColorId(@NotNull GraphElement element) {
     if (element instanceof GraphNode) {
-      int nodeIndex = ((GraphNode)element).getNodeIndex();
-      return getNodeColor(nodeIndex, getLayoutIndex(nodeIndex));
+      int nodeId = myLinearGraph.getNodeId(((GraphNode)element).getNodeIndex());
+      return getNodeColor(nodeId, getLayoutIndex(nodeId));
     }
     else {
       GraphEdge edge = (GraphEdge)element;
       NormalEdge normalEdge = LinearGraphUtils.asNormalEdge(edge);
       if (normalEdge == null) {
-        int nodeIndex = LinearGraphUtils.getNotNullNodeIndex(edge);
-        return getNodeColor(nodeIndex, getLayoutIndex(nodeIndex));
+        int nodeId = myLinearGraph.getNodeId(LinearGraphUtils.getNotNullNodeIndex(edge));
+        return getNodeColor(nodeId, getLayoutIndex(nodeId));
       }
 
-      int upLayoutIndex = getLayoutIndex(normalEdge.up);
-      int downLayoutIndex = getLayoutIndex(normalEdge.down);
+      int upNodeId = myLinearGraph.getNodeId(normalEdge.up);
+      int downNodeId = myLinearGraph.getNodeId(normalEdge.down);
+      int upLayoutIndex = getLayoutIndex(upNodeId);
+      int downLayoutIndex = getLayoutIndex(downNodeId);
 
       if (upLayoutIndex >= downLayoutIndex) {
-        return getNodeColor(normalEdge.up, upLayoutIndex);
+        return getNodeColor(upNodeId, upLayoutIndex);
       }
 
-      return getNodeColor(normalEdge.down, downLayoutIndex);
+      return getNodeColor(downNodeId, downLayoutIndex);
     }
   }
 
-  protected int getNodeColor(int nodeIndex, int layoutIndex) {
-    int headNodeId = getHeadNodeId(nodeIndex);
+  private int getNodeColor(int nodeId, int layoutIndex) {
+    int headNodeId = getHeadNodeId(nodeId);
     CommitId headCommitId = myPermanentGraphInfo.getPermanentCommitsInfo().getCommitId(headNodeId);
     if (layoutIndex == myPermanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(headNodeId)) {
       return myColorManager.getColorOfBranch(headCommitId);
@@ -73,19 +75,13 @@ public class ColorGetterByLayoutIndex<CommitId> {
     }
   }
 
-  private int getHeadNodeId(int upNodeIndex) {
-    int nodeId = getNodeId(upNodeIndex);
+  private int getHeadNodeId(int nodeId) {
     if (nodeId < 0) return 0;
     return myPermanentGraphInfo.getPermanentGraphLayout().getOneOfHeadNodeIndex(nodeId);
   }
 
-  private int getLayoutIndex(int upNodeIndex) {
-    int nodeId = getNodeId(upNodeIndex);
+  private int getLayoutIndex(int nodeId) {
     if (nodeId < 0) return nodeId;
     return myPermanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(nodeId);
-  }
-
-  private int getNodeId(int upNodeIndex) {
-    return myLinearGraph.getNodeId(upNodeIndex);
   }
 }

@@ -115,8 +115,7 @@ public abstract class FileAnnotation {
    * The typical aspects are revision number, date, author.
    * The aspects are displayed each in own column in the returned order.
    */
-  @NotNull
-  public abstract LineAnnotationAspect[] getAspects();
+  public abstract LineAnnotationAspect @NotNull [] getAspects();
 
 
   /**

@@ -1,5 +1,5 @@
-class A {
+class X {
   public nonFinal = 4
 }
 
-print A.n<ref>onFinal
+print X.n<ref>onFinal

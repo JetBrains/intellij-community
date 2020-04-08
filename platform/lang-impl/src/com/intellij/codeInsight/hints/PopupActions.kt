@@ -7,8 +7,8 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.Diff
+import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -130,9 +130,11 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
       notification.expire()
     }
 
-    val notification = Notification("Parameter Name Hints", "Method \"$methodName\" added to blacklist", 
-                 "<html><a href='settings'>Show Parameter Hints Settings</a> or <a href='undo'>Undo</a></html>",
-                 NotificationType.INFORMATION, listener)
+
+    val notification = Notification("Parameter Name Hints",
+                                    CodeInsightBundle.message("notification.inlay.method.added.to.blacklist", methodName),
+                                    CodeInsightBundle.message("notification.show.parameter.hints.settings.or.undo.label"),
+                                    NotificationType.INFORMATION, listener)
     
     notification.notify(project)
   }
@@ -236,8 +238,10 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
     val element = file.findElementAt(offset) ?: return null
     val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
 
-    val target = PsiTreeUtil.findFirstParent(element) { provider.hasDisabledOptionHintInfo(it) } ?: return null
-    return provider.getHintInfo(target) as? HintInfo.OptionInfo
+    val target = PsiTreeUtil.findFirstParent(element) { it is PsiFile
+                                                        || provider.hasDisabledOptionHintInfo(it, file) }
+    if (target == null || target is PsiFile) return null
+    return provider.getHintInfo(target, file) as? HintInfo.OptionInfo
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -251,8 +255,8 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
 }
 
 
-private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiElement): Boolean {
-  val info = getHintInfo(element)
+private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiElement, file: PsiFile): Boolean {
+  val info = getHintInfo(element, file)
   return info is HintInfo.OptionInfo && !info.isOptionEnabled()
 }
 
@@ -318,10 +322,11 @@ private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor):
   val element = file.findElementAt(offset) ?: return null
   val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
 
-  val isHintOwnedByElement: (PsiElement) -> Boolean = { e -> provider.getHintInfo(e)?.isOwnedByPsiElement(e, editor) ?: false }
-  val method = PsiTreeUtil.findFirstParent(element, isHintOwnedByElement) ?: return null
-  
-  return provider.getHintInfo(method)
+  val method = PsiTreeUtil.findFirstParent(element) { it is PsiFile
+                                                      // hint owned by element
+                                                      || (provider.getHintInfo(it, file)?.isOwnedByPsiElement(it, editor) ?: false)}
+  if (method == null || method is PsiFile) return null
+  return provider.getHintInfo(method, file)
 }
 
 fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'

@@ -20,9 +20,6 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyGlobalStatement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class PyGlobalStatementNavigator {
   private PyGlobalStatementNavigator() {
   }

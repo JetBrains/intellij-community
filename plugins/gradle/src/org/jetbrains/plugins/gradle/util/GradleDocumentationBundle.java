@@ -16,14 +16,22 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class GradleDocumentationBundle extends DynamicBundle {
-  private static final String BUNDLE = "i18n.GradleDocumentationBundle";
+import java.util.function.Supplier;
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+public class GradleDocumentationBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.GradleDocumentationBundle";
+
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 
   public static final GradleDocumentationBundle INSTANCE = new GradleDocumentationBundle();

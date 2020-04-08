@@ -39,7 +39,7 @@ public class MavenRebuildAction extends FakeRerunAction {
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
 
-    presentation.setText(ExecutionBundle.message("rerun.configuration.action.name",
+    presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
                                                  StringUtil.escapeMnemonics(myEnvironment.getRunProfile().getName())));
     presentation.setIcon(
       ExecutionManagerImpl.isProcessRunning(myEnvironment.getContentToReuse()) ?

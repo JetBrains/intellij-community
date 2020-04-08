@@ -80,9 +80,8 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
 
           PsiReferenceProvider myProvider;
 
-          @NotNull
           @Override
-          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+          public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
             if (myProvider == null) {
 
               myProvider = providerBean.instantiate();
@@ -117,14 +116,13 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     myRegistrars.remove(language);
   }
 
-  @NotNull
   @Override
   // 1. we create priorities map: "priority" ->  non-empty references from providers
   //    if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
   // 2. references with the highest priority are added "as is"
   // 3. all other references are added only they could be correctly merged with any reference with higher priority (ReferenceRange.containsRangeInElement(higherPriorityRef, lowerPriorityRef)
-  protected PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context,
-                                                        @NotNull PsiReferenceService.Hints hints) {
+  protected PsiReference @NotNull [] doGetReferencesFromProviders(@NotNull PsiElement context,
+                                                                  @NotNull PsiReferenceService.Hints hints) {
     List<ProviderBinding.ProviderInfo<ProcessingContext>> providers = getRegistrar(context.getLanguage()).getPairsByElement(context, hints);
 
     TDoubleObjectHashMap<List<PsiReference[]>> allReferencesMap = mapNotEmptyReferencesFromProviders(context, providers);
@@ -182,9 +180,8 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     }
   }
 
-  @NotNull
-  private static PsiReference[] getReferences(@NotNull PsiElement context,
-                                              @NotNull ProviderBinding.ProviderInfo<? extends ProcessingContext> providerInfo) {
+  private static PsiReference @NotNull [] getReferences(@NotNull PsiElement context,
+                                                        @NotNull ProviderBinding.ProviderInfo<? extends ProcessingContext> providerInfo) {
     try {
       return providerInfo.provider.getReferencesByElement(context, providerInfo.processingContext);
     }
@@ -212,7 +209,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   }
 
   private static boolean haveNotIntersectedTextRanges(@NotNull List<? extends PsiReference> higherPriorityRefs,
-                                                      @NotNull  PsiReference[] lowerPriorityRefs) {
+                                                      PsiReference @NotNull [] lowerPriorityRefs) {
     for (PsiReference ref : lowerPriorityRefs) {
       if (ref != null) {
         for (PsiReference reference : higherPriorityRefs) {

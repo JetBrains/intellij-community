@@ -124,7 +124,7 @@ public class CodeBlockGenerator extends Generator {
     generateCodeBlock(parameters, block, false);
   }
 
-  public void generateCodeBlock(@NotNull GrParameter[] parameters, @Nullable GrCodeBlock block, boolean shouldInsertReturnNull) {
+  public void generateCodeBlock(GrParameter @NotNull [] parameters, @Nullable GrCodeBlock block, boolean shouldInsertReturnNull) {
     builder.append("{");
 
     for (GrParameter parameter : parameters) {

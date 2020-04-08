@@ -71,16 +71,11 @@ public class PsiScopesUtil {
         return false; // resolved
       }
 
-      if (scope instanceof PsiModifierListOwner && !(scope instanceof PsiParameter/* important for not loading tree! */)) {
-        PsiModifierList modifierList = ((PsiModifierListOwner)scope).getModifierList();
-        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-          processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
-        }
-      }
       if (scope == maxScope) break;
       prevParent = scope;
-      scope = prevParent.getContext();
+      processor.handleEvent(JavaScopeProcessorEvent.EXIT_LEVEL, scope);
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
+      scope = scope.getContext();
     }
 
     return true;

@@ -19,9 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyCallExpression;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class PyCallExpressionNavigator {
   private PyCallExpressionNavigator() {
   }

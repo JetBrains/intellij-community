@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -45,8 +45,11 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
       byte[] content = vFile.contentsToByteArray();
       vFile.setPreloadedContentHint(content);
       try {
-        final FileContent fc = new FileContentImpl(vFile, content);
-        fc.putUserData(IndexingDataKeys.PROJECT, project);
+        FileContentImpl content1 = new FileContentImpl(vFile, content);
+        if (project != null) {
+          content1.setProject(project);
+        }
+        final FileContent fc = content1;
         if (psiFile != null && !vFile.getFileType().isBinary()) {
           fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
           // but don't reuse psiFile itself to avoid loading its contents. If we load AST, the stub will be thrown out anyway.
@@ -111,7 +114,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
 
       Stub stub;
       try {
-        stub = stubTree.getStub(false);
+        stub = stubTree.getStub();
       }
       catch (SerializerNotFoundException e) {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
@@ -207,7 +210,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   private static ObjectStubTree<?> processError(final VirtualFile vFile, String message, @Nullable Exception e) {
     LOG.error(message, e);
 
-    ApplicationManager.getApplication().invokeLater(() -> {
+    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> {
       final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
       if (doc != null) {
         FileDocumentManager.getInstance().saveDocument(doc);
@@ -216,7 +219,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
       // avoid deadlock by requesting reindex later.
       // processError may be invoked under stub index's read action and requestReindex in EDT starts dumb mode in writeAction (IDEA-197296)
       FileBasedIndex.getInstance().requestReindex(vFile);
-    }, ModalityState.NON_MODAL);
+    });
 
     return null;
   }
@@ -253,7 +256,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     try {
       PrebuiltStubsProvider provider = PrebuiltStubsKt.getPrebuiltStubsProvider().forFileType(virtualFile.getFileType());
       if (provider != null) {
-        canBePrebuilt = provider.findStub(new FileContentImpl(virtualFile, virtualFile.contentsToByteArray())) != null;
+        canBePrebuilt = provider.findStub(FileContentImpl.createByFile(virtualFile)) != null;
       }
     }
     catch (Exception e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.AppearanceOptionsTopHitProvider;
@@ -9,15 +9,13 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.FileColorManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class FileColorsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
   @NotNull
   @Override
@@ -44,7 +42,7 @@ public final class FileColorsOptionsTopHitProvider implements OptionsSearchTopHi
   private static class Option extends PublicMethodBasedOptionDescription {
     private final FileColorManager myManager;
 
-    Option(FileColorManager manager, String option, String getter, String setter) {
+    Option(FileColorManager manager, @Nls String option, String getter, String setter) {
       super(option, "reference.settings.ide.settings.file-colors", getter, setter);
       myManager = manager;
     }

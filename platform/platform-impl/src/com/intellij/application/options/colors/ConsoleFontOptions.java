@@ -39,7 +39,7 @@ public class ConsoleFontOptions extends FontOptions {
     if (allSettings != null) {
       ColorAndFontOptions colorAndFontOptions = allSettings.find(ColorAndFontOptions.class);
       if (colorAndFontOptions != null) {
-        Configurable editorFontConfigurable = colorAndFontOptions.findSubConfigurable(ColorAndFontOptions.FONT_CONFIGURABLE_NAME);
+        Configurable editorFontConfigurable = colorAndFontOptions.findSubConfigurable(ColorAndFontOptions.getFontConfigurableName());
         if (editorFontConfigurable != null) {
           allSettings.select(editorFontConfigurable);
         }

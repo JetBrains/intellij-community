@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -305,7 +305,7 @@ public final class MadTestingUtil {
       String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
 
-      Matcher rootPackageMatcher = Pattern.compile("/com/|/org/").matcher(path);
+      Matcher rootPackageMatcher = Pattern.compile("/com/|/org/|/onair/").matcher(path);
       if (rootPackageMatcher.find()) {
         path = path.substring(rootPackageMatcher.start() + 1);
       }
@@ -487,7 +487,7 @@ public final class MadTestingUtil {
         }
 
         List<File> toChoose = preferDirs(data, children);
-        Collections.sort(toChoose, Comparator.comparing(File::getName));
+        toChoose.sort(Comparator.comparing(File::getName));
         File chosen = data.generate(Generator.sampledFrom(toChoose));
         File generated = generateRandomFile(data, chosen, exhausted);
         if (generated != null) {
@@ -570,7 +570,7 @@ public final class MadTestingUtil {
       }
     }
 
-    private static int spin(@NotNull GenerationEnvironment data, @NotNull int[] weights) {
+    private static int spin(@NotNull GenerationEnvironment data, int @NotNull [] weights) {
       int totalWeight = Arrays.stream(weights).sum();
       if (totalWeight == 0) return -1;
       int value = data.generate(Generator.integers(0, totalWeight));

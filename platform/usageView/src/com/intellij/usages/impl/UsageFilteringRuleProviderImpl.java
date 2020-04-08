@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -36,16 +22,12 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider {
   private final ReadWriteState myReadWriteState = new ReadWriteState();
 
   @Override
-  @NotNull
-  public UsageFilteringRule[] getActiveRules(@NotNull Project project) {
-    final List<UsageFilteringRule> rules = new ArrayList<>();
+  public UsageFilteringRule @NotNull [] getActiveRules(@NotNull Project project) {
+    List<UsageFilteringRule> rules = new ArrayList<>();
 
     if (!myReadWriteState.isShowReadAccess()) {
       rules.add(new ReadAccessFilteringRule());
@@ -57,18 +39,17 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   @Override
-  @NotNull
-  public AnAction[] createFilteringActions(@NotNull UsageView view) {
-    final UsageViewImpl impl = (UsageViewImpl)view;
+  public AnAction @NotNull [] createFilteringActions(@NotNull UsageView view) {
     if (!view.getPresentation().isCodeUsages()) {
       return AnAction.EMPTY_ARRAY;
     }
-    final JComponent component = view.getComponent();
+    JComponent component = view.getComponent();
 
-    final ShowReadAccessUsagesAction read = new ShowReadAccessUsagesAction();
+    UsageViewImpl impl = (UsageViewImpl)view;
+    ShowReadAccessUsagesAction read = new ShowReadAccessUsagesAction();
     read.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)), component, impl);
 
-    final ShowWriteAccessUsagesAction write = new ShowWriteAccessUsagesAction();
+    ShowWriteAccessUsagesAction write = new ShowWriteAccessUsagesAction();
     write.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)), component, impl);
     return new AnAction[] {read, write};
   }
@@ -81,7 +62,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       return myShowReadAccess;
     }
 
-    void setShowReadAccess(final boolean showReadAccess) {
+    void setShowReadAccess(boolean showReadAccess) {
       myShowReadAccess = showReadAccess;
       if (!showReadAccess) {
         myShowWriteAccess = true;
@@ -92,7 +73,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       return myShowWriteAccess;
     }
 
-    void setShowWriteAccess(final boolean showWriteAccess) {
+    void setShowWriteAccess(boolean showWriteAccess) {
       myShowWriteAccess = showWriteAccess;
       if (!showWriteAccess) {
         myShowReadAccess = true;
@@ -102,7 +83,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   private class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowReadAccessUsagesAction() {
-      super(UsageViewBundle.message("action.show.read.access"), null, AllIcons.Actions.ShowReadAccess);
+      super(UsageViewBundle.messagePointer("action.show.read.access"), AllIcons.Actions.ShowReadAccess);
     }
 
     @Override
@@ -121,7 +102,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   private class ShowWriteAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowWriteAccessUsagesAction() {
-      super(UsageViewBundle.message("action.show.write.access"), null, AllIcons.Actions.ShowWriteAccess);
+      super(UsageViewBundle.messagePointer("action.show.write.access"), AllIcons.Actions.ShowWriteAccess);
     }
 
     @Override

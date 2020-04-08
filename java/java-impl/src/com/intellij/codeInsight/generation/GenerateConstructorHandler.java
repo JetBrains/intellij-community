@@ -2,25 +2,23 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,45 +32,41 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private boolean myCopyJavadoc;
 
   public GenerateConstructorHandler() {
-    super(CodeInsightBundle.message("generate.constructor.fields.chooser.title"));
+    super(JavaBundle.message("generate.constructor.fields.chooser.title"));
   }
 
   @Override
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<ClassMember> array = new ArrayList<>();
-    List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
-    fieldLoop:
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
 
-      for (ImplicitUsageProvider provider : implicitUsageProviders) {
-        if (provider.isImplicitWrite(field)) continue fieldLoop;
-      }
       array.add(new PsiFieldMember(field));
     }
     return array.toArray(ClassMember.EMPTY_ARRAY);
   }
 
   @Override
-  @Nullable
-  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember @Nullable [] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass instanceof PsiAnonymousClass) {
       Messages.showMessageDialog(project,
-                                 CodeInsightBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
+                                 JavaBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
                                  CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return null;
     }
 
-    if (aClass.isRecord() && JavaPsiRecordUtil.findCanonicalConstructor(aClass) == null) {
-      RecordConstructorChooserDialog dialog = new RecordConstructorChooserDialog(aClass);
-      if (!dialog.showAndGet()) return null;
-      ClassMember member = dialog.getClassMember();
-      if (member != null) {
-        return new ClassMember[]{member};
+    if (aClass.isRecord()) {
+      PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+      if (constructor instanceof LightRecordCanonicalConstructor) {
+        RecordConstructorChooserDialog dialog = new RecordConstructorChooserDialog(aClass);
+        if (!dialog.showAndGet()) return null;
+        ClassMember member = dialog.getClassMember();
+        if (member != null) {
+          return new ClassMember[]{member};
+        }
       }
     }
 
@@ -94,7 +88,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
           PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, s -> new PsiMethodMember(s, substitutor));
           MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(constructors, false, true, project);
-          chooser.setTitle(CodeInsightBundle.message("generate.constructor.super.constructor.chooser.title"));
+          chooser.setTitle(JavaBundle.message("generate.constructor.super.constructor.chooser.title"));
           chooser.show();
           List<PsiMethodMember> elements = chooser.getSelectedElements();
           if (elements == null || elements.isEmpty()) return null;
@@ -144,13 +138,20 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   }
 
   protected static List<ClassMember> preselect(ClassMember[] members) {
+    List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
     final List<ClassMember> preselection = new ArrayList<>();
+
+    fieldLoop:
     for (ClassMember member : members) {
       if (member instanceof PsiFieldMember) {
         final PsiField psiField = ((PsiFieldMember)member).getElement();
-        if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
-          preselection.add(member);
+        if (!psiField.hasModifierProperty(PsiModifier.FINAL)) {
+          continue fieldLoop;
         }
+        for (ImplicitUsageProvider provider : implicitUsageProviders) {
+          if (provider.isImplicitWrite(psiField)) continue fieldLoop;
+        }
+        preselection.add(member);
       }
     }
     return preselection;
@@ -160,8 +161,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     if (members.length == 1 && members[0] instanceof RecordConstructorMember) {
-      boolean compact = ((RecordConstructorMember)members[0]).isCompact();
-      return Collections.singletonList(new PsiGenerationInfo<>(generateRecordConstructor(aClass, compact)));
+      return Collections.singletonList(new PsiGenerationInfo<>(((RecordConstructorMember)members[0]).generateRecordConstructor()));
     }
 
     List<PsiMethod> baseConstructors = new ArrayList<>();
@@ -195,43 +195,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     final List<GenerationInfo> constructors =
       Collections.singletonList(new PsiGenerationInfo<>(generateConstructorPrototype(aClass, null, false, fields)));
     return filterOutAlreadyInsertedConstructors(aClass, constructors);
-  }
-
-  @NotNull
-  private static PsiMethod generateRecordConstructor(PsiClass aClass, boolean compact) {
-    String constructor;
-    if (compact) {
-      constructor = "public " + aClass.getName() + "{\n}";
-    }
-    else {
-      PsiRecordComponent[] components = aClass.getRecordComponents();
-      String parameters = StreamEx.of(components).map(PsiRecordComponent::getText).joining(",", "(", ")");
-      String body =
-        StreamEx.of(components).map(PsiRecordComponent::getName).map(name -> "this." + name + "=" + name + ";\n").joining("", "{", "}");
-      constructor = "public " + aClass.getName() + parameters + body;
-    }
-    Project project = aClass.getProject();
-    PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(constructor, aClass);
-    if (!compact) {
-      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
-      boolean finalParameters = settings.isGenerateFinalParameters();
-      PsiParameterList parameterList = ctor.getParameterList();
-      for (PsiParameter parameter : parameterList.getParameters()) {
-        PsiModifierList modifierList = parameter.getModifierList();
-        if (modifierList != null) {
-          modifierList.setModifierProperty(PsiModifier.FINAL, finalParameters);
-          PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(modifierList);
-          for (PsiAnnotation annotation : parameter.getAnnotations()) {
-            PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
-            if (applicable == null) {
-              annotation.delete();
-            }
-          }
-        }
-      }
-    }
-    CodeStyleManager.getInstance(project).reformat(ctor);
-    return ctor;
   }
 
   private static List<? extends GenerationInfo> filterOutAlreadyInsertedConstructors(PsiClass aClass, List<? extends GenerationInfo> constructors) {

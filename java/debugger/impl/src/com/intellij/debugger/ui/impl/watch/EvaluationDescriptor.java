@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
@@ -113,7 +113,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       return ((PsiExpressionCodeFragment)evaluationCode).getExpression();
     }
     else {
-      throw new EvaluateException(DebuggerBundle.message("error.cannot.create.expression.from.code.fragment"), null);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.cannot.create.expression.from.code.fragment"), null);
     }
   }
 

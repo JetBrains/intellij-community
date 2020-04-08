@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -58,7 +59,7 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      holder.createInfoAnnotation(element, null);
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).create();
     }
   }
 }

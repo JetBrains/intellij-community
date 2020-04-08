@@ -42,9 +42,8 @@ public class RootAction<T extends Repository> extends ActionGroup implements Pop
     getTemplatePresentation().setText(DvcsUtil.getShortRepositoryName(repository), false);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myGroup.getChildren(e);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.openapi.application.ModalityState;
@@ -32,7 +32,7 @@ final class PlatformVcsDetector implements StartupActivity.DumbAware {
 
       ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
 
-      Path file = ProjectBaseDirectory.getInstance(project).getBaseDir(Paths.get(projectBasePath));
+      Path file = Paths.get(projectBasePath);
       if (!vcsManager.needAutodetectMappings()) {
         return;
       }

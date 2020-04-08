@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -13,8 +13,6 @@ import javax.swing.*;
 import java.awt.*;
 
 abstract class ContentLayout {
-  static final int TAB_ARC = 2;
-
   ToolWindowContentUi myUi;
   BaseLabel myIdLabel;
 
@@ -22,15 +20,13 @@ abstract class ContentLayout {
     myUi = ui;
   }
 
-  public abstract void init();
+  public abstract void init(@NotNull ContentManager contentManager);
 
   public abstract void reset();
 
   public abstract void layout();
 
   public abstract void paintComponent(Graphics g);
-
-  public abstract void paintChildren(Graphics g);
 
   public abstract void update();
 
@@ -43,7 +39,7 @@ abstract class ContentLayout {
   public abstract void contentRemoved(ContentManagerEvent event);
 
   protected void updateIdLabel(BaseLabel label) {
-    String title = myUi.myWindow.getStripeTitle();
+    String title = myUi.window.getStripeTitle();
 
     String suffix = getTitleSuffix();
     if (suffix != null) title += suffix;
@@ -54,7 +50,7 @@ abstract class ContentLayout {
   }
 
   private String getTitleSuffix() {
-    ContentManager manager = myUi.contentManager;
+    ContentManager manager = myUi.getContentManager();
     switch (manager == null ? 0 : manager.getContentCount()) {
       case 0:
         return null;
@@ -87,7 +83,7 @@ abstract class ContentLayout {
   public abstract String getNextContentActionName();
 
   protected boolean shouldShowId() {
-    JComponent component = myUi.myWindow.getComponentIfInitialized();
+    JComponent component = myUi.window.getComponentIfInitialized();
     return component != null && !"true".equals(component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL));
   }
 

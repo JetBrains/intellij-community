@@ -29,9 +29,6 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 class AddLibraryDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
   private final Library myLibrary;

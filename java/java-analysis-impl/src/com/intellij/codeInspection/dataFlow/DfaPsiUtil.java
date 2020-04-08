@@ -128,9 +128,12 @@ public class DfaPsiUtil {
   private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
-    if (info == null ||
-        ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
+    if (info == null) {
       return Nullability.UNKNOWN;
+    }
+    if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
+      List<PsiParameter> supers = AnnotationUtil.getSuperAnnotationOwners((PsiParameter)owner);
+      return ContainerUtil.exists(supers, each -> manager.isNullable(each, false)) ? Nullability.NULLABLE :  Nullability.UNKNOWN;
     }
     return info.getNullability();
   }
@@ -280,16 +283,7 @@ public class DfaPsiUtil {
   }
 
   private static boolean isEnumPredefinedMethod(PsiMethod method) {
-    String methodName = method.getName();
-    if (("valueOf".equals(methodName) || "values".equals(methodName)) && method.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && containingClass.isEnum()) {
-        PsiParameter[] parameters = method.getParameterList().getParameters();
-        if ("values".equals(methodName)) return parameters.length == 0;
-        return parameters.length == 1 && parameters[0].getType().equalsToText(JAVA_LANG_STRING);
-      }
-    }
-    return false;
+    return CallMatcher.enumValueOf().methodMatches(method) || CallMatcher.enumValues().methodMatches(method);
   }
 
   public static boolean isInitializedNotNull(PsiField field) {
@@ -357,9 +351,8 @@ public class DfaPsiUtil {
             return typeContainers.contains(containingClass);
           }
 
-          @NotNull
           @Override
-          protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (isCallExposingNonInitializedFields(instruction) ||
                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {

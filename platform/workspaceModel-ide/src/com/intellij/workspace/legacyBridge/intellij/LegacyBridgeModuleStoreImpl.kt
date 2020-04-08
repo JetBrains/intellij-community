@@ -5,7 +5,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 
-internal class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMacroManager, module: Module) : ModuleStoreBase() {
+internal class LegacyBridgeModuleStoreImpl(module: Module) : ModuleStoreBase() {
   private val enabled: Boolean
 
   init {
@@ -13,9 +13,11 @@ internal class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMac
     enabled = JpsProjectModelSynchronizer.enabled && !module.moduleFilePath.startsWith(moduleManager.outOfTreeModulesPath)
   }
 
+  private val pathMacroManager = PathMacroManager.getInstance(module)
+
   override val storageManager: StateStorageManagerImpl =
     if (enabled)
-      LegacyBridgeModuleStateStorageManager(pathMacroManager)
+      LegacyBridgeModuleStateStorageManager(pathMacroManager, module)
     else
       DummyModuleStateStorageManager()
 
@@ -38,8 +40,6 @@ internal class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMac
     virtualFileTracker = null
   )
 
-  private class LegacyBridgeModuleStateStorageManager(pathMacroManager: PathMacroManager) : ModuleStateStorageManager(
-    macroSubstitutor = TrackingPathMacroSubstitutorImpl(pathMacroManager),
-    module = null
-  )
+  private class LegacyBridgeModuleStateStorageManager(pathMacroManager: PathMacroManager, module: Module) : ModuleStateStorageManager(
+    TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 }

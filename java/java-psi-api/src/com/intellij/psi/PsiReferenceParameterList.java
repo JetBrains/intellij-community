@@ -29,14 +29,12 @@ public interface PsiReferenceParameterList extends PsiElement {
    *
    * @return the array of type elements.
    */
-  @NotNull
-  PsiTypeElement[] getTypeParameterElements();
+  PsiTypeElement @NotNull [] getTypeParameterElements();
 
   /**
    * Returns the array of types corresponding to type elements used as type arguments.
    *
    * @return the array of types.
    */
-  @NotNull
-  PsiType[] getTypeArguments();
+  PsiType @NotNull [] getTypeArguments();
 }

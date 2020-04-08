@@ -2,6 +2,8 @@
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.i18n.NlsInfo;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
@@ -44,7 +46,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           List<PsiExpression> children = ExpressionUtils.nonStructuralChildren(expression).collect(Collectors.toList());
           for (PsiExpression e : children) {
             if (capitalization == null) {
-              capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno(method);
+              capitalization = NlsInfo.getCapitalization(method);
               if (capitalization == Nls.Capitalization.NotSpecified) return;
             }
             Value titleValue = getTitleValue(e, new HashSet<>());
@@ -64,7 +66,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
             PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
             for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
               PsiParameter parameter = parameters[i];
-              Nls.Capitalization capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno(parameter);
+              Nls.Capitalization capitalization = NlsInfo.getCapitalization(parameter);
               if (capitalization == Nls.Capitalization.NotSpecified) continue;
               ExpressionUtils.nonStructuralChildren(args[i])
                 .forEach(e -> checkCapitalization(e, getTitleValue(e, new HashSet<>()), holder, capitalization));
@@ -80,8 +82,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                           @NotNull ProblemsHolder holder,
                                           Nls.Capitalization capitalization) {
     if (titleValue != null && !titleValue.isSatisfied(capitalization)) {
-      holder.registerProblem(e, "String '" + titleValue + "' is not properly capitalized. It should have " +
-                                StringUtil.toLowerCase(capitalization.toString()) + " capitalization",
+      holder.registerProblem(e, JavaI18nBundle
+                               .message("inspection.title.capitalization.description", titleValue, StringUtil.toLowerCase(capitalization.toString())),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              titleValue.canFix() ? new TitleCapitalizationFix(titleValue, capitalization) : null);
     }
@@ -147,7 +149,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getName() {
-      return "Properly capitalize '" + myTitleValue + '\'';
+      return JavaI18nBundle.message("quickfix.text.title.capitalization", myTitleValue);
     }
 
     @Override
@@ -194,7 +196,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Properly capitalize";
+      return JavaI18nBundle.message("quickfix.family.title.capitalization.fix");
     }
   }
 

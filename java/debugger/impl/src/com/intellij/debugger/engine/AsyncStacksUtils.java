@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -29,9 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * @author egor
- */
 public class AsyncStacksUtils {
   private static final Logger LOG = Logger.getInstance(AsyncStacksUtils.class);
   // TODO: obtain CaptureStorage fqn from the class somehow
@@ -80,7 +77,7 @@ public class AsyncStacksUtils {
           LOG.debug("Error loading debug agent", "agent class not found");
         }
         else {
-          methodPair = Pair.create(captureClass, captureClass.methodsByName("getCurrentCapturedStack").get(0));
+          methodPair = Pair.create(captureClass, DebuggerUtils.findMethod(captureClass, "getCurrentCapturedStack", null));
         }
       }
       catch (EvaluateException e) {
@@ -222,7 +219,7 @@ public class AsyncStacksUtils {
 
   private static Location findLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int line) {
     if (type != null && line >= 0) {
-      for (Method method : type.methodsByName(methodName)) {
+      for (Method method : DebuggerUtilsEx.declaredMethodsByName(type, methodName)) {
         List<Location> locations = DebuggerUtilsEx.locationsOfLine(method, line);
         if (!locations.isEmpty()) {
           return locations.get(0);
@@ -241,7 +238,7 @@ public class AsyncStacksUtils {
         LOG.debug("Error loading debug agent", "agent class not found");
       }
       else {
-        Method method = captureClass.methodsByName("addCapturePoints").get(0);
+        Method method = DebuggerUtils.findMethod(captureClass, "addCapturePoints", null);
         if (method != null) {
           StringWriter writer = new StringWriter();
           try {

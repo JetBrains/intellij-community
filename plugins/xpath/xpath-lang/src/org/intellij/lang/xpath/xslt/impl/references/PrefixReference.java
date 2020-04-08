@@ -29,6 +29,11 @@ public class PrefixReference extends SimpleAttributeReference implements EmptyRe
     if (p == -1) {
       return TextRange.from(0, 0);
     } else {
+      for (int i = p - 1; i >= 0 ; i--) {
+        if (!Character.isJavaIdentifierPart(value.charAt(i))) {
+          return TextRange.create(i + 1, p);
+        }
+      }
       return TextRange.from(0, p);
     }
   }

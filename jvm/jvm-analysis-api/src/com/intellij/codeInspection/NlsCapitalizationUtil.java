@@ -1,16 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public class NlsCapitalizationUtil {
@@ -61,15 +55,5 @@ public class NlsCapitalizationUtil {
     return capitalization == Nls.Capitalization.Title
            ? StringUtil.wordsToBeginFromUpperCase(string)
            : StringUtil.capitalize(StringUtil.wordsToBeginFromLowerCase(string));
-  }
-
-  @NotNull
-  public static Nls.Capitalization getCapitalizationFromAnno(PsiModifierListOwner modifierListOwner) {
-    PsiAnnotation nls = AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, Collections.singleton(Nls.class.getName()));
-    if (nls == null) return Nls.Capitalization.NotSpecified;
-    PsiAnnotationMemberValue capitalization = nls.findAttributeValue("capitalization");
-    Object cap = JavaPsiFacade
-      .getInstance(modifierListOwner.getProject()).getConstantEvaluationHelper().computeConstantExpression(capitalization);
-    return cap instanceof Nls.Capitalization ? (Nls.Capitalization)cap : Nls.Capitalization.NotSpecified;
   }
 }

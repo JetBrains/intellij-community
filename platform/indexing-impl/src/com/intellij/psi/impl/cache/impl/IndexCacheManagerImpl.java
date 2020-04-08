@@ -36,8 +36,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @Override
-  @NotNull
-  public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public PsiFile @NotNull [] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
       return PsiFile.EMPTY_ARRAY;
     }
@@ -49,8 +48,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getVirtualFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public VirtualFile @NotNull [] getVirtualFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     if (myProject.isDefault()) {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -78,18 +76,13 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     try {
       return ReadAction.compute(() -> FileBasedIndex.getInstance()
-        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
-
-          @Override
-          public boolean process(@NotNull final VirtualFile file, final Integer value) {
-            ProgressIndicatorProvider.checkCanceled();
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              if (!fileProcessor.process(file)) return false;
-            }
-            return true;
+        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, (file, value) -> {
+          ProgressIndicatorProvider.checkCanceled();
+          final int mask = value.intValue();
+          if ((mask & occurrenceMask) != 0) {
+            if (!fileProcessor.process(file)) return false;
           }
+          return true;
         }, scope));
     }
     catch (IndexNotReadyException e) {

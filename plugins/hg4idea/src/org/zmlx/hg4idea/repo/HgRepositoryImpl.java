@@ -40,7 +40,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull private Set<String> myOpenedBranches = Collections.emptySet();
 
   @NotNull private volatile HgConfig myConfig;
-  private boolean myIsFresh = true;
   private final HgLocalIgnoredHolder myLocalIgnoredHolder;
 
 
@@ -200,11 +199,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   }
 
   @Override
-  public boolean isFresh() {
-    return myIsFresh;
-  }
-
-  @Override
   public void update() {
     HgRepoInfo currentInfo = readRepoInfo();
     // update only if something changed!!!   if update every time - new log will be refreshed every time, too.
@@ -234,7 +228,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull
   private HgRepoInfo readRepoInfo() {
-    myIsFresh = myIsFresh && myReader.isFresh();
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readCurrentTipRevision(), myReader.readState(),

@@ -88,7 +88,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'BigDecimal.valueOf()'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "BigDecimal.valueOf()");
     }
 
     @Override

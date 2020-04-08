@@ -33,5 +33,5 @@ public interface CustomOutputDataListener {
    * @param dataName
    * @param content
    */
-  void processData(CompileContext context, @Nullable String dataName, @NotNull byte[] content);
+  void processData(CompileContext context, @Nullable String dataName, byte @NotNull [] content);
 }

@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +33,17 @@ public abstract class ScratchFileService {
   @NotNull
   public abstract PerFileMappings<Language> getScratchesMapping();
 
+  @Nullable
+  public static RootType findRootType(@Nullable VirtualFile file) {
+    if (file == null || !file.isInLocalFileSystem()) return null;
+    VirtualFile parent = file.isDirectory() ? file : file.getParent();
+    return getInstance().getRootType(parent);
+  }
+
+  /** @deprecated use {@link ScratchFileService#findRootType(VirtualFile)} or {@link ScratchUtil#isScratch(VirtualFile)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isInScratchRoot(@Nullable VirtualFile file) {
-    VirtualFile parent = file == null ? null : file.getParent();
-    if (parent == null || !file.isInLocalFileSystem()) {
-      return false;
-    }
-    return getInstance().getRootType(file) != null;
+    return findRootType(file) != null;
   }
 }

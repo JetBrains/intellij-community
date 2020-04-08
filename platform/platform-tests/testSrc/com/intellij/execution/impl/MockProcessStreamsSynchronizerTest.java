@@ -144,7 +144,7 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     }).assertTiming();
   }
 
-  private void assertFlushedChunks(@NotNull FlushedChunk... expectedFlushedChunks) {
+  private void assertFlushedChunks(FlushedChunk @NotNull ... expectedFlushedChunks) {
     Assert.assertEquals(ContainerUtil.newArrayList(expectedFlushedChunks), mySynchronizer.getFlushedChunksAndClear());
   }
 

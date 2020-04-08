@@ -100,8 +100,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final XmlNSDescriptor rootTagNSDescriptor = DtdResolveUtil.getNsDescriptor(myElement);
       return rootTagNSDescriptor != null ?
              rootTagNSDescriptor.getRootElementsDescriptors(((XmlFile)getRealFile()).getDocument()):
@@ -246,8 +245,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     XmlElement nameElement = null;
 
     if (element instanceof XmlDoctype) {

@@ -1,25 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueGroup;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author egor
- */
 public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvider {
   private final StaticDescriptorImpl myStaticDescriptor;
   private final EvaluationContextImpl myEvaluationContext;
@@ -71,18 +72,28 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
           final ReferenceType refType = myStaticDescriptor.getType();
           List<Field> fields = refType.allFields();
 
-          final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-          for (Field field : fields) {
-            if (field.isStatic()) {
-              boolean isSynthetic = DebuggerUtils.isSynthetic(field);
-              if (!classRenderer.SHOW_SYNTHETICS && isSynthetic) {
-                continue;
+          boolean showSynthetics = NodeRendererSettings.getInstance().getClassRenderer().SHOW_SYNTHETICS;
+          List<Field> fieldsToShow = ContainerUtil.filter(fields, f -> f.isStatic() && (showSynthetics || !DebuggerUtils.isSynthetic(f)));
+          int loaded = 0, total = fieldsToShow.size();
+          Map<Field, Value> cachedValues = null;
+          for (int i = 0; i < total; i++) {
+            Field field = fieldsToShow.get(i);
+            // load values in chunks
+            if (i > loaded || cachedValues == null) {
+              int chunkSize = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, total - loaded);
+              try {
+                cachedValues = refType.getValues(fieldsToShow.subList(loaded, loaded + chunkSize));
               }
-              final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myStaticDescriptor, null, field);
-              children.add(JavaValue.create(fieldDescriptor, myEvaluationContext, myNodeManager));
-              //final DebuggerTreeNodeImpl node = myNodeManager.createNode(fieldDescriptor, myEvaluationContext);
-              //myChildren.add(node);
+              catch (Exception e) {
+                cachedValues = null;
+              }
+              loaded += chunkSize;
             }
+            FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myStaticDescriptor, null, field);
+            if (cachedValues != null) {
+              fieldDescriptor.setValue(cachedValues.get(field));
+            }
+            children.add(JavaValue.create(fieldDescriptor, myEvaluationContext, myNodeManager));
           }
 
           node.addChildren(children, true);

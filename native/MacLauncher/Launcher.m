@@ -334,7 +334,7 @@ NSString *getPropertiesFilePath() {
 
 
 NSString *getPreferencesFolderPath() {
-    return [NSString stringWithFormat:@"%@/Library/Preferences/%@", NSHomeDirectory(), getSelector()];
+    return [NSString stringWithFormat:@"%@/Library/Application Support/%@/%@", NSHomeDirectory(), getJVMProperty(@"idea.vendor.name"), getSelector()];
 }
 
 // NSString *getDefaultVMOptionsFilePath() {
@@ -464,17 +464,16 @@ NSString *getOverridePropertiesPath() {
 }
 
 - (void)process_cwd {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
-    NSString *cwd = [jvmInfo objectForKey:@"WorkingDirectory"];
-    if (cwd != nil && cwd != NULL) {
-        cwd = [self expandMacros:cwd];
-        if (chdir([cwd UTF8String]) != 0) {
-            NSLog(@"Cannot chdir to working directory at %@", cwd);
+    const char *cmd = getenv("_");
+    if (cmd != NULL && strcmp(cmd, "/usr/bin/open") == 0) {
+        const char *pwd = getenv("PWD");
+        if (pwd != NULL && chdir(pwd) != 0) {
+            NSLog(@"Cannot chdir() to %s", pwd);
         }
-    } else {
-        NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
-        NSLog(@"WorkingDirectory is absent in Info.plist. Current Directory: %@", dir);
     }
+
+    NSString *dir = [[NSFileManager defaultManager] currentDirectoryPath];
+    NSLog(@"Current Directory: %@", dir);
 }
 
 BOOL validationJavaVersion(){
@@ -553,8 +552,20 @@ BOOL validationJavaVersion(){
 
     jint create_vm_rc = create_vm(&jvm, &env, &args);
     if (create_vm_rc != JNI_OK || jvm == NULL) {
-        NSLog(@"JNI_CreateJavaVM (%@) failed: %ld", vm.bundlePath, create_vm_rc);
-        exit(-1);
+        NSString *serverLibUrl = [vm.bundlePath stringByAppendingPathComponent:@"Contents/Home/lib/server/libjvm.dylib"];
+
+        void *libHandle = dlopen(serverLibUrl.UTF8String, RTLD_NOW + RTLD_GLOBAL);
+        if (libHandle) {
+            create_vm = dlsym(libHandle, "JNI_CreateJavaVM");
+        }
+        
+        if (create_vm != NULL) {
+            create_vm_rc = create_vm(&jvm, &env, &args);
+        }
+        if (create_vm == NULL || create_vm_rc != JNI_OK) {
+            NSLog(@"JNI_CreateJavaVM (%@) failed: %ld", vm.bundlePath, create_vm_rc);
+            exit(-1);
+        }
     }
 
     jclass string_class = (*env)->FindClass(env, "java/lang/String");

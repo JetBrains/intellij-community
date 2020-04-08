@@ -61,9 +61,8 @@ public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter
     return lexer;
   }
 
-  @NotNull
   @Override
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     final SyntaxHighlighter activeSyntaxHighlighter =
       layeredHighlighterIterator != null ? layeredHighlighterIterator.getActiveSyntaxHighlighter() : highlighter;
     return activeSyntaxHighlighter.getTokenHighlights(tokenType);

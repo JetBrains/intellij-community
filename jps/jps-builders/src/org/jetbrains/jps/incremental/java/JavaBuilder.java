@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter;
@@ -55,8 +54,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -66,6 +64,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -204,6 +203,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return COMPILABLE_EXTENSIONS;
@@ -766,7 +766,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final List<String> compilationOptions = new ArrayList<>();
     final List<String> vmOptions = new ArrayList<>();
     final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCurrentCompilerOptions();
+    final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
       compilationOptions.add("-g");
     }
@@ -934,12 +934,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
   @NotNull
   public static String getUsedCompilerId(CompileContext context) {
     final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
-    return config == null ? JavaCompilers.JAVAC_ID : config.getJavaCompilerId();
+    return JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getJavaCompilerId();
   }
 
   private static void addCrossCompilationOptions(int compilerSdkVersion, List<? super String> options, CompileContext context, ModuleChunk chunk) {
-    final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+    final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(
       context.getProjectDescriptor().getProject()
     );
 
@@ -1120,8 +1119,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
-    private volatile int myErrorCount;
-    private volatile int myWarningCount;
+    private final AtomicInteger myErrorCount = new AtomicInteger(0);
+    private final AtomicInteger myWarningCount = new AtomicInteger(0);
     private final Set<File> myFilesWithErrors = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     @NotNull
     private final Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
@@ -1138,7 +1137,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     @Override
     public void registerJavacFileData(JavacFileData data) {
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
-        registrar.registerFile(myContext, data.getFilePath(), registrar.onlyImports() ? data.getImportRefs() : data.getRefs(), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
+        registrar.registerFile(myContext, data.getFilePath(), data.getRefs(), data.getDefs(), data.getCasts(), data.getImplicitToStringRefs());
       }
     }
 
@@ -1168,29 +1167,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
           //noinspection UseOfSystemOutOrSystemErr
           System.err.println(line);
         }
-        else if (line.contains("java.lang.OutOfMemoryError")) {
+        else if (line.contains("\\bjava.lang.OutOfMemoryError\\b")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
-          myErrorCount++;
+          myErrorCount.incrementAndGet();
         }
         else {
-          final BuildMessage.Kind kind = getKindByMessageText(line);
-          if (kind == BuildMessage.Kind.ERROR) {
-            myErrorCount++;
-          }
-          else if (kind == BuildMessage.Kind.WARNING) {
-            myWarningCount++;
-          }
-          myContext.processMessage(new CompilerMessage(BUILDER_NAME, kind, line));
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
         }
       }
-    }
-
-    private static BuildMessage.Kind getKindByMessageText(String line) {
-      final String lowercasedLine = StringUtil.toLowerCase(line);
-      if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
-        return BuildMessage.Kind.ERROR;
-      }
-      return BuildMessage.Kind.INFO;
     }
 
     @Override
@@ -1199,12 +1183,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
       switch (diagnostic.getKind()) {
         case ERROR:
           kind = BuildMessage.Kind.ERROR;
-          myErrorCount++;
+          myErrorCount.incrementAndGet();
           break;
         case MANDATORY_WARNING:
         case WARNING:
           kind = BuildMessage.Kind.WARNING;
-          myWarningCount++;
+          myWarningCount.incrementAndGet();
           break;
         case NOTE:
           kind = BuildMessage.Kind.INFO;
@@ -1220,7 +1204,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         // for eclipse compiler just an attempt to call getSource() may lead to an NPE,
         // so calling this method under try/catch to avoid induced compiler errors
         final JavaFileObject source = diagnostic.getSource();
-        sourceFile = source != null ? PathUtils.convertToFile(source.toUri()) : null;
+        sourceFile = source != null ? new File(source.toUri()) : null;
       }
       catch (Exception e) {
         LOG.info(e);
@@ -1251,11 +1235,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     int getErrorCount() {
-      return myErrorCount;
+      return myErrorCount.get();
     }
 
     int getWarningCount() {
-      return myWarningCount;
+      return myWarningCount.get();
     }
 
     @NotNull

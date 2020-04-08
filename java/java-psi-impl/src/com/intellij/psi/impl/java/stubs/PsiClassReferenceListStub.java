@@ -25,7 +25,7 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface PsiClassReferenceListStub extends StubElement<PsiReferenceList> {
-  @NotNull PsiClassType[] getReferencedTypes();
-  @NotNull String[] getReferencedNames();
+  PsiClassType @NotNull [] getReferencedTypes();
+  String @NotNull [] getReferencedNames();
   @NotNull PsiReferenceList.Role getRole();
 }

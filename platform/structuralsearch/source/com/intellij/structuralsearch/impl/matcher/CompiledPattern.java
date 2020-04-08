@@ -38,8 +38,7 @@ public abstract class CompiledPattern {
   private PsiElement last;
   private MatchingHandler lastHandler;
 
-  @NotNull
-  public abstract String[] getTypedVarPrefixes();
+  public abstract String @NotNull [] getTypedVarPrefixes();
   public abstract boolean isTypedVar(@NotNull String str);
 
   public void setTargetNode(PsiElement element) {

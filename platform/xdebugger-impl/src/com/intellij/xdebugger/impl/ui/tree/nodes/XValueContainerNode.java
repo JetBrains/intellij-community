@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
   private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;

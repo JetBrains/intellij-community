@@ -2,10 +2,11 @@
 package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -34,8 +35,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
@@ -52,7 +53,6 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   private final CyclicDependenciesBuilder myBuilder;
   private Content myContent;
   private final DependenciesPanel.DependencyPanelSettings mySettings = new DependenciesPanel.DependencyPanelSettings();
-  public static final String DEFAULT_PACKAGE_ABBREVIATION = AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
 
   public CyclicDependenciesPanel(@NotNull Project project, @NotNull CyclicDependenciesBuilder builder) {
     super(new BorderLayout());
@@ -109,7 +109,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
       else {
         String pack1Name = ((PsiPackage)nextPackageNode.getPsiElement()).getQualifiedName();
         String pack2Name = ((PsiPackage)selectedPackageNode.getPsiElement()).getQualifiedName();
-        myBuilder.setRootNodeNameInUsageView(AnalysisScopeBundle.message("cyclic.dependencies.usage.view.root.node.text",
+        myBuilder.setRootNodeNameInUsageView(JavaBundle.message("cyclic.dependencies.usage.view.root.node.text",
                                                                          pack1Name, pack2Name));
         myUsagesPanel.findUsages(searchIn, searchFor);
       }
@@ -160,7 +160,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private static PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
     if (node.getChildCount() == 0 || node.getChildCount() > 1 || node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode){
-      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString());//toString()
+      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(getDefaultPackageAbbreviation()) ? "" : node.toString());//toString()
     } else {
       if (node.getChildCount() == 1){
         PackageDependenciesNode child = (PackageDependenciesNode)node.getChildAt(0);
@@ -172,7 +172,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
           if (child instanceof PackageNode){
             node.removeAllChildren();
             result.append(result.length() != 0 ? "." : "")
-              .append(node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString());
+              .append(node.toString().equals(getDefaultPackageAbbreviation()) ? "" : node.toString());
             node = hideEmptyMiddlePackages(child, result);
             ((PackageNode)node).setPackageName(result.toString());//toString()
           }
@@ -393,7 +393,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class CloseAction extends AnAction implements DumbAware {
     CloseAction() {
-      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"),
+      super(CommonBundle.messagePointer("action.close"), CodeInsightBundle.messagePointer("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
 
@@ -407,7 +407,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"),
+      super(CodeInsightBundle.messagePointer("action.show.files"), CodeInsightBundle.messagePointer("action.show.files.description"),
             AllIcons.FileTypes.Java);
     }
 
@@ -446,7 +446,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"),
+      super(CodeInsightBundle.messagePointer("action.group.by.scope.type"), CodeInsightBundle.messagePointer("action.group.by.scope.type.description"),
             AllIcons.Actions.GroupByTestProduction);
     }
 
@@ -465,7 +465,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private class RerunAction extends AnAction {
     RerunAction(JComponent comp) {
-      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
+      super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 
@@ -502,5 +502,9 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
       }
       return (PackageDependenciesNode)((DefaultMutableTreeNode)lastPathComponent).getUserObject();
     }
+  }
+
+  public static String getDefaultPackageAbbreviation() {
+    return JavaBundle.message("dependencies.tree.node.default.package.abbreviation");
   }
 }

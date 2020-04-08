@@ -3,6 +3,7 @@ package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.*;
@@ -279,6 +280,8 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testNoSymlinkNoise() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
     Files.write(new File(myOlderDir, "bin/_target").toPath(), "test".getBytes(StandardCharsets.UTF_8));
     Utils.createLink("_target", new File(myOlderDir, "bin/_link"));
     resetNewerDir();
@@ -289,6 +292,8 @@ public class PatchCreationTest extends PatchTestCase {
 
   @Test
   public void testSymlinkDereferenceAndMove() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
     byte[] data = new byte[8192];
     new Random().nextBytes(data);
     long checksum = Digester.digestStream(new ByteArrayInputStream(data));

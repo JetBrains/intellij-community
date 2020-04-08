@@ -16,13 +16,20 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ParameterHidingMemberVariableInspectionTest extends LightJavaInspectionTestCase {
 
   public void testParameterHidingMemberVariable() {
     doTest();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
   }
 
   @Nullable

@@ -1706,11 +1706,19 @@ class Bar {
 
   void testShowVarInitializers() {
     configure()
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText == '("y") {...}'
-    assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' ( = 42)'
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailFragments[0].italic
+    myFixture.assertPreferredCompletionItems 0, 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
+    def items = myFixture.lookup.items
+    assert items.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x")', '("y") {...}', null, ' ( = 42)']
+    assert LookupElementPresentation.renderElement(items[3]).tailFragments[0].italic
+  }
+
+  void testShowNonImportedVarInitializers() {
+    configure()
+    myFixture.assertPreferredCompletionItems 1, 'Field', 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
+    def fieldItems = myFixture.lookup.items[1..4]
+    assert fieldItems.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x") in E', '("y") {...} in E', null, ' ( = 42) in E']
+    assert LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[0].italic
+    assert !LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[1].italic
   }
 
   void testSuggestInterfaceArrayWhenObjectIsExpected() {
@@ -1949,5 +1957,33 @@ class Abc {
     myFixture.configureByText("a.java", "enum X ex<caret>") // should not complete
     myFixture.completeBasic()
     myFixture.checkResult("enum X ex")
+  }
+
+  void testAddImportWhenCompletingInnerAfterNew() {
+    myFixture.addClass("package p; public class Outer { public static class Inner {} }")
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Inner') })
+    checkResult()
+  }
+
+  void "test completing qualified class name"() {
+    myFixture.configureByText("a.java", "class C implements java.util.Li<caret>")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, 'List')
+    myFixture.type('\n')
+    myFixture.checkResult("class C implements java.util.List<caret>")
+  }
+
+  void "test suggest Object methods when super is unresolved"() {
+    def checkGetClassPresent = { String text ->
+      myFixture.configureByText("a.java", text)
+      myFixture.completeBasic()
+      myFixture.assertPreferredCompletionItems 0, 'getClass'
+    }
+    checkGetClassPresent("class C extends Unresolved {{ getCl<caret>x }}")
+    checkGetClassPresent("class C implements Unresolved {{ getCl<caret>x }}")
+    checkGetClassPresent("class C extends Unresolved implements Runnable {{ getCl<caret>x }}")
+    checkGetClassPresent("class C extends Unresolved1 implements Unresolved2 {{ getCl<caret>x }}")
+
   }
 }

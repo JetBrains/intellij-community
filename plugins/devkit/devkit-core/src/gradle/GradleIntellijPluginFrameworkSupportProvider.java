@@ -56,7 +56,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final String FALLBACK_VERSION = "0.4.15";
+  private static final String FALLBACK_VERSION = "0.4.18";
   protected static final String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static class Lazy {
@@ -155,7 +155,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
 
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
     linkLabel.setHtmlText("Learn how to <a>build plugins with Gradle</a>");
-    linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
+    linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
     return linkLabel;
   }
 

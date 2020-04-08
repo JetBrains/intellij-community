@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -41,6 +42,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
 
+import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
+
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
   public static final int COLUMN_RESIZE_AREA_WIDTH = 3; // same as in BasicTableHeaderUI
@@ -51,6 +54,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private boolean myEnableAntialiasing;
 
+  private int myVisibleRowCount = 4;
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
@@ -178,6 +182,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
+  public int getVisibleRowCount() {
+    return myVisibleRowCount;
+  }
+
+  public void setVisibleRowCount(int visibleRowCount) {
+    int oldValue = myVisibleRowCount;
+    myVisibleRowCount = Math.max(0, visibleRowCount);
+    firePropertyChange("visibleRowCount", oldValue, visibleRowCount);
+  }
+
   @Override
   public int getRowHeight() {
     int height = super.getRowHeight();
@@ -217,6 +231,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
             if (component instanceof JLabel && StringUtil.isEmpty(((JLabel)component).getText())) {
               String oldText = ((JLabel)component).getText();
               try {
+                //noinspection HardCodedStringLiteral
                 ((JLabel)component).setText("Jj");
                 size = component.getPreferredSize();
                 result = Math.max(size.height, result);
@@ -269,7 +284,45 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   protected void initializeLocalVars() {
     super.initializeLocalVars();
-    setPreferredScrollableViewportSize(JBUI.size(getPreferredScrollableViewportSize()));
+    setPreferredScrollableViewportSize(null);
+  }
+
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    Dimension base = super.getPreferredScrollableViewportSize();
+    int visibleRows = myVisibleRowCount;
+    if (visibleRows <= 0) return base;
+    if (base != null && base.height > 0) return base;
+
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+
+    TableModel model = getModel();
+    int modelRows = model == null ? 0 : model.getRowCount();
+    boolean forceVisibleRowCount = Boolean.TRUE.equals(UIUtil.getClientProperty(this, FORCE_VISIBLE_ROW_COUNT_KEY));
+    if (!forceVisibleRowCount) {
+      visibleRows = Math.min(modelRows, visibleRows);
+    }
+    int fixedWidth = base != null && base.width > 0 ? base.width : JBUI.scale(100);
+    Dimension size;
+    if (modelRows == 0) {
+      int fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("Table.rowHeight");
+      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
+
+      size = new Dimension(fixedWidth, fixedHeight * visibleRows);
+      if (addExtraSpace) size.height += fixedHeight / 2;
+    }
+    else {
+      Rectangle rect = getCellRect(Math.min(visibleRows, modelRows) - 1, 0, true);
+      size = new Dimension(fixedWidth, rect.y + rect.height);
+      if (modelRows < visibleRows) {
+        size.height += (visibleRows - modelRows) * rect.height;
+      }
+      else if (modelRows > visibleRows) {
+        if (addExtraSpace) size.height += rect.height / 2;
+      }
+    }
+    return size;
   }
 
   public boolean isEmpty() {
@@ -493,7 +546,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     if (e instanceof KeyEvent) {
       // do not start editing in autoStartsEdit mode on Ctrl-Z and other non-typed events
-      if (!UIUtil.isReallyTypedEvent((KeyEvent)e) || ((KeyEvent)e).getKeyChar() == KeyEvent.CHAR_UNDEFINED) return false;
+      if (!UIUtil.isReallyTypedEvent((KeyEvent)e)) return false;
 
       SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this);
       if (supply != null && supply.isPopupActive()) {
@@ -849,7 +902,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           JLabel cmp = (JLabel)delegate;
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
-          JBEmptyBorder indent = JBUI.Borders.emptyLeft(JBUI.scale(8));
+          JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
           border = JBUI.Borders.merge(border, indent, true);
           cmp.setBorder(border);
           return cmp;
@@ -885,8 +938,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return super.getToolTipText(event);
     }
 
-    @Nullable
-    private ColumnInfo[] getColumnInfos() {
+    private ColumnInfo @Nullable [] getColumnInfos() {
       TableModel model = getModel();
       if (model instanceof SortableColumnModel) {
         return ((SortableColumnModel)model).getColumnInfos();

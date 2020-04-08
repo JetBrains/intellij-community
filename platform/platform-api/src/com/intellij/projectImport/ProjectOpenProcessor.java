@@ -1,27 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
 package com.intellij.projectImport;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.projectOpenProcessor");
 
   @NotNull
+  @Nls
   public abstract String getName();
 
   @Nullable
-  public abstract Icon getIcon();
+  public Icon getIcon() {
+    return null;
+  }
 
   @Nullable
   public Icon getIcon(@NotNull VirtualFile file) {
@@ -32,6 +40,21 @@ public abstract class ProjectOpenProcessor {
 
   public boolean isProjectFile(@NotNull VirtualFile file) {
     return canOpenProject(file);
+  }
+
+  /**
+   * If known that a user tries to open some project, ask if the user wants to open it as a plain file or as a project.
+   * @return Messages.YES -> Open as a project, Messages.NO -> Open as a plain file, Messages.CANCEL -> Don't open.
+   */
+  @Messages.YesNoCancelResult
+  public int askConfirmationForOpeningProject(@NotNull VirtualFile file, @Nullable Project project) {
+    return Messages.showYesNoCancelDialog(project,
+                                          IdeBundle.message("message.open.file.is.project", file.getName()),
+                                          IdeBundle.message("title.open.project"),
+                                          IdeBundle.message("message.open.file.is.project.open.as.project"),
+                                          IdeBundle.message("message.open.file.is.project.open.as.file"),
+                                          IdeBundle.message("button.cancel"),
+                                          Messages.getQuestionIcon());
   }
 
   @Nullable
@@ -46,6 +69,23 @@ public abstract class ProjectOpenProcessor {
     return true;
   }
 
+  /**
+   * Returns true if this processor is able to import the project after it has been opened in IDEA.
+   *
+   * @see #importProjectAfterwards(Project, VirtualFile)
+   */
+  public boolean canImportProjectAfterwards() {
+    return false;
+  }
+
+  /**
+   * Import the project after it has already been opened in IDEA.
+   *
+   * @see #canImportProjectAfterwards()
+   */
+  public void importProjectAfterwards(@NotNull Project project, @NotNull VirtualFile file) {
+  }
+
   @Nullable
   public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file) {
     return getImportProvider(file, false);
@@ -58,6 +98,13 @@ public abstract class ProjectOpenProcessor {
   @Nullable
   public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
     return EXTENSION_POINT_NAME.findFirstSafe(provider -> {
+      return provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file));
+    });
+  }
+
+  @NotNull
+  public static List<ProjectOpenProcessor> getOpenProcessors(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
+    return ContainerUtil.filter(EXTENSION_POINT_NAME.getExtensionList(), provider -> {
       return provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file));
     });
   }

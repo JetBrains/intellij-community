@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -54,7 +54,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
     final String targetDir = destinationParent.getPath() + File.separator + directoryName;
 
     final AtomicReference<HgCommandResult> cloneResult = new AtomicReference<>();
-    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
+    new Task.Backgroundable(project, HgBundle.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);

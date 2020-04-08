@@ -12,14 +12,12 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -32,28 +30,23 @@ public class ClassInnerStuffCache {
     myClass = aClass;
   }
 
-  @NotNull
-  public PsiMethod[] getConstructors() {
+  public PsiMethod @NotNull [] getConstructors() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(PsiImplUtil.getConstructors(myClass))));
   }
 
-  @NotNull
-  public PsiField[] getFields() {
+  public PsiField @NotNull [] getFields() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcFields())));
   }
 
-  @NotNull
-  public PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcMethods())));
   }
 
-  @NotNull
-  public PsiClass[] getInnerClasses() {
+  public PsiClass @NotNull [] getInnerClasses() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcInnerClasses())));
   }
 
-  @NotNull
-  public PsiRecordComponent[] getRecordComponents() {
+  public PsiRecordComponent @NotNull [] getRecordComponents() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcRecordComponents())));
   }
 
@@ -67,8 +60,7 @@ public class ClassInnerStuffCache {
     }
   }
 
-  @NotNull
-  public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsByName(String name, boolean checkBases) {
     if (checkBases) {
       return PsiClassImplUtil.findMethodsByName(myClass, name, true);
     }
@@ -88,13 +80,17 @@ public class ClassInnerStuffCache {
   }
 
   @Nullable
-  public PsiMethod getValuesMethod() {
-    return myClass.isEnum() && myClass.getName() != null ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValuesMethod())) : null;
+  PsiMethod getValuesMethod() {
+    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValuesMethod())) : null;
   }
 
   @Nullable
-  public PsiMethod getValueOfMethod() {
-    return myClass.isEnum() && myClass.getName() != null ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValueOfMethod())) : null;
+  private PsiMethod getValueOfMethod() {
+    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getCachedValue(myClass, () -> makeResult(makeValueOfMethod())) : null;
+  }
+
+  private boolean isAnonymousClass() {
+    return myClass.getName() == null || myClass instanceof PsiAnonymousClass;
   }
 
   private static <T> T[] copy(T[] value) {
@@ -105,29 +101,29 @@ public class ClassInnerStuffCache {
     return CachedValueProvider.Result.create(value, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
   }
 
-  @NotNull
-  private PsiField[] calcFields() {
+  private PsiField @NotNull [] calcFields() {
     List<PsiField> own = myClass.getOwnFields();
     List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class);
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private PsiMethod[] calcMethods() {
+  private PsiMethod @NotNull [] calcMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
     List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class);
+    if (myClass.isEnum()) {
+      ContainerUtil.addIfNotNull(ext, getValuesMethod());
+      ContainerUtil.addIfNotNull(ext, getValueOfMethod());
+    }
     return ArrayUtil.mergeCollections(own, ext, PsiMethod.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private PsiClass[] calcInnerClasses() {
+  private PsiClass @NotNull [] calcInnerClasses() {
     List<PsiClass> own = myClass.getOwnInnerClasses();
     List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class);
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private PsiRecordComponent[] calcRecordComponents() {
+  private PsiRecordComponent @NotNull [] calcRecordComponents() {
     PsiRecordHeader header = myClass.getRecordHeader();
     return header == null ? PsiRecordComponent.EMPTY_ARRAY : header.getRecordComponents();
   }
@@ -188,25 +184,43 @@ public class ClassInnerStuffCache {
   }
 
   private PsiMethod makeValuesMethod() {
-    return getSyntheticMethod("public static " + myClass.getName() + "[] values() { }");
+    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + "[] values() { }");
   }
 
   private PsiMethod makeValueOfMethod() {
-    return getSyntheticMethod("public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
-  }
-
-  private PsiMethod getSyntheticMethod(String text) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myClass.getProject());
-    PsiMethod method = factory.createMethodFromText(text, myClass);
-    return new LightMethod(myClass.getManager(), method, myClass) {
-      @Override
-      public int getTextOffset() {
-        return myClass.getTextOffset();
-      }
-    };
+    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
   }
 
   public void dropCaches() {
     myTracker.incModificationCount();
+  }
+
+  private static class EnumSyntheticMethod extends LightMethod implements SyntheticElement {
+    private final PsiClass myClass;
+    private final String myText;
+
+    EnumSyntheticMethod(@NotNull PsiClass enumClass, @NotNull String text) {
+      super(enumClass.getManager(), JavaPsiFacade.getElementFactory(enumClass.getProject()).createMethodFromText(text, enumClass), enumClass);
+      myClass = enumClass;
+      myText = text;
+    }
+
+    @Override
+    public int getTextOffset() {
+      return myClass.getTextOffset();
+    }
+
+    @Override
+    public boolean equals(Object another) {
+      return this == another ||
+             another instanceof EnumSyntheticMethod &&
+             myClass.equals(((EnumSyntheticMethod)another).myClass) &&
+             myText.equals(((EnumSyntheticMethod)another).myText);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myText, myClass);
+    }
   }
 }

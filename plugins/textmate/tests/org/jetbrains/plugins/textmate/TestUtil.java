@@ -16,6 +16,7 @@ public class TestUtil {
   @NonNls public static final String JAVASCRIPT = "javascript";
   @NonNls public static final String CHEF = "chef";
   @NonNls public static final String HTML = "html";
+  @NonNls public static final String HTML_VSC = "html_vsc";
   @NonNls public static final String MARKDOWN_SUBLIME = "markdown_sublime";
   @NonNls public static final String MARKDOWN_TEXTMATE = "markdown_textmate";
   @NonNls public static final String LARAVEL_BLADE = "laravel-blade";

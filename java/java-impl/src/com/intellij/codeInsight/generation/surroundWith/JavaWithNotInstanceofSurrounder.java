@@ -16,8 +16,8 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -56,6 +56,6 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
 
   @Override
   public String getTemplateDescription() {
-    return CodeInsightBundle.message("surround.with.not.instanceof.template");
+    return JavaBundle.message("surround.with.not.instanceof.template");
   }
 }

@@ -271,8 +271,7 @@ public class MvcModuleStructureUtil {
     return Pair.create(actions, facetActions);
   }
 
-  @Nullable
-  private static OrderEntry[] moveupLibrariesFromMavenPlugin(ModuleRootModel moduleRootModel) {
+  private static OrderEntry @Nullable [] moveupLibrariesFromMavenPlugin(ModuleRootModel moduleRootModel) {
     LibraryOrderEntry newestLibrary = null;
     int firstLibraryIndex = 0;
     int newestLibraryIndex = 0;

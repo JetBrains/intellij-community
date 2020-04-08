@@ -5,15 +5,15 @@ import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UExpression
+import kotlin.streams.asSequence
 
 @ApiStatus.Experimental
 interface UastAnalysisPlugin {
   companion object {
-    val extensionPointName = ExtensionPointName<UastAnalysisPlugin>("org.jetbrains.uast.analysis.uastAnalysisPlugin")
-    private val extensions by lazy { extensionPointName.extensionList }
+    private val extensionPointName = ExtensionPointName<UastAnalysisPlugin>("org.jetbrains.uast.analysis.uastAnalysisPlugin")
 
     @JvmStatic
-    fun byLanguage(language: Language) = extensions.firstOrNull { it.language == language }
+    fun byLanguage(language: Language) = extensionPointName.extensions().asSequence().firstOrNull { it.language == language }
   }
 
   val language: Language

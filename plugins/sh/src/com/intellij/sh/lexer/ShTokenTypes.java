@@ -48,5 +48,5 @@ public interface ShTokenTypes extends ShTypes {
       IF, IN, SELECT, THEN, UNTIL, WHILE, TEST, LET, EVAL
   );
 
-  TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING, INT, COLON);
+  TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING);
 }

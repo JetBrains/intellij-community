@@ -15,14 +15,15 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
 import gnu.trove.TObjectHashingStrategy
+import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
+private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters") // NON-NLS
 
 object VcsLogFilterObject {
-  const val ME = "me"
+  const val ME = "*"
 
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
@@ -208,34 +209,46 @@ fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
   return VcsLogFilterCollectionImpl(filterSet)
 }
 
-fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollection {
+fun VcsLogFilterCollection.without(condition: (VcsLogFilter) -> Boolean): VcsLogFilterCollection {
   val filterSet = createFilterSet()
-  this.filters.forEach { if (it.key != filterKey) filterSet.add(it) }
+  this.filters.forEach { if (!(condition(it))) filterSet.add(it) }
   return VcsLogFilterCollectionImpl(filterSet)
+}
+
+fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollection {
+  return without { it.key == filterKey }
+}
+
+fun <T : VcsLogFilter> VcsLogFilterCollection.without(filterClass: Class<T>): VcsLogFilterCollection {
+  return without { filterClass.isInstance(it) }
 }
 
 fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
   return this.filters.mapTo(mutableSetOf()) { it.key } == filterKey.toSet()
 }
 
+@Nls
 fun VcsLogFilterCollection.getPresentation(): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
   return filters.joinToString(" ") { filter ->
-    val prefix = if (filters.size != 1) filter.getPrefix() else ""
-    prefix + filter.displayText
+    if (filters.size != 1) {
+      filter.withPrefix()
+    }
+    else filter.displayText
   }
 }
 
-private fun VcsLogFilter.getPrefix(): String {
+@Nls
+private fun VcsLogFilter.withPrefix(): String {
   when (this) {
-    is VcsLogTextFilter -> return "containing "
-    is VcsLogUserFilter -> return "by "
-    is VcsLogDateFilter -> return "made "
-    is VcsLogBranchFilter -> return "on "
-    is VcsLogRootFilter -> return "in "
-    is VcsLogStructureFilter -> return "for "
+    is VcsLogTextFilter -> return VcsLogBundle.message("vcs.log.filter.text.presentation.with.prefix", displayText)
+    is VcsLogUserFilter -> return VcsLogBundle.message("vcs.log.filter.user.presentation.with.prefix", displayText)
+    is VcsLogDateFilter -> return displayTextWithPrefix
+    is VcsLogBranchFilter -> return VcsLogBundle.message("vcs.log.filter.branch.presentation.with.prefix", displayText)
+    is VcsLogRootFilter -> return VcsLogBundle.message("vcs.log.filter.root.presentation.with.prefix", displayText)
+    is VcsLogStructureFilter -> return VcsLogBundle.message("vcs.log.filter.structure.presentation.with.prefix", displayText)
   }
   return ""
 }

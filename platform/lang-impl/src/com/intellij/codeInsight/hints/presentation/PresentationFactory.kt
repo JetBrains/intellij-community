@@ -4,6 +4,8 @@ package com.intellij.codeInsight.hints.presentation
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.codeInsight.hints.InlayPresentationFactory
+import com.intellij.codeInsight.hints.InlayPresentationFactory.*
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -22,20 +24,23 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.font.FontRenderContext
 import java.util.*
 import javax.swing.Icon
+import kotlin.math.ceil
 import kotlin.math.max
 
-class PresentationFactory(private val editor: EditorImpl) {
-  /**
-   * Smaller text, than editor, required to be wrapped with [roundWithBackground]
-   */
+/**
+ * Contains non-stable and not well-designed API. Will be changed in 2020.2
+ */
+@ApiStatus.Experimental
+class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFactory {
   @Contract(pure = true)
-  fun smallText(text: String): InlayPresentation {
+  override fun smallText(text: String): InlayPresentation {
     val fontData = getFontData(editor)
     val plainFont = fontData.font
     val width = editor.contentComponent.getFontMetrics(plainFont).stringWidth(text)
@@ -49,11 +54,43 @@ class PresentationFactory(private val editor: EditorImpl) {
     return withInlayAttributes(textWithoutBox)
   }
 
-  /**
-   * Text, that is not expected to be drawn with rounding, the same font size as in editor.
-   */
+  override fun container(
+    presentation: InlayPresentation,
+    padding: Padding?,
+    roundedCorners: RoundedCorners?,
+    background: Color?,
+    backgroundAlpha: Float
+  ): InlayPresentation {
+    return ContainerInlayPresentation(presentation, padding, roundedCorners, background, backgroundAlpha)
+  }
+
+
+  override fun mouseHandling(base: InlayPresentation, clickListener: ClickListener?, hoverListener: HoverListener?): InlayPresentation {
+    return MouseHandlingPresentation(base, clickListener, hoverListener)
+  }
+
   @Contract(pure = true)
-  fun text(text: String): InlayPresentation {
+  @Deprecated(message = "Bad API for Java, use mouseHandling with ClickListener")
+  fun mouseHandling(
+    base: InlayPresentation,
+    clickListener: ((MouseEvent, Point) -> Unit)?,
+    hoverListener: HoverListener?
+  ): InlayPresentation {
+    val adapter = if (clickListener != null) {
+      object : ClickListener {
+        override fun onClick(event: MouseEvent, translated: Point) {
+          clickListener.invoke(event, translated)
+        }
+      }
+    }
+    else {
+      null
+    }
+    return mouseHandling(base, adapter, hoverListener)
+  }
+
+  @Contract(pure = true)
+  override fun text(text: String): InlayPresentation {
     val font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
     val width = editor.contentComponent.getFontMetrics(font).stringWidth(text)
     val ascent = editor.ascent
@@ -93,27 +130,7 @@ class PresentationFactory(private val editor: EditorImpl) {
   }
 
   @Contract(pure = true)
-  fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
-
-  @Contract(pure = true)
-  fun withTooltip(tooltip: String, base: InlayPresentation): InlayPresentation = when {
-    tooltip.isEmpty() -> base
-    else -> {
-      var hint: LightweightHint? = null
-      onHover(base, object : HoverListener {
-        override fun onHover(event: MouseEvent) {
-          if (hint?.isVisible != true) {
-            hint = showTooltip(editor, event, tooltip)
-          }
-        }
-
-        override fun onHoverFinished() {
-          hint?.hide()
-          hint = null
-        }
-      })
-    }
-  }
+  override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
 
   @Contract(pure = true)
   fun folding(placeholder: InlayPresentation, unwrapAction: () -> InlayPresentation): InlayPresentation {
@@ -150,7 +167,7 @@ class PresentationFactory(private val editor: EditorImpl) {
               onClick = { _, _ ->
                 presentationToChange?.flipState()
               })
-    }, second = { expanded() }, initialState = startWithPlaceholder)
+    }, second = { expanded() }, initiallyFirstEnabled = startWithPlaceholder)
     presentationToChange = content
     val listener = object : InputHandler {
       override fun mouseClicked(event: MouseEvent, translated: Point) {
@@ -160,10 +177,6 @@ class PresentationFactory(private val editor: EditorImpl) {
     prefixExposed.addInputListener(listener)
     suffixExposed.addInputListener(listener)
     return seq(prefixExposed, content, suffixExposed)
-  }
-
-  private fun flipState() {
-    TODO("not implemented")
   }
 
   @Contract(pure = true)
@@ -189,7 +202,7 @@ class PresentationFactory(private val editor: EditorImpl) {
     val forwardings = presentations.map { DynamicDelegatePresentation(it) }
     return forwardings.map {
       onHover(it, object : HoverListener {
-        override fun onHover(event: MouseEvent) {
+        override fun onHover(event: MouseEvent, translated: Point) {
           for ((index, forwarding) in forwardings.withIndex()) {
             forwarding.delegate = decorator(presentations[index])
           }
@@ -202,12 +215,6 @@ class PresentationFactory(private val editor: EditorImpl) {
         }
       })
     }
-  }
-
-
-  interface HoverListener {
-    fun onHover(event: MouseEvent)
-    fun onHoverFinished()
   }
 
   /**
@@ -253,19 +260,63 @@ class PresentationFactory(private val editor: EditorImpl) {
 
   @Contract(pure = true)
   fun reference(base: InlayPresentation, onClickAction: () -> Unit): InlayPresentation {
-    val noHighlightReference = onClick(base, MouseButton.Middle) { _, _ ->
-      onClickAction()
+    return reference(
+      base = base,
+      onClickAction = Runnable { onClickAction() },
+      clickButtonsWithoutHover = EnumSet.of(MouseButton.Middle),
+      clickButtonsWithHover = EnumSet.of(MouseButton.Left, MouseButton.Middle),
+      hoverPredicate = { isControlDown(it) }
+    )
+  }
+
+  @Contract(pure = true)
+  fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
+    val delegate = DynamicDelegatePresentation(base)
+    val hovered = onClick(
+      base = withReferenceAttributes(base),
+      buttons = EnumSet.of(MouseButton.Left, MouseButton.Middle),
+      onClick = { e, p ->
+        clickListener.onClick(e, p)
+      }
+    )
+    return OnHoverPresentation(delegate, object : HoverListener {
+      override fun onHover(event: MouseEvent, translated: Point) {
+        val handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        editor.setCustomCursor(this@PresentationFactory, handCursor)
+        delegate.delegate = hovered
+      }
+
+      override fun onHoverFinished() {
+        delegate.delegate = base
+        editor.setCustomCursor(this@PresentationFactory, null)
+      }
+    })
+  }
+
+  @Contract(pure = true)
+  private fun reference(
+    base: InlayPresentation,
+    onClickAction: Runnable,
+    clickButtonsWithoutHover: EnumSet<MouseButton>,
+    clickButtonsWithHover: EnumSet<MouseButton>,
+    hoverPredicate: (MouseEvent) -> Boolean
+  ): InlayPresentation {
+    val noHighlightReference = onClick(base, clickButtonsWithoutHover) { _, _ ->
+      onClickAction.run()
     }
     return changeOnHover(noHighlightReference, {
-      val withRefAttributes = attributes(noHighlightReference) {
-        val attributes = attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR)
-        attributes.effectType = null // With underlined looks weird
-        it.with(attributes)
+      return@changeOnHover onClick(withReferenceAttributes(noHighlightReference), clickButtonsWithHover) { _, _ ->
+        onClickAction.run()
       }
-      onClick(withRefAttributes, EnumSet.of(MouseButton.Left, MouseButton.Middle)) { _, _ ->
-        onClickAction()
-      }
-    }, { isControlDown(it) })
+    }, hoverPredicate)
+  }
+
+  private fun withReferenceAttributes(noHighlightReference: InlayPresentation): AttributesTransformerPresentation {
+    return attributes(noHighlightReference) {
+      val attributes = attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR)
+      attributes.effectType = null // With underlined looks weird
+      it.with(attributes)
+    }
   }
 
   @Contract(pure = true)
@@ -293,10 +344,6 @@ class PresentationFactory(private val editor: EditorImpl) {
     }
     return SequencePresentation(seq)
   }
-
-  @Contract(pure = true)
-  fun rounding(arcWidth: Int, arcHeight: Int, base: InlayPresentation): InlayPresentation =
-    RoundPresentation(base, arcWidth, arcHeight)
 
   private fun attributes(base: InlayPresentation, transformer: (TextAttributes) -> TextAttributes): AttributesTransformerPresentation =
     AttributesTransformerPresentation(base, transformer)
@@ -364,8 +411,8 @@ class PresentationFactory(private val editor: EditorImpl) {
       val context = getCurrentContext(editor)
       metrics = FontInfo.getFontMetrics(font, context)
       // We assume this will be a better approximation to a real line height for a given font
-      lineHeight = Math.ceil(font.createGlyphVector(context, "Albpq@").visualBounds.height).toInt()
-      baseline = Math.ceil(font.createGlyphVector(context, "Alb").visualBounds.height).toInt()
+      lineHeight = ceil(font.createGlyphVector(context, "Albpq@").visualBounds.height).toInt()
+      baseline = ceil(font.createGlyphVector(context, "Alb").visualBounds.height).toInt()
     }
 
     fun isActual(editor: Editor, familyName: String, size: Int): Boolean {

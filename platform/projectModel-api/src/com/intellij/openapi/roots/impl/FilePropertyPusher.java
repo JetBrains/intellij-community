@@ -29,7 +29,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 /**
- * @author Gregory.Shrago
+ * Represents a non-linear operation which is executed before indexing process is started {@link PushedFilePropertiesUpdater#pushAllPropertiesNow()}.
+ * During this process any pusher is allowed to set some properties to any of files being indexed.
+ * Most frequently property represents some kind of "language level"
+ * which is in most cases required to determine the algorithm of stub and other indexes building.
+ * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFileDataKey()}.
  */
 public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");

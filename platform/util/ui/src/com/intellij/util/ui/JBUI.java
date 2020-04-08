@@ -9,9 +9,13 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.scale.*;
+import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.Scale;
+import com.intellij.ui.scale.UserScaleContext;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +155,7 @@ public class JBUI {
   }
 
   @NotNull
-  public static JBInsets insets(String propName, JBInsets defaultValue) {
+  public static JBInsets insets(@NonNls @NotNull String propName, @NotNull JBInsets defaultValue) {
     Insets i = UIManager.getInsets(propName);
     return i != null ? JBInsets.create(i) : defaultValue;
   }
@@ -186,16 +190,21 @@ public class JBUI {
     return new JBInsets(0, 0, 0, r);
   }
 
+  /**
+   * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static <T extends JBScalableIcon> T scale(@NotNull T icon) {
-    //noinspection unchecked
-    return (T)icon.withIconPreScaled(false);
+    return JBUIScale.scaleIcon(icon);
   }
 
   /**
-   * @deprecated Use {@link #scale(JBScalableIcon)}.
+   * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     //noinspection unchecked
@@ -383,6 +392,11 @@ public class JBUI {
       @NotNull
       public static Color pressedBorder() {
         return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
+      public static Color focusedBorder() {
+        return JBColor.namedColor("ActionButton.focusedBorderColor", new JBColor(0x62b8de, 0x5eacd0));
       }
 
       @NotNull
@@ -940,6 +954,11 @@ public class JBUI {
       public static Color linkVisitedColor() {
         return JBColor.namedColor("Link.visitedForeground", JBColor.namedColor("link.visited.foreground", new JBColor(0x800080, 0x9776a9)));
       }
+
+      @NotNull
+      public static Color linkSecondaryColor() {
+        return JBColor.namedColor("Link.secondaryForeground", new JBColor(0x779dbd, 0x5676a0));
+      }
     }
 
     public static class Arrow {
@@ -985,19 +1004,19 @@ public class JBUI {
     }
   }
 
-  public static int getInt(@NotNull String propertyName, int defaultValue) {
+  public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {
     Object value = UIManager.get(propertyName);
     return value instanceof Integer ? (Integer)value : defaultValue;
   }
 
   @NotNull
-  private static Icon getIcon(@NotNull String propertyName, @NotNull Icon defaultIcon) {
+  private static Icon getIcon(@NonNls @NotNull String propertyName, @NotNull Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
   }
 
   @NotNull
-  private static Border getBorder(@NotNull String propertyName, @NotNull Border defaultBorder) {
+  private static Border getBorder(@NonNls @NotNull String propertyName, @NotNull Border defaultBorder) {
     Border border = UIManager.getBorder(propertyName);
     return border == null ? defaultBorder : border;
   }

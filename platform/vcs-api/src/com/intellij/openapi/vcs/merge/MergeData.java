@@ -33,9 +33,9 @@ import org.jetbrains.annotations.Nullable;
  * @author lesya
  */
 public class MergeData {
-  @NotNull public byte[] ORIGINAL;
-  @NotNull public byte[] LAST;
-  @NotNull public byte[] CURRENT;
+  public byte @NotNull [] ORIGINAL;
+  public byte @NotNull [] LAST;
+  public byte @NotNull [] CURRENT;
 
   @Nullable public VcsRevisionNumber ORIGINAL_REVISION_NUMBER;
   @Nullable public VcsRevisionNumber LAST_REVISION_NUMBER;

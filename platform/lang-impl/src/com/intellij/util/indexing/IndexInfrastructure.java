@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -19,6 +18,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -79,17 +79,21 @@ public class IndexInfrastructure {
   }
 
   @NotNull
-  private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion, String relativePath) {
-    final String dirName = StringUtil.toLowerCase(indexName.getName());
-    File indexDir;
+  private static File getIndexDirectory(@NotNull ID<?, ?> indexId, boolean forVersion, String relativePath) {
+    return getIndexDirectory(indexId.getName(), relativePath, indexId instanceof StubIndexKey, forVersion);
+  }
 
-    if (indexName instanceof StubIndexKey) {
+  @NotNull
+  private static File getIndexDirectory(String indexName, String relativePath, boolean stubKey, boolean forVersion) {
+    indexName = StringUtil.toLowerCase(indexName);
+    File indexDir;
+    if (stubKey) {
       // store StubIndices under StubUpdating index' root to ensure they are deleted
       // when StubUpdatingIndex version is changed
-      indexDir = new File(getIndexDirectory(StubUpdatingIndex.INDEX_ID, false, relativePath), forVersion ? STUB_VERSIONS : dirName);
+      indexDir = new File(getIndexDirectory(StubUpdatingIndex.INDEX_ID, false, relativePath), forVersion ? STUB_VERSIONS : indexName);
     } else {
       if (relativePath.length() > 0) relativePath = File.separator + relativePath;
-      indexDir = new File(PathManager.getIndexRoot() + relativePath, dirName);
+      indexDir = new File(PathManager.getIndexRoot() + relativePath, indexName);
     }
     indexDir.mkdirs();
     return indexDir;
@@ -146,7 +150,7 @@ public class IndexInfrastructure {
       if (ourDoParallelIndicesInitialization) {
         ExecutorService taskExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
           "IndexInfrastructure.DataInitialization.RunParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
-          CacheUpdateRunner.indexingThreadCount());
+          UnindexedFilesUpdater.getNumberOfIndexingThreads());
 
         for (ThrowableRunnable<?> callable : myNestedInitializationTasks) {
           taskExecutor.execute(() -> executeNestedInitializationTask(callable, proceedLatch));
@@ -180,7 +184,21 @@ public class IndexInfrastructure {
     }
   }
 
+  @ApiStatus.Internal
+  public static File getFileBasedIndexRootDir(@NotNull String indexName) {
+    return getIndexDirectory(indexName, "", false, false);
+  }
+
+  @ApiStatus.Internal
+  public static File getStubIndexRootDir(@NotNull String indexName) {
+    return getIndexDirectory(indexName, "", true, false);
+  }
+
   public static boolean hasIndices() {
     return !SystemProperties.is("idea.skip.indices.initialization");
+  }
+
+  public static boolean isIndexesInitializationSuspended() {
+    return SystemProperties.is("idea.suspend.indexes.initialization");
   }
 }

@@ -16,9 +16,8 @@ public class OptionalGetWithoutIsPresentInspectionFixTest extends LightQuickFixP
     return JAVA_8;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new OptionalGetWithoutIsPresentInspection()
     };

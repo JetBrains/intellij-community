@@ -147,9 +147,8 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
       return RootDescriptor.ROOT;
     }
 
-    @NotNull
     @Override
-    public Object[] getChildElements(@NotNull Object element) {
+    public Object @NotNull [] getChildElements(@NotNull Object element) {
       if (element == RootDescriptor.ROOT) {
         return ArrayUtilRt.toStringArray(myCertificates.keySet());
       }

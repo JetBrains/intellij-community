@@ -1,4 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("HardCodedStringLiteral")
 package com.intellij.ui.layout
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -64,7 +65,7 @@ fun visualPaddingsPanelOnlyComboBox(): JPanel {
 @Suppress("unused")
 fun visualPaddingsPanelOnlyButton(): JPanel {
   return panel {
-    row("Button:") { button("label", growX) {} }
+    row("Button:") { button("label") {}.constraints(growX) }
   }
 }
 
@@ -95,7 +96,7 @@ fun visualPaddingsPanel(): JPanel {
       field.isEditable = true
       field(growX)
     }
-    row("Button:") { button("label", growX) {} }
+    row("Button:") { button("label") {}.constraints(growX) }
     row("CheckBox:") { CheckBox("enabled")() }
     row("RadioButton:") { JRadioButton("label")() }
     row("Spinner:") { JBIntSpinner(0, 0, 7)() }
@@ -125,6 +126,20 @@ fun fieldWithGear(): JPanel {
     }
     row("Master Password:") {
       JBPasswordField()()
+    }
+  }
+}
+
+fun fieldWithGearWithIndent(): JPanel {
+  return panel {
+    row {
+      row("Database:") {
+        JTextField()()
+        gearButton()
+      }
+      row("Master Password:") {
+        JBPasswordField()()
+      }
     }
   }
 }
@@ -224,12 +239,12 @@ fun withVerticalButtons(): JPanel {
       label("<html>Merging branch <b>foo</b> into <b>bar</b>")
     }
     row {
-      scrollPane(JTextArea(), pushX)
+      scrollPane(JTextArea()).constraints(pushX)
 
       cell(isVerticalFlow = true) {
-        button("Accept Yours", growX) {}
-        button("Accept Theirs", growX) {}
-        button("Merge ...", growX) {}
+        button("Accept Yours") {}.constraints(growX)
+        button("Accept Theirs") {}.constraints(growX)
+        button("Merge ...") {}.constraints(growX)
       }
     }
   }
@@ -239,12 +254,12 @@ fun titledRows(): JPanel {
   return panel {
     titledRow("Async Profiler") {
       row { browserLink("Async profiler README.md", "https://github.com/jvm-profiling-tools/async-profiler") }
-      row("Agent path:") { textFieldWithBrowseButton("", comment = "If field is empty bundled agent will be used") }
-      row("Agent options:") { textFieldWithBrowseButton("", comment = "Don't add output format (collapsed is used) or output file options") }
+      row("Agent path:") { textFieldWithBrowseButton("").comment("If field is empty bundled agent will be used") }
+      row("Agent options:") { textFieldWithBrowseButton("").comment("Don't add output format (collapsed is used) or output file options") }
     }
     titledRow("Java Flight Recorder") {
       row("JRE home:") {
-        textFieldWithBrowseButton("", comment = "At least OracleJRE 9 or OpenJRE 11 is required to import dump")
+        textFieldWithBrowseButton("").comment("At least OracleJRE 9 or OpenJRE 11 is required to import dump")
       }
     }
   }
@@ -285,6 +300,53 @@ fun spannedCheckbox(): JPanel {
 
       row {
         RadioButton("Do not save, forget passwords after restart")()
+      }
+    }
+  }
+}
+
+fun checkboxRowsWithBigComponents(): JPanel {
+  return panel {
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      ComboBox(DefaultComboBoxModel(arrayOf("asd", "asd")))()
+    }
+    row {
+      CheckBox("Sample checkbox label")()
+      JBTextField()()
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+      }
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+        JBTextField()()
+      }
+    }
+    row {
+      cell(isFullWidth = true) {
+        CheckBox("Sample checkbox label")()
+        comment("commentary")
       }
     }
   }

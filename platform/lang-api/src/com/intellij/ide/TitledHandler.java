@@ -16,9 +16,13 @@
 
 package com.intellij.ide;
 
+import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.Nls;
+
 /**
  * @author yole
  */
 public interface TitledHandler {
+  @NlsActions.ActionText
   String getActionTitle();
 }

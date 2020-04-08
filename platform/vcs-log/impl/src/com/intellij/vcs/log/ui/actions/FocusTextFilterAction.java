@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -27,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class FocusTextFilterAction extends DumbAwareAction {
   public FocusTextFilterAction() {
-    super("Focus Text Filter", "Focus text filter or move focus back to the commits list", null);
+    super(VcsLogBundle.messagePointer("action.FocusTextFilterAction.text"),
+          VcsLogBundle.messagePointer("action.FocusTextFilterAction.description"), null);
   }
 
   @Override

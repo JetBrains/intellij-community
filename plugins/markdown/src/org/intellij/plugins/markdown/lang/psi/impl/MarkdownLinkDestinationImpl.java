@@ -29,9 +29,8 @@ public class MarkdownLinkDestinationImpl extends ASTWrapperPsiElement implements
     super.accept(visitor);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 

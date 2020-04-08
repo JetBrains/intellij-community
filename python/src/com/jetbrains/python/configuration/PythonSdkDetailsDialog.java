@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
@@ -21,13 +21,17 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.ToggleActionButton;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
@@ -37,20 +41,30 @@ import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.PythonSdkUpdater;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import java.awt.Dimension;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionListener;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.io.File;
-import java.util.List;
-import java.util.*;
-import java.util.function.Consumer;
 
 public class PythonSdkDetailsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PythonSdkDetailsDialog.class);
@@ -164,7 +178,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
                                    @NotNull AnActionButtonRunnable addAction,
                                    @NotNull AnActionButtonRunnable editAction,
                                    @NotNull AnActionButtonRunnable removeAction,
-                                   @NotNull AnActionButton... extraActions) {
+                                   AnActionButton @NotNull ... extraActions) {
     return ToolbarDecorator.createDecorator(sdkList)
       .disableUpDownActions()
       .setAddAction(addAction)
@@ -313,7 +327,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     });
     if (dialog.showAndGet()) {
       mySdkList.repaint();
-      final boolean pathChanged = !Comparing.equal(currentSdk.getHomePath(), dialog.getHomePath());
+      final boolean pathChanged = !Objects.equals(currentSdk.getHomePath(), dialog.getHomePath());
       if (!modificator.getName().equals(dialog.getName()) || pathChanged || dialog.isAssociateChanged()) {
         myModifiedModificators.add(modificator);
         modificator.setName(dialog.getName());
@@ -403,7 +417,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
     ToggleVirtualEnvFilterButton() {
-      super(PyBundle.message("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
+      super(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
     }
 
     @Override
@@ -421,7 +435,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
     ShowPathButton() {
-      super(PyBundle.message("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
+      super(PyBundle.messagePointer("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
     }
 
     @Override

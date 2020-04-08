@@ -23,8 +23,7 @@ import java.util.*;
 public class MockCodeStyleManager extends CodeStyleManager {
   private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();
 
-  @NotNull
-  public ChangedLines[] getFormattedLinesFor(@NotNull PsiFile file) {
+  public ChangedLines @NotNull [] getFormattedLinesFor(@NotNull PsiFile file) {
     ChangedLines[] changedLines = myFormattedLinesForFile.get(file);
     return changedLines != null ? changedLines : new ChangedLines[0];
   }
@@ -86,13 +85,6 @@ public class MockCodeStyleManager extends CodeStyleManager {
     return reformat(element);
   }
 
-  @NotNull
-  @Override
-  public PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly, boolean keepLineBreaks)
-    throws IncorrectOperationException {
-    return reformat(element);
-  }
-
   @Override
   public PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException {
     reformatText(element.getContainingFile(), startOffset, endOffset);
@@ -102,16 +94,6 @@ public class MockCodeStyleManager extends CodeStyleManager {
   @Override
   public PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset, boolean canChangeWhiteSpacesOnly)
     throws IncorrectOperationException {
-    reformatText(element.getContainingFile(), startOffset, endOffset);
-    return element;
-  }
-
-  @Override
-  public PsiElement reformatRange(@NotNull PsiElement element,
-                                  int startOffset,
-                                  int endOffset,
-                                  boolean canChangeWhiteSpacesOnly,
-                                  boolean keepLineBreaks) throws IncorrectOperationException {
     reformatText(element.getContainingFile(), startOffset, endOffset);
     return element;
   }

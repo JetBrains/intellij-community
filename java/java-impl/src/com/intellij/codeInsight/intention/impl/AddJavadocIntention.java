@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.FixDocCommentAction;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -49,7 +50,7 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
   @Override
   public String getFamilyName() {
     //noinspection DialogTitleCapitalization
-    return "Add Javadoc";
+    return JavaBundle.message("intention.family.add.javadoc");
   }
 
   @NotNull

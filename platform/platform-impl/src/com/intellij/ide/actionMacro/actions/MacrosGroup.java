@@ -14,8 +14,7 @@ import java.util.ArrayList;
 
 public class MacrosGroup extends ActionGroup {
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     ArrayList<AnAction> actions = new ArrayList<>();
     final ActionManagerEx actionManager = ((ActionManagerEx) ActionManager.getInstance());
     String[] ids = actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);

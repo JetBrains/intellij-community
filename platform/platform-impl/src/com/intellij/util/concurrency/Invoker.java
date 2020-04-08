@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
@@ -29,9 +29,6 @@ import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
   private static final Logger LOG = Logger.getInstance(Invoker.class);
@@ -43,11 +40,7 @@ public abstract class Invoker implements Disposable {
   private volatile boolean disposed;
 
   private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
-    StringBuilder sb = new StringBuilder().append(UID.getAndIncrement()).append(".Invoker.").append(prefix);
-    if (useReadAction != ThreeState.UNSURE) {
-      sb.append(".ReadAction=").append(useReadAction);
-    }
-    description = sb.append(": ").append(parent).toString();
+    description = "Invoker." + UID.getAndIncrement()+"."+prefix + (useReadAction != ThreeState.UNSURE ? ".ReadAction="+useReadAction : "") + ": "+parent;
     this.useReadAction = useReadAction;
     register(parent, this);
   }
@@ -356,6 +349,14 @@ public abstract class Invoker implements Disposable {
    * which is the only one valid thread for this invoker.
    */
   public static final class EDT extends Invoker {
+    /**
+     * Creates the invoker of user tasks on the event dispatch thread.
+     *
+     * @param parent a disposable parent object
+     * @deprecated use {@link #forEventDispatchThread} instead
+     */
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
     public EDT(@NotNull Disposable parent) {
       super("EDT", parent, ThreeState.UNSURE);
     }
@@ -427,7 +428,10 @@ public abstract class Invoker implements Disposable {
      * Creates the invoker of user read actions on a background thread.
      *
      * @param parent a disposable parent object
+     * @deprecated use {@link #forBackgroundThreadWithReadAction} instead
      */
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
     public Background(@NotNull Disposable parent) {
       this(parent, true);
     }
@@ -439,7 +443,10 @@ public abstract class Invoker implements Disposable {
      * @param maxThreads the number of threads used for parallel calculation,
      *                   where 1 guarantees sequential calculation,
      *                   which allows not to use additional synchronization
+     * @deprecated use {@link #forBackgroundPoolWithReadAction} instead
      */
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
     public Background(@NotNull Disposable parent, int maxThreads) {
       this(parent, ThreeState.YES, maxThreads);
     }
@@ -450,7 +457,10 @@ public abstract class Invoker implements Disposable {
      * @param parent        a disposable parent object
      * @param useReadAction {@code true} to run user tasks as read actions with write action priority,
      *                      {@code false} to run user tasks without read locks
+     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
      */
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
     public Background(@NotNull Disposable parent, boolean useReadAction) {
       this(parent, ThreeState.fromBoolean(useReadAction));
     }
@@ -462,7 +472,10 @@ public abstract class Invoker implements Disposable {
      * @param useReadAction {@code YES} to run user tasks as read actions with write action priority,
      *                      {@code NO} to run user tasks without read locks,
      *                      {@code UNSURE} does not guarantee that read action is allowed
+     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
      */
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
     public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction) {
       this(parent, useReadAction, 1);
     }
@@ -477,7 +490,10 @@ public abstract class Invoker implements Disposable {
      * @param maxThreads    the number of threads used for parallel calculation,
      *                      where 1 guarantees sequential calculation,
      *                      which allows not to use additional synchronization
+     * @deprecated use {@link #forBackgroundThreadWithReadAction} or {@link #forBackgroundThreadWithoutReadAction} instead
      */
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
     public Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
       super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent, useReadAction);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
@@ -522,5 +538,26 @@ public abstract class Invoker implements Disposable {
     else {
       executor.execute(runnable);
     }
+  }
+
+
+  @NotNull
+  public static Invoker forEventDispatchThread(@NotNull Disposable parent) {
+    return new EDT(parent);
+  }
+
+  @NotNull
+  public static Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
+    return new Background(parent, ThreeState.YES, 8);
+  }
+
+  @NotNull
+  public static Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
+    return new Background(parent, ThreeState.YES, 1);
+  }
+
+  @NotNull
+  public static Invoker forBackgroundThreadWithoutReadAction(@NotNull Disposable parent) {
+    return new Background(parent, ThreeState.NO, 1);
   }
 }

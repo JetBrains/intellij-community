@@ -1,16 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.NavigableSet;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static java.util.Collections.emptyList;
@@ -28,16 +31,16 @@ public class CanonicalPathMapTest {
   @Test
   public void flatRootReportedExactlyViaParent() {
     String root = DIR_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
-    Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), true);
+    CanonicalPathMap map = createCanonicalPathMap(emptyList(), singletonList(root));
+    Collection<String> paths = map.mapToOriginalWatchRoots(PathUtil.getParentPath(root), true);
     assertThat(paths).isEmpty();
   }
 
   @Test
   public void flatRootReportedExactlyViaItself() {
     String root = FILE_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
-    Collection<String> paths = map.getWatchedPaths(root, true);
+    CanonicalPathMap map = createCanonicalPathMap(emptyList(), singletonList(root));
+    Collection<String> paths = map.mapToOriginalWatchRoots(root, true);
     assertThat(paths).containsExactly(root);
   }
 
@@ -45,24 +48,24 @@ public class CanonicalPathMapTest {
   public void flatRootReportedExactlyViaChild() {
     String root = DIR_ROOT;
     String child = root + CHILD_FILE;
-    CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
-    Collection<String> paths = map.getWatchedPaths(child, true);
+    CanonicalPathMap map = createCanonicalPathMap(emptyList(), singletonList(root));
+    Collection<String> paths = map.mapToOriginalWatchRoots(child, true);
     assertThat(paths).containsExactly(child);
   }
 
   @Test
   public void flatRootReportedInexactlyViaParent() {
     String root = FILE_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
-    Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), false);
+    CanonicalPathMap map = createCanonicalPathMap(emptyList(), singletonList(root));
+    Collection<String> paths = map.mapToOriginalWatchRoots(PathUtil.getParentPath(root), false);
     assertThat(paths).containsExactly(root);
   }
 
   @Test
   public void flatRootReportedInexactlyViaItself() {
     String root = DIR_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
-    Collection<String> paths = map.getWatchedPaths(root, false);
+    CanonicalPathMap map = createCanonicalPathMap(emptyList(), singletonList(root));
+    Collection<String> paths = map.mapToOriginalWatchRoots(root, false);
     assertThat(paths).containsExactly(root);
   }
 
@@ -70,24 +73,24 @@ public class CanonicalPathMapTest {
   public void flatRootReportedInexactlyViaChild() {
     String root = DIR_ROOT;
     String child = root + CHILD_DIR;
-    CanonicalPathMap map = new CanonicalPathMap(emptyList(), singletonList(root));
-    Collection<String> paths = map.getWatchedPaths(child, false);
+    CanonicalPathMap map = createCanonicalPathMap(emptyList(), singletonList(root));
+    Collection<String> paths = map.mapToOriginalWatchRoots(child, false);
     assertThat(paths).isEmpty();
   }
 
   @Test
   public void recursiveRootReportedExactlyViaParent() {
     String root = DIR_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
-    Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), true);
+    CanonicalPathMap map = createCanonicalPathMap(singletonList(root), emptyList());
+    Collection<String> paths = map.mapToOriginalWatchRoots(PathUtil.getParentPath(root), true);
     assertThat(paths).isEmpty();
   }
 
   @Test
   public void recursiveRootReportedExactlyViaItself() {
     String root = DIR_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
-    Collection<String> paths = map.getWatchedPaths(root, true);
+    CanonicalPathMap map = createCanonicalPathMap(singletonList(root), emptyList());
+    Collection<String> paths = map.mapToOriginalWatchRoots(root, true);
     assertThat(paths).containsExactly(root);
   }
 
@@ -95,24 +98,24 @@ public class CanonicalPathMapTest {
   public void recursiveRootReportedExactlyViaChild() {
     String root = DIR_ROOT;
     String child = root + CHILD_FILE;
-    CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
-    Collection<String> paths = map.getWatchedPaths(child, true);
+    CanonicalPathMap map = createCanonicalPathMap(singletonList(root), emptyList());
+    Collection<String> paths = map.mapToOriginalWatchRoots(child, true);
     assertThat(paths).containsExactly(child);
   }
 
   @Test
   public void recursiveRootReportedInexactlyViaParent() {
     String root = DIR_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
-    Collection<String> paths = map.getWatchedPaths(PathUtil.getParentPath(root), false);
+    CanonicalPathMap map = createCanonicalPathMap(singletonList(root), emptyList());
+    Collection<String> paths = map.mapToOriginalWatchRoots(PathUtil.getParentPath(root), false);
     assertThat(paths).containsExactly(root);
   }
 
   @Test
   public void recursiveRootReportedInexactlyViaItself() {
     String root = DIR_ROOT;
-    CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
-    Collection<String> paths = map.getWatchedPaths(root, false);
+    CanonicalPathMap map = createCanonicalPathMap(singletonList(root), emptyList());
+    Collection<String> paths = map.mapToOriginalWatchRoots(root, false);
     assertThat(paths).containsExactly(root);
   }
 
@@ -120,8 +123,8 @@ public class CanonicalPathMapTest {
   public void recursiveRootReportedInexactlyViaChild() {
     String root = DIR_ROOT;
     String child = root + CHILD_DIR;
-    CanonicalPathMap map = new CanonicalPathMap(singletonList(root), emptyList());
-    Collection<String> paths = map.getWatchedPaths(child, false);
+    CanonicalPathMap map = createCanonicalPathMap(singletonList(root), emptyList());
+    Collection<String> paths = map.mapToOriginalWatchRoots(child, false);
     assertThat(paths).containsExactly(child);
   }
 
@@ -135,13 +138,21 @@ public class CanonicalPathMapTest {
     File mappedDir = new File(myTempDir.getRoot(), "mapped");
 
     // Initial symlink map: .../root/link -> .../root/real
-    CanonicalPathMap pathMap = new CanonicalPathMap(singletonList(symLink.getPath()), emptyList());
+    CanonicalPathMap pathMap = createCanonicalPathMap(singletonList(symLink.getPath()), emptyList());
 
     // REMAP from native file watcher: .../root/mapped -> .../root/real
     pathMap.addMapping(singletonList(pair(mappedDir.getPath(), realDir.getPath())));
 
     // expected: .../root/mapped/file.txt -> .../root/link/file.txt
-    Collection<String> watchedPaths = pathMap.getWatchedPaths(new File(mappedDir, "file.txt").getPath(), true);
+    Collection<String> watchedPaths = pathMap.mapToOriginalWatchRoots(new File(mappedDir, "file.txt").getPath(), true);
     assertThat(watchedPaths).containsExactly(new File(symLink, "file.txt").getPath());
+  }
+
+  private static CanonicalPathMap createCanonicalPathMap(Collection<String> recursive, Collection<String> flat) {
+    NavigableSet<String> recursiveSet = StreamEx.of(recursive).into(WatchRootsUtil.createFileNavigableSet());
+    NavigableSet<String> flatSet = StreamEx.of(flat).into(WatchRootsUtil.createFileNavigableSet());
+    CanonicalPathMap pathMap = new CanonicalPathMap(recursiveSet, flatSet, MultiMap.empty());
+    pathMap.getCanonicalWatchRoots();
+    return pathMap;
   }
 }

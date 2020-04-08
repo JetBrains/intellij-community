@@ -5,9 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author nik
- */
 public class JavaSourceRootDetectionUtilTest {
   @Test
   public void simple() {

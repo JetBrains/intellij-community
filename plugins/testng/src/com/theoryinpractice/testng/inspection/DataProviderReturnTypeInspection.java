@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Version;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +35,8 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
     CommonClassNames.JAVA_LANG_OBJECT + "[]"
   };
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final String dataProviderFqn = DataProvider.class.getName();
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
     if (annotation != null) {
@@ -45,9 +45,9 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
         final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
         LOG.assertTrue(returnTypeElement != null);
         boolean supportOneDimensional = supportOneDimensional(method);
-        String message = "Data provider must return " +
-                         (supportOneDimensional ? "Object[][]/Object[] or Iterator<Object[]>/Iterator<Object>"
-                                                : "Object[][] or Iterator<Object[]>");
+        String message = TestngBundle.message("inspection.data.provider.return.type.check",
+                                              supportOneDimensional ? "Object[][]/Object[] or Iterator<Object[]>/Iterator<Object>"
+                                                                    : "Object[][] or Iterator<Object[]>");
         return new ProblemDescriptor[]{manager.createProblemDescriptor(returnTypeElement,
                                                                        message,
                                                                        isOnTheFly,

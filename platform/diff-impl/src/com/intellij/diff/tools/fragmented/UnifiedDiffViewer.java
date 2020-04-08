@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -69,7 +70,6 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLinesContent;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull protected final EditorEx myEditor;
@@ -353,7 +353,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
-                           @NotNull CharSequence[] texts,
+                           CharSequence @NotNull [] texts,
                            @NotNull ProgressIndicator indicator) {
     final DocumentContent content1 = getContent1();
     final DocumentContent content2 = getContent2();
@@ -361,7 +361,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.nonBlocking(() -> {
       return new UnifiedEditorRangeHighlighter(myProject, content1, content2, builder.getRanges());
     })
-      .cancelWith(indicator)
+      .wrapProgress(indicator)
       .executeSynchronously();
 
     LineNumberConvertor convertor1 = builder.getConvertor1();
@@ -599,7 +599,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     private void logDebugInfo(DocumentEvent e,
                               LineCol onesideStartPosition, LineCol onesideEndPosition,
                               int twosideStartLine, int twosideEndLine) {
-      StringBuilder info = new StringBuilder();
+      @NonNls StringBuilder info = new StringBuilder();
       Document document1 = getDocument(Side.LEFT);
       Document document2 = getDocument(Side.RIGHT);
       info.append("==== UnifiedDiffViewer Debug Info ====");
@@ -678,7 +678,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       if (!isEditable(myModifiedSide, true)) return;
       if (isStateIsOutOfDate()) return;
 
-      String title = e.getPresentation().getText() + " selected changes";
+      String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
       DiffUtil.executeWriteCommand(getDocument(myModifiedSide), e.getProject(), title, () -> {
         // state is invalidated during apply(), but changes are in reverse order, so they should not conflict with each other
         apply(ContainerUtil.reverse(selectedChanges));
@@ -702,7 +702,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other());
 
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")));
-      getTemplatePresentation().setText(focusedSide.select("Revert", "Accept"));
+      getTemplatePresentation().setText(focusedSide.select(DiffBundle.message("action.presentation.diff.revert.text"),
+                                                           DiffBundle.message("action.presentation.diff.accept.text")));
       getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Remove, AllIcons.Actions.Checked));
     }
 
@@ -719,7 +720,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other());
 
       copyShortcutFrom(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")));
-      getTemplatePresentation().setText("Append");
+      getTemplatePresentation().setText(DiffBundle.messagePointer("action.presentation.diff.append.text"));
       getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
     }
 
@@ -1082,9 +1083,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       // Will not happen for initial rediff
     }
 
-    @Nullable
     @Override
-    protected LogicalPosition[] getCaretPositions() {
+    protected LogicalPosition @Nullable [] getCaretPositions() {
       LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
       Pair<int[], Side> pair = transferLineFromOneside(position.line);
       LogicalPosition[] carets = new LogicalPosition[2];
@@ -1306,7 +1306,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
           myUpdateIndicator.cancel();
           myUpdateIndicator = new EmptyProgressIndicator();
 
-          ChangedBlockData blockData = assertNotNull(myModel.getData());
+          ChangedBlockData blockData = Objects.requireNonNull(myModel.getData());
 
           ReadAction
             .nonBlocking(() -> updateHighlighters(blockData))
@@ -1317,7 +1317,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
               rangeHighlighter.apply(myProject, myDocument);
             })
             .withDocumentsCommitted(myProject)
-            .cancelWith(myUpdateIndicator)
+            .wrapProgress(myUpdateIndicator)
             .submit(NonUrgentExecutor.getInstance());
         }
       });

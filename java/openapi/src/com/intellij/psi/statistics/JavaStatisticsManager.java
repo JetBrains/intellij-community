@@ -116,8 +116,7 @@ public abstract class JavaStatisticsManager {
     return new StatisticsInfo(getMemberUseKey1(qualifierType), getMemberUseKey2(member));
   }
 
-  @NotNull
-  public static String[] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
+  public static String @NotNull [] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
     StatisticsInfo[] keys2 = StatisticsManager.getInstance().getAllValues(getVariableNameUseKey1(propertyName, type));
 
     List<String> list = new ArrayList<>();

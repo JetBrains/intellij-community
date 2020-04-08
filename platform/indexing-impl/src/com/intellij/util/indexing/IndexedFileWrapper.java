@@ -6,9 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 class IndexedFileWrapper implements FileContent {
     @NotNull
     private final IndexedFile myFile;
@@ -17,9 +19,8 @@ class IndexedFileWrapper implements FileContent {
         myFile = file;
     }
 
-    @NotNull
     @Override
-    public byte[] getContent() {
+    public byte @NotNull [] getContent() {
         throw new UnsupportedOperationException();
     }
 

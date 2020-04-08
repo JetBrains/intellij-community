@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractInterface;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import com.intellij.refactoring.ui.YesNoPreviewUsagesDialog;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,13 +47,13 @@ public class ExtractClassUtil {
     String superClassName = superClass.getName();
     String className = (subClass).getName();
     String createdString = superClass.isInterface() ?
-                           RefactoringBundle.message("interface.has.been.successfully.created", superClassName) :
-                           RefactoringBundle.message("class.has.been.successfully.created", superClassName);
+                           JavaRefactoringBundle.message("interface.has.been.successfully.created", superClassName) :
+                           JavaRefactoringBundle.message("class.has.been.successfully.created", superClassName);
     String message = createdString + "\n" +
-                     RefactoringBundle.message("use.super.references.prompt",
+                     JavaRefactoringBundle.message("use.super.references.prompt",
                                                ApplicationNamesInfo.getInstance().getProductName(), className, superClassName);
     YesNoPreviewUsagesDialog dialog = new YesNoPreviewUsagesDialog(
-      RefactoringBundle.message("analyze.and.replace.usages"),
+      JavaRefactoringBundle.message("analyze.and.replace.usages"),
       message,
       JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES,
       /*HelpID.TURN_REFS_TO_SUPER*/null, subClass.getProject());

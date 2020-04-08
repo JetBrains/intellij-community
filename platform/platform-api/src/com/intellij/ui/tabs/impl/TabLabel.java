@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +14,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
@@ -30,9 +29,10 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-import static java.awt.BorderLayout.*;
+import static java.awt.BorderLayout.EAST;
+import static java.awt.BorderLayout.WEST;
 
-public class TabLabel extends JPanel implements Accessible, Disposable {
+public class TabLabel extends JPanel implements Accessible {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
 
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
@@ -157,10 +157,6 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     }
   }
 
-  @Override
-  public void dispose() {
-  }
-
   private void setHovered(boolean value) {
     if (myTabs.isHoveredTab(this) == value) return;
     if (value) {
@@ -282,7 +278,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
 
     if (toShow.getChildrenCount() == 0) return;
 
-    myTabs.myActivePopup = myTabs.myActionManager.createActionPopupMenu(place, toShow).getComponent();
+    myTabs.myActivePopup = ActionManager.getInstance().createActionPopupMenu(place, toShow).getComponent();
     myTabs.myActivePopup.addPopupMenuListener(myTabs.myPopupListener);
 
     myTabs.myActivePopup.addPopupMenuListener(myTabs);
@@ -397,7 +393,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
     toggleShowActions(false);
 
-    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? EAST : WEST);
+    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
 
     myTabs.revalidateAndRepaint(false);
   }
@@ -533,29 +529,13 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     }
   }
 
-  /**
-   * Notice, that using this method can cause changing of TabLabel instance size.
-   */
-  public void setActionPanelVisible(boolean visible) {
-    if (myActionPanel != null) {
-      if (visible == myActionPanel.isVisible()) return;
-
-      myActionPanel.setVisible(visible);
-      if (visible) {
-        myActionPanel.update();
-      }
-
-      updateActionLabelPosition();
-    }
-  }
-
   void updateActionLabelPosition() {
     if (myActionPanel != null) {
       if (!myActionPanel.isVisible()) {
         remove(myActionPanel);
       }
       else {
-        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? EAST : WEST);
+        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
       }
     }
   }
@@ -633,24 +613,22 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     }
 
     private boolean doCustomLayout(Container parent) {
-      if (!(myTabs != null &&
-            myTabs.getEffectiveLayout() instanceof ScrollableSingleRowLayout &&
-            parent.getWidth() < parent.getPreferredSize().width)) {
-        return false;
+      if (myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
+          parent.getWidth() < parent.getPreferredSize().width) {
+        int spaceTop = parent.getInsets().top;
+        int spaceLeft = parent.getInsets().left;
+        int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
+        int spaceHeight = spaceBottom - spaceTop;
+
+        int xOffset = spaceLeft;
+
+        xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
+        xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
+        layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
+
+        return true;
       }
-
-      int spaceTop = parent.getInsets().top;
-      int spaceLeft = parent.getInsets().left;
-      int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
-      int spaceHeight = spaceBottom - spaceTop;
-
-      int xOffset = spaceLeft;
-
-      xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
-      xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
-      layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
-
-      return true;
+      return false;
     }
 
     private int layoutComponent(int xOffset, Component component, int spaceTop, int spaceHeight) {

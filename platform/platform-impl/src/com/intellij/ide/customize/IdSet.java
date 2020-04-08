@@ -3,6 +3,7 @@ package com.intellij.ide.customize;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -14,7 +15,7 @@ final class IdSet {
   String myTitle;
   List<PluginId> myIds;
 
-  IdSet(final PluginGroups pluginGroups, String description) {
+  IdSet(final PluginGroups pluginGroups, @NonNls String description) {
     int i = description.indexOf(":");
     if (i > 0) {
       myTitle = description.substring(0, i);

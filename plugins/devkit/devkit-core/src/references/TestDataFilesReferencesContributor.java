@@ -29,11 +29,10 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
         new UastInjectionHostReferenceProvider() {
           private final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = TestDataFile.class.getCanonicalName();
 
-          @NotNull
           @Override
-          public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression expression,
-                                                              @NotNull PsiLanguageInjectionHost host,
-                                                              @NotNull ProcessingContext context) {
+          public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression expression,
+                                                                        @NotNull PsiLanguageInjectionHost host,
+                                                                        @NotNull ProcessingContext context) {
             UCallExpression call = UastUtils.getUCallExpression(expression);
             if (call == null) return PsiReference.EMPTY_ARRAY;
 

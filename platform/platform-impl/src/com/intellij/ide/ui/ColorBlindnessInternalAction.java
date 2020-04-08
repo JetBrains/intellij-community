@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,15 +25,13 @@ import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.io.File;
 
-/**
- * @author Sergey.Malenkov
- */
 public class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     new ColorDialog(event).show();
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static final class ColorDialog extends DialogWrapper {
     private final ColorView myView = new ColorView();
     private final JComboBox myCombo = new ComboBox<>(FilterItem.ALL);
@@ -143,9 +141,8 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       return panel;
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getCancelAction()};
     }
   }

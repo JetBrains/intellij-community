@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -60,10 +61,10 @@ public class MavenRunnerPanel {
     c.anchor = GridBagConstraints.WEST;
     c.insets.bottom = 5;
 
-    myDelegateToMavenCheckbox = new JCheckBox("Delegate IDE build/run actions to Maven");
+    myDelegateToMavenCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
     myDelegateToMavenCheckbox.setMnemonic('d');
 
-    myRunInBackgroundCheckbox = new JCheckBox("Run in background");
+    myRunInBackgroundCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.run.in.background"));
     myRunInBackgroundCheckbox.setMnemonic('b');
     if (!myRunConfigurationMode) {
       c.gridx = 0;
@@ -78,7 +79,7 @@ public class MavenRunnerPanel {
     }
     c.gridwidth = 1;
 
-    JLabel labelVMParameters = new JLabel("VM Options:");
+    JLabel labelVMParameters = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.vm.options"));
     labelVMParameters.setDisplayedMnemonic('v');
     labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
     myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
@@ -94,7 +95,7 @@ public class MavenRunnerPanel {
     panel.add(myVMParametersEditor, c);
     c.insets.left = 0;
 
-    JLabel jdkLabel = new JLabel("JRE:");
+    JLabel jdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
     jdkLabel.setDisplayedMnemonic('j');
     jdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
     c.gridx = 0;
@@ -119,14 +120,14 @@ public class MavenRunnerPanel {
     c.gridwidth = 1;
 
     JPanel propertiesPanel = new JPanel(new BorderLayout());
-    propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder("Properties", false));
+    propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
 
-    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox("Skip tests"), BorderLayout.NORTH);
+    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")), BorderLayout.NORTH);
     mySkipTestsCheckBox.setMnemonic('t');
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
-    myPropertiesPanel.getEmptyText().setText("No properties defined");
+    myPropertiesPanel.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.runner.properties.not.defined"));
 
     c.gridx = 0;
     c.gridy++;

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
@@ -20,7 +21,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,12 +73,14 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       gridBag.anchor(GridBagConstraints.WEST).setDefaultAnchor(GridBagConstraints.WEST);
       northPanel.add(myCbUseSoftWrapsAtConsole, gridBag.nextLine().next());
       northPanel.add(Box.createHorizontalGlue(), gridBag.next().coverLine());
-      northPanel.add(new JLabel(ApplicationBundle.message("editbox.console.history.limit")), gridBag.nextLine().next());
+      JLabel label = new JLabel(ApplicationBundle.message("editbox.console.history.limit"));
+      label.setLabelFor(myCommandsHistoryLimitField);
+      northPanel.add(label, gridBag.nextLine().next());
       northPanel.add(myCommandsHistoryLimitField, gridBag.next());
       if (ConsoleBuffer.useCycleBuffer()) {
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
-        northPanel.add(new JLabel(" KB"), gridBag.next());
+        northPanel.add(new JLabel(ExecutionBundle.message("settings.console.kb")), gridBag.next());
         northPanel.add(Box.createHorizontalStrut(JBUIScale.scale(20)), gridBag.next());
         northPanel.add(myConsoleBufferSizeWarningLabel, gridBag.next());
       }
@@ -90,13 +92,15 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       Splitter splitter = new Splitter(true);
       myMainComponent.add(splitter, BorderLayout.CENTER);
       myPositivePanel =
-        new MyAddDeleteListPanel("Fold console lines that contain:", "Enter a substring of a console line you'd like to see folded:");
-      myNegativePanel = new MyAddDeleteListPanel("Exceptions:", "Enter a substring of a console line you don't want to fold:");
+        new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.console.lines"),
+                                 ApplicationBundle.message("console.enter.substring.folded"));
+      myNegativePanel = new MyAddDeleteListPanel(ApplicationBundle.message("console.fold.exceptions"),
+                                                 ApplicationBundle.message("console.enter.substring.dont.fold:"));
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
 
-      myPositivePanel.getEmptyText().setText("Fold nothing");
-      myNegativePanel.getEmptyText().setText("No exceptions");
+      myPositivePanel.getEmptyText().setText(ApplicationBundle.message("console.fold.nothing"));
+      myNegativePanel.getEmptyText().setText(ApplicationBundle.message("console.no.exceptions"));
     }
     return myMainComponent;
   }
@@ -213,9 +217,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Console";
+    return ExecutionBundle.message("configurable.ConsoleConfigurable.display.name");
   }
 
   @Override
@@ -245,7 +248,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     @Nullable
     private String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, "Folding Pattern", Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
+      return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
         @Override
         public boolean checkInput(String inputString) {
           return !StringUtil.isEmpty(inputString);

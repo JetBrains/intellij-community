@@ -544,4 +544,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testAvoidInfiniteLoopForPlusAssignment() {
     doTest(true)
   }
+
+  void testOverriddenVarargParameter() {
+    doTest(true)
+  }
 }

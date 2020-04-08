@@ -24,12 +24,12 @@ import com.intellij.ide.IdeBundle;
  */
 public final class ViewSubtypesHierarchyAction extends ChangeViewTypeActionBase {
   public ViewSubtypesHierarchyAction() {
-    super(IdeBundle.message("action.view.subtypes.hierarchy"),
-          IdeBundle.message("action.description.view.subtypes.hierarchy"), AllIcons.Hierarchy.Subtypes);
+    super(IdeBundle.messagePointer("action.view.subtypes.hierarchy"),
+          IdeBundle.messagePointer("action.description.view.subtypes.hierarchy"), AllIcons.Hierarchy.Subtypes);
   }
 
   @Override
   protected final String getTypeName() {
-    return TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE;
+    return TypeHierarchyBrowserBase.getSubtypesHierarchyType();
   }
 }

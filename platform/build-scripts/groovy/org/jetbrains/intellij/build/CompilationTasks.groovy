@@ -18,9 +18,6 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 
-/**
- * @author nik
- */
 @CompileStatic
 abstract class CompilationTasks {
   abstract void compileAllModulesAndTests()

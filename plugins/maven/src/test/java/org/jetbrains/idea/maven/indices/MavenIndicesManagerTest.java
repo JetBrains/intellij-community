@@ -2,8 +2,12 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.WaitFor;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +96,29 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     myIndicesFixture.setUp();
 
     assertArchetypeExists("myGroup:myArtifact:666");
+  }
+
+  public void testAddingFilesToIndex() throws IOException {
+    File localRepo = myIndicesFixture.getRepositoryHelper().getTestData("local2");
+    MavenIndex localIndex = myIndicesFixture.getIndicesManager()
+      .createIndexForLocalRepo(myProject, localRepo);
+    //copy junit to repository
+    File artifactDir = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit");
+    FileUtil.copyDir(artifactDir, localRepo);
+    assertFalse(localIndex.hasGroupId("junit"));
+    File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
+    MavenIndicesManager.getInstance().fixArtifactIndex(artifactFile, localRepo);
+    new WaitFor(500) {
+      @Override
+      protected boolean condition() {
+        return localIndex.hasGroupId("junit");
+      }
+    };
+
+    assertTrue(localIndex.hasGroupId("junit"));
+    assertTrue(localIndex.hasArtifactId("junit", "junit"));
+    assertTrue(localIndex.hasVersion("junit", "junit", "4.0"));
+    assertFalse(localIndex.hasVersion("junit", "junit", "3.8.2")); // copied but not used
   }
 
   private void assertArchetypeExists(String archetypeId) {

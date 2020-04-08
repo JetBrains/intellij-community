@@ -27,9 +27,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CompositePackagingElementNode extends PackagingElementNode<CompositePackagingElement<?>> {
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
   private final ArtifactType myArtifactType;

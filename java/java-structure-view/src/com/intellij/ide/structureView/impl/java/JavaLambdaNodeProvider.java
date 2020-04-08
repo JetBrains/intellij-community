@@ -16,15 +16,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.SyntaxTraverser;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class JavaLambdaNodeProvider
-  implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner, DumbAware {
-  public static final String ID = "SHOW_LAMBDA";
-  public static final String JAVA_LAMBDA_PROPERTY_NAME = "java.lambda.provider";
+public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner, DumbAware {
+  @NonNls public static final String ID = "SHOW_LAMBDA";
+  @NonNls public static final String JAVA_LAMBDA_PROPERTY_NAME = "java.lambda.provider";
 
   @NotNull
   @Override
@@ -44,12 +44,11 @@ public class JavaLambdaNodeProvider
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return "Show Lambdas";
+    return JavaStructureViewBundle.message("file.structure.toggle.show.collapse.show.lambdas");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta L" : "control L")};
   }
 

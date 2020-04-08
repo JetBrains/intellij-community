@@ -45,14 +45,6 @@ public class ThreadRunInspection extends BaseInspection {
   }
 
   private static class ThreadRunFix extends AbstractReplaceWithAnotherMethodCallFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "thread.run.replace.quickfix");
-    }
-
     @Override
     protected String getMethodName() {
       return "start";

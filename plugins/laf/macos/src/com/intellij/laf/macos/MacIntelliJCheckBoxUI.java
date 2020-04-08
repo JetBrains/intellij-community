@@ -18,7 +18,7 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
-  public static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(22));
+  public static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(22));
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
     c.setOpaque(false);

@@ -40,9 +40,8 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     this(project, ((PsiMember)method), scopeType);
   }
 
-  @NotNull
   @Override
-  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (enclosingElement == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
@@ -94,7 +93,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
     }
     
-    assert enclosingElement instanceof PsiField;
+    assert enclosingElement instanceof PsiField : "Enclosing element should be a field, but was " + enclosingElement.getClass() + ", text: " + enclosingElement.getText();
 
     return ReferencesSearch
       .search(enclosingElement, enclosingElement.getUseScope()).findAll().stream()

@@ -39,12 +39,11 @@ import java.util.List;
  */
 public class ExceptionPackageInspection extends BaseGlobalInspection {
 
-  @Nullable
   @Override
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
-                                                @NotNull AnalysisScope scope,
-                                                @NotNull InspectionManager manager,
-                                                @NotNull GlobalInspectionContext globalContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext) {
     if (!(refEntity instanceof RefPackage)) {
       return null;
     }

@@ -54,7 +54,7 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
 
   @Nullable
   @Override
-  public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete, @NotNull List<UsageInfo> result) {
+  public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<UsageInfo> result) {
     SafeDeleteProcessor.findGenericElementUsages(element, result, allElementsToDelete);
     return new NonCodeUsageSearchInfo(SafeDeleteProcessor.getDefaultInsideDeletedCondition(allElementsToDelete), element);
   }
@@ -88,13 +88,12 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
 
   @Nullable
   @Override
-  public Collection<String> findConflicts(@NotNull PsiElement element, @NotNull PsiElement[] allElementsToDelete) {
+  public Collection<String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
     return null;
   }
 
-  @Nullable
   @Override
-  public UsageInfo[] preprocessUsages(Project project, UsageInfo[] usages) {
+  public UsageInfo @Nullable [] preprocessUsages(Project project, UsageInfo[] usages) {
     return usages;
   }
 

@@ -1111,6 +1111,8 @@ public class TypeConversionUtil {
    */
   @NotNull
   public static PsiType binaryNumericPromotion(PsiType type1, PsiType type2) {
+    type1 = uncapture(type1);
+    type2 = uncapture(type2);
     if (isDoubleType(type1)) return unbox(type1);
     if (isDoubleType(type2)) return unbox(type2);
     if (isFloatType(type1)) return unbox(type1);
@@ -1261,12 +1263,12 @@ public class TypeConversionUtil {
     return type.accept(new PsiTypeVisitor<PsiType>() {
       @Nullable
       @Override
-      public PsiType visitType(PsiType type) {
+      public PsiType visitType(@NotNull PsiType type) {
         return type;
       }
 
       @Override
-      public PsiType visitClassType(PsiClassType classType) {
+      public PsiType visitClassType(@NotNull PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (aClass instanceof PsiTypeParameter && !isFreshVariable((PsiTypeParameter)aClass)) {
           return typeParameterErasure((PsiTypeParameter)aClass, beforeSubstitutor);
@@ -1275,28 +1277,28 @@ public class TypeConversionUtil {
       }
 
       @Override
-      public PsiType visitWildcardType(PsiWildcardType wildcardType) {
+      public PsiType visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         return wildcardType;
       }
 
       @Nullable
       @Override
-      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return capturedWildcardType.getUpperBound().accept(this);
       }
 
       @Override
-      public PsiType visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      public PsiType visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
         return primitiveType;
       }
 
       @Override
-      public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
+      public PsiType visitEllipsisType(@NotNull PsiEllipsisType ellipsisType) {
         return visitArrayType(ellipsisType);
       }
 
       @Override
-      public PsiType visitArrayType(PsiArrayType arrayType) {
+      public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
         final PsiType componentType = arrayType.getComponentType();
         final PsiType newComponentType = componentType.accept(this);
         if (newComponentType == componentType) return arrayType;
@@ -1304,7 +1306,7 @@ public class TypeConversionUtil {
       }
 
       @Override
-      public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+      public PsiType visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
         final PsiClassType lub = PsiTypesUtil.getLowestUpperBoundClassType(disjunctionType);
         return lub != null ? erasure(lub, beforeSubstitutor) : disjunctionType;
       }

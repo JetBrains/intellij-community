@@ -129,25 +129,34 @@ public class HintManagerImpl extends HintManager {
       }
     };
 
-    myEditorDocumentListener = new BulkAwareDocumentListener.NonTrivial() {
+    myEditorDocumentListener = new BulkAwareDocumentListener() {
       @Override
-      public void documentChanged(@NotNull Document document) {
-        LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-        HintInfo[] infos = getHintsStackArray();
-        for (HintInfo info : infos) {
-          if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
-            if (info.hint.isVisible()) {
-              info.hint.hide();
-            }
-            myHintsStack.remove(info);
-          }
-        }
+      public void documentChangedNonBulk(@NotNull DocumentEvent event) {
+        if (event.getOldLength() != 0 || event.getNewLength() != 0) onDocumentChange();
+      }
 
-        if (myHintsStack.isEmpty()) {
-          updateLastEditor(null);
-        }
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        onDocumentChange();
       }
     };
+  }
+
+  private void onDocumentChange() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    HintInfo[] infos = getHintsStackArray();
+    for (HintInfo info : infos) {
+      if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
+        if (info.hint.isVisible()) {
+          info.hint.hide();
+        }
+        myHintsStack.remove(info);
+      }
+    }
+
+    if (myHintsStack.isEmpty()) {
+      updateLastEditor(null);
+    }
   }
 
   /**
@@ -164,8 +173,7 @@ public class HintManagerImpl extends HintManager {
     myRequestFocusForNextHint = requestFocus;
   }
 
-  @NotNull
-  private HintInfo[] getHintsStackArray() {
+  private HintInfo @NotNull [] getHintsStackArray() {
     return myHintsStack.toArray(new HintInfo[0]);
   }
 
@@ -770,17 +778,25 @@ public class HintManagerImpl extends HintManager {
                                @PositionFlags short constraint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideQuestionHint();
-    TextAttributes attributes = new TextAttributes();
-    attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
-    attributes.setEffectType(EffectType.LINE_UNDERSCORE);
-    final RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter;
+    if (offset1 != offset2) {
+      TextAttributes attributes = new TextAttributes();
+      attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
+      attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+      highlighter = editor.getMarkupModel()
+        .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    }
+    else {
+      highlighter = null;
+    }
 
     hint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(@NotNull EventObject event) {
         hint.removeHintListener(this);
-        highlighter.dispose();
+        if (highlighter != null) {
+          highlighter.dispose();
+        }
 
         if (myQuestionHint == hint) {
           myQuestionAction = null;

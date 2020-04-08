@@ -3,7 +3,9 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
@@ -17,12 +19,13 @@ import javax.swing.JSpinner
 import javax.swing.text.DefaultFormatter
 
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink) =
-    object : FactoryInlayHintsCollector(editor) {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): FactoryInlayHintsCollector? {
+    val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
+    return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink) : Boolean {
         if (file.project.service<DumbService>().isDumb) return true
         val call = element as? PsiMethodCallExpression ?: return true
-        if (!isFirstCall(call, editor)) return true
+        if (!isFirstCall(call, document)) return true
         val next = call.nextSibling
         if (!(next is PsiWhiteSpace && next.textContains('\n'))) return true
         val chain = collectChain(call)
@@ -34,7 +37,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
         val types = chain.mapNotNull { it.type }
         if (types.size != chain.size) return true // some type unknown
 
-        val uniqueTypes = mutableSetOf<PsiType>()
+        val uniqueTypes = hashSetOf<PsiType>()
         for (i in (0 until types.size - 1)) { // Except last to avoid builder.build() which has obvious type
           uniqueTypes.add(types[i])
         }
@@ -56,12 +59,13 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
         return true
       }
     }
+  }
 
   override val key: SettingsKey<Settings>
     get() = ourKey
 
   override fun createConfigurable(settings: Settings) = object : ImmediateConfigurable {
-    val uniqueTypeCountName = "Minimal unique type count to show hints"
+    val uniqueTypeCountName = JavaBundle.message("settings.inlay.java.minimal.unique.type.count.to.show.hints")
 
     private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
 
@@ -96,7 +100,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
   override fun createSettings() = Settings()
 
   override val name: String
-    get() = "Method chains"
+    get() = JavaBundle.message("settings.inlay.java.method.chains")
 
   override val previewText: String?
     @Language("JAVA")
@@ -124,9 +128,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
 """
 
 
-  private fun isFirstCall(call: PsiMethodCallExpression, editor: Editor): Boolean {
-    val document = editor.document
-
+  private fun isFirstCall(call: PsiMethodCallExpression, document: Document): Boolean {
     val textOffset = call.argumentList.textOffset
     if (document.textLength - 1 < textOffset) return false
     val callLine = document.getLineNumber(textOffset)

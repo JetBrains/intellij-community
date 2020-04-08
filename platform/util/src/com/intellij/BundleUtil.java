@@ -11,7 +11,7 @@ import java.util.ResourceBundle;
 
 public class BundleUtil {
   private final static Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
-  private final static Logger LOG = Logger.getInstance(CommonBundle.class);
+  private final static Logger LOG = Logger.getInstance(BundleUtil.class);
 
   @Nullable
   public static ResourceBundle loadLanguageBundle(@Nullable ClassLoader pluginClassLoader, String name) {

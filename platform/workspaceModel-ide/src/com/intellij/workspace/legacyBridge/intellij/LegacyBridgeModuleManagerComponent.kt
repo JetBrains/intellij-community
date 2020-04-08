@@ -1,12 +1,15 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.ProjectTopics
 import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.configurationStore.ModuleStoreBase
+import com.intellij.configurationStore.saveComponentManager
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -14,11 +17,15 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
 import com.intellij.workspace.api.*
@@ -26,66 +33,75 @@ import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
+import com.intellij.workspace.legacyBridge.facet.FacetEntityChangeListener
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 @Suppress("ComponentNotRegistered")
-class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), ProjectComponent, Disposable {
-
+class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), Disposable {
   val outOfTreeModulesPath: String =
     FileUtilRt.toSystemIndependentName(File(PathManager.getTempPath(), "outOfTreeProjectModules-${project.locationHash}").path)
 
   private val LOG = Logger.getInstance(javaClass)
 
+  private val idToModule = Collections.synchronizedMap(LinkedHashMap<ModuleId, LegacyBridgeModule>())
+  internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
+  private val uncommittedModules = mutableMapOf<String, LegacyBridgeModule>()
+
   override fun dispose() {
-    val modules = modulesMap.values.toList()
-    modulesMap.clear()
+    val modules = idToModule.values.toList()
+    idToModule.clear()
+    uncommittedModules.clear()
 
     for (module in modules) {
       Disposer.dispose(module)
     }
   }
 
-  private val modulesMap: ConcurrentMap<ModuleId, LegacyBridgeModule> = ConcurrentHashMap()
-  private val unloadedModules = UnloadedModulesListStorage.getInstance(project)
-  private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
+  internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
+    override fun serviceCreated(project: Project) {
+      val activity = StartUpMeasurer.startMainActivity("(wm) module loading")
+      val manager = ModuleManagerComponent.getInstance(project) as? LegacyBridgeModuleManagerComponent ?: return
 
-  @ApiStatus.Internal
-  internal fun setNewModuleInstances(addedInstances: List<LegacyBridgeModule>) {
-    if (newModuleInstances.isNotEmpty()) error("newModuleInstances are not empty")
-    for (instance in addedInstances) {
-      newModuleInstances[instance.moduleEntityId] = instance
+      val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+      val entities = manager.entityStore.current.entities(ModuleEntity::class.java)
+        .filter { !unloadedNames.contains(it.name) }
+        .toList()
+      manager.loadModules(entities)
+      activity.end()
+      activity.setDescription("(wm) module count: ${manager.modules.size}")
+      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
-  }
-
-  private fun getModuleRootComponentByLibrary(entity: LibraryEntity): LegacyBridgeModuleRootComponent {
-    val tableId = entity.tableId as LibraryTableId.ModuleLibraryTableId
-    val module = modulesMap[tableId.moduleId] ?: error("Could not find module for module library: ${entity.persistentId()}")
-    return LegacyBridgeModuleRootComponent.getInstance(module)
   }
 
   init {
     // default project doesn't have modules
     if (!project.isDefault) {
-      val myMessageBusConnection = project.messageBus.connect(this)
-      myMessageBusConnection.subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-        override fun projectComponentsInitialized(listenedProject: Project) {
-          if (project !== listenedProject) return
+      val busConnection = project.messageBus.connect(this)
+      busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+        override fun projectOpened(eventProject: Project) {
+          val activity = StartUpMeasurer.startActivity("(wm) ProjectManagerListener.projectOpened")
+          if (project == eventProject) {
+            fireModulesAdded()
+            for (module in idToModule.values) {
+              (module as ModuleEx).projectOpened()
+            }
+          }
+          activity.end()
+        }
 
-          val unloadedNames = unloadedModules.unloadedModuleNames.toSet()
-
-          val entities = entityStore.current.entities(ModuleEntity::class.java)
-            .filter { !unloadedNames.contains(it.name) }
-            .toList()
-          loadModules(entities)
+        override fun projectClosed(eventProject: Project) {
+          if (project == eventProject) {
+            for (module in idToModule.values) {
+              (module as ModuleEx).projectClosed()
+            }
+          }
         }
       })
 
-      myMessageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun changed(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
@@ -126,7 +142,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                 is EntityChange.Added -> Unit // Add events are handled after adding new modules
               }.let {  } // exhaustive when
 
-              val unloadedModulesSetOriginal = unloadedModules.unloadedModuleNames.toSet()
+              val unloadedModulesSetOriginal = unloadedModules.keys.toList()
               val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
               val oldModuleNames = mutableMapOf<Module, String>()
 
@@ -139,21 +155,24 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
                 is EntityChange.Added -> {
                   val moduleId = change.entity.persistentId()
-                  val alreadyCreatedModule = newModuleInstances.remove(moduleId)
+                  val alreadyCreatedModule = uncommittedModules.remove(moduleId.name)
                   val module = if (alreadyCreatedModule != null) {
                     unloadedModulesSet.remove(change.entity.name)
+                    unloadedModules.remove(change.entity.name)
 
                     (alreadyCreatedModule as LegacyBridgeModuleImpl).entityStore = entityStore
                     alreadyCreatedModule.diff = null
-                    addModule(alreadyCreatedModule)
+                    if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(alreadyCreatedModule)
                     alreadyCreatedModule
-                  } else {
-                    if (unloadedModulesSet.contains(change.entity.name)) {
+                  }
+                  else {
+                    if (change.entity.name in unloadedModules.keys) {
                       // Skip unloaded modules if it was not added via API
                       continue@nextChange
                     }
 
-                    addModule(change.entity)
+                    if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(change.entity)
+                    else continue@nextChange
                   }
 
                   if (project.isOpen) {
@@ -167,8 +186,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
                   if (oldId != newId) {
                     unloadedModulesSet.remove(change.newEntity.name)
+                    unloadedModules.remove(change.newEntity.name)
                     renameModule(oldId, newId)
-                    oldModuleNames[modulesMap.getValue(newId)] = oldId.name
+                    oldModuleNames[idToModule.getValue(newId)] = oldId.name
                   }
                 }
               }
@@ -205,8 +225,10 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                   .modulesRenamed(project, oldModuleNames.keys.toList()) { module -> oldModuleNames[module] }
               }
 
-              if (unloadedModulesSetOriginal != unloadedModulesSet) {
-                setUnloadedModules(unloadedModulesSet.toList())
+              if (unloadedModulesSet.isNotEmpty()) {
+                val loadedModules = modules.map { it.name }.toMutableList()
+                loadedModules.removeAll(unloadedModulesSet)
+                AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
               }
 
               for (module in modulesToCheck) {
@@ -217,23 +239,24 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                   newModuleLibraries.clear()
                 }
               }
-
-              if (newModuleInstances.isNotEmpty()) {
-                LOG.error("Not all module instances were handled in change event. Leftovers:\n" +
-                          newModuleInstances.keys.joinToString(separator = "\n"))
-                newModuleInstances.clear()
-              }
-
               incModificationCount()
             }
           }
         }
       })
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, LegacyBridgeProjectRootsChangeListener(project))
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, FacetEntityChangeListener(project))
     }
   }
 
+  private fun getModuleRootComponentByLibrary(entity: LibraryEntity): LegacyBridgeModuleRootComponent {
+    val tableId = entity.tableId as LibraryTableId.ModuleLibraryTableId
+    val module = idToModule[tableId.moduleId] ?: error("Could not find module for module library: ${entity.persistentId()}")
+    return LegacyBridgeModuleRootComponent.getInstance(module)
+  }
+
   internal fun addModule(moduleEntity: ModuleEntity): LegacyBridgeModule {
-    if (modulesMap.containsKey(moduleEntity.persistentId())) {
+    if (idToModule.containsKey(moduleEntity.persistentId())) {
       error("Module ${moduleEntity.name} (id:'${moduleEntity.persistentId()}') is already added")
     }
 
@@ -243,27 +266,27 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   internal fun addModule(module: LegacyBridgeModule) {
-    val oldValue = modulesMap.put(module.moduleEntityId, module)
+    val oldValue = idToModule.put(module.moduleEntityId, module)
     if (oldValue != null) {
       LOG.warn("Duplicate module name: ${module.name}")
     }
   }
 
   internal fun removeModuleAndFireEvent(moduleEntityId: ModuleId) {
-    val moduleImpl = modulesMap.remove(moduleEntityId) ?: error("Module $moduleEntityId does not exist")
+    val moduleImpl = idToModule.remove(moduleEntityId) ?: error("Module $moduleEntityId does not exist")
     project.messageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(project, moduleImpl)
     Disposer.dispose(moduleImpl)
   }
 
   internal fun fireBeforeModuleRemoved(moduleEntityId: ModuleId) {
-    val moduleImpl = modulesMap[moduleEntityId] ?: error("Module $moduleEntityId does not exist")
+    val moduleImpl = idToModule[moduleEntityId] ?: error("Module $moduleEntityId does not exist")
     project.messageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(project, moduleImpl)
   }
 
   internal fun renameModule(oldId: ModuleId, newId: ModuleId) {
-    val moduleImpl = modulesMap.remove(oldId) ?: error("Module $oldId does not exist")
+    val moduleImpl = idToModule.remove(oldId) ?: error("Module $oldId does not exist")
 
-    val replacedModuleImplById = modulesMap.put(newId, moduleImpl)
+    val replacedModuleImplById = idToModule.put(newId, moduleImpl)
     if (replacedModuleImplById != null) {
       error("ModuleId $newId already exists")
     }
@@ -280,7 +303,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun moduleGraph(): Graph<Module> = moduleGraph(includeTests = true)
   override fun moduleGraph(includeTests: Boolean): Graph<Module> {
     return GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
-      override fun getNodes(): Collection<Module> = this@LegacyBridgeModuleManagerComponent.modulesMap.values.toMutableList()
+      override fun getNodes(): Collection<Module> = this@LegacyBridgeModuleManagerComponent.idToModule.values.toMutableList()
 
       override fun getIn(m: Module): Iterator<Module> {
         val dependentModules = ModuleRootManager.getInstance(m).getDependencies(includeTests)
@@ -310,22 +333,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     }
   }
 
-  override fun projectOpened() {
-    fireModulesAdded()
-
-    for (module in modulesMap.values) {
-      (module as ModuleEx).projectOpened()
-    }
-  }
-
-  override fun projectClosed() {
-    for (module in modulesMap.values) {
-      (module as ModuleEx).projectClosed()
-    }
-  }
-
   private fun fireModulesAdded() {
-    for (module in modulesMap.values) {
+    for (module in idToModule.values) {
       fireModuleAddedInWriteAction(module as ModuleEx)
     }
   }
@@ -357,14 +366,17 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     return module
   }
 
-  override fun getModuleDependentModules(module: Module): MutableList<Module> =
-    ModuleRootManager.getInstance(module).dependencies.toMutableList()
-
-  override fun getUnloadedModuleDescriptions(): MutableCollection<UnloadedModuleDescription> {
-    val names = unloadedModules.unloadedModuleNames.toSet()
-    val entities = entityStore.current.entities(ModuleEntity::class.java).filter { names.contains(it.name) }.toList()
-    return entities.map { getUnloadedModuleDescription(it) }.toMutableList()
+  override fun newNonPersistentModule(moduleName: String, id: String): Module {
+    incModificationCount()
+    val modifiableModel = modifiableModel
+    val module = modifiableModel.newNonPersistentModule(moduleName, id)
+    modifiableModel.commit()
+    return module
   }
+
+  override fun getModuleDependentModules(module: Module): List<Module> = modules.filter { isModuleDependent(it, module) }
+
+  override fun getUnloadedModuleDescriptions(): Collection<UnloadedModuleDescription> = unloadedModules.values
 
   override fun getFailedModulePaths(): Collection<ModulePath> = emptyList()
 
@@ -374,7 +386,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     ModuleRootManager.getInstance(module).isDependsOn(onModule)
 
   override fun getAllModuleDescriptions(): MutableCollection<ModuleDescription> =
-    (modulesMap.values.map { module ->
+    (idToModule.values.map { module ->
       object : ModuleDescription {
         override fun getName(): String = module.name
 
@@ -407,7 +419,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? {
-    if (!unloadedModules.unloadedModuleNames.contains(moduleName)) return null
+    if (moduleName !in unloadedModules) return null
 
     // TODO Optimize?
     val moduleEntity = entityStore.current.entities(ModuleEntity::class.java).filter { it.name == moduleName }.firstOrNull()
@@ -415,17 +427,30 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     return getUnloadedModuleDescription(moduleEntity)
   }
 
-  override fun getModules(): Array<Module> = modulesMap.values.toTypedArray()
+  override fun getModules(): Array<Module> = idToModule.values.toTypedArray()
 
   private val sortedModulesValue = CachedValueWithParameter<Set<ModuleId>, Array<Module>> { _, _ ->
-    val allModules = modulesMap.values.toTypedArray<Module>()
+    val allModules = idToModule.values.toTypedArray<Module>()
     Arrays.sort(allModules, moduleDependencyComparator())
     return@CachedValueWithParameter allModules
   }
 
-  override fun getSortedModules(): Array<Module> = entityStore.cachedValue(sortedModulesValue, modulesMap.keys.toSet())
+  override fun getSortedModules(): Array<Module> = entityStore.cachedValue(sortedModulesValue, idToModule.keys.toSet())
 
-  override fun findModuleByName(name: String): Module? = modulesMap[ModuleId(name)]
+  override fun findModuleByName(name: String): Module? = idToModule[ModuleId(name)]
+
+  @ApiStatus.Internal
+  internal fun findUncommittedModuleByName(name: String): Module? = uncommittedModules[name]
+
+  @ApiStatus.Internal
+  internal fun addUncommittedModule(module: LegacyBridgeModule) {
+    uncommittedModules[module.name] = module
+  }
+
+  @ApiStatus.Internal
+  internal fun removeUncommittedModule(name: String) {
+    uncommittedModules.remove(name)
+  }
 
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
     val modifiableModel = modifiableModel
@@ -434,7 +459,12 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   override fun setUnloadedModules(unloadedModuleNames: List<String>) {
-    unloadedModules.unloadedModuleNames = unloadedModuleNames
+    if (unloadedModules.keys == unloadedModuleNames.toSet()) {
+      //optimization
+      return
+    }
+
+    UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = unloadedModuleNames
 
     if (unloadedModuleNames.isNotEmpty()) {
       val loadedModules = modules.map { it.name }.toMutableList()
@@ -446,26 +476,34 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     val modulesToUnload = mutableSetOf<ModuleId>()
     for (module in modules) {
-      if (names.contains(module.name)) {
+      if (module.name in names) {
         modulesToUnload.add((module as LegacyBridgeModule).moduleEntityId)
       }
     }
 
     val moduleEntities = entityStore.current.entities(ModuleEntity::class.java).toList()
-    val moduleEntitiesToLoad = moduleEntities.filter { findModuleByName(it.name) == null && !names.contains(it.name) }
+    val moduleEntitiesToLoad = moduleEntities.filter { findModuleByName(it.name) == null && it.name !in names }
 
-    if (moduleEntitiesToLoad.isEmpty() && modulesToUnload.isEmpty()) return
-
-    ApplicationManager.getApplication().runWriteAction {
+    unloadedModules.keys.removeAll { it !in names }
+    runWriteAction {
       ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(
         {
-          modulesToUnload.forEach { moduleId ->
+          for (moduleId in modulesToUnload) {
             fireBeforeModuleRemoved(moduleId)
 
-            // we need to save module configuration before unloading, otherwise its settings will be lost
-            // copied from original ModuleManagerImpl
-            // TODO Uncomment after implementing save
-            // saveComponentManager(module)
+            val module = findModuleByName(moduleId.name)
+            if (module != null) {
+              val description = LoadedModuleDescriptionImpl(module)
+              val modulePath = getModulePath(module, entityStore)
+              val pointerManager = VirtualFilePointerManager.getInstance()
+              val contentRoots = ModuleRootManager.getInstance(module).contentRootUrls.map {
+                url -> pointerManager.create(url, this, null)
+              }
+              val unloadedModuleDescription = UnloadedModuleDescriptionImpl(modulePath, description.dependencyModuleNames, contentRoots)
+              unloadedModules[moduleId.name] = unloadedModuleDescription
+              // we need to save module configuration before unloading, otherwise its settings will be lost
+              saveComponentManager(module)
+            }
 
             removeModuleAndFireEvent(moduleId)
           }
@@ -478,10 +516,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun removeUnloadedModules(unloadedModules: MutableCollection<out UnloadedModuleDescription>) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-    val unloadedModulesSet = unloadedModules.map { it.name }.toSet()
-    val newUnloadedModules = this.unloadedModules.unloadedModuleNames.filter { !unloadedModulesSet.contains(it) }
+    unloadedModules.forEach { this.unloadedModules.remove(it.name) }
 
-    setUnloadedModules(newUnloadedModules)
+    UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
   private fun getUnloadedModuleDescription(moduleEntity: ModuleEntity): UnloadedModuleDescriptionImpl {
@@ -510,9 +547,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                            entityStore: TypedEntityStore,
                            diff: TypedEntityStorageDiffBuilder?,
                            isNew: Boolean): LegacyBridgeModule {
-
     val modulePath = getModuleFilePath(moduleEntity)
-
     val module = LegacyBridgeModuleImpl(
       name = moduleEntity.name,
       project = project,
@@ -525,7 +560,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
-        moduleStore.setPath(modulePath, isNew)
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
+        moduleStore.setPath(modulePath, null, isNew)
         moduleStore.storageManager.addMacro("MODULE_FILE", modulePath)
       }
       catch (t: Throwable) {
@@ -543,8 +579,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): LegacyBridgeModuleManagerComponent =
-      ModuleManagerComponent.getInstance(project) as LegacyBridgeModuleManagerComponent
+    fun getInstance(project: Project): LegacyBridgeModuleManagerComponent {
+      return ModuleManagerComponent.getInstance(project) as LegacyBridgeModuleManagerComponent
+    }
 
     private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() =
       filter {
@@ -563,6 +600,11 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
       return moduleEntity.groupPath?.path?.toTypedArray()
     }
+
+    internal fun getModulePath(module: Module, entityStore: TypedEntityStore): ModulePath = ModulePath(
+      path = module.moduleFilePath,
+      group = getModuleGroupPath(module, entityStore)?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
+    )
 
     internal fun hasModuleGroups(entityStore: TypedEntityStore) =
       entityStore.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null

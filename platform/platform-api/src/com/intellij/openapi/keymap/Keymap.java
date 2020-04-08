@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -33,23 +33,20 @@ public interface Keymap extends Scheme {
   @NotNull
   Collection<String> getActionIdList();
 
-  @NotNull
-  String[] getActionIds();
+  String @NotNull [] getActionIds();
 
   /**
    * @return all keyboard shortcuts for the action with the specified {@code actionId}
    * or an empty array if the action doesn't have any keyboard shortcut.
    */
   // 60 external usages - actionId cannot be marked as NotNull
-  @NotNull
-  Shortcut[] getShortcuts(@Nullable String actionId);
+  Shortcut @NotNull [] getShortcuts(@Nullable String actionId);
 
   /**
    * @return all actions including parent keymap that have the specified first keystroke. If there are no
    * such actions then the method returns an empty array.
    */
-  @NotNull
-  String[] getActionIds(@NotNull KeyStroke firstKeyStroke);
+  @NotNull String @NotNull [] getActionIds(@NotNull KeyStroke firstKeyStroke);
 
   /**
    * @return all actions that have the specified first and second keystrokes. If there are no
@@ -57,14 +54,12 @@ public interface Keymap extends Scheme {
    */
   String[] getActionIds(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke);
 
-  String[] getActionIds(@NotNull Shortcut shortcut);
+  @NotNull String[] getActionIds(@NotNull Shortcut shortcut);
 
   /**
-   * @return all actions with specified mouse shortcut.  If there are no
-   * such action then the method returns an empty array.
+   * @return all actions with specified mouse shortcut.
    */
-  @NotNull
-  String[] getActionIds(@NotNull MouseShortcut shortcut);
+  @NotNull List<@NotNull String> getActionIds(@NotNull MouseShortcut shortcut);
 
   void addShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 

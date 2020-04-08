@@ -11,7 +11,7 @@ import static com.intellij.vcs.log.VcsLogFilterCollection.REVISION_FILTER;
 /**
  * Tells to filter by head commits.
  */
-public interface VcsLogRevisionFilter extends VcsLogFilter {
+public interface VcsLogRevisionFilter extends VcsLogBranchLikeFilter {
 
   @NotNull
   Collection<CommitId> getHeads();

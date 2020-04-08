@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper{
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
+  private static final int MAX_CONFLICTS_SHOWN = 20;
+  @NonNls private static final String EXPAND_LINK = "expand";
 
   protected final String[] myConflictDescriptions;
   protected MultiMap<PsiElement, String> myElementConflictDescription;
@@ -82,8 +85,7 @@ public class ConflictsDialog extends DialogWrapper{
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions(){
+  protected Action @NotNull [] createActions(){
     final Action okAction = getOKAction();
     boolean showUsagesButton = myElementConflictDescription != null && myCanShowConflictsInView;
 
@@ -108,10 +110,15 @@ public class ConflictsDialog extends DialogWrapper{
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
 
     @NonNls StringBuilder buf = new StringBuilder();
-    for (String description : myConflictDescriptions) {
-      buf.append(description);
-      buf.append("<br><br>");
+
+    for (int i = 0; i < Math.min(myConflictDescriptions.length, MAX_CONFLICTS_SHOWN); i++) {
+      buf.append(myConflictDescriptions[i]).append("<br><br>");
     }
+
+    if (myConflictDescriptions.length > MAX_CONFLICTS_SHOWN) {
+      buf.append("<a href='" + EXPAND_LINK + "'>Show more...</a>");
+    }
+
     JEditorPane messagePane = new JEditorPane();
     messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
     messagePane.setText(buf.toString());
@@ -120,6 +127,12 @@ public class ConflictsDialog extends DialogWrapper{
                                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setPreferredSize(JBUI.size(500, 400));
+    messagePane.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && 
+          EXPAND_LINK.equals(e.getDescription())) {
+        messagePane.setText(StringUtil.join(myConflictDescriptions, "<br><br>"));
+      }
+    });
     panel.add(scrollPane, BorderLayout.CENTER);
 
     if (getOKAction().isEnabled()) {
@@ -153,13 +166,13 @@ public class ConflictsDialog extends DialogWrapper{
 
 
     MyShowConflictsInUsageViewAction() {
-      super("Show Conflicts in View");
+      super(RefactoringBundle.message("action.show.conflicts.in.view.text"));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
       final UsageViewPresentation presentation = new UsageViewPresentation();
-      final String codeUsagesString = "Conflicts";
+      final String codeUsagesString = RefactoringBundle.message("conflicts.tab.name");
       presentation.setCodeUsagesString(codeUsagesString);
       presentation.setTabName(codeUsagesString);
       presentation.setTabText(codeUsagesString);
@@ -231,8 +244,7 @@ public class ConflictsDialog extends DialogWrapper{
       public UsagePresentation getPresentation() {
         return new UsagePresentation() {
           @Override
-          @NotNull
-          public TextChunk[] getText() {
+          public TextChunk @NotNull [] getText() {
             return new TextChunk[] {new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription)};
           }
 

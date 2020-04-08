@@ -15,6 +15,7 @@
  */
 package com.intellij.spi.parsing;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
@@ -122,7 +123,7 @@ public class SPIParserDefinition implements ParserDefinition {
     }
     else {
       builder.advanceLexer();
-      builder.error("Unexpected token");
+      builder.error(JavaPsiBundle.message("unexpected.token"));
     }
   }
 

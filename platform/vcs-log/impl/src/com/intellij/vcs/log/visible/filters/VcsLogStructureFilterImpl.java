@@ -58,7 +58,7 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
 
   @Override
   public String toString() {
-    return "files:" + myFiles;
+    return "files:" + myFiles; // NON-NLS
   }
 
   @Override

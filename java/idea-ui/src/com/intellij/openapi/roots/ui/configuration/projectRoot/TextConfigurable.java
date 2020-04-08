@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class TextConfigurable<T> extends NamedConfigurable<T> {
   @NotNull
   private final T myObject;

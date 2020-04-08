@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -49,7 +49,7 @@ public class ExtractChainedMapAction extends PsiElementBaseIntentionAction {
     if (extractor == null) return false;
     PsiParameter parameter = lambda.getParameterList().getParameters()[0];
     if (ReferencesSearch.search(parameter).allMatch(ref -> PsiTreeUtil.isAncestor(initializer, ref.getElement(), false))) {
-      setText(CodeInsightBundle.message("intention.extract.map.step.text", variable.getName(),
+      setText(JavaBundle.message("intention.extract.map.step.text", variable.getName(),
                                         extractor.getMethodName(parameter, initializer, variable.getType())));
       return true;
     }
@@ -67,6 +67,6 @@ public class ExtractChainedMapAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.extract.map.step.family");
+    return JavaBundle.message("intention.extract.map.step.family");
   }
 }

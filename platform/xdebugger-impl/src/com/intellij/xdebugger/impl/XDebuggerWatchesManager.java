@@ -1,9 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
@@ -12,10 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author egor
- */
-public class XDebuggerWatchesManager {
+public final class XDebuggerWatchesManager {
   private final Map<String, List<XExpression>> watches = ContainerUtil.newConcurrentMap();
 
   @NotNull
@@ -34,12 +28,9 @@ public class XDebuggerWatchesManager {
 
   @NotNull
   public WatchesManagerState saveState(@NotNull WatchesManagerState state) {
-    List<ConfigurationState> expressions = new SmartList<>();
-    for (Map.Entry<String, List<XExpression>> entry : watches.entrySet()) {
-      expressions.add(new ConfigurationState(entry.getKey(), entry.getValue()));
-    }
-
-    state.setExpressions(expressions);
+    List<ConfigurationState> expressions = state.getExpressions();
+    expressions.clear();
+    watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, value)));
     return state;
   }
 

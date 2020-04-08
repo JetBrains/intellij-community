@@ -108,7 +108,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return getPackageDirectory(getPackageRelativePath());
   }
 
-  public static void sortClassesByName(@NotNull PsiClass[] classes) {
+  public static void sortClassesByName(PsiClass @NotNull [] classes) {
     Arrays.sort(classes, Comparator.comparing(NavigationItem::getName));
   }
 }

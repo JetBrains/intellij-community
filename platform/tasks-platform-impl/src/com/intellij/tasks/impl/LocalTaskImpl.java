@@ -102,9 +102,8 @@ public class LocalTaskImpl extends LocalTask {
     return myDescription;
   }
 
-  @NotNull
   @Override
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     return myComments;
   }
 

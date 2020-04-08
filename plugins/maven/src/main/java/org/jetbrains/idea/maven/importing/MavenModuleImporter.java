@@ -97,6 +97,10 @@ public class MavenModuleImporter {
     return myRootModelAdapter.getRootModel();
   }
 
+  void setRootModelAdapter(MavenRootModelAdapter mavenRootModelAdapter) { // need for new worskapce model
+    myRootModelAdapter = mavenRootModelAdapter;
+  }
+
   public void config(MavenRootModelAdapter mavenRootModelAdapter) {
     myRootModelAdapter = mavenRootModelAdapter;
 

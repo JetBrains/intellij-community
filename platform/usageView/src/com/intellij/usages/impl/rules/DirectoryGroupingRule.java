@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -38,14 +39,19 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   protected final Project myProject;
+  private final boolean myFlattenDirs;
 
   public DirectoryGroupingRule(Project project) {
+    this(project, true);
+  }
+  DirectoryGroupingRule(Project project, boolean flattenDirs) {
     myProject = project;
+    myFlattenDirs = flattenDirs;
   }
 
   @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof UsageInFile) {
       UsageInFile usageInFile = (UsageInFile)usage;
       VirtualFile file = usageInFile.getFile();
@@ -66,7 +72,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   public String getActionTitle() {
-    return "Group by directory";
+    return IdeBundle.message("action.title.group.by.directory") ;
   }
 
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
@@ -93,9 +99,12 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     @Override
     @NotNull
     public String getText(UsageView view) {
-      VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
-      String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
-      return relativePath == null ? myDir.getPresentableUrl() : relativePath;
+      if (myFlattenDirs || myDir.getParent() == null) {
+        VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+        String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
+        return relativePath == null ? myDir.getPresentableUrl() : relativePath;
+      }
+      return myDir.getName();
     }
 
     @Override

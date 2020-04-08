@@ -8,12 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class HotSwapUI {
   public static HotSwapUI getInstance(Project project) {
-    return project.getComponent(HotSwapUI.class);
+    return project.getService(HotSwapUI.class);
   }
 
   public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap);
@@ -21,7 +18,7 @@ public abstract class HotSwapUI {
   public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap,
                                             @Nullable HotSwapStatusListener callback);
 
-  public abstract void compileAndReload(@NotNull DebuggerSession session, @NotNull VirtualFile... files);
+  public abstract void compileAndReload(@NotNull DebuggerSession session, VirtualFile @NotNull ... files);
 
   public abstract void addListener(HotSwapVetoableListener listener);
 

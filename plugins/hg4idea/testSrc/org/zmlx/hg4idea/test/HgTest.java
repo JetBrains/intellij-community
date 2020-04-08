@@ -26,6 +26,7 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
 import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.Nullable;
@@ -101,11 +102,21 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
   @After
   public void tearDown() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
-      new RunAll(() -> myVcs.getGlobalSettings().setHgExecutable(null),
-                 () -> tearDownProject(),
-                 () -> tearDownRepositories())
+      new RunAll()
+        .append(() -> myVcs.getGlobalSettings().setHgExecutable(null))
+        .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
+        .append(() -> myChangeListManager.peer.waitEverythingDoneInTestMode())
+        .append(() -> tearDownFixture())
+        .append(() -> tearDownRepositories())
         .run();
     });
+  }
+
+  private void tearDownFixture() throws Exception {
+    if (myProjectFixture != null) {
+      myProjectFixture.tearDown();
+      myProjectFixture = null;
+    }
   }
 
   protected abstract HgTestRepository initRepositories() throws Exception;

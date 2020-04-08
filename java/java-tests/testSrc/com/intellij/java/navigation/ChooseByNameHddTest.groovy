@@ -51,7 +51,7 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     ModuleRootModificationUtil.addDependency(myFixture.module, modules[2])
     (0..moduleCount-1).each { myFixture.addFileToProject("mod$it/Foo.java", "class Foo {}") }
 
-    def place = myFixture.addClass("class A {}")
+    def place = myFixture.addClass("class A {}").containingFile
     def contributor = ChooseByNameTest.createFileContributor(project, place)
     def resultModules = ChooseByNameTest.calcContributorElements(contributor, 'Foo').collect {
       ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name

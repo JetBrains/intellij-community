@@ -155,6 +155,14 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testCapturedWildcardNotNull() { doTest(); }
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
   public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
+  public void testTypeUseLambdaReturn() {
+    setupTypeUseAnnotations("ambiguous", myFixture);
+    doTest();
+  }
+  public void testTypeUseInferenceInsideRequireNotNull() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 
   public void testArrayComponentAndMethodAnnotationConflict() {
     setupAmbiguousAnnotations("withTypeUse", myFixture);
@@ -165,6 +173,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupCustomAnnotations(pkg, "{ElementType.METHOD, ElementType.TYPE_USE}", fixture);
   }
 
+  public void testTypeUseAmbiguousArrayReturn() {
+    setupAmbiguousAnnotations("ambiguous", myFixture);
+    doTest();
+  }
   public void testLambdaInlining() { doTest(); }
 
   public void testOptionalInlining() {
@@ -183,6 +195,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testStreamAnyMatchIsNull() { doTest(); }
   public void testStreamCustomSumMethod() { doTest(); }
+  public void testStreamReduceLogicalAnd() { doTest(); }
   
   public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
@@ -210,6 +223,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   public void testMethodReferenceBoundToNullable() { doTestWithCustomAnnotations(); }
   public void testEscapeAnalysis() { doTest(); }
+  public void testEscapeAnalysisLambdaInConstructor() { doTest(); }
   public void testThisAsVariable() { doTest(); }
   public void testQueuePeek() { doTest(); }
   public void testForeachCollectionElement() { doTest(); }
@@ -263,4 +277,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testInlineLambdaFromLocal() { doTest(); }
   public void testAllowRequireNonNullInCtor() { doTest(); }
+  public void testNullableNotNullAssignmentInReturn() { doTest(); }
 }

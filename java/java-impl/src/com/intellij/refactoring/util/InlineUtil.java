@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineTransformer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -196,7 +196,7 @@ public class InlineUtil {
         final PsiExpressionList exprList = (PsiExpressionList)expr.getParent();
         if (exprList.getParent() instanceof PsiCall) {
           if (isSafeToInlineVarargsArgument((PsiCall)exprList.getParent())) {
-            inlineArrayCreationForVarargs(((PsiNewExpression)expr));
+            inlineArrayCreationForVarargs((PsiNewExpression)expr);
           }
         }
       }
@@ -267,9 +267,7 @@ public class InlineUtil {
             if (lastArgType != null && substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType()).isAssignableFrom(lastArgType)) {
               PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)lastArg).getArrayInitializer();
               PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
-              if (isSafeToFlatten(expression, method, initializers)) {
-                return true;
-              }
+              return isSafeToFlatten(expression, method, initializers);
             }
           }
         }
@@ -311,7 +309,7 @@ public class InlineUtil {
           return false;
         }
         return true;
-      }), RefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
+      }), JavaRefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
     return result && nonTailCallUsages.isEmpty();
   }
 
@@ -444,25 +442,7 @@ public class InlineUtil {
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {
-    return getChainedConstructor(constructor) != null;
-  }
-
-  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
-    PsiCodeBlock body = constructor.getBody();
-    if (body != null) {
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
-          if ("this".equals(methodExpr.getReferenceName())) {
-            PsiElement resolved = methodExpr.resolve();
-            return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor() ? (PsiMethod)resolved : null; //delegated via "this" call
-          }
-        }
-      }
-    }
-    return null;
+    return RefactoringUtil.getChainedConstructor(constructor) != null;
   }
 
   /**
@@ -472,7 +452,6 @@ public class InlineUtil {
    *
    * @param conflicts map for found conflicts
    * @param initializer variable initializer
-   * @return found changes and errors
    */
   public static void checkChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
                                                            @NotNull PsiExpression initializer,
@@ -494,7 +473,7 @@ public class InlineUtil {
 
     String readVarName = variable.getName();
     for (Map.Entry<PsiElement, PsiVariable> writePlaceEntry : writePlaces.entrySet()) {
-      String message = RefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
+      String message = JavaRefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
       conflicts.putValue(writePlaceEntry.getKey(), message);
     }
   }
@@ -614,7 +593,7 @@ public class InlineUtil {
                                                           boolean isAccessedForWriting) {
     if (strictlyFinal) {
       class CanAllLocalsBeDeclaredFinal extends JavaRecursiveElementWalkingVisitor {
-        boolean success = true;
+        private boolean success = true;
 
         @Override
         public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -732,11 +711,8 @@ public class InlineUtil {
     else if (initializer instanceof PsiThisExpression) {
       return true;
     }
-    else if (initializer instanceof PsiSuperExpression) {
-      return true;
-    }
     else {
-      return false;
+      return initializer instanceof PsiSuperExpression;
     }
   }
 
@@ -745,10 +721,8 @@ public class InlineUtil {
    *
    * @param variable      variable to inline
    * @param strictlyFinal whether the variable is referenced in the places where final variable is required
-   * @throws IncorrectOperationException
    */
-  public static void tryInlineGeneratedLocal(PsiLocalVariable variable, boolean strictlyFinal)
-    throws IncorrectOperationException {
+  public static void tryInlineGeneratedLocal(PsiLocalVariable variable, boolean strictlyFinal) throws IncorrectOperationException {
     PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return;
     List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, scope);
@@ -793,7 +767,7 @@ public class InlineUtil {
       PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
       if (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) {
         if (strictlyFinal || RefactoringUtil.canBeDeclaredFinal((PsiVariable)refElement)) {
-          PsiUtil.setModifierProperty(((PsiVariable)refElement), PsiModifier.FINAL, true);
+          PsiUtil.setModifierProperty((PsiVariable)refElement, PsiModifier.FINAL, true);
         }
       }
     }
@@ -808,7 +782,6 @@ public class InlineUtil {
    *
    * @param resultVar   variable to inline
    * @param resultUsage variable usage
-   * @throws IncorrectOperationException
    */
   public static void tryInlineResultVariable(@NotNull PsiLocalVariable resultVar, @NotNull PsiReferenceExpression resultUsage)
     throws IncorrectOperationException {
@@ -843,7 +816,7 @@ public class InlineUtil {
   private static void tryReplaceWithTarget(@NotNull PsiLocalVariable variable,
                                            @NotNull PsiReferenceExpression usage,
                                            PsiElement context,
-                                           List<PsiReferenceExpression> references) {
+                                           List<? extends PsiReferenceExpression> references) {
     PsiLocalVariable target = tryCast(PsiUtil.skipParenthesizedExprUp(usage.getParent()), PsiLocalVariable.class);
     if (target == null) return;
     String name = target.getName();

@@ -16,7 +16,7 @@
 
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -44,8 +44,8 @@ public class FieldBreakpointPropertiesPanel extends XBreakpointCustomPropertiesP
   public JComponent getComponent() {
     JPanel _panel;
     JPanel _panel0;
-    myWatchAccessCheckBox = new JCheckBox(DebuggerBundle.message("label.filed.breakpoint.properties.panel.field.access"));
-    myWatchModificationCheckBox = new JCheckBox(DebuggerBundle.message("label.filed.breakpoint.properties.panel.field.modification"));
+    myWatchAccessCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.filed.breakpoint.properties.panel.field.access"));
+    myWatchModificationCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.filed.breakpoint.properties.panel.field.modification"));
     DialogUtil.registerMnemonic(myWatchAccessCheckBox);
     DialogUtil.registerMnemonic(myWatchModificationCheckBox);
 
@@ -64,7 +64,7 @@ public class FieldBreakpointPropertiesPanel extends XBreakpointCustomPropertiesP
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events")));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("label.group.watch.events")));
 
     ActionListener listener = new ActionListener() {
       @Override

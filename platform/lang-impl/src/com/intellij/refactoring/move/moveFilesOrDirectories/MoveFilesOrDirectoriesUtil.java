@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -117,7 +116,7 @@ public class MoveFilesOrDirectoriesUtil {
       new MoveFilesOrDirectoriesDialog(project, adjustedElements, initialTargetDirectory) {
         @Override
         protected void performMove(@NotNull PsiDirectory targetDirectory) {
-          Runnable doneCallback = () -> close(DialogWrapper.CANCEL_EXIT_CODE);
+          Runnable doneCallback = this::closeOKAction;
           doMove(project, elements, adjustedElements, targetDirectory, moveCallback, doneCallback);
         }
       }.show();
@@ -131,7 +130,7 @@ public class MoveFilesOrDirectoriesUtil {
                              MoveCallback moveCallback,
                              Runnable doneCallback) {
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      Collection<PsiElement> toCheck = ContainerUtil.newArrayList((PsiElement)targetDirectory);
+      Collection<PsiElement> toCheck = ContainerUtil.newArrayList(targetDirectory);
       for (PsiElement e : adjustedElements) {
         toCheck.add(e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e);
       }
@@ -163,7 +162,7 @@ public class MoveFilesOrDirectoriesUtil {
       catch (IncorrectOperationException e) {
         CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), "refactoring.moveFile", project);
       }
-    }, MoveHandler.REFACTORING_NAME, null);
+    }, MoveHandler.getRefactoringName(), null);
   }
 
   @Nullable

@@ -18,6 +18,7 @@ package com.intellij.psi.augment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.TypeAnnotationProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,11 @@ import org.jetbrains.annotations.Nullable;
  * then the corresponding instantiations of inference variables would contain those type annotations.
  * If different bounds contain contradicting type annotations or type annotations on types repeat target type annotations,
  * it could be useful to ignore such annotations in the resulted instantiation.
+ * 
+ * @deprecated not used since IDEA 2020.1; will be removed
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+@Deprecated
 public abstract class TypeAnnotationModifier {
   public static final ExtensionPointName<TypeAnnotationModifier> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiTypeAnnotationModifier");
 

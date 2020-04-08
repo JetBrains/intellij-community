@@ -17,9 +17,6 @@ package com.intellij.ide.util.frameworkSupport;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportModelAdapter implements FrameworkSupportModelListener {
   @Override
   public void frameworkSelected(@NotNull FrameworkSupportProvider provider) {

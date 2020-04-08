@@ -32,8 +32,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
   }
 
   @Override
-  @NotNull
-  public PsiExpression[] getInitializers(){
+  public PsiExpression @NotNull [] getInitializers(){
     return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
   }
 

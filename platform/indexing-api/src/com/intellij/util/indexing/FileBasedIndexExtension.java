@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,7 +22,7 @@ import java.util.Collections;
 @ApiStatus.OverrideOnly
 public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V, FileContent> {
 
-  public static final ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME =
+  public static final ExtensionPointName<FileBasedIndexExtension<?, ?>> EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.fileBasedIndex");
 
   private static final int DEFAULT_CACHE_SIZE = 1024;
@@ -76,5 +77,17 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
 
   public boolean hasSnapshotMapping() {
     return false;
+  }
+
+  /**
+   * Whether this index needs the forward mapping to be shared along with inverted index.
+   *
+   * If this method returns {@code false}, it is an error to call {@link FileBasedIndex#getFileData(ID, VirtualFile, Project)}
+   * for this {@link #getName() index}.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public boolean needsForwardIndexWhenSharing() {
+    return true;
   }
 }

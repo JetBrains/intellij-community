@@ -2,6 +2,7 @@
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
+  <category>Version Controls</category>
   <description>
     <![CDATA[
       Provides integration with <a href="http://github.com/">GitHub</a>.
@@ -22,13 +23,11 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.github.ui.GHPREditorContentSynchronizer"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubGitHelper"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
@@ -38,18 +37,22 @@
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
 
-    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GHAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                          instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
-        implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
+      implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
-        implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
+      implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
 
     <fileType name="GithubPullRequest" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRFileType"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
+
+    <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"
+                anchor="left" canCloseContents="true" doNotActivateOnStart="true"
+                factoryClass="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowFactory"/>
   </extensions>
 
   <applicationListeners>
@@ -68,8 +71,6 @@
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
               topic="git4idea.repo.GitRepositoryChangeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-
-    <listener class="org.jetbrains.plugins.github.ui.GHPREditorContentSynchronizer$MyToolwindowListener" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener" />
   </projectListeners>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -90,13 +91,14 @@
     <action id="Github.View.Pull.Request" class="org.jetbrains.plugins.github.GithubViewPullRequestsAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
-    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserActionGroup">
+    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>
@@ -105,29 +107,27 @@
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
     <group id="Github.PullRequest.ToolWindow.List.Popup">
-      <action id="Github.PullRequest.Timeline.Show"
-              class="org.jetbrains.plugins.github.pullrequest.action.GHPRShowTimelineAction"/>
-      <action id="Github.PullRequest.Branch.Create"
-              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
+      <action id="Github.PullRequest.Show"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestAction"/>
       <reference id="Github.Open.In.Browser"/>
       <action id="Github.PullRequest.List.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>
     </group>
     <group id="Github.PullRequest.Details.Popup">
+      <action id="Github.PullRequest.Timeline.Show"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
+      <action id="Github.PullRequest.Branch.Create"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreateBranchAction"/>
       <action id="Github.PullRequest.Details.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
     </group>
+    <action id="Github.PullRequest.Changes.Reload"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadChangesAction" use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
     <group id="Github.PullRequest.Timeline.Popup">
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
-    </group>
-    <group>
-      <action id="Github.PullRequest.Zip.Commits.Toggle"
-              class="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser$ToggleZipCommitsAction"/>
-
-      <add-to-group group-id="ChangesView.GroupBy" anchor="last"/>
     </group>
   </actions>
 </idea-plugin>

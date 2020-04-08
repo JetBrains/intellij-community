@@ -14,19 +14,18 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.HtmlUtil
+import java.util.*
+import java.util.stream.Stream
 
 private val URL_PROVIDER_EP = ExtensionPointName<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
 
 class WebBrowserServiceImpl : WebBrowserService() {
   companion object {
-    fun getProvider(request: OpenInBrowserRequest): WebBrowserUrlProvider? {
+    fun getProviders(request: OpenInBrowserRequest): Stream<WebBrowserUrlProvider> {
       val dumbService = DumbService.getInstance(request.project)
-      for (urlProvider in URL_PROVIDER_EP.extensionList) {
-        if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
-          return urlProvider
-        }
+      return URL_PROVIDER_EP.extensions().filter {
+        (!dumbService.isDumb || DumbService.isDumbAware(it)) && it.canHandleElement(request)
       }
-      return null
     }
 
     fun getDebuggableUrls(context: PsiElement?): Collection<Url> {
@@ -38,7 +37,9 @@ class WebBrowserServiceImpl : WebBrowserService() {
         else {
           // it is client responsibility to set token
           request.isAppendAccessToken = false
-          return getUrls(getProvider(request), request)
+          return getProviders(request)
+            .map { getUrls(it, request) }
+            .filter(Collection<*>::isNotEmpty).findFirst().orElse(Collections.emptyList())
         }
       }
       catch (ignored: WebBrowserUrlProvider.BrowserException) {

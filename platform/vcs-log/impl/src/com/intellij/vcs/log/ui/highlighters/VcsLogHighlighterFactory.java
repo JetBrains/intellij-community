@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.highlighters;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogHighlighterFactory {
@@ -28,6 +29,7 @@ public interface VcsLogHighlighterFactory {
   String getId();
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getTitle();
 
   boolean showMenuItem();

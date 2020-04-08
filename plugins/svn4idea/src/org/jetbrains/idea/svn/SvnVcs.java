@@ -1,6 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
@@ -81,7 +79,7 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
-public class SvnVcs extends AbstractVcs {
+public final class SvnVcs extends AbstractVcs {
   private static final Logger LOG = wrapLogger(Logger.getInstance(SvnVcs.class));
 
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
@@ -96,6 +94,7 @@ public class SvnVcs extends AbstractVcs {
 
   @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
+  private SvnFileSystemListener myFileOperationsHandler;
 
   private CheckinEnvironment myCheckinEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
@@ -127,7 +126,6 @@ public class SvnVcs extends AbstractVcs {
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
-  private final SvnLoadedBranchesStorage myLoadedBranchesStorage;
 
   private final SvnExecutableChecker myChecker;
 
@@ -137,12 +135,11 @@ public class SvnVcs extends AbstractVcs {
 
   private final boolean myLogExceptions;
 
-  public SvnVcs(@NotNull Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBranchesStorage storage) {
+  public SvnVcs(@NotNull Project project) {
     super(project, VCS_NAME);
 
-    myLoadedBranchesStorage = storage;
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
-    myConfiguration = svnConfiguration;
+    myConfiguration = SvnConfiguration.getInstance(project);
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     cmdClientFactory = new CmdClientFactory(this);
@@ -158,7 +155,7 @@ public class SvnVcs extends AbstractVcs {
     }
     else {
       myEntriesFileListener = new SvnEntriesFileListener(project);
-      upgradeIfNeeded(bus);
+      upgradeIfNeeded(project.getMessageBus());
 
       myChangeListListener = new SvnChangelistListener(this);
 
@@ -239,7 +236,7 @@ public class SvnVcs extends AbstractVcs {
     connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, lists -> {
       if (lists.isEmpty()) return;
       try {
-        ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.DEFAULT_NAME, true);
+        ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDefaultName(), true);
 
         if (!myConfiguration.changeListsSynchronized()) {
           processChangeLists(lists);
@@ -312,7 +309,7 @@ public class SvnVcs extends AbstractVcs {
       });
     }
 
-    SvnApplicationSettings.getInstance().svnActivated();
+    myFileOperationsHandler = new SvnFileSystemListener(this);
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
     }
@@ -354,7 +351,7 @@ public class SvnVcs extends AbstractVcs {
       busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myRootsToWorkingCopies);
     }
 
-    myLoadedBranchesStorage.activate();
+    SvnLoadedBranchesStorage.getInstance(myProject).activate();
   }
 
   public static Logger wrapLogger(final Logger logger) {
@@ -380,7 +377,10 @@ public class SvnVcs extends AbstractVcs {
     if (myEntriesFileListener != null) {
       VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     }
-    SvnApplicationSettings.getInstance().svnDeactivated();
+    if (myFileOperationsHandler != null) {
+      Disposer.dispose(myFileOperationsHandler);
+      myFileOperationsHandler = null;
+    }
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
     }
@@ -391,7 +391,7 @@ public class SvnVcs extends AbstractVcs {
 
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
-    myLoadedBranchesStorage.deactivate();
+    SvnLoadedBranchesStorage.getInstance(myProject).deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {

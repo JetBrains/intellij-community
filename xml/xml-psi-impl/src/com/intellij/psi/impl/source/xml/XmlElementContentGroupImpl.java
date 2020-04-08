@@ -33,9 +33,8 @@ public class XmlElementContentGroupImpl  extends XmlElementImpl implements XmlEl
                                                                            XmlElementType {
 
   private final NotNullLazyValue<XmlContentParticle[]> myParticles = new NotNullLazyValue<XmlContentParticle[]>() {
-    @NotNull
     @Override
-    protected XmlContentParticle[] compute() {
+    protected XmlContentParticle @NotNull [] compute() {
       return ContainerUtil.map(getChildren(TokenSet.create(XML_ELEMENT_CONTENT_GROUP, XML_NAME)), astNode -> {
         PsiElement element = astNode.getPsi();
         assert element != null;

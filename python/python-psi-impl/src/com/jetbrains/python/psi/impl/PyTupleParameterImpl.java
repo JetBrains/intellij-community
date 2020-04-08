@@ -84,8 +84,7 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   @Override
-  @NotNull
-  public PyParameter[] getContents() {
+  public PyParameter @NotNull [] getContents() {
     return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
   }
 

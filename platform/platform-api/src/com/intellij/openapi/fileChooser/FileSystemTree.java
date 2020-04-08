@@ -34,8 +34,7 @@ public interface FileSystemTree extends Disposable {
   @Nullable
   VirtualFile getSelectedFile();
 
-  @NotNull
-  VirtualFile[] getSelectedFiles();
+  VirtualFile @NotNull [] getSelectedFiles();
 
   @Nullable
   VirtualFile getNewFileParent();

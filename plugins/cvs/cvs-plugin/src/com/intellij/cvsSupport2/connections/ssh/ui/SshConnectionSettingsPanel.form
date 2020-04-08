@@ -9,14 +9,14 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="etched" title-resource-bundle="com/intellij/cvsSupport2/CvsBundle" title-key="border.title.configure.ssh.private.key.file"/>
+    <border type="etched" title-resource-bundle="messages/CvsBundle" title-key="border.title.configure.ssh.private.key.file"/>
     <children>
       <component id="37beb" class="javax.swing.JCheckBox" binding="myUsePrivateKeyFile">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="checkbox.configure.ssh.use.private.key.file"/>
+          <text resource-bundle="messages/CvsBundle" key="checkbox.configure.ssh.use.private.key.file"/>
         </properties>
       </component>
       <vspacer id="a7871">
@@ -46,7 +46,7 @@
             </constraints>
             <properties>
               <labelFor value="1f45b"/>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.configure.ext.path.to.private.key.file"/>
+              <text resource-bundle="messages/CvsBundle" key="label.configure.ext.path.to.private.key.file"/>
             </properties>
           </component>
         </children>

@@ -4,6 +4,7 @@ package com.intellij.completion.ml
 import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -14,11 +15,16 @@ class MLCompletionWeigher : CompletionWeigher() {
     val storage = (LookupManager.getActiveLookup(location.completionParameters.editor) as? LookupImpl)
                     ?.let { LookupStorage.get(it) } ?: return DummyComparable.EMPTY
     if (!storage.shouldComputeFeatures()) return DummyComparable.EMPTY
-    val result = mutableMapOf<String, Any>()
+    val result = mutableMapOf<String, MLFeatureValue>()
     val contextFeatures = storage.contextProvidersResult()
     for (provider in ElementFeatureProvider.forLanguage(storage.language)) {
       val name = provider.name
-      for ((featureName, featureValue) in provider.calculateFeatures(element, location, contextFeatures)) {
+
+      val features = storage.performanceTracker.trackElementFeaturesCalculation(name) {
+        provider.calculateFeatures(element, location, contextFeatures)
+      }
+
+      for ((featureName, featureValue) in features) {
         result["${name}_$featureName"] = featureValue
       }
     }
@@ -26,7 +32,7 @@ class MLCompletionWeigher : CompletionWeigher() {
     return if (result.isEmpty()) DummyComparable.EMPTY else DummyComparable(result)
   }
 
-  private class DummyComparable(values: Map<String, Any>) : Comparable<Any> {
+  private class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
     val representation = calculateRepresentation(values)
 
     override fun compareTo(other: Any): Int = 0
@@ -36,8 +42,8 @@ class MLCompletionWeigher : CompletionWeigher() {
     companion object {
       val EMPTY = DummyComparable(emptyMap())
 
-      private fun calculateRepresentation(values: Map<String, Any>): String {
-        return values.entries.joinToString(",", "[", "]", transform = { "${it.key}=${it.value}" })
+      private fun calculateRepresentation(values: Map<String, MLFeatureValue>): String {
+        return values.entries.joinToString(",", "[", "]", transform = { "${it.key}=${MLFeaturesUtil.valueAsString(it.value)}" })
       }
     }
   }

@@ -53,12 +53,12 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     init(-1);
   }
 
-  public ComboBox(@NotNull E[] items) {
+  public ComboBox(E @NotNull [] items) {
     super(items);
     init(-1);
   }
 
-  public ComboBox(@NotNull E[] items, int width) {
+  public ComboBox(E @NotNull [] items, int width) {
     super(items);
     init(width);
   }

@@ -30,20 +30,29 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class CreateFromTemplateActionBase extends AnAction {
-  public CreateFromTemplateActionBase(final String title, final String description, final Icon icon) {
+  public CreateFromTemplateActionBase(@NlsActions.ActionText String title,
+                                      @NlsActions.ActionDescription String description,
+                                      Icon icon) {
     super(title, description, icon);
+  }
+
+  public CreateFromTemplateActionBase(@NotNull Supplier<String> dynamicTitle, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicTitle, dynamicDescription, icon);
   }
 
   @Override

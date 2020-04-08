@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
@@ -10,6 +10,7 @@ import com.intellij.idea.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -55,6 +56,8 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
       .get(20, TimeUnit.SECONDS)
 
     val boundedExecutor = createExecutorToPreloadServices()
+
+    Registry.getInstance().markAsLoaded()
     val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "", executor = boundedExecutor)
     app.loadComponents(null)
 

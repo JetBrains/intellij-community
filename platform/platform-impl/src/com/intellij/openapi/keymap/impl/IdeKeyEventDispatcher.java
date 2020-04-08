@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
-import com.intellij.diagnostic.EventsWatcher;
+import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -47,10 +48,12 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,8 +78,6 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher implements Disposable {
-  @NonNls
-  private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
   private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
@@ -137,8 +138,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
+    int id = e.getID();
     if (myIgnoreNextKeyTypedEvent) {
-      if (KeyEvent.KEY_TYPED == e.getID()) return true;
+      if (KeyEvent.KEY_TYPED == id) return true;
       myIgnoreNextKeyTypedEvent = false;
     }
 
@@ -148,18 +150,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myLeftCtrlPressed = false;
       }
     }
     else if (e.getKeyCode() == KeyEvent.VK_ALT) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myRightAltPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myRightAltPressed = false;
       }
     }
@@ -170,10 +172,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
       // remove AltGr modifier to show a shortcut without AltGr in Settings
-      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == id) removeAltGraph(e);
       return false;
     }
-    if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
+    if (id == KeyEvent.KEY_PRESSED && focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
       if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
       }
@@ -302,6 +304,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return true;
   }
 
+  private static class ReflectionHolder {
+    static final Method getCachedStroke = Objects.requireNonNull(
+      ReflectionUtil.getDeclaredMethod(AWTKeyStroke.class, "getCachedStroke", char.class, int.class, int.class, boolean.class));
+  }
+
   /**
    * This is hack. AWT doesn't allow to create KeyStroke with specified key code and key char
    * simultaneously. Therefore we are using reflection.
@@ -311,21 +318,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
                  ~InputEvent.BUTTON2_DOWN_MASK&~InputEvent.BUTTON2_MASK&
                  ~InputEvent.BUTTON3_DOWN_MASK&~InputEvent.BUTTON3_MASK;
     try {
-      Method[] methods=AWTKeyStroke.class.getDeclaredMethods();
-      Method getCachedStrokeMethod=null;
-      for (Method method : methods) {
-        if (GET_CACHED_STROKE_METHOD_NAME.equals(method.getName())) {
-          getCachedStrokeMethod = method;
-          getCachedStrokeMethod.setAccessible(true);
-          break;
-        }
-      }
-      if(getCachedStrokeMethod==null){
-        throw new IllegalStateException("not found method with name getCachedStrokeMethod");
-      }
-      Object[] getCachedStrokeMethodArgs=
-        {originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
-      return (KeyStroke)getCachedStrokeMethod.invoke(originalKeyStroke, getCachedStrokeMethodArgs);
+      return (KeyStroke)ReflectionHolder.getCachedStroke.invoke(originalKeyStroke,
+                                                                originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(),
+                                                                modifier, originalKeyStroke.isOnKeyRelease());
     }
     catch(Exception exc){
       throw new IllegalStateException(exc.getMessage());
@@ -412,8 +407,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
-    boolean isModalContext = myContext.isModalContext();
-    DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
     if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e) && e.isControlDown()) {
@@ -680,40 +673,57 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
 
-      showDumbModeDialogLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
-                                                   nonDumbAwareAction.toArray(new AnActionEvent[0]));
+      showDumbModeBalloonLaterIfNobodyConsumesEvent(project, e, processor, actions, presentationFactory,
+                                                    nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
     IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
   }
 
-  private static void showDumbModeDialogLaterIfNobodyConsumesEvent(@Nullable Project project,
-                                                                   InputEvent e,
-                                                                   ActionProcessor processor,
-                                                                   AnAction[] actions,
-                                                                   PresentationFactory presentationFactory,
-                                                                   AnActionEvent... actionEvents) {
+  private static void showDumbModeBalloonLaterIfNobodyConsumesEvent(@Nullable Project project,
+                                                                    InputEvent e,
+                                                                    ActionProcessor processor,
+                                                                    AnAction[] actions,
+                                                                    PresentationFactory presentationFactory,
+                                                                    AnActionEvent... actionEvents) {
     if (project == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
       if (e.isConsumed()) return;
-
-      List<String> actionNames = new ArrayList<>();
-      for (final AnActionEvent event : actionEvents) {
-        final String s = event.getPresentation().getText();
-        if (StringUtil.isNotEmpty(s)) {
-          actionNames.add(s);
-        }
-      }
-      if (DumbService.getInstance(project).showDumbModeDialog(actionNames)) {
+      DumbService.getInstance(project).showDumbModeActionBalloon(getActionUnavailableMessage(actionEvents), () -> {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() -> {
           DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
             processAction(e, processor, context, actions, presentationFactory);
           });
         });
-      }
+      });
     });
+  }
+
+  private static @NotNull @Nls String getActionUnavailableMessage(AnActionEvent... actionEvents) {
+    List<String> actionNames = new ArrayList<>();
+    for (final AnActionEvent event : actionEvents) {
+      final String s = event.getPresentation().getText();
+      if (StringUtil.isNotEmpty(s)) {
+        actionNames.add(s);
+      }
+    }
+    if (actionNames.isEmpty()) {
+      return getUnavailableMessage(IdeBundle.message("this.action"), false);
+    }
+    else if (actionNames.size() == 1) {
+      return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
+    }
+    else {
+      return getUnavailableMessage(IdeBundle.message("none.of.the.following.actions"), true) +
+             ": " + StringUtil.join(actionNames, ", ");
+    }
+  }
+
+  public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
+    return plural ? IdeBundle.message("0.are.not.available.while.indexing", action) :
+           IdeBundle.message("0.is.not.available.while.indexing", action);
   }
 
   private static DumbModeWarningListener dumbModeWarningListener  = null;
@@ -789,10 +799,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return;
     }
 
+    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (actionManager == null) {
+      return;
+    }
+
     KeymapManager keymapManager = KeymapManager.getInstance();
     Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
     String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(shortcut);
-    ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
       if (action != null && (!myContext.isModalContext() || action.isEnabledInModalContext())) {
@@ -908,14 +922,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-          final AnActionEvent event =
-            new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                              ActionManager.getInstance(), 0);
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-            ActionUtil.performActionDumbAware(action, event);
-          }
-        });
+      AnActionEvent event =
+        new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
+                          ActionManager.getInstance(), 0);
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+        ActionUtil.performActionDumbAware(action, event);
+      }
     }
 
     @Override
@@ -1004,10 +1016,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static void logTimeMillis(long startedAt, @NotNull AnAction action) {
-    EventsWatcher watcher = EventsWatcher.getInstance();
-    if (watcher == null) return;
-
-    watcher.logTimeMillis(action.toString(), startedAt);
+    EventWatcher watcher = EventWatcher.getInstance();
+    if (watcher != null) {
+      watcher.logTimeMillis(action.toString(), startedAt);
+    }
   }
 
   public static boolean removeAltGraph(InputEvent e) {

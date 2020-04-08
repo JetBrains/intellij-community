@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -82,8 +83,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     return map;
   }
 
-  @NotNull
-  public RangeHighlighter[] getHighlighters(@NotNull Editor editor) {
+  public RangeHighlighter @NotNull [] getHighlighters(@NotNull Editor editor) {
     Map<RangeHighlighter, HighlightFlags> highlightersMap = getHighlightInfoMap(editor, false);
     if (highlightersMap == null) return RangeHighlighter.EMPTY_ARRAY;
     Set<RangeHighlighter> set = new HashSet<>();
@@ -119,7 +119,7 @@ public final class HighlightManagerImpl extends HighlightManager {
 
   @Override
   public void addOccurrenceHighlights(@NotNull Editor editor,
-                                      @NotNull PsiReference[] occurrences,
+                                      PsiReference @NotNull [] occurrences,
                                       @NotNull TextAttributes attributes,
                                       boolean hideByTextChange,
                                       Collection<? super RangeHighlighter> outHighlighters) {
@@ -188,6 +188,8 @@ public final class HighlightManagerImpl extends HighlightManager {
                                 boolean hideByTextChange,
                                 boolean hideByAnyKey,
                                 @Nullable Collection<? super RangeHighlighter> highlighters) {
+    if (editor instanceof ImaginaryEditor) return;
+
     int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
@@ -203,11 +205,11 @@ public final class HighlightManagerImpl extends HighlightManager {
 
   @Override
   public void addOccurrenceHighlights(@NotNull Editor editor,
-                                      @NotNull PsiElement[] elements,
+                                      PsiElement @NotNull [] elements,
                                       @NotNull TextAttributes attributes,
                                       boolean hideByTextChange,
                                       Collection<? super RangeHighlighter> outHighlighters) {
-    if (elements.length == 0) return;
+    if (elements.length == 0 || editor instanceof ImaginaryEditor) return;
     int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;

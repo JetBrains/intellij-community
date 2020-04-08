@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -29,7 +30,8 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
 
         holder
           .registerProblem(expression,
-                           "Method reference mapped to Comparator interface does not fulfill the Comparator contract",
+                           JavaAnalysisBundle
+                             .message("method.reference.mapped.to.comparator"),
                            new ReplaceWithComparatorQuickFix(name.equals("min")));
       }
     };
@@ -62,14 +64,14 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getName() {
-      return "Replace with " + (reverse ? "Comparator.reverseOrder()" : "Comparator.naturalOrder()");
+      return CommonQuickFixBundle.message("fix.replace.with.x", reverse ? "Comparator.reverseOrder()" : "Comparator.naturalOrder()");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with comparator";
+      return JavaAnalysisBundle.message("replace.with.comparator");
     }
 
     @Override

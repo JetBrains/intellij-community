@@ -19,6 +19,5 @@ public interface InspectionSuppressor {
   /**
    * @see BatchSuppressableTool#getBatchSuppressActions(PsiElement)
    */
-  @NotNull
-  SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId);
+  SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId);
 }

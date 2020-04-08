@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -36,7 +36,7 @@ public interface ExtensionPoint<T> {
   void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
 
   /**
-   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)}
+   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
    * to register extension as first or to completely replace existing extensions in tests.
    */
   @TestOnly
@@ -45,8 +45,7 @@ public interface ExtensionPoint<T> {
   /**
    * Prefer to use {@link #getExtensionList()}.
    */
-  @NotNull
-  T[] getExtensions();
+  T @NotNull [] getExtensions();
 
   @NotNull
   List<T> getExtensionList();
@@ -121,8 +120,8 @@ public interface ExtensionPoint<T> {
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
-  
-  void addExtensionPointListener(@NotNull ExtensionPointChangeListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+
+  void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
@@ -135,6 +134,9 @@ public interface ExtensionPoint<T> {
    * @return true if the EP allows adding/removing extensions at runtime
    */
   boolean isDynamic();
+
+  @NotNull
+  PluginDescriptor getPluginDescriptor();
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

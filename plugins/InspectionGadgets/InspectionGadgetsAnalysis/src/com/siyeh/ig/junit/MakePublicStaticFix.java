@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +64,6 @@ class MakePublicStaticFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Make public/static";
+    return InspectionGadgetsBundle.message("make.public.static.fix.family.name");
   }
 }

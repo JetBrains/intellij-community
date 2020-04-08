@@ -396,4 +396,11 @@ public class Foo {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test local record"() {
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject('a.java', 'class A {\n' +
+                                                                         '  void test() {\n' +
+                                                                         '    record A(String s) { }\n' +
+                                                                         '  }\n' +
+                                                                         '}\n'))
+  }
 }

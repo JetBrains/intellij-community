@@ -1,38 +1,71 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.TABS_NONE
 import com.intellij.openapi.application.ApplicationBundle.message
-import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.layout.*
-import javax.swing.JCheckBox
-import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.SwingConstants
+import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo
+import com.intellij.ui.tabs.layout.TabsLayoutSettingsUi
+import javax.swing.*
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 import kotlin.math.max
 
-class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.settingsdialog.IDE.editor.tabs"), EditorOptionsProvider {
+class EditorTabsConfigurable : BoundSearchableConfigurable(
+  message("configurable.editor.tabs.display.name"),
+  "reference.settingsdialog.IDE.editor.tabs",
+  ID
+), EditorOptionsProvider {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
 
   override fun createPanel(): DialogPanel {
     return panel {
       titledRow(message("group.tab.appearance")) {
-        row {
-          cell {
-            label(TAB_PLACEMENT + ":")
-            myEditorTabPlacement = tabPlacementComboBox().component
-          }
-        }
-        row {
-          myScrollTabLayoutInEditorCheckBox =
-            checkBox(scrollTabLayoutInEditor).enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+
+        if (JBTabsImpl.NEW_TABS) {
+          val tabPlacementComboBoxModel: DefaultComboBoxModel<Int> = DefaultComboBoxModel(TAB_PLACEMENTS)
+          val myTabsLayoutComboBox: JComboBox<TabsLayoutInfo> = TabsLayoutSettingsUi.tabsLayoutComboBox(tabPlacementComboBoxModel)
+
           row {
-            checkBox(hideTabsIfNeeded).enableIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }
-                                                  and myScrollTabLayoutInEditorCheckBox.selected)
+            cell {
+              label(message("combobox.editor.tab.tabslayout") + ":")
+              val builder = myTabsLayoutComboBox()
+              TabsLayoutSettingsUi.prepare(builder, myTabsLayoutComboBox)
+            }
+          }
+          row {
+            cell {
+              label(TAB_PLACEMENT + ":")
+              myEditorTabPlacement = tabPlacementComboBox(tabPlacementComboBoxModel).component
+            }
+          }
+
+          updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel)
+          tabPlacementComboBoxModel.addListDataListener(MyAnyChangeOfListListener {
+            updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel)
+          })
+        }
+        else {
+
+          row {
+            cell {
+              label(TAB_PLACEMENT + ":")
+              myEditorTabPlacement = tabPlacementComboBox().component
+            }
+          }
+          row {
+            myScrollTabLayoutInEditorCheckBox =
+              checkBox(scrollTabLayoutInEditor).enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+            row {
+              checkBox(hideTabsIfNeeded).enableIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }
+                                                    and myScrollTabLayoutInEditorCheckBox.selected)
+            }
           }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }
@@ -60,14 +93,20 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
           }
         }
         row {
-          buttonGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
-            row { radioButton(message("radio.close.non.modified.files.first"), ui::closeNonModifiedFilesFirst) }
-            row { radioButton(message("radio.close.less.frequently.used.files")) }.largeGapAfter()
+          buttonGroup(ui::closeNonModifiedFilesFirst) {
+            checkBoxGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
+              row { radioButton(message("radio.close.non.modified.files.first"), value = true) }
+              row { radioButton(message("radio.close.less.frequently.used.files"), value = false) }.largeGapAfter()
+            }
           }
         }
         row {
           buttonGroup(message("label.when.closing.active.editor")) {
-            row { radioButton(message("radio.activate.left.neighbouring.tab")) }
+            row {
+              radioButton(message("radio.activate.left.neighbouring.tab")).apply {
+                onReset { component.isSelected = !ui.activeRightEditorOnClose && !ui.activeMruEditorOnClose }
+              }
+            }
             row { radioButton(message("radio.activate.right.neighbouring.tab"), ui::activeRightEditorOnClose) }
             row { radioButton(message("radio.activate.most.recently.opened.tab"), ui::activeMruEditorOnClose) }.largeGapAfter()
           }
@@ -77,6 +116,10 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
         }
       }
     }
+  }
+
+  private fun updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel: DefaultComboBoxModel<Int>) {
+    myEditorTabPlacement.isEnabled = tabPlacementComboBoxModel.size > 1
   }
 
   private fun <T : JComponent> CellBuilder<T>.enableIfTabsVisible() {
@@ -92,5 +135,9 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
     }
   }
 
-  override fun getId() = ID
+  private class MyAnyChangeOfListListener(val action: () -> Unit) : ListDataListener {
+    override fun contentsChanged(e: ListDataEvent?) { action() }
+    override fun intervalRemoved(e: ListDataEvent?) { action() }
+    override fun intervalAdded(e: ListDataEvent?) { action() }
+  }
 }

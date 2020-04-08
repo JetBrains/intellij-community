@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XEditWatchAction extends XWatchesTreeActionBase {
   @Override
   public void update(@NotNull final AnActionEvent e) {

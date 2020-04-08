@@ -10,7 +10,7 @@ public class MultiChildDescriptor {
   private final MyType myType;
   private final PsiElement[] myElements;
 
-  public MultiChildDescriptor(@NotNull MyType type, @NotNull PsiElement[] elements) {
+  public MultiChildDescriptor(@NotNull MyType type, PsiElement @NotNull [] elements) {
     myType = type;
     myElements = elements;
   }
@@ -20,8 +20,7 @@ public class MultiChildDescriptor {
     return myType;
   }
 
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return myElements;
   }
 

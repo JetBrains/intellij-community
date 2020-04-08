@@ -27,10 +27,8 @@ import java.util.Map;
  * @see PsiSubstitutor#EMPTY
  */
 public final class EmptySubstitutor implements PsiSubstitutor {
-  private static final EmptySubstitutor INSTANCE = new EmptySubstitutor();
-  
   public static EmptySubstitutor getInstance()  {
-    return INSTANCE;
+    return Holder.INSTANCE;
   }
 
   @Override
@@ -72,7 +70,7 @@ public final class EmptySubstitutor implements PsiSubstitutor {
 
   @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  public PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return map.isEmpty() ? EMPTY : PsiSubstitutorFactory.getInstance().createSubstitutor(map);
   }
 
@@ -93,5 +91,9 @@ public final class EmptySubstitutor implements PsiSubstitutor {
   @Override
   public String toString() {
     return "EmptySubstitutor";
+  }
+  
+  private static class Holder {
+    private static final EmptySubstitutor INSTANCE = new EmptySubstitutor();
   }
 }

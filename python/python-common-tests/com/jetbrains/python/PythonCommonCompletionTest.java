@@ -9,9 +9,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -229,6 +231,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   public void testClassMethod() {  // PY-833
     doTest();
+  }
+
+  // PY-37755 PY-2700
+  public void testGlobalAndNonlocalMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testStarImport() {
@@ -1709,6 +1716,32 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testHasattrInConditionalExpression() {
     String[] inList = {"foo", "bar"};
     doTestHasattrContributor(inList, null);
+  }
+
+  // PY-39956
+  public void testDuplicatesFromProvider() {
+    final String testName = getTestName(true);
+
+    final VirtualFile skeletonsDir =
+      StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/" + PythonSdkUtil.SKELETON_DIR_NAME);
+
+    assertNotNull(skeletonsDir);
+    runWithAdditionalClassEntryInSdkRoots(
+      skeletonsDir,
+      () -> assertNull(doTestByText("from itertools import prod<caret>"))
+    );
+  }
+
+  // PY-38172
+  public void testNoPrivateStubElementsInModuleCompletion() {
+    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, "import collections\n" +
+                                                                      "collections.<caret>");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotEmpty(suggested);
+    assertDoesntContain(suggested, "Union", "TypeVar", "Generic", "_S", "_T");
+    assertProjectFilesNotParsed(file);
+    assertSdkRootsNotParsed(file);
   }
 
   private void doTestHasattrContributor(String[] inList, String[] notInList) {

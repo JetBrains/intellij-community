@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -28,7 +14,6 @@ import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -38,7 +23,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.AstLoadingFilter;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.Html5SchemaProvider;
@@ -48,18 +32,15 @@ import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author Mike
- */
 public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   private static final Key<Boolean> AUTO_GENERATED = Key.create("auto-generated xml schema");
@@ -297,11 +278,19 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   @Nullable
-  public static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
-    return CachedValuesManager.getCachedValue(descriptorFile, () -> {
+  public static XmlNSDescriptor getCachedHtmlNsDescriptor(@NotNull final XmlFile descriptorFile) {
+    return getCachedHtmlNsDescriptor(descriptorFile, "");
+  }
+
+  @Nullable
+  public static XmlNSDescriptor getCachedHtmlNsDescriptor(@NotNull final XmlFile descriptorFile, @NotNull final String prefix) {
+    Map<String, XmlNSDescriptor> descriptorsByPrefix = CachedValuesManager.getCachedValue(descriptorFile, () -> {
+      return CachedValueProvider.Result.create(new ConcurrentHashMap<>(), descriptorFile);
+    });
+    return descriptorsByPrefix.computeIfAbsent(prefix, p -> {
       final XmlDocument document = descriptorFile.getDocument();
-      if (document == null) return CachedValueProvider.Result.create(null, descriptorFile);
-      return CachedValueProvider.Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
+      if (document == null) return null;
+      return new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData());
     });
   }
 
@@ -322,7 +311,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     final String dtdUri = XmlUtil.getDtdUri(doctype);
     LOG.debug("DTD url for doctype " + doctype.getText() + " in file " + filePath + " is " + dtdUri);
-    
+
     if (dtdUri != null && !dtdUri.isEmpty()){
       XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
       if (xmlFile == null) {
@@ -330,7 +319,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
         xmlFile = XmlNamespaceIndex.guessDtd(dtdUri, containingFile);
       }
       final String schemaFilePath = getFilePathForLogging(xmlFile);
-      
+
       LOG.debug("Schema file for " + filePath + " is " + schemaFilePath);
 
       XmlNSDescriptor descriptorFromDtd = getNSDescriptorFromMetaData(

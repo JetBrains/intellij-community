@@ -167,7 +167,7 @@ class TreeHasherBase extends AbstractTreeHasher {
                                      EquivalenceDescriptor descriptor,
                                      NodeSpecificHasher hasher) {
     final NodeSpecificHasherBase ssrHasher = (NodeSpecificHasherBase)hasher;
-    final PsiElement element2 = DuplocatorUtil.skipNodeIfNeccessary(element, descriptor, ssrHasher.getNodeFilter());
+    final PsiElement element2 = DuplocatorUtil.skipNodeIfNecessary(element, descriptor, ssrHasher.getNodeFilter());
     final boolean canSkip = element2 != element;
 
     final PsiFragment fragment = buildFragment(hasher, element, 0);
@@ -249,6 +249,9 @@ class TreeHasherBase extends AbstractTreeHasher {
                                         PsiFragment parentFragment,
                                         NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement element = childDescriptor.getElement();
+    if (element == null) {
+      return Couple.of(0, 0);
+    }
 
     switch (childDescriptor.getType()) {
       case OPTIONALLY_IN_PATTERN:
@@ -258,24 +261,10 @@ class TreeHasherBase extends AbstractTreeHasher {
 
       case CHILDREN_OPTIONALLY_IN_PATTERN:
       case CHILDREN:
-        TreeHashResult[] childResults = computeHashesForChildren(element, parentFragment, nodeSpecificHasher);
-        int[] hashes = getHashes(childResults);
-        int[] costs = getCosts(childResults);
-
-        int hash = AbstractTreeHasher.vector(hashes, 31);
-        int cost = AbstractTreeHasher.vector(costs);
-
-        return Couple.of(hash, cost);
+        return hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 31);
 
       case CHILDREN_IN_ANY_ORDER:
-        childResults = computeHashesForChildren(element, parentFragment, nodeSpecificHasher);
-        hashes = getHashes(childResults);
-        costs = getCosts(childResults);
-
-        hash = AbstractTreeHasher.vector(hashes);
-        cost = AbstractTreeHasher.vector(costs);
-
-        return Couple.of(hash, cost);
+        return hashChildResults(computeHashesForChildren(element, parentFragment, nodeSpecificHasher), 1);
 
       default:
         return Couple.of(0, 0);
@@ -288,32 +277,14 @@ class TreeHasherBase extends AbstractTreeHasher {
                                       NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement[] elements = childDescriptor.getElements();
 
-    if (elements == null) {
-      return Couple.of(0, 0);
-    }
-
     switch (childDescriptor.getType()) {
 
       case OPTIONALLY_IN_PATTERN:
       case DEFAULT:
-        TreeHashResult[] childResults = computeHashes(elements, parentFragment, nodeSpecificHasher);
-        int[] hashes = getHashes(childResults);
-        int[] costs = getCosts(childResults);
-
-        int hash = AbstractTreeHasher.vector(hashes, 31);
-        int cost = AbstractTreeHasher.vector(costs);
-
-        return Couple.of(hash, cost);
+        return hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 31);
 
       case IN_ANY_ORDER:
-        childResults = computeHashes(elements, parentFragment, nodeSpecificHasher);
-        hashes = getHashes(childResults);
-        costs = getCosts(childResults);
-
-        hash = AbstractTreeHasher.vector(hashes);
-        cost = AbstractTreeHasher.vector(costs);
-
-        return Couple.of(hash, cost);
+        return hashChildResults(computeHashes(elements, parentFragment, nodeSpecificHasher), 1);
 
       default:
         return Couple.of(0, 0);
@@ -321,9 +292,19 @@ class TreeHasherBase extends AbstractTreeHasher {
   }
 
   @NotNull
-  private TreeHashResult[] computeHashesForChildren(PsiElement element,
-                                                    PsiFragment parentFragment,
-                                                    NodeSpecificHasher nodeSpecificHasher) {
+  private static Couple<Integer> hashChildResults(TreeHashResult[] childResults, int multiplier) {
+    int[] hashes = getHashes(childResults);
+    int[] costs = getCosts(childResults);
+
+    int hash = AbstractTreeHasher.vector(hashes, multiplier);
+    int cost = AbstractTreeHasher.vector(costs);
+
+    return Couple.of(hash, cost);
+  }
+
+  private TreeHashResult @NotNull [] computeHashesForChildren(PsiElement element,
+                                                              PsiFragment parentFragment,
+                                                              NodeSpecificHasher nodeSpecificHasher) {
     final List<TreeHashResult> result = new ArrayList<>();
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -333,10 +314,9 @@ class TreeHasherBase extends AbstractTreeHasher {
     return result.toArray(new TreeHashResult[0]);
   }
 
-  @NotNull
-  private TreeHashResult[] computeHashes(PsiElement[] elements,
-                                         PsiFragment parentFragment,
-                                         NodeSpecificHasher nodeSpecificHasher) {
+  private TreeHashResult @NotNull [] computeHashes(PsiElement[] elements,
+                                                   PsiFragment parentFragment,
+                                                   NodeSpecificHasher nodeSpecificHasher) {
     TreeHashResult[] result = new TreeHashResult[elements.length];
 
     for (int i = 0; i < elements.length; i++) {

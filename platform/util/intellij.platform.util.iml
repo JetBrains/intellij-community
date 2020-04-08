@@ -14,7 +14,7 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
-    <orderEntry type="library" exported="" name="jetbrains-annotations-java5" level="project" />
+    <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" exported="" />
     <orderEntry type="library" name="jna" level="project" />

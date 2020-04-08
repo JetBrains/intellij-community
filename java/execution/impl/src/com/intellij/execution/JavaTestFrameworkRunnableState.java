@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -7,11 +7,10 @@ import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.impl.ConsoleBuffer;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.target.*;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -30,6 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -120,7 +120,28 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull protected abstract String getForkMode();
 
-  @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
+  @NotNull
+  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+    appendForkInfo(executor);
+    appendRepeatMode();
+
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, new EmptyProgressIndicator());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
+    TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
+    Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
+
+    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(process,
+                                                                               targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                                               targetedCommandLine.getCharset(),
+                                                                               targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+
+    ProcessTerminatedListener.attach(processHandler);
+    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      searchForTestsTask.attachTaskToProcess(processHandler);
+    }
+    return processHandler;
+  }
 
   public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
@@ -134,14 +155,21 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return false;
   }
 
+  @NotNull
   @Override
-  protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    GeneralCommandLine commandLine = super.createCommandLine().withInput(InputRedirectAware.getInputFile(getConfiguration()));
-    Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                 @Nullable TargetEnvironmentConfiguration configuration)
+    throws ExecutionException {
+    TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request, configuration);
+    File inputFile = InputRedirectAware.getInputFile(getConfiguration());
+    if (inputFile != null) {
+      commandLineBuilder.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+    }
+    Map<String, String> content = commandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
     }
-    return commandLine;
+    return commandLineBuilder;
   }
 
   @NotNull

@@ -5,23 +5,28 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Eugene.Kudelevsky
@@ -29,9 +34,13 @@ import java.util.Map;
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
-  public CreateFromTemplateAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                                  @Nls(capitalization = Nls.Capitalization.Sentence) String description, Icon icon) {
+  public CreateFromTemplateAction(@NlsActions.ActionText String text,
+                                  @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
+  }
+
+  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @Override
@@ -48,7 +57,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
 
-    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
+    final CreateFileFromTemplateDialog.Builder builder = createDialogBuilder(project, dataContext);
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
@@ -74,10 +83,26 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                  },
                  createdElement -> {
                    if (createdElement != null) {
+                     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+                     int offset = getOffsetToPreserve(editor);
                      view.selectElement(createdElement);
+                     if (offset != -1 && editor != null && !editor.isDisposed()) {
+                       editor.getCaretModel().moveToOffset(offset);
+                     }
                      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
                    }
                  });
+  }
+
+  @SuppressWarnings("TestOnlyProblems")
+  private static CreateFileFromTemplateDialog.Builder createDialogBuilder(Project project, DataContext dataContext) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      TestDialogBuilder.TestAnswers answers = dataContext.getData(TestDialogBuilder.TestAnswers.KEY);
+      if (answers != null) {
+        return new TestDialogBuilder(answers);
+      }
+    }
+    return CreateFileFromTemplateDialog.createDialog(project);
   }
 
   protected void postProcess(T createdElement, String templateName, Map<String,String> customProperties) {
@@ -88,12 +113,14 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
 
   protected abstract void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder);
 
+  @NonNls
   @Nullable
   protected String getDefaultTemplateName(@NotNull PsiDirectory dir) {
     String property = getDefaultTemplateProperty();
     return property == null ? null : PropertiesComponent.getInstance(dir.getProject()).getValue(property);
   }
 
+  @NonNls
   @Nullable
   protected String getDefaultTemplateProperty() {
     return null;
@@ -115,11 +142,20 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return project != null && view != null && view.getDirectories().length != 0;
   }
 
-  protected abstract String getActionName(PsiDirectory directory, @NotNull String newName, String templateName);
+  @NlsContexts.Command
+  protected abstract String getActionName(PsiDirectory directory, @NonNls @NotNull String newName, @NonNls String templateName);
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
+  }
+
+  private static Integer getOffsetToPreserve(Editor editor) {
+    if (editor == null) return -1;
+    int offset = editor.getCaretModel().getOffset();
+    if (offset == 0) return -1;
+    return offset;
   }
 
   //todo append $END variable to templates?

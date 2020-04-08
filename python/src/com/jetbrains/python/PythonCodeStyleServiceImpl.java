@@ -47,6 +47,16 @@ public class PythonCodeStyleServiceImpl extends PythonCodeStyleService {
   }
 
   @Override
+  public boolean isOptimizeImportsSortNamesInFromImports(@NotNull PsiFile file) {
+    return CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class).OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS;
+  }
+
+  @Override
+  public boolean isOptimizeImportsSortImports(@NotNull PsiFile file) {
+    return CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class).OPTIMIZE_IMPORTS_SORT_IMPORTS;
+  }
+
+  @Override
   public void reparseOpenEditorFiles(@NotNull Project project) {
     FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
   }

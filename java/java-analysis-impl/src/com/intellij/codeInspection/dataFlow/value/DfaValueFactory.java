@@ -239,7 +239,7 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions, PsiType targetType) {
+  public DfaValue createCommonValue(PsiExpression @NotNull [] expressions, PsiType targetType) {
     DfaValue loopElement = null;
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = createValue(expression);

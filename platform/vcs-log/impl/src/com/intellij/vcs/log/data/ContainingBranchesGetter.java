@@ -29,7 +29,7 @@ import java.util.*;
 public class ContainingBranchesGetter {
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
-  @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
+  @NotNull private final SequentialLimitedLifoExecutor<CachingTask> myTaskExecutor;
   @NotNull private final VcsLogData myLogData;
 
   // other fields accessed only from EDT
@@ -41,15 +41,7 @@ public class ContainingBranchesGetter {
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
     myLogData = logData;
     myConditionsCache = new CurrentBranchConditionCache(logData, parentDisposable);
-    myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, task -> {
-      final List<String> branches = task.getContainingBranches(myLogData);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        // if cache is cleared (because of log refresh) during this task execution,
-        // this will put obsolete value into the old instance we don't care anymore
-        task.cache.put(new CommitId(task.hash, task.root), branches);
-        notifyListeners();
-      });
-    });
+    myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, CachingTask::run);
     myLogData.addDataPackChangeListener(dataPack -> {
       Collection<VcsRef> currentBranches = dataPack.getRefsModel().getBranches();
       int checksum = currentBranches.hashCode();
@@ -97,8 +89,7 @@ public class ContainingBranchesGetter {
     LOG.assertTrue(EventQueue.isDispatchThread());
     List<String> refs = getContainingBranchesFromCache(root, hash);
     if (refs == null) {
-      DataPack dataPack = myLogData.getDataPack();
-      myTaskExecutor.queue(new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()));
+      myTaskExecutor.queue(new CachingTask(createTask(root, hash, myLogData.getDataPack()), myCache));
     }
     return refs;
   }
@@ -146,62 +137,38 @@ public class ContainingBranchesGetter {
   @CalledInAny
   @NotNull
   public List<String> getContainingBranchesSynchronously(@NotNull VirtualFile root, @NotNull Hash hash) {
-    return doGetContainingBranches(myLogData.getDataPack(), root, hash);
+    return createTask(root, hash, myLogData.getDataPack()).getContainingBranches();
   }
 
   @NotNull
-  private List<String> doGetContainingBranches(@NotNull DataPack dataPack, @NotNull VirtualFile root, @NotNull Hash hash) {
-    return new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()).getContainingBranches(myLogData);
+  private ContainingBranchesGetter.Task createTask(@NotNull VirtualFile root, @NotNull Hash hash, @NotNull DataPack dataPack) {
+    VcsLogProvider provider = myLogData.getLogProvider(root);
+    if (canUseGraphForComputation(provider)) {
+      return new GraphTask(provider, root, hash, dataPack);
+    }
+    return new ProviderTask(provider, root, hash);
   }
 
   private static boolean canUseGraphForComputation(@NotNull VcsLogProvider logProvider) {
     return VcsLogProperties.LIGHTWEIGHT_BRANCHES.getOrDefault(logProvider);
   }
 
-  private static class Task {
-    @NotNull private final VirtualFile root;
-    @NotNull private final Hash hash;
-    @NotNull private final SLRUMap<CommitId, List<String>> cache;
-    @NotNull private final RefsModel refs;
-    @NotNull private final PermanentGraph<Integer> graph;
+  private abstract static class Task {
+    @NotNull private final VcsLogProvider myProvider;
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final Hash myHash;
 
-    Task(@NotNull VirtualFile root,
-         @NotNull Hash hash,
-         @NotNull SLRUMap<CommitId, List<String>> cache,
-         @NotNull PermanentGraph<Integer> graph,
-         @NotNull RefsModel refs) {
-      this.root = root;
-      this.hash = hash;
-      this.cache = cache;
-      this.graph = graph;
-      this.refs = refs;
+    Task(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash) {
+      myProvider = provider;
+      myRoot = root;
+      myHash = hash;
     }
 
     @NotNull
-    public List<String> getContainingBranches(@NotNull VcsLogData logData) {
+    public List<String> getContainingBranches() {
       StopWatch sw = StopWatch.start("get containing branches");
       try {
-        VcsLogProvider provider = logData.getLogProvider(root);
-        if (canUseGraphForComputation(provider)) {
-          Set<Integer> branchesIndexes = graph.getContainingBranches(logData.getCommitIndex(hash, root));
-
-          Collection<VcsRef> branchesRefs = new HashSet<>();
-          for (Integer index : branchesIndexes) {
-            refs.refsToCommit(index).stream().filter(ref -> ref.getType().isBranch()).forEach(branchesRefs::add);
-          }
-          branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getLabelsOrderComparator());
-
-          ArrayList<String> branchesList = new ArrayList<>();
-          for (VcsRef ref : branchesRefs) {
-            branchesList.add(ref.getName());
-          }
-          return branchesList;
-        }
-        else {
-          List<String> branches = new ArrayList<>(provider.getContainingBranches(root, hash));
-          Collections.sort(branches);
-          return branches;
-        }
+        return getContainingBranches(myProvider, myRoot, myHash);
       }
       catch (VcsException e) {
         LOG.warn(e);
@@ -210,6 +177,73 @@ public class ContainingBranchesGetter {
       finally {
         sw.report();
       }
+    }
+
+
+    protected abstract @NotNull List<String> getContainingBranches(@NotNull VcsLogProvider provider,
+                                                                   @NotNull VirtualFile root, @NotNull Hash hash) throws VcsException;
+  }
+
+  private class GraphTask extends Task {
+    @NotNull private final RefsModel myRefs;
+    @NotNull private final PermanentGraph<Integer> myGraph;
+
+    GraphTask(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash, @NotNull DataPack dataPack) {
+      super(provider, root, hash);
+      myGraph = dataPack.getPermanentGraph();
+      myRefs = dataPack.getRefsModel();
+    }
+
+    @Override
+    protected @NotNull List<String> getContainingBranches(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash) {
+      Set<Integer> branchesIndexes = myGraph.getContainingBranches(myLogData.getCommitIndex(hash, root));
+
+      Collection<VcsRef> branchesRefs = new HashSet<>();
+      for (Integer index : branchesIndexes) {
+        myRefs.refsToCommit(index).stream().filter(ref -> ref.getType().isBranch()).forEach(branchesRefs::add);
+      }
+      branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getLabelsOrderComparator());
+
+      ArrayList<String> branchesList = new ArrayList<>();
+      for (VcsRef ref : branchesRefs) {
+        branchesList.add(ref.getName());
+      }
+      return branchesList;
+    }
+  }
+
+  private static class ProviderTask extends Task {
+
+    ProviderTask(@NotNull VcsLogProvider provider, @NotNull VirtualFile root, @NotNull Hash hash) {
+      super(provider, root, hash);
+    }
+
+    @Override
+    public @NotNull List<String> getContainingBranches(@NotNull VcsLogProvider provider,
+                                                       @NotNull VirtualFile root, @NotNull Hash hash) throws VcsException {
+      List<String> branches = new ArrayList<>(provider.getContainingBranches(root, hash));
+      Collections.sort(branches);
+      return branches;
+    }
+  }
+
+  private class CachingTask {
+    @NotNull private final Task myTask;
+    @NotNull private final SLRUMap<CommitId, List<String>> myCache;
+
+    CachingTask(@NotNull Task task, @NotNull SLRUMap<CommitId, List<String>> cache) {
+      myTask = task;
+      myCache = cache;
+    }
+
+    public void run() {
+      List<String> branches = myTask.getContainingBranches();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        // if cache is cleared (because of log refresh) during this task execution,
+        // this will put obsolete value into the old instance we don't care anymore
+        myCache.put(new CommitId(myTask.myHash, myTask.myRoot), branches);
+        notifyListeners();
+      });
     }
   }
 }

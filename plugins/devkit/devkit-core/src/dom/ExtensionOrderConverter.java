@@ -38,9 +38,8 @@ import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensions
 public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
     // avoid 'IntellijIdeaRulezzz' placeholder
     PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element);
     String orderValue = ElementManipulators.getValueText(originalElement);
@@ -198,9 +197,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
       return PomService.convertToPsi(target);
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       ExtensionPoint extensionPoint = myExtension.getExtensionPoint();
       if (extensionPoint == null) {
         return ArrayUtilRt.EMPTY_OBJECT_ARRAY;

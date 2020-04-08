@@ -5,7 +5,7 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -135,7 +135,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         throw new EvaluateException(e.getMessage(), e);
       }
       catch (ObjectCollectedException ignored) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.thread.collected"));
       }
       catch (IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -331,7 +331,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
       catch (InternalException e) {
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
-          throw new EvaluateException(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
+          throw new EvaluateException(JavaDebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
         }
         else throw e;
       }

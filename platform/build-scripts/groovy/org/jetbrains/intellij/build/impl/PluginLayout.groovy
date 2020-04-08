@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
@@ -11,13 +10,10 @@ import java.util.function.BiFunction
 
 /**
  * Describes layout of a plugin in the product distribution
- *
- * @author nik
  */
 class PluginLayout extends BaseLayout {
   final String mainModule
   String directoryName
-  final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
@@ -36,6 +32,10 @@ class PluginLayout extends BaseLayout {
    * {@code body} parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
    * specify the plugin module in {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundledPluginModules/pluginModulesToPublish} list.
    *
+   * <p>Note that project-level libraries on which the plugin modules depend, are automatically put to 'IDE_HOME/lib' directory for all IDEs
+   * which are compatible with the plugin. If this isn't desired (e.g. a library is used in a single plugin only, or if plugins where
+   * a library is used aren't bundled with IDEs so we don't want to increase size of the distribution, you may invoke {@link PluginLayoutSpec#withProjectLibrary}
+   * to include such a library to the plugin distribution.</p>
    * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
    */
   static PluginLayout plugin(String mainModuleName, @DelegatesTo(PluginLayoutSpec) Closure body = {}) {
@@ -63,21 +63,6 @@ class PluginLayout extends BaseLayout {
   String toString() {
     return "Plugin '$mainModule'"
   }
-/**
-   * @return map from a JAR name to list of modules
-   */
-  MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {
-    def result = new MultiValuesMap<String, String>(true)
-    for (Map.Entry<String, Collection<String>> entry : moduleJars.entrySet()) {
-      for (String moduleName : entry.getValue()) {
-        if (!optionalModules.contains(moduleName) || enabledPluginModules.contains(moduleName)) {
-          result.put(entry.key, moduleName)
-        }
-      }
-    }
-    return result
-  }
-
 
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
@@ -87,6 +72,9 @@ class PluginLayout extends BaseLayout {
     private boolean directoryNameSetExplicitly
     private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
 
+    /**
+     * @deprecated version of the plugin is automatically set to build number of IDE it's built with
+     */
     String version
 
     PluginLayoutSpec(PluginLayout layout) {
@@ -163,31 +151,8 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
-     * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
-     * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
-     * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
-     * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
-     *
-     * @deprecated if a module is not included into the plugin in some IDE, it may cause problems if a plugin it optionally depends on is installed
-     * as a custom plugin, so it isn't recommended to use optional dependencies. Use {@link #withModule(java.lang.String, java.lang.String)} instead.
+     * @deprecated use {@link #withModule} instead
      */
-    void withOptionalModule(String moduleName, String relativeJarPath) {
-      layout.optionalModules << moduleName
-      withModule(moduleName, relativeJarPath)
-    }
-
-    /**
-     * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
-     * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
-     *
-     * @deprecated if a module is not included into the plugin in some IDE, it may cause problems if a plugin it optionally depends on is installed
-     * as a custom plugin, so it isn't recommended to use optional dependencies. Use  {@link #withModule(java.lang.String)} instead.
-     */
-    void withOptionalModule(String moduleName) {
-      layout.optionalModules << moduleName
-      withModule(moduleName)
-    }
-
     void withJpsModule(String moduleName) {
       withModule(moduleName, "jps/${moduleName}.jar")
     }

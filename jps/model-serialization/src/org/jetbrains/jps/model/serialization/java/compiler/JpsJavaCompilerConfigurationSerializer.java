@@ -15,9 +15,6 @@ import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionSerializer {
   public static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   public static final String RESOURCE_EXTENSIONS = "resourceExtensions";
@@ -40,7 +37,7 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
 
   @Override
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     Element addNotNullTag = componentTag.getChild(ADD_NOTNULL_ASSERTIONS);
     if (addNotNullTag != null) {
       configuration.setAddNotNullAssertions(Boolean.parseBoolean(addNotNullTag.getAttributeValue(ENABLED, "true")));
@@ -101,7 +98,7 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
 
   @Override
   public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     for (String pattern : DEFAULT_WILDCARD_PATTERNS) {
       configuration.addResourcePattern(pattern);
     }

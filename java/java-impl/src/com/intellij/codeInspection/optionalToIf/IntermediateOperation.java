@@ -19,7 +19,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 abstract class IntermediateOperation implements Operation {
 
   @Nullable
-  static IntermediateOperation create(@NotNull String name, @NotNull PsiExpression[] args) {
+  static IntermediateOperation create(@NotNull String name, PsiExpression @NotNull [] args) {
     if (args.length != 1) return null;
 
     if (name.equals("map")) {

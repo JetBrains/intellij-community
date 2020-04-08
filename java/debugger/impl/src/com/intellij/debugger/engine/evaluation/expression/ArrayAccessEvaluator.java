@@ -20,7 +20,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -48,11 +48,11 @@ class ArrayAccessEvaluator implements Evaluator {
     Value indexValue = (Value)myIndexEvaluator.evaluate(context);
     Value arrayValue = (Value)myArrayReferenceEvaluator.evaluate(context);
     if (!(arrayValue instanceof ArrayReference)) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.array.reference.expected"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.array.reference.expected"));
     }
     myEvaluatedArrayReference = (ArrayReference)arrayValue;
     if (!DebuggerUtils.isInteger(indexValue)) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.index.expression"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.index.expression"));
     }
     myEvaluatedIndex = ((PrimitiveValue)indexValue).intValue();
     try {

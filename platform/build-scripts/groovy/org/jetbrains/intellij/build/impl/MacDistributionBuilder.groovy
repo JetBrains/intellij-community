@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.SystemProperties
@@ -8,9 +8,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.time.LocalDate
 
-/**
- * @author nik
- */
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
@@ -44,19 +41,22 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </dict>
 """ : "")
     def associations = ""
-    if (!customizer.fileAssociations.empty) {
-      associations = """<dict>
+    for (FileAssociation fileAssociation : customizer.fileAssociations) {
+        def iconFileName = targetIcnsFileName
+        def iconFile = fileAssociation.iconPath
+        if (!iconFile.isEmpty()) {
+          iconFileName = iconFile.substring(iconFile.lastIndexOf(File.separator) + 1, iconFile.size())
+        }
+        associations += """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
 """
-      customizer.fileAssociations.each {
-        associations += "          <string>${it}</string>\n"
-      }
-      associations +=  """        </array>
+          associations += "          <string>${fileAssociation.extension}</string>\n"
+          associations +=  """        </array>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
         <key>CFBundleTypeIconFile</key>
-        <string>$targetIcnsFileName</string>        
+        <string>$iconFileName</string>        
       </dict>
 """
     }
@@ -102,15 +102,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
           boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
                              !SystemProperties.getBooleanProperty("build.is.personal", false)
-          // With second JRE
           def jreManager = buildContext.bundledJreManager
-          if (jreManager.doBundleSecondJre()) {
-            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                          jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(),
-                                          jreManager.secondJreSuffix(),
-                                          false) // Disabled because JBR 8 cannot be notarized successfully
-          }
-          // With first aka main JRE
+          // With JRE
           File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
           if (jreArchive.file) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
@@ -147,6 +140,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
     buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
 
+    customizer.fileAssociations.each {
+      if (!it.iconPath.empty) {
+        buildContext.ant.copy(file: it.iconPath, todir: "$target/Resources", overwrite: "true")
+      }
+    }
+
     String fullName = buildContext.applicationInfo.productName
 
     //todo[nik] improve
@@ -157,8 +156,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     //todo[nik] don't mix properties for idea.properties file with properties for Info.plist
     Map<String, String> properties = readIdeaProperties(ideaPropertiesFile, customIdeaProperties)
+    properties["idea.vendor.name"] = buildContext.applicationInfo.shortCompanyName
 
-    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
+    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable", "idea.vendor.name"]
 
     String coreProperties = submapToXml(properties, coreKeys)
 

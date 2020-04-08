@@ -19,11 +19,11 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public final class ProjectFileIndexFacade extends FileIndexFacade {
+public class ProjectFileIndexFacade extends FileIndexFacade {
   private final DirectoryIndex myDirectoryIndex;
   private final ProjectFileIndex myFileIndex;
 
-  ProjectFileIndexFacade(@NotNull Project project) {
+  protected ProjectFileIndexFacade(@NotNull Project project) {
     super(project);
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

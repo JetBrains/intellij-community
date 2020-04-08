@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -20,6 +22,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 final class ContentComboLabel extends BaseLabel {
+  private final PopupState myPopupState = new PopupState();
+
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
@@ -28,7 +32,7 @@ final class ContentComboLabel extends BaseLabel {
 
     @Override
     public boolean isActive() {
-      return myUi.myWindow.isActive();
+      return myUi.window.isActive();
     }
   };
   private final ComboContentLayout myLayout;
@@ -44,7 +48,7 @@ final class ContentComboLabel extends BaseLabel {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
+            ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
           }
           super.keyPressed(e);
         }
@@ -57,7 +61,8 @@ final class ContentComboLabel extends BaseLabel {
     super.processMouseEvent(e);
 
     if (UIUtil.isActionClick(e)) {
-      ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
+      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+      ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager(), myPopupState);
     }
   }
 
@@ -68,7 +73,7 @@ final class ContentComboLabel extends BaseLabel {
 
   @Override
   protected boolean allowEngravement() {
-    return myUi == null || myUi.myWindow.isActive();
+    return myUi == null || myUi.window.isActive();
   }
 
   @Override
@@ -109,7 +114,8 @@ final class ContentComboLabel extends BaseLabel {
   @Nullable
   @Override
   public Content getContent() {
-    return myUi.contentManager == null ? null : myUi.contentManager.getSelectedContent();
+    ContentManager contentManager = myUi.getContentManager();
+    return contentManager == null ? null : contentManager.getSelectedContent();
   }
 
   @Override
@@ -145,7 +151,7 @@ final class ContentComboLabel extends BaseLabel {
     @Override
     public boolean doAccessibleAction(int index) {
       if (index == 0) {
-        ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
+        ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
         return true;
       }
       else {

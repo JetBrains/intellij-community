@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BuildoutModulesConfigurable extends ModuleAwareProjectConfigurable implements NonDefaultProjectConfigurable {
   public BuildoutModulesConfigurable(Project project) {
-    super(project, "Buildout Support", "reference-python-buildout");
+    super(project, PyBundle.message("configurable.BuildoutModulesConfigurable.display.name"), "reference-python-buildout");
   }
 
   @NotNull

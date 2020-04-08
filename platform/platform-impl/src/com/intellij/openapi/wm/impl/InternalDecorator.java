@@ -1,24 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
@@ -35,36 +34,37 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Map;
 
-/**
- * @author Eugene Belyaev
- * @author Vladimir Kondratyev
- */
 public final class InternalDecorator extends JPanel implements Queryable, DataProvider, ComponentWithMnemonics {
   private final ToolWindowImpl toolWindow;
-  private final MyDivider myDivider;
+
+  @Nullable
+  private JPanel divider;
+
+  private final JPanel dividerAndHeader = new JPanel(new BorderLayout());
+
+  private Disposable disposable;
 
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
   static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
 
-  //See ToolWindowViewModeAction and ToolWindowMoveAction
+  // see ToolWindowViewModeAction and ToolWindowMoveAction
   public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
   public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
   public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
 
   private final ToolWindowHeader header;
 
-  InternalDecorator(@NotNull ToolWindowImpl toolWindow) {
+  InternalDecorator(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull JComponent decoratorChild) {
     super(new BorderLayout());
 
     this.toolWindow = toolWindow;
-    myDivider = new MyDivider();
 
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
-    header = new ToolWindowHeader(toolWindow, () -> toolWindow.createPopupGroup(true)) {
+    header = new ToolWindowHeader(toolWindow, contentUi, () -> toolWindow.createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
         return toolWindow.isActive();
@@ -79,10 +79,26 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
 
     installFocusTraversalPolicy(this, new LayoutFocusTraversalPolicy());
-    add(header, BorderLayout.NORTH);
+
+    dividerAndHeader.setOpaque(false);
+    dividerAndHeader.add(header, BorderLayout.SOUTH);
+    add(dividerAndHeader, BorderLayout.NORTH);
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
+
+    add(decoratorChild, BorderLayout.CENTER);
+
+    setBorder(new InnerPanelBorder(toolWindow));
+  }
+
+  public ActionToolbar getHeaderToolbar() {
+    return header.getToolbar();
+  }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x, y, width, height);
   }
 
   @Override
@@ -90,59 +106,56 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return toolWindow.getId();
   }
 
-  public boolean isFocused(@NotNull JFrame frame) {
-    IdeFocusManager focusManager = toolWindow.getToolWindowManager().getFocusManager();
-    JComponent toolWindowComponent = toolWindow.getComponentIfInitialized();
-    if (toolWindowComponent == null) {
-      return false;
+  @NotNull
+  private JComponent initDivider() {
+    if (divider != null) {
+      return divider;
     }
 
-    Component component = focusManager.getFocusedDescendantFor(toolWindowComponent);
-    if (component != null) {
-      return true;
-    }
-
-    Component owner = focusManager.getLastFocusedFor(frame);
-    return owner != null && SwingUtilities.isDescendingFrom(owner, toolWindowComponent);
+    divider = new JPanel() {
+      @NotNull
+      @Override
+      public Cursor getCursor() {
+        WindowInfo info = toolWindow.getWindowInfo();
+        boolean isVerticalCursor = info.getType() == ToolWindowType.DOCKED ? info.getAnchor().isSplitVertically() : info.getAnchor().isHorizontal();
+        return isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+      }
+    };
+    return divider;
   }
 
   void applyWindowInfo(@NotNull WindowInfo info) {
-    // Anchor
-    ToolWindowAnchor anchor = info.getAnchor();
-    if (info.isSliding()) {
-      myDivider.invalidate();
-      if (ToolWindowAnchor.TOP == anchor) {
-        add(myDivider, BorderLayout.SOUTH);
+    if (info.getType() == ToolWindowType.SLIDING) {
+      ToolWindowAnchor anchor = info.getAnchor();
+      JComponent divider = initDivider();
+      divider.invalidate();
+      if (anchor == ToolWindowAnchor.TOP) {
+        add(divider, BorderLayout.SOUTH);
       }
-      else if (ToolWindowAnchor.LEFT == anchor) {
-        add(myDivider, BorderLayout.EAST);
+      else if (anchor == ToolWindowAnchor.LEFT) {
+        add(divider, BorderLayout.EAST);
       }
-      else if (ToolWindowAnchor.BOTTOM == anchor) {
-        add(myDivider, BorderLayout.NORTH);
+      else if (anchor == ToolWindowAnchor.BOTTOM) {
+        dividerAndHeader.add(divider, BorderLayout.NORTH);
       }
-      else if (ToolWindowAnchor.RIGHT == anchor) {
-        add(myDivider, BorderLayout.WEST);
+      else if (anchor == ToolWindowAnchor.RIGHT) {
+        add(divider, BorderLayout.WEST);
       }
-      myDivider.setPreferredSize(new Dimension(0, 0));
+      divider.setPreferredSize(new Dimension(0, 0));
     }
-    else {
+    else if (divider != null) {
       // docked and floating windows don't have divider
-      remove(myDivider);
+      divider.getParent().remove(divider);
+      divider = null;
     }
-
-    validate();
-    repaint();
 
     // push "apply" request forward
-    if (info.isFloating()) {
+    if (info.getType() == ToolWindowType.FLOATING) {
       FloatingDecorator floatingDecorator = (FloatingDecorator)SwingUtilities.getAncestorOfClass(FloatingDecorator.class, this);
       if (floatingDecorator != null) {
         floatingDecorator.apply(info);
       }
     }
-
-    toolWindow.getContentUI().setType(info.getContentUiType());
-    setBorder(new InnerPanelBorder(toolWindow, info));
   }
 
   @Nullable
@@ -152,14 +165,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       return toolWindow;
     }
     return null;
-  }
-
-  void addContentComponent(boolean dumbAware, @NotNull ContentManager contentManager) {
-    JComponent toolWindowComponent = contentManager.getComponent();
-    if (!dumbAware) {
-      toolWindowComponent = DumbService.getInstance(toolWindow.getToolWindowManager().getProject()).wrapGently(toolWindowComponent, toolWindow.getDisposable());
-    }
-    add(toolWindowComponent, BorderLayout.CENTER);
   }
 
   @Override
@@ -174,27 +179,24 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return super.processKeyBinding(ks, e, condition, pressed);
   }
 
-  public void setTitleActions(@NotNull AnAction[] actions) {
+  public void setTitleActions(@NotNull AnAction @NotNull [] actions) {
     header.setAdditionalTitleActions(actions);
   }
 
-  void setTabActions(@NotNull AnAction[] actions) {
+  void setTabActions(@NotNull AnAction @NotNull [] actions) {
     header.setTabActions(actions);
   }
 
   private static final class InnerPanelBorder implements Border {
     @NotNull
     private final ToolWindowImpl window;
-    @NotNull
-    private final WindowInfo windowInfo;
 
-    private InnerPanelBorder(@NotNull ToolWindowImpl window, @NotNull WindowInfo windowInfo) {
+    private InnerPanelBorder(@NotNull ToolWindowImpl window) {
       this.window = window;
-      this.windowInfo = windowInfo;
     }
 
     @Override
-    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
+    public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
       g.setColor(JBColor.border());
       doPaintBorder(c, g, x, y, width, height);
     }
@@ -227,6 +229,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     @Override
     public Insets getBorderInsets(@NotNull Component c) {
       ToolWindowManagerImpl toolWindowManager = window.getToolWindowManager();
+      WindowInfo windowInfo = window.getWindowInfo();
       if (toolWindowManager.getProject().isDisposed() ||
           !toolWindowManager.isToolWindowRegistered(window.getId()) || windowInfo.getType() == ToolWindowType.FLOATING || windowInfo.getType() == ToolWindowType.WINDOWED) {
         return JBUI.emptyInsets();
@@ -280,103 +283,117 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     header.setVisible(value);
   }
 
-  private final class MyDivider extends JPanel {
-    private boolean myDragging;
-    private Disposable myDisposable;
-    private IdeGlassPane myGlassPane;
+  public boolean isHeaderVisible() {
+    return header.isVisible();
+  }
 
-    private final MouseAdapter myListener = new MyMouseAdapter();
+  @Override
+  public void addNotify() {
+    super.addNotify();
 
-    @Override
-    public void addNotify() {
-      super.addNotify();
-      myGlassPane = IdeGlassPaneUtil.find(this);
-      myDisposable = Disposer.newDisposable();
-      myGlassPane.addMouseMotionPreprocessor(myListener, myDisposable);
-      myGlassPane.addMousePreprocessor(myListener, myDisposable);
+    JPanel divider = this.divider;
+    if (divider != null) {
+      IdeGlassPane glassPane = (IdeGlassPane)getRootPane().getGlassPane();
+      if (disposable != null) {
+        Disposer.dispose(disposable);
+      }
+      disposable = Disposer.newDisposable();
+      ResizeOrMoveDocketToolWindowMouseListener listener = new ResizeOrMoveDocketToolWindowMouseListener(divider, glassPane, this);
+      glassPane.addMouseMotionPreprocessor(listener, disposable);
+      glassPane.addMousePreprocessor(listener, disposable);
+    }
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+
+    Disposable disposable = this.disposable;
+    if (disposable != null && !Disposer.isDisposed(disposable)) {
+      this.disposable = null;
+      Disposer.dispose(disposable);
+    }
+  }
+
+  private static final class ResizeOrMoveDocketToolWindowMouseListener extends MouseAdapter {
+    private final JComponent divider;
+    private final IdeGlassPane glassPane;
+    private final InternalDecorator decorator;
+    private boolean isDragging;
+
+    private ResizeOrMoveDocketToolWindowMouseListener(@NotNull JComponent divider, @NotNull IdeGlassPane glassPane, @NotNull InternalDecorator decorator) {
+      this.divider = divider;
+      this.glassPane = glassPane;
+      this.decorator = decorator;
+    }
+
+    private boolean isInDragZone(@NotNull MouseEvent e) {
+      Point point = new Point(e.getPoint());
+      SwingUtilities.convertPointToScreen(point, e.getComponent());
+      if ((decorator.toolWindow.getWindowInfo().getAnchor().isHorizontal() ? point.y : point.x) == 0) {
+        return false;
+      }
+
+      SwingUtilities.convertPointFromScreen(point, divider);
+      return Math.abs(decorator.toolWindow.getWindowInfo().getAnchor().isHorizontal() ? point.y : point.x) < 6;
+    }
+
+    private void updateCursor(@NotNull MouseEvent event, boolean isInDragZone) {
+      if (isInDragZone) {
+        glassPane.setCursor(divider.getCursor(), divider);
+        event.consume();
+      }
     }
 
     @Override
-    public void removeNotify() {
-      super.removeNotify();
-      if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
-        Disposer.dispose(myDisposable);
-      }
+    public void mousePressed(@NotNull MouseEvent e) {
+      isDragging = isInDragZone(e);
+      updateCursor(e, isDragging);
     }
 
-    boolean isInDragZone(MouseEvent e) {
-      Point p = SwingUtilities.convertMouseEvent(e.getComponent(), e, this).getPoint();
-      return Math.abs(toolWindow.getWindowInfo().getAnchor().isHorizontal() ? p.y : p.x) < 6;
-    }
-
-    private final class MyMouseAdapter extends MouseAdapter {
-      private void updateCursor(MouseEvent e) {
-        if (isInDragZone(e)) {
-          myGlassPane.setCursor(MyDivider.this.getCursor(), MyDivider.this);
-          e.consume();
-        }
-      }
-
-      @Override
-      public void mousePressed(MouseEvent e) {
-        myDragging = isInDragZone(e);
-        updateCursor(e);
-      }
-
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        updateCursor(e);
-      }
-
-      @Override
-      public void mouseReleased(MouseEvent e) {
-        updateCursor(e);
-        myDragging = false;
-      }
-
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        updateCursor(e);
-      }
-
-      @Override
-      public void mouseDragged(MouseEvent e) {
-        if (!myDragging) {
-          return;
-        }
-
-        MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, MyDivider.this);
-        final ToolWindowAnchor anchor = toolWindow.getAnchor();
-        final Point point = event.getPoint();
-        final Container windowPane = InternalDecorator.this.getParent();
-        Point lastPoint = SwingUtilities.convertPoint(MyDivider.this, point, windowPane);
-        lastPoint.x = Math.min(Math.max(lastPoint.x, 0), windowPane.getWidth());
-        lastPoint.y = Math.min(Math.max(lastPoint.y, 0), windowPane.getHeight());
-
-        final Rectangle bounds = InternalDecorator.this.getBounds();
-        if (anchor == ToolWindowAnchor.TOP) {
-          InternalDecorator.this.setBounds(0, 0, bounds.width, lastPoint.y);
-        }
-        else if (anchor == ToolWindowAnchor.LEFT) {
-          InternalDecorator.this.setBounds(0, 0, lastPoint.x, bounds.height);
-        }
-        else if (anchor == ToolWindowAnchor.BOTTOM) {
-          InternalDecorator.this.setBounds(0, lastPoint.y, bounds.width, windowPane.getHeight() - lastPoint.y);
-        }
-        else if (anchor == ToolWindowAnchor.RIGHT) {
-          InternalDecorator.this.setBounds(lastPoint.x, 0, windowPane.getWidth() - lastPoint.x, bounds.height);
-        }
-        InternalDecorator.this.validate();
-        e.consume();
-      }
-    }
-
-    @NotNull
     @Override
-    public Cursor getCursor() {
-      WindowInfo info = toolWindow.getWindowInfo();
-      boolean isVerticalCursor = info.getType() == ToolWindowType.DOCKED ? info.getAnchor().isSplitVertically() : info.getAnchor().isHorizontal();
-      return isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+    public void mouseClicked(@NotNull MouseEvent e) {
+      updateCursor(e, isInDragZone(e));
+    }
+
+    @Override
+    public void mouseReleased(@NotNull MouseEvent e) {
+      updateCursor(e, isInDragZone(e));
+      isDragging = false;
+    }
+
+    @Override
+    public void mouseMoved(@NotNull MouseEvent e) {
+      updateCursor(e, isDragging || isInDragZone(e));
+    }
+
+    @Override
+    public void mouseDragged(@NotNull MouseEvent e) {
+      if (!isDragging) {
+        return;
+      }
+
+      ToolWindowAnchor anchor = decorator.toolWindow.getAnchor();
+      Container windowPane = decorator.getParent();
+      Point lastPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), windowPane);
+      lastPoint.x = Math.min(Math.max(lastPoint.x, 0), windowPane.getWidth());
+      lastPoint.y = Math.min(Math.max(lastPoint.y, 0), windowPane.getHeight());
+
+      Rectangle bounds = decorator.getBounds();
+      if (anchor == ToolWindowAnchor.TOP) {
+        decorator.setBounds(0, 0, bounds.width, lastPoint.y);
+      }
+      else if (anchor == ToolWindowAnchor.LEFT) {
+        decorator.setBounds(0, 0, lastPoint.x, bounds.height);
+      }
+      else if (anchor == ToolWindowAnchor.BOTTOM) {
+        decorator.setBounds(0, lastPoint.y, bounds.width, windowPane.getHeight() - lastPoint.y);
+      }
+      else if (anchor == ToolWindowAnchor.RIGHT) {
+        decorator.setBounds(lastPoint.x, 0, windowPane.getWidth() - lastPoint.x, bounds.height);
+      }
+      decorator.validate();
+      e.consume();
     }
   }
 
@@ -384,7 +401,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   public void putInfo(@NotNull Map<String, String> info) {
     info.put("toolWindowTitle", toolWindow.getTitle());
 
-    final Content selection = toolWindow.getContentManager().getSelectedContent();
+    Content selection = toolWindow.getContentManager().getSelectedContent();
     if (selection != null) {
       info.put("toolWindowTab", selection.getTabName());
     }

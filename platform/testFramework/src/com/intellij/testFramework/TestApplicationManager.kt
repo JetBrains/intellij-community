@@ -1,4 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.testFramework
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -73,7 +74,7 @@ class TestApplicationManager private constructor() {
     @Volatile
     private var ourInstance: TestApplicationManager? = null
     @Volatile
-    private var bootstrapError: RuntimeException? = null
+    private var bootstrapError: Throwable? = null
     private val isBootstrappingAppNow = AtomicBoolean()
 
     private val dataManager: HeadlessDataManager
@@ -86,7 +87,7 @@ class TestApplicationManager private constructor() {
         try {
           result = createInstance()
         }
-        catch (e: RuntimeException) {
+        catch (e: Throwable) {
           bootstrapError = e
           isBootstrappingAppNow.set(false)
           throw e
@@ -243,6 +244,7 @@ fun tearDownProjectAndApp(project: Project, appManager: TestApplicationManager? 
   l.run { LegacyBridgeTestFrameworkUtils.dropCachesOnTeardown(project) }
 
   l.run { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, !isLightProject) }
+  l.run { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
 
   l.run { (appManager ?: TestApplicationManager.getInstanceIfCreated())?.setDataProvider(null) }
   l.run { UiInterceptors.clear() }
@@ -278,6 +280,8 @@ fun disposeApplicationAndCheckForLeaks() {
       println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
       println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
     }
+
+    l.run { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) }
 
     l.run {
       try {
@@ -346,6 +350,5 @@ fun waitForProjectLeakingThreads(project: Project, timeout: Long = 10, timeUnit:
     project.stopServicePreloading()
   }
 
-  NonBlockingReadActionImpl.cancelAllTasks()
   (project.serviceIfCreated<GeneratedSourceFileChangeTracker>() as GeneratedSourceFileChangeTrackerImpl?)?.cancelAllAndWait(timeout, timeUnit)
 }

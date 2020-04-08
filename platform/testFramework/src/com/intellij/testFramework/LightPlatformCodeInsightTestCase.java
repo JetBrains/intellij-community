@@ -154,8 +154,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    */
   @NotNull
   protected Document configureFromFileText(@NonNls @NotNull final String fileName,
-                                                  @NonNls @NotNull final String fileText,
-                                                  boolean checkCaret) {
+                                           @NonNls @NotNull final String fileText,
+                                           boolean checkCaret) {
     return WriteCommandAction.writeCommandAction(null).compute(() -> {
       final Document fakeDocument = new DocumentImpl(fileText);
 
@@ -205,7 +205,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   @NotNull
-  private Document setupFileEditorAndDocument(@NotNull String fileName, @NotNull String fileText) throws IOException {
+  private Document setupFileEditorAndDocument(@NotNull String relativePath, @NotNull String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
     if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) {
       EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, StandardCharsets.UTF_8);
@@ -213,7 +213,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     deleteVFile();
 
-    myEditor = createSaveAndOpenFile(fileName, fileText);
+    myEditor = createSaveAndOpenFile(relativePath, fileText);
     myVFile = FileDocumentManager.getInstance().getFile(getEditor().getDocument());
     myFile = getPsiManager().findFile(myVFile);
 

@@ -16,10 +16,9 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +38,54 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
     checkAsQualifiedNameResult("foo + bar + baz", null);
     checkAsQualifiedNameResult("foo.bar + baz", QualifiedName.fromDottedString("foo.bar.__add__"));
     checkAsQualifiedNameResult("-foo + bar", null);
+  }
+
+  public void testAddingNameInFromImportStatement() {
+    checkAddingNameInFromImport("from mod import foo", "bar", "foo", true, "from mod import bar, foo");
+    checkAddingNameInFromImport("from mod import foo", "bar", "foo", false, "from mod import foo, bar");
+    checkAddingNameInFromImport("from mod import foo", "bar", null, false, "from mod import bar, foo");
+    checkAddingNameInFromImport("from mod import foo", "bar", null, true, "from mod import foo, bar");
+    checkAddingNameInFromImport("from mod import (foo) # comment", "bar", "foo", true, "from mod import (bar, foo) # comment");
+    checkAddingNameInFromImport("from mod import (foo) # comment", "bar", "foo", false, "from mod import (foo, bar) # comment");
+    checkAddingNameInFromImport("from mod import (foo,)", "bar", "foo", false, "from mod import (foo, bar,)");
+    checkAddingNameInFromImport("from mod import (foo # comment\n" +
+                                "                )",
+                                "bar", "foo", false,
+                                "from mod import (foo, bar # comment\n" +
+                                "                )");
+    checkAddingNameInFromImport("from mod import ", "bar", null, false, "from mod import bar");
+    checkAddingNameInFromImport("from mod import ", "bar", null, true, "from mod import bar");
+    checkAddingNameInFromImport("from mod import (", "bar", null, true, "from mod import (bar");
+    // TODO change where the placeholder empty import element is added in such cases
+    //checkAddingNameInFromImport("from mod import ( # comment", "bar", null, true, "from mod import (bar # comment");
+    checkAddingNameInFromImport("from mod import ()", "bar", null, true, "from mod import (bar)");
+  }
+
+  private void checkAddingNameInFromImport(@NotNull String fromImport,
+                                           @NotNull String newName,
+                                           @Nullable String anchorName,
+                                           boolean before,
+                                           @NotNull String result) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
+    final LanguageLevel languageLevel = LanguageLevel.PYTHON27;
+    final PyFromImportStatement fromImportElem = generator.createFromText(languageLevel, PyFromImportStatement.class, fromImport, new int[]{0});
+    final PyImportElement anchor;
+    if (anchorName != null) {
+      anchor = ContainerUtil.find(fromImportElem.getImportElements(),
+                                  importElem -> importElem.getImportedQName().toString().equals(anchorName));
+      assertNotNull(anchor);
+    }
+    else {
+      anchor = null;
+    }
+    final PyImportElement newNameElem = generator.createImportElement(languageLevel, newName, null);
+    if (before) {
+      fromImportElem.addBefore(newNameElem, anchor);
+    }
+    else {
+      fromImportElem.addAfter(newNameElem, anchor);
+    }
+    assertEquals(result, fromImportElem.getText());
   }
 
   private void checkAsQualifiedNameResult(@NotNull String expression, @Nullable QualifiedName expectedQualifiedName) {

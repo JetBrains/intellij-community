@@ -24,9 +24,6 @@ import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class DownloadableFileService {
   public static DownloadableFileService getInstance() {
     return ServiceManager.getService(DownloadableFileService.class);
@@ -43,7 +40,7 @@ public abstract class DownloadableFileService {
    */
   @NotNull
   public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
-                                                                                                    @NotNull URL... localUrls);
+                                                                                                    URL @NotNull ... localUrls);
 
   @NotNull
   public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description);

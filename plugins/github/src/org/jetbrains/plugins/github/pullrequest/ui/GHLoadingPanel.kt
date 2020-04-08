@@ -1,24 +1,53 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.ui.LoadingDecorator
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.NotNullFunction
+import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.util.getName
 import java.awt.BorderLayout
+import java.awt.GridBagLayout
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.KeyStroke
 
 class GHLoadingPanel<T>(private val model: GHLoadingModel,
                         private val content: T,
                         parentDisposable: Disposable,
                         private val textBundle: EmptyTextBundle = EmptyTextBundle.Default)
-  : JBLoadingPanel(BorderLayout(), parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  : JBLoadingPanel(BorderLayout(), createDecorator(parentDisposable))
   where T : JComponent, T : ComponentWithEmptyText {
+
+  companion object {
+    private fun createDecorator(parentDisposable: Disposable): NotNullFunction<JPanel, LoadingDecorator> {
+      return NotNullFunction<JPanel, LoadingDecorator> {
+        object : LoadingDecorator(it, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+          override fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
+            parent.layout = GridBagLayout()
+
+            text.text = "Loading..."
+            text.icon = AnimatedIcon.Default()
+            text.foreground = UIUtil.getContextHelpForeground()
+
+            val result = NonOpaquePanel(text)
+            parent.add(result)
+            return result
+          }
+        }
+      }
+    }
+  }
 
   private val updateLoadingPanel =
     ProgressStripe(content, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {

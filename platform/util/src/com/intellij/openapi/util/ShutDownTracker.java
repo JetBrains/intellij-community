@@ -94,8 +94,7 @@ public class ShutDownTracker implements Runnable {
     return myThreads.contains(thread);
   }
 
-  @NotNull
-  private synchronized Thread[] getStopperThreads() {
+  private synchronized Thread @NotNull [] getStopperThreads() {
     return myThreads.toArray(new Thread[0]);
   }
 

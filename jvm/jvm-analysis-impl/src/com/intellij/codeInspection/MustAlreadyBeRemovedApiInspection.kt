@@ -75,8 +75,7 @@ class MustAlreadyBeRemovedApiInspection : LocalInspectionTool() {
       currentVersion = version
     }
 
-    val formBuilder = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Current version", versionField)
+    val formBuilder = FormBuilder.createFormBuilder().addLabeledComponent(JvmAnalysisBundle.message("current.version"), versionField)
 
     val container = JPanel(BorderLayout())
     container.add(formBuilder.panel, BorderLayout.NORTH)

@@ -90,7 +90,7 @@ public class PublicConstructorInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.isRecord()) {
         return;
       }
       if (SerializationUtils.isExternalizable(aClass)) {

@@ -51,7 +51,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
   @Override
   @NotNull
-  public UpdateSession updateDirectories(@NotNull final FilePath[] contentRoots,
+  public UpdateSession updateDirectories(final FilePath @NotNull [] contentRoots,
                                          final UpdatedFiles updatedFiles,
                                          final ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context)
     throws ProcessCanceledException {
@@ -95,7 +95,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     private final VcsDirtyScopeManager myDirtyScopeManager;
     private final List<Runnable> myGroupWorkers;
 
-    private MyUpdateSessionAdapter(@NotNull final FilePath[] contentRoots, final UpdatedFiles updatedFiles, final List<VcsException> exceptions) {
+    private MyUpdateSessionAdapter(final FilePath @NotNull [] contentRoots, final UpdatedFiles updatedFiles, final List<VcsException> exceptions) {
       super(exceptions, false);
       myContentRoots = contentRoots;
       myUpdatedFiles = updatedFiles;

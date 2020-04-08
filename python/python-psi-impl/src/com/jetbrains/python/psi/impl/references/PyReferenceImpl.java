@@ -8,37 +8,83 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.FutureFeature;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PsiReferenceEx;
+import com.jetbrains.python.psi.PyAssignmentExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import com.jetbrains.python.psi.resolve.PyOverridingReferenceResolveProvider;
+import com.jetbrains.python.psi.resolve.PyReferenceResolveProvider;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveProcessor;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -94,8 +140,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * @see PsiPolyVariantReference#multiResolve(boolean)
    */
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     if (USE_CACHE) {
       final ResolveCache cache = ResolveCache.getInstance(getElement().getProject());
       return cache.resolveWithCaching(this, CachingResolver.INSTANCE, true, incompleteCode);
@@ -107,8 +152,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   // sorts and modifies results of resolveInner
 
-  @NotNull
-  private ResolveResult[] multiResolveInner() {
+  private ResolveResult @NotNull [] multiResolveInner() {
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
 
@@ -123,23 +167,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PsiElement element = rrr.getElement();
         if (element instanceof PyClass) {
           final PyClass cls = (PyClass)element;
-          final List<PyFunction> initAndNew = cls.multiFindInitOrNew(false, null);
-          if (!initAndNew.isEmpty()) {
-            // replace
+          final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myElement.getProject());
+          final Collection<? extends PsiElement> constructors = PyCallExpressionHelper.resolveConstructors(cls, myElement, context, false);
+          if (!constructors.isEmpty()) {
             iterator.remove();
-            preferInitOverNew(initAndNew).forEach(init -> iterator.add(rrr.replace(init)));
+            constructors.forEach(c -> iterator.add(rrr.replace(c)));
           }
         }
       }
     }
 
     return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
-  }
-
-  @NotNull
-  private static Collection<? extends PyFunction> preferInitOverNew(@NotNull List<PyFunction> initAndNew) {
-    final MultiMap<String, PyFunction> functions = ContainerUtil.groupBy(initAndNew, PyFunction::getName);
-    return functions.containsKey(PyNames.INIT) ? functions.get(PyNames.INIT) : functions.values();
   }
 
   @NotNull
@@ -523,7 +561,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
-      if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName))) {
+      if ((Objects.equals(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName))) {
         if (!haveQualifiers(element)) {
           final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
           final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
@@ -667,8 +705,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final List<LookupElement> ret = Lists.newArrayList();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
@@ -791,8 +828,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     public static final CachingResolver INSTANCE = new CachingResolver();
 
     @Override
-    @NotNull
-    public ResolveResult[] resolve(@NotNull final PyReferenceImpl ref, final boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull final PyReferenceImpl ref, final boolean incompleteCode) {
       return ref.multiResolveInner();
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
@@ -12,15 +12,11 @@ import java.util.List;
 
 /**
  * Listener for application lifecycle events.
- *
- * @author yole
  */
 public interface AppLifecycleListener {
-  Topic<AppLifecycleListener> TOPIC = Topic.create("Application lifecycle notifications", AppLifecycleListener.class);
+  Topic<AppLifecycleListener> TOPIC = new Topic<>(AppLifecycleListener.class, Topic.BroadcastDirection.NONE);
 
-  /**
-   * @deprecated use {@link #appFrameCreated(List)}
-   */
+  /** @deprecated use {@link #appFrameCreated(List)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   default void appFrameCreated(@NotNull List<String> commandLineArgs, @SuppressWarnings("unused") @NotNull Ref<? super Boolean> willOpenProject) {
@@ -30,8 +26,7 @@ public interface AppLifecycleListener {
   /**
    * Called before an application frame is shown.
    */
-  default void appFrameCreated(@NotNull List<String> commandLineArgs) {
-  }
+  default void appFrameCreated(@NotNull List<String> commandLineArgs) { }
 
   /**
    * Called when the welcome screen is displayed (not called if the application opens a project).
@@ -41,8 +36,7 @@ public interface AppLifecycleListener {
   /**
    * Called after an application frame is shown.
    */
-  default void appStarting(@Nullable Project projectFromCommandLine) {
-  }
+  default void appStarting(@Nullable Project projectFromCommandLine) { }
 
   /**
    * Called when a project frame is closed.
@@ -68,5 +62,6 @@ public interface AppLifecycleListener {
 
   /** @deprecated please use {@link AppLifecycleListener} directly */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   abstract class Adapter implements AppLifecycleListener { }
 }

@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ModuleOutputSourceItem extends PackagingSourceItem {
   private final Module myModule;
 

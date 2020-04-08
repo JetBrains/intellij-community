@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
@@ -15,20 +16,28 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.function.Supplier;
 
-/**
- * @author max
- */
 public abstract class CheckboxAction extends ToggleAction implements CustomComponentAction {
 
   protected CheckboxAction() {}
 
-  protected CheckboxAction(final String text) {
+  protected CheckboxAction(@NlsContexts.Checkbox String text) {
     super(text);
   }
 
-  protected CheckboxAction(final String text, final String description, final Icon icon) {
+  protected CheckboxAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
+  protected CheckboxAction(@NlsContexts.Checkbox String text,
+                           @NlsContexts.Tooltip String description,
+                           final Icon icon) {
     super(text, description, icon);
+  }
+
+  protected CheckboxAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @NotNull

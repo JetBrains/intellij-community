@@ -107,6 +107,16 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), base);
   }
 
+  public void testModificationWithoutModification() {
+    InspectionProfileImpl profile = createProfile();
+    profile.getAllTools();
+    assertTrue(profile.wasInitialized());
+    assertNotEmpty(profile.myTools.keySet());
+    profile.modifyProfile(m -> {});
+    assertTrue(profile.wasInitialized());
+    assertNotEmpty(profile.myTools.keySet());
+  }
+
   public void testSameNameSharedProfile() {
     BaseInspectionProfileManager profileManager = getApplicationProfileManager();
     InspectionProfileImpl localProfile = createProfile();

@@ -40,6 +40,7 @@ import com.thaiopensource.relaxng.output.rng.RngOutputFormat;
 import com.thaiopensource.relaxng.output.xsd.XsdOutputFormat;
 import com.thaiopensource.relaxng.translate.util.InvalidParamsException;
 import com.thaiopensource.util.UriOrFile;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -137,7 +138,7 @@ public class IdeaDriver {
             final File file = new File(outputFile.getParentFile(), s);
             if (file.exists()) {
               final String msg = "The file '" + file.getAbsolutePath() + "' already exists. Overwrite it?";
-              final int choice = Messages.showYesNoDialog(myProject, msg, "Output File Exists", Messages.getWarningIcon());
+              final int choice = Messages.showYesNoDialog(myProject, msg, RelaxngBundle.message("output.file.exists"), Messages.getWarningIcon());
               if (choice == Messages.YES) {
                 return super.open(sourceUri, encoding);
               } else if (choice == 1) {

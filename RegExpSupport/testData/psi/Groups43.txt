@@ -1,7 +1,7 @@
 REGEXP_FILE
   RegExpPatternImpl: <(?(name)yes-pattern|no_pattern|maybe-pattern>
     RegExpBranchImpl: <(?(name)yes-pattern|no_pattern>
-      RegExpPyCondRefImpl: <(?(name)yes-pattern|no_pattern>
+      RegExpConditionalImpl: <(?(name)yes-pattern|no_pattern>
         PsiElement(PYTHON_COND_REF)('(?(')
         PsiElement(NAME)('name')
         PsiElement(GROUP_END)(')')

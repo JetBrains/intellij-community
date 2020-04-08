@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.idea.ActionsBundle
@@ -6,19 +6,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
 
@@ -33,7 +30,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
     updateEnabledAndVisible(e, enabled)
 
     if (!e.getData(VcsDataKeys.CHANGE_LISTS).isNullOrEmpty()) {
-      e.presentation.text = "Move Files to Another Changelist..."
+      e.presentation.text = ActionsBundle.message("action.ChangesView.Move.Files.text")
     }
   }
 
@@ -45,7 +42,9 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       }
 
       if (isEmpty) {
-        VcsBalloonProblemNotifier.showOverChangesView(project, "Nothing is selected that can be moved", MessageType.INFO)
+        VcsBalloonProblemNotifier.showOverChangesView(project,
+                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification.title"),
+                                                      MessageType.INFO)
         return
       }
 
@@ -57,7 +56,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   }
 
   private fun selectAndShowFile(project: Project, file: VirtualFile) {
-    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return
+    val window = getToolWindowFor(project, LOCAL_CHANGES) ?: return
     if (!window.isVisible) {
       window.activate { ChangesViewManager.getInstance(project).selectFile(file) }
     }

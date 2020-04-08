@@ -39,8 +39,7 @@ public class XsltIncludeProvider extends FileIncludeProvider {
   }
 
   @Override
-  @NotNull
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XsltSupport.XSLT_NS, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<>();

@@ -11,9 +11,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspectio
 import com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.codeInspection.htmlInspections.XmlWrongRootElementInspection;
+import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
@@ -119,6 +117,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testrootTag1() throws Exception { doTest(); }
   public void testManyRootTags() throws Exception { doTest(); }
   public void testCommentBeforeProlog() throws Exception { doTest(); }
+  public void testXmlStylesheet() throws Exception { doTest(); }
   public void testCommentBeforeProlog_2() throws Exception { doTest(); }
   //public void testNoRootTag() throws Exception { doTest(); }
 
@@ -314,7 +313,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
-  private void doTestWithLocations(@Nullable String[][] resources, String ext) {
+  private void doTestWithLocations(String[] @Nullable [] resources, String ext) {
     doConfigureWithLocations(resources, ext);
     doDoTest(true,false);
   }
@@ -1112,6 +1111,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTestWithUnboundNSQuickFix(BASE_PATH + testName + "5");
   }
 
+  public void testDoctypeSystemConfigured() {
+    ExternalResourceManagerExImpl.registerResourceTemporarily("sample.dtd",
+                                                              getTestDataPath() + BASE_PATH + "sample.dtd",
+                                                              getTestRootDisposable());
+    configureByFiles(null, BASE_PATH + "sample.xml", BASE_PATH + "sample.dtd");
+    doDoTest(true, false);
+  }
+
   public void testUnboundNsHighlighting6() throws Exception {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     doTestWithQuickFix(BASE_PATH + getTestName(false), CREATE_NAMESPACE_DECLARATION_INTENTION_NAME, true);
@@ -1902,6 +1909,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testMobileHtml() throws Exception {
     enableInspectionTool(new HtmlUnknownTagInspection());
+    doTest(getFullRelativeTestName(".html"), true, true);
+  }
+
+  public void testSvgInHtml() throws Exception {
+    enableInspectionTools(new HtmlUnknownTagInspection(),
+                          new HtmlUnknownAttributeInspection(),
+                          new HtmlUnknownBooleanAttributeInspection());
     doTest(getFullRelativeTestName(".html"), true, true);
   }
 

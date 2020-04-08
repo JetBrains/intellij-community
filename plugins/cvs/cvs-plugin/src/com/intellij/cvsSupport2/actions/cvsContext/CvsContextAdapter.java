@@ -49,8 +49,7 @@ public class CvsContextAdapter implements CvsContext{
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSelectedFiles() {
+  public VirtualFile @NotNull [] getSelectedFiles() {
     return VirtualFile.EMPTY_ARRAY;
   }
 
@@ -105,8 +104,7 @@ public class CvsContextAdapter implements CvsContext{
   }
 
   @Override
-  @NotNull
-  public FilePath[] getSelectedFilePaths() {
+  public FilePath @NotNull [] getSelectedFilePaths() {
     return new FilePath[] {};
   }
 
@@ -116,14 +114,12 @@ public class CvsContextAdapter implements CvsContext{
   }
 
   @Override
-  @Nullable
-  public ChangeList[] getSelectedChangeLists() {
+  public ChangeList @Nullable [] getSelectedChangeLists() {
     return null;
   }
 
   @Override
-  @Nullable
-  public Change[] getSelectedChanges() {
+  public Change @Nullable [] getSelectedChanges() {
     return null;
   }
 }

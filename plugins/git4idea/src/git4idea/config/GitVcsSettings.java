@@ -27,14 +27,6 @@ import java.util.Objects;
 public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
-  /**
-   * The way the local changes are saved before update if user has selected auto-stash
-   */
-  public enum SaveChangesPolicy {
-    STASH,
-    SHELVE,
-  }
-
   public GitVcsSettings() {
     super(new GitVcsOptions());
   }
@@ -57,11 +49,11 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   @NotNull
-  public SaveChangesPolicy getSaveChangesPolicy() {
+  public GitSaveChangesPolicy getSaveChangesPolicy() {
     return getState().getSaveChangesPolicy();
   }
 
-  public void setSaveChangesPolicy(SaveChangesPolicy value) {
+  public void setSaveChangesPolicy(GitSaveChangesPolicy value) {
     getState().setSaveChangesPolicy(value);
   }
 
@@ -244,8 +236,8 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   @NotNull
-  public DvcsBranchSettings getFavoriteBranchSettings() {
-    return getState().getFavoriteBranchSettings();
+  public DvcsBranchSettings getBranchSettings() {
+    return getState().getBranchSettings();
   }
 
   public boolean shouldSetUserNameGlobally() {
@@ -311,7 +303,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   /**
-   * @deprecated Use {@link SaveChangesPolicy}
+   * @deprecated Use {@link GitSaveChangesPolicy}
    */
   @Deprecated
   public enum UpdateChangesPolicy {
@@ -319,13 +311,13 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     SHELVE;
 
     @NotNull
-    private static UpdateChangesPolicy from(SaveChangesPolicy policy) {
-      return policy == SaveChangesPolicy.STASH ? STASH : SHELVE;
+    private static UpdateChangesPolicy from(GitSaveChangesPolicy policy) {
+      return policy == GitSaveChangesPolicy.STASH ? STASH : SHELVE;
     }
 
     @NotNull
-    public SaveChangesPolicy convert() {
-      return this == STASH ? SaveChangesPolicy.STASH : SaveChangesPolicy.SHELVE;
+    public GitSaveChangesPolicy convert() {
+      return this == STASH ? GitSaveChangesPolicy.STASH : GitSaveChangesPolicy.SHELVE;
     }
   }
 

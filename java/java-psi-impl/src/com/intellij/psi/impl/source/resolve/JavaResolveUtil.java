@@ -42,7 +42,7 @@ public class JavaResolveUtil {
     return null;
   }
 
-  public static PsiElement findParentContextOfClass(PsiElement element, Class aClass, boolean strict){
+  public static PsiElement findParentContextOfClass(PsiElement element, Class<?> aClass, boolean strict){
     PsiElement scope = strict ? element.getContext() : element;
     while(scope != null && !aClass.isInstance(scope)){
       scope = scope.getContext();
@@ -253,7 +253,7 @@ public class JavaResolveUtil {
     return true;
   }
 
-  public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
+  public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, JavaResolveResult @NotNull [] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
       for (int i = 0; i < result.length; i++) {
         final CandidateInfo resolveResult = (CandidateInfo)result[i];
@@ -273,12 +273,11 @@ public class JavaResolveUtil {
     }
   }
 
-  @NotNull
-  public static <T extends PsiPolyVariantReference> JavaResolveResult[] resolveWithContainingFile(@NotNull T ref,
-                                                                                                  @NotNull ResolveCache.PolyVariantContextResolver<T> resolver,
-                                                                                                  boolean needToPreventRecursion,
-                                                                                                  boolean incompleteCode,
-                                                                                                  @NotNull PsiFile containingFile) {
+  public static <T extends PsiPolyVariantReference> JavaResolveResult @NotNull [] resolveWithContainingFile(@NotNull T ref,
+                                                                                                            @NotNull ResolveCache.PolyVariantContextResolver<T> resolver,
+                                                                                                            boolean needToPreventRecursion,
+                                                                                                            boolean incompleteCode,
+                                                                                                            @NotNull PsiFile containingFile) {
     Project project = containingFile.getProject();
     ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(ref, resolver, needToPreventRecursion, incompleteCode,
                                                                                    containingFile);

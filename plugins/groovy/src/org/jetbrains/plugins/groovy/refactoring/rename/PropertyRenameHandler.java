@@ -48,7 +48,7 @@ public class PropertyRenameHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = getElement(dataContext);
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);

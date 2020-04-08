@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -10,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MacEmojiAndSymbolsInputAction extends DumbAwareAction {
   public MacEmojiAndSymbolsInputAction() {
-    // it's not currently possible to use &, when text is set in resource bundle
-    getTemplatePresentation().setText("Emoji & Symbols", false);
+    getTemplatePresentation().setText(ActionsBundle.message("EmojiAndSymbols.text"), false);
     setEnabledInModalContext(true);
   }
 

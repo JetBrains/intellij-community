@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.newProjectWizard.modes;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.importProject.FrameworkDetectionStep;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ProjectDescriptor;
@@ -28,7 +29,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,13 +45,13 @@ public abstract class CreateFromSourcesMode extends WizardMode {
   @Override
   @NotNull
   public String getDisplayName(final WizardContext context) {
-    return ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName());
+    return JavaUiBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName());
   }
 
   @Override
   @NotNull
   public String getDescription(final WizardContext context) {
-    return ProjectBundle.message("project.new.wizard.from.existent.sources.description",
+    return JavaUiBundle.message("project.new.wizard.from.existent.sources.description",
                                  ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 

@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +43,7 @@ public class JavadocQuarantineStatusCleaner {
 
   private static final String QUARANTINE_ATTRIBUTE = "com.apple.quarantine";
 
-  public static void cleanIfNeeded(@NotNull VirtualFile... docFolders) {
+  public static void cleanIfNeeded(VirtualFile @NotNull ... docFolders) {
     if (docFolders.length > 0 && SystemInfo.isMac) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<String> quarantined = Stream.of(docFolders)
@@ -51,8 +52,8 @@ public class JavadocQuarantineStatusCleaner {
           .collect(Collectors.toList());
         if (!quarantined.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            String title = ApplicationBundle.message("quarantine.cleaner");
-            String message = ApplicationBundle.message("quarantine.dialog.message", StringUtil.join(quarantined, "\n"));
+            String title = JavaUiBundle.message("quarantine.cleaner");
+            String message = JavaUiBundle.message("quarantine.dialog.message", StringUtil.join(quarantined, "\n"));
             if (Messages.showYesNoDialog(message, title, null) == Messages.YES) {
               cleanQuarantineStatusInBackground(quarantined);
             }
@@ -63,7 +64,7 @@ public class JavadocQuarantineStatusCleaner {
   }
 
   private static void cleanQuarantineStatusInBackground(List<String> paths) {
-    new Task.Backgroundable(null, ApplicationBundle.message("quarantine.clean.progress"), true) {
+    new Task.Backgroundable(null, JavaUiBundle.message("quarantine.clean.progress"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (String path : paths) {
@@ -84,9 +85,10 @@ public class JavadocQuarantineStatusCleaner {
       @Override
       public void onThrowable(@NotNull Throwable error) {
         LOG.warn(error);
-        String title = ApplicationBundle.message("quarantine.cleaner");
-        String message = ApplicationBundle.message("quarantine.error.message", error.getMessage());
-        new Notification(title, title, message, NotificationType.WARNING).notify(null);
+        String title = JavaUiBundle.message("quarantine.cleaner");
+        String message = JavaUiBundle.message("quarantine.error.message", error.getMessage());
+        new Notification(NotificationGroup.createIdWithTitle("Quarantine Cleaner", title), title, message, NotificationType.WARNING)
+          .notify(null);
       }
     }.queue();
   }

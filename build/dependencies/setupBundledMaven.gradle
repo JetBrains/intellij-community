@@ -56,9 +56,3 @@ task setupBundledMaven(dependsOn: [deletePreviousMinorVersionIfRequired, unpackM
     unzippedDir.deleteDir()
   }
 }
-
-idea.project.settings {
-  taskTriggers {
-    afterSync tasks.getByName("setupBundledMaven")
-  }
-}

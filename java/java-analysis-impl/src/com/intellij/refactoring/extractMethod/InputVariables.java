@@ -236,7 +236,7 @@ public class InputVariables {
     return myInputVariables;
   }
 
-  public PsiExpression replaceWrappedReferences(@NotNull PsiElement[] elements, PsiExpression expression) {
+  public PsiExpression replaceWrappedReferences(PsiElement @NotNull [] elements, PsiExpression expression) {
     if (!myFoldingAvailable) return expression;
 
     boolean update = elements[0] == expression;

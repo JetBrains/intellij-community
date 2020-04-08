@@ -14,10 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                               @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                         @NotNull ProcessingContext context) {
     final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
     return new PsiReference[] {new JavaFXFactoryReference(attributeValue)};
   }
@@ -48,9 +47,8 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
              !PsiType.VOID.equals(method.getReturnType());
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final PsiClass psiClass = JavaFxPsiUtil.getTagClass(getElement());
       if (psiClass != null) {
         final List<PsiMethod> methods = new ArrayList<>();

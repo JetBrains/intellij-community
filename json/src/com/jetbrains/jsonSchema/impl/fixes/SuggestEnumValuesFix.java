@@ -8,6 +8,7 @@ import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementGenerator;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.application.WriteAction;
@@ -40,7 +41,7 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace with allowed value";
+    return JsonBundle.message("replace.with.allowed.value");
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -95,15 +96,16 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
 
   @Override
   public void applyFix(@NotNull Project project,
-                       @NotNull CommonProblemDescriptor[] descriptors,
+                       CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null) {
-      HintManager.getInstance().showErrorHint(editor, "Sorry, this fix is not available in batch mode");
+      HintManager.getInstance().showErrorHint(editor, JsonBundle.message("sorry.this.fix.is.not.available.in.batch.mode"));
     }
     else {
-      Messages.showErrorDialog(project, "Sorry, this fix is not available in batch mode", "Not Applicable in Batch Mode");
+      Messages.showErrorDialog(project, JsonBundle.message("sorry.this.fix.is.not.available.in.batch.mode"),
+                               JsonBundle.message("not.applicable.in.batch.mode"));
     }
   }
 }

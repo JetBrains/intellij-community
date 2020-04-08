@@ -5,4 +5,4 @@ flake8==3.7.8
 flake8-bugbear==19.8.0
 flake8-pyi==19.3.0
 isort==4.3.21
-pytype>=2019.7.30
+pytype>=2020.01.08

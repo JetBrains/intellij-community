@@ -23,12 +23,14 @@ import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -132,7 +134,8 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
   }
 
   AnAction[] createActions() {
-    AnAction expandAll = new AnAction("Expand All", null, AllIcons.Actions.Expandall) {
+    AnAction expandAll =
+      new AnAction(UIBundle.messagePointer("action.DesignerToolWindow.Anonymous.text.expand.all"), AllIcons.Actions.Expandall) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {
@@ -141,7 +144,8 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
       }
     };
 
-    AnAction collapseAll = new AnAction("Collapse All", null, AllIcons.Actions.Collapseall) {
+    AnAction collapseAll =
+      new AnAction(UIBundle.messagePointer("action.DesignerToolWindow.Anonymous.text.collapse.all"), AllIcons.Actions.Collapseall) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {

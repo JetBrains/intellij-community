@@ -63,7 +63,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
-                                                   @Nullable LocalQuickFix[] fixes,
+                                                   LocalQuickFix @Nullable [] fixes,
                                                    @NotNull ProblemHighlightType highlightType,
                                                    boolean onTheFly,
                                                    boolean isAfterEndOfLine) {
@@ -168,5 +168,9 @@ public abstract class InspectionManagerBase extends InspectionManager {
       }
     }
     return myCurrentProfileName;
+  }
+
+  public void setProfile(@NotNull String name) {
+    myCurrentProfileName = name;
   }
 }

@@ -28,8 +28,7 @@ public class RegExpBranchImpl extends RegExpElementImpl implements RegExpBranch 
     }
 
     @Override
-    @NotNull
-    public RegExpAtom[] getAtoms() {
+    public RegExpAtom @NotNull [] getAtoms() {
         final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.ATOMS);
         final RegExpAtom[] atoms = new RegExpAtom[nodes.length];
         for (int i = 0; i < atoms.length; i++) {

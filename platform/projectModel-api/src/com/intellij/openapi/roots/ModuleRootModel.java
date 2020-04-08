@@ -49,16 +49,14 @@ public interface ModuleRootModel {
    * @return list of content entries for this module
    * @see ContentEntry
    */
-  @NotNull
-  ContentEntry[] getContentEntries();
+  ContentEntry @NotNull [] getContentEntries();
 
   /**
    * Use this method to obtain order of roots of a module. Order of entries is important.
    *
    * @return list of order entries for this module
    */
-  @NotNull
-  OrderEntry[] getOrderEntries();
+  OrderEntry @NotNull [] getOrderEntries();
 
   /**
    * Returns the SDK used by the module.
@@ -84,8 +82,7 @@ public interface ModuleRootModel {
    * @return the array of content roots.
    * @see #getContentEntries()
    */
-  @NotNull
-  VirtualFile[] getContentRoots();
+  VirtualFile @NotNull [] getContentRoots();
 
   /**
    * Returns an array of content root urls from all content entries.
@@ -93,8 +90,7 @@ public interface ModuleRootModel {
    * @return the array of content root URLs.
    * @see #getContentEntries()
    */
-  @NotNull
-  String[] getContentRootUrls();
+  String @NotNull [] getContentRootUrls();
 
   /**
    * Returns an array of exclude roots from all content entries.
@@ -102,8 +98,7 @@ public interface ModuleRootModel {
    * @return the array of excluded roots.
    * @see #getContentEntries()
    */
-  @NotNull
-  VirtualFile[] getExcludeRoots();
+  VirtualFile @NotNull [] getExcludeRoots();
 
   /**
    * Returns an array of exclude root urls from all content entries.
@@ -111,8 +106,7 @@ public interface ModuleRootModel {
    * @return the array of excluded root URLs.
    * @see #getContentEntries()
    */
-  @NotNull
-  String[] getExcludeRootUrls();
+  String @NotNull [] getExcludeRootUrls();
 
   /**
    * Returns an array of source roots from all content entries.
@@ -121,8 +115,7 @@ public interface ModuleRootModel {
    * @see #getContentEntries()
    * @see #getSourceRoots(boolean)
    */
-  @NotNull
-  VirtualFile[] getSourceRoots();
+  @NotNull VirtualFile @NotNull [] getSourceRoots();
 
   /**
    * Returns an array of source roots from all content entries.
@@ -131,8 +124,7 @@ public interface ModuleRootModel {
    * @return the array of source roots.
    * @see #getContentEntries()
    */
-  @NotNull
-  VirtualFile[] getSourceRoots(boolean includingTests);
+  VirtualFile @NotNull [] getSourceRoots(boolean includingTests);
 
   /**
    * Return a list of source roots of the specified type.
@@ -159,8 +151,7 @@ public interface ModuleRootModel {
    * @see #getContentEntries()
    * @see #getSourceRootUrls(boolean)
    */
-  @NotNull
-  String[] getSourceRootUrls();
+  String @NotNull [] getSourceRootUrls();
 
   /**
    * Returns an array of source root urls from all content entries.
@@ -169,8 +160,7 @@ public interface ModuleRootModel {
    * @return the array of source root URLs.
    * @see #getContentEntries()
    */
-  @NotNull
-  String[] getSourceRootUrls(boolean includingTests);
+  String @NotNull [] getSourceRootUrls(boolean includingTests);
 
   /**
    * Passes all order entries in the module to the specified visitor.
@@ -196,14 +186,11 @@ public interface ModuleRootModel {
    *
    * @return the list of module names this module depends on.
    */
-  @NotNull
-  String[] getDependencyModuleNames();
+  String @NotNull [] getDependencyModuleNames();
 
   <T> T getModuleExtension(@NotNull Class<T> klass);
 
-  @NotNull
-  Module[] getModuleDependencies();
+  Module @NotNull [] getModuleDependencies();
 
-  @NotNull
-  Module[] getModuleDependencies(boolean includeTests);
+  Module @NotNull [] getModuleDependencies(boolean includeTests);
 }

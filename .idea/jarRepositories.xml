@@ -57,46 +57,6 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/www.myget.org/F/rd-snapshots/maven" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="maven4" />
-      <option name="name" value="maven4" />
-      <option name="url" value="https://repo.labs.intellij.net/jet-sign" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven5" />
-      <option name="name" value="maven5" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven3" />
-      <option name="name" value="maven3" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/plugins.jetbrains.com/maven" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven8" />
-      <option name="name" value="maven8" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/test-discovery" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven" />
-      <option name="name" value="maven" />
-      <option name="url" value="https://repo.labs.intellij.net/java" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven9" />
-      <option name="name" value="maven9" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jcenter.bintray.com" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven6" />
-      <option name="name" value="maven6" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="maven10" />
-      <option name="name" value="maven10" />
-      <option name="url" value="https://www.jetbrains.com/intellij-repository/releases" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="36870030-7a21-4052-b93a-010aa4c33366" />
       <option name="name" value="36870030-7a21-4052-b93a-010aa4c33366" />
       <option name="url" value="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository" />

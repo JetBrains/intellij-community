@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * `Heavy` entries should be disposed with {@link #destroy()} to prevent leak of VirtualFilePointer
  */
-final class HistoryEntry {
+public final class HistoryEntry {
   @NonNls static final String TAG = "entry";
   static final String FILE_ATTR = "file";
   @NonNls private static final String PROVIDER_ELEMENT = "provider";
@@ -57,8 +57,8 @@ final class HistoryEntry {
 
   @NotNull
   static HistoryEntry createLight(@NotNull VirtualFile file,
-                                  @NotNull FileEditorProvider[] providers,
-                                  @NotNull FileEditorState[] states,
+                                  FileEditorProvider @NotNull [] providers,
+                                  FileEditorState @NotNull [] states,
                                   @NotNull FileEditorProvider selectedProvider) {
     VirtualFilePointer pointer = new LightFilePointer(file);
     HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, null);
@@ -83,8 +83,8 @@ final class HistoryEntry {
   @NotNull
   static HistoryEntry createHeavy(@NotNull Project project,
                                   @NotNull VirtualFile file,
-                                  @NotNull FileEditorProvider[] providers,
-                                  @NotNull FileEditorState[] states,
+                                  FileEditorProvider @NotNull [] providers,
+                                  FileEditorState @NotNull [] states,
                                   @NotNull FileEditorProvider selectedProvider) {
     if (project.isDisposed()) return createLight(file, providers, states, selectedProvider);
 

@@ -1,27 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEventDispatcherLoadingModel
 import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
-class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
-                              private val diffHelper: GHPRChangesDiffHelper,
-                              zipChanges: Boolean)
+class GHPRChangesLoadingModel(val commitsModel: GHPRCommitsModel,
+                              val cumulativeChangesModel: GHPRChangesModel,
+                              val diffHelper: GHPRChangesDiffHelper)
   : GHEventDispatcherLoadingModel() {
 
-  var zipChanges by Delegates.observable(zipChanges) { _, _, _ ->
-    update()
-  }
-  private val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
+  private val requestChangesListener = object : GHPRDataProvider.RequestsChangedListener {
     override fun commitsRequestChanged() {
       update()
     }
   }
-  var dataProvider by Delegates.observable<GithubPullRequestDataProvider?>(null) { _, oldValue, newValue ->
+  var dataProvider by Delegates.observable<GHPRDataProvider?>(null) { _, oldValue, newValue ->
     oldValue?.removeRequestsChangesListener(requestChangesListener)
     newValue?.addRequestsChangesListener(requestChangesListener)
     update()
@@ -36,7 +32,7 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
   override var error: Throwable? = null
     private set
   override val resultAvailable: Boolean
-    get() = changesModel.changes != null || changesModel.commits != null
+    get() = cumulativeChangesModel.changes != null && commitsModel.commitsWithChanges != null
 
   init {
     update()
@@ -48,8 +44,8 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
     if (dataProvider == null) {
       loading = false
       error = null
-      changesModel.commits = null
-      changesModel.changes = null
+      commitsModel.commitsWithChanges = null
+      cumulativeChangesModel.changes = null
       diffHelper.reset()
       eventDispatcher.multicaster.onReset()
     }
@@ -57,24 +53,16 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
       loading = true
       error = null
 
-      val newUpdateFuture =
-        if (zipChanges) {
-          dataProvider.changesProviderRequest.successOnEdt {
-            changesModel.changes = it.changes
-            diffHelper.setUp(dataProvider, it)
-          }
+      updateFuture = dataProvider.changesProviderRequest.handleOnEdt { changesProvider, error ->
+        if (error == null) {
+          commitsModel.commitsWithChanges = changesProvider.changesByCommits
+          cumulativeChangesModel.changes = changesProvider.changes
+          diffHelper.setUp(dataProvider, changesProvider)
         }
-        else {
-          diffHelper.reset()
-          dataProvider.logCommitsRequest.successOnEdt { changesModel.commits = it }
-        }
-
-      newUpdateFuture.handleOnEdt { _, error: Throwable? ->
-        if (error != null) this.error = error.cause
+        this.error = error
         loading = false
         eventDispatcher.multicaster.onLoadingCompleted()
       }
-      updateFuture = newUpdateFuture
       eventDispatcher.multicaster.onLoadingStarted()
     }
   }

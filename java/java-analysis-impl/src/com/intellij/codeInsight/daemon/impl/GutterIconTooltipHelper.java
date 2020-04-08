@@ -41,7 +41,7 @@ public class GutterIconTooltipHelper {
    * @deprecated use {@link GutterTooltipHelper}
    */
   @Deprecated
-  public static String composeText(@NotNull PsiElement[] elements, @NotNull String start, @NotNull String pattern) {
+  public static String composeText(PsiElement @NotNull [] elements, @NotNull String start, @NotNull String pattern) {
     return composeText(Arrays.asList(elements), start, pattern);
   }
 

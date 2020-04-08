@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -6,9 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.sun.jdi.connect.Connector;
 
-/**
- * @author egor
- */
 public class PidRemoteConnection extends RemoteConnection {
   private final String myPid;
   private final boolean myFixedAddress;

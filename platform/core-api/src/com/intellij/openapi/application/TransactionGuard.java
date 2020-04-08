@@ -91,6 +91,20 @@ public abstract class TransactionGuard {
   public abstract void assertWriteSafeContext(@NotNull ModalityState modality);
 
   /**
+   * Checks whether the current state allows for writing the model. Must be called from write thread.
+   * @return {@code true} is current context is write-safe, {@code false} otherwise
+   */
+  public abstract boolean isWritingAllowed();
+
+  /**
+   * Checks whether a given modality is write-safe.
+   *
+   * @param state modality to check
+   * @return {@code true} if a given modality is write-safe, {@code false} otherwise
+   */
+  public abstract boolean isWriteSafeModality(ModalityState state);
+
+  /**
    * @deprecated Replace with {@link Application#invokeLater} and take care that the default or explicitly passed modality state is write-safe.
    * When in doubt, use {@link ModalityState#NON_MODAL}.
    */

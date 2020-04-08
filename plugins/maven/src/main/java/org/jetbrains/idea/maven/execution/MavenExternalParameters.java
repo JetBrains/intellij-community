@@ -29,6 +29,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -57,9 +58,9 @@ import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
-import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.event.HyperlinkEvent;
@@ -357,7 +358,7 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }
@@ -591,7 +592,7 @@ public class MavenExternalParameters {
 
     @Override
     protected void hyperlinkClicked() {
-      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenSettings.DISPLAY_NAME);
+      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("configurable.MavenSettings.display.name"));
     }
   }
 

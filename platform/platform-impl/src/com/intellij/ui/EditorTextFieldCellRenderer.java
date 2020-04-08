@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -121,7 +107,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   @NotNull
   private RendererComponent getEditorPanel(final JTable table) {
-    RendererComponent panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
+    RendererComponent panel = ComponentUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       DelegateColorScheme scheme = (DelegateColorScheme)panel.getEditor().getColorsScheme();
       scheme.setDelegate(EditorColorsUtil.getGlobalOrDefaultColorScheme());
@@ -130,7 +116,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     panel = createRendererComponent(myProject, myLanguage, myInheritFontFromLaF);
     Disposer.register(this, panel);
-    Disposer.register(this, () -> UIUtil.putClientProperty(table, MY_PANEL_PROPERTY, null));
+    Disposer.register(this, () -> ComponentUtil.putClientProperty(table, MY_PANEL_PROPERTY, null));
 
     table.putClientProperty(MY_PANEL_PROPERTY, panel);
     return panel;
@@ -258,12 +244,18 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     private static final char RETURN_SYMBOL = '\u23ce';
 
     private final StringBuilder myDocumentTextBuilder = new StringBuilder();
+    private final boolean myAppendEllipsis;
 
     private Dimension myPreferredSize;
     private String myRawText;
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+      this(project, language, inheritFontFromLaF, true);
+    }
+
+    public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF, boolean appendEllipsis) {
       super(project, language, inheritFontFromLaF);
+      myAppendEllipsis = appendEllipsis;
     }
 
     @Override
@@ -313,7 +305,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
       boolean singleLineMode = getHeight() / (float)getEditor().getLineHeight() < 1.1f;
       if (singleLineMode) {
-        appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true);
+        appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true, myAppendEllipsis);
       }
       else {
         int lineHeight = getEditor().getLineHeight();
@@ -329,7 +321,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         for (int line = 0; !lt.atEnd() && line < linesToAppend; lt.advance(), line++) {
           int start = lt.getOffset();
           int end = start + lt.getLength();
-          appendAbbreviated(myDocumentTextBuilder, myRawText, start, end, fontMetrics, maxLineWidth, false);
+          appendAbbreviated(myDocumentTextBuilder, myRawText, start, end, fontMetrics, maxLineWidth, false, myAppendEllipsis);
           if (lt.getLineSeparatorLength() > 0) {
             myDocumentTextBuilder.append('\n');
           }
@@ -340,8 +332,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     private static void appendAbbreviated(StringBuilder to, String text, int start, int end,
-                                          FontMetrics metrics, int maxWidth, boolean replaceLineTerminators) {
-      int abbreviationLength = abbreviationLength(text, start, end, metrics, maxWidth, replaceLineTerminators);
+                                          FontMetrics metrics, int maxWidth, boolean replaceLineTerminators, boolean appendEllipsis) {
+      int abbreviationLength = abbreviationLength(text, start, end, metrics, maxWidth, replaceLineTerminators, appendEllipsis);
 
       if (!replaceLineTerminators) {
         to.append(text, start, start + abbreviationLength);
@@ -356,15 +348,15 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         }
       }
 
-      if (abbreviationLength != end - start) {
+      if (appendEllipsis && abbreviationLength != end - start) {
         to.append(ABBREVIATION_SUFFIX);
       }
     }
 
-    private static int abbreviationLength(String text, int start, int end, FontMetrics metrics, int maxWidth, boolean replaceSeparators) {
+    private static int abbreviationLength(String text, int start, int end, FontMetrics metrics, int maxWidth, boolean replaceSeparators, boolean appendEllipsis) {
       if (metrics.charWidth('m') * (end - start) <= maxWidth) return end - start;
 
-      int abbrWidth = metrics.charWidth(ABBREVIATION_SUFFIX);
+      int abbrWidth = appendEllipsis ? metrics.charWidth(ABBREVIATION_SUFFIX) : 0;
       int abbrLength = 0;
 
       CharSequenceSubSequence subSeq = new CharSequenceSubSequence(text, start, end);

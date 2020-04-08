@@ -30,7 +30,7 @@ public class MakeStaticAction extends BaseJavaRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return (elements.length == 1) && (elements[0] instanceof PsiMethod) && !((PsiMethod)elements[0]).isConstructor();
   }
 

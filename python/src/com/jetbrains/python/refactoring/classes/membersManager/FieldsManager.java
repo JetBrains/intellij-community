@@ -78,7 +78,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   @Override
   protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
                                               @NotNull final Collection<PyMemberInfo<PyTargetExpression>> members,
-                                              @NotNull final PyClass... to) {
+                                              final PyClass @NotNull ... to) {
     return moveAssignments(from, Collections2
       .filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
                            to);
@@ -86,7 +86,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
 
   protected abstract Collection<PyElement> moveAssignments(@NotNull PyClass from,
                                                            @NotNull Collection<PyAssignmentStatement> statements,
-                                                           @NotNull PyClass... to);
+                                                           PyClass @NotNull ... to);
 
   /**
    * Checks if class has fields. Only child may know how to obtain field

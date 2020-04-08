@@ -44,8 +44,7 @@ public class ProtocolFrame {
     return myPayload;
   }
 
-  @NotNull
-  public byte[] pack() {
+  public byte @NotNull [] pack() {
     String s = String.valueOf(myCommand) +
                 '\t' +
                 mySequence +

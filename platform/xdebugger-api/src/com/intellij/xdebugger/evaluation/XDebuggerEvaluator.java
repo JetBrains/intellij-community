@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerEvaluator {
   /**
    * Start evaluating expression.

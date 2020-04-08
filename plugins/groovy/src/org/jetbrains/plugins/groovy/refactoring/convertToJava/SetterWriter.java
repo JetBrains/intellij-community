@@ -66,7 +66,7 @@ public class SetterWriter {
   }
 
   private void writeBody(boolean aStatic,
-                         @NotNull PsiParameter[] parameters,
+                         PsiParameter @NotNull [] parameters,
                          @NotNull PsiParameter parameter, final GroovyPsiElement place) {
     //method body
     myBuffer.append("{\n");
@@ -89,8 +89,7 @@ public class SetterWriter {
     myBuffer.append("}\n");
   }
 
-  @NotNull
-  private GrExpression[] generateArguments(@NotNull PsiParameter[] parameters, @NotNull GroovyPsiElement place) {
+  private GrExpression @NotNull [] generateArguments(PsiParameter @NotNull [] parameters, @NotNull GroovyPsiElement place) {
     final GrExpression[] args = new GrExpression[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       args[i] = GroovyPsiElementFactory.getInstance(myContext.project).createExpressionFromText(parameters[i].getName(), place);
@@ -99,7 +98,7 @@ public class SetterWriter {
     return args;
   }
 
-  private GroovyPsiElement createStubMethod(@NotNull PsiParameter[] parameters) {
+  private GroovyPsiElement createStubMethod(PsiParameter @NotNull [] parameters) {
     StringBuilder methodText = new StringBuilder("def ").append(myName).append('(');
     for (PsiParameter parameter : parameters) {
       methodText.append(parameter.getType().getCanonicalText()).append(' ').append(parameter.getName()).append(',');
@@ -109,10 +108,9 @@ public class SetterWriter {
     return GroovyPsiElementFactory.getInstance(myContext.project).createMethodFromText(methodText.toString(), mySetter);
   }
 
-  @NotNull
-  private PsiParameter[] inferActualParameters(boolean aStatic,
-                                               @NotNull PsiParameter[] parameters,
-                                               @NotNull PsiParameter parameter) {
+  private PsiParameter @NotNull [] inferActualParameters(boolean aStatic,
+                                                         PsiParameter @NotNull [] parameters,
+                                                         @NotNull PsiParameter parameter) {
     //parameters
     parameters[parameters.length - 1] = parameter;
     PsiParameter[] actual;

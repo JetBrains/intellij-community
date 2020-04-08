@@ -5,10 +5,10 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 
 interface GHPRChangesDiffHelper {
-  fun setUp(dataProvider: GithubPullRequestDataProvider, changesProvider: GHPRChangesProvider)
+  fun setUp(dataProvider: GHPRDataProvider, changesProvider: GHPRChangesProvider)
   fun reset()
 
   fun getReviewSupport(change: Change): GHPRDiffReviewSupport?

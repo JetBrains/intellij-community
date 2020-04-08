@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -76,9 +76,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author max
- */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   static {
@@ -86,6 +83,7 @@ public final class UIUtil {
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
+  public static final @NonNls String BR = "<br/>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
@@ -507,34 +505,6 @@ public final class UIUtil {
     }
   }
 
-  public static boolean hasLeakingAppleListeners() {
-    // in version 1.6.0_29 Apple introduced a memory leak in JViewport class - they add a PropertyChangeListeners to the CToolkit
-    // but never remove them:
-    // JViewport.java:
-    // public JViewport() {
-    //   ...
-    //   final Toolkit toolkit = Toolkit.getDefaultToolkit();
-    //   if(toolkit instanceof CToolkit)
-    //   {
-    //     final boolean isRunningInHiDPI = ((CToolkit)toolkit).runningInHiDPI();
-    //     if(isRunningInHiDPI) setScrollMode(0);
-    //     toolkit.addPropertyChangeListener("apple.awt.contentScaleFactor", new PropertyChangeListener() { ... });
-    //   }
-    // }
-
-    return SystemInfo.isMac && System.getProperty("java.runtime.version").startsWith("1.6.0_29");
-  }
-
-  public static void removeLeakingAppleListeners() {
-    if (!hasLeakingAppleListeners()) return;
-
-    Toolkit toolkit = Toolkit.getDefaultToolkit();
-    String name = "apple.awt.contentScaleFactor";
-    for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
-      toolkit.removePropertyChangeListener(name, each);
-    }
-  }
-
   public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
     return Boolean.TRUE.equals(getWindowClientProperty(window, key));
   }
@@ -595,7 +565,7 @@ public final class UIUtil {
   }
 
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
-    component.putClientProperty(key, value);
+    ComponentUtil.putClientProperty(component, key, value);
   }
 
   @NotNull
@@ -643,6 +613,7 @@ public final class UIUtil {
 
   public static boolean isReallyTypedEvent(@NotNull KeyEvent e) {
     char c = e.getKeyChar();
+    if (c == KeyEvent.CHAR_UNDEFINED) return false; // ignore CHAR_UNDEFINED, like Swing text components do
     if (c < 0x20 || c == 0x7F) return false;
 
     // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
@@ -766,9 +737,8 @@ public final class UIUtil {
     WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
-  @NotNull
-  public static String[] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
-    ArrayList<String> lines = new ArrayList<>();
+  public static String @NotNull [] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
+    List<String> lines = new ArrayList<>();
     StringBuilder currentLine = new StringBuilder();
     StringBuilder currentAtom = new StringBuilder();
 
@@ -903,6 +873,10 @@ public final class UIUtil {
   @NotNull
   public static Color getLabelForeground() {
     return JBColor.namedColor("Label.foreground", new JBColor(Gray._0, Gray.xBB));
+  }
+
+  public static Color getErrorForeground() {
+    return JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
   }
 
   @NotNull
@@ -1262,34 +1236,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Alloy Look-n-Feel is deprecated and not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderAlloyIDEALookAndFeel() {
-    return false;
-  }
-
-  /**
-   * @deprecated Native OS Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderWindowsLookAndFeel() {
-    return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
-  }
-
-  /**
-   * @deprecated Native OS Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderWindowsClassicLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().equals("Windows Classic");
-  }
-
-
-  /**
    * @deprecated Aqua Look-n-Feel is not supported anymore
    */
   @Deprecated
@@ -1304,15 +1250,6 @@ public final class UIUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderNimbusLookAndFeel() {
-    return false;
-  }
-
-  /**
-   * @deprecated JGoodies Look-n-Feel is deprecated and not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderJGoodiesLookAndFeel() {
     return false;
   }
 
@@ -1365,29 +1302,6 @@ public final class UIUtil {
     } catch (Exception e) {
       return false;
     }
-  }
-
-  /**
-   * @deprecated GTK Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static String getGtkThemeName() {
-    final LookAndFeel laf = UIManager.getLookAndFeel();
-    if (laf != null && "GTKLookAndFeel".equals(laf.getClass().getSimpleName())) {
-      try {
-        final Method method = laf.getClass().getDeclaredMethod("getGtkThemeName");
-        method.setAccessible(true);
-        final Object theme = method.invoke(laf);
-        if (theme != null) {
-          return theme.toString();
-        }
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -1460,8 +1374,7 @@ public final class UIUtil {
     return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
-  @NotNull
-  public static String[] getValidFontNames(final boolean familyName) {
+  public static String @NotNull [] getValidFontNames(final boolean familyName) {
     Set<String> result = new TreeSet<>();
 
     // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
@@ -1485,8 +1398,7 @@ public final class UIUtil {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public static String[] getStandardFontSizes() {
+  public static String @NotNull [] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
   }
 
@@ -1863,6 +1775,7 @@ public final class UIUtil {
   }
 
   /**
+   * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
    * @see #pump()
    */
@@ -1870,7 +1783,8 @@ public final class UIUtil {
   public static void dispatchAllInvocationEvents() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    Method dispatchEventMethod = ObjectUtils.notNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
+    Method dispatchEventMethod =
+      Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
     for (int i = 1; ; i++) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
@@ -2011,7 +1925,6 @@ public final class UIUtil {
     return SwingUtilities.isDescendingFrom(owner, component);
   }
 
-
   public static boolean isCloseClick(@NotNull MouseEvent e) {
     return isCloseClick(e, MouseEvent.MOUSE_PRESSED);
   }
@@ -2057,50 +1970,55 @@ public final class UIUtil {
   @Nullable
   public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
     Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
-    if (component != null && component.getParent() instanceof JRootPane) {//GlassPane case
+    if (component != null && component.getParent() instanceof JRootPane) { // GlassPane case
       JRootPane rootPane = (JRootPane)component.getParent();
-      Point point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getLayeredPane());
-      component = SwingUtilities.getDeepestComponentAt(rootPane.getLayeredPane(), point.x, point.y);
+      component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getLayeredPane());
       if (component == null) {
-        point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getContentPane());
-        component = SwingUtilities.getDeepestComponentAt(rootPane.getContentPane(), point.x, point.y);
+        component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
+      }
+    }
+    if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
+      Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
+      if (components.length == 1 && ArrayUtil.indexOf(components, component) == -1) {
+        component = getDeepestComponentAtForComponent(parent, x, y, components[0]);
       }
     }
     return component;
   }
 
+  private static Component getDeepestComponentAtForComponent(@NotNull Component parent, int x, int y, @NotNull Component component) {
+    Point point = SwingUtilities.convertPoint(parent, new Point(x, y), component);
+    return SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
+  }
+
   public static void layoutRecursively(@NotNull Component component) {
-    if (component instanceof JComponent) {
-      component.doLayout();
-      for (Component child : ((JComponent)component).getComponents()) {
-        layoutRecursively(child);
-      }
+    if (!(component instanceof JComponent)) {
+      return;
     }
+    forEachComponentInHierarchy(component, __ -> component.doLayout());
   }
 
   @NotNull
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font) {
-    return getCssFontDeclaration(font, null, null, null);
+    return getCssFontDeclaration(font, getLabelForeground(), JBUI.CurrentTheme.Link.linkColor(), null);
   }
 
   @NotNull
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
-    StringBuilder builder = new StringBuilder().append("<style>\n");
+    @Language("HTML")
     String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
-
-    builder.append("body, div, td, p {").append(familyAndSize);
-    if (fgColor != null) builder.append(" color:#").append(ColorUtil.toHex(fgColor)).append(';');
-    builder.append("}\n");
-
-    builder.append("a {").append(familyAndSize);
-    if (linkColor != null) builder.append(" color:#").append(ColorUtil.toHex(linkColor)).append(';');
-    builder.append("}\n");
-
-    builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
-    builder.append("ul {list-style:disc; margin-left:15px;}\n");
-    return builder.append("</style>").toString();
+    return "<style>\n"
+    +"body, div, td, p {" + familyAndSize
+    + (fgColor != null ? " color:#" + ColorUtil.toHex(fgColor)+';' : "")
+    +"}\n"
+    +"a {" + familyAndSize
+    + (linkColor != null ? " color:#"+ColorUtil.toHex(linkColor)+';' : "")
+    +"}\n"
+    +"code {font-size:"+font.getSize()+"pt;}\n"
+    +"ul {list-style:disc; margin-left:15px;}\n"
+    +"</style>";
   }
 
   @NotNull
@@ -2319,14 +2237,17 @@ public final class UIUtil {
     return toRender;
   }
 
+  /**
+   * @deprecated This method is a hack. Please avoid it and create borderless {@code JScrollPane} manually using
+   * {@link com.intellij.ui.ScrollPaneFactory#createScrollPane(Component, boolean)}.
+   */
+  @Deprecated
   public static void removeScrollBorder(final Component c) {
-    for (JScrollPane scrollPane : uiTraverser(c).filter(JScrollPane.class)) {
-      if (!uiParents(scrollPane, true)
-        .takeWhile(Conditions.notEqualTo(c))
-        .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
-        .isEmpty()) continue;
-
-      Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
+    JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
+      .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
+      .filter(JScrollPane.class);
+    for (JScrollPane scrollPane : scrollPanes) {
+      Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
       if (keepBorderSides != null) {
         if (scrollPane.getBorder() instanceof LineBorder) {
           Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
@@ -2630,7 +2551,7 @@ public final class UIUtil {
     }
     if (c instanceof JComponent) {
       JComponent jc = (JComponent)c;
-      Iterable<? extends Component> orphans = getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+      Iterable<? extends Component> orphans = ComponentUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
       }
@@ -2641,7 +2562,6 @@ public final class UIUtil {
     }
     return result;
   });
-
 
   public static void scrollListToVisibleIfNeeded(@NotNull final JList<?> list) {
     SwingUtilities.invokeLater(() -> {
@@ -2860,7 +2780,7 @@ public final class UIUtil {
   }
 
   @Nullable
-  public static JComponent mergeComponentsWithAnchor(@NotNull PanelWithAnchor... panels) {
+  public static JComponent mergeComponentsWithAnchor(PanelWithAnchor @NotNull ... panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
 
@@ -2886,18 +2806,26 @@ public final class UIUtil {
     return maxWidthAnchor;
   }
 
-  /**
-   * @deprecated Not required.
-   */
-  @Deprecated
-  public static void setNotOpaqueRecursively(@SuppressWarnings("unused") @NotNull Component component) {
+  public static void setNotOpaqueRecursively(@NotNull Component component) {
+    if (!(component instanceof JComponent)) {
+      return;
+    }
+    forEachComponentInHierarchy(component, c -> {
+      if (c instanceof JComponent) {
+        ((JComponent)c).setOpaque(false);
+      }
+    });
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
-    component.setBackground(bg);
+    forEachComponentInHierarchy(component, c -> c.setBackground(bg));
+  }
+
+  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
+    action.consume(component);
     if (component instanceof Container) {
       for (Component c : ((Container)component).getComponents()) {
-        setBackgroundRecursively(c, bg);
+        forEachComponentInHierarchy(c, action);
       }
     }
   }
@@ -3030,13 +2958,13 @@ public final class UIUtil {
 
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
   @NotNull
-  public static String getDebugText(Component c) {
+  public static String getDebugText(@NotNull Component c) {
     StringBuilder builder  = new StringBuilder();
-    getAllTextsRecursivelyImpl(c, builder);
+    getAllTextsRecursively(c, builder);
     return builder.toString();
   }
 
-  private static void getAllTextsRecursivelyImpl(Component component, @NotNull StringBuilder builder) {
+  private static void getAllTextsRecursively(@NotNull Component component, @NotNull StringBuilder builder) {
     String candidate = "";
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
@@ -3049,7 +2977,7 @@ public final class UIUtil {
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
       for (Component child : components) {
-        getAllTextsRecursivelyImpl(child, builder);
+        getAllTextsRecursively(child, builder);
       }
     }
   }
@@ -3065,7 +2993,7 @@ public final class UIUtil {
   }
 
   public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
-    UndoManager undoManager = getClientProperty(textComponent, UNDO_MANAGER);
+    UndoManager undoManager = ComponentUtil.getClientProperty(textComponent, UNDO_MANAGER);
     if (undoManager != null) {
       undoManager.discardAllEdits();
     }
@@ -3145,6 +3073,11 @@ public final class UIUtil {
   }
 
   @NotNull
+  public static String leftArrow() {
+    return FontUtil.leftArrow(StartupUiUtil.getLabelFont());
+  }
+
+  @NotNull
   public static String rightArrow() {
     return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
@@ -3208,7 +3141,7 @@ public final class UIUtil {
    * Indicates whether the specified component is instance of one of the specified types
    * or it contains an instance of one of the specified types.
    */
-  public static boolean hasComponentOfType(@NotNull Component component, @NotNull Class<?>... types) {
+  public static boolean hasComponentOfType(@NotNull Component component, Class<?> @NotNull ... types) {
     for (Class<?> type : types) {
       if (type.isAssignableFrom(component.getClass())) {
         return true;
@@ -3356,7 +3289,6 @@ public final class UIUtil {
 
   private static final class FocusedSelection {
     private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
-    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.selectionBackground", BACKGROUND);
     private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionBackground", BACKGROUND);
     private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionBackground", BACKGROUND);
   }
@@ -3756,9 +3688,7 @@ public final class UIUtil {
     assert !SwingUtilities.isEventDispatchThread();
     Semaphore lock = new Semaphore(1);
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      lock.up();
-    });
+    SwingUtilities.invokeLater(() -> lock.up());
     lock.waitFor();
   }
 

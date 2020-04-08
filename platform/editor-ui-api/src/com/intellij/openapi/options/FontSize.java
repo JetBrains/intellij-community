@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum FontSize {
 
-  XX_SMALL(8), X_SMALL(10), SMALL(12), MEDIUM(14), LARGE(16), X_LARGE(18), XX_LARGE(24);
+  XX_SMALL(10), X_SMALL(12), SMALL(13), MEDIUM(14), LARGE(16), X_LARGE(18), XX_LARGE(24);
 
   private final int    mySize;
 

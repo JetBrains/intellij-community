@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -67,8 +67,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       return toolWindow;
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(TOOL_WINDOW_ID));
-    toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild);
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(TOOL_WINDOW_ID, AllIcons.Toolwindows.ToolWindowBuild));
     ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addDataProvider(new DataProvider() {
       private int myInsideGetData = 0;
@@ -85,7 +84,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       }
     });
 
-    new ContentManagerWatcher(toolWindow, contentManager);
+    ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
     return toolWindow;
   }
 
@@ -213,17 +212,19 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       }
       closeListenerMap.put(buildDescriptor.getId(), new CloseListener(content, processHandler));
     }
+    Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
+    pair.second.incrementAndGet();
+    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    if (pair.first == null) {
+      content.putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT);
+    }
+    content.setIcon(ExecutionUtil.getLiveIndicator(pair.first, 0, 13));
     invokeLaterIfNeeded(() -> {
-      Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
-      pair.second.incrementAndGet();
-      content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-      if (pair.first == null) {
-        content.putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT);
-      }
-      content.setIcon(ExecutionUtil.getLiveIndicator(pair.first, 0, 13));
       JComponent component = content.getComponent();
       component.invalidate();
-      getOrCreateToolWindow().setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Toolwindows.ToolWindowBuild));
+      if (!liveContentsMap.isEmpty()) {
+        getOrCreateToolWindow().setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Toolwindows.ToolWindowBuild));
+      }
     });
   }
 
@@ -238,17 +239,19 @@ public final class BuildContentManagerImpl implements BuildContentManager {
         }
       }
     }
+
+    Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
+    if (pair != null && pair.second.decrementAndGet() == 0) {
+      content.setIcon(pair.first);
+      if (pair.first == null) {
+        content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.FALSE);
+      }
+      liveContentsMap.remove(content);
+    }
+
     invokeLaterIfNeeded(() -> {
-      Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
-      if (pair != null && pair.second.decrementAndGet() == 0) {
-        content.setIcon(pair.first);
-        if (pair.first == null) {
-          content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.FALSE);
-        }
-        liveContentsMap.remove(content);
-        if (liveContentsMap.isEmpty()) {
-          getOrCreateToolWindow().setIcon(AllIcons.Toolwindows.ToolWindowBuild);
-        }
+      if (liveContentsMap.isEmpty()) {
+        getOrCreateToolWindow().setIcon(AllIcons.Toolwindows.ToolWindowBuild);
       }
     });
   }

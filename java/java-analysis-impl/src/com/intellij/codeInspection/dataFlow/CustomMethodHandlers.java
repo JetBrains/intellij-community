@@ -129,8 +129,7 @@ class CustomMethodHandlers {
     return CONSTANT_CALLS.methodMatches(method);
   }
 
-  @NotNull
-  private static DfType handleConstantCall(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
+  private static @NotNull DfType handleConstantCall(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
     PsiType returnType = method.getReturnType();
     if (returnType == null) return TOP;
     List<Object> args = new ArrayList<>();
@@ -164,9 +163,8 @@ class CustomMethodHandlers {
 
   private static Method toJvmMethod(PsiMethod method) {
     return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Method>() {
-      @NotNull
       @Override
-      public Result<Method> compute() {
+      public @NotNull Result<Method> compute() {
         Method reflection = getMethod();
         return Result.create(reflection, method);
       }
@@ -202,8 +200,7 @@ class CustomMethodHandlers {
         return null;
       }
 
-      @Nullable
-      private Method getMethod() {
+      private @Nullable Method getMethod() {
         PsiClass aClass = method.getContainingClass();
         Class<?> containingClass;
         if (aClass == null) return null;
@@ -227,20 +224,18 @@ class CustomMethodHandlers {
     });
   }
 
-  @NotNull
-  private static DfType indexOf(DfaValue qualifier,
-                                DfaMemoryState memState,
-                                DfaValueFactory factory,
-                                SpecialField specialField) {
+  private static @NotNull DfType indexOf(DfaValue qualifier,
+                                         DfaMemoryState memState,
+                                         DfaValueFactory factory,
+                                         SpecialField specialField) {
     DfaValue length = specialField.createValue(factory, qualifier);
     LongRangeSet range = DfIntType.extractRange(memState.getDfType(length));
     return DfTypes.intRange(LongRangeSet.range(-1, range.max() - 1));
   }
 
-  @NotNull
-  private static DfType collectionFactory(DfaCallArguments args,
-                                          DfaMemoryState memState, DfaValueFactory factory,
-                                          PsiMethod method) {
+  private static @NotNull DfType collectionFactory(DfaCallArguments args,
+                                                   DfaMemoryState memState, DfaValueFactory factory,
+                                                   PsiMethod method) {
     PsiType type = method.getReturnType();
     if (!(type instanceof PsiClassType)) return TOP;
     int factor = ((PsiClassType)type).rawType().equalsToText(JAVA_UTIL_MAP) ? 2 : 1;
@@ -268,8 +263,7 @@ class CustomMethodHandlers {
     return DfTypes.constant(field, field.getType());
   }
 
-  @NotNull
-  private static DfType substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
+  private static @NotNull DfType substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
     if (stringType == null || !stringType.equalsToText(JAVA_LANG_STRING)) return TOP;
     DfaValue qualifier = args.myQualifier;
     DfaValue[] arguments = args.myArguments;
@@ -286,8 +280,7 @@ class CustomMethodHandlers {
     return STRING_LENGTH.asDfType(resultLen, stringType);
   }
 
-  @NotNull
-  private static DfType mathAbs(DfaValue[] args, DfaMemoryState memState, boolean isLong) {
+  private static @NotNull DfType mathAbs(DfaValue[] args, DfaMemoryState memState, boolean isLong) {
     DfaValue arg = ArrayUtil.getFirstElement(args);
     if (arg == null) return TOP;
     DfType type = memState.getDfType(arg);
@@ -295,8 +288,7 @@ class CustomMethodHandlers {
     return isLong ? DfTypes.longRange(range.abs(true)) : DfTypes.intRange(range.abs(false));
   }
 
-  @NotNull
-  private static DfType calendarGet(DfaValue[] arguments, DfaMemoryState state) {
+  private static @NotNull DfType calendarGet(DfaValue[] arguments, DfaMemoryState state) {
     if (arguments.length != 1) return TOP;
     Integer val = DfConstantType.getConstantOfType(state.getDfType(arguments[0]), Integer.class);
     if (val == null) return TOP;
@@ -315,16 +307,14 @@ class CustomMethodHandlers {
     return range == null ? TOP : DfTypes.intRange(range);
   }
 
-  @NotNull
-  private static DfType skip(DfaValue[] arguments, DfaMemoryState state) {
+  private static @NotNull DfType skip(DfaValue[] arguments, DfaMemoryState state) {
     if (arguments.length != 1) return TOP;
     LongRangeSet range = DfLongType.extractRange(state.getDfType(arguments[0]));
     return DfTypes.longRange(LongRangeSet.range(0, Math.max(0, range.max())));
   }
 
 
-  @NotNull
-  private static DfType numberAsString(DfaCallArguments args, DfaMemoryState state, int bitsPerChar, int maxBits) {
+  private static @NotNull DfType numberAsString(DfaCallArguments args, DfaMemoryState state, int bitsPerChar, int maxBits) {
     DfaValue arg = args.myArguments[0];
     if (arg == null) return TOP;
     LongRangeSet range = DfLongType.extractRange(state.getDfType(arg));
@@ -333,8 +323,7 @@ class CustomMethodHandlers {
     return STRING_LENGTH.asDfType(DfTypes.intRange(LongRangeSet.range(1, max)));
   }
 
-  @NotNull
-  private static DfType enumName(DfaValue qualifier, DfaMemoryState state, PsiType type) {
+  private static @NotNull DfType enumName(DfaValue qualifier, DfaMemoryState state, PsiType type) {
     DfType dfType = state.getDfType(qualifier);
     PsiEnumConstant value = DfConstantType.getConstantOfType(dfType, PsiEnumConstant.class);
     if (value != null) {

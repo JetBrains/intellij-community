@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
@@ -35,19 +35,6 @@ public class SimpleColoredText implements ColoredTextContainer {
     myTexts.add(index, fragment);
     myCachedToString = null;
     myAttributes.add(index, attributes);
-  }
-
-  @Override
-  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-    append(fragment, attributes);
-  }
-
-  @Override
-  public void setIcon(@Nullable Icon icon) {
-  }
-
-  @Override
-  public void setToolTipText(@Nullable String text) {
   }
 
   public void clear() {

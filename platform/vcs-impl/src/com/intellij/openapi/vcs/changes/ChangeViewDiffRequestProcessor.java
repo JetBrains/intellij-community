@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -21,13 +21,13 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -192,13 +192,13 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    ObjectUtils.notNull(getSelectionStrategy(false)).goNext();
+    Objects.requireNonNull(getSelectionStrategy(false)).goNext();
     updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    ObjectUtils.notNull(getSelectionStrategy(false)).goPrev();
+    Objects.requireNonNull(getSelectionStrategy(false)).goPrev();
     updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
   }
 

@@ -132,8 +132,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @Override
-  @NotNull
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     return multiResolve(true);
   }
 
@@ -142,9 +141,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return findChildByClass(GrTypeElement.class);
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     GroovyReference reference = getConstructorReference();
     return reference == null ? GroovyResolveResult.EMPTY_ARRAY : reference.multiResolve(incompleteCode);
   }

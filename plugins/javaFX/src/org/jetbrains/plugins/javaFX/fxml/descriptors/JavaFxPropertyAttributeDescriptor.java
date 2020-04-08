@@ -66,9 +66,8 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
     return getEnumeratedValues() != null;
   }
 
-  @Nullable
   @Override
-  public String[] getEnumeratedValues() {
+  public String @Nullable [] getEnumeratedValues() {
     final PsiClass aClass = getEnum();
     if (aClass != null) {
       final PsiField[] fields = aClass.getAllFields();

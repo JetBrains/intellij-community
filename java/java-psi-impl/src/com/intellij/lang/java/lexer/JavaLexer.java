@@ -23,7 +23,7 @@ public class JavaLexer extends LexerBase {
     ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
     FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
     RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
-    TRUE, FALSE, NULL, RECORD);
+    TRUE, FALSE, NULL);
 
   private static final Set<CharSequence> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
     CharSequenceHashingStrategy.CASE_SENSITIVE,
@@ -45,7 +45,7 @@ public class JavaLexer extends LexerBase {
 
   private final _JavaLexer myFlexLexer;
   private CharSequence myBuffer;
-  private @Nullable char[] myBufferArray;
+  private char @Nullable [] myBufferArray;
   private int myBufferIndex;
   private int myBufferEndOffset;
   private int myTokenEndOffset;  // positioned after the last symbol of the current token

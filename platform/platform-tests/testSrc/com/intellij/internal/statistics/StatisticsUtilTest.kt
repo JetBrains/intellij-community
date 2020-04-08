@@ -1,34 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
-import com.intellij.internal.statistic.utils.getBooleanUsage
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
+import com.intellij.internal.statistic.utils.getCountingStepName
 import com.intellij.internal.statistic.utils.getCountingUsage
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class StatisticsUtilTest {
-
-  @Test
-  fun test_boolean_usage() {
-    assertUsage("test.value.enabled", 1, getBooleanUsage("test.value", true))
-    assertUsage("test.value.disabled", 1, getBooleanUsage("test.value", false))
-  }
-
   @Test
   fun test_counting_usage() {
     val steps = listOf(0, 1, 2, 10, 1000, 10 * 1000, 1000 * 1000)
@@ -91,6 +72,33 @@ class StatisticsUtilTest {
     assertCountingUsage("test.value.count.<1", 0, steps)
   }
 
+  @Test
+  fun `test next power of two`() {
+    testPowerOfTwo(0, 1)
+    testPowerOfTwo(-5, 1)
+    testPowerOfTwo(1, 1)
+    testPowerOfTwo(2, 2)
+    testPowerOfTwo(3, 4)
+    testPowerOfTwo(5, 8)
+  }
+
+  private fun testPowerOfTwo(value: Int, expected: Int) {
+    assertEquals(expected, getNextPowerOfTwo(value), "Incorrect key for value `$value`")
+  }
+
+  @Test
+  fun `test hash sensitive data`() {
+    val salt = byteArrayOf(45, 105, 19, -80, 109, 38, 24, -23, 27, -102, -123, 92, 60, -63, -83, -67, -66, -17, -26, 44, 123, 28, 40, -74, 77, -105, 105, -41, 36, -55, -21, 5)
+    doTestHashing(salt, "test-project-name", "dfa488a68d19d909af416ea02c8013e314562803d421ae747d7fec06dd080609")
+    doTestHashing(salt, "SomeFramework", "894bcfb4eb52e802ce750112ad3ed6d16f049c63f385f5a0d6c6ab5d63e54c4e")
+    doTestHashing(salt, "project", "4d85bff7bbefd0d5695450874de9b38fb1f10bacadd23abdd4ea511248aab7f0")
+  }
+
+  private fun doTestHashing(salt: ByteArray, data: String, expected: String) {
+    val actual = EventLogConfiguration.hashSha256(salt, data)
+    assertEquals(expected, actual, "Hashing algorithm was changed for '$data'")
+  }
+
   private fun assertCountingUsage(expectedKey: String, actualValue: Int, steps: List<Int>) {
     assertUsage(expectedKey, 1, getCountingUsage("test.value.count", actualValue, steps), "Incorrect key for value '$actualValue'")
   }
@@ -103,4 +111,8 @@ class StatisticsUtilTest {
     assertEquals(key, actualUsage.key, message)
     assertEquals(value, actualUsage.value, message)
   }
+}
+
+private fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescriptor {
+  return UsageDescriptor("$key." + getCountingStepName(value, steps), 1)
 }

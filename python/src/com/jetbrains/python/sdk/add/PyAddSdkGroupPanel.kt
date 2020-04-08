@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.ButtonGroup
 import javax.swing.Icon
@@ -30,11 +31,11 @@ import javax.swing.JPanel
 /**
  * @author vlan
  */
-class PyAddSdkGroupPanel(name: String,
+class PyAddSdkGroupPanel(private val nameGetter: java.util.function.Supplier<@Nls String>,
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,
                          defaultPanel: PyAddSdkPanel) : PyAddSdkPanel() {
-  override val panelName: String = name
+  override val panelName: String get() = nameGetter.get()
   override val icon: Icon = panelIcon
   var selectedPanel: PyAddSdkPanel = defaultPanel
   private val changeListeners: MutableList<Runnable> = mutableListOf()

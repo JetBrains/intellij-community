@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
@@ -485,7 +485,7 @@ private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+[\\[(]\\d+
 
 private class ArrayPresentation(length: Int, className: String?) : XValuePresentation() {
   private val length = Integer.toString(length)
-  private val className = if (className.isNullOrEmpty()) "Array" else className!!
+  private val className = if (className.isNullOrEmpty()) "Array" else className
 
   override fun renderValue(renderer: XValuePresentation.XValueTextRenderer) {
     renderer.renderSpecialSymbol(className)

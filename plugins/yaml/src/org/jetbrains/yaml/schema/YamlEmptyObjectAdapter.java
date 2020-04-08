@@ -74,7 +74,7 @@ public class YamlEmptyObjectAdapter implements JsonObjectValueAdapter {
   }
 
   @Override
-  public JsonSchemaType substituteTypeForErrorMessage(JsonSchemaType type) {
+  public JsonSchemaType getAlternateType(JsonSchemaType type) {
     return type == JsonSchemaType._object ? JsonSchemaType._null : type;
   }
 }

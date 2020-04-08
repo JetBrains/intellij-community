@@ -9,7 +9,6 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -56,9 +55,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerEditorBase implements Expandable {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
@@ -146,7 +142,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
 
     DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
-    return JBPopupFactory.getInstance().createActionGroupPopup("Choose Language", actions, dataContext,
+    return JBPopupFactory.getInstance().createActionGroupPopup(XDebuggerBundle.message("debugger.editor.choose.language"), actions, dataContext,
                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                false);
   }
@@ -381,10 +377,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       foldingModel.clearFoldRegions();
       for (int i = 0; i < text.length(); i++) {
         if (text.charAt(i) == '\n') {
-          FoldRegion region = foldingModel.createFoldRegion(i, i + 1, "\u23ce", null, true);
-          if (region != null) {
-            region.setExpanded(false);
-          }
+          foldingModel.createFoldRegion(i, i + 1, "\u23ce", null, true);
         }
       }
     });

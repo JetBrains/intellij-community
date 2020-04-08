@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
-import com.intellij.application.options.colors.FontEditorPreview;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -27,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +37,7 @@ import java.util.Map;
 public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   private static final String STRING_TO_FOLD = "Folded text with highlighting";
 
-  private static final String ADDITIONAL_DEMO_TEXT =
-    "\n" +
+  private static final String DEMO_TEXT =
     "<todo>//TODO: Visit JB Web resources:</todo>\n"+
     "JetBrains Home Page: <hyperlink_f>http://www.jetbrains.com</hyperlink_f>\n" +
     "JetBrains Developer Community: <hyperlink>https://www.jetbrains.com/devnet</hyperlink>\n" +
@@ -128,6 +126,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.caret.row"), EditorColors.CARET_ROW_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.right.margin"), EditorColors.RIGHT_MARGIN_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.whitespaces"), EditorColors.WHITESPACES_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs"), EditorColors.TABS_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide"), EditorColors.INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide.selected"), EditorColors.SELECTED_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number"), EditorColors.LINE_NUMBERS_COLOR, ColorDescriptor.Kind.FOREGROUND),
@@ -145,14 +144,14 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.error"), HintUtil.ERROR_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.recent.locations.selection"), HintUtil.RECENT_LOCATIONS_SELECTION_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.tooltip"), IdeTooltipManager.TOOLTIP_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.promotion"), HintUtil.PROMOTION_PANE_KEY, ColorDescriptor.Kind.BACKGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.highlighted.folding.border"), EditorColors.FOLDED_TEXT_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND)
   };
 
-  private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
-  public static final String DISPLAY_NAME = OptionsBundle.message("options.general.display.name");
+  private static final @NonNls Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
 
   static{
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("folded_text", EditorColors.FOLDED_TEXT_ATTRIBUTES);
@@ -199,7 +198,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   @Override
   @NotNull
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return getDisplayNameText();
   }
 
   @Override
@@ -208,14 +207,12 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATT_DESCRIPTORS;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return COLOR_DESCRIPTORS;
   }
 
@@ -228,7 +225,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   @Override
   @NotNull
   public String getDemoText() {
-    return FontEditorPreview.getIDEDemoText() + ADDITIONAL_DEMO_TEXT;
+    return DEMO_TEXT;
   }
 
   @Override
@@ -254,10 +251,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     if (foldPos >= 0) {
       FoldingModelEx foldingModel = editor.getFoldingModel();
       foldingModel.runBatchFoldingOperation(() -> {
-        FoldRegion region = foldingModel.createFoldRegion(foldPos, foldPos + STRING_TO_FOLD.length(), STRING_TO_FOLD, null, true);
-        if (region != null) {
-          region.setExpanded(false);
-        }
+        foldingModel.createFoldRegion(foldPos, foldPos + STRING_TO_FOLD.length(), STRING_TO_FOLD, null, true);
       });
     }
   }
@@ -279,5 +273,9 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   private static String getHighlightDescTagName(HighlightInfoType highlightInfoType) {
     return highlightInfoType.getSeverity(null).myName;
+  }
+
+  public static String getDisplayNameText() {
+    return OptionsBundle.message("options.general.display.name");
   }
 }

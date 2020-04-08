@@ -19,6 +19,7 @@ package com.theoryinpractice.testng.model;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.theoryinpractice.testng.TestngBundle;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -33,7 +34,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
 
     public TestNGParametersTableModel() {
         super(
-                new ColumnInfo<Map.Entry<String, String>, String>("Name")
+                new ColumnInfo<Map.Entry<String, String>, String>(TestngBundle.message("testng.parameters.table.model.name"))
                 {
                     @Override
                     public String valueOf(Map.Entry<String, String> object) {
@@ -47,7 +48,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
                         return new DefaultCellEditor(textField);
                     }
                 },
-                new ColumnInfo<Map.Entry<String, String>, String>("Value")
+                new ColumnInfo<Map.Entry<String, String>, String>(TestngBundle.message("testng.parameters.table.model.value"))
                 {
                     @Override
                     public String valueOf(Map.Entry<String, String> object) {

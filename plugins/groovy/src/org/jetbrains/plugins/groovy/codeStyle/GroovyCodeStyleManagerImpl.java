@@ -102,7 +102,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     return anchor;
   }
 
-  protected static int getPackageEntryIdx(@NotNull PackageEntry[] entries, @NotNull GrImportStatement statement) {
+  protected static int getPackageEntryIdx(PackageEntry @NotNull [] entries, @NotNull GrImportStatement statement) {
     final GrCodeReferenceElement reference = statement.getImportReference();
     if (reference == null) return -1;
     final String packageName = StringUtil.getPackageName(reference.getCanonicalText());

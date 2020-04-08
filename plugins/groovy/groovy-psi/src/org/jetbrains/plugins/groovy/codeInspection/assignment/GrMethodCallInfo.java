@@ -16,9 +16,8 @@ public class GrMethodCallInfo extends CallInfoBase<GrMethodCall> implements Call
     super(call);
   }
 
-  @Nullable
   @Override
-  protected PsiType[] inferArgTypes() {
+  protected PsiType @Nullable [] inferArgTypes() {
     return PsiUtil.getArgumentTypes(getCall().getInvokedExpression(), true);
   }
 
@@ -42,8 +41,7 @@ public class GrMethodCallInfo extends CallInfoBase<GrMethodCall> implements Call
     return argList;
   }
 
-  @NotNull
-  public GroovyResolveResult[] multiResolve() {
+  public GroovyResolveResult @NotNull [] multiResolve() {
     return getCall().multiResolve(false);
   }
 }

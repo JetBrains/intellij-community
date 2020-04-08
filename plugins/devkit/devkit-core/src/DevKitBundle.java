@@ -20,13 +20,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class DevKitBundle extends DynamicBundle {
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "org.jetbrains.idea.devkit.DevKitBundle";
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return ourInstance.getLazyMessage(key, params);
+  }
+
+  @NonNls public static final String BUNDLE = "messages.DevKitBundle";
   private static final DevKitBundle ourInstance = new DevKitBundle();
 
   private DevKitBundle() {

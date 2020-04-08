@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -10,11 +10,11 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +113,7 @@ public class SMTRunnerRunDashboardCustomizer extends RunDashboardCustomizer {
     presentation.addText(" of " + total + "]", SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
-  private static class NodeUpdaterEventsListener extends TestResultsViewer.SMEventsAdapter {
+  private static class NodeUpdaterEventsListener implements TestResultsViewer.EventsListener {
     private WeakReference<AbstractTreeNode<?>> myNodeReference;
 
     @Override
@@ -134,7 +134,7 @@ public class SMTRunnerRunDashboardCustomizer extends RunDashboardCustomizer {
       AbstractTreeNode<?> node = SoftReference.dereference(myNodeReference);
       if (node != null) {
         //noinspection ConstantConditions
-        AppUIUtil.invokeOnEdt(node::update, node.getProject().getDisposed());
+        AppUIExecutor.onUiThread().expireWith(node.getProject()).submit(node::update);
       }
     }
   }

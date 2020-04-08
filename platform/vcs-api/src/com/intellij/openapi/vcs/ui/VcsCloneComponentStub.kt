@@ -4,23 +4,28 @@ package com.intellij.openapi.vcs.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class VcsCloneComponentStub(private val checkoutProvider: CheckoutProvider,
-                            private val primaryActionText: String = "Clone") : VcsCloneComponent {
+class VcsCloneComponentStub(
+  private val checkoutProvider: CheckoutProvider,
+  @Nls private val primaryActionText: String = VcsBundle.getString("clone.dialog.clone.button")
+) : VcsCloneComponent {
+
   override fun getView(): JComponent {
     val panel = JPanel(BorderLayout()).apply {
       border = JBEmptyBorder(JBUI.insetsLeft(UIUtil.PANEL_REGULAR_INSETS.left))
     }
     // todo: replace with better help text
     // todo: or add additional button closer to vcs combo
-    panel.add(JLabel("Click \"$primaryActionText\" to continue"), BorderLayout.NORTH)
+    panel.add(JLabel(VcsBundle.message("action.clone.dialog.stub.click.to.continue", primaryActionText)), BorderLayout.NORTH)
     return panel
   }
 

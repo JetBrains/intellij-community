@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -37,8 +37,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     Set<PsiPackage> subPackages = new HashSet<>();
     for (PsiPackage psiPackage : getContext()) {
       ContainerUtil.addAll(subPackages, psiPackage.getSubPackages(myReferenceSet.getResolveScope()));
@@ -50,17 +49,15 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   @Override
   public String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
-    return JavaErrorMessages.message("cannot.resolve.package");
+    return JavaErrorBundle.message("cannot.resolve.package");
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return doMultiResolve();
   }
 
-  @NotNull
-  protected ResolveResult[] doMultiResolve() {
+  protected ResolveResult @NotNull [] doMultiResolve() {
     Collection<PsiPackage> packages = new HashSet<>();
     for (PsiPackage parentPackage : getContext()) {
       packages.addAll(myReferenceSet.resolvePackageName(parentPackage, getValue()));

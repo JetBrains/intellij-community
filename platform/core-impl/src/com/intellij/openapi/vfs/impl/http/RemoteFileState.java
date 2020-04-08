@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-/**
- * @author nik
- */
 public enum RemoteFileState {
   DOWNLOADING_NOT_STARTED, DOWNLOADING_IN_PROGRESS, DOWNLOADED, ERROR_OCCURRED
 }

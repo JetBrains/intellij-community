@@ -20,17 +20,24 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class DvcsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.intellij.dvcs.ui.DvcsBundle";
+  @NonNls static final String BUNDLE = "messages.DvcsBundle";
   private static final DvcsBundle INSTANCE = new DvcsBundle();
 
   private DvcsBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
-  
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
+  }
+
   @NotNull
   public static String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);

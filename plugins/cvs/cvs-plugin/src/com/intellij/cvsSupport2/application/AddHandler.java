@@ -113,8 +113,7 @@ class AddHandler {
       }
 
       @Override
-      @NotNull
-      public VirtualFile[] getSelectedFiles() {
+      public VirtualFile @NotNull [] getSelectedFiles() {
         return VfsUtil.toVirtualFileArray(files);
       }
     };

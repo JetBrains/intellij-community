@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,23 +11,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.concurrent.Executor;
 
-final class MacEventReader {
+final class MacEventReader implements Notifications {
   private static final int MAX_MESSAGE_LENGTH = 100;
   private static final Logger LOG = Logger.getInstance(MacEventReader.class);
-  private static final Notifications ourNotificationAdapter = new Notifications() {
-    @Override
-    public void notify(@NotNull Notification notification) {
-      process(notification);
-    }
-  };
 
-  MacEventReader() {
-    if (SystemInfo.isMac) {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, ourNotificationAdapter);
-    }
-  }
-
-  private static void process(@NotNull Notification notification) {
+  @Override
+  public void notify(@NotNull Notification notification) {
     if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldReadAloud()) {
       return;
     }
@@ -61,12 +47,6 @@ final class MacEventReader {
           LOG.warn(e);
         }
       });
-    }
-  }
-
-  static final class MacProjectTracker {
-    MacProjectTracker(@NotNull Project project) {
-      project.getMessageBus().connect().subscribe(Notifications.TOPIC, ourNotificationAdapter);
     }
   }
 }

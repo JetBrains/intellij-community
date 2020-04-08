@@ -7,11 +7,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.util.io.IdeUtilIoBundle;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -101,7 +101,7 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
       fail("'executable missing' expected");
     }
     catch (ExecutionException e) {
-      assertEquals(IdeBundle.message("run.configuration.error.executable.not.specified"), e.getMessage());
+      assertEquals(IdeUtilIoBundle.message("run.configuration.error.executable.not.specified"), e.getMessage());
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
@@ -13,9 +13,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,15 +48,15 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
 
   @Override
   protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
-    selectInNavBar();
+    selectInNavBar(false);
   }
 
   @Override
   protected void select(final PsiElement element, boolean requestFocus) {
-    selectInNavBar();
+    selectInNavBar(false);
   }
 
-  private static void selectInNavBar() {
+  public static void selectInNavBar(boolean showPopup) {
     DataManager.getInstance().getDataContextFromFocus()
       .doWhenDone((Consumer<DataContext>)context -> {
         IdeFrame frame = IdeFrame.KEY.getData(context);
@@ -62,7 +65,13 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
           if (navBarExt != null) {
             final JComponent c = navBarExt.getComponent();
             final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
-            panel.rebuildAndSelectTail(true);
+            panel.rebuildAndSelectItem((list) -> {
+              if (UISettings.getInstance().getShowMembersInNavigationBar()) {
+                int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> item.getObject() instanceof PsiDirectory || item.getObject() instanceof PsiDirectoryContainer);
+                if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
+              }
+              return list.size() - 1;
+            }, showPopup);
           }
         }
       });
@@ -79,6 +88,6 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   public String toString() {
-    return SelectInManager.NAV_BAR;
+    return SelectInManager.getNavBar();
   }
 }

@@ -110,6 +110,7 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
         fillMap(keys1, XPathTokenTypes.REST, XPATH_TEXT);
 
         keys1.put(XPathTokenTypes.NCNAME, XPATH_NAME);
+        keys1.put(XPathTokenTypes.AT, XPATH_NAME);
 
         keys1.put(XPathTokenTypes.NUMBER, XPATH_NUMBER);
         keys1.put(XPathTokenTypes.STRING_LITERAL, XPATH_STRING);
@@ -133,8 +134,7 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
     }
 
     @Override
-    @NotNull
-    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
         return pack(((TextAttributesKey)(myXPath2Syntax ? keys1_2 : keys1).get(tokenType)), ((TextAttributesKey)keys2.get(tokenType)));
     }
 }

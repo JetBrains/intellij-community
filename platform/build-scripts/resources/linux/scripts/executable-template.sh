@@ -40,7 +40,7 @@ GREP_OPTIONS=''
 OS_TYPE=$("$UNAME" -s)
 
 # ---------------------------------------------------------------------
-# Ensure IDE_HOME points to the directory where the IDE is installed.
+# Ensure $IDE_HOME points to the directory where the IDE is installed.
 # ---------------------------------------------------------------------
 SCRIPT_LOCATION="$0"
 if [ -x "$READLINK" ]; then
@@ -56,15 +56,15 @@ cd "${OLDPWD}" || exit 2
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory command -v will be used to run the IDE.
-# Try (in order): __product_uc___JDK, __vm_options__.jdk, ./jbr, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, .../jre64, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
   JDK="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" ] && [ -s "$HOME/.__system_selector__/config/__vm_options__.jdk" ]; then
-  USER_JRE=$("$CAT" "$HOME/.__system_selector__/config/__vm_options__.jdk")
+if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
+  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__.jdk")
   if [ ! -d "$USER_JRE" ]; then
     USER_JRE="$IDE_HOME/$USER_JRE"
   fi
@@ -73,16 +73,13 @@ if [ -z "$JDK" ] && [ -s "$HOME/.__system_selector__/config/__vm_options__.jdk" 
   fi
 fi
 
-if [ -z "$JDK" ] && [ "$OS_TYPE" = "Linux" ] ; then
-  BUNDLED_JRE="$IDE_HOME/jbr"
-  if [ ! -d "$BUNDLED_JRE" ]; then
-    BUNDLED_JRE="$IDE_HOME/jre64"
-    if [ ! -d "$BUNDLED_JRE" ]; then
-      BUNDLED_JRE="$IDE_HOME/jre"
-    fi
+if [ -z "$JDK" ] && [ "$OS_TYPE" = "Linux" ]; then
+  OS_ARCH=$("$UNAME" -m)
+  if [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
+    JDK="$IDE_HOME/jbr"
   fi
-  if [ -x "$BUNDLED_JRE/bin/java" ] && "$BUNDLED_JRE/bin/java" -version > /dev/null 2>&1 ; then
-    JDK="$BUNDLED_JRE"
+  if [ -z "$JDK" ] && [ -d "$IDE_HOME/jbr-x86" ] && "$IDE_HOME/jbr-x86/bin/java" -version > /dev/null 2>&1 ; then
+    JDK="$IDE_HOME/jbr-x86"
   fi
 fi
 
@@ -138,7 +135,13 @@ fi
 
 JAVA_BIN="$JDK/bin/java"
 if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
-  message "No JDK found. Please validate either __product_uc___JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
+  X86_JRE_URL="__x86_jre_url__"
+  # shellcheck disable=SC2166
+  if [ -n "$X86_JRE_URL" ] && [ ! -d "$IDE_HOME/jbr-x86" ] && [ "$OS_ARCH" = "i386" -o "$OS_ARCH" = "i686" ]; then
+    message "To run __product_full__ on a 32-bit system, please download 32-bit Java runtime from \"$X86_JRE_URL\" and unpack it into \"jbr-x86\" directory."
+  else
+    message "No JDK found. Please validate either __product_uc___JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
+  fi
   exit 1
 fi
 
@@ -165,9 +168,9 @@ if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; t
 elif [ -r "$IDE_HOME.vmoptions" ]; then
   # Toolbox
   VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
-elif [ -r "$HOME/.__system_selector__/config/__vm_options__$BITS.vmoptions" ]; then
+elif [ -r "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__$BITS.vmoptions" ]; then
   # user-overridden
-  VM_OPTIONS_FILE="$HOME/.__system_selector__/config/__vm_options__$BITS.vmoptions"
+  VM_OPTIONS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__$BITS.vmoptions"
 elif [ -r "$IDE_BIN_HOME/__vm_options__$BITS.vmoptions" ]; then
   # default, standard installation
   VM_OPTIONS_FILE="$IDE_BIN_HOME/__vm_options__$BITS.vmoptions"
@@ -180,7 +183,7 @@ fi
 VM_OPTIONS=""
 if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
-  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent" - ; }; then
+  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent"; }; then
     if [ "$OS_TYPE" = "Linux" ]; then
       VM_OPTIONS=$(echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|")
     else

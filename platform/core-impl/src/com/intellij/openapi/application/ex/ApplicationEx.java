@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -13,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
 
@@ -53,6 +51,20 @@ public interface ApplicationEx extends Application {
    */
   boolean isWriteActionPending();
 
+  /**
+   * Acquires IW lock if it's not acquired by the current thread.
+   *
+   * @param invokedClassFqn fully qualified name of the class requiring the write intent lock.
+   */
+  @ApiStatus.Internal
+  default void acquireWriteIntentLock(@NotNull String invokedClassFqn) { }
+
+  /**
+   * Releases IW lock.
+   */
+  @ApiStatus.Internal
+  default void releaseWriteIntentLock() {}
+
   boolean isSaveAllowed();
 
   void setSaveAllowed(boolean value);
@@ -68,9 +80,8 @@ public interface ApplicationEx extends Application {
   /**
    * Executes {@code process} in a separate thread in the application thread pool (see {@link #executeOnPooledThread(Runnable)}).
    * The process is run inside read action (see {@link #runReadAction(Runnable)})
-   * It is guaranteed that no other read or write action is run before the process start running.
+   * If run from EDT, it is guaranteed that no other read or write action is run before the process start running.
    * If the process is running for too long, a progress window shown with {@code progressTitle} and a button with {@code cancelText}.
-   * This method can be called from the EDT only.
    * @return true if process run successfully and was not canceled.
    */
   boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
@@ -185,5 +196,38 @@ public interface ApplicationEx extends Application {
                                                                            @Nullable JComponent parentComponent,
                                                                            @NotNull Consumer<? super ProgressIndicator> action) {
     throw new UnsupportedOperationException();
+  }
+
+  /**
+   * DO NOT USE
+   */
+  @ApiStatus.Internal
+  default boolean isInImpatientReader() {
+    return false;
+  }
+
+  /**
+   * Runs the specified action, releasing Write Intent lock if it is acquired at the moment of the call.
+   * <p>
+   * This method is used to implement higher-level API, please do not use it directly.
+   */
+  @ApiStatus.Internal
+  default <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
+    return action.compute();
+  }
+
+  /**
+   * Runs the specified action under Write Intent lock. Can be called from any thread. The action is executed immediately
+   * if no write intent action is currently running, or blocked until the currently running write intent action completes.
+   * <p>
+   * This method is used to implement higher-level API, please do not use it directly.
+   * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or {@link com.intellij.openapi.application.AppUIExecutor#onWriteThread()} to
+   * run code under Write Intent lock asynchronously.
+   *
+   * @param action the action to run
+   */
+  @ApiStatus.Internal
+  default void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
+    action.run();
   }
 }

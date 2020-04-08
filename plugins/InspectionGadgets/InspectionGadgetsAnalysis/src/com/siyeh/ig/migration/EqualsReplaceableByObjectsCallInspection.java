@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -67,7 +68,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Objects.equals()");
     }
 
     @Override

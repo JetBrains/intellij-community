@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CommandProcessor {
   public static CommandProcessor getInstance() {
-    return ServiceManager.getService(CommandProcessor.class);
+    return ApplicationManager.getApplication().getService(CommandProcessor.class);
   }
 
   /**
@@ -26,29 +27,29 @@ public abstract class CommandProcessor {
    */
   @Deprecated
   public abstract void executeCommand(@NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
                                       @Nullable Document document);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
                                       @NotNull UndoConfirmationPolicy confirmationPolicy);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
                                       @NotNull UndoConfirmationPolicy confirmationPolicy,
                                       @Nullable Document document);
@@ -60,12 +61,12 @@ public abstract class CommandProcessor {
    */
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
                                       @NotNull UndoConfirmationPolicy confirmationPolicy,
                                       boolean shouldRecordCommandForActiveDocument);
 
-  public abstract void setCurrentCommandName(@Nullable String name);
+  public abstract void setCurrentCommandName(@Nullable @NlsContexts.Command String name);
 
   public abstract void setCurrentCommandGroupId(@Nullable Object groupId);
 
@@ -73,6 +74,7 @@ public abstract class CommandProcessor {
   public abstract Runnable getCurrentCommand();
 
   @Nullable
+  @Nls
   public abstract String getCurrentCommandName();
 
   @Nullable
@@ -94,9 +96,9 @@ public abstract class CommandProcessor {
 
   public abstract void markCurrentCommandAsGlobal(@Nullable Project project);
 
-  public abstract void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs);
+  public abstract void addAffectedDocuments(@Nullable Project project, Document @NotNull ... docs);
 
-  public abstract void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files);
+  public abstract void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files);
 
   /**
    * @deprecated use {@link CommandListener#TOPIC}

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,28 +19,25 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
   private final String myDescription;
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {
     this(project, items, title, description, false);
   }
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description, boolean sort) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description, boolean sort) {
     super(project, true);
     myDescription = description;
     initializeDialog(items, title, sort);
   }
 
-  public ChooseElementsDialog(Component parent, List<? extends T> items, String title) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title) {
     this(parent, items, title, null, false);
   }
 
-  public ChooseElementsDialog(Component parent, List<? extends T> items, String title, @Nullable String description, final boolean sort) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title, @Nullable @NlsContexts.Label String description, final boolean sort) {
     super(parent, true);
     myDescription = description;
     initializeDialog(items, title, sort);
@@ -54,7 +52,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return false;
   }
 
-  private void initializeDialog(final List<? extends T> items, final String title, boolean sort) {
+  private void initializeDialog(final List<? extends T> items, @NlsContexts.DialogTitle String title, boolean sort) {
     setTitle(title);
     myChooser = new ElementsChooser<T>(canElementsBeMarked()) {
       @Override
@@ -66,7 +64,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
     List<? extends T> elements = new ArrayList<T>(items);
     if (sort) {
-      Collections.sort(elements, (Comparator<T>)(o1, o2) -> getItemText(o1).compareToIgnoreCase(getItemText(o2)));
+      elements.sort((Comparator<T>)(o1, o2) -> getItemText(o1).compareToIgnoreCase(getItemText(o2)));
     }
     setElements(elements, ContainerUtil.getFirstItems(elements, 1));
     myChooser.getComponent().registerKeyboardAction(new ActionListener() {
@@ -78,7 +76,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         doOKAction();
         return true;
       }

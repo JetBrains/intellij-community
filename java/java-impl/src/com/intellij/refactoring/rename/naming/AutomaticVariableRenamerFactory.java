@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,7 @@ public class AutomaticVariableRenamerFactory implements AutomaticRenamerFactory 
 
   @Override
   public String getOptionName() {
-    return RefactoringBundle.message("rename.variables");
+    return JavaRefactoringBundle.message("rename.variables");
   }
 
   @Override

@@ -147,8 +147,8 @@ public class AdvancedProxy {
     if (constructorArgs.length == 0) return ArrayUtil.EMPTY_CLASS_ARRAY;
 
     loop: for (final Constructor constructor : aClass.getDeclaredConstructors()) {
-      final Class[] parameterTypes = constructor.getParameterTypes();
-      if (parameterTypes.length == constructorArgs.length) {
+      if (constructor.getParameterCount() == constructorArgs.length) {
+        final Class[] parameterTypes = constructor.getParameterTypes();
         for (int i = 0; i < parameterTypes.length; i++) {
           Class parameterType = parameterTypes[i];
           final Object constructorArg = constructorArgs[i];
@@ -156,7 +156,7 @@ public class AdvancedProxy {
             continue loop;
           }
         }
-        return constructor.getParameterTypes();
+        return parameterTypes;
       }
     }
     throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));

@@ -7,7 +7,7 @@ import sys
 import threading
 from typing import (
     Any, Callable, ContextManager, Dict, Iterable, Generic, List, Mapping, Optional,
-    Sequence, Tuple, TypeVar, Union,
+    Sequence, Tuple, TypeVar, Union, AnyStr,
 )
 from .context import BaseContext
 
@@ -22,7 +22,34 @@ class Namespace: ...
 
 _Namespace = Namespace
 
-class BaseProxy: ...
+class Token(object):
+    typeid: Optional[Union[str, bytes]]
+    address: Tuple[Union[str, bytes], int]
+    id: Optional[Union[str, bytes, int]]
+    def __init__(self, typeid: Optional[Union[bytes, str]], address: Tuple[Union[str, bytes], int],
+                 id: Optional[Union[str, bytes, int]]) -> None: ...
+    def __repr__(self) -> str: ...
+    def __getstate__(self) -> Tuple[Optional[Union[str, bytes]], Tuple[Union[str, bytes], int],
+                                    Optional[Union[str, bytes, int]]]: ...
+    def __setstate__(self, state: Tuple[Optional[Union[str, bytes]], Tuple[Union[str, bytes], int],
+                                        Optional[Union[str, bytes, int]]]) -> None: ...
+
+class BaseProxy(object):
+    _address_to_local: Dict[Any, Any]
+    _mutex: Any
+    if sys.version_info >= (3, 6):
+        def __init__(self, token: Any, serializer: str, manager: Any = ...,
+                     authkey: Optional[AnyStr] = ..., exposed: Any = ...,
+                     incref: bool = ..., manager_owned: bool = ...) -> None: ...
+    else:
+        def __init__(self, token: Any, serializer: str, manager: Any = ...,
+                     authkey: Optional[AnyStr] = ..., exposed: Any = ...,
+                     incref: bool = ...) -> None: ...
+    def __deepcopy__(self, memo: Optional[Any]) -> Any: ...
+    def _callmethod(self, methodname: str, args: Tuple[Any, ...] = ...,
+                    kwds: Dict[Any, Any] = ...) -> None: ...
+    def _getvalue(self) -> Any: ...
+    def __reduce__(self) -> Tuple[Any, Tuple[Any, Any, str, Dict[Any, Any]]]: ...
 
 class ValueProxy(BaseProxy, Generic[_T]):
     def get(self) -> _T: ...

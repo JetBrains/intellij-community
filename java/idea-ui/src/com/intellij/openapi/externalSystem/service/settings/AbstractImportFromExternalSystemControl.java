@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.settings;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -120,7 +121,7 @@ public abstract class AbstractImportFromExternalSystemControl<
     myProjectSettingsControl.fillUi(myComponent, 0);
 
     myProjectFormatPanel = new ProjectFormatPanel();
-    myProjectFormatLabel = new JLabel(ExternalSystemBundle.message("settings.label.project.format"));
+    myProjectFormatLabel = new JLabel(JavaUiBundle.message("settings.label.project.format"));
     myComponent.add(myProjectFormatLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     myComponent.add(myProjectFormatPanel.getStorageFormatComboBox(), ExternalSystemUiUtil.getFillLineConstraints(0));
 
@@ -263,7 +264,7 @@ public abstract class AbstractImportFromExternalSystemControl<
     String linkedProjectPath = myLinkedProjectPathField.getPath();
     Project currentProject = getProject();
     if (StringUtil.isEmpty(linkedProjectPath)) {
-      throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
+      throw new ConfigurationException(JavaUiBundle.message("error.project.undefined"));
     }
     else if (currentProject != null) {
       ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);

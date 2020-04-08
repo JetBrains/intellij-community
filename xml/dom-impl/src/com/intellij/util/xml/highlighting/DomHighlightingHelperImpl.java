@@ -18,7 +18,6 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +34,6 @@ import com.intellij.util.xml.impl.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,14 +67,14 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           final String xmlElementName = element.getXmlElementName();
           String namespace = element.getXmlElementNamespace();
           if (element instanceof GenericAttributeValue) {
-            return Collections.singletonList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", xmlElementName),
+            return Collections.singletonList(holder.createProblem(element, XmlDomBundle.message("attribute.0.should.be.defined", xmlElementName),
                                                               new DefineAttributeQuickFix(xmlElementName, namespace)));
           }
           return Collections.singletonList(
             holder.createProblem(
               element,
               HighlightSeverity.ERROR,
-              IdeBundle.message("child.tag.0.should.be.defined", xmlElementName),
+              XmlDomBundle.message("child.tag.0.should.be.defined", xmlElementName),
               new AddRequiredSubtagFix(xmlElementName, namespace)
             )
           );
@@ -94,7 +92,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
           final Required annotation = description.getAnnotation(Required.class);
           if (annotation != null && annotation.value()) {
-            list.add(holder.createProblem(element, childDescription, IdeBundle.message("child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
+            list.add(holder.createProblem(element, childDescription, XmlDomBundle.message("child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
           }
         }
       }
@@ -167,8 +165,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         final GenericDomValue genericDomValue = domElement.getGenericInfo().getNameDomElement(element);
         if (genericDomValue != null) {
           return Collections.singletonList(holder.createProblem(genericDomValue, DomUtil.getFile(domElement).equals(DomUtil.getFile(element))
-                                                                 ? IdeBundle.message("model.highlighting.identity", typeName)
-                                                                 : IdeBundle.message("model.highlighting.identity.in.other.file", typeName,
+                                                                 ? XmlDomBundle.message("model.highlighting.identity", typeName)
+                                                                 : XmlDomBundle.message("model.highlighting.identity.in.other.file", typeName,
                                                                                      domElement.getXmlTag().getContainingFile()
                                                                                        .getName())));
         }
@@ -200,10 +198,10 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (stringValue == null) return null;
 
     if (required.nonEmpty() && isEmpty(child, stringValue)) {
-      return annotator.createProblem(child, IdeBundle.message("value.must.not.be.empty"));
+      return annotator.createProblem(child, XmlDomBundle.message("value.must.not.be.empty"));
     }
     if (required.identifier() && !isIdentifier(stringValue)) {
-      return annotator.createProblem(child, IdeBundle.message("value.must.be.identifier"));
+      return annotator.createProblem(child, XmlDomBundle.message("value.must.be.identifier"));
     }
     return null;
   }
@@ -246,13 +244,13 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     @Override
     @NotNull
     public String getName() {
-      return XmlBundle.message("insert.required.tag.fix", tagName);
+      return XmlDomBundle.message("insert.required.tag.fix", tagName);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlBundle.message("insert.required.tag.fix.family");
+      return XmlDomBundle.message("insert.required.tag.fix.family");
     }
 
     @Override

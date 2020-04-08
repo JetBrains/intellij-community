@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
@@ -51,7 +49,6 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.status.GitChangeProvider;
-import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.util.GitVcsConsoleWriter;
 import git4idea.vfs.GitVFSListener;
@@ -60,10 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -80,13 +74,14 @@ public final class GitVcs extends AbstractVcs {
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
-  private GitBranchWidget myBranchWidget;
 
   private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
 
   @NotNull
   public static GitVcs getInstance(@NotNull Project project) {
-    return ObjectUtils.notNull((GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME));
+    GitVcs gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
+    ProgressManager.checkCanceled();
+    return Objects.requireNonNull(gitVcs);
   }
 
   public GitVcs(@NotNull Project project) {
@@ -183,7 +178,7 @@ public final class GitVcs extends AbstractVcs {
     }
     if (path != null) {
       try {
-        VirtualFile root = GitUtil.getRepositoryForFile(myProject, path).getRoot();
+        VirtualFile root = GitUtil.getRootForFile(myProject, path);
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {
@@ -216,23 +211,11 @@ public final class GitVcs extends AbstractVcs {
     }
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      installWidget();
-    }
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
-  }
-
-  private void installWidget() {
-    Boolean newWidgetStyle = Registry.is("vcs.new.widget");
-
-    if (!newWidgetStyle) {
-      myBranchWidget = new GitBranchWidget(myProject);
-      myBranchWidget.activate();
-    }
   }
 
   @Override
@@ -241,13 +224,7 @@ public final class GitVcs extends AbstractVcs {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
-
-    if (myBranchWidget != null) {
-      myBranchWidget.deactivate();
-      myBranchWidget = null;
-    }
   }
-
 
   @Override
   public Configurable getConfigurable() {
@@ -377,5 +354,10 @@ public final class GitVcs extends AbstractVcs {
   @TestOnly
   public GitVFSListener getVFSListener() {
     return myVFSListener;
+  }
+
+  @Override
+  public boolean needsCaseSensitiveDirtyScope() {
+    return true;
   }
 }

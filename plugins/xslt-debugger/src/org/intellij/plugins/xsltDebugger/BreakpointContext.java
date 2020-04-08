@@ -44,8 +44,7 @@ public class BreakpointContext extends XsltContextProvider {
       }
 
       @Override
-      @NotNull
-      public IntentionAction[] getUnresolvedVariableFixes(XPathVariableReference reference) {
+      public IntentionAction @NotNull [] getUnresolvedVariableFixes(XPathVariableReference reference) {
         return IntentionAction.EMPTY_ARRAY;
       }
     };

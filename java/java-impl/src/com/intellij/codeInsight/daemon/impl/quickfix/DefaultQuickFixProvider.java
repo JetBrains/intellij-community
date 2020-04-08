@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
@@ -68,6 +68,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
       registrar.register(new CreateTypeParameterFromUsageFix(ref));
     }
+    if (HighlightingFeature.RECORDS.isAvailable(ref)) {
+      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
+    }
 
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
     PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
@@ -76,6 +79,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
         (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
       registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
       registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
+      if (HighlightingFeature.RECORDS.isAvailable(ref)) {
+        registrar.register(new CreateRecordFromNewFix((PsiNewExpression)parent));
+        if (((PsiNewExpression)parent).getQualifier() == null) {
+          registrar.register(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
+        }
+      }
     }
     else {
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));

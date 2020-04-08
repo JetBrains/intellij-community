@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.project.Project;
@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,9 @@ public class GitUnstructuredEditor extends DialogWrapper {
     setTitle(dialogTitle);
     setOKButtonText(okButtonText);
 
-    myRootLabel = root == null ? null : new JBLabel("Git Root: " + root.getPresentableUrl());
+    myRootLabel = root == null
+                  ? null
+                  : new JBLabel(GitBundle.message("rebase.interactive.unstructured.editor.dialog.root.label", root.getPresentableUrl()));
 
     myTextEditor = new CommitMessage(project, false, false, false);
     Disposer.register(getDisposable(), myTextEditor);

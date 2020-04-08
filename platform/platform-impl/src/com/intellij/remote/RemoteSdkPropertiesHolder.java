@@ -1,21 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
   private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
   private static final String HELPERS_PATH = "HELPERS_PATH";

@@ -20,7 +20,7 @@ public class LogUtil {
   /**
    * Format string syntax as in {@linkplain String#format(String, Object...)}.
    */
-  public static void debug(@NotNull Logger logger, @NonNls @NotNull String format, @Nullable Object... args) {
+  public static void debug(@NotNull Logger logger, @NonNls @NotNull String format, Object @Nullable ... args) {
     if (logger.isDebugEnabled()) {
       logger.debug(String.format(format, args));
     }

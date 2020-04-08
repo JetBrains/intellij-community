@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find;
 
@@ -56,7 +56,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class FindUtil {
@@ -596,7 +599,7 @@ public class FindUtil {
       else {
         CharSequence text = document.getCharsSequence();
         final StringBuilder newText = new StringBuilder(document.getTextLength());
-        Collections.sort(rangesToChange, Comparator.comparingInt(o -> o.getFirst().getStartOffset()));
+        rangesToChange.sort(Comparator.comparingInt(o -> o.getFirst().getStartOffset()));
         int offsetBefore = 0;
         for (Pair<TextRange, String> pair : rangesToChange) {
           TextRange range = pair.getFirst();
@@ -894,7 +897,7 @@ public class FindUtil {
   }
 
   public static <T> UsageView showInUsageView(@Nullable PsiElement sourceElement,
-                                              @NotNull T[] targets,
+                                              T @NotNull [] targets,
                                               @NotNull Function<? super T, ? extends Usage> usageConverter,
                                               @NotNull String title,
                                               @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
@@ -911,7 +914,7 @@ public class FindUtil {
 
     UsageView view = UsageViewManager.getInstance(project).showUsages(usageTargets, Usage.EMPTY_ARRAY, presentation);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, FindBundle.message("progress.title.updating.usage.view")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         UsageViewImpl impl = (UsageViewImpl)view;
@@ -934,7 +937,7 @@ public class FindUtil {
 
   @Nullable
   public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
-                                          @NotNull PsiElement[] targets,
+                                          PsiElement @NotNull [] targets,
                                           @NotNull String title,
                                           @NotNull Project project) {
     if (targets.length == 0) return null;
@@ -998,7 +1001,7 @@ public class FindUtil {
     LogicalPosition caretPosition = editor.offsetToLogicalPosition(caretOffset);
     if (caretShiftFromSelectionStart == 0) caretPosition = caretPosition.leanForward(true);
     EditorActionUtil.makePositionVisible(editor, caretOffset);
-    Caret newCaret = editor.getCaretModel().addCaret(editor.logicalToVisualPosition(caretPosition));
+    Caret newCaret = editor.getCaretModel().addCaret(caretPosition, true);
     if (newCaret == null) {
       return false;
     }

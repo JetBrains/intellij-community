@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -107,7 +108,7 @@ public class UrlFilter implements Filter, DumbAware {
         public OpenFileDescriptor getDescriptor() {
           OpenFileDescriptor descriptor = super.getDescriptor();
           if (descriptor == null) {
-            Messages.showErrorDialog(myProject, "Cannot find file " + StringUtil.trimMiddle(url, 150),
+            Messages.showErrorDialog(myProject, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
                                      IdeBundle.message("title.cannot.open.file"));
           }
           return descriptor;
@@ -118,15 +119,13 @@ public class UrlFilter implements Filter, DumbAware {
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
-    @NotNull
     @Override
-    public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public Filter @NotNull [] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
       return new Filter[]{new UrlFilter(project)};
     }
 
-    @NotNull
     @Override
-    public Filter[] getDefaultFilters(@NotNull Project project) {
+    public Filter @NotNull [] getDefaultFilters(@NotNull Project project) {
       return getDefaultFilters(project, GlobalSearchScope.allScope(project));
     }
   }

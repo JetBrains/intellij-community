@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.openapi.project.Project;
@@ -30,14 +16,13 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Collect changes for merge or pull operations
@@ -50,11 +35,20 @@ public class MergeChangeCollector {
   @NotNull private final GitRevisionNumber myStart; // Revision number before update (used for diff)
   @NotNull private final GitRepository myRepository;
 
-  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
+  public MergeChangeCollector(@NotNull Project project, @NotNull GitRepository repository, @NotNull GitRevisionNumber start) {
     myStart = start;
     myProject = project;
-    myRoot = root;
-    myRepository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
+    myRoot = repository.getRoot();
+    myRepository = repository;
+  }
+
+  /**
+   * @deprecated use constructor with GitRepository
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
+    this(project, Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)), start);
   }
 
   /**
@@ -71,7 +65,7 @@ public class MergeChangeCollector {
     TreeSet<String> removed = new TreeSet<>();
 
     String revisionsForDiff = getRevisionsForDiff();
-    if (revisionsForDiff ==  null) {
+    if (revisionsForDiff == null) {
       return;
     }
     getChangedFilesExceptUnmerged(updated, created, removed, revisionsForDiff);
@@ -87,7 +81,8 @@ public class MergeChangeCollector {
   public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
     try {
       collect(updatedFiles);
-    } catch (VcsException e) {
+    }
+    catch (VcsException e) {
       exceptions.add(e);
     }
   }
@@ -115,7 +110,7 @@ public class MergeChangeCollector {
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
 
     Set<String> paths = new HashSet<>();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
+    for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
         continue;
@@ -148,7 +143,7 @@ public class MergeChangeCollector {
       try {
         if (mergeHeadsFile.exists()) {
           String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, CharsetToolkit.UTF8));
-          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
+          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData(); ) {
             String head = s.line();
             if (head.length() == 0) {
               continue;
@@ -157,10 +152,12 @@ public class MergeChangeCollector {
             return myStart.getRev() + "..." + head;
           }
         }
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         throw new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e);
       }
-    } else {
+    }
+    else {
       // Otherwise this is a merge that did created a commit. And because of this the incoming changes
       // are diffs between old head and new head. The commit could have been multihead commit,
       // and the expression below considers it as well.
@@ -174,15 +171,15 @@ public class MergeChangeCollector {
    * where revisions is the range of revisions to check.
    */
   private void getChangedFilesExceptUnmerged(@NotNull Collection<? super String> updated,
-                                               @NotNull Collection<? super String> created,
-                                               @NotNull Collection<? super String> removed,
-                                               @NotNull String revisions) throws VcsException {
+                                             @NotNull Collection<? super String> created,
+                                             @NotNull Collection<? super String> removed,
+                                             @NotNull String revisions) throws VcsException {
     String root = myRoot.getPath();
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.DIFF);
     h.setSilent(true);
     // note that moves are not detected here
     h.addParameters("--name-status", "--diff-filter=ADMRUX", "--no-renames", revisions);
-    for (StringScanner s = new StringScanner(Git.getInstance().runCommand(h).getOutputOrThrow()); s.hasMoreData();) {
+    for (StringScanner s = new StringScanner(Git.getInstance().runCommand(h).getOutputOrThrow()); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
         continue;

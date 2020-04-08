@@ -138,8 +138,7 @@ public class MagicConstantUtils {
     return parseBeanInfo(element, manager);
   }
 
-  @NotNull
-  private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
+  private static PsiAnnotation @NotNull [] getAllAnnotations(@NotNull PsiModifierListOwner element) {
     PsiModifierListOwner realElement = getSourceElement(element);
     return CachedValuesManager.getCachedValue(realElement, () ->
       CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
@@ -260,11 +259,11 @@ public class MagicConstantUtils {
   }
 
   public static class AllowedValues {
-    @NotNull private final PsiAnnotationMemberValue[] values;
+    private final PsiAnnotationMemberValue @NotNull [] values;
     private final boolean canBeOred;
     private final boolean resolvesToZero; //true if one if the values resolves to literal 0, e.g. "int PLAIN = 0"
 
-    AllowedValues(@NotNull PsiAnnotationMemberValue[] values, boolean canBeOred) {
+    AllowedValues(PsiAnnotationMemberValue @NotNull [] values, boolean canBeOred) {
       this.values = values;
       this.canBeOred = canBeOred;
       resolvesToZero = resolvesToZero();
@@ -318,8 +317,7 @@ public class MagicConstantUtils {
         value -> Arrays.stream(other.values).anyMatch(otherValue -> same(value, otherValue, manager)));
     }
 
-    @NotNull
-    public PsiAnnotationMemberValue[] getValues() {
+    public PsiAnnotationMemberValue @NotNull [] getValues() {
       return values;
     }
 

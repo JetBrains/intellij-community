@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -18,9 +18,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,6 +112,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     return (Window)myLastFocusedFrame;
   }
 
+  @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     if (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing.active.window.checks")) {
@@ -147,6 +150,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     return ApplicationManager.getApplication().getService(IdeFocusManager.class);
   }
 
+  @DirtyUI
   @Override
   public void dispose() {
     myForcedFocusRequestsAlarm.cancelAllRequests();
@@ -232,6 +236,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
                                      true).doWhenProcessed(() -> myTypeAheadRequestors.remove(done)));
   }
 
+  @DirtyUI
   @Override
   public Component getFocusOwner() {
     assertDispatchThread();
@@ -266,6 +271,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     return result;
   }
 
+  @DirtyUI
   @Override
   public void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable) {
     assertDispatchThread();
@@ -318,6 +324,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   private static class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private Throwable myAllocation;
     private boolean myDisposed;
 
@@ -438,7 +445,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private static void assertDispatchThread() {
     if (Registry.is("actionSystem.assertFocusAccessFromEdt")) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      EDT.assertIsEdt();
     }
   }
 

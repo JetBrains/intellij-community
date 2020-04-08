@@ -18,9 +18,8 @@ public class HtmlXmlExtension extends DefaultXmlExtension {
     return file.getFileType() == HtmlFileType.INSTANCE;
   }
 
-  @Nullable
   @Override
-  public String[][] getNamespacesFromDocument(XmlDocument parent, boolean declarationsExist) {
+  public String[] @Nullable [] getNamespacesFromDocument(XmlDocument parent, boolean declarationsExist) {
     String[][] namespaces = super.getNamespacesFromDocument(parent, false);
     if (namespaces == null || !HtmlUtil.isHtml5Document(parent)) return namespaces;
 

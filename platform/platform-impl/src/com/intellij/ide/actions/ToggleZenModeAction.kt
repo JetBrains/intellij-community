@@ -9,9 +9,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 
 class ToggleZenModeAction : DumbAwareAction() {
     companion object {
-        private val TEXT_ENTER_ZEN_MODE = ActionsBundle.message("action.ToggleZenMode.enter")
-        private val TEXT_EXIT_ZEN_MODE = ActionsBundle.message("action.ToggleZenMode.exit")
-
         private fun isFullScreenApplicable() = WindowManager.getInstance().isFullScreenSupportedInCurrentOS
         private fun Project.getFrame() = WindowManagerEx.getInstanceEx().findFrameHelper(this)
 
@@ -43,7 +40,9 @@ class ToggleZenModeAction : DumbAwareAction() {
             return
         }
 
-        e.presentation.text = if (isZenModeEnabled(project)) TEXT_EXIT_ZEN_MODE else TEXT_ENTER_ZEN_MODE
+        e.presentation.text =
+          if (isZenModeEnabled(project)) ActionsBundle.message("action.ToggleZenMode.exit")
+          else ActionsBundle.message("action.ToggleZenMode.enter")
     }
 
     override fun actionPerformed(e: AnActionEvent) {

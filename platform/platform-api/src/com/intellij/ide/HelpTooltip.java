@@ -18,7 +18,6 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +28,7 @@ import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -287,6 +287,8 @@ public class HelpTooltip {
 
   private void initPopupBuilder() {
     JComponent tipPanel = createTipPanel();
+    tipPanel.addMouseListener(createIsOverTipMouseListener());
+
     myPopupSize = tipPanel.getPreferredSize();
     myPopupBuilder = JBPopupFactory.getInstance().
         createComponentPopupBuilder(tipPanel, null).
@@ -300,21 +302,27 @@ public class HelpTooltip {
     myPopupBuilder = instance.myPopupBuilder;
   }
 
-  private JPanel createTipPanel() {
-    JPanel tipPanel = new JPanel();
-    tipPanel.addMouseListener(new MouseAdapter() {
-      @Override public void mouseEntered(MouseEvent e) {
+  @NotNull
+  private MouseListener createIsOverTipMouseListener() {
+    return new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
         isOverPopup = true;
       }
 
-      @Override public void mouseExited(MouseEvent e) {
+      @Override
+      public void mouseExited(MouseEvent e) {
         if (link == null || !link.getBounds().contains(e.getPoint())) {
           isOverPopup = false;
           hidePopup(false);
         }
       }
-    });
+    };
+  }
 
+  @NotNull
+  protected final JPanel createTipPanel() {
+    JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(VGAP.get()));
     tipPanel.setBackground(BACKGROUND_COLOR);
 
@@ -421,7 +429,6 @@ public class HelpTooltip {
    * @param owner possible owner
    * @param condition a {@code BooleanSupplier} for open condition
    */
-  @ApiStatus.Experimental
   public static void setMasterPopupOpenCondition(@NotNull Component owner, @Nullable BooleanSupplier condition) {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
@@ -472,6 +479,12 @@ public class HelpTooltip {
     return hasTitle ?
            font.deriveFont((float)font.getSize() + DESCRIPTION_FONT_SIZE_DELTA.get()) :
            deriveHeaderFont(font);
+  }
+
+  public static @NotNull String getShortcutAsHtml(@Nullable String shortcut) {
+    return StringUtil.isEmpty(shortcut)
+           ? ""
+           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut);
   }
 
   private static class BoundWidthLabel extends JLabel {
@@ -533,9 +546,7 @@ public class HelpTooltip {
     }
 
     private String getShortcutAsHTML() {
-      return StringUtil.isNotEmpty(shortcut) ?
-             String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut) :
-             "";
+      return getShortcutAsHtml(shortcut);
     }
   }
 

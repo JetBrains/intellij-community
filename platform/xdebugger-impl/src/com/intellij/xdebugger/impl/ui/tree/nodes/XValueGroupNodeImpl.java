@@ -10,9 +10,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class XValueGroupNodeImpl extends XValueContainerNode<XValueGroup> implements RestorableStateNode {
   public XValueGroupNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull XValueGroup group) {
     super(tree, parent, false, group);

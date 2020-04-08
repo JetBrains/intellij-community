@@ -68,7 +68,7 @@ public class LibraryTableImplUtil {
     if (!(library instanceof LibraryEx)) return false;
 
     Module module = ((LibraryEx)library).getModule();
-    if (module == null) return false;
+    if (module == null || module.isDisposed()) return false;
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == library) {
         return true;

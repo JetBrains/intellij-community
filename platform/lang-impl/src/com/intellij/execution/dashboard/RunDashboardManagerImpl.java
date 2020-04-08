@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.google.common.collect.Sets;
@@ -25,6 +25,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @State(
@@ -57,6 +59,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     ExtensionPointName.create("com.intellij.runDashboardCustomizer");
   private static final ExtensionPointName<RunDashboardDefaultTypesProvider> DEFAULT_TYPES_PROVIDER_EP_NAME =
     ExtensionPointName.create("com.intellij.runDashboardDefaultTypesProvider");
+  static final ExtensionPointName<RunDashboardGroupingRule> GROUPING_RULE_EP_NAME =
+    ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
 
   private final Project myProject;
   private final ContentManager myContentManager;
@@ -68,7 +72,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final ReentrantReadWriteLock myServiceLock = new ReentrantReadWriteLock();
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
   private String myToolWindowId;
-  private final Condition<Content> myReuseCondition;
+  private final Predicate<Content> myReuseCondition;
   private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
 
   public RunDashboardManagerImpl(@NotNull Project project) {
@@ -77,6 +81,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myContentManager = contentFactory.createContentManager(new PanelContentUI(), false, project);
     myServiceContentManagerListener = new ServiceContentManagerListener();
     myReuseCondition = this::canReuseContent;
+    initExtensionPointListeners();
+
+  }
+
+  private void initExtensionPointListeners() {
+    ExtensionPointChangeListener dashboardUpdater = () -> updateDashboard(true);
+    CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
+    GROUPING_RULE_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
+    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(() -> setTypes(new HashSet<>(getTypes())), myProject);
   }
 
   private void initServiceContentListeners() {
@@ -315,7 +328,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   @NotNull
   @Override
-  public Condition<Content> getReuseCondition() {
+  public Predicate<Content> getReuseCondition() {
     return myReuseCondition;
   }
 
@@ -468,11 +481,13 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   @Nullable
   private RunnerAndConfigurationSettings findSettings(@NotNull Content content) {
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
+    if (descriptor == null) return null;
+
     Set<RunnerAndConfigurationSettings> settingsSet = ExecutionManagerImpl.getInstance(myProject).getConfigurations(descriptor);
     RunnerAndConfigurationSettings result = ContainerUtil.getFirstItem(settingsSet);
     if (result != null) return result;
 
-    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
+    ProcessHandler processHandler = descriptor.getProcessHandler();
     return processHandler == null ? null : processHandler.getUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY);
   }
 
@@ -676,7 +691,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  private class ServiceContentManagerListener extends ContentManagerAdapter {
+  private class ServiceContentManagerListener implements ContentManagerListener {
     @Override
     public void selectionChanged(@NotNull ContentManagerEvent event) {
       boolean onAdd = event.getOperation() == ContentManagerEvent.ContentOperation.add;

@@ -2,19 +2,13 @@
 package com.intellij.openapi.vcs.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.vcs.commit.NonModalCommitUsagesCollector
 
 class VcsApplicationOptionsUsagesCollector : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "vcs.application.configuration"
 
-  override fun getMetrics(): Set<MetricEvent> {
-    val settings = VcsApplicationSettings.getInstance()
-    val defaultSettings = VcsApplicationSettings()
+  override fun getVersion(): Int = 2
 
-    return mutableSetOf<MetricEvent>().apply {
-      addBoolIfDiffers(this, settings, defaultSettings, { it.COMMIT_FROM_LOCAL_CHANGES }, "commit.from.local.changes")
-    }
-  }
+  override fun getMetrics(): Set<MetricEvent> = NonModalCommitUsagesCollector.getMetrics()
 }

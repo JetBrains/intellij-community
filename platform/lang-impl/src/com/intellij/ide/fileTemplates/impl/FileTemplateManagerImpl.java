@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -108,9 +108,8 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     return myProjectScheme;
   }
 
-  @NotNull
   @Override
-  public FileTemplate[] getTemplates(@NotNull String category) {
+  public FileTemplate @NotNull [] getTemplates(@NotNull String category) {
     if (DEFAULT_TEMPLATES_CATEGORY.equals(category)) return ArrayUtil.mergeArrays(getInternalTemplates(), getAllTemplates());
     if (INCLUDES_TEMPLATES_CATEGORY.equals(category)) return getAllPatterns();
     if (CODE_TEMPLATES_CATEGORY.equals(category)) return getAllCodeTemplates();
@@ -119,9 +118,8 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   @Override
-  @NotNull
-  public FileTemplate[] getAllTemplates() {
-    final Collection<FileTemplateBase> templates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
+  public FileTemplate @NotNull [] getAllTemplates() {
+    Collection<FileTemplateBase> templates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
     return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
@@ -213,8 +211,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   @Override
-  @NotNull
-  public FileTemplate[] getInternalTemplates() {
+  public FileTemplate @NotNull [] getInternalTemplates() {
     List<InternalTemplateBean> internalTemplateBeans = InternalTemplateBean.EP_NAME.getExtensionList();
     List<FileTemplate> result = new ArrayList<>(internalTemplateBeans.size());
     for (InternalTemplateBean bean : internalTemplateBeans) {
@@ -310,13 +307,12 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   @NotNull
-  private String getQualifiedName(@NotNull String name) {
+  private static String getQualifiedName(@NotNull String name) {
     return FileTypeManagerEx.getInstanceEx().getExtension(name).isEmpty() ? FileTemplateBase.getQualifiedName(name, "java") : name;
   }
 
   @Override
-  @NotNull
-  public FileTemplate[] getAllPatterns() {
+  public FileTemplate @NotNull [] getAllPatterns() {
     final Collection<FileTemplateBase> allTemplates = getSettings().getPatternsManager().getAllTemplates(false);
     return allTemplates.toArray(FileTemplate.EMPTY_ARRAY);
   }
@@ -327,15 +323,13 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   @Override
-  @NotNull
-  public FileTemplate[] getAllCodeTemplates() {
+  public FileTemplate @NotNull [] getAllCodeTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getCodeTemplatesManager().getAllTemplates(false);
     return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
-  @NotNull
-  public FileTemplate[] getAllJ2eeTemplates() {
+  public FileTemplate @NotNull [] getAllJ2eeTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getJ2eeTemplatesManager().getAllTemplates(false);
     return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }

@@ -41,13 +41,12 @@ import com.intellij.psi.PsiElementVisitor;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 public class NewClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public static final ExtensionPointName<NamingConvention<PsiClass>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.class");
 
   public NewClassNamingConventionInspection() {
-    super(Arrays.asList(EP_NAME.getExtensions()), ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    super(EP_NAME.getExtensionList(), ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    registerConventionsListener(EP_NAME);
   }
 
   @Override

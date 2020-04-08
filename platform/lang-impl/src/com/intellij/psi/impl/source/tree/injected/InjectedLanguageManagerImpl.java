@@ -13,8 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -56,19 +55,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     myDumbService = DumbService.getInstance(myProject);
     myDocManager = PsiDocumentManager.getInstance(project);
 
-    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener((e, pd) -> clearInjectorCache(), false, this);
+    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(
+      this::clearInjectorCache, false, this);
 
-    LanguageInjector.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjector>() {
-      @Override
-      public void extensionAdded(@NotNull LanguageInjector extension, @NotNull PluginDescriptor pluginDescriptor) {
-        clearInjectorCache();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull LanguageInjector extension, @NotNull PluginDescriptor pluginDescriptor) {
-        clearInjectorCache();
-      }
-    }, this);
+    LanguageInjector.EXTENSION_POINT_NAME.addExtensionPointListener(this::clearInjectorCache, this);
 
     project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -182,6 +172,17 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   private void clearInjectorCache() {
     cachedInjectors = null;
+    if (myProject.isDisposed() || myProject.isDefault()) return;
+
+    for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+      if (psiFile != null) {
+        for (DocumentWindow document : InjectedLanguageUtil.getCachedInjectedDocuments(psiFile)) {
+          EditorWindowImpl.disposeEditorFor(document);
+        }
+        dropFileCaches(psiFile);
+      }
+    }
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.Disposable;
@@ -28,6 +14,7 @@ import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.util.ui.JBUI;
@@ -39,9 +26,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Sergey.Malenkov
- */
 public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
   private static final Logger LOG = Logger.getInstance(ConfigurableCardPanel.class);
 
@@ -79,29 +63,17 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   protected void addEPChangesListener(@NotNull ConfigurableWrapper wrapper) {
     //for the dynamic configurations we have to update the whole tree
     if (wrapper.getExtensionPoint().dynamic) return;
-    
+
     Configurable.WithEpDependencies configurable = ConfigurableWrapper.cast(Configurable.WithEpDependencies.class, wrapper);
     if (configurable != null && !myListeners.containsKey(wrapper)) {
       Disposable disposable = Disposer.newDisposable();
       Collection<BaseExtensionPointName<?>> dependencies = configurable.getDependencies();
-      ExtensionPointListener listener = new ExtensionPointListener() {
-        @Override
-        public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extensionChanged();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
-          extensionChanged();
-        }
-
-        public void extensionChanged() {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            //dispose resources -> reset nested component
-            wrapper.disposeUIResources();
-            resetValue(wrapper);
-          }, ModalityState.stateForComponent(ConfigurableCardPanel.this), (__) -> ConfigurableCardPanel.this.isDisposed());
-        }
+      ExtensionPointChangeListener listener = () -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          //dispose resources -> reset nested component
+          wrapper.disposeUIResources();
+          resetValue(wrapper);
+        }, ModalityState.stateForComponent(this), (__) -> this.isDisposed());
       };
 
       for (BaseExtensionPointName dependency : dependencies) {
@@ -152,11 +124,13 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
               panel.add(BorderLayout.CENTER, component);
               component = panel;
             }
-            component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
+            component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
           }
           if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
             JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
             scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
+            scroll.getVerticalScrollBar().setBackground(JBColor.PanelBackground);
+            scroll.getHorizontalScrollBar().setBackground(JBColor.PanelBackground);
             component = scroll;
           }
         }
@@ -206,7 +180,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
       int threshold = Registry.intValue("ide.settings.configurable.loading.threshold", 0);
       if (0 < threshold && threshold < time) {
         String name = configurable.getDisplayName();
-        String id = ConfigurableVisitor.ByID.getID(configurable);
+        String id = ConfigurableVisitor.getId(configurable);
         LOG.warn(time + " ms to " + action + " '" + name + "' id=" + id);
       }
     }

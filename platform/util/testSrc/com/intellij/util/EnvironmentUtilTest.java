@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -7,15 +7,12 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
-/**
- * @author mike
- */
 public class EnvironmentUtilTest {
   @Test(timeout = 30000)
   public void map() {
@@ -48,7 +45,7 @@ public class EnvironmentUtilTest {
 
   @Test(timeout = 30000)
   public void load() {
-    assumeTrue("unix only", SystemInfo.isUnix);
+    assumeUnix();
     Map<String, String> env = EnvironmentUtil.testLoader();
     assertTrue(env.size() >= System.getenv().size() / 2);
   }
@@ -60,7 +57,7 @@ public class EnvironmentUtilTest {
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "set FOO_TEST_1=123\r\nset FOO_TEST_2=%1");
 
-    Map<String, String> result = new EnvironmentUtil.ShellEnvReader().readBatEnv(file, Arrays.asList("arg_value"));
+    Map<String, String> result = new EnvironmentUtil.ShellEnvReader().readBatEnv(file.toPath(), Collections.singletonList("arg_value"));
     assertEquals("123", result.get("FOO_TEST_1"));
     assertEquals("arg_value", result.get("FOO_TEST_2"));
   }
@@ -73,7 +70,7 @@ public class EnvironmentUtilTest {
     FileUtil.writeToFile(file, "echo some error\r\nexit /B 1");
 
     try {
-      new EnvironmentUtil.ShellEnvReader().readBatEnv(file, Arrays.asList());
+      new EnvironmentUtil.ShellEnvReader().readBatEnv(file.toPath(), Collections.emptyList());
       fail("error should be reported");
     }
     catch (Exception e) {

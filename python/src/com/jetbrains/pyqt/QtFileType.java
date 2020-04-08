@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
@@ -71,7 +72,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
       Runtime.getRuntime().exec(new String[] { qtTool, file.getPath() } );
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, "Failed to run Qt Designer: " + e.getMessage(), "Error");
+      Messages.showErrorDialog(project, PyBundle.message("qt.error.failed.run.qt.designer", e.getMessage()), PyBundle.message("qt.run.designer.error"));
     }
     return true;
   }

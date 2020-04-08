@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -20,8 +21,10 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
+import static com.intellij.ide.plugins.DynamicPluginsTestUtilKt.loadDescriptorInTest;
 import static org.junit.Assert.*;
 
 public class PluginManagerTest {
@@ -119,10 +122,42 @@ public class PluginManagerTest {
     doPluginSortTest("ultimatePlugins", true);
   }
 
+  @Test
+  public void testIdentifyPreInstalledPlugins() {
+    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
+    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
+    IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
+    assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
+    DescriptorListLoadingContext loadingContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+
+    PluginLoadingResult loadingResult = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
+    loadingResult.add(descriptorBundled, loadingContext, false);
+    loadingResult.add(descriptorInstalled, loadingContext, false);
+    assertPluginPreInstalled(loadingResult, descriptorInstalled.getPluginId());
+  }
+
+  @Test
+  public void testIdentifyPreInstalledPluginsInReverseOrder() {
+    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
+    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
+    IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
+    assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
+    DescriptorListLoadingContext loadingContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+
+    PluginLoadingResult resultInReverseOrder = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
+    resultInReverseOrder.add(descriptorInstalled, loadingContext, false);
+    resultInReverseOrder.add(descriptorBundled, loadingContext, false);
+    assertPluginPreInstalled(resultInReverseOrder, descriptorInstalled.getPluginId());
+  }
+
+  private static void assertPluginPreInstalled(@NotNull PluginLoadingResult loadingResult, PluginId pluginId) {
+    assertTrue("Plugin should be pre installed", loadingResult.getShadowedBundledIds().contains(pluginId));
+  }
+
   private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
     PluginManagerCore.ourPluginError = null;
-    PluginLoadingResult loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
-    String actual = StringUtil.join(loadPluginResult.getSortedPlugins(), o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
+    PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
+    String actual = StringUtil.join(loadPluginResult.sortedPlugins, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
                     "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
     PluginManagerCore.ourPluginError = null;
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), actual);
@@ -140,28 +175,40 @@ public class PluginManagerTest {
     assertNull(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild));
   }
 
-  @NotNull
-  private static PluginLoadingResult loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
+  private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), true));
-    DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* doesn't matter */ false,
-                                                                    PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
 
-    Element root = JDOMUtil.load(file, context.parentContext.getXmlFactory());
+    Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
+    DescriptorLoadingContext context = new DescriptorLoadingContext(
+      parentContext, isBundled, /* doesn't matter */ false,
+      new BasePathResolver() {
+        @Override
+        public @NotNull Element resolvePath(@NotNull Path basePath,
+                                            @NotNull String relativePath,
+                                            @NotNull SafeJdomFactory jdomFactory) {
+          for (Element child : root.getChildren("config-file-idea-plugin")) {
+            String url = Objects.requireNonNull(child.getAttributeValue("url"));
+            if (url.endsWith("/" + relativePath)) return child;
+          }
+          throw new AssertionError("Unexpected: " + relativePath);
+        }
+      });
 
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Paths.get(url), isBundled);
       descriptor.readExternal(element, Paths.get(url), context.pathResolver, context, descriptor);
-      parentContext.result.add(descriptor, parentContext);
+      parentContext.result.add(descriptor, parentContext, /* overrideUseIfCompatible = */ false);
     }
-    PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
-    return parentContext.result;
+    parentContext.close();
+    parentContext.result.finishLoading();
+    return PluginManagerCore.initializePlugins(parentContext, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false);
   }
 
   /** @noinspection unused */
-  private static String dumpDescriptors(@NotNull IdeaPluginDescriptorImpl[] descriptors) {
+  private static String dumpDescriptors(IdeaPluginDescriptorImpl @NotNull [] descriptors) {
     // place breakpoint in PluginManagerCore#loadDescriptors before sorting
     StringBuilder sb = new StringBuilder("<root>");
     Function<String, String> escape = s ->

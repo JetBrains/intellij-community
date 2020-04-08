@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ActionPanel extends NonOpaquePanel {
+public final class ActionPanel extends NonOpaquePanel {
   private final List<ActionButton> myButtons = new ArrayList<>();
   private final JBTabsImpl myTabs;
 
@@ -37,7 +37,7 @@ public class ActionPanel extends NonOpaquePanel {
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
     wrapper.add(inner, BorderLayout.CENTER);
     for (AnAction each : children) {
-      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass, hover, tabs.getTabActionsMouseDeadzone()) {
+      ActionButton eachButton = new ActionButton(tabInfo, each, tabInfo.getTabActionPlace(), pass, hover, tabs.getTabActionsMouseDeadzone()) {
         @Override
         protected void repaintComponent(final Component c) {
           TabLabel tabLabel = (TabLabel) SwingUtilities.getAncestorOfClass(TabLabel.class, c);
@@ -45,12 +45,13 @@ public class ActionPanel extends NonOpaquePanel {
             Point point = SwingUtilities.convertPoint(c, new Point(0, 0), tabLabel);
             Dimension d = c.getSize();
             tabLabel.repaint(point.x, point.y, d.width, d.height);
-          } else {
+          }
+          else {
             super.repaintComponent(c);
           }
         }
       };
-      
+
       myButtons.add(eachButton);
       InplaceButton component = eachButton.getComponent();
       component.setFocusable(false);
@@ -72,7 +73,7 @@ public class ActionPanel extends NonOpaquePanel {
     }
 
     myActionsIsVisible = anyVisible;
-    
+
     return changed;
   }
 

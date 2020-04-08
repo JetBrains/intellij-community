@@ -47,7 +47,7 @@ public class MigrateRootDialog extends DialogWrapper {
     myDirectoryField.setText(directory.getPath());
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         for (VirtualFile vFile : files) {
           final File file = CvsVfsUtil.getFileFor(vFile);
           final String root = CvsUtil.loadRootFrom(file);

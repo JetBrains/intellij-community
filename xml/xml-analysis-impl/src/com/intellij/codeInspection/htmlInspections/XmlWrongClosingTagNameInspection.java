@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -20,6 +19,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class XmlWrongClosingTagNameInspection implements Annotator {
-
   @Override
   public void annotate(@NotNull final PsiElement psiElement, @NotNull final AnnotationHolder holder) {
     if (psiElement instanceof XmlToken) {
@@ -61,7 +61,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
           final PsiFile psiFile = psiElement.getContainingFile();
 
           if (psiFile != null && (HTMLLanguage.INSTANCE == psiFile.getViewProvider().getBaseLanguage() || HTMLLanguage.INSTANCE == parent.getLanguage())) {
-            final String message = XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing");
+            final String message = XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing");
 
             if (message.equals(((PsiErrorElement)parent).getErrorDescription()) &&
                 psiFile.getContext() == null
@@ -76,9 +76,9 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
   }
 
   private static void registerProblemStart(@NotNull final AnnotationHolder holder,
-                                      @NotNull final XmlTag tag,
-                                      @NotNull final XmlToken start,
-                                      @NotNull final XmlToken end) {
+                                           @NotNull final XmlTag tag,
+                                           @NotNull final XmlToken start,
+                                           @NotNull final XmlToken end) {
     PsiElement context = tag.getContainingFile().getContext();
     if (context != null) {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
@@ -96,8 +96,8 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"))
-      .range(start.getTextRange())
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlAnalysisBundle.message("tag.has.wrong.closing.tag.name"))
+      .range(start)
       .withFix(renameEndAction)
       .withFix(renameStartAction)
       .create();
@@ -123,8 +123,8 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorMessages.message("wrong.closing.tag.name"))
-      .range(end.getTextRange())
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlAnalysisBundle.message("wrong.closing.tag.name"))
+      .range(end)
       .withFix(new RemoveExtraClosingTagIntentionAction())
       .withFix(renameEndAction)
       .withFix(renameStartAction)

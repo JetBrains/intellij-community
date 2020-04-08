@@ -1,8 +1,8 @@
 class TextBlocks {
   static {
     System.out.println("""
-                       first
-                        second
+                       first  \s\
+                       second
                          third""" + <caret>//c1
                        """
                           _no space

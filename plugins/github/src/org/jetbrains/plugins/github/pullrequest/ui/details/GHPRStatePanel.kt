@@ -1,336 +1,371 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.VerticalFlowLayout
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
+import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.DelayedTaskScheduler
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.FlowLayout
-import java.awt.event.ActionEvent
 import javax.swing.*
+import kotlin.properties.Delegates.observable
 
-object GHPRStatePanel {
-  fun create(project: Project,
-             model: SingleValueModel<out GHPullRequestShort>,
-             dataProvider: GithubPullRequestDataProvider,
-             securityService: GithubPullRequestsSecurityService,
-             busyStateTracker: GithubPullRequestsBusyStateTracker,
-             stateService: GithubPullRequestsStateService,
-             parentDisposable: Disposable): JComponent {
+internal class GHPRStatePanel(private val project: Project,
+                              private val dataProvider: GHPRDataProvider,
+                              private val securityService: GHPRSecurityService,
+                              private val stateService: GHPRStateService,
+                              private val detailsModel: SingleValueModel<GHPullRequestShort>,
+                              parentDisposable: Disposable)
+  : CardLayoutPanel<GHPullRequestState, GHPRStatePanel.StateUI, JComponent>() {
 
-    val stateLabel = JLabel().apply {
-      border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
-    }
-    val accessDeniedLabel = JLabel("Repository write access required to merge pull requests").apply {
-      foreground = UIUtil.getContextHelpForeground()
-    }
-    val buttonsPanel = createButtons(project, model,
-                                     dataProvider, securityService, busyStateTracker, stateService,
-                                     parentDisposable).apply {
-      border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
-    }
+  private var currentState by observable(detailsModel.value.state) { _, oldValue, newValue ->
+    resetValue(oldValue)
+    select(newValue, true)
+  }
+  private var openComponentDisposable = Disposer.newDisposable()
 
-    Controller(model, securityService, stateLabel, accessDeniedLabel)
-
-    return NonOpaquePanel(VerticalFlowLayout(0, 0)).apply {
-      add(stateLabel)
-      add(accessDeniedLabel)
-      add(buttonsPanel)
+  init {
+    Disposer.register(parentDisposable, this)
+    detailsModel.addAndInvokeValueChangedListener(this) {
+      currentState = detailsModel.value.state
     }
   }
 
-  private fun createButtons(project: Project,
-                            model: SingleValueModel<out GHPullRequestShort?>,
-                            dataProvider: GithubPullRequestDataProvider,
-                            securityService: GithubPullRequestsSecurityService,
-                            busyStateTracker: GithubPullRequestsBusyStateTracker,
-                            stateService: GithubPullRequestsStateService,
-                            parentDisposable: Disposable): JComponent {
-    val closeButton = JButton()
-    val reopenButton = JButton()
-
-    val mergeButton = JBOptionButton(null, null)
-
-    val errorPanel = HtmlEditorPane().apply {
-      foreground = SimpleTextAttributes.ERROR_ATTRIBUTES.fgColor
-    }
-
-    ButtonsController(project, model, dataProvider, securityService, busyStateTracker, stateService, parentDisposable,
-                      closeButton, reopenButton, mergeButton, errorPanel)
-
-    return NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
-      add(mergeButton)
-      add(closeButton)
-      add(reopenButton)
-      add(errorPanel)
+  override fun prepare(key: GHPullRequestState): StateUI {
+    return when (key) {
+      GHPullRequestState.MERGED -> StateUI.Merged
+      GHPullRequestState.CLOSED -> StateUI.Closed(dataProvider, securityService, detailsModel.value.viewerDidAuthor, stateService)
+      GHPullRequestState.OPEN -> StateUI.Open(project, dataProvider, securityService, stateService,
+                                              detailsModel, openComponentDisposable)
     }
   }
 
-  private class Controller(private val model: SingleValueModel<out GHPullRequestShort?>,
-                           private val securityService: GithubPullRequestsSecurityService,
-                           private val stateLabel: JLabel,
-                           private val accessDeniedLabel: JLabel) {
+  override fun dispose(key: GHPullRequestState?) {
+    if (key == GHPullRequestState.OPEN) {
+      Disposer.dispose(openComponentDisposable)
+      openComponentDisposable = Disposer.newDisposable()
+    }
+  }
 
-    init {
-      updateText()
+  override fun create(ui: StateUI) = ui.createComponent()
 
-      model.addValueChangedListener {
-        updateText()
+  internal sealed class StateUI {
+
+    companion object {
+      const val STATUSES_GAP = 4
+    }
+
+    fun createComponent(): JComponent {
+      val statusComponent = createStatusComponent()
+
+      val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+      val errorComponent = HtmlEditorPane().apply {
+        foreground = SimpleTextAttributes.ERROR_ATTRIBUTES.fgColor
+      }
+      val actionsPanel = BorderLayoutPanel().andTransparent()
+        .addToLeft(buttonsPanel).addToCenter(errorComponent)
+      for (button in createButtons { errorComponent.setBody(it) }) {
+        buttonsPanel.add(button)
+      }
+
+      return NonOpaquePanel(VerticalLayout(4)).apply {
+        border = JBUI.Borders.emptyLeft(4)
+
+        add(statusComponent, VerticalLayout.FILL_HORIZONTAL)
+        add(actionsPanel, VerticalLayout.FILL_HORIZONTAL)
       }
     }
 
-    private fun updateText() {
-      val value = model.value
-      if (value == null) {
-        stateLabel.text = ""
-        stateLabel.icon = null
+    abstract fun createStatusComponent(): JComponent
 
-        accessDeniedLabel.isVisible = false
+    abstract fun createButtons(errorHandler: (String) -> Unit): List<JComponent>
+
+    object Merged : StateUI() {
+
+      override fun createStatusComponent() = JLabel("Pull request is merged", GithubIcons.PullRequestMerged, SwingConstants.LEFT)
+
+      override fun createButtons(errorHandler: (String) -> Unit) = emptyList<JComponent>()
+    }
+
+    class Closed(private val dataProvider: GHPRDataProvider,
+                 securityService: GHPRSecurityService,
+                 viewerIsAuthor: Boolean,
+                 private val stateService: GHPRStateService) : StateUI() {
+
+      private val canReopen = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || viewerIsAuthor
+
+      override fun createStatusComponent(): JComponent {
+        val stateLabel = JLabel("Pull request is closed", GithubIcons.PullRequestClosed, SwingConstants.LEFT)
+        return if (canReopen) stateLabel
+        else {
+          val accessDeniedLabel = JLabel().apply {
+            icon = AllIcons.RunConfigurations.TestError
+            text = "Repository access required to manage pull requests"
+          }
+          JPanel(VerticalLayout(STATUSES_GAP)).apply {
+            add(stateLabel, VerticalLayout.FILL_HORIZONTAL)
+            add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
+          }
+        }
       }
-      else {
-        when (value.state) {
-          GHPullRequestState.OPEN -> {
-            if (value is GHPullRequest)
-              when (value.mergeable) {
-                GHPullRequestMergeableState.MERGEABLE -> {
-                  stateLabel.icon = AllIcons.RunConfigurations.TestPassed
-                  stateLabel.text = "Branch has no conflicts with base branch"
-                }
-                GHPullRequestMergeableState.CONFLICTING -> {
-                  stateLabel.icon = AllIcons.RunConfigurations.TestFailed
-                  stateLabel.text = "Branch has conflicts that must be resolved"
-                }
-                GHPullRequestMergeableState.UNKNOWN -> {
-                  stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
-                  stateLabel.text = "Checking for ability to merge automatically..."
-                }
-              }
+
+      override fun createButtons(errorHandler: (String) -> Unit): List<JComponent> {
+        return if (canReopen) {
+          val action = GHPRReopenAction(SingleValueModel(false), errorHandler,
+                                        stateService, dataProvider.id)
+          listOf(JButton(action))
+        }
+        else emptyList()
+      }
+    }
+
+    class Open(private val project: Project,
+               private val dataProvider: GHPRDataProvider,
+               securityService: GHPRSecurityService,
+               private val stateService: GHPRStateService,
+               private val detailsModel: SingleValueModel<GHPullRequestShort>,
+               parentDisposable: Disposable) : StateUI() {
+
+      private val canClose =
+        securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || detailsModel.value.viewerDidAuthor
+      private val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
+      private val mergeForbidden = securityService.isMergeForbiddenForProject()
+
+      private val canCommitMerge = securityService.isMergeAllowed()
+      private val canSquashMerge = securityService.isSquashMergeAllowed()
+      private val canRebaseMerge = securityService.isRebaseMergeAllowed()
+
+      private val mergeabilityModel = SingleValueModel<GHPRMergeabilityState?>(null)
+      private val mergeabilityPoller = DelayedTaskScheduler(3, parentDisposable) {
+        dataProvider.reloadMergeabilityState()
+      }
+
+      init {
+        dataProvider.addRequestsChangesListener(parentDisposable, object : GHPRDataProvider.RequestsChangedListener {
+          override fun mergeabilityStateRequestChanged() {
+            loadMergeability()
+          }
+        })
+        loadMergeability()
+
+        mergeabilityModel.addValueChangedListener {
+          val state = mergeabilityModel.value
+          if (state != null && state.hasConflicts == null) {
+            mergeabilityPoller.start()
+          }
+          else mergeabilityPoller.stop()
+        }
+      }
+
+      private fun loadMergeability() {
+        dataProvider.mergeabilityStateRequest.successOnEdt {
+          mergeabilityModel.value = it
+        }
+      }
+
+      override fun createStatusComponent(): JComponent {
+        val panel = Wrapper()
+        LoadingController(mergeabilityModel, panel, ::createNotLoadedComponent, ::createLoadedComponent)
+        return panel
+      }
+
+      private fun createNotLoadedComponent(): JComponent {
+        val stateLabel = JLabel("Loading pull request status...", AllIcons.RunConfigurations.TestNotRan, SwingConstants.LEFT)
+        val accessDeniedLabel = createAccessDeniedLabel()
+        return if (accessDeniedLabel == null) stateLabel
+        else {
+          JPanel(VerticalLayout(STATUSES_GAP)).apply {
+            add(stateLabel, VerticalLayout.FILL_HORIZONTAL)
+            add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
+          }
+        }
+      }
+
+      private fun createLoadedComponent(mergeabilityModel: SingleValueModel<GHPRMergeabilityState>): JComponent {
+        val statusChecks = GHPRStatusChecksComponent.create(mergeabilityModel)
+
+        val conflictsLabel = JLabel()
+        ConflictsController(mergeabilityModel, conflictsLabel)
+
+        val requiredReviewsLabel = JLabel()
+        RequiredReviewsController(mergeabilityModel, requiredReviewsLabel)
+
+        val restrictionsLabel = JLabel()
+        RestrictionsController(mergeabilityModel, restrictionsLabel)
+
+        val accessDeniedLabel = createAccessDeniedLabel()
+        return JPanel(VerticalLayout(STATUSES_GAP)).apply {
+          add(statusChecks, VerticalLayout.FILL_HORIZONTAL)
+          add(requiredReviewsLabel, VerticalLayout.FILL_HORIZONTAL)
+          add(conflictsLabel, VerticalLayout.FILL_HORIZONTAL)
+          add(restrictionsLabel, VerticalLayout.FILL_HORIZONTAL)
+          if (accessDeniedLabel != null)
+            add(accessDeniedLabel, VerticalLayout.FILL_HORIZONTAL)
+        }
+      }
+
+      private fun createAccessDeniedLabel(): JComponent? {
+        return when {
+          !canClose -> {
+            JLabel().apply {
+              icon = AllIcons.RunConfigurations.TestError
+              text = "Repository access required to manage pull requests"
+            }
+          }
+          !canMerge -> {
+            JLabel().apply {
+              icon = AllIcons.RunConfigurations.TestError
+              text = "Repository write access required to merge pull requests"
+            }
+          }
+          mergeForbidden -> {
+            JLabel().apply {
+              icon = AllIcons.RunConfigurations.TestError
+              text = "Merging is disabled for this project"
+            }
+          }
+          else -> null
+        }
+      }
+
+      override fun createButtons(errorHandler: (String) -> Unit): List<JComponent> {
+        val list = mutableListOf<JComponent>()
+        val busyStateModel = SingleValueModel(false)
+        if (canMerge && !mergeForbidden) {
+          val allowedActions = mutableListOf<Action>()
+          if (canCommitMerge)
+            allowedActions.add(GHPRCommitMergeAction(busyStateModel, errorHandler,
+                                                     detailsModel, mergeabilityModel, project, stateService))
+          if (canRebaseMerge)
+            allowedActions.add(GHPRRebaseMergeAction(busyStateModel, errorHandler,
+                                                     mergeabilityModel, stateService))
+          if (canSquashMerge)
+            allowedActions.add(GHPRSquashMergeAction(busyStateModel, errorHandler,
+                                                     mergeabilityModel, project, stateService, dataProvider))
+
+          val action = allowedActions.firstOrNull()
+          val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
+
+          val mergeButton = JBOptionButton(action, actions)
+          list.add(mergeButton)
+        }
+
+        if (canClose) {
+          val action = GHPRCloseAction(SingleValueModel(false), errorHandler,
+                                       stateService, dataProvider.id)
+          list.add(JButton(action))
+        }
+        return list
+      }
+
+      private class LoadingController(private val loadingMergeabilityModel: SingleValueModel<GHPRMergeabilityState?>,
+                                      private val panel: Wrapper,
+                                      private val notLoadedContentFactory: () -> JComponent,
+                                      private val loadedContentFactory: (mergeabilityModel: SingleValueModel<GHPRMergeabilityState>) -> JComponent) {
+
+        private var loadedMergeabilityModel: SingleValueModel<GHPRMergeabilityState>? = null
+
+        init {
+          loadingMergeabilityModel.addAndInvokeValueChangedListener(this::update)
+        }
+
+        private fun update() {
+          val mergeability = loadingMergeabilityModel.value
+          if (mergeability == null) {
+            loadedMergeabilityModel = null
+            panel.setContent(notLoadedContentFactory())
+          }
+          else {
+            var mergeabilityModel = loadedMergeabilityModel
+            if (mergeabilityModel == null) {
+              mergeabilityModel = SingleValueModel(mergeability)
+              panel.setContent(loadedContentFactory(mergeabilityModel))
+              panel.revalidate()
+              loadedMergeabilityModel = mergeabilityModel
+            }
             else {
-              stateLabel.icon = GithubIcons.PullRequestOpen
-              stateLabel.text = "Pull request is open"
+              mergeabilityModel.value = mergeability
             }
-            accessDeniedLabel.isVisible = !securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
-          }
-          GHPullRequestState.CLOSED -> {
-            stateLabel.icon = GithubIcons.PullRequestClosed
-            stateLabel.text = "Pull request is closed"
-            accessDeniedLabel.isVisible = false
-          }
-          GHPullRequestState.MERGED -> {
-            stateLabel.icon = GithubIcons.PullRequestMerged
-            stateLabel.text = "Pull request is merged"
-            accessDeniedLabel.isVisible = false
           }
         }
       }
-    }
-  }
 
-  private class ButtonsController(private val project: Project,
-                                  private val model: SingleValueModel<out GHPullRequestShort?>,
-                                  private val dataProvider: GithubPullRequestDataProvider,
-                                  private val securityService: GithubPullRequestsSecurityService,
-                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
-                                  private val stateService: GithubPullRequestsStateService,
-                                  parentDisposable: Disposable,
-                                  private val closeButton: JButton,
-                                  private val reopenButton: JButton,
-                                  private val mergeButton: JBOptionButton,
-                                  private val errorPanel: HtmlEditorPane) {
+      private class ConflictsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
+                                        private val label: JLabel) {
 
-    val closeAction = object : AbstractAction("Close") {
-      override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let {
-          if (!busyStateTracker.acquire(it.number)) return
-          errorPanel.setBody("")
-          stateService.close(EmptyProgressIndicator(), it.number)
-            .errorOnEdt { error ->
-              //language=HTML
-              errorPanel.setBody("<p>Error occurred while closing pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
-            }
-            .handleOnEdt { _, _ ->
-              busyStateTracker.release(it.number)
-            }
+        init {
+          mergeabilityModel.addAndInvokeValueChangedListener(::update)
         }
-      }
-    }
-    val reopenAction = object : AbstractAction("Reopen") {
-      override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let {
-          if (!busyStateTracker.acquire(it.number)) return
-          errorPanel.setBody("")
-          stateService.reopen(EmptyProgressIndicator(), it.number)
-            .errorOnEdt { error ->
-              //language=HTML
-              errorPanel.setBody("<p>Error occurred while reopening pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
-            }
-            .handleOnEdt { _, _ ->
-              busyStateTracker.release(it.number)
-            }
-        }
-      }
-    }
 
-    val mergeAction = object : AbstractAction("Merge...") {
-      override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let {
-          if (it !is GHPullRequest) return
-          if (!busyStateTracker.acquire(it.number)) return
-          errorPanel.setBody("")
-
-          val dialog = GithubMergeCommitMessageDialog(project,
-                                                      "Merge Pull Request",
-                                                      "Merge pull request #${it.number}",
-                                                      it.title)
-          if (!dialog.showAndGet()) {
-            busyStateTracker.release(it.number)
-            return
-          }
-
-          stateService.merge(EmptyProgressIndicator(), it.number, dialog.message, it.headRefOid)
-            .errorOnEdt { error ->
-              //language=HTML
-              errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
+        private fun update() {
+          when (mergeabilityModel.value.hasConflicts) {
+            false -> {
+              label.icon = AllIcons.RunConfigurations.TestPassed
+              label.text = "Branch has no conflicts with base branch"
             }
-            .handleOnEdt { _, _ ->
-              busyStateTracker.release(it.number)
+            true -> {
+              label.icon = AllIcons.RunConfigurations.TestError
+              label.text = "Branch has conflicts that must be resolved"
             }
-        }
-      }
-    }
-    val rebaseMergeAction = object : AbstractAction("Rebase and Merge") {
-      override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let {
-          if (it !is GHPullRequest) return
-          if (!busyStateTracker.acquire(it.number)) return
-          errorPanel.setBody("")
-
-          stateService.rebaseMerge(EmptyProgressIndicator(), it.number, it.headRefOid)
-            .errorOnEdt { error ->
-              //language=HTML
-              errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
+            null -> {
+              label.icon = AllIcons.RunConfigurations.TestNotRan
+              label.text = "Checking for ability to merge automatically..."
             }
-            .handleOnEdt { _, _ ->
-              busyStateTracker.release(it.number)
-            }
-        }
-      }
-    }
-    val squashMergeAction = object : AbstractAction("Squash and Merge...") {
-      override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let {
-          if (it !is GHPullRequest) return
-          if (!busyStateTracker.acquire(it.number)) return
-          errorPanel.setBody("")
-
-
-          dataProvider.apiCommitsRequest.successOnEdt { commits ->
-            val body = "* " + StringUtil.join(commits, { it.commit.message }, "\n\n* ")
-            val dialog = GithubMergeCommitMessageDialog(project,
-                                                        "Merge Pull Request",
-                                                        "Merge pull request #${it.number}",
-                                                        body)
-            if (!dialog.showAndGet()) {
-              throw ProcessCanceledException()
-            }
-            dialog.message
-          }.thenCompose { message ->
-            stateService.squashMerge(EmptyProgressIndicator(), it.number, message, it.headRefOid)
-          }.errorOnEdt { error ->
-            //language=HTML
-            errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
-          }.handleOnEdt { _, _ ->
-            busyStateTracker.release(it.number)
           }
         }
       }
-    }
 
-    init {
-      updateActions()
+      private class RequiredReviewsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
+                                              private val label: JLabel) {
 
-      model.addValueChangedListener {
-        updateActions()
+        init {
+          mergeabilityModel.addAndInvokeValueChangedListener(::update)
+        }
+
+        private fun update() {
+          val requiredApprovingReviewsCount = mergeabilityModel.value.requiredApprovingReviewsCount
+          label.isVisible = requiredApprovingReviewsCount > 0
+          with(label) {
+            icon = AllIcons.RunConfigurations.TestError
+            text = "At least $requiredApprovingReviewsCount approving review is required by reviewers with write access"
+          }
+        }
       }
-      busyStateTracker.addPullRequestBusyStateListener(parentDisposable) {
-        updateActions()
-      }
-      closeButton.action = closeAction
-      reopenButton.action = reopenAction
-    }
 
-    private fun updateActions() {
-      val value = model.value
-      if (value == null) {
-        reopenAction.isEnabled = false
-        reopenButton.isVisible = false
+      private class RestrictionsController(private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState>,
+                                           private val label: JLabel) {
 
-        closeAction.isEnabled = false
-        closeButton.isVisible = false
+        init {
+          mergeabilityModel.addAndInvokeValueChangedListener(::update)
+        }
 
-        mergeAction.isEnabled = false
-        rebaseMergeAction.isEnabled = false
-        squashMergeAction.isEnabled = false
-        mergeButton.action = null
-        mergeButton.options = emptyArray()
-        mergeButton.isVisible = false
-      }
-      else {
-        val canEdit = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
-                      securityService.currentUser == value.author
-
-        reopenButton.isVisible = canEdit && value.state == GHPullRequestState.CLOSED
-        reopenAction.isEnabled = reopenButton.isVisible && !busyStateTracker.isBusy(value.number)
-
-        closeButton.isVisible = canEdit && value.state == GHPullRequestState.OPEN
-        closeAction.isEnabled = closeButton.isVisible && !busyStateTracker.isBusy(value.number)
-
-        val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
-
-        mergeButton.isVisible = canMerge && value.state == GHPullRequestState.OPEN && value is GHPullRequest
-        val mergeable = mergeButton.isVisible && value is GHPullRequest && value.mergeable == GHPullRequestMergeableState.MERGEABLE &&
-                        !busyStateTracker.isBusy(value.number) &&
-                        !securityService.isMergeForbiddenForProject()
-
-        mergeAction.isEnabled = mergeable
-        rebaseMergeAction.isEnabled = mergeable
-        squashMergeAction.isEnabled = mergeable
-
-        mergeButton.optionTooltipText = if (securityService.isMergeForbiddenForProject()) "Merge actions are disabled for this project" else null
-
-        val allowedActions = mutableListOf<Action>()
-        if (securityService.isMergeAllowed()) allowedActions.add(mergeAction)
-        if (securityService.isRebaseMergeAllowed()) allowedActions.add(rebaseMergeAction)
-        if (securityService.isSquashMergeAllowed()) allowedActions.add(squashMergeAction)
-
-        val action = allowedActions.firstOrNull()
-        val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
-        mergeButton.action = action
-        mergeButton.options = actions
+        private fun update() {
+          with(label) {
+            isVisible = mergeabilityModel.value.isRestricted
+            icon = AllIcons.RunConfigurations.TestError
+            text = "You are not authorized to merge pull requests into this branch"
+          }
+        }
       }
     }
   }

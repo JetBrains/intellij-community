@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.ConvertIndentsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 
@@ -24,6 +25,6 @@ import com.intellij.openapi.util.TextRange;
 public class ConvertIndentsToTabsAction extends ConvertIndentsActionBase {
   @Override
   protected int performAction(Editor editor, TextRange textRange) {
-    return convertIndentsToTabs(editor.getDocument(), editor.getSettings().getTabSize(editor.getProject()), textRange);
+    return ConvertIndentsUtil.convertIndentsToTabs(editor.getDocument(), editor.getSettings().getTabSize(editor.getProject()), textRange);
   }
 }

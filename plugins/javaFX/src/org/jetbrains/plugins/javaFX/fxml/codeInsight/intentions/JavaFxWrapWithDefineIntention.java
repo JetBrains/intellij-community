@@ -23,6 +23,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
 public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction {
@@ -37,12 +38,12 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Wrap with fx:define";
+    return JavaFXBundle.message("javafx.wrap.with.fx.define.intention.family.name");
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    setText("Wrap \"" + myId + "\" with fx:define");
+    setText( JavaFXBundle.message("javafx.wrap.id.with.fx.define.intention",myId));
     return myTag.isValid();
   }
 

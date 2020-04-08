@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.navigation.NavigationItem;
@@ -24,7 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.messages.Topic;
+import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +29,7 @@ public abstract class FindManager {
 
   public abstract void setPreviousFindModel(FindModel previousFindModel);
 
-  public abstract void showSettingsAndFindUsages(@NotNull NavigationItem[] targets);
+  public abstract void showSettingsAndFindUsages(NavigationItem @NotNull [] targets);
 
   /**
    * Returns the find manager instance for the specified project.
@@ -72,7 +60,7 @@ public abstract class FindManager {
    * interface.
    */
   @PromptResultValue
-  public abstract int showPromptDialog(@NotNull FindModel model, String title);
+  public abstract int showPromptDialog(@NotNull FindModel model, @NlsContexts.DialogTitle String title);
 
   /**
    * Returns the settings of the last performed Find in File operation, or the
@@ -131,7 +119,9 @@ public abstract class FindManager {
    * interface. May be only {@link PromptResult#CANCEL} or {@link PromptResult#SKIP} for bad replace operation
    */
   @PromptResultValue
-  public abstract int showMalformedReplacementPrompt(@NotNull FindModel model, String title, MalformedReplacementStringException exception);
+  public abstract int showMalformedReplacementPrompt(@NotNull FindModel model,
+                                                     @NlsContexts.DialogTitle String title,
+                                                     MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {
     public MalformedReplacementStringException(String s, Throwable throwable) {
@@ -247,6 +237,13 @@ public abstract class FindManager {
   public abstract void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor editor);
 
   /**
+   * @deprecated please use {@link #findNextUsageInEditor(Editor)}
+   */
+  @ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated
+  public abstract boolean findNextUsageInEditor(@NotNull FileEditor editor);
+
+  /**
    * Performs a "Find Next" operation after "Find Usages in File" or
    * "Highlight Usages in File".
    *
@@ -254,9 +251,14 @@ public abstract class FindManager {
    * @return {@code true} if the operation was performed (not necessarily found anything),
    *         {@code false} if an error occurred during the operation.
    */
-  public abstract boolean findNextUsageInEditor(@NotNull FileEditor editor);
-
   public abstract boolean findNextUsageInEditor(@NotNull Editor editor);
+
+  /**
+   * @deprecated please use {@link #findPreviousUsageInEditor(Editor)}
+   */
+  @ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated
+  public abstract boolean findPreviousUsageInEditor(@NotNull FileEditor editor);
 
   /**
    * Performs a "Find Previous" operation after "Find Usages in File" or
@@ -266,8 +268,6 @@ public abstract class FindManager {
    * @return {@code true} if the operation was performed (not necessarily found anything),
    *         {@code false} if an error occurred during the operation.
    */
-  public abstract boolean findPreviousUsageInEditor(@NotNull FileEditor editor);
-
   public abstract boolean findPreviousUsageInEditor(@NotNull Editor editor);
 
   @MagicConstant(valuesFromClass = FindManager.PromptResult.class)

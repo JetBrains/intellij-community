@@ -31,9 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* @author nik
-*/
 public class ArtifactValidationManagerImpl implements Disposable {
   private final ArtifactErrorPanel myErrorPanel;
   private final ArtifactEditorImpl myArtifactEditor;

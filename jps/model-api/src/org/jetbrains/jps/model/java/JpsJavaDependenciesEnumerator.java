@@ -28,8 +28,6 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
  * and use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#dependencies(org.jetbrains.jps.model.JpsProject)} to process dependencies of all modules in a project.<p>
  *
  * Note that all configuration methods modify {@link org.jetbrains.jps.model.module.JpsDependenciesEnumerator} instance instead of creating a new one.
- *
- * @author nik
  */
 public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator {
   /**

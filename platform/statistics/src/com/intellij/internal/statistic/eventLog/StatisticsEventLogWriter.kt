@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.text.StringUtil
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -16,7 +15,7 @@ interface StatisticsEventLogWriter {
 
   fun getActiveFile(): EventLogFile?
 
-  fun getFiles(): List<EventLogFile>
+  fun getLogFilesProvider(): EventLogFilesProvider
 
   fun cleanup()
 
@@ -68,10 +67,8 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
     return EventLogFile(File(File(getEventLogDir().toUri()), activeLog))
   }
 
-  override fun getFiles(): List<EventLogFile> {
-    val activeLog = fileAppender?.activeLogName
-    val files = File(getEventLogDir().toUri()).listFiles { f: File -> !StringUtil.equals(f.name, activeLog) }
-    return files?.map { EventLogFile(it) }?.toList() ?: emptyList()
+  override fun getLogFilesProvider(): EventLogFilesProvider {
+    return DefaultEventLogFilesProvider(getEventLogDir()) { fileAppender?.activeLogName }
   }
 
   override fun cleanup() {

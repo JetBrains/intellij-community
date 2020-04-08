@@ -82,8 +82,7 @@ public class CachedVcsContext implements VcsContext {
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSelectedFiles() {
+  public VirtualFile @NotNull [] getSelectedFiles() {
     return mySelectedFiles;
   }
 
@@ -124,8 +123,7 @@ public class CachedVcsContext implements VcsContext {
   }
 
   @Override
-  @NotNull
-  public FilePath[] getSelectedFilePaths() {
+  public FilePath @NotNull [] getSelectedFilePaths() {
     return mySelectedFilePaths;
   }
 
@@ -135,14 +133,12 @@ public class CachedVcsContext implements VcsContext {
   }
 
   @Override
-  @Nullable
-  public ChangeList[] getSelectedChangeLists() {
+  public ChangeList @Nullable [] getSelectedChangeLists() {
     return mySelectedChangeLists;
   }
 
   @Override
-  @Nullable
-  public Change[] getSelectedChanges() {
+  public Change @Nullable [] getSelectedChanges() {
     return mySelectedChanges;
   }
 

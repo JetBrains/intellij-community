@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -41,7 +42,7 @@ public class ExtensionsDomExtender extends DomExtender<Extensions> {
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
     Project project = extensions.getManager().getProject();
     VirtualFile currentFile = getVirtualFile(extensions);
-    if (currentFile == null) return;
+    if (currentFile == null || DumbService.isDumb(project)) return;
 
     Set<VirtualFile> files = getVisibleFiles(project, currentFile);
 

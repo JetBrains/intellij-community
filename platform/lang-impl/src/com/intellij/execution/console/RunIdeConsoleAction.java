@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -57,6 +58,7 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author gregsh
@@ -112,7 +114,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
       .toList();
     DefaultActionGroup actionGroup = new DefaultActionGroup(actions);
     JBPopupFactory.getInstance().createActionGroupPopup(
-      "Script Engine", actionGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+      ExecutionBundle.message("popup.title.script.engine"), actionGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false)
       .showInBestPositionFor(e.getDataContext());
   }
 
@@ -241,7 +243,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
 
   private static void selectContent(RunContentDescriptor descriptor) {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    ConsoleViewImpl consoleView = ObjectUtils.assertNotNull((ConsoleViewImpl)descriptor.getExecutionConsole());
+    ConsoleViewImpl consoleView = Objects.requireNonNull((ConsoleViewImpl)descriptor.getExecutionConsole());
     RunContentManager.getInstance(consoleView.getProject()).toFrontRunContent(executor, descriptor);
   }
 

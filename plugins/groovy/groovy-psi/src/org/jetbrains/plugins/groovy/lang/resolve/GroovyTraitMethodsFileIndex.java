@@ -102,7 +102,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
   }
 
   @Nullable
-  private static PsiJavaFileStub index(@NotNull VirtualFile file, @NotNull byte[] content) {
+  private static PsiJavaFileStub index(@NotNull VirtualFile file, byte @NotNull [] content) {
     try {
       PsiJavaFileStub root = new PsiJavaFileStubImpl("", true);
       new ClassReader(content).accept(new GrTraitMethodVisitor(file, root), EMPTY_ATTRIBUTES, ClassReader.SKIP_CODE);

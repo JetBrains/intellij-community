@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class HgLineProcessListener {
   @NotNull private final StringBuilder myErrorOutput = new StringBuilder();
   private int myExitCode;
-  @NotNull private byte[] myBinaryOutput = new byte[0];
+  private byte @NotNull [] myBinaryOutput = new byte[0];
 
   public void onLineAvailable(String line, Key outputType) {
     if (ProcessOutputTypes.STDOUT == outputType) {
@@ -55,12 +55,11 @@ public abstract class HgLineProcessListener {
     myExitCode = exitCode;
   }
 
-  public void setBinaryOutput(@NotNull byte[] output) {
+  public void setBinaryOutput(byte @NotNull [] output) {
     myBinaryOutput = output;
   }
 
-  @NotNull
-  public byte[] getBinaryOutput() {
+  public byte @NotNull [] getBinaryOutput() {
     return myBinaryOutput;
   }
 }

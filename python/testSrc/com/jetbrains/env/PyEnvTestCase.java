@@ -72,8 +72,7 @@ public abstract class PyEnvTestCase {
    * Tags that should exist between all tags, available on all interpreters for test to run.
    * See {@link #PyEnvTestCase(String...)}
    */
-  @Nullable
-  private final String[] myRequiredTags;
+  private final String @Nullable [] myRequiredTags;
 
   /**
    * Environments and tags they provide.
@@ -135,7 +134,7 @@ public abstract class PyEnvTestCase {
    *                     See <a href="http://junit.sourceforge.net/javadoc/org/junit/Assume.html">Assume manual</a>.
    *                     Check [IDEA-122939] and [TW-25043] as well.
    */
-  protected PyEnvTestCase(@NotNull final String... requiredTags) {
+  protected PyEnvTestCase(final String @NotNull ... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
   }
 
@@ -286,8 +285,7 @@ public abstract class PyEnvTestCase {
     taskRunner.runTask(testTask, testName, skipOnFlavors, ArrayUtil.mergeArrays(methodTags, classTags));
   }
 
-  @NotNull
-  private static String[] getTags(@Nullable final EnvTestTagsRequired tagsRequiredAnnotation) {
+  private static String @NotNull [] getTags(@Nullable final EnvTestTagsRequired tagsRequiredAnnotation) {
     if (tagsRequiredAnnotation != null) {
       return tagsRequiredAnnotation.tags();
     }

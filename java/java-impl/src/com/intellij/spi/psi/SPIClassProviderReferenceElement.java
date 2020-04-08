@@ -27,9 +27,8 @@ public class SPIClassProviderReferenceElement extends SPIPackageOrClassReference
     return TextRange.from(0, getTextLength());
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final String name = getContainingFile().getName();
     final PsiClass superProvider = JavaPsiFacade.getInstance(getProject()).findClass(name, getResolveScope());
     if (superProvider != null) {

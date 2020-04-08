@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -9,12 +9,14 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.SdkAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,23 +28,13 @@ import java.util.Objects;
 
 import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
-public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
+public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
+  @NotNull private final Producer<SdkListModel> myGetModel;
 
-  @NotNull
-  private final ProjectSdksModel mySdkModel;
-
-  protected SdkListPresenter(@NotNull ProjectSdksModel sdkModel) {
-    mySdkModel = sdkModel;
+  public SdkListPresenter(@NotNull Producer<SdkListModel> getSdkListModel) {
+    myGetModel = getSdkListModel;
   }
-
-  @NotNull
-  protected abstract SdkListModel getModel();
-
-  protected boolean showProgressIcon() {
-    return true;
-  }
-
 
   @NotNull
   public <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
@@ -79,12 +71,12 @@ public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListIt
     };
     panel.add(component, BorderLayout.CENTER);
 
-    SdkListModel model = getModel();
+    SdkListModel model = myGetModel.produce();
     //handle the selected item to show in the ComboBox, not in the popup
     if (index == -1) {
       component.setOpaque(false);
       panel.setOpaque(false);
-      if (model.isSearching() && showProgressIcon()) {
+      if (model.isSearching()) {
         JBLabel progressIcon = new JBLabel(AnimatedIcon.Default.INSTANCE);
         panel.add(progressIcon, BorderLayout.EAST);
       }
@@ -133,15 +125,15 @@ public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListIt
       append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
     else if (value instanceof ProjectSdkItem) {
-      final Sdk sdk = mySdkModel.getProjectSdk();
+      final Sdk sdk = myGetModel.produce().resolveProjectSdk();
       if (sdk != null) {
         setIcon(((SdkType)sdk.getSdkType()).getIcon());
         append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        append(" " + sdk.getName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(" ");
+        append(sdk.getName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else {
-        String str = ProjectBundle.message("jdk.combo.box.project.item");
-        append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
+        append(ProjectBundle.message("jdk.combo.box.project.item"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
     else if (value instanceof SuggestedItem) {
@@ -150,13 +142,13 @@ public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListIt
       String home = item.getHomePath();
       String version = item.getVersion();
 
-      Icon icon1 = type.getIconForAddAction();
-      if (Objects.equals(icon1, IconUtil.getAddIcon())) icon1 = type.getIcon();
-      if (icon1 == null) icon1 = IconUtil.getAddIcon();
-      Icon icon = icon1;
+      Icon icon = type.getIconForAddAction();
+      if (Objects.equals(icon, IconUtil.getAddIcon())) icon = type.getIcon();
+      if (icon == null) icon = IconUtil.getAddIcon();
       setIcon(icon);
       append(presentDetectedSdkPath(home));
-      append(" " + version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      append(" ");
+      append(version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else if (value instanceof ActionItem) {
       ActionItem item = (ActionItem)value;
@@ -170,11 +162,11 @@ public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListIt
             Icon icon = sdkType.getIcon();
             if (icon == null) icon = AllIcons.General.Add;
             setIcon(icon);
-            append(sdkType.getPresentableName() + "...");
+            append(ProjectBundle.message("sdk.configure.add.sdkType.subAction", sdkType.getPresentableName()));
             break;
           case DOWNLOAD:
             setIcon(template.getIcon());
-            append("Download " + sdkType.getPresentableName() + "...");
+            append(ProjectBundle.message("sdk.configure.download.subAction", sdkType.getPresentableName()));
             break;
         }
       }
@@ -182,11 +174,11 @@ public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListIt
         switch (item.myRole) {
           case ADD:
             setIcon(template.getIcon());
-            append("Add " + sdkType.getPresentableName() + "...");
+            append(ProjectBundle.message("sdk.configure.add.sdkType.action", sdkType.getPresentableName()));
             break;
           case DOWNLOAD:
             setIcon(template.getIcon());
-            append("Download " + sdkType.getPresentableName() + "...");
+            append(ProjectBundle.message("sdk.configure.download.action", sdkType.getPresentableName()));
             break;
         }
       }
@@ -204,23 +196,38 @@ public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListIt
 
       String version = sdk.getVersionString();
       if (version == null) version = ((SdkType)sdk.getSdkType()).getPresentableName();
-      append(" " + version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      append(" ");
+      append(version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else if (value instanceof NoneSdkItem) {
       SdkAppearanceService.getInstance()
-        .forSdk(null, false, selected, false)
+        .forNullSdk(selected)
         .customize(this);
     }
+    else if(value instanceof SdkReferenceItem) {
+      SdkReferenceItem item = (SdkReferenceItem)value;
+
+      SdkAppearanceService.getInstance()
+        .forSdk(item.getSdkType(), item.getName(), null, item.isValid(), false, selected);
+
+      String version = item.getVersionString();
+      if (version == null) version = item.getSdkType().getPresentableName();
+      append(" ");
+      append(version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
     else {
-      customizeCellRenderer(list, new NoneSdkItem(), index, selected, hasFocus);
+      SdkAppearanceService.getInstance()
+        .forNullSdk(selected)
+        .customize(this);
     }
   }
 
   @NotNull
   public static String presentDetectedSdkPath(@NotNull String home) {
     //for macOS, let's try removing Bundle internals
-    home = StringUtil.trimEnd(home, "/Contents/Home");
-    home = StringUtil.trimEnd(home, "/Contents/MacOS");
+    home = StringUtil.trimEnd(home, "/Contents/Home"); //NON-NLS
+    home = StringUtil.trimEnd(home, "/Contents/MacOS");  //NON-NLS
+    home = FileUtil.getLocationRelativeToUserHome(home);
     home = StringUtil.shortenTextWithEllipsis(home, 50, 30);
     return home;
   }

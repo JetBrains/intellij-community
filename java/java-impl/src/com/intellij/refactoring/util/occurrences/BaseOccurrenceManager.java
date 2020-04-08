@@ -61,11 +61,9 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     return myOccurrences;
   }
 
-  @NotNull
-  protected abstract PsiExpression[] defaultOccurrences();
+  protected abstract PsiExpression @NotNull [] defaultOccurrences();
 
-  @NotNull
-  protected abstract PsiExpression[] findOccurrences();
+  protected abstract PsiExpression @NotNull [] findOccurrences();
 
   @Override
   public boolean isInFinalContext() {

@@ -69,10 +69,10 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     @Override
-    public void generate(@NotNull final Processor<Usage> processor) {
+    public void generate(@NotNull final Processor<? super Usage> processor) {
         Runnable runnable = () -> {
             myIndicator.setIndeterminate(true);
-            myIndicator.setText2(findBundleMessage("find.searching.for.string.in.file.occurrences.progress", 0));
+            myIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", 0));
             final CountProcessor counter = new CountProcessor();
             myScope.iterateContent(myProject, counter);
 
@@ -97,7 +97,8 @@ class XPathUsageSearcher implements UsageSearcher {
 
         @Override
         protected void processXmlFile(VirtualFile t) {
-            myIndicator.setText(findBundleMessage("find.searching.for.string.in.file.progress", myExpression.expression, t.getPresentableUrl()));
+            myIndicator.setText(
+              FindBundle.message("find.searching.for.string.in.file.progress", myExpression.expression, t.getPresentableUrl()));
 
             final PsiFile psiFile = myManager.findFile(t);
             if (psiFile instanceof XmlFile) {
@@ -185,12 +186,9 @@ class XPathUsageSearcher implements UsageSearcher {
         }
 
         private void matchFound() {
-            myIndicator.setText2(findBundleMessage("find.searching.for.string.in.file.occurrences.progress", ++myMatchCount));
+            Object[] args = new Object[]{++myMatchCount};
+            myIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", args));
         }
-    }
-
-    private static String findBundleMessage(String s, Object... args) {
-        return FindBundle.message(s, args);
     }
 
     static class CountProcessor extends BaseProcessor {

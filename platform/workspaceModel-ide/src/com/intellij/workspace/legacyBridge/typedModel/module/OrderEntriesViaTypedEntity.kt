@@ -2,7 +2,6 @@ package com.intellij.workspace.legacyBridge.typedModel.module
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -13,19 +12,18 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.workspace.api.LibraryId
 import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.api.ModuleDependencyItem
 import com.intellij.workspace.api.ModuleId
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
-import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
+import com.intellij.workspace.legacyBridge.intellij.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal abstract class OrderEntryViaTypedEntity(
-  protected val model: RootModelViaTypedEntityImpl,
+  protected val module: LegacyBridgeModule,
   protected val index: Int,
   val item: ModuleDependencyItem,
   private val itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
@@ -34,18 +32,22 @@ internal abstract class OrderEntryViaTypedEntity(
   protected val updater: ((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit
     get() = itemUpdater ?: error("This mode is read-only. Call from a modifiable model")
 
-  override fun getOwnerModule() = model.module
+  override fun getOwnerModule() = module
   override fun compareTo(other: OrderEntry?) = index.compareTo((other as OrderEntryViaTypedEntity).index)
   override fun isValid() = true
   override fun isSynthetic() = false
+  fun getRootModel(): RootModelViaTypedEntityImpl {
+    // Getting actual RootModelViaTypedEntityImpl the previous implementation returns disposed e.g SuppressExternalTest
+    return LegacyBridgeModuleRootComponent.getInstance(module).model
+  }
 }
 
 internal abstract class ExportableOrderEntryViaTypedEntity(
-  model: RootModelViaTypedEntityImpl,
+  module: LegacyBridgeModule,
   index: Int,
   exportableDependencyItem: ModuleDependencyItem.Exportable,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-): OrderEntryViaTypedEntity(model, index, exportableDependencyItem, itemUpdater), ExportableOrderEntry {
+): OrderEntryViaTypedEntity(module, index, exportableDependencyItem, itemUpdater), ExportableOrderEntry {
 
   private var exportedVar = exportableDependencyItem.exported
   private var scopeVar = exportableDependencyItem.scope
@@ -66,11 +68,11 @@ internal abstract class ExportableOrderEntryViaTypedEntity(
 }
 
 internal abstract class ModuleOrderEntryBaseViaTypedEntity(
-  model: RootModelViaTypedEntityImpl,
+  module: LegacyBridgeModule,
   index: Int,
   dependencyItem: ModuleDependencyItem.Exportable,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : ExportableOrderEntryViaTypedEntity(model, index, dependencyItem, itemUpdater), ModuleOrderEntry, ClonableOrderEntry {
+) : ExportableOrderEntryViaTypedEntity(module, index, dependencyItem, itemUpdater), ModuleOrderEntry, ClonableOrderEntry {
 
   override fun getFiles(type: OrderRootType): Array<VirtualFile> {
     return getEnumerator(type)?.roots ?: VirtualFile.EMPTY_ARRAY
@@ -80,7 +82,7 @@ internal abstract class ModuleOrderEntryBaseViaTypedEntity(
     return getEnumerator(rootType)?.urls ?: ArrayUtil.EMPTY_STRING_ARRAY
   }
 
-  private fun getEnumerator(rootType: OrderRootType) = module?.let { ModuleRootManagerImpl.getCachingEnumeratorForType(rootType, it) }
+  private fun getEnumerator(rootType: OrderRootType) = module.let { ModuleRootManagerImpl.getCachingEnumeratorForType(rootType, it) }
 
   override fun getPresentableName() = moduleName
 
@@ -88,19 +90,23 @@ internal abstract class ModuleOrderEntryBaseViaTypedEntity(
 }
 
 internal class ModuleOrderEntryViaTypedEntity(
-  model: RootModelViaTypedEntityImpl,
+  module: LegacyBridgeModule,
   index: Int,
   private val moduleDependencyItem: ModuleDependencyItem.Exportable.ModuleDependency,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : ModuleOrderEntryBaseViaTypedEntity(model, index, moduleDependencyItem, itemUpdater) {
+) : ModuleOrderEntryBaseViaTypedEntity(module, index, moduleDependencyItem, itemUpdater) {
 
   private var productionOnTestVar = moduleDependencyItem.productionOnTest
 
   override fun getModule(): Module? {
     // TODO It's better to resolve modules via id when it'll be possible
-    // val module = moduleDependencyItem.module.resolve(model.storage)?.findModule(model.module.project)
-    val module = ModuleManager.getInstance(model.module.project).findModuleByName(moduleName)
-    return model.accessor.getModule(module, moduleName)
+    val moduleManager = ModuleManager.getInstance(module.project) as LegacyBridgeModuleManagerComponent
+    val module = moduleManager.findModuleByName(moduleName) ?: {
+      getRootModel().storage.resolve(moduleDependencyItem.module)?.let {
+        moduleManager.findUncommittedModuleByName(it.name)
+      }
+    }.invoke()
+    return getRootModel().accessor.getModule(module, moduleName)
   }
 
   override fun getModuleName() = moduleDependencyItem.module.name
@@ -117,7 +123,7 @@ internal class ModuleOrderEntryViaTypedEntity(
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
   ): OrderEntry = ModuleOrderEntryViaTypedEntity(
-    (rootModel as LegacyBridgeModifiableRootModel).currentModel,
+    (rootModel as LegacyBridgeModifiableRootModel).module,
     index, moduleDependencyItem.copy(), null
   )
 }
@@ -137,11 +143,11 @@ fun DependencyScope.toEntityDependencyScope(): ModuleDependencyItem.DependencySc
 }
 
 internal abstract class SdkOrderEntryBaseViaTypedEntity(
-  model: RootModelViaTypedEntityImpl,
+  module: LegacyBridgeModule,
   index: Int,
   item: ModuleDependencyItem,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : OrderEntryViaTypedEntity(model, index, item, itemUpdater), LibraryOrSdkOrderEntry {
+) : OrderEntryViaTypedEntity(module, index, item, itemUpdater), LibraryOrSdkOrderEntry {
 
   protected abstract val rootProvider: RootProvider?
 
@@ -155,11 +161,11 @@ internal abstract class SdkOrderEntryBaseViaTypedEntity(
 }
 
 internal abstract class LibraryOrderEntryBaseViaTypedEntity(
-  model: RootModelViaTypedEntityImpl,
+  module: LegacyBridgeModule,
   index: Int,
   item: ModuleDependencyItem.Exportable,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : ExportableOrderEntryViaTypedEntity(model, index, item, itemUpdater), LibraryOrderEntry {
+) : ExportableOrderEntryViaTypedEntity(module, index, item, itemUpdater), LibraryOrderEntry {
 
   protected abstract val rootProvider: RootProvider?
 
@@ -175,12 +181,12 @@ internal abstract class LibraryOrderEntryBaseViaTypedEntity(
 }
 
 internal class LibraryOrderEntryViaTypedEntity(
-  model: RootModelViaTypedEntityImpl,
+  module: LegacyBridgeModule,
   index: Int,
   internal val libraryDependencyItem: ModuleDependencyItem.Exportable.LibraryDependency,
   private val moduleLibrary: Library?,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
-) : LibraryOrderEntryBaseViaTypedEntity(model, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
+) : LibraryOrderEntryBaseViaTypedEntity(module, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
 
   override fun getPresentableName() = libraryName
 
@@ -194,7 +200,7 @@ internal class LibraryOrderEntryViaTypedEntity(
   override fun getLibrary(): Library? {
     val libraryId = libraryDependencyItem.library
 
-    val project = model.module.project
+    val project = module.project
 
     val library = when (val parentId = libraryId.tableId) {
       is LibraryTableId.ProjectLibraryTableId -> {
@@ -232,7 +238,7 @@ internal class LibraryOrderEntryViaTypedEntity(
       // model.accessor.getLibrary is not applicable to module libraries
       library
     } else {
-      model.accessor.getLibrary(library, libraryName, libraryLevel)
+      getRootModel().accessor.getLibrary(library, libraryName, libraryLevel)
     }
   }
 
@@ -244,7 +250,7 @@ internal class LibraryOrderEntryViaTypedEntity(
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
   ): OrderEntry {
-    val currentModel = (rootModel as LegacyBridgeModifiableRootModel).currentModel
+    val currentModule = (rootModel as LegacyBridgeModifiableRootModel).module
 
     val libraryTableId = if (libraryLevel == JpsLibraryTableSerializer.MODULE_LEVEL) {
       LibraryTableId.ModuleLibraryTableId(ModuleId(rootModel.module.name))
@@ -259,29 +265,29 @@ internal class LibraryOrderEntryViaTypedEntity(
       val disposable = LegacyBridgeModuleRootComponent.getInstance(rootModel.module)
       LegacyBridgeLibraryImpl(libraryTable, rootModel.project, libraryId, rootModel.module.entityStore, disposable)
     }
-    return LibraryOrderEntryViaTypedEntity(currentModel, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
+    return LibraryOrderEntryViaTypedEntity(currentModule, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
   }
 
   override fun isSynthetic(): Boolean = isModuleLevel
 }
 
 internal class SdkOrderEntryViaTypedEntity(
-  model: RootModelViaTypedEntityImpl,
+  module: LegacyBridgeModule,
   index: Int,
   internal val sdkDependencyItem: ModuleDependencyItem.SdkDependency
-) : SdkOrderEntryBaseViaTypedEntity(model, index, sdkDependencyItem, null), ModuleJdkOrderEntry, ClonableOrderEntry {
+) : SdkOrderEntryBaseViaTypedEntity(module, index, sdkDependencyItem, null), ModuleJdkOrderEntry, ClonableOrderEntry {
 
   override val rootProvider: RootProvider?
     get() = jdk?.rootProvider
 
-  override fun getPresentableName() = "<${jdk?.name ?: sdkDependencyItem.sdkName}>"
+  override fun getPresentableName() = "< ${jdk?.name ?: sdkDependencyItem.sdkName} >"
 
   override fun getJdk(): Sdk? {
     val jdkTable = ProjectJdkTable.getInstance()
 
     val sdkType = sdkDependencyItem.sdkType
     val sdk = jdkTable.findJdk(sdkDependencyItem.sdkName, sdkType)
-    return model.accessor.getSdk(sdk, sdkDependencyItem.sdkName)
+    return getRootModel().accessor.getSdk(sdk, sdkDependencyItem.sdkName)
   }
 
   override fun getJdkName() = sdkDependencyItem.sdkName
@@ -293,19 +299,19 @@ internal class SdkOrderEntryViaTypedEntity(
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = SdkOrderEntryViaTypedEntity((rootModel as LegacyBridgeModifiableRootModel).currentModel, index, sdkDependencyItem.copy())
+  ): OrderEntry = SdkOrderEntryViaTypedEntity((rootModel as LegacyBridgeModifiableRootModel).module, index, sdkDependencyItem.copy())
 
   override fun isSynthetic(): Boolean = true
 }
 
-internal class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.InheritedSdkDependency)
-  : SdkOrderEntryBaseViaTypedEntity(model, index, item, null), InheritedJdkOrderEntry, ClonableOrderEntry {
+internal class InheritedSdkOrderEntryViaTypedEntity(module: LegacyBridgeModule, index: Int, item: ModuleDependencyItem.InheritedSdkDependency)
+  : SdkOrderEntryBaseViaTypedEntity(module, index, item, null), InheritedJdkOrderEntry, ClonableOrderEntry {
 
   override val rootProvider: RootProvider?
     get() = jdk?.rootProvider
 
-  override fun getJdk(): Sdk? = model.accessor.getProjectSdk(model.module.project)
-  override fun getJdkName(): String? = model.accessor.getProjectSdkName(model.module.project)
+  override fun getJdk(): Sdk? = getRootModel().accessor.getProjectSdk(module.project)
+  override fun getJdkName(): String? = getRootModel().accessor.getProjectSdkName(module.project)
 
   override fun getPresentableName() = jdk?.let { "<${it.name}>" } ?: "<INVALID-INHERITED-JDK>"
 
@@ -315,28 +321,26 @@ internal class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEnti
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
   ): OrderEntry = InheritedSdkOrderEntryViaTypedEntity(
-    (rootModel as LegacyBridgeModifiableRootModel).currentModel, index, ModuleDependencyItem.InheritedSdkDependency
+    (rootModel as LegacyBridgeModifiableRootModel).module, index, ModuleDependencyItem.InheritedSdkDependency
   )
 }
 
-internal class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.ModuleSourceDependency)
-  : OrderEntryViaTypedEntity(model, index, item, null), ModuleSourceOrderEntry, ClonableOrderEntry {
+internal class ModuleSourceOrderEntryViaTypedEntity(module: LegacyBridgeModule, index: Int, item: ModuleDependencyItem.ModuleSourceDependency)
+  : OrderEntryViaTypedEntity(module, index, item, null), ModuleSourceOrderEntry, ClonableOrderEntry {
   override fun getFiles(type: OrderRootType): Array<out VirtualFile> = if (type == OrderRootType.SOURCES) rootModel.sourceRoots else VirtualFile.EMPTY_ARRAY
 
   override fun getUrls(rootType: OrderRootType): Array<out String> = if (rootType == OrderRootType.SOURCES) rootModel.sourceRootUrls else ArrayUtil.EMPTY_STRING_ARRAY
 
-  override fun getPresentableName(): String = ProjectBundle.message("project.root.module.source")
+  override fun getPresentableName(): String = ProjectModelBundle.message("project.root.module.source")
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? =
     policy.visitModuleSourceOrderEntry(this, initialValue)
-
-  override fun getRootModel() = model
 
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
   ): OrderEntry = ModuleSourceOrderEntryViaTypedEntity(
-    (rootModel as LegacyBridgeModifiableRootModel).currentModel, index, ModuleDependencyItem.ModuleSourceDependency
+    (rootModel as LegacyBridgeModifiableRootModel).module, index, ModuleDependencyItem.ModuleSourceDependency
   )
 
   override fun isSynthetic(): Boolean = true

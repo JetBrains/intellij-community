@@ -31,5 +31,5 @@ public interface CharArrayExternalizable extends CharSequence {
    * @param dest the array to put characters into
    * @param destPos the index where to put the characters in the dest array
    */
-  void getChars(int start, int end, @NotNull char[] dest, int destPos);
+  void getChars(int start, int end, char @NotNull [] dest, int destPos);
 }

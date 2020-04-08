@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -24,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -39,6 +39,8 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
@@ -58,21 +60,20 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 
-public final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
+public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
   private final JBTabsEx myTabs;
 
-  @NonNls public static final String HELP_ID = "ideaInterface.editor";
+  @NonNls
+  public static final String HELP_ID = "ideaInterface.editor";
 
   private final TabInfo.DragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
 
   EditorTabbedContainer(@NotNull EditorWindow window, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    Disposer.register(parentDisposable, this);
-
     myWindow = window;
     myProject = project;
-    myTabs =  new EditorTabs(project, this, window);
+    myTabs = new EditorTabs(project, parentDisposable, window);
     myTabs.getComponent().setFocusable(false);
     myTabs.getComponent().setTransferHandler(new MyTransferHandler());
     myTabs
@@ -123,6 +124,11 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     });
 
     setTabPlacement(UISettings.getInstance().getEditorTabPlacement());
+
+    if (JBTabsImpl.NEW_TABS) {
+      TabsLayoutInfo tabsLayoutInfo = TabsLayoutSettingsManager.getInstance().getSelectedTabsLayoutInfo();
+      myTabs.updateTabsLayout(tabsLayoutInfo);
+    }
   }
 
   public int getTabCount() {
@@ -230,6 +236,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
+  void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo) {
+    myTabs.updateTabsLayout(newTabsLayoutInfo);
+  }
+
   /**
    * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
    *                    component for which menu is invoked will be returned
@@ -320,10 +330,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     return tab.getComponent();
   }
 
-  @Override
-  public void dispose() {
-  }
-
   public final class CloseTab extends AnAction implements DumbAware {
     private final VirtualFile myFile;
 
@@ -337,7 +343,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       e.getPresentation().setIcon(AllIcons.Actions.Close);
       e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
-      e.getPresentation().setText("Close. Alt-Click to Close Others.");
+      e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"));
     }
 
     @Override
@@ -609,9 +615,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     private final EditorWindow myWindow;
 
     private EditorTabs(Project project, @NotNull Disposable parentDisposable, @NotNull EditorWindow window) {
-      super(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), parentDisposable);
+      super(project, parentDisposable);
+
       myWindow = window;
-      IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
+      IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), parentDisposable);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
 
       project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {

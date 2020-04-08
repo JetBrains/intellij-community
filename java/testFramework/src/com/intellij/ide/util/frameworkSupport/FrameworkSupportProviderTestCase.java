@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.Facet;
@@ -26,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCase {
   private FrameworkSupportModelBase myFrameworkSupportModel;
   private Map<FrameworkType, FrameworkSupportInModuleConfigurable> myConfigurables;
@@ -41,7 +39,7 @@ public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCa
     myFrameworkSupportModel = new FrameworkSupportModelImpl(project, "", LibrariesContainerFactory.createContainer(project));
     myNodes = new LinkedHashMap<>();
     final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getAllProviders();
-    Collections.sort(providers, FrameworkSupportUtil.getFrameworkSupportProvidersComparator(providers));
+    providers.sort(FrameworkSupportUtil.getFrameworkSupportProvidersComparator(providers));
     for (FrameworkSupportInModuleProvider provider : providers) {
       final FrameworkSupportNode node = new FrameworkSupportNode(provider, null, myFrameworkSupportModel, getTestRootDisposable());
       myNodes.put(provider.getFrameworkType(), node);

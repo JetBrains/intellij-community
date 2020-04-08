@@ -1,38 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.containers.ComparatorUtil.min
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
-import org.jetbrains.plugins.groovy.util.init
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.ArgumentApplicability
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
-private typealias MapWithVarargs = Pair<Map<Argument, PsiParameter>, Set<Argument>>
-
-class VarargArgumentMapping(
-  method: PsiMethod,
+class VarargArgumentMapping<out P : CallParameter>(
+  parameters: List<P>,
   override val arguments: Arguments,
   private val context: PsiElement
-) : ArgumentMapping {
+) : ArgumentMapping<P> {
 
-  private val varargParameter: PsiParameter = method.parameterList.parameters.last()
+  override val varargParameter: P = parameters.last()
 
   private val varargType: PsiType = (varargParameter.type as PsiArrayType).componentType
 
-  private val mapping: MapWithVarargs? by recursionAwareLazy(fun(): MapWithVarargs? {
-    val parameters = method.parameterList.parameters
-    val regularParameters = parameters.init()
+  private val mapping: Pair<Map<Argument, P>, Set<Argument>>? by recursionAwareLazy {
+    val regularParameters = parameters.dropLast(1)
     val regularParametersCount = regularParameters.size
     if (arguments.size < regularParametersCount) {
       // not enough arguments
-      return null
+      return@recursionAwareLazy null
     }
     val map = arguments.zip(regularParameters).toMap()
     val varargs = arguments.drop(regularParametersCount)
-    return Pair(map, LinkedHashSet(varargs))
-  })
+    Pair(map, LinkedHashSet(varargs))
+  }
 
-  override fun targetParameter(argument: Argument): PsiParameter? {
+  override fun targetParameter(argument: Argument): P? {
     val (positional, varargs) = mapping ?: return null
     if (argument in varargs) {
       return varargParameter
@@ -52,25 +53,30 @@ class VarargArgumentMapping(
     }
   }
 
-  override fun isVararg(parameter: PsiParameter): Boolean = varargParameter === parameter
-
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {
       val (positional, varargs) = mapping ?: return emptyList()
-      val positionalSequence = positional.asSequence().map { (argument, parameter) -> Pair(parameter.type, argument) }
-      val varargsSequence = varargs.asSequence().map { Pair(varargType, it) }
-      return (positionalSequence + varargsSequence).asIterable()
+      val result = ArrayList<Pair<PsiType, Argument>>()
+      positional.mapNotNullTo(result) { (argument, parameter) ->
+        parameter.type?.let { expectedType ->
+          Pair(expectedType, argument)
+        }
+      }
+      varargs.mapTo(result) {
+        Pair(varargType, it)
+      }
+      return result
     }
 
-  override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability {
+  override fun applicability(): Applicability {
     val (positional, varargs) = mapping ?: return Applicability.inapplicable
 
-    val mapApplicability = mapApplicability(positional, substitutor, erase, context)
+    val mapApplicability = mapApplicability(positional, context)
     if (mapApplicability === Applicability.inapplicable) {
       return Applicability.inapplicable
     }
 
-    val varargApplicability = varargApplicability(parameterType(varargType, substitutor, erase), varargs, context)
+    val varargApplicability = varargApplicability(varargs, context)
     if (varargApplicability === Applicability.inapplicable) {
       return Applicability.inapplicable
     }
@@ -78,7 +84,8 @@ class VarargArgumentMapping(
     return min(mapApplicability, varargApplicability)
   }
 
-  private fun varargApplicability(parameterType: PsiType?, varargs: Collection<Argument>, context: PsiElement): Applicability {
+  private fun varargApplicability(varargs: Collection<Argument>, context: PsiElement): Applicability {
+    val parameterType = TypeConversionUtil.erasure(varargType)
     for (vararg in varargs) {
       val argumentAssignability = argumentApplicability(parameterType, vararg.runtimeType, context)
       if (argumentAssignability != Applicability.applicable) {
@@ -88,28 +95,16 @@ class VarargArgumentMapping(
     return Applicability.applicable
   }
 
-  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
-    val (positional, varargs) = mapping ?: return emptyMap()
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): ApplicabilityResult {
+    val (positional, varargs) = mapping ?: return ApplicabilityResult.Inapplicable
 
-    val positionalApplicabilities = highlightApplicabilities(positional, substitutor,  context)
+    val positionalApplicabilities = highlightApplicabilities(positional, substitutor, context)
     val parameterType = parameterType(varargType, substitutor, false)
-    val varargApplicabilities = varargs.associate {
-      it to ApplicabilityData(parameterType, argumentApplicability(parameterType, it.type, context))
+    val varargApplicabilities = varargs.associateWith {
+      ArgumentApplicability(parameterType, argumentApplicability(parameterType, it.type, context))
     }
 
-    return positionalApplicabilities + varargApplicabilities
-  }
-
-  fun compare(right: VarargArgumentMapping): Int {
-    val sizeDiff = varargs.size - right.varargs.size
-    if (sizeDiff != 0) return sizeDiff
-    val leftDistance = distance
-    val rightDistance = right.distance
-    return when {
-      distance == 0L -> -1
-      right.distance == 0L -> 1
-      else -> leftDistance.compareTo(rightDistance)
-    }
+    return ApplicabilityResultImpl(positionalApplicabilities + varargApplicabilities)
   }
 
   /**
@@ -137,4 +132,20 @@ class VarargArgumentMapping(
     get() = requireNotNull(mapping) {
       "#varargs should not be accessed on inapplicable mapping"
     }.second
+
+  companion object {
+    fun <X : CallParameter> compare(left: VarargArgumentMapping<X>, right: VarargArgumentMapping<X>): Int {
+      val sizeDiff = left.varargs.size - right.varargs.size
+      if (sizeDiff != 0) {
+        return sizeDiff
+      }
+      val leftDistance = left.distance
+      val rightDistance = right.distance
+      return when {
+        leftDistance == 0L -> -1
+        right.distance == 0L -> 1
+        else -> leftDistance.compareTo(rightDistance)
+      }
+    }
+  }
 }

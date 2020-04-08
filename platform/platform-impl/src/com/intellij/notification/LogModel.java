@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -6,24 +6,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
  */
 public final class LogModel  {
-  public static final Topic<Runnable> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", Runnable.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<EventLogListener> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", EventLogListener.class, Topic.BroadcastDirection.NONE);
 
   private final List<Notification> myNotifications = new ArrayList<>();
   @SuppressWarnings("unchecked") private final Map<Notification, String> myStatuses = ContainerUtil.createConcurrentWeakMap(TObjectHashingStrategy.IDENTITY);
@@ -49,7 +46,7 @@ public final class LogModel  {
   }
 
   private static void fireModelChanged() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(LOG_MODEL_CHANGED).run();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LOG_MODEL_CHANGED).modelChanged();
   }
 
   List<Notification> takeNotifications() {
@@ -58,7 +55,9 @@ public final class LogModel  {
       result = getNotifications();
       myNotifications.clear();
     }
-    fireModelChanged();
+    if (!result.isEmpty()) {
+      fireModelChanged();
+    }
     return result;
   }
 
@@ -68,7 +67,7 @@ public final class LogModel  {
       if (myStatusMessage == null && statusMessage == null) return;
 
       myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage,
-                                                                      ObjectUtils.assertNotNull(myStatuses.get(statusMessage)), stamp);
+                                                                      Objects.requireNonNull(myStatuses.get(statusMessage)), stamp);
     }
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }
@@ -89,7 +88,7 @@ public final class LogModel  {
     setStatusToImportant();
   }
 
-  public ArrayList<Notification> getNotifications() {
+  public @NotNull ArrayList<Notification> getNotifications() {
     synchronized (myNotifications) {
       return new ArrayList<>(myNotifications);
     }
@@ -114,7 +113,7 @@ public final class LogModel  {
   private void setStatusToImportant() {
     ArrayList<Notification> notifications = getNotifications();
     Collections.reverse(notifications);
-    Notification message = ContainerUtil.find(notifications, notification -> notification.isImportant());
+    Notification message = ContainerUtil.find(notifications, Notification::isImportant);
     if (message == null) {
       setStatusMessage(null, 0);
     }

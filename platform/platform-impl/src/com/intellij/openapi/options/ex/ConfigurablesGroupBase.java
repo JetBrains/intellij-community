@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
  * @deprecated needed for {@link IdeConfigurablesGroup}
  */
 @Deprecated
@@ -24,9 +23,8 @@ abstract class ConfigurablesGroupBase implements ConfigurableGroup {
     myConfigurablesExtensionPoint = configurablesExtensionPoint;
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     if (myChildren == null) {
       if (ApplicationManager.getApplication().isDisposed()) {
         return new Configurable[0];

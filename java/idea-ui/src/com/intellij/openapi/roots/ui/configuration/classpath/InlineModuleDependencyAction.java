@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,15 +34,13 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Proxy;
 import java.util.function.Predicate;
 
-/**
- * @author nik
- */
 public class InlineModuleDependencyAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(InlineModuleDependencyAction.class);
   private final ClasspathPanelImpl myClasspathPanel;
 
   public InlineModuleDependencyAction(ClasspathPanelImpl classpathPanel) {
-    super("Inline Module Dependency", "Replace dependency on a module without source roots by the list of its dependencies", null);
+    super(JavaUiBundle.message("action.text.inline.module.dependency"),
+          JavaUiBundle.message("action.description.inline.module.dependency"), null);
     myClasspathPanel = classpathPanel;
   }
 

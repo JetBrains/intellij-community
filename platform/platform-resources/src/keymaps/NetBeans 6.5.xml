@@ -393,6 +393,9 @@
   <action id="Git.Reword.Commit">
     <keyboard-shortcut first-keystroke="control R"/>
   </action>
+  <action id="Git.Rename.Local.Branch">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
   <action id="ChangesView.Rename">
     <keyboard-shortcut first-keystroke="control R"/>
   </action>

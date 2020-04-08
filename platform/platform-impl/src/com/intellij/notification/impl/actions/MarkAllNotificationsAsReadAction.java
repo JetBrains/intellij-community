@@ -1,6 +1,7 @@
 package com.intellij.notification.impl.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -9,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MarkAllNotificationsAsReadAction extends DumbAwareAction {
   public MarkAllNotificationsAsReadAction() {
-    super("Mark all notifications as read", "Mark all unread notifications as read", AllIcons.Actions.Selectall);
+    super(IdeBundle.messagePointer("action.MarkAllNotificationsAsReadAction.text"),
+          IdeBundle.messagePointer("action.MarkAllNotificationsAsReadAction.description"), AllIcons.Actions.Selectall);
   }
 
   @Override

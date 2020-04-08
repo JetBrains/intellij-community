@@ -492,8 +492,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public static final Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override
-  @NotNull
-  public Object[] getCompletionVariants(String prefix, PsiElement location, @NotNull ProcessingContext context) {
+  public Object @NotNull [] getCompletionVariants(String prefix, PsiElement location, @NotNull ProcessingContext context) {
     if (isRecursive(context)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     final Set<String> visited = visitedNames(context);
 

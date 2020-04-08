@@ -29,14 +29,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
 
     val changes = changeListManager.findChangeList("Test")!!.changes
     commit(changes)
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
     repo.assertCommitted {
@@ -54,14 +54,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       tracker.setExcludedFromCommit(ranges[1], true)
     }
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
 
-    val changes = changeListManager.findChangeList(LocalChangeList.DEFAULT_NAME)!!.changes
+    val changes = changeListManager.findChangeList(LocalChangeList.getDefaultName())!!.changes
     commit(changes)
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
     repo.assertCommitted {
@@ -81,7 +81,7 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
 
@@ -112,7 +112,7 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
       modified("b.java")
     }
@@ -121,7 +121,7 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       .filter { ChangesUtil.getFilePath(it).name == "a.java" }
     commit(changes)
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
       modified("b.java")
     }
@@ -144,14 +144,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
 
     val changes = changeListManager.findChangeList("Test")!!.changes
     commit(changes)
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
     repo.assertCommitted {
@@ -173,14 +173,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
       tracker.moveToChangelist(ranges[1], testChangeList)
     }
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
 
     val changes = changeListManager.findChangeList("Test")!!.changes
     commit(changes)
 
-    assertChanges {
+    assertChangesWithRefresh {
       modified("a.java")
     }
     repo.assertCommitted {
@@ -214,10 +214,13 @@ class GitPartialCommitTest : GitSingleRepoTest() {
 
       lstm.requestTrackerFor(document, this)
       try {
-        val tracker = lstm.getLineStatusTracker(file)
+        val tracker = lstm.getLineStatusTracker(file) as PartialLocalLineStatusTracker
         lstm.waitUntilBaseContentsLoaded()
 
-        task(document, tracker as PartialLocalLineStatusTracker)
+        // Assume that initial changes are included into commit
+        tracker.setExcludedFromCommit(false)
+
+        task(document, tracker)
 
         FileDocumentManager.getInstance().saveAllDocuments()
       }

@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.*;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -12,7 +12,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -35,14 +34,12 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkElement(method, manager, isOnTheFly);
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new SmartList<>();
     for (PsiClassInitializer initializer : initializers) {
@@ -56,8 +53,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> result = new SmartList<>();
     appendProblems(manager, isOnTheFly, result, field.getInitializer());
     appendProblems(manager, isOnTheFly, result, field.getModifierList());
@@ -76,8 +72,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     }
   }
 
-  @Nullable
-  private static ProblemDescriptor[] checkElement(PsiElement element, final InspectionManager manager, boolean onTheFly) {
+  private static ProblemDescriptor @Nullable [] checkElement(PsiElement element, final InspectionManager manager, boolean onTheFly) {
     UnresolvedPropertyVisitor visitor = new UnresolvedPropertyVisitor(manager, onTheFly);
     element.accept(visitor);
     Map<PsiElement, ProblemDescriptor> problems = visitor.getProblems();
@@ -186,13 +181,13 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
       }
       else if (expression.getParent() instanceof PsiNameValuePair) {
         PsiNameValuePair nvp = (PsiNameValuePair)expression.getParent();
-        if (Comparing.equal(nvp.getName(), AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)) {
+        if (Objects.equals(nvp.getName(), AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)) {
           PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(expression.getProject());
           Module module = ModuleUtilCore.findModuleForPsiElement(expression);
           if (module != null) {
             List<PropertiesFile> propFiles = manager.findPropertiesFiles(module, key);
             if (propFiles.isEmpty()) {
-              final String description = CodeInsightBundle.message("inspection.invalid.resource.bundle.reference", key);
+              final String description = JavaI18nBundle.message("inspection.invalid.resource.bundle.reference", key);
               final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                                   description,
                                                                                   (LocalQuickFix)null,
@@ -224,7 +219,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
                 && Objects.requireNonNull(method.getParameterList().getParameter(i + 1)).isVarArgs()
                 && !hasArrayTypeAt(i + 1, methodCall)) {
               myProblems.putIfAbsent(methodCall, myManager.createProblemDescriptor(methodCall,
-                                                               CodeInsightBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),
+                                                               JavaI18nBundle.message("property.has.more.parameters.than.passed", key, maxParamCount, args.length - i - 1),
                                                                onTheFly, LocalQuickFix.EMPTY_ARRAY,
                                                                ProblemHighlightType.GENERIC_ERROR));
             }
@@ -246,7 +241,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
                                                          @NotNull InspectionManager manager,
                                                          @NotNull Map<PsiElement, ProblemDescriptor> problems,
                                                          boolean onTheFly) {
-      final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
+      final String description = JavaI18nBundle.message("inspection.unresolved.property.key.reference.message", key);
       final List<PropertiesFile> propertiesFiles = filterNotInLibrary(expression.getProject(),
                                                                       I18nUtil.propertiesFilesByBundleName(bundleName, expression));
       if (problems.containsKey(expression)) return;

@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -17,7 +18,7 @@ public class TryExceptAnnotator extends PyAnnotator {
     boolean haveDefaultExcept = false;
     for (PyExceptPart part : exceptParts) {
       if (haveDefaultExcept) {
-        getHolder().createErrorAnnotation(part, PyBundle.message("ANN.default.except.must.be.last"));
+        getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.default.except.must.be.last")).range(part).create();
       }
       if (part.getExceptClass() == null) {
         haveDefaultExcept = true;

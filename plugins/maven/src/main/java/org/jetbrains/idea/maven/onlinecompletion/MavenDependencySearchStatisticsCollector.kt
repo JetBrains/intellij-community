@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
+import org.jetbrains.idea.reposearch.SearchParameters
 
 object MavenDependencySearchStatisticsCollector {
   private val GROUP_ID = "build.maven.packagesearch"
@@ -18,7 +18,7 @@ object MavenDependencySearchStatisticsCollector {
                                                 FeatureUsageData()
                                                   .addData("time", timeMillisToResponse)
                                                   .addData("endpoint", endPoint)
-                                                  .addData("timeout", parameters.millisToWait)
+                                                  .addData("useCache", parameters.useCache())
                                                   .addData("exception", e.javaClass.canonicalName));
   }
 
@@ -31,6 +31,6 @@ object MavenDependencySearchStatisticsCollector {
                                                 FeatureUsageData()
                                                   .addData("time", timeMillisToResponse)
                                                   .addData("endpoint", endPoint)
-                                                  .addData("timeout", parameters.millisToWait));
+                                                  .addData("useCache", parameters.useCache()));
   }
 }

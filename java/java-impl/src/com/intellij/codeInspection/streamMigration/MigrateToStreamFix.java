@@ -17,13 +17,18 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
+import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLoopStatement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -38,13 +43,13 @@ class MigrateToStreamFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return "Replace with "+myMigration.getReplacement();
+    return JavaAnalysisBundle.message("replace.with.0", myMigration.getReplacement());
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Replace with Stream API equivalent";
+    return JavaBundle.message("quickfix.family.replace.with.stream.api.equivalent");
   }
 
   @Override
@@ -66,6 +71,24 @@ class MigrateToStreamFix implements LocalQuickFix {
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, true);
+    removeRedundantPatternVariables(result);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
+  }
+
+  private static void removeRedundantPatternVariables(PsiElement element) {
+    for (PsiLambdaExpression lambda : PsiTreeUtil.collectElementsOfType(element, PsiLambdaExpression.class)) {
+      PsiElement body = lambda.getBody();
+      if (body instanceof PsiExpression) {
+        PsiExpression expression = (PsiExpression)body;
+        if (PsiType.BOOLEAN.equals(expression.getType())) {
+          List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariablesIgnoreParent(expression);
+          for (PsiPatternVariable variable : variables) {
+            if (!VariableAccessUtils.variableIsUsed(variable, expression)) {
+              variable.delete();
+            }
+          }
+        }
+      }
+    }
   }
 }

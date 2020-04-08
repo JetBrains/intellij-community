@@ -81,6 +81,9 @@ public class SpellCheckerManager implements Disposable {
     myAppDictionaryPath = getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE;
     myCustomDictFileListener = new CustomDictFileListener(settings);
     LocalFileSystem.getInstance().addVirtualFileListener(myCustomDictFileListener);
+    BundledDictionaryProvider.EP_NAME.addExtensionPointListener(this::fillEngineDictionary, this);
+    RuntimeDictionaryProvider.EP_NAME.addExtensionPointListener(this::fillEngineDictionary, this);
+    CustomDictionaryProvider.EP_NAME.addExtensionPointListener(this::fillEngineDictionary, this);
   }
 
   @SuppressWarnings("unused")  // used in Rider
@@ -89,7 +92,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void fullConfigurationReload() {
-    spellChecker = SpellCheckerFactory.create(project);
+    spellChecker = SpellCheckerFactory.create(project, this);
     fillEngineDictionary();
   }
 

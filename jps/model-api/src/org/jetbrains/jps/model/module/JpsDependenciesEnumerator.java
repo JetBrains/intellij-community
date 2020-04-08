@@ -28,8 +28,6 @@ import java.util.Set;
  * Use {@link org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator JpsJavaDependenciesEnumerator} for java-specific dependencies processing
  * <p/>
  * Note that all configuration methods modify {@link org.jetbrains.jps.model.module.JpsDependenciesEnumerator} instance instead of creating a new one.
- *
- * @author nik
  */
 public interface JpsDependenciesEnumerator {
   @NotNull

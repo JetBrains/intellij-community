@@ -2,6 +2,7 @@
 package com.intellij.largeFilesEditor.editor;
 
 import com.google.common.collect.EvictingQueue;
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.largeFilesEditor.file.ReadingPageResultHandler;
 import com.intellij.largeFilesEditor.search.SearchResult;
@@ -13,9 +14,9 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -63,6 +64,9 @@ public class EditorModel {
   private boolean isNeedToShowCaret = false;
   private final SelectionState targetSelectionState = new SelectionState();
 
+  private boolean wasViewPortInTheEndOfFileLastTime = false;
+  private boolean isAllowedToFollowTheEndOfFile = false;
+
   private boolean isNeedToHighlightCloseSearchResults = false;
   private boolean isHighlightedSearchResultsAreStabilized = false;
 
@@ -90,7 +94,7 @@ public class EditorModel {
     editor.getCaretModel().addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent event) {
-        fireRealCaretPositionChanged();
+        fireRealCaretPositionChanged(event);
       }
     });
 
@@ -186,13 +190,21 @@ public class EditorModel {
     editor.putUserData(key, value);
   }
 
-  private void fireRealCaretPositionChanged() {
+  private void fireRealCaretPositionChanged(@NotNull CaretEvent event) {
     if (isRealCaretAndSelectionCanAffectOnTarget) {
       reflectRealToTargetCaretPosition();
       isNeedToShowCaret = true;
 
       if (editor.getSelectionModel().getSelectionEnd() == editor.getSelectionModel().getSelectionStart()) {
         targetSelectionState.isExists = false;
+      }
+
+      if (event.getOldPosition().line != event.getNewPosition().line) {
+        IdeDocumentHistory docHistory = IdeDocumentHistory.getInstance(dataProvider.getProject());
+        if (docHistory != null) {
+          docHistory.includeCurrentCommandAsNavigation();
+          docHistory.setCurrentCommandHasMoves();
+        }
       }
 
       requestUpdate();
@@ -274,8 +286,8 @@ public class EditorModel {
     }
     catch (IOException e) {
       LOG.info(e);
-      Messages.showErrorDialog("[Large File Editor Subsystem] EditorMode.update():"
-                               + " Error while working with file. Try to reopen it.", "ERROR");
+      Messages.showErrorDialog(EditorBundle.message("large.file.editor.message.error.while.working.with.file.try.to.reopen.it"),
+                               CommonBundle.getErrorTitle());
       return;
     }
 
@@ -309,6 +321,14 @@ public class EditorModel {
     }
 
     normalizePagesInDocumentListEnding();
+
+    ensureDocumentLastPageIsValid(pagesAmountInFile);
+
+    if (wasViewPortInTheEndOfFileLastTime && isAllowedToFollowTheEndOfFile) {
+      targetVisiblePosition.set(Long.MAX_VALUE, 0);
+      isNeedToShowCaret = false;
+      isAllowedToFollowTheEndOfFile = false;
+    }
 
     tryReflectTargetCaretPositionToReal();
 
@@ -352,7 +372,22 @@ public class EditorModel {
       }
     }
 
+    wasViewPortInTheEndOfFileLastTime = false;
+    if (documentOfPagesModel.getLastPage().getPageNumber() == pagesAmountInFile - 1 &&
+        myLocalInvisibleScrollBar.getValue() + myLocalInvisibleScrollBar.getHeight() == myLocalInvisibleScrollBar.getMaximum()) {
+      wasViewPortInTheEndOfFileLastTime = true;
+    }
+
     tryHighlightSearchResultsIfNeed();
+  }
+
+  // IDEA-232158
+  private void ensureDocumentLastPageIsValid(long pagesAmountInFile) {
+    Page lastPageInDocument = documentOfPagesModel.getLastPage();
+    if (lastPageInDocument.isLastInFile() != (lastPageInDocument.getPageNumber() == pagesAmountInFile - 1)) {
+      removeLastPageFromDocument();
+      pagesCash.removeIf(page -> lastPageInDocument.getPageNumber() == page.getPageNumber());
+    }
   }
 
   private boolean isNeedToTurnOnSoftWrapping() {
@@ -387,20 +422,45 @@ public class EditorModel {
   private void updateSearchResultsHighlighting() {
     clearHighlightedSearchResults();
 
-    List<TextRange> searchResults = dataProvider.getAllSearchResultsInDocument(documentOfPagesModel.getDocument());
-    if (searchResults != null && !searchResults.isEmpty()) {
+    List<TextRange> highlightRanges = getAllSearchResultsRangesInDocument();
+
+    if (!highlightRanges.isEmpty()) {
       HighlightManager highlightManager = HighlightManager.getInstance(dataProvider.getProject());
       TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme()
         .getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
 
-      for (TextRange searchResult : searchResults) {
+      for (TextRange range : highlightRanges) {
         highlightManager.addRangeHighlight(
           editor,
-          searchResult.getStartOffset(),
-          searchResult.getEndOffset(),
+          range.getStartOffset(),
+          range.getEndOffset(),
           textAttributes, true, pageRangeHighlighters);
       }
     }
+  }
+
+  private List<TextRange> getAllSearchResultsRangesInDocument() {
+    List<TextRange> searchResultsRanges = new ArrayList<>();
+    for (int i = 0; i < documentOfPagesModel.getPagesList().size(); i++) {
+      Page page = documentOfPagesModel.getPagesList().get(i);
+      List<SearchResult> searchResults = dataProvider.getSearchResultsInPage(page);
+      if (searchResults != null) {
+        for (SearchResult result : searchResults) {
+          int from = documentOfPagesModel.getSymbolOffsetToStartOfPage(
+            documentOfPagesModel.getIndexOfPageByPageNumber(result.startPosition.pageNumber))
+                     + result.startPosition.symbolOffsetInPage;
+          int to = documentOfPagesModel.getSymbolOffsetToStartOfPage(
+            documentOfPagesModel.getIndexOfPageByPageNumber(result.endPostion.pageNumber))
+                   + result.endPostion.symbolOffsetInPage;
+          if (from < 0) from = 0;
+          if (to > documentOfPagesModel.getDocument().getTextLength()) to = documentOfPagesModel.getDocument().getTextLength();
+          if (from < to) {
+            searchResultsRanges.add(new TextRange(from, to));
+          }
+        }
+      }
+    }
+    return searchResultsRanges;
   }
 
   private void clearHighlightedSearchResults() {
@@ -744,10 +804,12 @@ public class EditorModel {
     int targetTopOfVisibleArea = topOfTargetVisiblePage + targetVisiblePosition.verticalScrollOffset;
 
     if (editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y != targetTopOfVisibleArea) {
+      editor.getScrollingModel().disableAnimation();
       editor.getScrollingModel().scrollVertically(targetTopOfVisibleArea);
+      editor.getScrollingModel().enableAnimation();
     }
 
-    if (editor.getScrollingModel().getVisibleArea().y == targetTopOfVisibleArea) {
+    if (editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y == targetTopOfVisibleArea) {
       isLocalScrollBarStabilized = true;
     }
   }
@@ -907,8 +969,6 @@ public class EditorModel {
                + " 'editor' is not instance of EditorEx. Can't set proper context menu group id.");
     }
 
-    // restrict using old soft-wrapping logic for this editor, because it (old logic) can cause unlimited loading of file into document
-    editor.putUserData(SoftWrapApplianceManager.IGNORE_OLD_SOFT_WRAP_LOGIC_REGISTRY_OPTION, new Object());
     // don't show PositionPanel for this editor, because it still can't work properly with the editor
     editor.putUserData(PositionPanel.DISABLE_FOR_EDITOR, new Object());
 
@@ -974,11 +1034,26 @@ public class EditorModel {
   }
 
   @CalledInAwt
-  public void fireEncodingWasChanged() {
-    pagesCash.clear();
+  public void onFileChanged(Page lastPage) {
     isLocalScrollBarStabilized = false;
-    runCaretAndSelectionListeningTransparentCommand(
-      () -> documentOfPagesModel.removeAllPages(dataProvider.getProject()));
+    pagesCash.clear();
+    runCaretAndSelectionListeningTransparentCommand(() -> {
+      documentOfPagesModel.removeLastPage(dataProvider.getProject());
+    });
+    if (lastPage != null) {
+      pagesCash.add(lastPage);
+    }
+    isAllowedToFollowTheEndOfFile = true;
+    update();
+  }
+
+  @CalledInAwt
+  public void onEncodingChanged() {
+    isLocalScrollBarStabilized = false;
+    pagesCash.clear();
+    runCaretAndSelectionListeningTransparentCommand(() -> {
+      documentOfPagesModel.removeAllPages(dataProvider.getProject());
+    });
     requestUpdate();
   }
 
@@ -993,6 +1068,6 @@ public class EditorModel {
 
     void requestReadPage(long pageNumber, ReadingPageResultHandler readingPageResultHandler);
 
-    List<TextRange> getAllSearchResultsInDocument(Document document);
+    List<SearchResult> getSearchResultsInPage(Page page);
   }
 }

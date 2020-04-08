@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -41,6 +28,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +42,6 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author traff
- */
 public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   private final Set<Pair<String, Integer>> myBreakpoints = Sets.newHashSet();
   protected PyDebugProcess myDebugProcess;
@@ -137,13 +122,20 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     debugProcess.startStepIntoMyCode(currentSession.getSuspendContext());
   }
 
-  protected void smartStepInto(String funcName) {
+  protected void smartStepInto(String funcName, int callOrder) {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 
     Assert.assertTrue(currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
-    myDebugProcess.startSmartStepInto(funcName);
+    ReadAction.run(() -> {
+      List<?> smartStepIntoVariants = getSmartStepIntoVariants();
+      for (Object o : smartStepIntoVariants) {
+        PySmartStepIntoVariant variant = (PySmartStepIntoVariant) o;
+        if (variant.getFunctionName().equals(funcName) && variant.getCallOrder() == callOrder)
+          myDebugProcess.startSmartStepInto(variant);
+      }
+    });
   }
 
   protected Pair<Boolean, String> setNextStatement(int line) throws PyDebuggerException {
@@ -543,6 +535,11 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   public boolean hasChildWithValue(XValueChildrenList children, int value) {
     return hasChildWithValue(children, Integer.toString(value));
+  }
+
+  public List<?> getSmartStepIntoVariants() {
+      XSourcePosition position = XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition();
+      return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariants(position);
   }
 
   @Override

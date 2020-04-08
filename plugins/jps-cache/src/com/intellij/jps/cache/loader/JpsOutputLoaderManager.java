@@ -3,6 +3,7 @@ package com.intellij.jps.cache.loader;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
@@ -23,10 +24,19 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.jetbrains.jps.model.serialization.JpsLoaderBase;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
+import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +45,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.NONE_NOTIFICATION_GROUP;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
 
 public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
@@ -46,6 +58,7 @@ public class JpsOutputLoaderManager {
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
   private final JpsServerClient myServerClient;
+  private final String myBuildOutDir;
   private final Project myProject;
 
   @NotNull
@@ -56,6 +69,7 @@ public class JpsOutputLoaderManager {
   public JpsOutputLoaderManager(@NotNull Project project) {
     myProject = project;
     hasRunningTask = new AtomicBoolean();
+    myBuildOutDir = getBuildOutDir(myProject);
     myServerClient = JpsServerClient.getServerClient();
     myMetadataLoader = new JpsMetadataLoader(project, myServerClient);
     myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
@@ -96,7 +110,9 @@ public class JpsOutputLoaderManager {
       ApplicationManager.getApplication().invokeLater(() -> {
         Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
                                                                                  NotificationType.INFORMATION, null);
-        notification.addAction(NotificationAction.createSimple("Update Caches", () -> {
+        notification
+          .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
+            "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
           notification.expire();
           load(false);
         }));
@@ -176,9 +192,46 @@ public class JpsOutputLoaderManager {
     }
   }
 
+  @Nullable
+  private static String getBuildOutDir(@NotNull Project project) {
+    VirtualFile projectFile = project.getProjectFile();
+    String projectBasePath = project.getBasePath();
+    if (projectFile == null || projectBasePath == null) {
+      LOG.warn("Project files doesn't exist");
+      return null;
+    }
+    String fileExtension = projectFile.getExtension();
+    if (fileExtension != null && fileExtension.equals("irp")) {
+      LOG.warn("File base project not supported");
+      return null;
+    }
+
+    Path configFile = Paths.get(FileUtil.toCanonicalPath(projectFile.getPath()));
+    Element componentTag = JDomSerializationUtil.findComponent(JpsLoaderBase.tryLoadRootElement(configFile), "ProjectRootManager");
+    if (componentTag == null) {
+      LOG.warn("Component tag in config file doesn't exist");
+      return null;
+    }
+    Element output = componentTag.getChild(OUTPUT_TAG);
+    if (output == null) {
+      LOG.warn("Output tag in config file doesn't exist");
+      return null;
+    }
+    String url = output.getAttributeValue(URL_ATTRIBUTE);
+    if (url == null) {
+      LOG.warn("URL attribute in output tag doesn't exist");
+      return null;
+    }
+    return JpsPathUtil.urlToPath(url).replace("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$", projectBasePath);
+  }
+
   private synchronized boolean canRunNewLoading() {
     if (hasRunningTask.get()) {
       LOG.warn("Jps cache loading already in progress, can't start the new one");
+      return false;
+    }
+    if (myBuildOutDir == null) {
+      LOG.warn("Build output dir is not configured for the project");
       return false;
     }
     if (myWorkspaceConfiguration.MAKE_PROJECT_ON_SAVE) {
@@ -259,7 +312,7 @@ public class JpsOutputLoaderManager {
   private List<JpsOutputLoader<?>> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
     myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, project),
-                                              new JpsCompilationOutputLoader(myServerClient, project));
+                                              new JpsCompilationOutputLoader(myServerClient, myBuildOutDir));
     return myJpsOutputLoadersLoaders;
   }
 

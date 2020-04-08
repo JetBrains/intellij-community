@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     fireBeforeFileDeletion(requestor, vFile);
     final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();
     if (parent == null) {
-      throw new IOException(VfsBundle.message("file.delete.root.error", vFile.getPresentableUrl()));
+      throw new IOException(IdeBundle.message("file.delete.root.error", vFile.getPresentableUrl()));
     }
 
     parent.removeChild((VirtualFileImpl)vFile);

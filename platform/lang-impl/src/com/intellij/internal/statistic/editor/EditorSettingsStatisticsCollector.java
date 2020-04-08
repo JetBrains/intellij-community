@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -25,7 +26,7 @@ import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBool
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
 
-class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
+final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
@@ -34,7 +35,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 3;
+    return 5;
   }
 
   @NotNull
@@ -43,7 +44,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     Set<MetricEvent> set = new HashSet<>();
 
     EditorSettingsExternalizable es = EditorSettingsExternalizable.getInstance();
-    EditorSettingsExternalizable esDefault = new EditorSettingsExternalizable();
+    EditorSettingsExternalizable esDefault = new EditorSettingsExternalizable(new EditorSettingsExternalizable.OsSpecificState());
     addBoolIfDiffers(set, es, esDefault, s -> s.isVirtualSpace(), "caretAfterLineEnd");
     addBoolIfDiffers(set, es, esDefault, s -> s.isCaretInsideTabs(), "caretInsideTabs");
     addBoolIfDiffers(set, es, esDefault, s -> s.isAdditionalPageAtBottom(), "virtualSpaceAtFileBottom");
@@ -56,6 +57,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     addBoolIfDiffers(set, es, esDefault, s -> s.isEnsureNewLineAtEOF(), "ensureNewlineAtEOF");
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowQuickDocOnMouseOverElement(), "quickDocOnMouseHover");
     addBoolIfDiffers(set, es, esDefault, s -> s.isBlinkCaret(), "blinkingCaret");
+    addIfDiffers(set, es, esDefault, s -> s.getBlinkPeriod(), "blinkPeriod");
     addBoolIfDiffers(set, es, esDefault, s -> s.isBlockCursor(), "blockCaret");
     addBoolIfDiffers(set, es, esDefault, s -> s.isRightMarginShown(), "rightMargin");
     addBoolIfDiffers(set, es, esDefault, s -> s.isLineNumbersShown(), "lineNumbers");
@@ -81,6 +83,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsAbove(), "breadcrumbsAbove");
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShown(), "all.breadcrumbs");
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), "intentionBulb");
+    addBoolIfDiffers(set, es, esDefault, s -> s.isDocCommentRenderingEnabled(), "renderDoc");
 
     for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
       final FeatureUsageData data = new FeatureUsageData().addLanguage(language);
@@ -105,6 +108,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     addBoolIfDiffers(set, cis, cisDefault, s -> s.SMART_INDENT_ON_ENTER, "indentOnEnter");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.INSERT_BRACE_ON_ENTER, "braceOnEnter");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.JAVADOC_STUB_ON_ENTER, "javadocOnEnter");
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.INSERT_SCRIPTLET_END_ON_ENTER, "scriptletEndOnEnter");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.SMART_END_ACTION, "smartEnd");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.JAVADOC_GENERATE_CLOSING_TAG, "autoCloseJavadocTags");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.SURROUND_SELECTION_ON_QUOTE_TYPED, "surroundByQuoteOrBrace");
@@ -136,6 +140,17 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     final CaretStopOptionsTransposed caretStop = CaretStopOptionsTransposed.fromCaretStopOptions(es.getCaretStopOptions());
     addIfDiffers(set, caretStop.getLineBoundary(), defaultCaretStop.getLineBoundary(), s -> toCaretStopValue(s), "caret.movement.line");
     addIfDiffers(set, caretStop.getWordBoundary(), defaultCaretStop.getWordBoundary(), s -> toCaretStopValue(s), "caret.movement.word");
+
+    if (!FileColorManagerImpl._isEnabled()) {
+      set.add(newBooleanMetric("fileColorsEnabled", false));
+    }
+    if (!FileColorManagerImpl._isEnabledForProjectView()) {
+      set.add(newBooleanMetric("fileColorsEnabledForProjectView", false));
+    }
+    if (!FileColorManagerImpl._isEnabledForTabs()) {
+      set.add(newBooleanMetric("fileColorsEnabledForTabs", false));
+    }
+
     return set;
   }
 

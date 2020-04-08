@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -11,9 +11,6 @@ import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-/**
- * @author max
- */
 public interface Query<Result> extends Iterable<Result> {
   /**
    * Get all of the results in the {@link Collection}
@@ -43,8 +40,7 @@ public interface Query<Result> extends Iterable<Result> {
   @NotNull
   AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer);
 
-  @NotNull
-  Result[] toArray(@NotNull Result[] a);
+  Result @NotNull [] toArray(Result @NotNull [] a);
 
   /**
    * Checks whether predicate is satisfied for every result of this query.

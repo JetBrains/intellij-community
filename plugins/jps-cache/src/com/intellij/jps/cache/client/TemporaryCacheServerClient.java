@@ -1,5 +1,6 @@
 package com.intellij.jps.cache.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.jps.cache.JpsCachesPluginUtil;
@@ -45,9 +46,9 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   @NotNull
   @Override
   public Set<String> getAllCacheKeys() {
-    TemporaryCacheEntryDto[] responseDtos = doGetRequest(TemporaryCacheEntryDto[].class);
-    if (responseDtos == null) return Collections.emptySet();
-    return Arrays.stream(responseDtos).map(TemporaryCacheEntryDto::getName).collect(Collectors.toSet());
+    Map<String, List<String>> response = doGetRequest();
+    if (response == null) return Collections.emptySet();
+    return response.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
   }
 
   @Nullable
@@ -144,16 +145,16 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     }
   }
 
-  private <T> T doGetRequest(Class<T> responseClass) {
+  private Map<String, List<String>> doGetRequest() {
     try {
-      return HttpRequests.request(stringThree + REPOSITORY_NAME + "/caches/?json=1")
+      return HttpRequests.request(stringThree + REPOSITORY_NAME + "/commit_history.json")
         .connect(it -> {
           URLConnection connection = it.getConnection();
           if (connection instanceof HttpURLConnection) {
             HttpURLConnection httpConnection = (HttpURLConnection)connection;
             if (httpConnection.getResponseCode() == 200) {
               InputStream inputStream = httpConnection.getInputStream();
-              return OBJECT_MAPPER.readValue(inputStream, responseClass);
+              return OBJECT_MAPPER.readValue(inputStream, new TypeReference<Map<String, List<String>>>() {});
             }
 
             else {
@@ -171,55 +172,5 @@ public class TemporaryCacheServerClient implements JpsServerClient {
       LOG.warn("Failed request to cache server", e);
     }
     return null;
-  }
-
-  private static class TemporaryCacheEntryDto {
-    private String name;
-    private String type;
-    private String mtime;
-
-    private String getName() {
-      return name;
-    }
-
-    private void setName(String name) {
-      this.name = name;
-    }
-
-    private String getType() {
-      return type;
-    }
-
-    private void setType(String type) {
-      this.type = type;
-    }
-
-    private String getMtime() {
-      return mtime;
-    }
-
-    private void setMtime(String mtime) {
-      this.mtime = mtime;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TemporaryCacheEntryDto dto = (TemporaryCacheEntryDto)o;
-      if (name != null ? !name.equals(dto.name) : dto.name != null) return false;
-      if (type != null ? !type.equals(dto.type) : dto.type != null) return false;
-      if (mtime != null ? !mtime.equals(dto.mtime) : dto.mtime != null) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = name != null ? name.hashCode() : 0;
-      result = 31 * result + (type != null ? type.hashCode() : 0);
-      result = 31 * result + (mtime != null ? mtime.hashCode() : 0);
-      return result;
-    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.engine.RemoteStateState;
@@ -42,9 +42,6 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author egor
- */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
   private static final Logger LOG = Logger.getInstance(JavaAttachDebuggerProvider.class);
 
@@ -315,7 +312,12 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
           host = port.substring(0, pos);
           port = port.substring(pos + 1);
         }
-        return new PidRemoteConnection(myPid, myUseSocket, host, port, false);
+        if (!StringUtil.isEmpty(myPid)) {
+          return new PidRemoteConnection(myPid, myUseSocket, host, port, false);
+        }
+        else {
+          return new RemoteConnection(myUseSocket, host, port, false);
+        }
       }
     }
 
@@ -481,6 +483,11 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ProcessAttachRunConfiguration(project);
       }
+
+      @Override
+      public @NotNull String getId() {
+        return INSTANCE.getId();
+      }
     };
 
     @NotNull
@@ -516,6 +523,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public String getHelpTopic() {
       return "reference.dialogs.rundebug.ProcessAttachRunConfigurationType";
     }
+  }
+
+  static void attach(String transport, String address, Project project) {
+    attach(new DebuggerLocalAttachInfo(!"dt_shmem".equals(transport), address, null, null, false), project);
   }
 
   static void attach(JavaAttachDebuggerProvider.LocalAttachInfo info, Project project) {

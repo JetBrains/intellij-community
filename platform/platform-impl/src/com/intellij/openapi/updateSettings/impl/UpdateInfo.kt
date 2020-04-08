@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -43,7 +43,7 @@ class UpdateChannel internal constructor(node: Element) {
 
 class BuildInfo internal constructor(node: Element) {
   val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"))
-  val apiVersion: BuildNumber = BuildNumber.fromStringWithProductCode(node.getAttributeValue("apiVersion"), number.productCode) ?: number
+  val apiVersion: BuildNumber = node.getAttributeValue("apiVersion")?.let { BuildNumber.fromStringWithProductCode(it, number.productCode) } ?: number
   val version: String = node.getAttributeValue("version") ?: ""
   val message: String = node.getChild("message")?.value ?: ""
   val blogPost: String? = node.getChild("blogPost")?.getAttributeValue("url")
@@ -53,7 +53,7 @@ class BuildInfo internal constructor(node: Element) {
   val patches: List<PatchInfo> = node.getChildren("patch").map(::PatchInfo)
 
   private fun parseBuildNumber(value: String): BuildNumber {
-    var buildNumber = BuildNumber.fromString(value)
+    var buildNumber = BuildNumber.fromString(value)!!
     if (buildNumber.productCode.isEmpty()) {
       buildNumber = BuildNumber(ApplicationInfoImpl.getShadowInstance().build.productCode, *buildNumber.components)
     }
@@ -66,7 +66,7 @@ class BuildInfo internal constructor(node: Element) {
       SimpleDateFormat("yyyyMMdd", Locale.US).parse(value)  // same as the 'majorReleaseDate' in ApplicationInfo.xml
     }
     catch (e: ParseException) {
-      Logger.getInstance(BuildInfo::class.java).info("invalid build release date: ${value}")
+      Logger.getInstance(BuildInfo::class.java).info("invalid build release date: $value")
       null
     }
 
@@ -89,7 +89,7 @@ class PatchInfo internal constructor(node: Element) {
     val OS_SUFFIX = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
   }
 
-  val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))
+  val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))!!
   val size: String? = node.getAttributeValue("size")
   val isAvailable: Boolean = node.getAttributeValue("exclusions")?.splitToSequence(",")?.none { it.trim() == OS_SUFFIX } ?: true
 }

@@ -19,9 +19,6 @@ import java.util.List;
 import java.util.Stack;
 import java.util.function.Function;
 
-/**
- * @author traff
- */
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private final Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;

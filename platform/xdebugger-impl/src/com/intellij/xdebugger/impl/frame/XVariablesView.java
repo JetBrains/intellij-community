@@ -35,9 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * @author nik
- */
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
   private final JPanel myComponent;
 

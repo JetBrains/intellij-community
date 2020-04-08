@@ -330,8 +330,7 @@ public class ControlFlowUtil {
     return array;
   }
 
-  @NotNull
-  public static PsiVariable[] getOutputVariables(@NotNull ControlFlow flow, int start, int end, @NotNull int[] exitPoints) {
+  public static PsiVariable @NotNull [] getOutputVariables(@NotNull ControlFlow flow, int start, int end, int @NotNull [] exitPoints) {
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
     List<PsiVariable> array = new ArrayList<>();
     for (PsiVariable variable : writtenVariables) {
@@ -351,16 +350,17 @@ public class ControlFlowUtil {
     return outputVariables;
   }
 
+  @SafeVarargs
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
                                                                      @NotNull IntArrayList exitPoints,
-                                                                     @NotNull Class<? extends PsiStatement>... classesFilter) {
+                                                                     Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
     }
     final Collection<PsiStatement> exitStatements = new THashSet<>();
-    InstructionClientVisitor visitor = new InstructionClientVisitor() {
+    InstructionClientVisitor<Void> visitor = new InstructionClientVisitor<Void>() {
       @Override
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
         //[ven]This is a hack since Extract Method doesn't want to see throw's exit points
@@ -398,7 +398,7 @@ public class ControlFlowUtil {
       }
 
       @Override
-      public Object getResult() {
+      public Void getResult() {
         return null;
       }
     };
@@ -406,11 +406,12 @@ public class ControlFlowUtil {
     return exitStatements;
   }
 
+  @SafeVarargs
   private static void processGoto(@NotNull ControlFlow flow, int start, int end,
                                   @NotNull IntArrayList exitPoints,
                                   @NotNull Collection<? super PsiStatement> exitStatements,
                                   @NotNull BranchingInstruction instruction,
-                                  final PsiStatement statement, @NotNull Class... classesFilter) {
+                                  final PsiStatement statement, Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (statement == null) return;
     int gotoOffset = instruction.offset;
     if (start > gotoOffset || gotoOffset >= end || isElementOfClass(statement, classesFilter)) {
@@ -434,15 +435,17 @@ public class ControlFlowUtil {
     }
   }
 
+  @SafeVarargs
   private static void processGotoStatement(@NotNull Collection<? super PsiStatement> exitStatements,
-                                           PsiStatement statement, @NotNull Class... classesFilter) {
+                                           PsiStatement statement, Class<? extends PsiStatement> @NotNull ... classesFilter) {
     if (statement != null && isElementOfClass(statement, classesFilter)) {
       exitStatements.add(statement);
     }
   }
 
-  private static boolean isElementOfClass(@NotNull PsiElement element, @NotNull Class... classesFilter) {
-    for (Class aClassesFilter : classesFilter) {
+  @SafeVarargs
+  private static boolean isElementOfClass(@NotNull PsiElement element, Class<? extends PsiStatement> @NotNull ... classesFilter) {
+    for (Class<? extends PsiStatement> aClassesFilter : classesFilter) {
       if (ReflectionUtil.isAssignable(aClassesFilter, element.getClass())) {
         return true;
       }
@@ -501,7 +504,7 @@ public class ControlFlowUtil {
   public static boolean hasObservableThrowExitPoints(@NotNull final ControlFlow flow,
                                                      final int flowStart,
                                                      final int flowEnd,
-                                                     @NotNull PsiElement[] elements,
+                                                     PsiElement @NotNull [] elements,
                                                      @NotNull PsiElement enclosingCodeFragment) {
     final List<Instruction> instructions = flow.getInstructions();
     class Worker {
@@ -1005,7 +1008,7 @@ public class ControlFlowUtil {
   }
 
   /**
-   * returns true iff exists controlflow path completing normally, i.e. not resulting in return,break,continue or exception thrown.
+   * returns true iff exists control flow path completing normally, i.e. not resulting in return,break,continue or exception thrown.
    * In other words, if we add instruction after controlflow specified, it should be reachable
    */
   public static boolean canCompleteNormally(@NotNull ControlFlow flow, final int startOffset, final int endOffset) {
@@ -1334,8 +1337,7 @@ public class ControlFlowUtil {
       }
 
       @Override
-      @NotNull
-      public boolean[] getResult() {
+      public boolean @NotNull [] getResult() {
         return maybeUnassigned;
       }
     }
@@ -1554,17 +1556,17 @@ public class ControlFlowUtil {
     return endOffset;
   }
 
-  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor visitor) {
+  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor<?> visitor) {
     depthFirstSearch(flow, visitor, 0, flow.getSize());
   }
 
-  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor visitor, int startOffset, int endOffset) {
+  private static void depthFirstSearch(@NotNull ControlFlow flow, @NotNull InstructionClientVisitor<?> visitor, int startOffset, int endOffset) {
     visitor.processedInstructions = new boolean[endOffset];
     internalDepthFirstSearch(flow.getInstructions(), visitor, startOffset, endOffset);
   }
 
   private static void internalDepthFirstSearch(@NotNull List<? extends Instruction> instructions,
-                                               @NotNull InstructionClientVisitor clientVisitor,
+                                               @NotNull InstructionClientVisitor<?> clientVisitor,
                                                int startOffset,
                                                int endOffset) {
 
@@ -1775,7 +1777,7 @@ public class ControlFlowUtil {
       this(Collections.emptyList());
     }
 
-    CopyOnWriteList(@NotNull VariableInfo... infos) {
+    CopyOnWriteList(VariableInfo @NotNull ... infos) {
       this(Arrays.asList(infos));
     }
 
@@ -1822,7 +1824,7 @@ public class ControlFlowUtil {
     }
   }
 
-  private static void merge(int offset, CopyOnWriteList source, @NotNull CopyOnWriteList[] target) {
+  private static void merge(int offset, CopyOnWriteList source, CopyOnWriteList @NotNull [] target) {
     if (source != null) {
       CopyOnWriteList existing = target[offset];
       target[offset] = existing == null ? source : existing.addAll(source);
@@ -1870,7 +1872,7 @@ public class ControlFlowUtil {
     public void visitReadVariableInstruction(ReadVariableInstruction instruction, int offset, int nextOffset) {
       CopyOnWriteList readVars = readVariables[Math.min(nextOffset, myFlow.getSize())];
       final PsiVariable variable = instruction.variable;
-      if (!localVariablesOnly || !isMethodParameter(variable)) {
+      if (!localVariablesOnly || !isImplicitlyInitialized(variable)) {
         final PsiReferenceExpression expression = getEnclosingReferenceExpression(myFlow.getElement(offset), variable);
         if (expression != null) {
           readVars = CopyOnWriteList.add(readVars, new VariableInfo(variable, expression));
@@ -1885,10 +1887,14 @@ public class ControlFlowUtil {
       if (readVars == null) return;
 
       final PsiVariable variable = instruction.variable;
-      if (!localVariablesOnly || !isMethodParameter(variable)) {
+      if (!localVariablesOnly || !isImplicitlyInitialized(variable)) {
         readVars = readVars.remove(new VariableInfo(variable, null));
       }
       merge(offset, readVars, readVariables);
+    }
+
+    private static boolean isImplicitlyInitialized(@NotNull PsiVariable variable) {
+      return isMethodParameter(variable) || variable instanceof PsiPatternVariable;
     }
 
     private static boolean isMethodParameter(@NotNull PsiVariable variable) {
@@ -2080,8 +2086,8 @@ public class ControlFlowUtil {
    */
   @NotNull
   public static Map<PsiElement, PsiVariable> getWritesBeforeReads(@NotNull ControlFlow flow,
-                                                                  @NotNull Set<PsiVariable> writeVars,
-                                                                  @NotNull Set<PsiVariable> readVars,
+                                                                  @NotNull Set<? extends PsiVariable> writeVars,
+                                                                  @NotNull Set<? extends PsiVariable> readVars,
                                                                   final int stopPoint) {
     Map<PsiElement, PsiVariable> writes = new HashMap<>();
     List<Instruction> instructions = flow.getInstructions();
@@ -2105,7 +2111,7 @@ public class ControlFlowUtil {
    * @return true if it was read
    */
   private static boolean readBeforeStopPoint(@NotNull final ControlFlow flow,
-                                             @NotNull Set<PsiVariable> readVars,
+                                             @NotNull Set<? extends PsiVariable> readVars,
                                              final int startOffset,
                                              final int stopPoint) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
@@ -2152,7 +2158,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean areInstructionsReachable(@NotNull final ControlFlow flow,
-                                                  @NotNull final int[] instructionOffsets,
+                                                  final int @NotNull [] instructionOffsets,
                                                   final int startOffset) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
       private boolean reachable;
@@ -2225,8 +2231,7 @@ public class ControlFlowUtil {
       }
     }
 
-    @NotNull
-    int[] getNextOffsets(int offset) {
+    int @NotNull [] getNextOffsets(int offset) {
       return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
@@ -2294,7 +2299,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean areInstructionsReachableWithCalls(@NotNull final ControlFlow flow,
-                                                           @NotNull final int[] instructionOffsets,
+                                                           final int @NotNull [] instructionOffsets,
                                                            final int startOffset) {
     ControlFlowGraph graph = new ControlFlowGraph(flow.getSize()) {
       @Override

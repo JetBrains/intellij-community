@@ -2,7 +2,9 @@
 package com.intellij.webcore.packaging;
 
 import com.google.common.collect.Lists;
+import com.intellij.CommonBundle;
 import com.intellij.ide.ActivityTracker;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.Application;
@@ -42,9 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstalledPackagesPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(InstalledPackagesPanel.class);
-
-  private static final String LOADING_PACKAGES_LIST_TITLE = "Loading Packages List";
-
+  
   private final AnActionButton myUpgradeButton;
   protected final AnActionButton myInstallButton;
   private final AnActionButton myUninstallButton;
@@ -62,8 +62,13 @@ public class InstalledPackagesPanel extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myNotificationArea = area;
-
-    myPackagesTableModel = new DefaultTableModel(new String[]{"Package", "Version", "Latest version"}, 0) {
+    
+    String[] names = {
+      IdeBundle.message("packages.settings.package"),
+      IdeBundle.message("packages.settings.version"),
+      IdeBundle.message("packages.settings.latest.version")
+    };
+    myPackagesTableModel = new DefaultTableModel(names, 0) {
       @Override
       public boolean isCellEditable(int i, int i1) {
         return false;
@@ -76,21 +81,18 @@ public class InstalledPackagesPanel extends JPanel {
         return tableCellRenderer;
       }
     };
-    // Defence from javax.swing.JTable.initializeLocalVars:
-    //     setPreferredScrollableViewportSize(new Dimension(450, 400));
-    myPackagesTable.setPreferredScrollableViewportSize(null);
     myPackagesTable.setStriped(true);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
     new TableSpeedSearch(myPackagesTable);
 
-    myUpgradeButton = new DumbAwareActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
+    myUpgradeButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.upgrade"), IconUtil.getMoveUpIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         PackageManagementUsageCollector.triggerUpgradePerformed(myProject, myPackageManagementService);
         upgradeAction();
       }
     };
-    myInstallButton = new DumbAwareActionButton("Install", IconUtil.getAddIcon()) {
+    myInstallButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.install"), IconUtil.getAddIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         PackageManagementUsageCollector.triggerBrowseAvailablePackagesPerformed(myProject, myPackageManagementService);
@@ -101,7 +103,7 @@ public class InstalledPackagesPanel extends JPanel {
       }
     };
     myInstallButton.setShortcut(CommonShortcuts.getNew());
-    myUninstallButton = new DumbAwareActionButton("Uninstall", IconUtil.getRemoveIcon()) {
+    myUninstallButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.uninstall"), IconUtil.getRemoveIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         PackageManagementUsageCollector.triggerUninstallPerformed(myProject, myPackageManagementService);
@@ -130,7 +132,7 @@ public class InstalledPackagesPanel extends JPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (myPackageManagementService != null && myInstallButton.isEnabled()) {
           ManagePackagesDialog dialog = createManagePackagesDialog();
           Point p = e.getPoint();
@@ -397,12 +399,12 @@ public class InstalledPackagesPanel extends JPanel {
 
   private void onUpdateStarted() {
     myPackagesTable.setPaintBusy(true);
-    myPackagesTable.getEmptyText().setText("Loading...");
+    myPackagesTable.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
   }
 
   private void onUpdateFinished() {
     myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
-    myPackagesTable.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+    myPackagesTable.getEmptyText().setText(StatusText.getDefaultEmptyText());
     updateUninstallUpgrade();
     // Action button presentations won't be updated if no events occur (e.g. mouse isn't moving, keys aren't being pressed).
     // In that case emulating activity will help:
@@ -412,7 +414,7 @@ public class InstalledPackagesPanel extends JPanel {
   public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
     onUpdateStarted();
     ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.run(new Task.Backgroundable(myProject, LOADING_PACKAGES_LIST_TITLE, true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+    progressManager.run(new Task.Backgroundable(myProject, IdeBundle.message("packages.settings.loading"), true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Collection<InstalledPackage> packages = Lists.newArrayList();

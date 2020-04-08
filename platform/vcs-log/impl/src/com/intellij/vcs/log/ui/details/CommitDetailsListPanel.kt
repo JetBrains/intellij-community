@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.details
 
 import com.intellij.openapi.Disposable
@@ -13,20 +13,27 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.getCommitDetailsBackground
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Disposable) : BorderLayoutPanel(), EditorColorsListener {
+abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Disposable) :
+  BorderLayoutPanel(),
+  EditorColorsListener,
+  ComponentWithEmptyText {
+
   companion object {
     private const val MAX_ROWS = 50
     private const val MIN_SIZE = 20
@@ -39,7 +46,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     override fun getBackground(): Color = getCommitDetailsBackground()
   }
   private val statusText: StatusText = object : StatusText(mainContentPanel) {
-    override fun isStatusVisible(): Boolean = this.text.isNotEmpty()
+    override fun isStatusVisible(): Boolean = isEmptyStatusVisible()
   }
 
   private val scrollPane =
@@ -63,7 +70,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     loadingPanel.stopLoading()
   }
 
-  fun setStatusText(text: String) {
+  fun setStatusText(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
     statusText.text = text
   }
 
@@ -90,13 +97,14 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
 
     if (rows > MAX_ROWS) {
       mainContentPanel.add(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
-      val label = JBLabel("(showing $MAX_ROWS of $rows selected commits)").apply {
+      val label = JBLabel(VcsLogBundle.message("vcs.log.details.showing.selected.commits", MAX_ROWS, rows)).apply {
         font = FontUtil.getCommitMetadataFont()
         border = JBUI.Borders.emptyLeft(CommitDetailsPanel.SIDE_BORDER)
       }
       mainContentPanel.add(label)
     }
 
+    revalidate()
     repaint()
     return newRowsCount
   }
@@ -108,11 +116,6 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
 
   fun setCommits(commits: List<VcsCommitMetadata>) {
     rebuildPanel(commits.size)
-    if (commits.isEmpty()) {
-      setStatusText(StatusText.DEFAULT_EMPTY_TEXT)
-      return
-    }
-    setStatusText("")
     forEachPanelIndexed { i, panel ->
       val commit = commits[i]
       panel.setCommit(commit)
@@ -126,6 +129,10 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
   protected open fun navigate(commitId: CommitId) {}
 
   protected abstract fun getCommitDetailsPanel(): Panel
+
+  protected open fun isEmptyStatusVisible(): Boolean = commitDetailsList.isEmpty()
+
+  override fun getEmptyText(): StatusText = statusText
 
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
     update()
@@ -150,7 +157,7 @@ abstract class CommitDetailsListPanel<Panel : CommitDetailsPanel>(parent: Dispos
     override fun getBackground(): Color = getCommitDetailsBackground()
 
     override fun paintChildren(g: Graphics) {
-      if (statusText.text.isNotEmpty()) {
+      if (isEmptyStatusVisible()) {
         statusText.paint(this, g)
       }
       else {

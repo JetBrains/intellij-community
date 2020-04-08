@@ -40,7 +40,7 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
   [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
-JDK version 1.8 (u91 or newer) is required for building and developing for IntelliJ IDEA Community Edition.
+JDK version 1.8 (u162 or newer) is required for building and developing for IntelliJ IDEA Community Edition.
 1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`.
    * If not already present, add `<JDK_18_HOME>/lib/tools.jar` [to the Classpath](https://www.jetbrains.com/help/idea/sdk.html#manage_sdks) tab
      for the **1.8** JDK.
@@ -62,7 +62,7 @@ To build installation packages, run the `ant` command in `<IDEA_HOME>` directory
 ## Running IntelliJ IDEA
 To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
 
-To run tests on the build, apply these setting to the **Run | Edit Run Configurations... | Defaults | JUnit** configuration tab:
+To run tests on the build, apply these setting to the **Run | Edit Configurations... | Templates | JUnit** configuration tab:
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 

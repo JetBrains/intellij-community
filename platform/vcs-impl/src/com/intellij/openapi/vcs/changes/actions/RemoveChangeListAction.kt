@@ -84,9 +84,9 @@ class RemoveChangeListAction : AbstractChangeListAction() {
       if (remainingLists.isEmpty()) {
         if (!confirmAllChangeListsRemoval(project, pendingLists, toAsk)) return
 
-        var defaultList = manager.getChangeList(LocalChangeList.DEFAULT_NAME)
+        var defaultList = manager.getChangeList(LocalChangeList.getDefaultName())
         if (defaultList == null) {
-          defaultList = manager.addChangeList(LocalChangeList.DEFAULT_NAME, null)
+          defaultList = manager.addChangeList(LocalChangeList.getDefaultName(), null)
         }
         else {
           manager.editComment(defaultList.name, null)

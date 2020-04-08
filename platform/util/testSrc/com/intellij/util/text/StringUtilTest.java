@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.LineColumn;
@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
@@ -566,6 +568,7 @@ public class StringUtilTest {
   public void testFormatDuration() {
     assertEquals("0 ms", StringUtil.formatDuration(0));
     assertEquals("1 ms", StringUtil.formatDuration(1));
+    assertEquals("1 s", StringUtil.formatDuration(1000));
     assertEquals("24 d 20 h 31 m 23 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE));
     assertEquals("82 d 17 h 24 m 43 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE+5000000000L));
 
@@ -584,7 +587,19 @@ public class StringUtilTest {
 
   @Test
   public void testFormatDurationApproximate() {
+    assertEquals("0 ms", StringUtil.formatDurationApproximate(0));
+
+    assertEquals("59 s 999 ms", StringUtil.formatDurationApproximate(60000 - 1));
+    assertEquals("1 m", StringUtil.formatDurationApproximate(60000));
+    assertEquals("1 m 0 s", StringUtil.formatDurationApproximate(60000 + 1));
+
+    assertEquals("2 m", StringUtil.formatDurationApproximate(120000 - 1));
     assertEquals("2 m", StringUtil.formatDurationApproximate(120000));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 1));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 499));
+    assertEquals("2 m 0 s", StringUtil.formatDurationApproximate(120000 + 500));
+    assertEquals("2 m 1 s", StringUtil.formatDurationApproximate(120000 + 501));
+
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123000));
     assertEquals("2 m 4 s", StringUtil.formatDurationApproximate(123789));
     assertEquals("2 m 3 s", StringUtil.formatDurationApproximate(123456));
@@ -827,14 +842,14 @@ public class StringUtilTest {
   @Test
   public void testFirstLastDontConvertCharSequenceToString() {
     CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
-    assertTrue(s instanceof ByteArrayCharSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+    assertTrue(s instanceof ByteArrayCharSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     CharSequence first = StringUtil.first(s, 1, false);
     assertTrue(String.valueOf(first.getClass()),
-               first instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               first instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", first.toString());
     CharSequence last = StringUtil.last(s, 1, false);
     assertTrue(String.valueOf(last.getClass()),
-               last instanceof CharSequenceSubSequence || SystemInfo.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
+               last instanceof CharSequenceSubSequence || SystemInfoRt.IS_AT_LEAST_JAVA9 && s.getClass() == String.class);
     assertEquals("t", last.toString());
   }
 
@@ -883,5 +898,13 @@ public class StringUtilTest {
     assertEquals("a\\nb", StringUtil.escapeToRegexp("a\nb"));
     assertEquals("a\\&\\%\\$b", StringUtil.escapeToRegexp("a&%$b"));
     assertEquals("\uD83D\uDE80", StringUtil.escapeToRegexp("\uD83D\uDE80"));
+  }
+
+  @Test
+  public void testRemoveEllipsisSuffix() {
+    assertEquals("a", removeEllipsisSuffix("a..."));
+    assertEquals("a", removeEllipsisSuffix("a"));
+    assertEquals("a", removeEllipsisSuffix("a" + ELLIPSIS));
+    assertEquals("a...", removeEllipsisSuffix("a..." + ELLIPSIS));
   }
 }

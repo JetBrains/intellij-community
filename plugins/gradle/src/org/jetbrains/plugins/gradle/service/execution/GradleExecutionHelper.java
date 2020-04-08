@@ -162,16 +162,9 @@ public class GradleExecutionHelper {
       String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
       LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
 
-      // filter nulls, empty strings and '--args' arguments
-      for (Iterator<String> iterator = settings.getArguments().iterator(); iterator.hasNext(); ) {
-        String arg = iterator.next();
-        if(StringUtil.isEmpty(arg)) continue;
-        if("--args".equals(arg) && iterator.hasNext()) {
-          iterator.next();
-        } else {
-          filteredArgs.add(arg);
-        }
-      }
+      // filter nulls and empty strings
+      filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
+
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
     }
@@ -197,8 +190,6 @@ public class GradleExecutionHelper {
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener(gradleProgressListener,
-                                  OperationType.GENERIC,
-                                  OperationType.PROJECT_CONFIGURATION,
                                   OperationType.TASK,
                                   OperationType.TEST);
     operation.setStandardOutput(standardOutput);
@@ -281,7 +272,7 @@ public class GradleExecutionHelper {
       throw e;
     }
     catch (Throwable e) {
-      LOG.debug("Gradle execution error", e);
+      LOG.warn("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
       ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
       externalSystemException.initCause(e);
@@ -296,7 +287,7 @@ public class GradleExecutionHelper {
         connection.close();
       }
       catch (Throwable e) {
-        LOG.debug("Gradle connection close error", e);
+        LOG.warn("Gradle connection close error", e);
       }
     }
   }
@@ -511,7 +502,7 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class> toolingExtensionClasses) {
+  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class<?>> toolingExtensionClasses) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
     try {
       if (stream == null) {
@@ -699,7 +690,7 @@ public class GradleExecutionHelper {
   }
 
   @NotNull
-  public static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
+  public static String getToolingExtensionsJarPaths(@NotNull Set<Class<?>> toolingExtensionClasses) {
     final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
       String path = PathManager.getJarPathForClass(aClass);
       if (path != null) {

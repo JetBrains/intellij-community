@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
@@ -40,7 +41,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private final PsiManager myManager;
   private final String[] myFileExtensions;
 
-  public NonClasspathClassFinder(@NotNull Project project, @NotNull String... fileExtensions) {
+  public NonClasspathClassFinder(@NotNull Project project, String @NotNull ... fileExtensions) {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
     myFileExtensions = ArrayUtil.append(fileExtensions, "class");
@@ -62,7 +63,11 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       List<VirtualFile> invalidRoots = ContainerUtil.filter(roots, f -> !f.isValid());
       if (!invalidRoots.isEmpty()) {
         roots = ContainerUtil.filter(roots, VirtualFile::isValid);
-        LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
+        PluginException.logPluginError(
+          LOG,
+          "Invalid roots returned by " + getClass().getName() + ": " + invalidRoots,
+          null, getClass()
+        );
       }
       myCache = cache = PackageDirectoryCache.createCache(roots);
     }
@@ -110,9 +115,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   protected abstract List<VirtualFile> calcClassRoots();
 
-  @NotNull
   @Override
-  public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final List<PsiClass> result = new ArrayList<>();
     processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       for (final VirtualFile file : dir.getChildren()) {
@@ -158,7 +162,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @Override
   public boolean processPackageDirectories(@NotNull final PsiPackage psiPackage,
                                            @NotNull GlobalSearchScope scope,
-                                           @NotNull final Processor<PsiDirectory> consumer,
+                                           @NotNull final Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     return processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       final PsiDirectory psiDirectory = psiPackage.getManager().findDirectory(dir);
@@ -173,9 +177,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
                                  file -> !scope.contains(file) || processor.process(file));
   }
 
-  @NotNull
   @Override
-  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final String pkgName = psiPackage.getQualifiedName();
     final Set<String> names = getCache(scope).getSubpackageNames(pkgName);
     if (names.isEmpty()) {
@@ -189,9 +192,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return result.toArray(PsiPackage.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final PsiClass psiClass = findClass(qualifiedName, scope);
     return psiClass == null ? PsiClass.EMPTY_ARRAY : new PsiClass[]{psiClass};
   }
@@ -217,7 +219,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @Nullable
   private static VirtualFile findChild(@NotNull VirtualFile root,
                                        @NotNull String relPath,
-                                       @NotNull String[] extensions) {
+                                       String @NotNull [] extensions) {
     VirtualFile file = null;
     for (String extension : extensions) {
       file = root.findChild(relPath + '.' + extension);

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.RequestHint;
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,7 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
 
   @Override
   public String getEventMessage(LocatableEvent event) {
-    return DebuggerBundle.message("status.stopped.at.cursor");
+    return JavaDebuggerBundle.message("status.stopped.at.cursor");
   }
 
   @Nullable

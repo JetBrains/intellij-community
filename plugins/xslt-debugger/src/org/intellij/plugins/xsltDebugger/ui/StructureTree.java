@@ -35,7 +35,7 @@ public class StructureTree extends Tree implements TypeSafeDataProvider {
     setRootVisible(false);
     setShowsRootHandles(true);
 
-    final DefaultActionGroup structureContextActions = new DefaultActionGroup("StructureContext", true);
+    final DefaultActionGroup structureContextActions = DefaultActionGroup.createPopupGroup(() -> "StructureContext");
     structureContextActions.add(NavigateAction.getInstance());
     structureContextActions.add(new CopyValueAction(this));
     PopupHandler.installFollowingSelectionTreePopup(this, structureContextActions, "XSLT.Debugger.GeneratedStructure", ActionManager.getInstance());

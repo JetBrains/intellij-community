@@ -38,8 +38,7 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
   }
 
   @Override
-  @NotNull
-  public final Property[] getChildren(final RadComponent component){
+  public final Property @NotNull [] getChildren(final RadComponent component){
     return myChildren;
   }
 

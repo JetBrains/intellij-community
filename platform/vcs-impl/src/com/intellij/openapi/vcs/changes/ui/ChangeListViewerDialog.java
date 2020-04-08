@@ -124,9 +124,8 @@ public class ChangeListViewerDialog extends DialogWrapper {
     return myLoadingPanel;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action cancelAction = getCancelAction();
     cancelAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     return new Action[]{cancelAction};

@@ -56,6 +56,9 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -81,7 +84,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private static final int CONNECTION_TIMEOUT = 60000;
 
   public static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup(PyBundle.message("debug.notification.group"), ToolWindowId.DEBUG);
+    NotificationGroup.toolWindowGroup("Python Debugger", ToolWindowId.DEBUG, true, PyBundle.message("debug.notification.group"));
 
   private final ProcessDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
@@ -99,7 +102,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myDownloadSources = false;
 
   protected PyPositionConverter myPositionConverter;
-  private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
+  @NotNull private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
@@ -108,6 +111,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Nullable private XCompositeNode myCurrentRootNode;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
+
 
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
@@ -144,7 +148,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myBreakpointHandlers = breakpointHandlers.toArray(XBreakpointHandler.EMPTY_ARRAY);
 
     myEditorsProvider = new PyDebuggerEditorsProvider();
-    mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
     if (myProcessHandler != null) {
@@ -156,6 +159,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     else {
       myPositionConverter = new PyLocalPositionConverter();
     }
+
+    mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
 
     PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(getProject());
     executionService.sessionStarted(this);
@@ -256,9 +261,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myPositionConverter;
   }
 
-  @NotNull
   @Override
-  public XBreakpointHandler<?>[] getBreakpointHandlers() {
+  public XBreakpointHandler<?> @NotNull [] getBreakpointHandlers() {
     return myBreakpointHandlers;
   }
 
@@ -281,6 +285,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  @NotNull
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
   }
@@ -471,10 +476,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     private final String myText;
 
     WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
-      super("", "Enables watching executed functions return values", null);
+      super("", PyBundle.message("debugger.watch.return.values.description"), null);
       myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
       myProcess = debugProcess;
-      myText = "Show Return Values";
+      myText = PyBundle.message("debugger.watch.show.return.values");
     }
 
     @Override
@@ -501,7 +506,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       }
     }
   }
-
 
   public void setShowReturnValues(boolean showReturnValues) {
     myDebugger.setShowReturnValues(showReturnValues);
@@ -544,12 +548,29 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OUT);
   }
 
-  public void startSmartStepInto(String functionName) {
-    dropFrameCaches();
+  public void startSmartStepInto(@NotNull PySmartStepIntoVariant variant) {
+    String threadId = variant.getContext().getFrame().getThreadId();
+    String frameId = variant.getContext().getFrame().getFrameId();
     if (isConnected()) {
+      dropFrameCaches();
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
-        myDebugger.smartStepInto(suspendedThread.getId(), functionName);
+        if (threadId.equals(suspendedThread.getId())) {
+          PySmartStepIntoContext context = variant.getContext();
+          myDebugger.smartStepInto(threadId, frameId, variant.getFunctionName(), variant.getCallOrder(),
+                                   context.getStartLine(), context.getEndLine());
+          break;
+        }
       }
+    }
+  }
+
+  public List<Pair<String, Boolean>> getSmartStepIntoVariants(int startContextLine, int endContextLine) {
+    try {
+      PyStackFrame frame = currentFrame();
+      return myDebugger.getSmartStepIntoVariants(frame.getThreadId(), frame.getFrameId(), startContextLine, endContextLine);
+    }
+    catch (PyDebuggerException e) {
+      return Collections.emptyList();
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -43,30 +44,30 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   private static class Holder {
     private static final String INTERPRETER_NAME =
-      PathEnvironmentVariableUtil.findInPath("python") != null ? "python":
-      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" :null;
+      PathEnvironmentVariableUtil.findInPath("python") != null ? "python" :
+      PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" : null;
   }
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix &&
-           (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
-           Holder.INTERPRETER_NAME != null;
+    return SystemInfo.isUnix && !ExternalUpdateManager.isRoaming() && Holder.INTERPRETER_NAME != null;
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    boolean enabled = isAvailable();
+    boolean enabled = SystemInfo.isUnix &&
+                      (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
+                      Holder.INTERPRETER_NAME != null;
     event.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    if (!isAvailable()) return;
-
-    if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) {
-      String title = ApplicationBundle.message("launcher.script.title");
-      String message = ApplicationBundle.message("launcher.script.luke");
-      Messages.showInfoMessage(event.getProject(), message, title);
+    if (!isAvailable()) {
+      if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) {
+        String title = ApplicationBundle.message("launcher.script.title");
+        String message = ApplicationBundle.message("launcher.script.luke");
+        Messages.showInfoMessage(event.getProject(), message, title);
+      }
       return;
     }
 
@@ -95,12 +96,12 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     if (target.exists()) {
       String message = ApplicationBundle.message("launcher.script.overwrite", target);
       String ok = ApplicationBundle.message("launcher.script.overwrite.button");
-      if (Messages.showOkCancelDialog(project, message, title, ok, Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) != Messages.OK) {
+      if (Messages.showOkCancelDialog(project, message, title, ok, Messages.getCancelButton(), Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }
 
-    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.title")) {
+    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -153,7 +154,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     LOG.warn(e);
     String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
     Notifications.Bus.notify(
-      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher script creation failed", message, NotificationType.ERROR),
+      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.launcher.script.creation.failed"), message, NotificationType.ERROR),
       project);
   }
 

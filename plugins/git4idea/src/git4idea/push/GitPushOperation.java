@@ -344,7 +344,7 @@ public class GitPushOperation {
   private void collectUpdatedFiles(@NotNull UpdatedFiles updatedFiles, @NotNull GitRepository repository,
                                    @NotNull String preUpdatePosition) {
     try {
-      new MergeChangeCollector(myProject, repository.getRoot(), new GitRevisionNumber(preUpdatePosition)).collect(updatedFiles);
+      new MergeChangeCollector(myProject, repository, new GitRevisionNumber(preUpdatePosition)).collect(updatedFiles);
     }
     catch (VcsException e) {
       LOG.info(e);

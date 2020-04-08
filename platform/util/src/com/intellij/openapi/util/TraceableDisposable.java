@@ -57,9 +57,8 @@ public class TraceableDisposable {
       KILL_TRACE = ThrowableInterner.intern(new Throwable(msg));
     }
 
-    @NotNull
     @Override
-    public Attachment[] getAttachments() {
+    public Attachment @NotNull [] getAttachments() {
       return new Attachment[]{new Attachment("kill", KILL_TRACE)};
     }
 
@@ -93,9 +92,8 @@ public class TraceableDisposable {
       super(message);
     }
 
-    @NotNull
     @Override
-    public Attachment[] getAttachments() {
+    public Attachment @NotNull [] getAttachments() {
       List<Attachment> answer = new SmartList<>();
       if (CREATE_TRACE != null) {
         answer.add(new Attachment("creation", CREATE_TRACE));

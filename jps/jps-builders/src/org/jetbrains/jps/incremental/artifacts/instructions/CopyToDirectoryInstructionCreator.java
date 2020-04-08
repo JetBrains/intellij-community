@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
   private final String myOutputPath;
 

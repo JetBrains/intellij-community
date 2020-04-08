@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports local variable declarations that can be replaced with pattern variables. E.g.:
+<pre><code>
+  if (obj instanceof String) {
+    String str = (String) obj;
+    System.out.println(str);
+  }
+</code></pre>
+Can be replaced with:
+<pre><code>
+  if (obj instanceof String str) {
+    System.out.println(str);
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>This inspection only reports if the language level of the project or module is 14 (Preview) or higher</p>
+<p><small>New in 2020.1</small></p>
+</body>
+</html>

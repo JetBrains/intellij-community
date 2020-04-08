@@ -43,8 +43,7 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.without.no.arg.constructor.problem.descriptor");
   }
@@ -61,7 +60,7 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType()) {
+          aClass.isAnnotationType() || aClass.isRecord()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {

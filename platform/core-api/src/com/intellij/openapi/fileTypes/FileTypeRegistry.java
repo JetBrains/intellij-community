@@ -23,21 +23,16 @@ import java.util.Collection;
  * thus implying that execution of
  * such methods is as long as the sum of all possible matching checks in the worst case. That includes reading file contents to
  * feed to all {@link FileTypeDetector} instances, checking {@link FileTypeIdentifiableByVirtualFile} and so on. Such actions
- * may lead to considerable slowdowns if used on large {@code VirtualFile} collections, e.g. in
+ * may lead to considerable slowdowns if called on UI thread, e.g. in
  * {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} implementations.
  *
  * <p> If it is possible and correct to restrict file type matching by particular means (e.g. match only by file name),
  * it is advised to do so, in order to improve the performance of the check, e.g. use
- * <pre><code>
- * FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence())
- * </code></pre>
+ * <pre>{@code FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence())}</pre>
  * instead of
- * <pre><code>
- * file.getFileType()
- * </code></pre>
- *
- * Also, if you are interested not in getting file type, but rather comparing file type with a known one, prefer using
- * {@link #isFileOfType(VirtualFile, FileType)}, as it is faster than {@link #getFileTypeByFile(VirtualFile)} as well.
+ * <pre>{@code file.getFileType()}</pre>.
+ * Otherwise consider moving the computation into background, e.g. via {@link com.intellij.openapi.vfs.AsyncFileListener} or
+ * {@link com.intellij.openapi.application.ReadAction#nonBlocking}.
  *
  * @author yole
  */
@@ -73,8 +68,7 @@ public abstract class FileTypeRegistry {
    *
    * @return The list of file types.
    */
-  @NotNull
-  public abstract FileType[] getRegisteredFileTypes();
+  public abstract FileType @NotNull [] getRegisteredFileTypes();
 
   /**
    * Returns the file type for the specified file.
@@ -93,7 +87,7 @@ public abstract class FileTypeRegistry {
    * @return The file type instance.
    */
   @NotNull
-  public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
+  public FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
     return getFileTypeByFile(file);
   }
 
@@ -130,7 +124,7 @@ public abstract class FileTypeRegistry {
    * Finds a file type with the specified name.
    */
   @Nullable
-  public abstract FileType findFileTypeByName(@NotNull String fileTypeName);
+  public abstract FileType findFileTypeByName(@NonNls @NotNull String fileTypeName);
 
   /**
    * Pluggable file type detector by content
@@ -153,6 +147,8 @@ public abstract class FileTypeRegistry {
     /**
      * Returns the file type that this detector is capable of detecting, or null if it can detect
      * multiple file types.
+     * 
+     * @deprecated unused
      */
     @Deprecated
     @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
@@ -171,6 +167,6 @@ public abstract class FileTypeRegistry {
       return 1024;
     }
 
-    int getVersion();
+    default int getVersion() { return 0; }
   }
 }

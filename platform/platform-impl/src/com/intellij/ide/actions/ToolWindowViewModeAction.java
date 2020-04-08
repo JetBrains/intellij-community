@@ -2,7 +2,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -12,7 +14,8 @@ import com.intellij.openapi.wm.WindowInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToolWindowViewModeAction extends DumbAwareToggleAction {
+@SuppressWarnings("ComponentNotRegistered")
+public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction {
   public enum ViewMode {
     DockPinned("DockPinnedMode"),
     DockUnpinned("DockUnpinnedMode"),
@@ -83,23 +86,14 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
           window.setType(ToolWindowType.WINDOWED, null);
       }
     }
-
-    @Override
-    public String toString() {
-      switch (this) {
-        case DockPinned: return "Dock Pinned";
-        case DockUnpinned: return "Dock Unpinned";
-        default: return name();
-      }
-    }
   }
 
   @NotNull protected final ViewMode myMode;
 
-
   protected ToolWindowViewModeAction(@NotNull ViewMode mode) {
     myMode = mode;
-    getTemplatePresentation().setText(myMode.toString());
+    getTemplatePresentation().setText(ActionsBundle.actionText(myMode.myActionID));
+    getTemplatePresentation().setDescription(ActionsBundle.actionDescription(myMode.myActionID));
   }
 
   @Nullable
@@ -155,6 +149,14 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getToolWindow(e) != null);
+  }
+
+  @Override
+  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+    ToolWindow toolWindow = getToolWindow(event);
+    if (toolWindow != null) {
+      data.addData("toolwindow", toolWindow.getId());
+    }
   }
 
   public static class Group extends DefaultActionGroup {

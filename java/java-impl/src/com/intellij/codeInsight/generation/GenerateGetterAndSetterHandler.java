@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,15 +36,20 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
   private final GenerateSetterHandler myGenerateSetterHandler = new GenerateSetterHandler();
 
   public GenerateGetterAndSetterHandler(){
-    super(CodeInsightBundle.message("generate.getter.setter.title"));
+    super(JavaBundle.message("generate.getter.setter.title"));
+  }
+
+  @Override
+  protected boolean hasMembers(@NotNull PsiClass aClass) {
+    return GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass).stream().anyMatch(ecm -> !ecm.isReadOnlyMember());
   }
 
   @Nullable
   @Override
   protected JComponent getHeaderPanel(Project project) {
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
-    panel.add(getHeaderPanel(project, GetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.getter.template")), BorderLayout.NORTH);
-    panel.add(getHeaderPanel(project, SetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.setter.template")), BorderLayout.SOUTH);
+    panel.add(getHeaderPanel(project, GetterTemplatesManager.getInstance(), JavaBundle.message("generate.getter.template")), BorderLayout.NORTH);
+    panel.add(getHeaderPanel(project, SetterTemplatesManager.getInstance(), JavaBundle.message("generate.setter.template")), BorderLayout.SOUTH);
     return panel;
   }
 

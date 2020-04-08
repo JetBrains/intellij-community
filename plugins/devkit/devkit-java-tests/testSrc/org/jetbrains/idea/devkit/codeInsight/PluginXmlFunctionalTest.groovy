@@ -102,15 +102,19 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testListeners() {
+    myFixture.addClass("public class MyCollectionWithoutDefaultCTOR implements java.util.Collection {" +
+                       " public MyCollectionWithoutDefaultCTOR(String something) {}" +
+                       "}")
     doHighlightingTest("Listeners.xml")
   }
 
-  void testListenersNoSinceBuild() {
-    doHighlightingTest("ListenersNoSinceBuild.xml")
-  }
-
+  // absence of since-build only in DevKit setup: PluginXmlPluginModuleTest.testListenersNoSinceBuild
   void testListenersPre193() {
     doHighlightingTest("ListenersPre193.xml")
+  }
+
+  void testListenersOsAttributePre201() {
+    doHighlightingTest("ListenersOsAttributePre201.xml")
   }
 
   void testListenersDepends() {
@@ -380,13 +384,19 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                                      "myTag", "myTagWithoutAnnotation")
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
+  void testActionExtensionPointAttributeHighlighting() {
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
+    doHighlightingTest("actionExtensionPointAttribute.xml", "MyActionAttributeEPBean.java")
+  }
+
   void testLanguageAttributeHighlighting() {
-    configureLanguageAttributeTest()
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
     doHighlightingTest("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
   }
 
   void testLanguageAttributeCompletion() {
-    configureLanguageAttributeTest()
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguageAttributeEPBean.java"))
     myFixture.configureByFile("languageAttribute.xml")
 
@@ -401,14 +411,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     element.renderElement(presentation)
     assertEquals(lookupString, presentation.itemText)
     assertEquals(typeText, presentation.typeText)
-  }
-
-  private void configureLanguageAttributeTest() {
-    myFixture.addClass("package com.intellij.lang; " +
-                       "public class Language { " +
-                       "  protected Language(String id) {}" +
-                       "}")
-    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
   }
 
   @SuppressWarnings("ComponentNotRegistered")
@@ -627,7 +629,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testRegistrationCheck() {
-    configureLanguageAttributeTest()
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(AnAction.class))))

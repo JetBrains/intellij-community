@@ -1,16 +1,5 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.vcs.commit.VetoSavingCommittingDocumentsAdapter</implementation-class>
-    </component>
-  </application-components>
   <project-components>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
-    </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
@@ -21,43 +10,8 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
       <headless-implementation-class/>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager</implementation-class>
-      <headless-implementation-class/>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.committed.CommittedChangesCache</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier</implementation-class>
-      <headless-implementation-class/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
     </component>
   </project-components>
   <extensions defaultExtensionNs="com.intellij">
@@ -83,6 +37,7 @@
                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguageHighlighterFactory"/>
 
     <localInspection
+        language="IgnoreLang"
         bundle="messages.VcsBundle"
         enabledByDefault="true"
         groupKey="ignore.codeInspection.group"
@@ -90,4 +45,9 @@
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.openapi.vcs.annotate.AnnotationsPreloader$AnnotationsPreloaderFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>

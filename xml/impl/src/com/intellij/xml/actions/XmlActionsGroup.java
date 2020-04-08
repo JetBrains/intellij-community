@@ -16,6 +16,7 @@
 package com.intellij.xml.actions;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.xml.XmlBundle;
 
 /**
  * @author Konstantin Bulenkov
@@ -23,7 +24,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 public class XmlActionsGroup extends DefaultActionGroup {
   public XmlActionsGroup() {
     super();
-    getTemplatePresentation().setText("XML Actions");
+    getTemplatePresentation().setText(XmlBundle.message("xml.actions"));
   }
 
 }

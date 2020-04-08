@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -26,7 +11,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -181,7 +166,7 @@ class ClosureFolding {
 
   private static boolean hasOnlyOneLambdaMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
     PsiField[] fields = anonymousClass.getFields();
-    if (fields.length != 0 && (fields.length != 1 || !HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) ||
+    if (fields.length != 0 && (fields.length != 1 || !CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) ||
                                !fields[0].hasModifierProperty(PsiModifier.STATIC))) {
       return false;
     }
@@ -216,7 +201,7 @@ class ClosureFolding {
   @NotNull
   private String getOptionalLambdaType() {
     if (myBuilder.shouldShowExplicitLambdaType(myAnonymousClass, myNewExpression)) {
-      String baseClassName = ObjectUtils.assertNotNull(myAnonymousClass.getBaseClassType().resolve()).getName();
+      String baseClassName = Objects.requireNonNull(myAnonymousClass.getBaseClassType().resolve()).getName();
       if (baseClassName != null) {
         return "(" + baseClassName + ") ";
       }

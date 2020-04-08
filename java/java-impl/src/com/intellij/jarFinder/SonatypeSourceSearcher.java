@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarFinder;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,7 +27,7 @@ public class SonatypeSourceSearcher extends SourceSearcher {
     throws SourceSearchException {
     try {
       indicator.setIndeterminate(true);
-      indicator.setText("Connecting to https://oss.sonatype.org");
+      indicator.setText(IdeBundle.message("progress.message.connecting.to", "https://oss.sonatype.org"));
 
       indicator.checkCanceled();
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class AddTestProcessAction extends AnAction implements DumbAware {
 
   @Override

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +14,7 @@ import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 class ChangesBrowserNodeCopyProvider implements CopyProvider {
 
@@ -36,7 +36,7 @@ class ChangesBrowserNodeCopyProvider implements CopyProvider {
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<TreePath> paths = ContainerUtil.sorted(Arrays.asList(ObjectUtils.assertNotNull(myTree.getSelectionPaths())),
+    List<TreePath> paths = ContainerUtil.sorted(Arrays.asList(Objects.requireNonNull(myTree.getSelectionPaths())),
                                                 TreeUtil.getDisplayOrderComparator(myTree));
     CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(paths, path -> {
       Object node = path.getLastPathComponent();

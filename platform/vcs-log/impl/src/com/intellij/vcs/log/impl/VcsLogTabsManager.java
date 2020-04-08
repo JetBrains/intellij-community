@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -79,9 +80,10 @@ public class VcsLogTabsManager {
       });
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
-      ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
-      updateTabName(ui);
-      ui.addFilterListener(() -> updateTabName(ui));
+      ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME,
+                                        () -> VcsLogBundle.message("vcs.log.tab.name"), u -> generateShortDisplayName(u),
+                                        factory, focus);
+      ui.addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
     }
     else {
       throw new UnsupportedOperationException("Only log in editor or tool window is supported");
@@ -89,20 +91,16 @@ public class VcsLogTabsManager {
     return ui;
   }
 
-  private void updateTabName(@NotNull VcsLogUi ui) {
-    VcsLogContentUtil.renameLogUi(myProject, ui, generateShortDisplayName(ui));
-  }
-
   @NotNull
   private static String generateShortDisplayName(@NotNull VcsLogUi ui) {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
-    if (filters.isEmpty()) return "all";
+    if (filters.isEmpty()) return "";
     return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
   }
 
   @NotNull
   private static String getFullName(@NotNull String shortName) {
-    return ContentUtilEx.getFullName(VcsLogContentProvider.TAB_NAME, shortName);
+    return ContentUtilEx.getFullName(VcsLogBundle.message("vcs.log.tab.name"), shortName);
   }
 
   @NotNull

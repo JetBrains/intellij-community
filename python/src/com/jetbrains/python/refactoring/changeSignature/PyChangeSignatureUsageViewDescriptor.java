@@ -40,9 +40,8 @@ public class PyChangeSignatureUsageViewDescriptor extends UsageViewDescriptorAda
     myDeclarationsElements = PsiUtilCore.toPsiElementArray(declarationsElements);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return myDeclarationsElements;
   }
 

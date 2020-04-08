@@ -13,11 +13,15 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.documentation.*;
+import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationMarkup;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -54,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -183,7 +188,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static String generateClassInfo(PsiClass aClass) {
     StringBuilder buffer = new StringBuilder();
 
-    if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
+    if (aClass instanceof PsiAnonymousClass) return JavaPsiBundle.message("java.terms.anonymous.class");
 
     generateOrderEntryAndPackageInfo(buffer, aClass);
     generateModifiers(buffer, aClass);
@@ -194,7 +199,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                            : aClass instanceof PsiTypeParameter
                                                              ? "java.terms.type.parameter"
                                                              : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
-    buffer.append(LangBundle.message(classString)).append(" ");
+    buffer.append(JavaBundle.message(classString)).append(" ");
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
@@ -378,7 +383,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getName());
+    sb.append(JavaBundle.message("java.terms.module")).append(' ').append(module.getName());
 
     return sb.toString();
   }
@@ -559,13 +564,54 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
             createElementLink(sb, constructor, StringUtil.escapeXmlEntities(str));
           }
 
-          return CodeInsightBundle.message("javadoc.constructor.candidates", targetClass.getName(), sb);
+          return JavaBundle.message("javadoc.constructor.candidates", targetClass.getName(), sb);
         }
       }
     }
 
     //external documentation finder
     return generateExternalJavadoc(element);
+  }
+
+  @Override
+  public @Nullable String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+    if (originalElement != null && PsiTreeUtil.isAncestor(element, originalElement, false)) {
+      return null;
+    }
+    return generateDoc(element, originalElement);
+  }
+
+  @Override
+  public @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+    JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
+    return JavaDocExternalFilter.filterInternalDocInfo(generator.generateRenderedDocInfo());
+  }
+
+  @Override
+  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    if (!(file instanceof PsiJavaFile)) return;
+    PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+    for (PsiClass aClass : classes) {
+      collectDocComments(aClass, sink);
+    }
+  }
+
+  private static void collectDocComments(@NotNull PsiClass aClass, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    collectDocComment(aClass, sink);
+    List<PsiDocCommentOwner> children = PsiTreeUtil.getChildrenOfTypeAsList(aClass, PsiDocCommentOwner.class);
+    for (PsiDocCommentOwner child : children) {
+      if (child instanceof PsiClass) {
+        collectDocComments((PsiClass) child, sink);
+      }
+      else {
+        collectDocComment(child, sink);
+      }
+    }
+  }
+
+  private static void collectDocComment(@NotNull PsiDocCommentOwner commentOwner, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+    PsiDocComment comment = commentOwner.getDocComment();
+    if (comment != null) sink.accept(comment);
   }
 
   @Nullable
@@ -620,7 +666,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return CodeInsightBundle.message("javadoc.candidates", text, sb);
     }
 
-    return CodeInsightBundle.message("javadoc.candidates.not.found", text);
+    return JavaBundle.message("javadoc.candidates.not.found", text);
   }
 
   private static void createElementLink(StringBuilder sb, PsiElement element, String str) {

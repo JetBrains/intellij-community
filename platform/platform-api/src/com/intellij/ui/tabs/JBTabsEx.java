@@ -3,6 +3,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,4 +33,5 @@ public interface JBTabsEx extends JBTabs {
 
   boolean isEmptyVisible();
 
+  void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -124,7 +123,7 @@ public class FindInProjectUtil {
         DefaultSearchScopeProviders.ChangeLists changeListsScopeProvider =
           SearchScopeProvider.EP_NAME.findExtension(DefaultSearchScopeProviders.ChangeLists.class);
         if (changeListsScopeProvider != null) {
-          SearchScope changeListScope = ContainerUtil.find(changeListsScopeProvider.getSearchScopes(project),
+          SearchScope changeListScope = ContainerUtil.find(changeListsScopeProvider.getSearchScopes(project, dataContext),
                                                            scope -> scope.getDisplayName().equals(changeListName));
           if (changeListScope != null) {
             model.setCustomScope(true);
@@ -284,7 +283,7 @@ public class FindInProjectUtil {
   private static boolean processSomeOccurrencesInFile(@NotNull Document document,
                                                       @NotNull FindModel findModel,
                                                       @NotNull final PsiFile psiFile,
-                                                      @NotNull int[] offsetRef,
+                                                      int @NotNull [] offsetRef,
                                                       @NotNull Processor<? super UsageInfo> consumer) {
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
@@ -366,12 +365,12 @@ public class FindInProjectUtil {
 
   public static void setupViewPresentation(UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
     String scope = getTitleForScope(findModel);
-    if (!scope.isEmpty()) {
-      scope = Character.toLowerCase(scope.charAt(0)) + scope.substring(1);
-    }
     final String stringToFind = findModel.getStringToFind();
     presentation.setScopeText(scope);
     if (stringToFind.isEmpty()) {
+      if (!scope.isEmpty()) {
+        scope = Character.toLowerCase(scope.charAt(0)) + scope.substring(1);
+      }
       presentation.setTabText("Files");
       presentation.setToolwindowTitle("Files in " + scope);
       presentation.setUsagesString("files");
@@ -384,10 +383,9 @@ public class FindInProjectUtil {
       }
       presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind, contextText));
       presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope, contextText));
-      presentation.setUsagesString(FindBundle.message("find.usage.view.usages.text", stringToFind));
+      presentation.setSearchString(FindBundle.message("find.occurrences.search.string", stringToFind, searchContext.ordinal()));
       presentation.setUsagesWord(FindBundle.message("occurrence"));
       presentation.setCodeUsagesString(FindBundle.message("found.occurrences"));
-      presentation.setContextText(contextText);
     }
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
@@ -421,9 +419,6 @@ public class FindInProjectUtil {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
-    processPresentation.setProgressIndicatorFactory(
-      () -> new FindProgressIndicator(project, presentation.getScopeText())
-    );
     return processPresentation;
   }
 
@@ -514,28 +509,8 @@ public class FindInProjectUtil {
     }
 
     @Override
-    public void findUsagesInEditor(@NotNull FileEditor editor) {}
-    @Override
-    public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {}
-
-    @Override
     public boolean isValid() {
       return true;
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return true;
-    }
-
-    @Override
-    @Nullable
-    public VirtualFile[] getFiles() {
-      return null;
-    }
-
-    @Override
-    public void update() {
     }
 
     @Override

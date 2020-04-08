@@ -18,12 +18,13 @@ public class CommandLineWrapperUtil {
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX;
 
   public static @NotNull File createClasspathJarFile(@NotNull Manifest manifest, @NotNull List<String> pathList) throws IOException {
-    return createClasspathJarFile(manifest, pathList, false);
+    File file = FileUtil.createTempFile(CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt(Integer.MAX_VALUE)), ".jar", true);
+    fillClasspathJarFile(manifest, pathList, false, file);
+    return file;
   }
 
-  public static @NotNull File createClasspathJarFile(@NotNull Manifest manifest, @NotNull List<String> pathList, boolean notEscape) throws IOException {
-    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-
+  public static void fillClasspathJarFile(Manifest manifest, List<String> pathList, boolean notEscape, @NotNull File outputJar)
+    throws IOException {
     StringBuilder classPath = new StringBuilder();
     for (String path : pathList) {
       if (classPath.length() > 0) classPath.append(' ');
@@ -31,12 +32,15 @@ public class CommandLineWrapperUtil {
       @SuppressWarnings("deprecation") String url = (notEscape ? classpathElement.toURL() : classpathElement.toURI().toURL()).toString();
       classPath.append(url);
     }
-    manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, classPath.toString());
+    fillClasspathJarFile(manifest, classPath.toString(), outputJar);
+  }
 
-    File jarFile = FileUtil.createTempFile(CLASSPATH_JAR_FILE_NAME_PREFIX + new Random().nextInt(Integer.MAX_VALUE), ".jar", true);
+  public static void fillClasspathJarFile(Manifest manifest, String classPath, @NotNull File outputJar)
+    throws IOException {
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, classPath);
     //noinspection IOResourceOpenedButNotSafelyClosed
-    new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest).close();
-    return jarFile;
+    new JarOutputStream(new BufferedOutputStream(new FileOutputStream(outputJar)), manifest).close();
   }
 
   public static @NotNull File createArgumentFile(@NotNull List<String> args, @NotNull Charset cs) throws IOException {
@@ -54,10 +58,26 @@ public class CommandLineWrapperUtil {
    * @param cs      a character encoding of an output file, must be ASCII-compatible (e.g. UTF-8)
    */
   public static void writeArgumentsFile(@NotNull File argFile, @NotNull List<String> args, @NotNull Charset cs) throws IOException {
+    writeArgumentsFile(argFile, args, System.lineSeparator(), cs);
+  }
+
+  /**
+   * Writes list of Java arguments to the Java Command-Line Argument File
+   * See https://docs.oracle.com/javase/9/tools/java.htm, section "java Command-Line Argument Files"
+   *
+   * @param argFile       a file to write arguments into
+   * @param args          arguments
+   * @param lineSeparator a line separator to use in file
+   * @param cs            a character encoding of an output file, must be ASCII-compatible (e.g. UTF-8)
+   */
+  public static void writeArgumentsFile(@NotNull File argFile,
+                                        @NotNull List<String> args,
+                                        String lineSeparator,
+                                        @NotNull Charset cs) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(argFile), cs))) {
       for (String arg : args) {
         writer.write(quoteArg(arg));
-        writer.write(System.lineSeparator());
+        writer.write(lineSeparator);
       }
     }
   }
@@ -84,15 +104,18 @@ public class CommandLineWrapperUtil {
 
   public static @NotNull File createWrapperFile(@NotNull List<String> classpath, @NotNull Charset cs) throws IOException {
     File file = FileUtil.createTempFile("classpath" + new Random().nextInt(Integer.MAX_VALUE), null, true);
-    writeWrapperFile(file, classpath, cs);
+    writeWrapperFile(file, classpath, System.lineSeparator(), cs);
     return file;
   }
 
-  public static void writeWrapperFile(@NotNull File wrapperFile, @NotNull List<String> classpath, @NotNull Charset cs) throws IOException {
+  public static void writeWrapperFile(@NotNull File wrapperFile,
+                                      @NotNull List<String> classpath,
+                                      @NotNull String lineSeparator, 
+                                      @NotNull Charset cs) throws IOException {
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(wrapperFile), cs))) {
       for (String path : classpath) {
         writer.write(path);
-        writer.write(System.lineSeparator());
+        writer.write(lineSeparator);
       }
     }
   }

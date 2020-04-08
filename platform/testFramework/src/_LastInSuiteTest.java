@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -68,9 +69,11 @@ public class _LastInSuiteTest extends TestCase {
   public void testDynamicExtensions() {
     Assume.assumeTrue(!EXTENSION_POINTS_WHITE_LIST.isEmpty() ||
                       SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false));
+    if (ApplicationManager.getApplication() == null) return;
 
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
     unloadExtensionPoints(extensions.keySet());
+    startCorePluginUnload();
     disposePluginDisposables();
     ProjectManager pm = ProjectManager.getInstanceIfCreated();
     if (pm != null) {
@@ -78,6 +81,7 @@ public class _LastInSuiteTest extends TestCase {
         ((CachedValuesManagerImpl) CachedValuesManager.getManager(project)).clearCachedValues();
       }
     }
+    finishCorePluginUnload();
 
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
@@ -92,7 +96,7 @@ public class _LastInSuiteTest extends TestCase {
 
       List<Object> alive = ContainerUtil.mapNotNull(references, WeakReference::get);
       if (!alive.isEmpty()) {
-        String aliveExtensions = StringUtil.join(alive, o -> o.getClass().getName(), "\n");
+        String aliveExtensions = StringUtil.join(alive, o -> o +" ("+o.getClass()+")", "\n");
         System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName,
                           escape("Not unloaded extensions:\n" + aliveExtensions + "\n\n" + "See testDynamicExtensions output to find a heapDump"));
         System.out.flush();
@@ -110,7 +114,7 @@ public class _LastInSuiteTest extends TestCase {
   }
 
   private static void disposePluginDisposables() {
-    DynamicPlugins.INSTANCE.getPluginDisposables().forEach((plugin, disposable) -> Disposer.dispose(disposable));
+    PluginManager.pluginDisposables.forEach((plugin, disposable) -> Disposer.dispose(disposable));
   }
 
   @NotNull
@@ -120,10 +124,13 @@ public class _LastInSuiteTest extends TestCase {
 
   private static void unloadExtensionPoints(@NotNull Set<ExtensionPoint<?>> extensionPoints) {
     for (ExtensionPoint<?> ep : extensionPoints) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
+      WriteAction.runAndWait(() -> {
         ep.unregisterExtensions((a, b) -> false, false);
       });
     }
+  }
+
+  private static void startCorePluginUnload() {
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
     assert corePlugin != null;
     ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -132,8 +139,18 @@ public class _LastInSuiteTest extends TestCase {
     });
   }
 
+  private static void finishCorePluginUnload() {
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
+    assert corePlugin != null;
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
+        .pluginUnloaded(corePlugin, false);
+    });
+  }
+
   @NotNull
   private static Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> collectDynamicNonPlatformExtensions() {
+
     boolean useWhiteList = !SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
     ExtensionsArea area = Extensions.getRootArea();
 

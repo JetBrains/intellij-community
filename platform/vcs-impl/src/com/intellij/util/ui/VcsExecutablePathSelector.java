@@ -72,7 +72,7 @@ public class VcsExecutablePathSelector {
                                              VcsBundle.getString("executable.project.override.reset.title"),
                                              VcsBundle.getString("executable.project.override.reset.globalize"),
                                              VcsBundle.getString("executable.project.override.reset.revert"),
-                                             Messages.CANCEL_BUTTON,
+                                             Messages.getCancelButton(),
                                              null)) {
         case Messages.NO:
           myPathSelector.setText(mySavedPath);
@@ -98,7 +98,7 @@ public class VcsExecutablePathSelector {
                     @Nullable String projectPath,
                     @NotNull String autoDetectedPath) {
     myAutoDetectedPath = autoDetectedPath;
-    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText("Auto-detected: " + myAutoDetectedPath);
+    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText(VcsBundle.message("settings.auto.detected") + myAutoDetectedPath);
 
     myProjectPathCheckbox.setSelected(pathOverriddenForProject);
     if (pathOverriddenForProject) {

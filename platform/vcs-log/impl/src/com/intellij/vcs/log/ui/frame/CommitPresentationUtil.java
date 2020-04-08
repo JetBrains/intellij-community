@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.project.Project;
@@ -12,12 +12,11 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.message.SubjectLimitInspection;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +37,9 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
-  @NotNull private static final String GO_TO_HASH = "go-to-hash:";
-  @NotNull private static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
-  private static final String ELLIPSIS = "...";
+  @NotNull private static final String GO_TO_HASH = "go-to-hash:"; // NON-NLS
+  @NotNull private static final String SHOW_HIDE_BRANCHES = "show-hide-branches"; // NON-NLS
+  private static final String ELLIPSIS = "..."; // NON-NLS
   private static final int BIG_CUT_SIZE = 10;
   private static final double EPSILON = 1.5;
 
@@ -50,20 +49,6 @@ public class CommitPresentationUtil {
 
   public static boolean isGoToHash(@NotNull HyperlinkEvent e) {
     return e.getDescription().startsWith(GO_TO_HASH);
-  }
-
-  @NotNull
-  public static String getShortSummary(@NotNull VcsShortCommitDetails details) {
-    return getShortSummary(details, true, 50);
-  }
-
-  @NotNull
-  public static String getShortSummary(@NotNull VcsShortCommitDetails details, boolean useHtml, int maxMessageLength) {
-    return (useHtml ? "<b>" : "") + "\"" +
-           StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "...") +
-           "\"" + (useHtml ? "</b>" : "") + " by " +
-           getAuthorPresentation(details) +
-           formatDateTime(details.getAuthorTime());
   }
 
   @NotNull
@@ -191,39 +176,62 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String getAuthorText(@NotNull VcsCommitMetadata commit) {
-    long authorTime = commit.getAuthorTime();
-    long commitTime = commit.getCommitTime();
+  @Nls
+  private static String getAuthorAndCommitterText(@NotNull VcsUser author, long authorTime,
+                                                  @NotNull VcsUser committer, long commitTime) {
 
-    String authorText = getAuthorName(commit.getAuthor()) + formatDateTime(authorTime);
-    if (!VcsUserUtil.isSamePerson(commit.getAuthor(), commit.getCommitter())) {
-      String commitTimeText;
-      if (authorTime != commitTime) {
-        commitTimeText = formatDateTime(commitTime);
-      }
-      else {
-        commitTimeText = "";
-      }
-      authorText += "<br/>" + getCommitterText(commit.getCommitter(), commitTimeText);
+    String authorText = VcsLogBundle.message("vcs.log.details.author.on.date.at.time",
+                                             getAuthorName(author),
+                                             DateFormatUtil.formatDate(authorTime),
+                                             DateFormatUtil.formatTime(authorTime));
+
+    String committerText = null;
+    if (!VcsUserUtil.isSamePerson(author, committer)) {
+      committerText = getCommitterText(committer, commitTime != authorTime ? commitTime : null);
     }
     else if (authorTime != commitTime) {
-      authorText += "<br/>" + getCommitterText(null, formatDateTime(commitTime));
+      committerText = getCommitterText(null, commitTime);
     }
+    authorText += (committerText != null ? "<br/>" + committerText : "");
+
     return authorText;
   }
 
   @NotNull
-  private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText) {
-    String graySpan = "<span style='color:#" + ColorUtil.toHex(JBColor.GRAY) + "'>";
-    String text = graySpan + "committed";
-    if (committer != null) {
-      text += " by " + VcsUserUtil.getShortPresentation(committer);
-      if (!committer.getEmail().isEmpty()) {
-        text += "</span>" + getEmailText(committer) + graySpan;
-      }
+  @Nls
+  private static String getCommitterText(@Nullable VcsUser committer, @Nullable Long commitTime) {
+    if (committer == null && commitTime == null) {
+      return "";
     }
-    text += commitTimeText + "</span>";
-    return text;
+
+    String graySpan = "<span style='color:#" + ColorUtil.toHex(JBColor.GRAY) + "'>";
+    StringBuilder builder = new StringBuilder(graySpan);
+
+    if (commitTime == null) {
+      boolean withEmail = !committer.getEmail().isEmpty();
+      String by = VcsUserUtil.getShortPresentation(committer) +
+                  (withEmail ? "</span>" + getEmailText(committer) + graySpan : "");
+      builder.append(VcsLogBundle.message("vcs.log.details.committer.info.user", by));
+      builder.append("</span>");
+      return builder.toString();
+    }
+
+    String date = DateFormatUtil.formatDate(commitTime);
+    String time = DateFormatUtil.formatTime(commitTime);
+
+    if (committer != null) {
+      boolean withEmail = !committer.getEmail().isEmpty();
+      String by = VcsUserUtil.getShortPresentation(committer) +
+                  (withEmail ? "</span>" + getEmailText(committer) + graySpan : "");
+      String committedBy = VcsLogBundle.message("vcs.log.details.committer.info.user.date.time", by, date, time);
+      builder.append(committedBy);
+    }
+    else {
+      String committed = VcsLogBundle.message("vcs.log.details.committer.info.date.time", date, time);
+      builder.append(committed);
+    }
+    builder.append("</span>");
+    return builder.toString();
   }
 
   @NotNull
@@ -233,38 +241,48 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
+  @NonNls
   private static String getEmailText(@NotNull VcsUser user) {
     return " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
   }
 
   @NotNull
-  public static String formatDateTime(long time) {
-    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
-  }
-
-  @NotNull
+  @Nls
   private static String formatCommitHashAndAuthor(@NotNull VcsCommitMetadata commit) {
-    Font font = FontUtil.getCommitMetadataFont();
-    return FontUtil.getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit), font.getStyle(), font);
+    return formatCommitHashAndAuthor(commit.getId(),
+                                     commit.getAuthor(), commit.getAuthorTime(),
+                                     commit.getCommitter(), commit.getCommitTime());
   }
 
   @NotNull
+  @Nls
+  public static String formatCommitHashAndAuthor(@NotNull Hash commitId,
+                                                 @NotNull VcsUser author, long authorTime,
+                                                 @NotNull VcsUser committer, long commitTime) {
+    Font font = FontUtil.getCommitMetadataFont();
+    return FontUtil.getHtmlWithFonts(commitId.toShortString() + " " + getAuthorAndCommitterText(author, authorTime, committer, commitTime),
+                                     font.getStyle(), font);
+  }
+
+  @NotNull
+  @Nls
   public static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth,
                                        @NotNull FontMetrics metrics) {
     if (branches == null) {
-      return "In branches: loading...";
+      return VcsLogBundle.message("vcs.log.details.in.branches.loading");
     }
-    if (branches.isEmpty()) return "Not in any branch";
+    if (branches.isEmpty()) return VcsLogBundle.message("vcs.log.details.in.branches.empty");
 
-    String head = "In " + branches.size() + StringUtil.pluralize(" branch", branches.size()) + ": ";
+    String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size()) + " ";
 
     if (expanded) {
-      return head +
-             "<a href=\"" + SHOW_HIDE_BRANCHES + "\">Hide</a><br/>" +
-             StringUtil.join(branches, "<br/>");
+      String hide = VcsLogBundle.message("vcs.log.details.in.branches.hide");
+      //noinspection HardCodedStringLiteral
+      return head + "<a href=\"" + SHOW_HIDE_BRANCHES + "\">" + hide + "</a><br/>" + StringUtil.join(branches, "<br/>");
     }
 
-    String tail = "… <a href=\"" + SHOW_HIDE_BRANCHES + "\">Show all</a>";
+    String showAll = VcsLogBundle.message("vcs.log.details.in.branches.show.all");
+    String tail = "… <a href=\"" + SHOW_HIDE_BRANCHES + "\">" + showAll + "</a>";
     int headWidth = metrics.stringWidth(head);
     int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
     if (availableWidth <= headWidth + tailWidth) {

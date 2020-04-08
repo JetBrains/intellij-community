@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -23,20 +24,22 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class TerminalSettingsPanel {
   private JPanel myWholePanel;
   private TextFieldWithBrowseButton myShellPathField;
@@ -67,8 +70,8 @@ public class TerminalSettingsPanel {
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
-    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder("Project settings"));
-    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder("Application settings"));
+    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.project.settings")));
+    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.application.settings")));
 
     configureShellPathField();
     configureStartDirectoryField();
@@ -115,7 +118,7 @@ public class TerminalSettingsPanel {
   private void configureShellPathField() {
     myShellPathField.addBrowseFolderListener(
       "",
-      "Shell executable path",
+      IdeBundle.message("settings.terminal.shell.executable.path"),
       null,
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
@@ -138,10 +141,10 @@ public class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return !Comparing.equal(TerminalOptionsProvider.getInstance().getEffectiveShellPath(myShellPathField.getText()),
-                            myOptionsProvider.getShellPath())
-           || !Comparing.equal(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
-           || !Comparing.equal(myTabNameTextField.getText(), myOptionsProvider.getTabName())
+    return !Objects
+      .equals(TerminalOptionsProvider.getInstance().getEffectiveShellPath(myShellPathField.getText()), myOptionsProvider.getShellPath())
+           || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
+           || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
            || (myMouseReportCheckBox.isSelected() != myOptionsProvider.enableMouseReporting())
            || (mySoundBellCheckBox.isSelected() != myOptionsProvider.audibleBell())

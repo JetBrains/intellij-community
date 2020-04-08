@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -10,8 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -30,13 +29,13 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final String myId;
   private final IdeaPluginDescriptor myPlugin;
   private final String myIconPath;
-  private SmartFMap<String, String> myActionTextOverrides = SmartFMap.emptyMap();
+  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
                     @NotNull IdeaPluginDescriptor plugin,
-                    String iconPath,
-                    String projectType,
+                    @Nullable String iconPath,
+                    @Nullable String projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
     myPlugin = plugin;
     myClassName = actionClass;
@@ -47,8 +46,12 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     myIconPath = iconPath;
   }
 
-  public void addActionTextOverride(@NotNull String place, @NotNull String text) {
+  public void addActionTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
+  }
+
+  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
+    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
   }
 
   @NotNull
@@ -97,17 +100,11 @@ public final class ActionStub extends AnAction implements ActionStubBase {
    * Copies template presentation and shortcuts set to {@code targetAction}.
    */
   @ApiStatus.Internal
-  public final void initAction(@NotNull AnAction targetAction, @Nullable ResourceBundle resourceBundle) {
+  public final void initAction(@NotNull AnAction targetAction) {
     copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
-    for (Map.Entry<String, String> override : myActionTextOverrides.entrySet()) {
-      String place = override.getKey();
-      String overrideText = override.getValue();
-      if (overrideText.isEmpty()) {
-        if (resourceBundle == null) return;
-        overrideText = resourceBundle.getString("action." + getId() + "." + place + ".text");
-      }
-      targetAction.addTextOverride(place, overrideText);
+    for (String place : myActionTextOverrides.keySet()) {
+      targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
     }
   }
 

@@ -57,8 +57,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
@@ -141,8 +140,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 

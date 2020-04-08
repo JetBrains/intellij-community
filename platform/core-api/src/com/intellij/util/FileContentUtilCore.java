@@ -25,7 +25,7 @@ public final class FileContentUtilCore {
    *
    * @param files the files to reparse.
    */
-  public static void reparseFiles(@NotNull VirtualFile... files) {
+  public static void reparseFiles(VirtualFile @NotNull ... files) {
     reparseFiles(Arrays.asList(files));
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,7 +18,8 @@ import javax.swing.*;
 
 public class HideCoverageInfoAction extends IconWithTextAction {
   public HideCoverageInfoAction() {
-    super("Hide coverage", "Hide coverage data", null);
+    super(CoverageBundle.messagePointer("coverage.hide.coverage.action.name"),
+          CoverageBundle.messagePointer("coverage.hide.coverage.action.description"), null);
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +91,7 @@ public abstract class Decompressor {
     //</editor-fold>
   }
 
+  //NOTE. This class should work without CommonsCompress!
   public static class Zip extends Decompressor {
     public Zip(@NotNull File file) {
       mySource = file;
@@ -101,6 +103,15 @@ public abstract class Decompressor {
     private Enumeration<? extends ZipEntry> myEntries;
     private ZipEntry myEntry;
 
+    /**
+     * Enables Zip Extensions to consider symlinks and unix file permissions.
+     * NOTE. It will require CommonsCompress in the classpath
+     */
+    @NotNull
+    public Decompressor withUnixPermissionsAndSymlinks() {
+      return new CommonsZip(mySource);
+    }
+
     @Override
     protected void openStream() throws IOException {
       myZip = new ZipFile(mySource);
@@ -111,6 +122,68 @@ public abstract class Decompressor {
     protected Entry nextEntry() {
       myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
       return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory());
+    }
+
+    @Override
+    protected InputStream openEntryStream(Entry entry) throws IOException {
+      return myZip.getInputStream(myEntry);
+    }
+
+    @Override
+    protected void closeEntryStream(InputStream stream) throws IOException {
+      stream.close();
+    }
+
+    @Override
+    protected void closeStream() throws IOException {
+      if (myZip != null) {
+        myZip.close();
+        myZip = null;
+      }
+    }
+    //</editor-fold>
+  }
+
+  private static class CommonsZip extends Decompressor {
+    CommonsZip(@NotNull File file) {
+      mySource = file;
+    }
+
+    //<editor-fold desc="Implementation">
+    private final File mySource;
+    private org.apache.commons.compress.archivers.zip.ZipFile myZip;
+    private Enumeration<? extends ZipArchiveEntry> myEntries;
+    private ZipArchiveEntry myEntry;
+
+    @Override
+    protected void openStream() throws IOException {
+      myZip = new org.apache.commons.compress.archivers.zip.ZipFile(mySource);
+      myEntries = myZip.getEntries();
+    }
+
+    @Override
+    protected Entry nextEntry() throws IOException {
+      if (!myEntries.hasMoreElements()) {
+        myEntry = null;
+        return null;
+      }
+
+      myEntry = myEntries.nextElement();
+      if (myEntry == null) {
+        return null;
+      }
+
+      String linkTarget = myEntry.isUnixSymlink() ? myZip.getUnixSymlink(myEntry) : null;
+      //noinspection OctalInteger
+      return new Entry(myEntry.getName(),
+                       type(myEntry),
+                       isSet(myEntry.getUnixMode(), 0200),
+                       isSet(myEntry.getUnixMode(), 0100),
+                       linkTarget);
+    }
+
+    private static Type type(ZipArchiveEntry te) {
+      return te.isUnixSymlink() ? Type.SYMLINK : te.isDirectory() ? Type.DIR : Type.FILE;
     }
 
     @Override

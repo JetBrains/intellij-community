@@ -24,11 +24,11 @@ public class XmlNamespaceAnnotator implements Annotator {
         if (key != null) {
           TextRange range = XmlTagUtil.getStartTagRange(tag);
           if (range != null) {
-            holder.createInfoAnnotation(range, null).setTextAttributes(key);
+            holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(range).textAttributes(key).create();
           }
           TextRange endTagRange = XmlTagUtil.getEndTagRange(tag);
           if (endTagRange != null) {
-            holder.createInfoAnnotation(endTagRange, null).setTextAttributes(key);
+            holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(endTagRange).textAttributes(key).create();
           }
           return;
         }

@@ -31,6 +31,7 @@ import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.core.ParsingException;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   private final static Map<String,List<String>> DEPENDENCIES = new HashMap<>();
 
   private final static Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
-  public static final EmptyProgressIndicator EMPTY_PROGRESS_INDICATOR = new EmptyProgressIndicator();
+  public static final ProgressIndicator EMPTY_PROGRESS_INDICATOR = new EmptyProgressIndicator();
 
   static {
     addDependency("indent_size", "continuation_indent_size");
@@ -139,7 +140,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
 
   @Override
   public String getName() {
-    return "EditorConfig";
+    return EditorConfigBundle.message("editorconfig");
   }
 
   private static boolean processOptions(@NotNull MyContext context,

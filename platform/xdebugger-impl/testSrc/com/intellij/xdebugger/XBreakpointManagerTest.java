@@ -18,9 +18,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author nik
- */
 public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   public void testAddRemove() {

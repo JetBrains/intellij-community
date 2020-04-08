@@ -27,9 +27,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author nik
- */
 public class MavenResourceFileProcessor {
   private static final int FILTERING_SIZE_LIMIT = 10 * 1024 * 1024 /*10 mb*/;
   private static final String MAVEN_BUILD_TIMESTAMP_PROPERTY = "maven.build.timestamp";

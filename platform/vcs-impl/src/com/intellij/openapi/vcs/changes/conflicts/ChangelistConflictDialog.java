@@ -92,9 +92,8 @@ public class ChangelistConflictDialog extends DialogWrapper {
     return ChangelistConflictResolution.IGNORE;
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[] { new AbstractAction("&Configure...") {
       @Override
       public void actionPerformed(ActionEvent e) {

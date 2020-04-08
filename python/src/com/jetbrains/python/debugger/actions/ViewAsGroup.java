@@ -82,12 +82,11 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   public ViewAsGroup() {
-    super(null, true);
+    super(Presentation.NULL_STRING, true);
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
 
     final List<PyDebugValue> values = getSelectedValues(e);

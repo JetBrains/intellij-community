@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
@@ -21,7 +22,7 @@ public class YamlMetaClass extends YamlMetaType {
   private final List<Field> myFeatures = new LinkedList<>();
   private final List<Field> myFeaturesRO = Collections.unmodifiableList(myFeatures);
 
-  public YamlMetaClass(@NotNull String typeName) {
+  public YamlMetaClass(@NonNls @NotNull String typeName) {
     super(typeName);
   }
 

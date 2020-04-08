@@ -19,6 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -91,13 +93,11 @@ class FormatDecode {
     final int result = value & ~allowedFlags;
     if (result != 0) {
       final String flags = flagString(result);
-      final String word = flags.length() == 1 ? "flag '" : "flags '";
-      throw new IllegalFormatException(word + flags + "' not allowed in '" + specifier + '\'');
+      throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.flags.not.allowed", flags, specifier, flags.length()));
     }
   }
 
-  @NotNull
-  public static Validator[] decode(String formatString, int argumentCount) {
+  public static Validator @NotNull [] decode(String formatString, int argumentCount) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 
     final Matcher matcher = fsPattern.matcher(formatString);
@@ -124,10 +124,10 @@ class FormatDecode {
         final char flag = flags.charAt(j);
         final int bit = flag(flag);
         if (bit == -1) {
-          throw new IllegalFormatException("unexpected character '" + flag + "' in '" + specifier + '\'');
+          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.unexpected.flag", flag, specifier));
         }
         if ((flagBits | bit) == flagBits) {
-          throw new IllegalFormatException("duplicate flag '" + flag + "' in '" + specifier + '\'');
+          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.duplicate.flag", flag, specifier));
         }
         flagBits |= bit;
       }
@@ -137,7 +137,7 @@ class FormatDecode {
         // no flags allowed
         checkFlags(flagBits, 0, specifier);
         if (!StringUtil.isEmpty(width)) {
-          throw new IllegalFormatException("width ('" + width + "') not allowed in '" + specifier + '\'');
+          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.width.not.allowed", width, specifier));
         }
         checkNoPrecision(precision, specifier);
         continue;
@@ -150,19 +150,20 @@ class FormatDecode {
 
       if (posSpec != null) {
         if (isAllBitsSet(flagBits, PREVIOUS)) {
-          throw new IllegalFormatException("unnecessary argument position specifier '" + posSpec + "' in '" + specifier + '\'');
+          throw new IllegalFormatException(
+            InspectionGadgetsBundle.message("format.string.error.unnecessary.position.specifier", posSpec, specifier));
         }
         final String num = posSpec.substring(0, posSpec.length() - 1);
         pos = Integer.parseInt(num) - 1;
         if (pos < 0) {
-          throw new IllegalFormatException("illegal position specifier '" + posSpec + "' in '" + specifier + '\'');
+          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.illegal.position.specifier", posSpec, specifier));
         }
         previousAllowed = true;
       }
       else if (isAllBitsSet(flagBits, PREVIOUS)) {
         // reuse last pos
         if (!previousAllowed) {
-          throw new IllegalFormatException("previous flag '<' used but no previous format specifier found for '" + specifier + '\'');
+          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.previous.element.not.found", specifier));
         }
       }
       else {
@@ -226,24 +227,24 @@ class FormatDecode {
             allowed = new FloatValidator(specifier);
             break;
           default:
-            throw new IllegalFormatException("unknown conversion in '" + specifier + '\'');
+            throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.unknown.conversion", specifier));
         }
       }
       if (precision != null && precision.length() < 2) {
-        throw new IllegalFormatException("invalid precision specified in '" + specifier + '\'');
+        throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.invalid.precision", specifier));
       }
       if (isAllBitsSet(flagBits, LEADING_SPACE | PLUS)) {
-        throw new IllegalFormatException("illegal flag combination ' ' and '+' in '" + specifier + '\'');
+        throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.illegal.flag.combination", ' ', '+', specifier));
       }
       if (isAllBitsSet(flagBits, LEFT_JUSTIFY | ZERO_PAD)) {
-        throw new IllegalFormatException("illegal flag combination '-' and '0' in '" + specifier + '\'');
+        throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.illegal.flag.combination", '-', '0', specifier));
       }
       if (StringUtil.isEmpty(width)) {
         if (isAllBitsSet(flagBits, LEFT_JUSTIFY)) {
-          throw new IllegalFormatException("left justify flag '-' used but width not specified in '" + specifier + '\'');
+          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.left.justify.no.width", specifier));
         }
         if (isAllBitsSet(flagBits, ZERO_PAD)) {
-          throw new IllegalFormatException("zero padding flag '0' used but width not specified in '" + specifier + '\'');
+          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.zero.padding.no.width", specifier));
         }
       }
       storeValidator(allowed, pos, parameters, argumentCount);
@@ -257,7 +258,7 @@ class FormatDecode {
 
   private static void checkNoPrecision(String precision, String specifier) {
     if (!StringUtil.isEmpty(precision)) {
-      throw new IllegalFormatException("precision ('" + precision + "') not allowed in '" + specifier + '\'');
+      throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.precision.not.allowed", precision, specifier));
     }
   }
 
@@ -297,7 +298,7 @@ class FormatDecode {
 
   public static class IllegalFormatException extends RuntimeException {
 
-    public IllegalFormatException(String message) {
+    public IllegalFormatException(@Nls String message) {
       super(message);
     }
 

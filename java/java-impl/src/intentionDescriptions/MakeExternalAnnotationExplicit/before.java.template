@@ -4,4 +4,4 @@ class A {
     //do smth
     return null;
   }
-}                      ]
+}

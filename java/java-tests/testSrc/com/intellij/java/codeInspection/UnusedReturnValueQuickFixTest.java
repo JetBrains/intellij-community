@@ -3,11 +3,11 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -84,19 +84,19 @@ public class UnusedReturnValueQuickFixTest extends LightJavaCodeInsightFixtureTe
   public void testNoChangeForImplicitRead() {
     final String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
-    assertEmpty(myFixture.filterAvailableIntentions(InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix")));
+    assertEmpty(myFixture.filterAvailableIntentions(JavaBundle.message("inspection.unused.return.value.make.void.quickfix")));
   }
 
   public void testNoChangeForEntryPoint() {
     final String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
-    assertEmpty(myFixture.filterAvailableIntentions(InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix")));
+    assertEmpty(myFixture.filterAvailableIntentions(JavaBundle.message("inspection.unused.return.value.make.void.quickfix")));
   }
 
   private void doTest() {
     final String name = getTestName(false);
     myFixture.configureByFile(name + ".java");
-    myFixture.launchAction(myFixture.findSingleIntention(InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix")));
+    myFixture.launchAction(myFixture.findSingleIntention(JavaBundle.message("inspection.unused.return.value.make.void.quickfix")));
     myFixture.checkResultByFile(name + ".after.java");
   }
 

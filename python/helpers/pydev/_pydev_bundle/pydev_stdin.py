@@ -57,7 +57,7 @@ class StdIn(BaseStdIn):
         self.rpc_client = rpc_client
 
     def readline(self, *args, **kwargs):
-        from pydev_console.protocol import KeyboardInterruptException
+        from pydev_console.pydev_protocol import KeyboardInterruptException
 
         # Ok, callback into the client to get the new input
         try:

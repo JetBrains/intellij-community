@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAndFontDescriptorsProvider, DisplayPrioritySortable {
-  public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
-
   @Override
   @NotNull
   public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
@@ -43,7 +41,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
     descriptionPanel.addDescriptionPanel(new ColorAndFontDescriptionPanel(), it -> it instanceof ColorAndFontDescription);
     descriptionPanel.addDescriptionPanel(new DiffColorDescriptionPanel(options), it -> it instanceof TextAttributesDescription);
 
-    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, DIFF_GROUP, descriptionPanel);
+    final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, getDiffGroup(), descriptionPanel);
     final DiffPreviewPanel previewPanel = new DiffPreviewPanel();
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
@@ -54,20 +52,18 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
       }
     });
 
-    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, DIFF_GROUP, null, null);
+    return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, getDiffGroup(), null, null);
   }
 
-  @NotNull
   @Override
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     TextDiffTypeFactory.TextDiffTypeImpl[] diffTypes = TextDiffTypeFactory.getInstance().getAllDiffTypes();
     return ContainerUtil.map2Array(diffTypes, AttributesDescriptor.class, type -> 
       new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(), type.getKey()));
   }
 
-  @NotNull
   @Override
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     List<ColorDescriptor> descriptors = new ArrayList<>();
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.background"), DiffLineSeparatorRenderer.BACKGROUND, ColorDescriptor.Kind.BACKGROUND));
@@ -78,17 +74,21 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
   @Override
   @NotNull
   public String getPanelDisplayName() {
-    return DIFF_GROUP;
+    return getDiffGroup();
   }
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return DIFF_GROUP;
+    return getDiffGroup();
   }
 
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.COMMON_SETTINGS;
+  }
+
+  public static String getDiffGroup() {
+    return ApplicationBundle.message("title.diff");
   }
 }

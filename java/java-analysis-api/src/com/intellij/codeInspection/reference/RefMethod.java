@@ -142,14 +142,14 @@ public interface RefMethod extends RefJavaElement {
    * @return the list of exceptions declared but not thrown, or null if there are no
    * such exceptions.
    */
-  @Nullable PsiClass[] getUnThrownExceptions();
+  PsiClass @Nullable [] getUnThrownExceptions();
 
   /**
    * Returns the list of reference graph nodes for the method parameters.
    *
    * @return the method parameters.
    */
-  @NotNull RefParameter[] getParameters();
+  RefParameter @NotNull [] getParameters();
 
   /**
    * Returns the class to which the method belongs.

@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
@@ -29,8 +28,8 @@ import kotlin.math.roundToInt
 private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
-class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
-  constructor() : this(ServiceManager.getService(NotRoamableUiSettings::class.java))
+class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
+  constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
 
   private var state = UISettingsState()
 
@@ -54,15 +53,13 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.allowMergeButtons = value
     }
 
-  val alwaysShowWindowsButton: Boolean
-    get() = state.alwaysShowWindowsButton
-
   var animateWindows: Boolean
     get() = state.animateWindows
     set(value) {
       state.animateWindows = value
     }
 
+  @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean
     get() = state.showMemoryIndicator
     set(value) {
@@ -123,8 +120,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.useSmallLabelsOnTabs = value
     }
 
-  val smoothScrolling: Boolean
+  var smoothScrolling: Boolean
     get() = state.smoothScrolling
+    set(value) {
+      state.smoothScrolling = value
+    }
 
   val animatedScrolling: Boolean
     get() = state.animatedScrolling
@@ -150,6 +150,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.navigateToPreview = value
     }
 
+  var selectedTabsLayoutInfoId: String?
+    get() = state.selectedTabsLayoutInfoId
+    set(value) {
+      state.selectedTabsLayoutInfoId = value
+    }
+
   val scrollTabLayoutInEditor: Boolean
     get() = state.scrollTabLayoutInEditor
 
@@ -169,6 +175,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     get() = state.showNavigationBar
     set(value) {
       state.showNavigationBar = value
+    }
+
+  var showMembersInNavigationBar: Boolean
+    get() = state.showMembersInNavigationBar
+    set(value) {
+      state.showMembersInNavigationBar = value
     }
 
   var showStatusBar: Boolean
@@ -225,10 +237,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.sortLookupElementsLexicographically = value
     }
 
-  @Deprecated("The property name is grammatically incorrect", replaceWith = ReplaceWith("this.hideTabsIfNeeded"))
-  val hideTabsIfNeed: Boolean
-    get() = hideTabsIfNeeded
-
   val hideTabsIfNeeded: Boolean
     get() = state.hideTabsIfNeeded
   var showFileIconInTabs: Boolean
@@ -275,8 +283,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.presentationMode = value
     }
 
-  val presentationModeFontSize: Int
+  var presentationModeFontSize: Int
     get() = state.presentationModeFontSize
+    set(value) {
+      state.presentationModeFontSize = value
+    }
 
   var editorTabPlacement: Int
     get() = state.editorTabPlacement
@@ -290,11 +301,17 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.editorTabLimit = value
     }
 
-  val recentFilesLimit: Int
+  var recentFilesLimit: Int
     get() = state.recentFilesLimit
+    set(value) {
+      state.recentFilesLimit = value
+    }
 
-  val recentLocationsLimit: Int
+  var recentLocationsLimit: Int
     get() = state.recentLocationsLimit
+    set(value) {
+      state.recentLocationsLimit = value
+    }
 
   var maxLookupWidth: Int
     get() = state.maxLookupWidth
@@ -402,13 +419,22 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
 
+  var enableAlphaMode: Boolean
+    get() = state.enableAlphaMode
+    set(value) {
+      state.enableAlphaMode = value
+    }
+
+  var fullPathsInWindowHeader: Boolean
+    get() = state.fullPathsInWindowHeader
+    set(value) {
+      state.fullPathsInWindowHeader = value
+    }
+
   init {
     // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical", false)) {
+    if (SystemProperties.`is`("tabs.alphabetical")) {
       sortTabsAlphabetically = true
-    }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end", false)) {
-      openTabsAtTheEnd = true
     }
   }
 
@@ -464,7 +490,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
     @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
+    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina)
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {

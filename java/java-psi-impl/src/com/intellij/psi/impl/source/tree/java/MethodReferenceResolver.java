@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,18 +18,17 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
-  @NotNull
   @Override
-  public JavaResolveResult[] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
+  public JavaResolveResult @NotNull [] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(reference);
 
     final PsiClass containingClass = qualifierResolveResult.getContainingClass();
@@ -95,8 +94,10 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 @NotNull
                 @Override
                 public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return includeReturnConstraint ? inferTypeArguments(true) 
-                                                 : ObjectUtils.assertNotNull(MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(reference, false, () -> inferTypeArguments(false)));
+                  return includeReturnConstraint ? inferTypeArguments(true)
+                                                 : Objects.requireNonNull(MethodCandidateInfo.ourOverloadGuard
+                                                                            .doPreventingRecursion(reference, false,
+                                                                                                   () -> inferTypeArguments(false)));
                 }
 
                 private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
@@ -357,7 +358,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       if (firstApplicability < secondApplicability) {
         return secondCandidates.size() == 1 ? secondCandidates.get(0) : null;
       }
-      
+
       if (secondApplicability < firstApplicability) {
         return firstCandidates.size() == 1 ? firstCandidates.get(0) : null;
       }

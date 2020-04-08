@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.controlflow;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -22,7 +22,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
 
   public void testThisCall() { assertQuickfixNotAvailable(); }
   public void testBrokenCode() { assertQuickfixNotAvailable(); }
-  public void testField() { assertQuickfixNotAvailable(); }
+  public void testField() { doTest(); }
   public void testNonDenotableVar() { assertQuickfixNotAvailable(); }
 
   public void testArrayInitializer() { doTest(); }
@@ -33,6 +33,8 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testConditionalAsArgument() { doTest(); }
   public void testConditionalInBinaryExpression() { doTest(); }
   public void testConditionalInIf() { doTest(); }
+  public void testConditionalInIfBranch() { doTest(); }
+  public void testConditionalInIfBranch2() { doTest(); }
   public void testInsideExprLambda() { doTest(); }
   public void testInsideExprLambdaWithParams() { doTest(); }
   public void testParentheses() { doTest(); }
@@ -44,7 +46,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
     javaSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     doTest();
   }
-  public void testNestedConditionalChangesSemantics() { doTest(InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")); }
+  public void testNestedConditionalOuter() { doTest(); }
 
   public void testSimpleOption() {
     final ConditionalExpressionInspection inspection = new ConditionalExpressionInspection();
@@ -52,6 +54,8 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     doTest();
   }
+  
+  public void testSwitchExpressionInside() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) {

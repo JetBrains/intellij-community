@@ -43,6 +43,6 @@ public class YamlUnstructuredClass extends YamlMetaClass {
   }
 
   public YamlUnstructuredClass() {
-    super("yaml:anything");
+    super("yaml:anyobject");
   }
 }

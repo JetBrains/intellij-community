@@ -4,21 +4,21 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +27,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
+import static git4idea.util.GitUIUtil.bold;
+import static git4idea.util.GitUIUtil.code;
 
 /**
  * Deletes tag.
  */
 class GitDeleteTagOperation extends GitBranchOperation {
-
-  private static final Logger LOG = Logger.getInstance(GitDeleteTagOperation.class);
 
   @NotNull private final String myTagName;
   @NotNull private final VcsNotifier myNotifier;
@@ -55,9 +55,12 @@ class GitDeleteTagOperation extends GitBranchOperation {
         myDeletedTagTips.put(repository, revisionNumber.asString());
       }
       catch (VcsException e) {
-        String title = "Couldn't find tag " + myTagName;
+        String title;
         if (!GitUtil.justOneGitRepository(myProject)) {
-          title += " in " + repository.getPresentableUrl();
+          title = GitBundle.message("delete.tag.operation.could.not.find.tag.in", repository.getPresentableUrl());
+        }
+        else {
+          title = GitBundle.message("delete.tag.operation.could.not.find.tag", myTagName);
         }
         fatalError(title, "");
         return;
@@ -72,7 +75,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
         markSuccessful(repository);
       }
       else {
-        fatalError(String.format("Tag %s wasn't deleted", myTagName), result.getErrorOutputAsJoinedString());
+        fatalError(GitBundle.message("delete.tag.operation.tag.was.not.deleted", myTagName), result.getErrorOutputAsJoinedString());
         return;
       }
     }
@@ -81,9 +84,10 @@ class GitDeleteTagOperation extends GitBranchOperation {
 
   @Override
   protected void notifySuccess() {
-    String message = "<b>Deleted Tag:</b> " + myTagName;
+    String message = GitBundle.message("delete.tag.operation.deleted.tag", myTagName);
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(NotificationAction.createSimple("Restore", () -> restoreInBackground(notification)));
+    notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
+      "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
 
     int remotes = 0;
     for (GitRepository repository: getRepositories()) {
@@ -91,14 +95,14 @@ class GitDeleteTagOperation extends GitBranchOperation {
     }
 
     if (remotes > 0) {
-      String text = "Delete on " + StringUtil.pluralize("Remote", remotes);
+      String text = GitBundle.message("delete.tag.operation.delete.on.remote", remotes);
       notification.addAction(NotificationAction.createSimple(text, () -> pushRemotesInBackground()));
     }
     myNotifier.notify(notification);
   }
 
   private void restoreInBackground(@NotNull Notification notification) {
-    new Task.Backgroundable(myProject, "Restoring Tag " + myTagName + "...") {
+    new Task.Backgroundable(myProject, GitBundle.message("delete.tag.operation.restoring.tag.process", myTagName)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         rollbackTagDeletion(notification);
@@ -110,11 +114,15 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (result.totalSuccess()) {
-      Notification notification = STANDARD_NOTIFICATION.createNotification("Rollback Successful", "Restored tag " + myTagName, NotificationType.INFORMATION, null);
+      Notification notification =
+        STANDARD_NOTIFICATION.createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
+          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION, null);
       myNotifier.notify(notification);
     }
     else {
-      myNotifier.notifyError("Error during rollback of tag deletion", result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError(GitBundle.message("delete.tag.operation.error.during.rollback.of.tag.deletion"),
+                             result.getErrorOutputWithReposIndication(),
+                             true);
     }
   }
 
@@ -124,7 +132,9 @@ class GitDeleteTagOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError("Couldn't Restore <b><code>" + myTagName + "</code></b>", result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError(GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
+                             result.getErrorOutputWithReposIndication(),
+                             true);
     }
   }
 
@@ -142,9 +152,11 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However tag deletion has succeeded for the following " + repositories() + ":<br/>" +
+    return GitBundle.message("delete.tag.operation.however.tag.deletion.has.succeeded.for.the.following", getSkippedRepositories().size()) +
+           UIUtil.BR +
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (recreate " + myTagName + " in these roots) not to let tags diverge.";
+           UIUtil.BR +
+           GitBundle.message("delete.tag.operation.you.may.rollback.not.to.let.tags.diverge", myTagName);
   }
 
   @NotNull

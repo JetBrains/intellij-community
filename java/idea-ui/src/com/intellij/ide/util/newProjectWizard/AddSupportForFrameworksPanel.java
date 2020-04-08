@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.newProjectWizard;
 
@@ -10,6 +10,7 @@ import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -21,7 +22,6 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -47,9 +47,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class AddSupportForFrameworksPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(AddSupportForFrameworksPanel.class);
   @NonNls private static final String EMPTY_CARD = "empty";
@@ -393,8 +390,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     for (LibraryCompositionSettings compositionSettings : getLibrariesCompositionSettingsList()) {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              "Libraries Are Required", Messages.getWarningIcon());
+                                              JavaUiBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              JavaUiBundle.message("dialog.title.libraries.are.required"), Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }
@@ -416,8 +413,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
     if (!frameworksWithoutRequiredLibraries.isEmpty()) {
       String frameworksText = StringUtil.join(frameworksWithoutRequiredLibraries, ", ");
-      Messages.showErrorDialog(myMainPanel, ProjectBundle.message("error.message.required.library.is.not.configured", frameworksText, frameworksWithoutRequiredLibraries.size()),
-                               ProjectBundle.message("error.title.required.library.is.not.configured"));
+      Messages.showErrorDialog(myMainPanel, JavaUiBundle.message("error.message.required.library.is.not.configured", frameworksText, frameworksWithoutRequiredLibraries.size()),
+                               JavaUiBundle.message("error.title.required.library.is.not.configured"));
       return false;
     }
     return true;
@@ -460,7 +457,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void sortFrameworks(final List<? extends FrameworkSupportNode> nodes) {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
-    Collections.sort(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
+    nodes.sort((o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }
 
   public void reportSelectedFrameworks(@NotNull String eventId, @NotNull FeatureUsageData original) {

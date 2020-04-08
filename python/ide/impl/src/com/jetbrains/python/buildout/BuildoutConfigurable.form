@@ -19,7 +19,7 @@
             </constraints>
             <properties>
               <enabled value="false"/>
-              <text value="&amp;Enable buildout support"/>
+              <text resource-bundle="messages/PyBundle" key="buildout.configurable.enable.buildout.support.checkbox.text"/>
             </properties>
           </component>
         </children>

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -18,7 +19,6 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
@@ -59,7 +59,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
   @NotNull
   @Override
   public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
-    return ProjectBundle.message("import.module.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
+    return JavaUiBundle.message("import.module.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
   }
 
   @Override
@@ -132,7 +132,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
   public static AddModuleWizard selectFileAndCreateWizard(@Nullable Project project, @Nullable Component dialogParent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     descriptor.setHideIgnored(false);
-    descriptor.setTitle("Select File or Directory to Import");
+    descriptor.setTitle(JavaUiBundle.message("chooser.title.select.file.or.directory.to.import"));
     List<ProjectImportProvider> providers = getProviders(project);
     String description = getFileChooserDescription(providers);
     descriptor.setDescription(description);
@@ -202,7 +202,8 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
                                                    ProjectImportProvider... providers) {
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, provider -> provider.canImport(file, project));
     if (available.isEmpty()) {
-      Messages.showInfoMessage(project, "Cannot import anything from " + file.getPath(), "Cannot Import");
+      Messages.showInfoMessage(project, JavaUiBundle.message("message.cannot.import.anything.from.0", file.getPath()),
+                               JavaUiBundle.message("dialog.title.cannot.import"));
       return null;
     }
 

@@ -37,9 +37,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-/**
- * @author nik
- */
 class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   fun testFileCopy() {
     val a = addArtifact(root().fileCopy(createFile("file.txt", "foo")))
@@ -223,7 +220,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
 
   fun testCopyResourcesFromModuleOutput() {
     val file = createFile("src/a.xml", "")
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).addResourcePattern("*.xml")
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).addResourcePattern("*.xml")
     val module = addModule("a", PathUtil.getParentPath(file))
     val artifact = addArtifact(root().module(module))
     buildArtifacts(artifact)

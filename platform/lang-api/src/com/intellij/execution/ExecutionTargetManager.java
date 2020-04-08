@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -63,7 +63,7 @@ public abstract class ExecutionTargetManager {
     return settings != null && canRun(settings.getConfiguration(), environment.getExecutionTarget());
   }
 
-  protected abstract boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target);
+  public abstract boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target);
 
   public static void update(@NotNull Project project) {
     getInstance(project).update();

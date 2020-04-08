@@ -41,7 +41,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   }
 
   public VcsVirtualFile(@NotNull String path,
-                        @NotNull byte[] content,
+                        byte @NotNull [] content,
                         @Nullable String revision,
                         @NotNull VirtualFileSystem fileSystem) {
     this(path, null, fileSystem);
@@ -50,8 +50,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     if (myContentLoadFailed) {
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }

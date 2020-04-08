@@ -65,8 +65,7 @@ public interface FoldingModel {
    *
    * @return the array of fold regions, or an empty array if folding is currently disabled.
    */
-  @NotNull
-  FoldRegion[] getAllFoldRegions();
+  FoldRegion @NotNull [] getAllFoldRegions();
 
   /**
    * Checks if the specified offset in the document belongs to a folded region. The region must contain given offset or be located right
@@ -104,17 +103,30 @@ public interface FoldingModel {
    *
    * @param operation the operation to execute.
    */
-  void runBatchFoldingOperation(@NotNull Runnable operation);
+  default void runBatchFoldingOperation(@NotNull Runnable operation) {
+    runBatchFoldingOperation(operation, true, true);
+  }
 
   /**
-   * Runs an operation which is allowed to modify fold regions in the editor by calling
-   * {@link #addFoldRegion(int, int, String)} and {@link #removeFoldRegion(FoldRegion)}.
-   *
-   * @param operation                    the operation to execute.
-   * @param moveCaretFromCollapsedRegion flag that identifies whether caret position should be changed if it's located inside
-   *                                     collapsed fold region after the operation
+   * @deprecated Passing {@code false} for {@code moveCaretFromCollapsedRegion} might leave caret in an inconsistent state
+   * after the operation. Use {@link #runBatchFoldingOperation(Runnable)} instead.
    */
+  @Deprecated
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
 
-  void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation);
+  default void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
+    runBatchFoldingOperation(operation, false, true);
+  }
+
+  /**
+   * Performs folding model changes (creation/deletion/expanding/collapsing of fold regions).
+   *
+   * @param allowMovingCaret If {@code false}, requests to collapse a region containing caret won't be processed. If {@code true} -
+   *                         corresponding operation will be performed with caret automatically moved to the region's start offset
+   *                         (original caret position is remembered and is restored on region expansion).
+   * @param keepRelativeCaretPosition If {@code true}, editor scrolling position will be adjusted after the operation, so that vertical
+   *                                  caret position will remain unchanged (if caret is not visible at operation start, top left corner
+   *                                  of editor will be used as an anchor instead). If {@code false}, no scrolling adjustment will be done.
+   */
+  void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition);
 }

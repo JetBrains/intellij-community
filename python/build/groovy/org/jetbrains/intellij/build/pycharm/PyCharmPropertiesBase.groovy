@@ -20,9 +20,6 @@ import org.jetbrains.intellij.build.*
 
 import static org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions.GENERATE_INDICES_AND_STUBS_STEP
 
-/**
- * @author nik
- */
 abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   protected String dependenciesPath
 

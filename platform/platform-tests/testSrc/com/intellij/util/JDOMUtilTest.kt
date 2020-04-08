@@ -243,6 +243,39 @@ internal class JDOMUtilTest {
     assertElementText(element, """<state x="1" y="1" width="0" height="0" />""")
   }
 
+  @Test
+  fun `equals and hashCode`() {
+    fun generateElement(data: Int): Element {
+      val s = Integer.toBinaryString(data).padStart(7, '0')
+      val element = Element("e${s.substring(0, 1)}")
+      val attributeName = s.substring(1, 3)
+      val attributeValue = s.substring(3, 5)
+      if (attributeName != "00" || attributeValue != "00") {
+        element.setAttribute("a$attributeName", if (attributeValue == "00") "" else attributeValue)
+      }
+      val subTag = s.substring(5, 7)
+      if (subTag == "01") {
+        element.addContent(Element("subTag"))
+      }
+      else if (subTag != "00") {
+        element.addContent(Text(subTag))
+      }
+      return element
+    }
+    for (data1 in 0 .. 31) {
+      val element1 = generateElement(data1)
+      for (data2 in 0..31) {
+        val element2 = generateElement(data2)
+        if (data1 == data2) {
+          assertThat(element1).isEqualTo(element2)
+          assertThat(JDOMUtil.hashCode(element1, false)).isEqualTo(JDOMUtil.hashCode(element2, false))
+        }
+        else {
+          assertThat(JDOMUtil.areElementsEqual(element1, element2)).isFalse()
+        }
+      }
+    }
+  }
 
   private fun assertElementText(actual: Element, expected: String) {
     assertThat(JDOMUtil.createOutputter("").outputString(actual)).isEqualTo(expected)

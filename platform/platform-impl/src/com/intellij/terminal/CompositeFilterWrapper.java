@@ -39,6 +39,9 @@ class CompositeFilterWrapper {
       return Collections.emptyList();
     }
     return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) {
+        return Collections.emptyList();
+      }
       return ConsoleViewUtil.computeConsoleFilters(myProject, myConsole, GlobalSearchScope.allScope(myProject));
     });
   }

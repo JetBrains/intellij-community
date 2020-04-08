@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
 public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
   @Nullable private final RefEntity myRefEntity;
@@ -50,7 +47,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   protected String calculatePresentableName() {
     final RefEntity element = getElement();
     if (element == null) {
-      return InspectionsBundle.message("inspection.reference.invalid");
+      return AnalysisBundle.message("inspection.reference.invalid");
     }
     return element.getRefManager().getRefinedElement(element).getName();
   }

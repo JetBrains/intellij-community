@@ -1,5 +1,5 @@
 #!/usr/bin/env $PYTHON$
-#  Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+#  Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import os
 import socket
@@ -102,7 +102,7 @@ def try_activate_instance(args):
         return False
 
     paths = read_sequence_from_sock(s)
-    found = CONFIG_PATH in paths
+    found = CONFIG_PATH in paths or os.path.realpath(CONFIG_PATH) in paths
 
     if found:
         write_to_sock(s, 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args))
@@ -125,7 +125,7 @@ def start_new_instance(args):
     if sys.platform == 'darwin':
         if len(args) > 0:
             args.insert(0, '--args')
-        os.execvp('/usr/bin/open', ['-a', RUN_PATH] + args)
+        os.execv('/usr/bin/open', ['open', '-na', RUN_PATH] + args)
     else:
         bin_file = os.path.split(RUN_PATH)[1]
         os.execv(RUN_PATH, [bin_file] + args)

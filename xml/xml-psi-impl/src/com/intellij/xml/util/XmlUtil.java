@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
@@ -50,6 +49,7 @@ import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +58,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author Mike
- */
 public class XmlUtil {
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
@@ -388,7 +385,7 @@ public class XmlUtil {
 
       if (presentNames.containsKey(nameKey)) {
         final T psiElement = presentNames.get(nameKey);
-        final String message = XmlErrorMessages.message("duplicate.declaration", nameKey);
+        final String message = XmlPsiBundle.message("duplicate.declaration", nameKey);
 
         if (psiElement != null) {
           presentNames.put(nameKey, null);
@@ -555,9 +552,8 @@ public class XmlUtil {
     return (XmlTag)parent.add(child);
   }
 
-  @Nullable
   @NonNls
-  public static String[][] getDefaultNamespaces(final XmlDocument document) {
+  public static String[] @Nullable [] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = getContainingFile(document);
 
     final XmlTag tag = document.getRootTag();
@@ -1161,7 +1157,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static String extractXmlEncodingFromProlog(@NotNull byte[] content) {
+  public static String extractXmlEncodingFromProlog(byte @NotNull [] content) {
     return XmlCharsetDetector.extractXmlEncodingFromProlog(content);
   }
 
@@ -1171,14 +1167,14 @@ public class XmlUtil {
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @NonNls String @Nullable [] attributeNames,
                                                                 @Nullable ElementFilter elementFilter,
                                                                 @NotNull PsiReferenceProvider provider) {
     registerXmlAttributeValueReferenceProvider(registrar, attributeNames, elementFilter, true, provider);
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @NonNls String @Nullable [] attributeNames,
                                                                 @Nullable ElementFilter elementFilter,
                                                                 boolean caseSensitive,
                                                                 @NotNull PsiReferenceProvider provider) {
@@ -1187,7 +1183,7 @@ public class XmlUtil {
   }
 
   public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
-                                                                @Nullable @NonNls String[] attributeNames,
+                                                                @NonNls String @Nullable [] attributeNames,
                                                                 @Nullable ElementFilter elementFilter,
                                                                 boolean caseSensitive,
                                                                 @NotNull PsiReferenceProvider provider,

@@ -27,6 +27,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
+import static com.intellij.util.io.FileChannelUtil.unInterruptible;
+
 public class PersistentHashMapValueStorage {
   @Nullable
   private RAReader myCompactionModeReader;
@@ -811,7 +813,7 @@ public class PersistentHashMapValueStorage {
 
     private FileReader(Path file) {
       try {
-        myFile = FileChannel.open(file, StandardOpenOption.READ);
+        myFile = unInterruptible(FileChannel.open(file, StandardOpenOption.READ));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -843,7 +845,7 @@ public class PersistentHashMapValueStorage {
     }
 
     @Override
-    public void write(@NotNull byte[] b, int off, int len) throws IOException {
+    public void write(byte @NotNull [] b, int off, int len) throws IOException {
       FileAccessorCache.Handle<RandomAccessFileWithLengthAndSizeTracking> fileAccessor = ourRandomAccessFileCache.get(myPath);
       RandomAccessFileWithLengthAndSizeTracking file = fileAccessor.get();
 

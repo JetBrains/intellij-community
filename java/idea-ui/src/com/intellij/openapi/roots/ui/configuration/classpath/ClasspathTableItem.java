@@ -20,9 +20,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author nik
-*/
 class ClasspathTableItem<T extends OrderEntry> {
   @Nullable protected final T myEntry;
   private final boolean myRemovable;

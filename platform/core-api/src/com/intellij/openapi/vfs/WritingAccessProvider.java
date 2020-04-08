@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ public abstract class WritingAccessProvider {
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getReadOnlyMessage() {
-    return EditorBundle.message("editing.read.only.file.hint");
+    return CoreBundle.message("editing.read.only.file.hint");
   }
 
   /**
@@ -40,7 +40,7 @@ public abstract class WritingAccessProvider {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  public Collection<VirtualFile> requestWriting(@NotNull VirtualFile... files) {
+  public Collection<VirtualFile> requestWriting(VirtualFile @NotNull ... files) {
     throw new AbstractMethodError("requestWriting(List<VirtualFile>) not implemented");
   }
 

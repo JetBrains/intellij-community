@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -81,28 +80,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     App() {
       myDefaultInjections = loadDefaultInjections();
       myAdvancedConfiguration = new AdvancedConfiguration();
-      LanguageInjectionSupport.CONFIG_EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjectionConfigBean>() {
-        @Override
-        public void extensionAdded(@NotNull LanguageInjectionConfigBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull LanguageInjectionConfigBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-      }, null);
-      LanguageInjectionSupport.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjectionSupport>() {
-        @Override
-        public void extensionAdded(@NotNull LanguageInjectionSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull LanguageInjectionSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
-          reloadInjections();
-        }
-      }, null);
+      LanguageInjectionSupport.CONFIG_EP_NAME.addExtensionPointListener(this::reloadInjections, null);
+      LanguageInjectionSupport.EP_NAME.addExtensionPointListener(this::reloadInjections, null);
     }
 
     private void reloadInjections() {
@@ -266,8 +245,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     importPlaces(getDefaultInjections());
   }
 
-  @Nullable
-  private static InjectionPlace[] dropKnownInvalidPlaces(InjectionPlace[] places) {
+  private static InjectionPlace @Nullable [] dropKnownInvalidPlaces(InjectionPlace[] places) {
     InjectionPlace[] result = places;
     for (InjectionPlace place : places) {
       if (place.getText().contains("matches(\"[^${}/\\\\]+\")")) {
@@ -571,7 +549,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     };
     WriteCommandAction.writeCommandAction(project, psiFiles)
-                      .withName("Language Injection Configuration Update")
+                      .withName(IntelliLangBundle.message("command.name.language.injection.configuration.update"))
                       .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
                       .run(() -> {
                         for (PsiElement annotation : psiElementsToRemove) {

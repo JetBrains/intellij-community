@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,12 +22,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
  * Declares a named component that enables to configure settings.
  *
- * @author nik
  * @see Configurable
  */
 @Tag("configurable")
@@ -60,18 +60,31 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("bundle")
   public String bundle;
 
+  @NotNull
   public String getDisplayName() {
-    if (displayName == null) {
-      ResourceBundle resourceBundle = findBundle();
-      if (resourceBundle != null) {
-        displayName = CommonBundle.message(resourceBundle, key);
+    if (displayName != null) {
+      return displayName;
+    }
+
+    ResourceBundle resourceBundle = findBundle();
+    if (resourceBundle == null || key == null) {
+      if (key == null) {
+        LOG.warn("Bundle key missed for " + displayName);
       }
       else {
-        displayName = providerClass != null ? providerClass : instanceClass != null ? instanceClass : implementationClass;
         LOG.warn("Bundle missed for " + displayName);
       }
+
+      if (providerClass == null) {
+        return instanceClass == null ? implementationClass : instanceClass;
+      }
+      else {
+        return providerClass;
+      }
     }
-    return displayName;
+    else {
+      return AbstractBundle.message(resourceBundle, key);
+    }
   }
 
   /**
@@ -96,7 +109,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
 
   @Property(surroundWithTag = false)
   @XCollection
-  public ConfigurableEP[] children;
+  public List<ConfigurableEP<?>> children;
 
   /**
    * This attribute specifies a name of the extension point of {@code ConfigurableEP} type that will be used to calculate children.
@@ -123,8 +136,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("parentId")
   public String parentId;
 
-  public ConfigurableEP[] getChildren() {
-    for (ConfigurableEP child : children) {
+  @NotNull
+  public List<ConfigurableEP<?>> getChildren() {
+    for (ConfigurableEP<?> child : children) {
       child.myPicoContainer = myPicoContainer;
       child.myPluginDescriptor = myPluginDescriptor;
       child.myProject = myProject;
@@ -392,7 +406,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
         return null;
       }
       catch (AssertionError | LinkageError | Exception e) {
-        LOG.error(e);
+        LOG.error("Cannot create configurable", e);
       }
       return null;
     }

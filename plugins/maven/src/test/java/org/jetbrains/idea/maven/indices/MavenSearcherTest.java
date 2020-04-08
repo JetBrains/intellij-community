@@ -45,8 +45,6 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
   }
 
   public void testClassSearch() {
-    if(ignore()) return;
-    assertTrue(getClassSearchResults("").isEmpty());
 
     assertClassSearchResults("TestCas",
                              "TestCase(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",

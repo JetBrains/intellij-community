@@ -41,8 +41,7 @@ public interface GrIntroduceContext {
   @Nullable
   StringPartInfo getStringPart();
 
-  @NotNull
-  PsiElement[] getOccurrences();
+  PsiElement @NotNull [] getOccurrences();
 
   PsiElement getScope();
 

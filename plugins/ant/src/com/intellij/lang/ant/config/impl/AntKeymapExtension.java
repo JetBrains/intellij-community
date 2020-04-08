@@ -16,13 +16,13 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
@@ -42,7 +42,7 @@ class AntKeymapExtension implements KeymapExtension {
   @Override
   public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
     final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<>();
-    final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("ant.targets.group.title"),
+    final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(AntBundle.message("ant.targets.group.title"),
                                                                             AllIcons.Nodes.KeymapAnt);
 
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();

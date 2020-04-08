@@ -25,9 +25,24 @@ import java.util.List;
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
   static {
+    ourCommonStyle = StartupUiUtil.createStyleSheet(
+      "code { font-size: 100%; }" +  // small by Swing's default
+      "small { font-size: small; }" +  // x-small by Swing's default
+      "a { text-decoration: none;}" +
+      // override too large default margin "ul {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
+      "ul { margin-left-ltr: 12; margin-right-rtl: 12; }" +
+      // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
+      // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
+      "ol { margin-left-ltr: 22; margin-right-rtl: 22; }"
+    );
+    ourNoGapsBetweenParagraphsStyle = StartupUiUtil.createStyleSheet(
+      "p { margin-top: 0; }"
+    );
     StartupUiUtil.configureHtmlKitStylesheet();
   }
   private static final ViewFactory ourViewFactory = new JBHtmlFactory();
+  private static final StyleSheet ourCommonStyle;
+  private static final StyleSheet ourNoGapsBetweenParagraphsStyle;
 
   @Override
   public Cursor getDefaultCursor() {
@@ -36,14 +51,24 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   private final StyleSheet style;
   private final HyperlinkListener myHyperlinkListener;
+  private final boolean myDisableLinkedCss;
 
   public JBHtmlEditorKit() {
     this(true);
   }
 
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
+    this(noGapsBetweenParagraphs, false);
+  }
+
+  /**
+   * @param disableLinkedCss Disables loading of linked CSS (from URL referenced in {@code <link>} HTML tags). JEditorPane does this loading
+   *                         synchronously during {@link JEditorPane#setText(String)} operation (usually invoked in EDT).
+   */
+  public JBHtmlEditorKit(boolean noGapsBetweenParagraphs, boolean disableLinkedCss) {
+    myDisableLinkedCss = disableLinkedCss;
     style = createStyleSheet();
-    if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+    if (noGapsBetweenParagraphs) style.addStyleSheet(ourNoGapsBetweenParagraphsStyle);
     myHyperlinkListener = new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -84,7 +109,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     StyleSheet ss = new StyleSheetCompressionThreshold();
     ss.addStyleSheet(styles);
 
-    HTMLDocument doc = new HTMLDocument(ss);
+    HTMLDocument doc = myDisableLinkedCss ? new HTMLDocumentNoLinkedCss(ss) : new HTMLDocument(ss);
     doc.setParser(getParser());
     doc.setAsynchronousLoadPriority(4);
     doc.setTokenThreshold(100);
@@ -93,16 +118,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   public static StyleSheet createStyleSheet() {
     StyleSheet style = new StyleSheet();
-    style.addStyleSheet(StartupUiUtil.isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : StartupUiUtil.getDefaultHtmlKitCss());
-    style.addRule("code { font-size: 100%; }"); // small by Swing's default
-    style.addRule("small { font-size: small; }"); // x-small by Swing's default
-    style.addRule("a { text-decoration: none;}");
-    // override too large default margin "ul {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
-    style.addRule("ul { margin-left-ltr: 10; margin-right-rtl: 10; }");
-    // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
-    // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
-    style.addRule("ol { margin-left-ltr: 22; margin-right-rtl: 22; }");
-
+    style.addStyleSheet(StartupUiUtil.isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle")
+                                                       : StartupUiUtil.getDefaultHtmlKitCss());
+    style.addStyleSheet(ourCommonStyle);
     return style;
   }
 
@@ -149,7 +167,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   @NotNull
-  private static List<LinkController> filterLinkControllerListeners(@NotNull Object[] listeners) {
+  private static List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
     return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
   }
 
@@ -320,6 +338,77 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
           return vAlign;
         }
         return super.getAlignment(axis);
+      }
+    }
+  }
+
+  private static class HTMLDocumentNoLinkedCss extends HTMLDocument {
+    private HTMLDocumentNoLinkedCss(StyleSheet styles) {
+      super(styles);
+    }
+
+    @Override
+    public ParserCallback getReader(int pos) {
+      return new CallbackWrapper(super.getReader(pos));
+    }
+
+    @Override
+    public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
+      return new CallbackWrapper(super.getReader(pos, popDepth, pushDepth, insertTag));
+    }
+
+    private static class CallbackWrapper extends ParserCallback {
+      private final ParserCallback delegate;
+      private int depth;
+
+      private CallbackWrapper(ParserCallback delegate) {this.delegate = delegate;}
+
+      @Override
+      public void flush() throws BadLocationException {
+        delegate.flush();
+      }
+
+      @Override
+      public void handleText(char[] data, int pos) {
+        if (depth > 0) return;
+        delegate.handleText(data, pos);
+      }
+
+      @Override
+      public void handleComment(char[] data, int pos) {
+        if (depth > 0) return;
+        delegate.handleComment(data, pos);
+      }
+
+      @Override
+      public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos) {
+        if (t == HTML.Tag.LINK) depth++;
+        if (depth > 0) return;
+        delegate.handleStartTag(t, a, pos);
+      }
+
+      @Override
+      public void handleEndTag(HTML.Tag t, int pos) {
+        if (t == HTML.Tag.LINK) depth--;
+        LOG.assertTrue(depth >= 0);
+        if (depth > 0) return;
+        delegate.handleEndTag(t, pos);
+      }
+
+      @Override
+      public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, int pos) {
+        if (t == HTML.Tag.LINK) return;
+        delegate.handleSimpleTag(t, a, pos);
+      }
+
+      @Override
+      public void handleError(String errorMsg, int pos) {
+        delegate.handleError(errorMsg, pos);
+      }
+
+      @Override
+      public void handleEndOfLineString(String eol) {
+        delegate.handleEndOfLineString(eol);
       }
     }
   }

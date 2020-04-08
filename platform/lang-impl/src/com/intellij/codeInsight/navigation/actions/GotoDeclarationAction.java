@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -6,16 +6,13 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.*;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,14 +31,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,11 +44,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
-public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
+import static com.intellij.codeInsight.navigation.actions.UiKt.notifyNowhereToGo;
+
+public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
+
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
 
   @NotNull
@@ -69,76 +65,80 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
+      try {
+        int offset = editor.getCaretModel().getOffset();
+        Pair<PsiElement[], PsiElement> pair = ActionUtil
+          .underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference"), () -> doSelectCandidate(project, editor, offset));
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
-    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-    try {
-      int offset = editor.getCaretModel().getOffset();
-      Pair<PsiElement[], PsiElement> pair = ActionUtil
-        .underModalProgress(project, "Resolving Reference...", () -> doSelectCandidate(project, editor, offset));
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
+        PsiElement[] elements = pair.first;
+        PsiElement usage = pair.second;
 
-      PsiElement[] elements = pair.first;
-      PsiElement usage = pair.second;
-
-      if (elements.length != 1) {
-        if (elements.length == 0) {
-          if (usage != null) {
-            startFindUsages(editor, project, usage);
-            return;
+        if (elements.length != 1) {
+          if (elements.length == 0) {
+            if (usage != null) {
+              startFindUsages(editor, project, usage);
+              return;
+            }
           }
+
+          chooseAmbiguousTarget(project, editor, offset, elements, file);
+          return;
         }
 
-        //disable 'no declaration found' notification for keywords
-        if (isKeywordUnderCaret(project, file, offset)) return;
+        PsiElement element = elements[0];
+        if (element == usage) {
+          startFindUsages(editor, project, element);
+          return;
+        }
 
-        chooseAmbiguousTarget(project, editor, offset, elements, file);
-        return;
+        PsiElement navElement = element.getNavigationElement();
+        navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
+        if (navElement != null) {
+          gotoTargetElement(navElement, editor, file);
+        }
       }
-
-      PsiElement element = elements[0];
-      if (element == usage) {
-        startFindUsages(editor, project, element);
-        return;
+      catch (IndexNotReadyException e) {
+        DumbService.getInstance(project).showDumbModeNotification(
+          CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"));
       }
-
-      PsiElement navElement = element.getNavigationElement();
-      navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
-      if (navElement != null) {
-        gotoTargetElement(navElement, editor, file);
-      }
-    }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
-    }
-    finally {
-      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-    }
+    });
   }
 
   @NotNull
   private static Pair<PsiElement[], PsiElement> doSelectCandidate(@NotNull Project project, @NotNull Editor editor, int offset) {
     PsiElement[] elements = findAllTargetElements(project, editor, offset);
-    PsiElement usage = null;
-    if (elements.length != 1) {
-      if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
-        usage = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-      }
+    if (elements.length == 0) {
+      PsiElement usage = suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()
+                         ? findElementToShowUsagesOf(editor, offset)
+                         : null;
       return new Pair<>(elements, usage);
     }
-
-    usage = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-    return new Pair<>(elements, usage);
+    else if (elements.length == 1) {
+      return new Pair<>(elements, findElementToShowUsagesOf(editor, offset));
+    }
+    else {
+      return new Pair<>(elements, null);
+    }
   }
 
   public static void startFindUsages(@NotNull Editor editor, @NotNull Project project, @NotNull PsiElement element) {
+    startFindUsages(editor, project, element, null);
+  }
+
+  public static void startFindUsages(@NotNull Editor editor,
+                                     @NotNull Project project,
+                                     @NotNull PsiElement element,
+                                     @Nullable RelativePoint point) {
     if (DumbService.getInstance(project).isDumb()) {
       AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       String name = action.getTemplatePresentation().getText();
       DumbService.getInstance(project).showDumbModeNotification(ActionUtil.getUnavailableMessage(name, false));
     }
     else {
-      RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
+      RelativePoint popupPosition = point != null ? point : JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+      ShowUsagesAction.startFindUsages(element, popupPosition, editor);
     }
   }
 
@@ -159,8 +159,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     boolean found =
       chooseAmbiguousTarget(project, editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"),
                             elements);
+
     if (!found) {
-      HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to");
+      notifyNowhereToGo(project, editor, currentFile, offset);
     }
   }
 
@@ -200,7 +201,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull String titlePattern,
-                                              @Nullable PsiElement[] elements) {
+                                              PsiElement @Nullable [] elements) {
     Project project = editor.getProject();
     if (project == null) {
       return false;
@@ -214,14 +215,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull String titlePattern,
-                                              @Nullable PsiElement[] elements) {
+                                              PsiElement @Nullable [] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return false;
     }
 
     final PsiElement[] finalElements = elements;
     Pair<PsiElement[], PsiReference> pair =
-      ActionUtil.underModalProgress(project, "Resolving Reference...", () -> doChooseAmbiguousTarget(editor, offset, finalElements));
+      ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference"), () -> doChooseAmbiguousTarget(editor, offset, finalElements));
 
     elements = pair.first;
     PsiReference reference = pair.second;
@@ -256,7 +257,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   @NotNull
   private static Pair<PsiElement[], PsiReference> doChooseAmbiguousTarget(@NotNull Editor editor,
                                                                           int offset,
-                                                                          @Nullable PsiElement[] elements) {
+                                                                          PsiElement @Nullable [] elements) {
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
 
     if (elements == null || elements.length == 0) {
@@ -286,9 +287,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return targets.length == 1 ? targets[0] : null;
   }
 
-  @NotNull
   @VisibleForTesting
-  public static PsiElement[] findAllTargetElements(Project project, Editor editor, int offset) {
+  public static @NotNull PsiElement @NotNull [] findAllTargetElements(Project project, Editor editor, int offset) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -297,8 +297,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return targets != null ? targets : PsiElement.EMPTY_ARRAY;
   }
 
-  @Nullable
-  static PsiElement[] findTargetElementsFromProviders(@NotNull Project project, @NotNull Editor editor, int offset) {
+  static @NotNull PsiElement @Nullable [] findTargetElementsFromProviders(@NotNull Project project, @NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
@@ -306,8 +305,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return GotoDeclarationUtil.findTargetElementsFromProviders(editor, offset, file);
   }
 
-  @Nullable
-  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+  public static @NotNull PsiElement @Nullable [] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
     PsiElement[] fromProviders = findTargetElementsFromProviders(project, editor, offset);
     if (fromProviders == null || fromProviders.length > 0) {
       return fromProviders;
@@ -360,11 +358,73 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     super.update(event);
   }
 
-  static boolean isKeywordUnderCaret(@NotNull Project project, @NotNull PsiFile file, int offset) {
-    final PsiElement elementAtCaret = file.findElementAt(offset);
-    if (elementAtCaret == null) return false;
-    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
-    return namesValidator.isKeyword(elementAtCaret.getText(), project);
+  @Override
+  public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    final PsiReference ref = TargetElementUtil.findReference(editor, offset);
+    final List<PsiElement> resolvedElements = ref == null ? Collections.emptyList() : resolve(ref);
+    final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
+
+    final PsiElement[] targetElements = findTargetElementsNoVS(file.getProject(), editor, offset, false);
+    final PsiElement elementAtPointer = file.findElementAt(TargetElementUtil.adjustOffset(file, editor.getDocument(), offset));
+
+    if (targetElements != null) {
+      if (targetElements.length == 0) {
+        return null;
+      }
+      else if (targetElements.length == 1) {
+        if (targetElements[0] != resolvedElement && elementAtPointer != null && targetElements[0].isPhysical()) {
+          return ref != null ? new SingleTargetElementInfo(ref, targetElements[0])
+                             : new SingleTargetElementInfo(elementAtPointer, targetElements[0]);
+        }
+      }
+      else {
+        return elementAtPointer != null ? new MultipleTargetElementsInfo(elementAtPointer) : null;
+      }
+    }
+
+    if (resolvedElements.size() == 1) {
+      return new SingleTargetElementInfo(ref, resolvedElements.get(0));
+    }
+    if (resolvedElements.size() > 1) {
+      return elementAtPointer != null ? new MultipleTargetElementsInfo(elementAtPointer, ref) : null;
+    }
+
+    final PsiElement element = findElementToShowUsagesOf(editor, offset);
+    if (element instanceof PsiNameIdentifierOwner) {
+      PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
+      if (identifier != null && identifier.isValid()) {
+        return new BaseCtrlMouseInfo(identifier) {
+          @Override
+          public @NotNull CtrlMouseDocInfo getDocInfo() {
+            String name = UsageViewUtil.getType(element) + " '" + UsageViewUtil.getShortName(element) + "'";
+            return new CtrlMouseDocInfo("Show usages of " + name, null);
+          }
+
+          @Override
+          public boolean isValid() {
+            return element.isValid();
+          }
+        };
+      }
+    }
+    return null;
   }
 
+  @NotNull
+  private static List<PsiElement> resolve(@NotNull PsiReference ref) {
+    // IDEA-56727 try resolve first as in GotoDeclarationAction
+    PsiElement resolvedElement = ref.resolve();
+
+    if (resolvedElement == null && ref instanceof PsiPolyVariantReference) {
+      List<PsiElement> result = new ArrayList<>();
+      final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
+      for (ResolveResult resolveResult : psiElements) {
+        if (resolveResult.getElement() != null) {
+          result.add(resolveResult.getElement());
+        }
+      }
+      return result;
+    }
+    return resolvedElement == null ? Collections.emptyList() : Collections.singletonList(resolvedElement);
+  }
 }

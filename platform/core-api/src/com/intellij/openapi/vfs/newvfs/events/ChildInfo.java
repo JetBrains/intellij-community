@@ -6,10 +6,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 /** An internal class for data transfer from refresh worker to persistent FS impl, do not use. */
 @ApiStatus.Internal
 public interface ChildInfo {
   ChildInfo[] EMPTY_ARRAY = new ChildInfo[0];
+  Comparator<ChildInfo> BY_ID = Comparator.comparing(o->o.getId());
 
   int getId();
 
@@ -19,7 +22,7 @@ public interface ChildInfo {
 
   String getSymLinkTarget();
 
-  @Nullable("null means children are unknown") ChildInfo[] getChildren();
+  ChildInfo @Nullable("null means children are unknown") [] getChildren();
 
   FileAttributes getFileAttributes();
 }

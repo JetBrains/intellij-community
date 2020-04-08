@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -13,9 +13,6 @@ import org.junit.Assert;
 import java.nio.file.Path;
 import java.util.Map;
 
-/**
- * @author mike
- */
 public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   protected final Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> myFixtureBuilderProviders = new THashMap<>();
 

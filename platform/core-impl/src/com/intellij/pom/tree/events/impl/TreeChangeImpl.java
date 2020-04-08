@@ -163,8 +163,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   }
 
   @Override
-  @NotNull
-  public TreeElement[] getAffectedChildren() {
+  public TreeElement @NotNull [] getAffectedChildren() {
     return getAllChanges().keySet().toArray(TreeElement.EMPTY_ARRAY);
   }
 

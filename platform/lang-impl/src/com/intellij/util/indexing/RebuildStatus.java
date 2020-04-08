@@ -12,15 +12,16 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author peter
  */
-enum RebuildStatus {
+public enum RebuildStatus {
   OK,
   REQUIRES_REBUILD,
   DOING_REBUILD;
 
   private static final Map<ID<?, ?>, AtomicReference<RebuildStatus>> ourRebuildStatus = new THashMap<>();
+  private static volatile boolean ourRebuildAfterInitialization;
 
-  static void registerIndex(ID<?, ?> indexId) {
-    ourRebuildStatus.put(indexId, new AtomicReference<>(OK));
+  public static void registerIndex(ID<?, ?> indexId) {
+    ourRebuildStatus.put(indexId, new AtomicReference<>(ourRebuildAfterInitialization ? REQUIRES_REBUILD : OK));
   }
 
   static boolean isOk(ID<?, ?> indexId) {
@@ -56,5 +57,14 @@ enum RebuildStatus {
       ProgressManager.checkCanceled();
       TimeoutUtil.sleep(50);
     }
+  }
+
+  static void reset() {
+    ourRebuildAfterInitialization = false;
+    ourRebuildStatus.clear();
+  }
+
+  static void rebuildAfterInitialization() {
+    ourRebuildAfterInitialization = true;
   }
 }

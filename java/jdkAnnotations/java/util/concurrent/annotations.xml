@@ -117,6 +117,16 @@
   <item name='java.util.concurrent.ConcurrentHashMap V remove(java.lang.Object) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.concurrent.ConcurrentLinkedDeque ConcurrentLinkedDeque()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.concurrent.ConcurrentLinkedQueue ConcurrentLinkedQueue()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.concurrent.ConcurrentMap V putIfAbsent(K, V) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

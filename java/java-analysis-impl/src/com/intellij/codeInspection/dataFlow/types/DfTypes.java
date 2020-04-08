@@ -468,7 +468,11 @@ public class DfTypes {
       if (type.equals(PsiType.FLOAT)) return FLOAT;
       if (type.equals(PsiType.NULL)) return NULL;
     }
-    return new DfGenericObjectType(Collections.emptySet(), TypeConstraints.instanceOf(type),
+    TypeConstraint constraint = TypeConstraints.instanceOf(type);
+    if (constraint == TypeConstraints.BOTTOM) {
+      return nullability == Nullability.NOT_NULL ? BOTTOM : NULL;
+    }
+    return new DfGenericObjectType(Collections.emptySet(), constraint,
                                    DfaNullability.fromNullability(nullability), Mutability.UNKNOWN, null, BOTTOM, false);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -40,8 +40,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   @NotNull
-  public abstract Collection<? extends AbstractTreeNode> getChildren();
-
+  public abstract Collection<? extends AbstractTreeNode<?>> getChildren();
 
   protected boolean hasProblemFileBeneath() {
     return false;
@@ -53,7 +52,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   @Override
   public PresentableNodeDescriptor getChildToHighlightAt(int index) {
-    final Collection<? extends AbstractTreeNode> kids = getChildren();
+    final Collection<? extends AbstractTreeNode<?>> kids = getChildren();
     int i = 0;
     for (final AbstractTreeNode<?> kid : kids) {
       if (i == index) return kid;

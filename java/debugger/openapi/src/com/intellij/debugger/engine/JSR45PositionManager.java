@@ -3,7 +3,7 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
@@ -160,7 +160,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
         }
         catch (InternalError ignored) {
           myDebugProcess.printToConsole(
-            DebuggerBundle.message("internal.error.locations.of.line", type.name()));
+            JavaDebuggerBundle.message("internal.error.locations.of.line", type.name()));
         }
         return null;
       }

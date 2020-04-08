@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.extractor.ProxyExtractor;
 import com.intellij.debugger.memory.agent.parsers.BooleanParser;
 import com.intellij.debugger.memory.agent.parsers.GcRootsPathsParser;
@@ -32,8 +33,7 @@ class MemoryAgentOperations {
     return LongValueParser.INSTANCE.parse(result);
   }
 
-  @NotNull
-  static long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
+  static long @NotNull [] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
     throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, references);
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Collections.singletonList(array));
@@ -136,7 +136,7 @@ class MemoryAgentOperations {
                                   @NotNull List<? extends Value> args) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     long start = System.currentTimeMillis();
-    List<Method> methods = proxyType.methodsByName(methodName);
+    List<Method> methods = DebuggerUtilsEx.declaredMethodsByName(proxyType, methodName);
     if (methods.isEmpty()) {
       throw EvaluateExceptionUtil.createEvaluateException("Could not find method with such name: " + methodName);
     }
@@ -157,8 +157,7 @@ class MemoryAgentOperations {
     return result;
   }
 
-  @NotNull
-  private static byte[] readUtilityClass() {
+  private static byte @NotNull [] readUtilityClass() {
     return new ProxyExtractor().extractProxy();
   }
 

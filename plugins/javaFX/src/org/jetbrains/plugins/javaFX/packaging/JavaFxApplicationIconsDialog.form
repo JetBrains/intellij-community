@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="153bd"/>
-          <text value="&amp;Linux Icon"/>
+          <text resource-bundle="messages/JavaFXBundle" key="javafx.app.dialog.linux.icon"/>
         </properties>
       </component>
       <vspacer id="3b423">
@@ -34,7 +34,7 @@
         </constraints>
         <properties>
           <labelFor value="4c06e"/>
-          <text value="&amp;Mac Icon"/>
+          <text resource-bundle="messages/JavaFXBundle" key="javafx.app.dialog.mac.icon"/>
         </properties>
       </component>
       <component id="4c06e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myMacIconPath">
@@ -49,7 +49,7 @@
         </constraints>
         <properties>
           <labelFor value="8c868"/>
-          <text value="&amp;Windows Icon"/>
+          <text resource-bundle="messages/JavaFXBundle" key="javafx.app.dialog.windows.icon"/>
         </properties>
       </component>
       <component id="8c868" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWindowsIconPath">

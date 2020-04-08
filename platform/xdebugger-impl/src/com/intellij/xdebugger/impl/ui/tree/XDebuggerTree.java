@@ -47,9 +47,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override
@@ -131,6 +128,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final XValueMarkers<?,?> myValueMarkers;
   private final TreeExpansionListener myTreeExpansionListener;
   private final XDebuggerPinToTopManager myPinToTopManager;
+  XDebuggerTreeSpeedSearch mySpeedSearch;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -178,7 +176,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         return expandIfEllipsis();
       }
     }.installOn(this);
@@ -193,12 +191,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
     });
 
-    if (Registry.is("debugger.variablesView.rss")) {
-      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
-    }
-    else {
-      new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
-    }
+    mySpeedSearch = new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
 
     final ActionManager actionManager = ActionManager.getInstance();
     addMouseListener(new PopupHandler() {

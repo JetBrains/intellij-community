@@ -54,21 +54,21 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
     val project = getProject()
     Testable()
       .suspendEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL) }
+      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL, true) }
       .flushEDT()
       .execute { enterModal(myApplicationModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current()) }
+      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current(), true) }
       .flushEDT()
       .execute { enterModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL) }
+      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL, true) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current()) }
+      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current(), true) }
       .flushEDT()
       .execute { leaveModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL) }
+      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL, true) }
       .flushEDT()
       .execute { leaveModal(myApplicationModalDialog) }
       .flushEDT()

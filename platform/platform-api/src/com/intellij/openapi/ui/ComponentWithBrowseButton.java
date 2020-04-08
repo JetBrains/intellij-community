@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,7 +9,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -19,10 +19,11 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +35,14 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance(ComponentWithBrowseButton.class);
-
   private final Comp myComponent;
   private final FixedSizeButton myBrowseButton;
   private boolean myButtonEnabled = true;
+
+  @ApiStatus.Internal
+  public static boolean isUseInlineBrowserButton() {
+    return !LoadingState.COMPONENTS_REGISTERED.isOccurred() || Experiments.getInstance().isFeatureEnabled("inline.browse.button");
+  }
 
   public ComponentWithBrowseButton(@NotNull Comp component, @Nullable ActionListener browseActionListener) {
     super(new BorderLayout(SystemInfo.isMac || StartupUiUtil.isUnderDarcula() ? 0 : 2, 0));
@@ -46,7 +50,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
     setFocusable(false);
-    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.getInstance().isFeatureEnabled("inline.browse.button");
+    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && isUseInlineBrowserButton();
     if (inlineBrowseButton) {
       ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
         getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners));
@@ -145,8 +149,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor) {
@@ -157,8 +161,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
    */
   @Deprecated
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
@@ -216,8 +220,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
-    public BrowseFolderActionListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+    public BrowseFolderActionListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,

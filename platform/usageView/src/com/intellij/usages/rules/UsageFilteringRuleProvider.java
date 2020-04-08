@@ -25,11 +25,9 @@ import org.jetbrains.annotations.NotNull;
 public interface UsageFilteringRuleProvider {
   ExtensionPointName<UsageFilteringRuleProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageFilteringRuleProvider");
 
-  @NotNull
-  UsageFilteringRule[] getActiveRules(@NotNull Project project);
+  UsageFilteringRule @NotNull [] getActiveRules(@NotNull Project project);
 
-  @NotNull
-  AnAction[] createFilteringActions(@NotNull UsageView view);
+  AnAction @NotNull [] createFilteringActions(@NotNull UsageView view);
 
   Topic<Runnable> RULES_CHANGED = new Topic<>("usage view rules changed", Runnable.class);
 }

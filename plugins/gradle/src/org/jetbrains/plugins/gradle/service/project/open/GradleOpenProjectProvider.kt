@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -18,25 +17,20 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.EnvironmentUtil
 import com.intellij.util.text.nullize
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.startup.GradleUnlinkedProjectProcessor
+import org.jetbrains.plugins.gradle.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants.BUILD_FILE_EXTENSIONS
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.GradleEnvironment
-import org.jetbrains.plugins.gradle.util.GradleUtil
 
 internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   override fun isProjectFile(file: VirtualFile): Boolean {
@@ -48,6 +42,7 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     val gradleProjectSettings = GradleProjectSettings()
     setupGradleSettings(gradleProjectSettings, projectDirectory, project, projectSdk)
     attachGradleProjectAndRefresh(gradleProjectSettings, project)
+    validateJavaHome(project, projectDirectory, gradleProjectSettings.resolveGradleVersion())
   }
 
   override fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
@@ -70,7 +65,7 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
                                         .use(MODAL_SYNC))
     ExternalSystemUtil.refreshProject(externalProjectPath,
                                       ImportSpecBuilder(project, SYSTEM_ID)
-                                        .callback(createFinalImportCallback(project, settings)))
+                                        .callback(createFinalImportCallback(project, externalProjectPath)))
   }
 
   fun setupGradleSettings(settings: GradleProjectSettings, projectDirectory: String, project: Project, projectSdk: Sdk? = null) {
@@ -91,7 +86,7 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE?.let(DistributionType::valueOf)
                        ?: DistributionType.DEFAULT_WRAPPED
     gradleHome = GradleEnvironment.Headless.GRADLE_HOME ?: suggestGradleHome()
-    gradleJvm = suggestGradleJvm(project, projectSdk, resolveGradleVersion())
+    gradleJvm = suggestGradleJvm(project, projectSdk, projectDirectory, resolveGradleVersion())
   }
 
   private fun suggestGradleHome(): String? {
@@ -102,91 +97,36 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     return FileUtil.toCanonicalPath(gradleHome.path)
   }
 
-  private fun suggestGradleJvm(project: Project, projectSdk: Sdk?, gradleVersion: GradleVersion): String? {
-    with(SettingsContext(project, projectSdk, gradleVersion)) {
-      return getGradleJdkReference()
-             ?: getProjectJdkReference()
-             ?: getMostRecentJdkReference()
-             ?: getJavaHomeJdkReference()
-             ?: getAndAddExternalJdkReference()
-    }
-  }
-
-  private class SettingsContext(val project: Project, val projectSdk: Sdk?, val gradleVersion: GradleVersion)
-
-  private fun SettingsContext.getGradleJdkReference(): String? {
-    val settings = ExternalSystemApiUtil.getSettings(project, SYSTEM_ID)
-    return settings.getLinkedProjectsSettings()
-      .filterIsInstance<GradleProjectSettings>()
-      .mapNotNull { it.gradleJvm }
-      .firstOrNull()
-  }
-
-  private fun SettingsContext.getJavaHomeJdkReference(): String? {
-    val javaHome = EnvironmentUtil.getEnvironmentMap()["JAVA_HOME"] ?: return null
-    val jdk = GradleJdk.valueOf(javaHome) ?: return null
-    if (!jdk.isSupported(gradleVersion)) return null
-    val simpleJavaSdkType = SimpleJavaSdkType.getInstance()
-    val sdkName = simpleJavaSdkType.suggestSdkName(null, javaHome)
-    simpleJavaSdkType.createJdk(sdkName, javaHome)
-    return ExternalSystemJdkUtil.USE_JAVA_HOME
-  }
-
-  private fun SettingsContext.getProjectJdkReference(): String? {
-    val projectSdk = projectSdk ?: ProjectRootManager.getInstance(project).projectSdk
-    val projectJdk = projectSdk?.let(GradleJdk.Companion::valueOf) ?: return null
-    if (!projectJdk.isSupported(gradleVersion)) return null
-    return ExternalSystemJdkUtil.USE_PROJECT_JDK
-  }
-
-  private fun SettingsContext.getMostRecentJdkReference(): String? {
-    val projectJdkTable = ProjectJdkTable.getInstance()
-    val javaSdkType = ExternalSystemJdkUtil.getJavaSdkType()
-    val jdk = projectJdkTable.getSdksOfType(javaSdkType)
-      .mapNotNull { GradleJdk.valueOf(it) }
-      .filter { it.isSupported(gradleVersion) }
-      .maxBy { it.version }
-    return jdk?.name
-  }
-
-  private fun SettingsContext.getAndAddExternalJdkReference(): String? {
-    val jdk = ExternalSystemJdkUtil.suggestJdkHomePaths()
-      .mapNotNull { GradleJdk.valueOf(it) }
-      .filter { it.isSupported(gradleVersion) }
-      .maxBy { it.version }
-    if (jdk == null) return null
-    return ExternalSystemJdkUtil.addJdk(jdk.homePath).name
-  }
-
-  private fun createFinalImportCallback(project: Project, projectSettings: ExternalProjectSettings): ExternalProjectRefreshCallback {
+  private fun createFinalImportCallback(project: Project, externalProjectPath: String): ExternalProjectRefreshCallback {
     return object : ExternalProjectRefreshCallback {
       override fun onSuccess(externalProject: DataNode<ProjectData>?) {
         if (externalProject == null) return
-        val selectDataTask = {
-          val projectInfo = InternalExternalProjectInfo(SYSTEM_ID, projectSettings.externalProjectPath, externalProject)
-          val dialog = ExternalProjectDataSelectorDialog(project, projectInfo)
-          if (dialog.hasMultipleDataToSelect()) {
-            dialog.showAndGet()
-          }
-          else {
-            Disposer.dispose(dialog.disposable)
-          }
-        }
-        val importTask = {
-          ProjectDataManager.getInstance().importData(externalProject, project, false)
-        }
-        val showSelectiveImportDialog = GradleSettings.getInstance(project).showSelectiveImportDialogOnInitialImport()
-        val application = ApplicationManager.getApplication()
-        if (showSelectiveImportDialog && !application.isHeadlessEnvironment) {
-          application.invokeLater {
-            selectDataTask()
-            application.executeOnPooledThread(importTask)
-          }
+        selectDataToImport(project, externalProjectPath, externalProject)
+        importData(project, externalProject)
+        updateGradleJvm(project, externalProjectPath)
+      }
+    }
+  }
+
+  private fun selectDataToImport(project: Project, externalProjectPath: String, externalProject: DataNode<ProjectData>) {
+    val settings = GradleSettings.getInstance(project)
+    val showSelectiveImportDialog = settings.showSelectiveImportDialogOnInitialImport()
+    val application = ApplicationManager.getApplication()
+    if (showSelectiveImportDialog && !application.isHeadlessEnvironment) {
+      application.invokeAndWait {
+        val projectInfo = InternalExternalProjectInfo(SYSTEM_ID, externalProjectPath, externalProject)
+        val dialog = ExternalProjectDataSelectorDialog(project, projectInfo)
+        if (dialog.hasMultipleDataToSelect()) {
+          dialog.showAndGet()
         }
         else {
-          importTask()
+          Disposer.dispose(dialog.disposable)
         }
       }
     }
+  }
+
+  private fun importData(project: Project, externalProject: DataNode<ProjectData>) {
+    ProjectDataManager.getInstance().importData(externalProject, project, false)
   }
 }

@@ -68,7 +68,7 @@ final class HashedBlockOutputStream extends OutputStream {
   }
 
   @Override
-  public void write(@NotNull byte[] b, int offset, int count) throws IOException {
+  public void write(byte @NotNull [] b, int offset, int count) throws IOException {
     put(b, offset, count);
   }
 

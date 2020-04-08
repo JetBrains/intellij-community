@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.MultiMap
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
-import javax.swing.JComponent
+import javax.swing.*
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
   companion object {
@@ -55,11 +55,11 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
-  override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = hashMapOf()
-  override var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap()
-  override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
-  override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
-  override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
+  override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
+  override var customValidationRequestors: MutableMap<JComponent, MutableList<(() -> Unit) -> Unit>> = linkedMapOf()
+  override var applyCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  override var resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  override var isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
 
   val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
@@ -71,7 +71,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     try {
       body()
 
-      resetCallbacks.add {
+      resetCallbacks.getOrPut(null, { SmartList() }).add {
         selectRadioButtonInGroup(buttonGroup)
       }
 
@@ -103,8 +103,12 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   // it doesn't lead to any issue.
   val columnConstraints = AC()
 
+  // MigLayout in any case always creates CC, so, create instance even if it is not required
+  private val Component.constraints: CC
+    get() = componentConstraints.getOrPut(this) { CC() }
+
   fun updateComponentConstraints(component: Component, callback: CC.() -> Unit) {
-    componentConstraints.getOrPut(component) { CC() }.callback()
+    component.constraints.callback()
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
@@ -136,18 +140,16 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     lc.hideMode = 2
 
     val rowConstraints = AC()
-    (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
+    (container as JComponent).putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
       override fun layoutContainer(parent: Container) {
         if (!isLayoutInsetsAdjusted) {
           isLayoutInsetsAdjusted = true
           if (container.getClientProperty(DialogWrapper.DIALOG_CONTENT_PANEL_PROPERTY) != null) {
-            val topBottom = createUnitValue(spacing.dialogTopBottom, false)
-            val leftRight = createUnitValue(spacing.dialogLeftRight, true)
             // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
             // but instead set insets to our content panel (so, child components are not clipped)
-            lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
+            lc.setInsets(spacing.dialogTopBottom, spacing.dialogLeftRight)
           }
         }
 
@@ -155,75 +157,73 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
       }
     }
 
+    configureGapBetweenColumns(rootRow)
+
+    val physicalRows = collectPhysicalRows(rootRow)
+
+    configureGapsBetweenRows(physicalRows)
+
     val isNoGrid = layoutConstraints.contains(LCFlags.noGrid)
+    if (isNoGrid) {
+      physicalRows.flatMap { it.components }.forEach { component ->
+        container.add(component, component.constraints)
+      }
+    }
+    else {
+      for ((rowIndex, row) in physicalRows.withIndex()) {
+        if (row.noGrid) {
+          rowConstraints.noGrid(rowIndex)
+        }
+        else {
+          row.gapAfter?.let {
+            rowConstraints.gap(it, rowIndex)
+          }
+        }
+        // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
+        // so, we set for each row to make sure that constraints from previous row will be not applied
+        rowConstraints.align("baseline", rowIndex)
 
-    var rowIndex = 0
-    fun configureComponents(row: MigLayoutRow) {
-      val lastComponent = row.components.lastOrNull()
-      for ((index, component) in row.components.withIndex()) {
-        // MigLayout in any case always creates CC, so, create instance even if it is not required
-        val cc = componentConstraints.get(component) ?: CC()
+        for ((index, component) in row.components.withIndex()) {
+          val cc = component.constraints
 
-        if (isNoGrid) {
+          // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
+          // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
+          if (index == row.components.size - 1) {
+            cc.spanX()
+            cc.isWrap = true
+          }
+
+          if (index >= row.rightIndex) {
+            cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
+          }
+
           container.add(component, cc)
-          continue
-        }
-
-        // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
-        // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
-        if (component === lastComponent) {
-          cc.spanX()
-          cc.isWrap = true
-        }
-
-        if (index == 0) {
-          if (row.noGrid) {
-            rowConstraints.noGrid(rowIndex)
-          }
-          else {
-            row.gapAfter?.let {
-              rowConstraints.gap(it, rowIndex)
-            }
-          }
-          // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
-          // so, we set for each row to make sure that constraints from previous row will be not applied
-          rowConstraints.align("baseline", rowIndex)
-        }
-
-        if (index >= row.rightIndex) {
-          cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
-        }
-
-        container.add(component, cc)
-      }
-
-      rowIndex++
-    }
-
-    fun processRows(rows: List<MigLayoutRow>) {
-      for (row in rows) {
-        // configureComponents will increase rowIndex, but if row doesn't have components, it is synthetic row (e.g. titled row that contains only sub rows)
-        if (row.components.isNotEmpty()) {
-          configureComponents(row)
-        }
-        row.subRows?.let {
-          processRows(it)
         }
       }
-    }
-
-    rootRow.subRows?.let {
-      configureGapBetweenColumns(it)
-      processRows(it)
     }
 
     // do not hold components
     componentConstraints.clear()
   }
 
-  private fun configureGapBetweenColumns(subRows: List<MigLayoutRow>) {
+  private fun collectPhysicalRows(rootRow: MigLayoutRow): List<MigLayoutRow> {
+    val result = mutableListOf<MigLayoutRow>()
+    fun collect(subRows: List<MigLayoutRow>?) {
+      subRows?.forEach { row ->
+        // skip synthetic rows that don't have components (e.g. titled row that contains only sub rows)
+        if (row.components.isNotEmpty()) {
+          result.add(row)
+        }
+        collect(row.subRows)
+      }
+    }
+    collect(rootRow.subRows)
+    return result
+  }
+
+  private fun configureGapBetweenColumns(rootRow: MigLayoutRow) {
     var startColumnIndexToApplyHorizontalGap = 0
-    if (subRows.any { it.isLabeledIncludingSubRows }) {
+    if (rootRow.isLabeledIncludingSubRows) {
       // using columnConstraints instead of component gap allows easy debug (proper painting of debug grid)
       columnConstraints.gap("${spacing.labelColumnHorizontalGap}px!", 0)
       columnConstraints.grow(0f, 0)
@@ -235,36 +235,64 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
       columnConstraints.gap(gapAfter, i)
     }
   }
-}
 
-internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
-  val unitValue = createUnitValue(value, isHorizontal)
-  return BoundSize(unitValue, unitValue, null, false, null)
-}
+  private fun configureGapsBetweenRows(physicalRows: List<MigLayoutRow>) {
+    for (rowIndex in physicalRows.indices) {
+      if (rowIndex == 0) continue
 
-fun createLayoutConstraints(): LC {
-  val lc = LC()
-  lc.gridGapX = gapToBoundSize(0, true)
-  lc.setInsets(0)
-  return lc
-}
+      val prevRow = physicalRows[rowIndex - 1]
+      val nextRow = physicalRows[rowIndex]
 
-fun LC.setInsets(value: Int) {
-  val h = createUnitValue(value, isHorizontal = true)
-  val v = createUnitValue(value, isHorizontal = false)
-  insets = arrayOf(v, h, v, h)
-}
+      val prevRowType = getRowType(prevRow)
+      val nextRowType = getRowType(nextRow)
+      if (prevRowType.isCheckboxRow && nextRowType.isCheckboxRow &&
+          (prevRowType == RowType.CHECKBOX_TALL || nextRowType == RowType.CHECKBOX_TALL)) {
+        // ugly patching to make UI pretty IDEA-234078
+        if (prevRow.gapAfter == null &&
+            prevRow.components.all { it.constraints.vertical.gapAfter == null } &&
+            nextRow.components.all { it.constraints.vertical.gapBefore == null }) {
+          prevRow.gapAfter = "0px!"
 
-fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
-  val lc = LC()
-  lc.gridGapX = gapToBoundSize(horizontalGap, isHorizontal = true)
-  lc.gridGapY = gapToBoundSize(verticalGap, isHorizontal = false)
-  lc.setInsets(0)
-  return lc
-}
+          for ((index, component) in prevRow.components.withIndex()) {
+            if (index == 0) {
+              component.constraints.gapBottom("${spacing.componentVerticalGap}px!")
+            }
+            else {
+              component.constraints.gapBottom("${component.insets.bottom}px!")
+            }
+          }
+          for ((index, component) in nextRow.components.withIndex()) {
+            if (index == 0) {
+              component.constraints.gapTop("${spacing.componentVerticalGap}px!")
+            }
+            else {
+              component.constraints.gapTop("${component.insets.top}px!")
+            }
+          }
+        }
+      }
+    }
+  }
 
-private fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
-  return UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
+  private fun getRowType(row: MigLayoutRow): RowType {
+    if (row.components[0] is JCheckBox) {
+      if (row.components.all {
+          it is JCheckBox || it is JLabel
+        }) return RowType.CHECKBOX
+      if (row.components.all {
+          it is JCheckBox || it is JLabel ||
+          it is JTextField || it is JPasswordField ||
+          it is JComboBox<*>
+        }) return RowType.CHECKBOX_TALL
+    }
+    return RowType.GENERIC
+  }
+
+  private enum class RowType {
+    GENERIC, CHECKBOX, CHECKBOX_TALL;
+
+    val isCheckboxRow get() = this == CHECKBOX || this == CHECKBOX_TALL
+  }
 }
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -41,7 +41,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
-      throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");
+      return null;
     }
     if (myFlat) {
       Element element = (Element)context;

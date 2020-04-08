@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -18,14 +19,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public class Utils{
+public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
-  @NonNls public static final String NOTHING_HERE = "Nothing here";
-  public static final AnAction EMPTY_MENU_FILLER = new AnAction(NOTHING_HERE) {
+  @NonNls public static final String NOTHING_HERE = CommonBundle.message("empty.menu.filler");
+  public static final AnAction EMPTY_MENU_FILLER = new AnAction(CommonBundle.messagePointer("empty.menu.filler")) {
 
     {
       getTemplatePresentation().setEnabled(false);

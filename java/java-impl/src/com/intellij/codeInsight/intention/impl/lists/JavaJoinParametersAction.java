@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.lists;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
@@ -41,7 +42,7 @@ public class JavaJoinParametersAction extends AbstractJavaJoinListAction<PsiPara
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Put parameters on one line";
+    return JavaBundle.message("intention.family.put.parameters.on.one.line");
   }
 
   @NotNull

@@ -13,9 +13,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 class ThemeJsonNamedColorPsiReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (!(element instanceof JsonLiteral)) return PsiReference.EMPTY_ARRAY;
 
     JsonLiteral literal = (JsonLiteral)element;

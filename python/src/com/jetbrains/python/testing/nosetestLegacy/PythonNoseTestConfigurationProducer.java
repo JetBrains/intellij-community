@@ -46,6 +46,6 @@ public final class PythonNoseTestConfigurationProducer extends PythonTestLegacyC
 
   @Override
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
-    return PythonUnitTestUtil.isTestFunction(pyFunction, ThreeState.NO, null);
+    return PythonUnitTestDetectorsBasedOnSettings.isTestFunction(pyFunction, ThreeState.NO, null);
   }
 }

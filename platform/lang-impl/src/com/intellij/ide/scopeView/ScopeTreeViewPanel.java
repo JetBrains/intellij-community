@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
+import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -59,7 +60,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -254,8 +254,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     });
   }
 
-  @NotNull
-  private PsiElement[] getSelectedPsiElements() {
+  private PsiElement @NotNull [] getSelectedPsiElements() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
       Set<PsiElement> result = new HashSet<>();
@@ -298,9 +297,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     }, settings);
     myTree.setPaintBusy(true);
     myBuilder.setTree(myTree);
-    myTree.getEmptyText().setText("Loading...");
+    myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myActionCallback = new ActionCallback();
-    UIUtil.putClientProperty(myTree, TreeState.CALLBACK, new WeakReference<>(myActionCallback));
+    ComponentUtil.putClientProperty(myTree, TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
     myTree.setModel(myBuilder.build(myProject, true, () -> {
       myTree.setPaintBusy(false);
       myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -383,8 +382,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     return null;
   }
 
-  @Nullable
-  private Module[] getSelectedModules() {
+  private Module @Nullable [] getSelectedModules() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
       Set<Module> result = new HashSet<>();
@@ -786,9 +784,8 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       return null;
     }
 
-    @NotNull
     @Override
-    public PsiDirectory[] getDirectories() {
+    public PsiDirectory @NotNull [] getDirectories() {
       PsiDirectory directory = getDirectory();
       return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
     }
@@ -832,12 +829,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private class MyProblemListener implements ProblemListener {
     @Override
     public void problemsAppeared(@NotNull VirtualFile file) {
-      addNode(file, ProblemsScope.NAME);
+      addNode(file, ProblemsScope.getNameText());
     }
 
     @Override
     public void problemsDisappeared(@NotNull VirtualFile file) {
-      removeNode(file, ProblemsScope.NAME);
+      removeNode(file, ProblemsScope.getNameText());
     }
   }
 

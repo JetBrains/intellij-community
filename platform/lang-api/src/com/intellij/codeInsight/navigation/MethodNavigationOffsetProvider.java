@@ -26,6 +26,5 @@ import org.jetbrains.annotations.Nullable;
 public interface MethodNavigationOffsetProvider {
   ExtensionPointName<MethodNavigationOffsetProvider> EP_NAME = ExtensionPointName.create("com.intellij.methodNavigationOffsetProvider");
 
-  @Nullable
-  int[] getMethodNavigationOffsets(PsiFile file, int caretOffset);
+  int @Nullable [] getMethodNavigationOffsets(PsiFile file, int caretOffset);
 }

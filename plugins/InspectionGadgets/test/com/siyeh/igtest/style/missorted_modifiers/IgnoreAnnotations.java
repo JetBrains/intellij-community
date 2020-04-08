@@ -5,7 +5,7 @@ class IgnoreAnnotations {
 
   @TestAnnotation1 private final String foo = ""; // TYPE_USE annotation
   private final @TestAnnotation2 String bar = ""; // FIELD annotation
-  <warning descr="Missorted modifiers 'private @TestAnnotation3 final'">private @TestAnnotation3 final</warning> String baz = "";
+  private <warning descr="Missorted modifiers '@TestAnnotation3 final'">@TestAnnotation3</warning> final String baz = "";
 
   @Target(ElementType.TYPE_USE)
   public @interface TestAnnotation1 {

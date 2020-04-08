@@ -12,9 +12,6 @@ import org.jetbrains.jps.appengine.model.impl.AppEngineModuleExtensionProperties
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineFacetConfiguration implements FacetConfiguration, PersistentStateComponent<AppEngineModuleExtensionProperties> {
   private AppEngineModuleExtensionProperties myProperties = new AppEngineModuleExtensionProperties();
 

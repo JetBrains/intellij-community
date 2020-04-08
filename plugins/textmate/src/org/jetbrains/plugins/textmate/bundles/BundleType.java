@@ -47,8 +47,7 @@ public enum BundleType {
     return mySnippetsPath;
   }
 
-  @NotNull
-  String[] getSnippetFileExtensions() {
+  String @NotNull [] getSnippetFileExtensions() {
     return mySnippetFileExtensions;
   }
 

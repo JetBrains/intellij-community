@@ -28,9 +28,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerTreeNode implements TreeNode {
   protected final XDebuggerTree myTree;
   protected final XDebuggerTreeNode myParent;

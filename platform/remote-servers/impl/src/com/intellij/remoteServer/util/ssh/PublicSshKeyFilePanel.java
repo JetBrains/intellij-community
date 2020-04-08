@@ -17,6 +17,7 @@ package com.intellij.remoteServer.util.ssh;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.util.TooltipUtil;
 import com.intellij.ui.HyperlinkLabel;
 
@@ -32,7 +33,8 @@ public class PublicSshKeyFilePanel {
   private JPanel myMainPanel;
 
   public PublicSshKeyFilePanel() {
-    myPublicSshKeyFileField.addBrowseFolderListener("SSH key file", "Select public SSH key file", null,
+    myPublicSshKeyFileField.addBrowseFolderListener(CloudBundle.message("button.browse.title.ssh.key.file"),
+                                                    CloudBundle.message("dialog.message.select.public.ssh.key.file"), null,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
   }
 

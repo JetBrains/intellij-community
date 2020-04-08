@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.util.io.URLUtil;
@@ -8,9 +8,6 @@ import com.jetbrains.python.debugger.PyReferringObjectsValue;
 
 import java.util.List;
 
-/**
- * @author traff
- */
 public class GetReferrersCommand extends RunCustomOperationCommand<List<PyDebugValue>> {
 
   public GetReferrersCommand(RemoteDebugger target, String threadId, String frameId, PyReferringObjectsValue value) {

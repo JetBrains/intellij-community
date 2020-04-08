@@ -30,9 +30,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
   private Artifact myArtifact;
   private final ArtifactEditorEx myArtifactEditor;
@@ -75,7 +72,7 @@ public abstract class SourceItemNodeBase extends ArtifactsTreeNode {
 
   @Contract(pure = true)
   private static boolean isAvailable(@NotNull PackagingSourceItem item, @NotNull ArtifactEditorContext context,
-                                     @NotNull PackagingSourceItemFilter[] filters) {
+                                     PackagingSourceItemFilter @NotNull [] filters) {
     for (PackagingSourceItemFilter filter : filters) {
       if (!filter.isAvailable(item, context)) {
         return false;

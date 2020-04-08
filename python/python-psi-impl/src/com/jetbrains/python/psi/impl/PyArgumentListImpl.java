@@ -53,8 +53,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @Override
-  @NotNull
-  public PyExpression[] getArguments() {
+  public PyExpression @NotNull [] getArguments() {
     return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 

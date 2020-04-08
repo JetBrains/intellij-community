@@ -64,16 +64,14 @@ public interface PsiDirectory extends PsiFileSystemItem {
    *
    * @return the array of subdirectories.
    */
-  @NotNull
-  PsiDirectory[] getSubdirectories();
+  PsiDirectory @NotNull [] getSubdirectories();
 
   /**
    * Returns the list of files in the directory.
    *
    * @return the array of files.
    */
-  @NotNull
-  PsiFile[] getFiles();
+  PsiFile @NotNull [] getFiles();
 
   /**
    * Finds the subdirectory of this directory with the specified name.

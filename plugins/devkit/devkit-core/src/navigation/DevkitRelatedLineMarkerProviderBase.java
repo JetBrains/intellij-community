@@ -31,8 +31,8 @@ import java.util.List;
 public abstract class DevkitRelatedLineMarkerProviderBase extends RelatedItemLineMarkerProvider {
 
   @Override
-  public void collectNavigationMarkers(@NotNull List<PsiElement> elements,
-                                       @NotNull Collection<? super RelatedItemLineMarkerInfo> result,
+  public void collectNavigationMarkers(@NotNull List<? extends PsiElement> elements,
+                                       @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result,
                                        boolean forNavigation) {
     final PsiElement psiElement = ContainerUtil.getFirstItem(elements);
     if (psiElement == null || !PsiUtil.isPluginProject(psiElement.getProject())) {

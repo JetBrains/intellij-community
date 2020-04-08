@@ -46,7 +46,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Use default settings"/>
+              <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.use.default.settings"/>
             </properties>
           </component>
           <component id="56d91" class="javax.swing.JRadioButton" binding="myUseCustomFormattingOptionsRadioButton" default-binding="true">
@@ -54,7 +54,7 @@
               <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Use custom formatting options"/>
+              <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.use.custom.formatting.options"/>
             </properties>
           </component>
           <grid id="fe40a" binding="fileLocationPanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
@@ -66,7 +66,7 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="etched" title="Location in File"/>
+            <border type="etched" title-resource-bundle="messages/CopyrightBundle" title-key="settings.copyright.formatting.location.in.file"/>
             <children/>
           </grid>
           <component id="29b5" class="javax.swing.JRadioButton" binding="myNoCopyright">
@@ -74,7 +74,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="No copyright"/>
+              <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.no.copyright"/>
             </properties>
           </component>
           <grid id="dc4b5" binding="myCommentTypePanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -86,14 +86,14 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="etched" title="Comment Type"/>
+            <border type="etched" title-resource-bundle="messages/CopyrightBundle" title-key="settings.copyright.formatting.comment.type"/>
             <children>
               <component id="c8599" class="javax.swing.JRadioButton" binding="rbBlockComment">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Use block comment"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.use.block.comment"/>
                 </properties>
               </component>
               <component id="2b1b2" class="javax.swing.JRadioButton" binding="rbLineComment">
@@ -101,7 +101,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Use line comment"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.use.line.comment"/>
                 </properties>
               </component>
               <component id="52d04" class="javax.swing.JCheckBox" binding="cbPrefixLines">
@@ -109,7 +109,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Prefix each line"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.prefix.each.line"/>
                 </properties>
               </component>
             </children>
@@ -123,14 +123,14 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="etched" title="Borders"/>
+            <border type="etched" title-resource-bundle="messages/CopyrightBundle" title-key="settings.copyright.formatting.borders"/>
             <children>
               <component id="3c05" class="javax.swing.JCheckBox" binding="cbSeparatorBefore">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Separator before"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.separator.before"/>
                 </properties>
               </component>
               <component id="20e5e" class="javax.swing.JCheckBox" binding="cbSeparatorAfter">
@@ -138,7 +138,7 @@
                   <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Separator after"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.separator.after"/>
                 </properties>
               </component>
               <component id="74372" class="javax.swing.JLabel" binding="lblLengthBefore">
@@ -147,7 +147,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="fcbea"/>
-                  <text value="Length:"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.length"/>
                 </properties>
               </component>
               <component id="7a6fe" class="javax.swing.JLabel" binding="lblLengthAfter">
@@ -156,7 +156,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="ee688"/>
-                  <text value="Length:"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.length"/>
                 </properties>
               </component>
               <component id="fcbea" class="javax.swing.JTextField" binding="txtLengthBefore">
@@ -180,7 +180,7 @@
                   <grid row="4" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="A&amp;dd blank line after"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.add.blank.line.after"/>
                 </properties>
               </component>
               <component id="81563" class="javax.swing.JLabel" binding="mySeparatorCharLabel">
@@ -189,7 +189,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="679a0"/>
-                  <text value="Separator:"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.separator"/>
                 </properties>
               </component>
               <component id="30865" class="javax.swing.JCheckBox" binding="cbBox">
@@ -197,7 +197,7 @@
                   <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Box"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.box"/>
                 </properties>
               </component>
               <component id="679a0" class="javax.swing.JTextField" binding="txtFiller">
@@ -219,14 +219,14 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="etched" title="Relative Location"/>
+            <border type="etched" title-resource-bundle="messages/CopyrightBundle" title-key="settings.copyright.formatting.relative.location"/>
             <children>
               <component id="83e39" class="javax.swing.JRadioButton" binding="rbBefore">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Bef&amp;ore other comments"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.before.other.comments"/>
                 </properties>
               </component>
               <component id="c0972" class="javax.swing.JRadioButton" binding="rbAfter">
@@ -234,7 +234,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Afte&amp;r other comments"/>
+                  <text resource-bundle="messages/CopyrightBundle" key="settings.copyright.formatting.after.other.comments"/>
                 </properties>
               </component>
             </children>

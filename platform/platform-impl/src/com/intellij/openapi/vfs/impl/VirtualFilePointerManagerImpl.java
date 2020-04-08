@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -84,9 +84,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   private static class EventDescriptor {
     @NotNull private final VirtualFilePointerListener myListener;
-    @NotNull private final VirtualFilePointer[] myPointers;
+    private final VirtualFilePointer @NotNull [] myPointers;
 
-    private EventDescriptor(@NotNull VirtualFilePointerListener listener, @NotNull VirtualFilePointer[] pointers) {
+    private EventDescriptor(@NotNull VirtualFilePointerListener listener, VirtualFilePointer @NotNull [] pointers) {
       myListener = listener;
       myPointers = pointers;
       if (pointers.length == 0) throw new IllegalArgumentException();
@@ -101,8 +101,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  @NotNull
-  private static VirtualFilePointer[] toPointers(@NotNull Collection<? extends FilePointerPartNode> nodes) {
+  private static VirtualFilePointer @NotNull [] toPointers(@NotNull Collection<? extends FilePointerPartNode> nodes) {
     if (nodes.isEmpty()) return VirtualFilePointer.EMPTY_ARRAY;
     List<VirtualFilePointer> list = new ArrayList<>(nodes.size());
     for (FilePointerPartNode node : nodes) {
@@ -383,7 +382,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   private synchronized void assertAllPointersDisposed() {
     List<VirtualFilePointer> leaked = new ArrayList<>(dumpAllPointers());
-    Collections.sort(leaked, Comparator.comparing(VirtualFilePointer::getUrl));
+    leaked.sort(Comparator.comparing(VirtualFilePointer::getUrl));
     for (VirtualFilePointer pointer : leaked) {
       try {
         ((VirtualFilePointerImpl)pointer).throwDisposalError("Not disposed pointer: " + pointer);
@@ -602,11 +601,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private void after(@NotNull MultiMap<VirtualFilePointerListener, FilePointerPartNode> toFireEvents,
                      @NotNull MultiMap<VirtualFilePointerListener, FilePointerPartNode> toUpdateUrls,
                      @NotNull List<? extends EventDescriptor> eventList,
-                     @NotNull VirtualFilePointer[] allPointers,
+                     VirtualFilePointer @NotNull [] allPointers,
                      long prepareElapsedMs,
                      int eventsSize) {
     long start = System.currentTimeMillis();
-    ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
+    ApplicationManager.getApplication().assertIsWriteThread(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
 
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();

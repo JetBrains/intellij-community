@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.util.DelegatingProgressIndicator;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -29,7 +28,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.*;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.BombedProgressIndicator;
@@ -864,5 +862,49 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     catch (ProcessCanceledException ignored) {
     }
+  }
+
+  public void testEmptyIndicatorMustConformToAtLeastSomeSimpleLifecycleConstrains() {
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    for (int i = 0; i < 2; i++) {
+      assertThrows(IllegalStateException.class, indicator::stop);
+      indicator.start();
+      assertThrows(IllegalStateException.class, indicator::start);
+      indicator.stop();
+      assertThrows(IllegalStateException.class, indicator::stop);
+    }
+  }
+
+  public void testProgressIndicatorsAttachToStartedProgress() {
+    ProgressIndicatorEx progressIndicator = new ProgressIndicatorBase();
+    progressIndicator.start();
+    progressIndicator.setText("Progress 0/2");
+
+    // attach
+    ProgressIndicatorEx progressIndicatorWatcher1 = new ProgressIndicatorBase();
+    ProgressIndicatorEx progressIndicatorGroup = new ProgressIndicatorBase();
+    progressIndicatorGroup.addStateDelegate(progressIndicatorWatcher1);
+
+    progressIndicator.addStateDelegate(progressIndicatorGroup);
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+
+    progressIndicator.setText("Progress 1/2");
+
+    // attach
+    ProgressIndicatorEx progressIndicatorWatcher2 = new ProgressIndicatorBase();
+    progressIndicatorGroup.addStateDelegate(progressIndicatorWatcher2);
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
+
+    progressIndicator.setText("Progress 2/2");
+    progressIndicator.stop();
+
+    assertEquals(progressIndicator.getText(), progressIndicatorGroup.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
+    assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
   }
 }

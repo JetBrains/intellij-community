@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -15,6 +16,8 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
@@ -31,7 +34,7 @@ class ChangesViewCommitWorkflowHandler(
     ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
-  override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
+  override val amendCommitHandler: ChangesViewAmendCommitHandler = ChangesViewAmendCommitHandler(this)
 
   private fun getCommitState(): ChangeListCommitState {
     val changes = getIncludedChanges()
@@ -73,6 +76,8 @@ class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
 
     ProjectManager.TOPIC.subscribe(this, this)
+    CheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
+    VcsCheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
@@ -97,7 +102,9 @@ class ChangesViewCommitWorkflowHandler(
     return commitOptions
   }
 
-  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !isCommitEmpty()
+  private fun isDefaultCommitEnabled() =
+    workflow.vcses.isNotEmpty() && !workflow.isExecuting && !amendCommitHandler.isLoading &&
+    (amendCommitHandler.isAmendWithoutChangesAllowed() || !isCommitEmpty())
 
   override fun vcsesChanged() {
     initCommitHandlers()
@@ -115,7 +122,7 @@ class ChangesViewCommitWorkflowHandler(
     // state without blinking.
   }
 
-  private fun updateDefaultCommitActionEnabled() {
+  internal fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
   }
 

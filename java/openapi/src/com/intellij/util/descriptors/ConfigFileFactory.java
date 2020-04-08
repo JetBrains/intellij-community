@@ -21,9 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class ConfigFileFactory {
   public static ConfigFileFactory getInstance() {
     return ServiceManager.getService(ConfigFileFactory.class);

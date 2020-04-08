@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
   }
 
   private static boolean hasParameters(PsiTypeParameterListOwner paramOwner, PsiElement context) {
-    return paramOwner instanceof PsiClass && ConstructorInsertHandler.hasConstructorParameters((PsiClass)paramOwner, context);
+    return paramOwner instanceof PsiClass && ConstructorInsertHandler.hasConstructorParameters((PsiClass)paramOwner, context) != ThreeState.NO;
   }
 
   private static void addInheritors(CompletionParameters parameters,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -72,15 +72,13 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
     return getElement().toString();
   }
 
-  @NotNull
   @Override
-  public final StructureViewTreeElement[] getChildren() {
+  public final StructureViewTreeElement @NotNull [] getChildren() {
     return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren);
   }
 
-  @NotNull
-  private StructureViewTreeElement[] doGetChildren() {
-    return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase());
+  private StructureViewTreeElement @NotNull [] doGetChildren() {
+    return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase(), true);
   }
 
   @Override

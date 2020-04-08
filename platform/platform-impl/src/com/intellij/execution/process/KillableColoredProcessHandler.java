@@ -7,8 +7,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * This process handler supports both ANSI coloring (see {@link ColoredProcessHandler})
@@ -38,8 +41,19 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
-    super(process, commandLine, charset);
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/
+                                       String commandLine,
+                                       @NotNull Charset charset) {
+    this(process, commandLine, charset, null);
+  }
+
+  /**
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
+   */
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine,
+                                       @NotNull Charset charset,
+                                       @Nullable Set<? extends File> filesToDelete) {
+    super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(true);
   }
 
@@ -53,6 +67,10 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   public static class Silent extends KillableColoredProcessHandler {
     public Silent(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
       super(commandLine);
+    }
+
+    public Silent(@NotNull Process process, String commandLine, @NotNull Charset charset, @Nullable Set<? extends File> filesToDetele) {
+      super(process, commandLine, charset, filesToDetele);
     }
 
     @NotNull

@@ -39,7 +39,7 @@ public class RemoveFromIgnoreListAction extends BasicAction {
 
     presentation.setEnabledAndVisible(true);
     presentation.setText(myActionName);
-    presentation.setDescription(SvnBundle.message("action.Subversion.UndoIgnore.description"));
+    presentation.setDescription(SvnBundle.messagePointer("action.Subversion.UndoIgnore.description"));
   }
 
   @Override
@@ -60,7 +60,7 @@ public class RemoveFromIgnoreListAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException {
     SvnPropertyService.doRemoveFromIgnoreProperty(vcs, myUseCommonExtension, files, myInfoGetter);
   }
 

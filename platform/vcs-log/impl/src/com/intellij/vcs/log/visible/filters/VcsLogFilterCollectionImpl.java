@@ -34,6 +34,6 @@ class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
 
   @Override
   public String toString() {
-    return "filters: (" + myFilters + ")";
+    return "filters: (" + myFilters + ")"; // NON-NLS
   }
 }

@@ -36,11 +36,9 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
   @Nullable
   String getName();
 
-  @NotNull
-  String[] getUrls(@NotNull OrderRootType rootType);
+  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
-  @NotNull
-  VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+  VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType);
 
   /**
    * As soon as you obtaining modifiable model you will have to commit it or call Disposer.dispose(model)!
@@ -60,8 +58,7 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
   boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
 
   interface ModifiableModel extends Disposable {
-    @NotNull
-    String[] getUrls(@NotNull OrderRootType rootType);
+    String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
     void setName(String name);
 
@@ -87,8 +84,7 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
 
     void commit();
 
-    @NotNull
-    VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+    VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType);
 
     boolean isChanged();
 

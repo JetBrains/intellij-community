@@ -11,32 +11,32 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class ChildInfoImpl implements ChildInfo {
-  public static final int UNKNOWN_ID_YET = -1;
+  public static final int UNKNOWN_ID_YET = -238;
 
   private final int id;
   private final int nameId;
   private final String symLinkTarget;
-  private final @Nullable("null means children are unknown") ChildInfo[] children;
+  private final ChildInfo @Nullable("null means children are unknown") [] children;
 
   private final byte fileAttributesType;  // inlined FileAttributes to reduce memory
   private final @FileAttributes.Flags byte flags; // -1 means getFileAttributes == null
   private final long length;
   private final long lastModified;
 
-  public ChildInfoImpl(int id, @NotNull String name, @Nullable FileAttributes attributes, @Nullable ChildInfo[] children, @Nullable String symLinkTarget) {
+  public ChildInfoImpl(int id, @NotNull String name, @Nullable FileAttributes attributes, ChildInfo @Nullable [] children, @Nullable String symLinkTarget) {
     this(id, FileNameCache.storeName(name), attributes, children, symLinkTarget);
   }
 
   public ChildInfoImpl(int id,
                        int nameId,
                        @Nullable FileAttributes attributes,
-                       @Nullable ChildInfo[] children,
+                       ChildInfo @Nullable [] children,
                        @Nullable String symLinkTarget) {
     this.nameId = nameId;
     this.id = id;
     this.children = children;
     this.symLinkTarget = symLinkTarget;
-    if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
+    if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0 && nameId != UNKNOWN_ID_YET) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
     if (attributes == null) {
       fileAttributesType = -1;
       flags = -1;
@@ -72,9 +72,8 @@ public class ChildInfoImpl implements ChildInfo {
     return symLinkTarget;
   }
 
-  @Nullable
   @Override
-  public ChildInfo[] getChildren() {
+  public ChildInfo @Nullable [] getChildren() {
     return children;
   }
 
@@ -85,7 +84,7 @@ public class ChildInfoImpl implements ChildInfo {
 
   @Override
   public String toString() {
-    return nameId + " id: " + id + " (" + getFileAttributes() + ")" +
+    return getName()+"; nameId: "+nameId + "; id: " + id + " (" + getFileAttributes() + ")" +
            (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 }

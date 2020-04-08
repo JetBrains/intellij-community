@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -21,7 +22,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
-public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground {
+public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;
@@ -34,9 +35,13 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
 
   public synchronized final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
     EditorActionHandler tmp = getHandler();
+    doSetupHandler(newHandler);
+    return tmp;
+  }
+
+  protected void doSetupHandler(@NotNull EditorActionHandler newHandler) {
     myHandler = newHandler;
     myHandler.setWorksInInjected(isInInjectedContext());
-    return tmp;
   }
 
   public synchronized EditorActionHandler getHandler() {
@@ -49,8 +54,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
         if (handlerBean.action.equals(id)) {
           EditorActionHandler handler = handlerBean.getHandler(myHandler);
           if (handler != null) {
-            myHandler = handler;
-            myHandler.setWorksInInjected(isInInjectedContext());
+            doSetupHandler(handler);
           }
         }
       }

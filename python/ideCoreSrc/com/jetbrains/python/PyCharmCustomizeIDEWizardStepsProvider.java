@@ -2,12 +2,11 @@
 package com.jetbrains.python;
 
 import com.intellij.ide.customize.*;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.python.conda.PyCharmCustomizeCondaSetupStep;
 import com.jetbrains.python.conda.PythonMinicondaLocator;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,7 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
   public void initSteps(CustomizeIDEWizardDialog wizardDialog, List<AbstractCustomizeWizardStep> steps) {
     PluginGroups groups = new PluginGroups() {
       @Override
-      protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
+      protected void initGroups(@NotNull List<Group> tree, @NotNull Map<String, String> featuredPlugins) {
         addVimPlugin(featuredPlugins);
         addRPlugin(featuredPlugins);
         addAwsPlugin(featuredPlugins);

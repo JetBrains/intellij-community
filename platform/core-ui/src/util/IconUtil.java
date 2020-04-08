@@ -167,7 +167,7 @@ public class IconUtil {
   };
 
   @Iconable.IconFlags
-  private static int filterFileIconFlags(VirtualFile file, @Iconable.IconFlags int flags) {
+  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
     UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
     int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
     int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
@@ -181,7 +181,7 @@ public class IconUtil {
     return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
-  private static Icon getBaseIcon(VirtualFile vFile) {
+  private static Icon getBaseIcon(@NotNull VirtualFile vFile) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
       return icon;
@@ -309,8 +309,7 @@ public class IconUtil {
   /**
    * Result icons look like original but have equal (maximum) size
    */
-  @NotNull
-  public static Icon[] getEqualSizedIcons(@NotNull Icon... icons) {
+  public static Icon @NotNull [] getEqualSizedIcons(Icon @NotNull ... icons) {
     Icon[] result = new Icon[icons.length];
     int width = 0;
     int height = 0;

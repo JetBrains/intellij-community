@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -107,17 +107,17 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
           GlobalSearchScope scope = psiClass.getResolveScope();
 
           if (isInheritorChain(psiClass, JAVA_UTIL_LIST, expectedClass, scope, project)) {
-            setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.list"));
+            setText(JavaBundle.message("intention.wrap.with.unmodifiable.list"));
             return true;
           }
           if (isInheritorChain(psiClass, JAVA_UTIL_SET, expectedClass, scope, project) ||
               isInheritorChain(psiClass, JAVA_UTIL_SORTED_SET, expectedClass, scope, project)) {
-            setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.set"));
+            setText(JavaBundle.message("intention.wrap.with.unmodifiable.set"));
             return true;
           }
           if (isInheritorChain(psiClass, JAVA_UTIL_MAP, expectedClass, scope, project) ||
               isInheritorChain(psiClass, JAVA_UTIL_SORTED_MAP, expectedClass, scope, project)) {
-            setText(CodeInsightBundle.message("intention.wrap.with.unmodifiable.map"));
+            setText(JavaBundle.message("intention.wrap.with.unmodifiable.map"));
             return true;
           }
         }
@@ -187,6 +187,6 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.wrap.with.unmodifiable");
+    return JavaBundle.message("intention.wrap.with.unmodifiable");
   }
 }

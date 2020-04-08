@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface AppEngineSdk {
 
   @NotNull
@@ -37,8 +34,7 @@ public interface AppEngineSdk {
   @NotNull
   File getToolsApiJarFile();
 
-  @NotNull
-  File[] getLibraries();
+  File @NotNull [] getLibraries();
 
   boolean isClassInWhiteList(@NotNull String className);
 
@@ -55,8 +51,7 @@ public interface AppEngineSdk {
   @NotNull
   List<String> getUserLibraryPaths();
 
-  @NotNull
-  VirtualFile[] getOrmLibSources();
+  VirtualFile @NotNull [] getOrmLibSources();
 
   @NotNull
   File getApplicationSchemeFile();
@@ -64,8 +59,7 @@ public interface AppEngineSdk {
   @NotNull
   File getWebSchemeFile();
 
-  @NotNull
-  File[] getJspLibraries();
+  File @NotNull [] getJspLibraries();
 
   void patchJavaParametersForDevServer(@NotNull ParametersList vmParameters);
 }

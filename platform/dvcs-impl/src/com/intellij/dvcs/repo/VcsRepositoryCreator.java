@@ -16,7 +16,7 @@
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
  * Creates {@link Repository} instance for appropriate vcs if root is valid
  */
 public abstract class VcsRepositoryCreator {
-  @NonNls public static final ExtensionPointName<VcsRepositoryCreator> EXTENSION_POINT_NAME =
-    ExtensionPointName.create("com.intellij.vcsRepositoryCreator");
+  @NonNls public static final ProjectExtensionPointName<VcsRepositoryCreator> EXTENSION_POINT_NAME =
+    new ProjectExtensionPointName<>("com.intellij.vcsRepositoryCreator");
 
   @Nullable
   public abstract Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable);

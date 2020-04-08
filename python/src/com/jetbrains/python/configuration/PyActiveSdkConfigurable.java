@@ -57,8 +57,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private static final Logger LOG = Logger.getInstance(PyActiveSdkConfigurable.class);
 
-  private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
-
   @NotNull
   private final Project myProject;
 
@@ -116,7 +114,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final ComboBox<Object> result = new ComboBox<Object>() {
       @Override
       public void setSelectedItem(Object item) {
-        if (SHOW_ALL.equals(item)) {
+        if (getShowAll().equals(item)) {
           onShowAllSelected.run();
         }
         else if (!PySdkListCellRenderer.SEPARATOR.equals(item)) {
@@ -165,7 +163,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     c.gridx = 0;
     c.gridy = 0;
-    result.add(new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter")), c);
+    JLabel label = new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter"));
+    label.setLabelFor(sdkComboBox);
+    result.add(label, c);
 
     c.gridx = 1;
     c.gridy = 0;
@@ -327,7 +327,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
 
     items.add(PySdkListCellRenderer.SEPARATOR);
-    items.add(SHOW_ALL);
+    items.add(getShowAll());
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
@@ -360,5 +360,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         updateSdkListAndSelect(sdk);
       }
     }
+  }
+
+  private static String getShowAll() {
+    return PyBundle.message("active.sdk.dialog.show.all.item");
   }
 }

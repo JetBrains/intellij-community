@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.status;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +19,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
+import git4idea.diff.GitSubmoduleContentRevision;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
@@ -53,6 +41,8 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 class GitChangesCollector {
+  private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
+
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitRepository myRepository;
@@ -163,7 +153,7 @@ class GitChangesCollector {
   }
 
   private static void removeCommonParents(List<FilePath> paths) {
-    Collections.sort(paths, Comparator.comparing(FilePath::getPath));
+    paths.sort(Comparator.comparing(FilePath::getPath));
 
     FilePath prevPath = null;
     Iterator<FilePath> it = paths.iterator();
@@ -461,6 +451,18 @@ class GitChangesCollector {
   }
 
   private void reportChange(FileStatus status, ContentRevision before, ContentRevision after) {
-    myChanges.add(new Change(before, after, status));
+    Change change = new Change(before, after, status);
+
+    FilePath filePath = ChangesUtil.getFilePath(change);
+    VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
+    boolean isUnderOurRoot = myVcsRoot.equals(root) ||
+                             before instanceof GitSubmoduleContentRevision ||
+                             after instanceof GitSubmoduleContentRevision;
+    if (!isUnderOurRoot) {
+      LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", change, myVcsRoot, root));
+      return;
+    }
+
+    myChanges.add(change);
   }
 }

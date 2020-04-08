@@ -2,7 +2,10 @@
 package com.intellij.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.target.local.LocalTargetEnvironment
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.CommandLineWrapper
@@ -115,12 +118,15 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   private fun doTest(vararg expected: String) {
-    val cmd = parameters.toCommandLine()
-    filesToDelete = cmd.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION)
+    val environmentFactory = LocalTargetEnvironmentFactory()
+    val request = environmentFactory.createRequest()
+    val cmd = parameters.toCommandLine(request, environmentFactory.targetConfiguration)
+    filesToDelete = cmd.filesToDeleteOnTermination
 
-    val actual = cmd.getCommandLineList("-")
+    val actual = ParametersList()
+    actual.addParametersString(cmd.build().getCommandPresentation(LocalTargetEnvironment(request)))
     val toCompare = mutableListOf<String>()
-    actual.forEachIndexed { i, arg ->
+    actual.parameters.forEachIndexed { i, arg ->
       if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {
         toCompare += when {
           arg.contains(File.pathSeparatorChar) -> arg.splitToSequence(File.pathSeparatorChar).map { mapPath(it) }.joinToString(":")

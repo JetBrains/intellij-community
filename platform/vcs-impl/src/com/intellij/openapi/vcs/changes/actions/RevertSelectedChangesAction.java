@@ -60,9 +60,8 @@ public abstract class RevertSelectedChangesAction extends RevertCommittedStuffAb
     return true;
   }
 
-  @Nullable
   @Override
-  protected Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
+  protected Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
     if (!isFromUpdate) {
       // to ensure directory flags for SVN are initialized
       e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);

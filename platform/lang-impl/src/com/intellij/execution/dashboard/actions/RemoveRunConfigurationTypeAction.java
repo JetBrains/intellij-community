@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +27,7 @@ public class RemoveRunConfigurationTypeAction extends DumbAwareAction {
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(true);
-    presentation.setText(ExecutionBundle.message("run.dashboard.remove.run.configuration.type.action.name",
-                                                 "Configuration " + StringUtil.pluralize("Type", types.size())));
+    presentation.setText(ExecutionBundle.messagePointer("run.dashboard.remove.run.configuration.type.action.name", types.size()));
   }
 
   @Override

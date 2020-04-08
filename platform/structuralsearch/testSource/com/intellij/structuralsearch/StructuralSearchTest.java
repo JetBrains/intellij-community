@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -1407,7 +1407,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                         "class C extends B implements IC {}" +
                         "class D extends C {}";
     assertEquals("extends navigation match", 2, findMatchesCount(s107, "class '_ extends 'Type:+A {}"));
-    assertEquals("implements navigation match", 5, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
+    assertEquals("extends navigation match 2", 3, findMatchesCount(s107, "interface '_ extends 'Type:*IA {}"));
+    assertEquals("extends navigation match 3", 2, findMatchesCount(s107, "interface '_ extends 'Type:+IA {}"));
+    assertEquals("implements navigation match", 3, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
+    assertEquals("without hierarchy finds only direct implements", 1, findMatchesCount(s107, "class '_ implements '_T:IA {}"));
 
     final String s109 = "interface I {}" +
                         "interface I2 extends I {}" +
@@ -2010,8 +2013,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "class B3 extends A { }\n" +
                 "class C extends B2 { static void foo(); }\n";
     assertEquals("Find class within type hierarchy with not", 1,
-                 findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( I )] {}"));
-    assertEquals("Find class within type hierarchy with not, 2", 1,
+                 findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( *I )] {}"));
+    assertEquals("Find class within type hierarchy with not 2", 2,
+                 findMatchesCount(s1, "class '_C:[!regex( *A )] implements '_Implements:[regex( *I )] {}"));
+    assertEquals("Find class within type hierarchy with not 3", 1,
                  findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )]{}"));
     assertEquals("Search in hierarchy on class identifier", 2, findMatchesCount(s1, "class '_X:*B2 {}"));
 
@@ -2127,11 +2132,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     MatchOptions options = new MatchOptions();
     options.fillSearchCriteria("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
     options.setFileType(StdFileTypes.JAVA);
-    Matcher testMatcher = new Matcher(getProject(), options);
 
     List<MatchResult> results = new ArrayList<>();
     for(PsiVariable var:vars) {
-      final List<MatchResult> matchResult = testMatcher.matchByDownUp(var);
+      final List<MatchResult> matchResult = new Matcher(getProject(), options).matchByDownUp(var);
       results.addAll(matchResult);
       assertTrue((var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && !matchResult.isEmpty()) ||
                  matchResult.isEmpty());
@@ -2150,7 +2154,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     for(PsiVariable var:vars) {
       final PsiTypeElement typeElement = var.getTypeElement();
-      final List<MatchResult> matchResult = testMatcher.matchByDownUp(typeElement);
+      final List<MatchResult> matchResult = new Matcher(getProject(), options).matchByDownUp(typeElement);
       results.addAll(matchResult);
       assertTrue((var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && !matchResult.isEmpty()) ||
                  matchResult.isEmpty());
@@ -2260,9 +2264,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   public void testFindEnums() {
     String s = "class Foo {} class Bar {} enum X {}";
-    String s2 = "enum 'x {}";
 
-    assertEquals(1, findMatchesCount(s,s2));
+    assertEquals(1, findMatchesCount(s, "enum 'x {}"));
+
+    String in = "enum E {" +
+                "  A(1), B(2), C(3)" +
+                "}";
+    assertEquals(1, findMatchesCount(in, "enum '_E { 'A(2) }"));
+    assertEquals(0, findMatchesCount(in, "enum '_E { 'A('_x{0,0}) }"));
+    assertEquals(0, findMatchesCount(in, "enum '_E { 'A(2) {} }"));
   }
 
   public void testFindDeclaration() {
@@ -3323,8 +3333,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // (probably after JDK14 release in March 2020)
     final PsiMethod method = factory.createMethodFromText(in, null, LanguageLevel.JDK_14);
 
-    System.out.println(PsiUtil.getLanguageLevel(method));
-    System.out.println(DebugUtil.psiToString(method, false));
     options.setScope(new LocalSearchScope(method));
     assertEquals("find expressions & statements", 2, findMatchesCount(null, "switch (i) {" +
                                                                           "  case 10 -> {" +

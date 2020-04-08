@@ -19,9 +19,6 @@ import java.nio.file.Path;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author nik
- */
 public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   private Path myProjectDir;
 

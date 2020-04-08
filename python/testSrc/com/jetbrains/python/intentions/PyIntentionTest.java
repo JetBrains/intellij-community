@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -72,44 +73,44 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertDictComp() {
-    doTest(PyBundle.message("INTN.convert.dict.comp.to"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.convert.dict.comp.to"), LanguageLevel.PYTHON26);
   }
 
   public void testConvertSetLiteral() {
-    doTest(PyBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
   }
 
   public void testReplaceExceptPart() {
-    doTest(PyBundle.message("INTN.convert.except.to"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.convert.except.to"), LanguageLevel.PYTHON34);
   }
 
   public void testConvertBuiltins() {
-    doTest(PyBundle.message("INTN.convert.builtin.import"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.convert.builtin.import"), LanguageLevel.PYTHON34);
   }
 
   public void testRemoveLeadingF() {
-    doTest(PyBundle.message("INTN.remove.leading.$0", "F"), LanguageLevel.PYTHON35);
+    doTest(PyPsiBundle.message("INTN.remove.leading.$0", "F"), LanguageLevel.PYTHON35);
   }
 
   // PY-18972
   public void testRemoveTrailingL() {
-    doTest(PyBundle.message("INTN.remove.trailing.l"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("QFIX.remove.trailing.suffix"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceOctalNumericLiteral() {
-    doTest(PyBundle.message("INTN.replace.octal.numeric.literal"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.octal.numeric.literal"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceListComprehensions() {
-    doTest(PyBundle.message("INTN.replace.list.comprehensions"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.list.comprehensions"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceRaiseStatement() {
-    doTest(PyBundle.message("INTN.replace.raise.statement"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.raise.statement"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceBackQuoteExpression() {
-    doTest(PyBundle.message("INTN.replace.backquote.expression"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.backquote.expression"), LanguageLevel.PYTHON34);
   }
 
   /*
@@ -239,7 +240,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertVariadicParamPositionalContainerInPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
   }
 
   // PY-26284
@@ -264,6 +265,56 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-2264
   public void testConvertVariadicParamUnpackedKwargsReused() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptions() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCalls() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCallsWithSameDefaultValue() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCallsWithDifferentDefaultValue() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptionsAndCalls() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptionsAndCallsWithSameDefaultValue() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralSubscriptionsAndCallsWithDifferentDefaultValue() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCallsWithDifferentKeysCaretOnContainer() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCallsWithDifferentKeysCaretOnAvailableKey() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-26286
+  public void testConvertVariadicParamSeveralCallsWithDifferentKeysCaretOnUnavailableKey() {
     doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 

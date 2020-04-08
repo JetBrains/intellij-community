@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
+public class ToggleColumnModeAction extends ToggleAction implements DumbAware, LightEditCompatible {
   public ToggleColumnModeAction() {
     setEnabledInModalContext(true);
   }

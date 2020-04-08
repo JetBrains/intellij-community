@@ -42,11 +42,11 @@ class _float_info:
     rounds: int
 
 class _version_info(Tuple[int, int, int, str, int]):
-    major = 0
-    minor = 0
-    micro = 0
+    major: int
+    minor: int
+    micro: int
     releaselevel: str
-    serial = 0
+    serial: int
 
 _mercurial: Tuple[str, str, str]
 api_version: int
@@ -89,8 +89,8 @@ last_traceback: TracebackType
 meta_path: List[Any]
 path_hooks: List[Any]
 path_importer_cache: Dict[str, Any]
-displayhook: Optional[Callable[[int], None]]
-excepthook: Optional[Callable[[type, BaseException, TracebackType], None]]
+displayhook: Callable[[object], Any]
+excepthook: Callable[[Type[BaseException], BaseException, TracebackType], Any]
 exc_type: Optional[type]
 exc_value: Union[BaseException, ClassType]
 exc_traceback: TracebackType
@@ -112,7 +112,7 @@ def _clear_type_cache() -> None: ...
 def _current_frames() -> Dict[int, FrameType]: ...
 def _getframe(depth: int = ...) -> FrameType: ...
 def call_tracing(fn: Any, args: Any) -> Any: ...
-def __displayhook__(value: int) -> None: ...
+def __displayhook__(value: object) -> None: ...
 def __excepthook__(type_: type, value: BaseException, traceback: TracebackType) -> None: ...
 def exc_clear() -> None: ...
 def exc_info() -> _OptExcInfo: ...

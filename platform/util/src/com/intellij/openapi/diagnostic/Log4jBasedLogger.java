@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class Log4jBasedLogger extends Logger {
   protected final org.apache.log4j.Logger myLogger;
 
@@ -82,7 +79,7 @@ public class Log4jBasedLogger extends Logger {
   }
 
   @Override
-  public void error(@NonNls String message, @Nullable Throwable t, @NonNls @NotNull String... details) {
+  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String @NotNull ... details) {
     String fullMessage = details.length > 0 ? message + "\nDetails: " + StringUtil.join(details, "\n") : message;
     myLogger.error(fullMessage, t);
   }

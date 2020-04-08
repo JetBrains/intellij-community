@@ -60,7 +60,8 @@ public class PyDirectoryIconProvider extends IconProvider {
       if (sourceRoots.contains(dir.getVirtualFile())) {
         return true;
       }
-      if (!PyNames.isIdentifier(dir.getName()) || dir.findFile(PyNames.INIT_DOT_PY) == null) {
+      if (!PyNames.isIdentifier(dir.getName()) || (dir.findFile(PyNames.INIT_DOT_PY) == null &&
+                                                   dir.findFile(PyNames.INIT_DOT_PYI) == null)) {
         return false;
       }
     }

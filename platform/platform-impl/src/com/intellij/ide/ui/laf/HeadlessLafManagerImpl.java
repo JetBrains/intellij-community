@@ -15,9 +15,8 @@ public class HeadlessLafManagerImpl extends LafManager {
     UIManager.getLookAndFeelDefaults().put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
   }
 
-  @NotNull
   @Override
-  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
+  public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
   }
 
@@ -32,6 +31,9 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
+  public void setCurrentLookAndFeel(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) { }
+
+  @Override
   public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
     return new CollectionComboBoxModel<>();
   }
@@ -40,9 +42,6 @@ public class HeadlessLafManagerImpl extends LafManager {
   public UIManager.LookAndFeelInfo findLaf(LafReference reference) {
     return null;
   }
-
-  @Override
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) { }
 
   @Override
   public void updateUI() { }

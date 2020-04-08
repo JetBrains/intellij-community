@@ -29,7 +29,7 @@ internal class InspectionJsonSchemaGenerator : SchemaGenerator {
           }
         }
       }
+      "additionalProperties" to false
     }
-    "additionalProperties" to false
   }
 }

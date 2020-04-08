@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.TreeUtil;
@@ -210,6 +210,36 @@ public class TreePathUtilTest {
   private static void makeDeepTreeFromNode(TreeNode node, int count) {
     while (1 < count) node = node(--count, node);
   }
+
+
+  @Test
+  public void findAncestorFound() {
+    TreePath path = TreePathUtil.convertArrayToTreePath("one", "two", "three", "four", "five");
+    Assert.assertEquals(
+      TreePathUtil.convertArrayToTreePath("one", "two"),
+      TreePathUtil.findAncestor(path, ancestor -> ancestor.getPathCount() == 2));
+  }
+
+  @Test
+  public void findAncestorNotFound() {
+    TreePath path = TreePathUtil.convertArrayToTreePath("one", "two", "three", "four", "five");
+    Assert.assertNull(TreePathUtil.findAncestor(path, ancestor -> ancestor.getPathCount() == 10));
+  }
+
+  @Test
+  public void findAncestorNull() {
+    Assert.assertNull(TreePathUtil.findAncestor(null, ancestor -> {
+      Assert.fail();
+      return true;
+    }));
+  }
+
+  @Test
+  public void findAncestorSame() {
+    TreePath path = TreePathUtil.convertArrayToTreePath("one", "two", "three", "four", "five");
+    Assert.assertSame(path, TreePathUtil.findAncestor(path, ancestor -> ancestor.getPathCount() == 5));
+  }
+
 
   @Test
   public void findCommonAncestor() {

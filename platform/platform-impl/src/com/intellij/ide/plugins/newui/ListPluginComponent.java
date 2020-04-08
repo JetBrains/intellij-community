@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +22,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,8 +153,9 @@ public class ListPluginComponent extends JPanel {
         myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
 
         myInstallButton
-          .addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null, "Installed");
+          .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
+        myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null,
+                                   IdeBundle.message("plugin.status.installed"));
         ColorButton.setWidth72(myInstallButton);
       }
     }
@@ -234,7 +237,8 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else {
-      String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : "bundled";
+      String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : IdeBundle.message("plugin.status.bundled");
+      
       if (!StringUtil.isEmptyOrSpaces(version)) {
         myVersion = createRatingLabel(panel, version, null);
       }
@@ -270,7 +274,7 @@ public class ListPluginComponent extends JPanel {
   private void createLicensePanel() {
     String productCode = myPlugin.getProductCode();
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (myMarketplace || productCode == null || instance == null) {
+    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled()) {
       return;
     }
 
@@ -282,7 +286,7 @@ public class ListPluginComponent extends JPanel {
         setTagTooltip("The license is not required for EAP version");
         return;
       }
-      licensePanel.setText("No license.", true, false);
+      licensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false);
     }
     else {
       licensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
@@ -312,6 +316,9 @@ public class ListPluginComponent extends JPanel {
     if (myUpdateDescriptor == null && descriptor == null) {
       return;
     }
+    if (myIndicator != null || isRestartEnabled()) {
+      return;
+    }
 
     myUpdateDescriptor = descriptor;
 
@@ -332,7 +339,7 @@ public class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
+        myVersion.setText(PluginManagerConfigurable.getVersion(myPlugin, descriptor));
       }
       if (myPlugin.getProductCode() == null && descriptor.getProductCode() != null) {
         if (myUpdateLicensePanel == null) {
@@ -344,14 +351,14 @@ public class ListPluginComponent extends JPanel {
           }
         }
 
-        myUpdateLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myUpdateLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
         myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myUpdateLicensePanel.setVisible(true);
       }
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
         myUpdateButton.addActionListener(
-          e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
+          e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
       }
       else {
         myUpdateButton.setEnabled(true);
@@ -452,7 +459,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(PluginLogo.getIcon(myPlugin, false, false, errors, disabled));
+    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, false, errors, disabled));
   }
 
   public void showProgress() {
@@ -480,11 +487,11 @@ public class ListPluginComponent extends JPanel {
         enableRestart();
       }
       else if (myInstallButton != null) {
-        myInstallButton.setEnabled(false, "Installed");
+        myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
       }
       else if (myUpdateButton != null) {
         myUpdateButton.setEnabled(false);
-        myUpdateButton.setText("Installed");
+        myUpdateButton.setText(IdeBundle.message("plugin.status.installed"));
       }
     }
 
@@ -625,7 +632,7 @@ public class ListPluginComponent extends JPanel {
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
+    group.add(new MyAnAction(result.first ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"), null, KeyEvent.VK_SPACE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
@@ -642,7 +649,7 @@ public class ListPluginComponent extends JPanel {
       group.addSeparator();
     }
 
-    group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
+    group.add(new MyAnAction(IdeBundle.message("plugins.configurable.uninstall.button"), IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (!MyPluginModel.showUninstallDialog(ListPluginComponent.this, selection)) {
@@ -795,7 +802,7 @@ public class ListPluginComponent extends JPanel {
   public static class ButtonAnAction extends DumbAwareAction {
     private final JButton[] myButtons;
 
-    ButtonAnAction(@NotNull JButton... buttons) {
+    ButtonAnAction(JButton @NotNull ... buttons) {
       super(buttons[0].getText());
       myButtons = buttons;
       setShortcutSet(CommonShortcuts.ENTER);
@@ -810,7 +817,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public abstract static class MyAnAction extends DumbAwareAction {
-    MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
+    MyAnAction(@Nls @Nullable String text, @Nullable String actionId, int keyCode) {
       super(text);
       ShortcutSet shortcutSet = null;
       if (actionId != null) {
@@ -1037,7 +1044,10 @@ public class ListPluginComponent extends JPanel {
     }
 
     public void removeProgressComponent() {
-      assert myProgressComponent != null;
+      if (myProgressComponent == null) {
+        return;
+      }
+
       remove(myProgressComponent);
       myProgressComponent = null;
 

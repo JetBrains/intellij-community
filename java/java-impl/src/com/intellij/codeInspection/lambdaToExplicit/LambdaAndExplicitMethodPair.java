@@ -55,7 +55,7 @@ class LambdaAndExplicitMethodPair {
   private final @NotNull String myExplicitMethod;
   private final int myParameterIndex;
   private final @Nullable String myExplicitParameterType;
-  private final @NotNull String[] myDefaultLambdaParameters;
+  private final String @NotNull [] myDefaultLambdaParameters;
 
   /**
    * @param aClass                class containing both methods
@@ -70,7 +70,7 @@ class LambdaAndExplicitMethodPair {
                               @NotNull String explicitMethod,
                               int index,
                               @Nullable String explicitParameterType,
-                              @NotNull String... defaultLambdaParameters) {
+                              String @NotNull ... defaultLambdaParameters) {
     myClass = aClass;
     myLambdaMethod = Pattern.compile(lambdaMethod);
     myExplicitMethod = explicitMethod;

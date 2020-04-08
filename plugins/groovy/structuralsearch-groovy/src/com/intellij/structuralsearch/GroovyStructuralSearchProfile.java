@@ -29,9 +29,8 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
 
   private static final TokenSet VARIABLE_DELIMITERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
 
-  @NotNull
   @Override
-  protected String[] getVarPrefixes() {
+  protected String @NotNull [] getVarPrefixes() {
     return new String[]{"_$_____"};
   }
 

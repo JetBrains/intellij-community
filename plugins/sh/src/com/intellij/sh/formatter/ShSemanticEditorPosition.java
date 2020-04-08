@@ -19,19 +19,19 @@ class ShSemanticEditorPosition {
     }
   }
 
-  void moveBeforeOptionalMix(@NotNull IElementType... elements) {
+  void moveBeforeOptionalMix(IElementType @NotNull ... elements) {
     while (isAtAnyOf(elements)) {
       myIterator.retreat();
     }
   }
 
-  void moveAfterOptionalMix(@NotNull IElementType... elements) {
+  void moveAfterOptionalMix(IElementType @NotNull ... elements) {
     while (isAtAnyOf(elements)) {
       myIterator.advance();
     }
   }
 
-  boolean isAtAnyOf(@NotNull IElementType... syntaxElements) {
+  boolean isAtAnyOf(IElementType @NotNull ... syntaxElements) {
     if (!myIterator.atEnd()) {
       IElementType currElement = myIterator.getTokenType();
       for (IElementType element : syntaxElements) {

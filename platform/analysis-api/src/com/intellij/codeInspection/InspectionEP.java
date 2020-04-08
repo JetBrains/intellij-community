@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.diagnostic.PluginException;
@@ -49,21 +49,20 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
-    return shortName == null ? shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
+    return shortName != null ? shortName : InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
   public String getDisplayName() {
-    return displayName == null ? displayName = getLocalizedString(bundle, key) : displayName;
+    return displayName != null ? displayName : getLocalizedString(bundle, key);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Nullable
   public String getGroupDisplayName() {
-    return groupDisplayName == null ? groupDisplayName = getLocalizedString(groupBundle, groupKey) : groupDisplayName;
+    return groupDisplayName != null ? groupDisplayName : getLocalizedString(groupBundle, groupKey);
   }
-
 
   @Override
   @Nullable
@@ -123,15 +122,15 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   /**
    * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Attribute("groupPath")
   public String groupPath;
 
-  @Nullable
-  public String[] getGroupPath() {
+  public String @Nullable [] getGroupPath() {
     String name = getGroupDisplayName();
     if (name == null) return null;
     if (groupPath == null) {
-      return new String[]{name.isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : name};
+      return new String[]{name.isEmpty() ? InspectionProfileEntry.getGeneralGroupName() : name};
     }
     return ArrayUtil.append(groupPath.split(","), name);
   }
@@ -190,7 +189,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
       return null;
     }
     ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
-    return CommonBundle.message(resourceBundle, key);
+    return AbstractBundle.message(resourceBundle, key);
   }
 
   @NotNull

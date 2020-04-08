@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.diagnostic.IdeErrorsDialog
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -98,18 +100,20 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
       LOG.warn("Save settings failed", e)
     }
 
-    val messagePostfix = "Please restart ${ApplicationNamesInfo.getInstance().fullProductName}</p>" +
-                         (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else "")
+    val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName,
+                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else ""))
 
-    val pluginId = IdeErrorsDialog.findPluginId(e)
+    val pluginId = PluginUtil.getInstance().findPluginId(e)
+    val groupId = NotificationGroup.createIdWithTitle("Settings Error", IdeBundle.message("notification.group.settings.error"))
     val notification = if (pluginId == null) {
-      Notification("Settings Error", "Unable to save settings", "<p>Failed to save settings. $messagePostfix",
+      Notification(groupId, IdeBundle.message("notification.title.unable.to.save.settings"),
+                   IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
                    NotificationType.ERROR)
     }
     else {
       PluginManagerCore.disablePlugin(pluginId)
-      Notification("Settings Error", "Unable to save plugin settings",
-                   "<p>The plugin <i>$pluginId</i> failed to save settings and has been disabled. $messagePostfix",
+      Notification(groupId, IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
+                   IdeBundle.message("notification.content.plugin.failed.to.save.settings.and.has.been.disabled", pluginId.idString, messagePostfix),
                    NotificationType.ERROR)
     }
     notification.notify(componentManager as? Project)

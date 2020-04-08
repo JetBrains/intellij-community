@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.dvcs.repo.ClonePathProvider
@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -78,7 +77,7 @@ internal class GHCloneDialogExtensionComponent(
   private val avatarLoader: CachingGithubUserAvatarLoader,
   private val imageResizer: GithubImageResizer
 ) : VcsCloneDialogExtensionComponent() {
-  private val LOG = logger<GHCloneDialogExtensionComponent>()
+  private val LOG = GithubUtil.LOG
 
   private val progressManager: ProgressVisibilityManager
   private val githubGitHelper: GithubGitHelper = GithubGitHelper.getInstance()
@@ -173,12 +172,11 @@ internal class GHCloneDialogExtensionComponent(
     }
 
     repositoriesPanel = panel {
-      val gapLeft = JBUI.scale(VcsCloneDialogUiSpec.Components.innerHorizontalGap)
       row {
         cell(isFullWidth = true) {
           searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY, gapLeft = gapLeft)
-          accountsPanel(gapLeft = gapLeft)
+          JSeparator(JSeparator.VERTICAL)(growY).withLargeLeftGap()
+          accountsPanel().withLargeLeftGap()
         }
       }
       row {
@@ -348,12 +346,17 @@ internal class GHCloneDialogExtensionComponent(
   override fun doValidateAll(): List<ValidationInfo> {
     val list = ArrayList<ValidationInfo>()
     ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
-    ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.createDestination(directoryField.text))
     return list
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val parent = Paths.get(directoryField.text).toAbsolutePath().parent
+    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
+    if (destinationValidation != null) {
+      LOG.error("Unable to create destination directory", destinationValidation.message)
+      GithubNotifications.showError(project, "Clone failed", "Unable to create destination directory")
+      return
+    }
 
     val lfs = LocalFileSystem.getInstance()
     var destinationParent = lfs.findFileByIoFile(parent.toFile())
@@ -361,6 +364,8 @@ internal class GHCloneDialogExtensionComponent(
       destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
     }
     if (destinationParent == null) {
+      LOG.error("Clone Failed. Destination doesn't exist")
+      GithubNotifications.showError(project, "Clone failed", "Unable to find destination")
       return
     }
     val directoryName = Paths.get(directoryField.text).fileName.toString()
@@ -408,15 +413,13 @@ internal class GHCloneDialogExtensionComponent(
               }
               errorPanel.repaint()
             }
-            if (loginToken != null) {
-              val login = loginToken.first
-              val token = loginToken.second
-              if (account != null) {
-                authenticationManager.updateAccountToken(account, token)
-              }
-              else {
-                authenticationManager.registerAccount(login, getServer().host, token)
-              }
+            val login = loginToken.first
+            val token = loginToken.second
+            if (account != null) {
+              authenticationManager.updateAccountToken(account, token)
+            }
+            else {
+              authenticationManager.registerAccount(login, getServer().host, token)
             }
           }
       })
@@ -450,10 +453,15 @@ internal class GHCloneDialogExtensionComponent(
     selectedUrl = null
   }
 
-  private fun getGithubRepoPath(url: String): GHRepositoryCoordinates? {
-    try {
-      if (!url.endsWith(GitUtil.DOT_GIT, true)) return null
 
+  private fun getGithubRepoPath(searchText: String): GHRepositoryCoordinates? {
+    val url = searchText
+      .trim()
+      .removePrefix("git clone")
+      .removeSuffix(".git")
+      .trim()
+
+    try {
       var serverPath = GithubServerPath.from(url)
       serverPath = GithubServerPath.from(serverPath.toUrl().removeSuffix(serverPath.suffix ?: ""))
 

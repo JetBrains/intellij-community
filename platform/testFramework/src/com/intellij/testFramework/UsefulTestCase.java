@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -30,7 +29,12 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
@@ -40,15 +44,6 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
 import gnu.trove.THashSet;
-import junit.framework.AssertionFailedError;
-import junit.framework.TestCase;
-import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
-import org.junit.ComparisonFailure;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -59,9 +54,29 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import junit.framework.AssertionFailedError;
+import junit.framework.TestCase;
+import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
+import org.junit.ComparisonFailure;
 
 /**
  * @author peter
@@ -216,7 +231,6 @@ public abstract class UsefulTestCase extends TestCase {
           }
         }
       },
-      () -> UIUtil.removeLeakingAppleListeners(),
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
     ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
@@ -489,16 +503,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull T[] actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(T @NotNull [] actual, T @NotNull ... expected) {
     assertOrderedEquals(Arrays.asList(actual), expected);
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, T @NotNull ... expected) {
     assertOrderedEquals("", actual, expected);
   }
 
-  public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
+  public static void assertOrderedEquals(byte @NotNull [] actual, byte @NotNull [] expected) {
     assertEquals(expected.length, actual.length);
     for (int i = 0; i < actual.length; i++) {
       byte a = actual[i];
@@ -507,7 +521,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public static void assertOrderedEquals(@NotNull int[] actual, @NotNull int[] expected) {
+  public static void assertOrderedEquals(int @NotNull [] actual, int @NotNull [] expected) {
     if (actual.length != expected.length) {
       fail("Expected size: "+expected.length+"; actual: "+actual.length+"\nexpected: "+Arrays.toString(expected)+"\nactual  : "+Arrays.toString(actual));
     }
@@ -519,7 +533,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, T @NotNull ... expected) {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
@@ -559,7 +573,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertOrderedCollection(T @NotNull [] collection, Consumer<T> @NotNull ... checkers) {
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
 
@@ -567,7 +581,7 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
   @SafeVarargs
-  public static <T> void assertSameElements(@NotNull T[] actual, @NotNull T... expected) {
+  public static <T> void assertSameElements(T @NotNull [] actual, T @NotNull ... expected) {
     assertSameElements(Arrays.asList(actual), expected);
   }
 
@@ -575,7 +589,7 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
   @SafeVarargs
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, T @NotNull ... expected) {
     assertSameElements(actual, Arrays.asList(expected));
   }
 
@@ -596,7 +610,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
 
@@ -618,7 +632,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
     assertContainsElements(collection, Arrays.asList(expected));
   }
 
@@ -629,12 +643,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  public static String toString(@NotNull Object[] collection, @NotNull String separator) {
+  public static String toString(Object @NotNull [] collection, @NotNull String separator) {
     return toString(Arrays.asList(collection), separator);
   }
 
   @SafeVarargs
-  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull T... notExpected) {
+  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
     assertDoesntContain(collection, Arrays.asList(notExpected));
   }
 
@@ -661,7 +675,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertOrderedCollection(@NotNull Collection<? extends T> collection, Consumer<T> @NotNull ... checkers) {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
@@ -680,12 +694,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertUnorderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertUnorderedCollection(T @NotNull [] collection, Consumer<T> @NotNull ... checkers) {
     assertUnorderedCollection(Arrays.asList(collection), checkers);
   }
 
   @SafeVarargs
-  public static <T> void assertUnorderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
+  public static <T> void assertUnorderedCollection(@NotNull Collection<? extends T> collection, Consumer<T> @NotNull ... checkers) {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
@@ -742,13 +756,13 @@ public abstract class UsefulTestCase extends TestCase {
     return t;
   }
 
-  public static <T> T assertOneElement(@NotNull T[] ts) {
+  public static <T> T assertOneElement(T @NotNull [] ts) {
     Assert.assertEquals(Arrays.asList(ts).toString(), 1, ts.length);
     return ts[0];
   }
 
   @SafeVarargs
-  public static <T> void assertOneOf(T value, @NotNull T... values) {
+  public static <T> void assertOneOf(T value, T @NotNull ... values) {
     for (T v : values) {
       if (Objects.equals(value, v)) {
         return;
@@ -761,7 +775,7 @@ public abstract class UsefulTestCase extends TestCase {
     PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
   }
 
-  public static void assertEmpty(@NotNull Object[] array) {
+  public static void assertEmpty(Object @NotNull [] array) {
     assertOrderedEquals(array);
   }
 
@@ -787,7 +801,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 
-  public static void assertSize(int expectedSize, @NotNull Object[] array) {
+  public static void assertSize(int expectedSize, Object @NotNull [] array) {
     if (array.length != expectedSize) {
       assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
     }
@@ -875,7 +889,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
-    if (!Comparing.equal(expected, actual)) {
+    if (!Objects.equals(expected, actual)) {
       throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
@@ -1047,8 +1061,7 @@ public abstract class UsefulTestCase extends TestCase {
 
       if (shouldOccur) {
         wasThrown = true;
-        final String errorMessage = exceptionCase.getAssertionErrorMessage();
-        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
+        assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
         if (expectedErrorMsgPart != null) {
           assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }
@@ -1069,7 +1082,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     finally {
       if (shouldOccur && !wasThrown) {
-        fail(exceptionCase.getAssertionErrorMessage());
+        fail(exceptionCase.getExpectedExceptionClass().getName() + " must be thrown.");
       }
     }
   }
@@ -1118,7 +1131,7 @@ public abstract class UsefulTestCase extends TestCase {
       if (app != null && !app.isDisposed()) {
         FileBasedIndexImpl index = (FileBasedIndexImpl)app.getServiceIfCreated(FileBasedIndex.class);
         if (index != null) {
-          index.waitForVfsEventsExecuted(timeout, timeUnit);
+          index.getChangedFilesCollector().waitForVfsEventsExecuted(timeout, timeUnit);
         }
 
         DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);

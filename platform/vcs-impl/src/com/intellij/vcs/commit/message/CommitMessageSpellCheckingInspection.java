@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public class CommitMessageSpellCheckingInspection extends BaseCommitMessageInspe
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Spelling";
+    return VcsBundle.message("inspection.CommitMessageSpellCheckingInspection.display.name");
   }
 
   @NotNull

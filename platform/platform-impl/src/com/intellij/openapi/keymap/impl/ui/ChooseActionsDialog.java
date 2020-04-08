@@ -7,6 +7,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -53,7 +54,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         doOKAction();
         return true;
       }
@@ -68,7 +69,7 @@ public class ChooseActionsDialog extends DialogWrapper {
       }
     });
 
-    setTitle("Add Actions to Quick List");
+    setTitle(IdeBundle.message("dialog.title.add.actions.to.quick.list"));
     init();
   }
 

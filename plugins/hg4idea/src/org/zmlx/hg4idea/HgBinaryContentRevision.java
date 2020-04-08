@@ -28,9 +28,8 @@ public class HgBinaryContentRevision extends HgContentRevision implements Binary
     super(project, hgFile, revisionNumber);
   }
 
-  @Nullable
   @Override
-  public byte[] getBinaryContent() {
+  public byte @Nullable [] getBinaryContent() {
     return getContentAsBytes();
   }
 }

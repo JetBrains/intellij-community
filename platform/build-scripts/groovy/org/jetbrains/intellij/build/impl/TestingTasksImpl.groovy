@@ -24,9 +24,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.util.function.Predicate
 import java.util.jar.Manifest
 
-/**
- * @author nik
- */
 @CompileStatic
 class TestingTasksImpl extends TestingTasks {
   private final CompilationContext context
@@ -376,10 +373,7 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
     else {
-      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"}"
-      if (options.debugPort != -1) {
-        debuggerParameter += ",address=$options.debugPort"
-      }
+      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"},address=localhost:$options.debugPort"
       jvmArgs.add(debuggerParameter)
     }
 
@@ -481,7 +475,7 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private static boolean isUnderTeamCity() {
-    System.getProperty("teamcity.buildType.id") != null
+    System.getenv("TEAMCITY_VERSION") != null
   }
 
   static boolean dependenciesInstalled

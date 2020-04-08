@@ -813,8 +813,8 @@ class TimeoutExpired(SubprocessError):
     stderr: Any
 
 
-class CalledProcessError(Exception):
-    returncode = 0
+class CalledProcessError(SubprocessError):
+    returncode: int
     # morally: _CMD
     cmd: Any
     # morally: Optional[_TXT]
@@ -832,11 +832,11 @@ class CalledProcessError(Exception):
 
 class Popen(Generic[AnyStr]):
     args: _CMD
-    stdin: IO[AnyStr]
-    stdout: IO[AnyStr]
-    stderr: IO[AnyStr]
-    pid = 0
-    returncode = 0
+    stdin: Optional[IO[AnyStr]]
+    stdout: Optional[IO[AnyStr]]
+    stderr: Optional[IO[AnyStr]]
+    pid: int
+    returncode: int
 
     # Technically it is wrong that Popen provides __new__ instead of __init__
     # but this shouldn't come up hopefully?
@@ -1156,7 +1156,10 @@ class Popen(Generic[AnyStr]):
                     pass_fds: Any = ...) -> Popen[Any]: ...
 
     def poll(self) -> int: ...
-    def wait(self, timeout: Optional[float] = ...) -> int: ...
+    if sys.version_info >= (3, 7):
+        def wait(self, timeout: Optional[float] = ...) -> int: ...
+    else:
+        def wait(self, timeout: Optional[float] = ..., endtime: Optional[float] = ...) -> int: ...
     # Return str/bytes
     def communicate(self,
                     input: Optional[AnyStr] = ...,

@@ -17,8 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class PsiReferenceProvider {
 
-  @NotNull
-  public abstract PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context);
+  public abstract PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context);
 
   public boolean acceptsHints(@NotNull final PsiElement element, @NotNull PsiReferenceService.Hints hints) {
     final PsiElement target = hints.target;

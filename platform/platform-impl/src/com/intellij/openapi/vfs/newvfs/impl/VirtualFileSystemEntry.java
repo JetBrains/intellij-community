@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -8,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -25,23 +27,20 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Collection;
 
-/**
- * @author max
- */
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
   static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
-          static final int IS_WRITABLE_FLAG = 0x01000000;
-          static final int IS_HIDDEN_FLAG =   0x02000000;
-  private static final int INDEXED_FLAG =     0x04000000;
-          static final int CHILDREN_CACHED =  0x08000000; // makes sense for directory only
+  static final int IS_WRITABLE_FLAG = 0x0100_0000;
+  static final int IS_HIDDEN_FLAG = 0x0200_0000;
+  private static final int INDEXED_FLAG = 0x0400_0000;
+  static final int CHILDREN_CACHED = 0x0800_0000; // makes sense for directory only
   static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense for non-directory file only
-  private static final int DIRTY_FLAG =       0x10000000;
-          static final int IS_SYMLINK_FLAG =  0x20000000;
-  private static final int HAS_SYMLINK_FLAG = 0x40000000;
-          static final int IS_SPECIAL_FLAG =  0x80000000;
+  private static final int DIRTY_FLAG = 0x1000_0000;
+  static final int IS_SYMLINK_FLAG = 0x2000_0000;
+  private static final int HAS_SYMLINK_FLAG = 0x4000_0000;
+  static final int IS_SPECIAL_FLAG = 0x8000_0000;
 
   static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
@@ -75,8 +74,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
+  void registerLink(VirtualFileSystem fs) {
+    if (fs instanceof LocalFileSystemImpl && is(VFileProperty.SYMLINK) && isValid()) {
+      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getPath(), getCanonicalPath());
+    }
+  }
+
   void updateLinkStatus() {
     setFlagInt(HAS_SYMLINK_FLAG, is(VFileProperty.SYMLINK) || getParent().getFlagInt(HAS_SYMLINK_FLAG));
+    registerLink(getFileSystem());
   }
 
   @Override
@@ -99,6 +105,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public VirtualDirectoryImpl getParent() {
     VirtualDirectoryImpl changedParent = mySegment.vfsData.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
+  }
+
+  public boolean hasSymlink() {
+    return getFlagInt(HAS_SYMLINK_FLAG);
   }
 
   @Override
@@ -157,8 +167,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  @NotNull
-  protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+  protected char @NotNull [] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
     CharSequence name = getNameSequence();
 
     char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
@@ -169,7 +178,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return chars;
   }
 
-  private static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
+  private static int copyString(char @NotNull [] chars, int pos, @NotNull CharSequence s) {
     int length = s.length();
     CharArrayUtil.getChars(s, chars, 0, pos, length);
     return pos + length;
@@ -241,11 +250,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
 
     if (!newParent.isDirectory()) {
-      throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
+      throw new IOException(CoreBundle.message("file.copy.target.must.be.directory"));
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this, () -> ourPersistence.copyFile(requestor, this, newParent, copyName));
@@ -256,7 +265,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (getFileSystem() != newParent.getFileSystem()) {
-      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
+      throw new IOException(CoreBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
@@ -289,7 +298,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   private void validateName(@NotNull String name) throws IOException {
     if (!getFileSystem().isValidName(name)) {
-      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
+      throw new IOException(CoreBundle.message("file.invalid.name.error", name));
     }
   }
 
@@ -310,7 +319,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   public void setNewName(@NotNull String newName) {
     if (!getFileSystem().isValidName(newName)) {
-      throw new IllegalArgumentException(VfsBundle.message("file.invalid.name.error", newName));
+      throw new IllegalArgumentException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
     VirtualDirectoryImpl parent = getParent();

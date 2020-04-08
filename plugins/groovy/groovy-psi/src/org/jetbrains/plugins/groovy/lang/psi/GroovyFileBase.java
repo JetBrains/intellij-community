@@ -39,14 +39,11 @@ public interface GroovyFileBase extends PsiFile, GrVariableDeclarationOwner, GrS
   @NotNull
   String getPackageName();
 
-  @NotNull
-  GrTypeDefinition[] getTypeDefinitions();
+  GrTypeDefinition @NotNull [] getTypeDefinitions();
 
-  @NotNull
-  GrMethod[] getMethods();
+  GrMethod @NotNull [] getMethods();
 
-  @NotNull
-  GrTopStatement[] getTopStatements();
+  GrTopStatement @NotNull [] getTopStatements();
 
   @Nullable
   GrImportStatement addImportForClass(@NotNull PsiClass aClass) throws IncorrectOperationException;

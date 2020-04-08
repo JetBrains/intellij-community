@@ -149,7 +149,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace concatenation";
+      return InspectionGadgetsBundle.message("unnecessary.temporary.object.fix.family.name");
     }
 
     @Override

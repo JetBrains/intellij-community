@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.internal
 
+import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -27,7 +28,8 @@ open class DumpUastTreeAction : AnAction() {
     val dump = runReadAction { buildDump(file) }
     if (dump == null) {
       Notifications.Bus.notify(
-        Notification("UAST", "UAST", "Can't build UAST tree for file '${file.name}'", NotificationType.ERROR)
+        Notification("UAST", JvmAnalysisBundle.message("title.uast"),
+                     "${JvmAnalysisBundle.message("can.t.build.uast.tree.for.file")} '${file.name}'", NotificationType.ERROR)
       )
       return
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -41,16 +42,16 @@ public class FixLineSeparatorsAction extends AnAction {
       for (VirtualFile vFile : vFiles) {
         fixSeparators(vFile);
       }
-    }, "fixing line separators", null);
+    }, IdeBundle.message("command.fixing.line.separators"), null);
   }
 
-  private static void fixSeparators(VirtualFile vFile) {
+  private static void fixSeparators(@NotNull VirtualFile vFile) {
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && !file.getFileType().isBinary()) {
           final Document document = FileDocumentManager.getInstance().getDocument(file);
-          if (areSeparatorsBroken(document)) {
+          if (document != null && areSeparatorsBroken(document)) {
             fixSeparators(document);
           }
         }
@@ -59,7 +60,7 @@ public class FixLineSeparatorsAction extends AnAction {
     });
   }
 
-  private static boolean areSeparatorsBroken(Document document) {
+  private static boolean areSeparatorsBroken(@NotNull Document document) {
     final int count = document.getLineCount();
     for (int i = 1; i < count; i += 2) {
       if (document.getLineStartOffset(i) != document.getLineEndOffset(i)) {
@@ -69,7 +70,7 @@ public class FixLineSeparatorsAction extends AnAction {
     return true;    
   }
 
-  private static void fixSeparators(final Document document) {
+  private static void fixSeparators(@NotNull Document document) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       int i = 1;
       while(i < document.getLineCount()) {

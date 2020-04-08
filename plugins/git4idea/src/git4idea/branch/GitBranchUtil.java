@@ -14,16 +14,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.commands.*;
-import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,14 +33,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 public class GitBranchUtil {
 
   private static final Logger LOG = Logger.getInstance(GitBranchUtil.class);
 
   // The name that specifies that git is on specific commit rather then on some branch ({@value})
- private static final String NO_BRANCH_NAME = "(no branch)";
+ private static final String NO_BRANCH_NAME = "(no branch)"; //NON-NLS
 
   private GitBranchUtil() {}
 
@@ -79,43 +76,6 @@ public class GitBranchUtil {
     return ContainerUtil.map(branches, GitBranch::getName);
   }
 
-  /**
-   * Returns the current branch in the given repository, or null if either repository is not on the branch, or in case of error.
-   * @deprecated Use {@link GitRepository#getCurrentBranch()}
-   */
-  @Deprecated
-  @Nullable
-  public static GitLocalBranch getCurrentBranch(@NotNull Project project, @NotNull VirtualFile root) {
-    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
-    if (repository != null) {
-      return repository.getCurrentBranch();
-    }
-    else {
-      LOG.info("getCurrentBranch: Repository is null for root " + root);
-      return getCurrentBranchFromGit(project, root);
-    }
-  }
-
-  @Nullable
-  private static GitLocalBranch getCurrentBranchFromGit(@NotNull Project project, @NotNull VirtualFile root) {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REV_PARSE);
-    handler.addParameters("--abbrev-ref", "HEAD");
-    handler.setSilent(true);
-    try {
-      String name = Git.getInstance().runCommand(handler).getOutputOrThrow();
-      if (!name.equals("HEAD")) {
-        return new GitLocalBranch(name);
-      }
-      else {
-        return null;
-      }
-    }
-    catch (VcsException e) {
-      LOG.info("git rev-parse --abbrev-ref HEAD", e);
-      return null;
-    }
-  }
-
   @NotNull
   public static List<String> getAllTags(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.TAG);
@@ -137,65 +97,12 @@ public class GitBranchUtil {
     return tags;
   }
 
-  @NotNull
-  private static String trackedBranchKey(String branchName) {
-    return "branch." + branchName + ".merge";
-  }
-
-  @NotNull
-  private static String trackedRemoteKey(String branchName) {
-    return "branch." + branchName + ".remote";
-  }
-
-  /**
-   * Get the tracking branch for the given branch, or null if the given branch doesn't track anything.
-   * @deprecated Use {@link GitRepository#getBranchTrackInfo(String)}
-   */
-  @Deprecated
-  @Nullable
-  public static GitRemoteBranch tracked(@NotNull Project project, @NotNull VirtualFile root, @NotNull String branchName) throws VcsException {
-    final HashMap<String, String> result = new HashMap<>();
-    GitConfigUtil.getValues(project, root, null, result);
-    String remoteName = result.get(trackedRemoteKey(branchName));
-    if (remoteName == null) {
-      return null;
-    }
-    String branch = result.get(trackedBranchKey(branchName));
-    if (branch == null) {
-      return null;
-    }
-
-    if (".".equals(remoteName)) {
-      return new GitSvnRemoteBranch(branch);
-    }
-
-    GitRemote remote = findRemoteByNameOrLogError(project, root, remoteName);
-    if (remote == null) return null;
-    return new GitStandardRemoteBranch(remote, branch);
-  }
-
-  @Nullable
-  @Deprecated
-  public static GitRemote findRemoteByNameOrLogError(@NotNull Project project, @NotNull VirtualFile root, @NotNull String remoteName) {
-    GitRepository repository = GitUtil.getRepositoryForRootOrLogError(project, root);
-    if (repository == null) {
-      return null;
-    }
-
-    GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
-    if (remote == null) {
-      LOG.warn("Couldn't find remote with name " + remoteName);
-      return null;
-    }
-    return remote;
-  }
-
   /**
    * Convert {@link git4idea.GitRemoteBranch GitRemoteBranches} to their names, and remove remote HEAD pointers: origin/HEAD.
    */
   @NotNull
   public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
-    return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD"));
+    return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD")); //NON-NLS
   }
 
   @NotNull
@@ -260,10 +167,10 @@ public class GitBranchUtil {
       prefix = state.toString() + " ";
     }
     else if (state == GitRepository.State.GRAFTING) {
-      prefix = "Cherry-picking in ";
+      prefix = "Cherry-picking in "; //NON-NLS
     }
     else if (state == GitRepository.State.REVERTING) {
-      prefix = "Reverting in ";
+      prefix = "Reverting in "; //NON-NLS
     }
 
     GitBranch branch = repository.getCurrentBranch();
@@ -369,6 +276,7 @@ public class GitBranchUtil {
    * List branches containing a commit. Specify null if no commit filtering is needed.
    */
   @NotNull
+  @CalledInBackground
   public static Collection<String> getBranches(@NotNull Project project, @NotNull VirtualFile root, boolean localWanted,
                                                boolean remoteWanted, @Nullable String containingCommit) throws VcsException {
     // preparing native command executor
@@ -392,13 +300,14 @@ public class GitBranchUtil {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {
-        File headFile = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)).getRepositoryFiles().getHeadFile();
+        File headFile = GitUtil.getRepositoryForRoot(project, root).getRepositoryFiles().getHeadFile();
         head = FileUtil.loadFile(headFile, StandardCharsets.UTF_8).trim();
-        final String prefix = "ref: refs/heads/";
+        final String prefix = "ref: refs/heads/"; //NON-NLS
         return head.startsWith(prefix) ?
                Collections.singletonList(head.substring(prefix.length())) :
                Collections.emptyList();
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
         LOG.info(e);
         return Collections.emptyList();
       }
@@ -422,8 +331,8 @@ public class GitBranchUtil {
       if (b.equals(NO_BRANCH_NAME)) { continue; }
 
       String remotePrefix = null;
-      if (b.startsWith("remotes/")) {
-        remotePrefix = "remotes/";
+      if (b.startsWith("remotes/")) { //NON-NLS
+        remotePrefix = "remotes/"; //NON-NLS
       } else if (b.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
         remotePrefix = GitBranch.REFS_REMOTES_PREFIX;
       }
@@ -432,7 +341,7 @@ public class GitBranchUtil {
         if (! remoteOnly) {
           b = b.substring(remotePrefix.length());
         }
-        final int idx = b.indexOf("HEAD ->");
+        final int idx = b.indexOf("HEAD ->"); //NON-NLS
         if (idx > 0) {
           continue;
         }

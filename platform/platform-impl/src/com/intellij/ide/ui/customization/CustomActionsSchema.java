@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -27,19 +27,23 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
+import java.awt.Image;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.Icon;
+import javax.swing.tree.DefaultMutableTreeNode;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
@@ -64,18 +68,18 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   private int myModificationStamp = 0;
 
   public CustomActionsSchema() {
-    myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE);
-    myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR);
-    myIdToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.EDITOR_POPUP);
-    myIdToName.put(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu");
-    myIdToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP);
-    myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP);
-    myIdToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, "Scope View Popup Menu");
-    myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP);
-    myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP);
-    myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
-    myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar Popup Menu");
-    myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
+    myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.getMainMenuTitle());
+    myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar());
+    myIdToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.getEditorPopup());
+    myIdToName.put(IdeActions.GROUP_EDITOR_GUTTER, ActionsTreeUtil.getEditorGutterPopupMenu());
+    myIdToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup());
+    myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.getProjectViewPopup());
+    myIdToName.put(IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionsTreeUtil.getScopeViewPopupMenu());
+    myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.getFavoritesPopup());
+    myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.getCommanderPopup());
+    myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.getJ2EEPopup());
+    myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu());
+    myIdToName.put("NavBarToolBar", ActionsTreeUtil.getNavigationBarToolbar());
 
     List<Couple<String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
@@ -83,7 +87,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
       provider.registerGroups(registrar);
     }
-    Collections.sort(extList, (o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
+    extList.sort((o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
     for (Couple<String> couple : extList) {
       myIdToName.put(couple.first, couple.second);
     }
@@ -147,7 +151,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   private void resortActions() {
-    Collections.sort(myActions, ActionUrlComparator.INSTANCE);
+    myActions.sort(ActionUrlComparator.INSTANCE);
   }
 
   public boolean isModified(CustomActionsSchema schema) {
@@ -352,7 +356,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       int index = 0;
       if (groupPath.size() <= actionUrl.getGroupPath().size()) {
         while (index < groupPath.size()) {
-          if (!Comparing.equal(groupPath.get(index), actionUrl.getGroupPath().get(index))) {
+          if (!Objects.equals(groupPath.get(index), actionUrl.getGroupPath().get(index))) {
             break;
           }
           index++;

@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.stripe;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author Sergey.Malenkov
- */
 public class ExtraErrorStripePainter extends ErrorStripePainter {
   private final ErrorStripePainter myPainter = new ErrorStripePainter(true, null);
   private boolean myGroupSwap;

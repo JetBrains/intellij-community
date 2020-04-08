@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Pavel.Dolgov
  */
 class PatternNode extends FragmentNode {
-  PatternNode(@NotNull PsiElement[] elements) {
+  PatternNode(PsiElement @NotNull [] elements) {
     super(elements[0], elements[elements.length - 1], new ExtractableFragment(elements));
   }
 }

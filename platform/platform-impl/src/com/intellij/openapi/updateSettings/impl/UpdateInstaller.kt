@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -16,7 +16,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.io.copy
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -26,16 +26,16 @@ import java.util.zip.ZipFile
 import javax.swing.JComponent
 import javax.swing.UIManager
 
-data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDescriptor>, val restartRequired: Boolean)
+internal data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDescriptor>, val restartRequired: Boolean)
 
-object UpdateInstaller {
+internal object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
 
   private const val PATCH_FILE_NAME = "patch-file.zip"
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
   private val patchesUrl: URL
-    get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
+    get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.patchesUrl)
 
   @JvmStatic
   @Throws(IOException::class)
@@ -117,11 +117,10 @@ object UpdateInstaller {
   @JvmStatic
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
-    var result: PluginUpdateResult? = null
-    ProgressManager.getInstance().executeNonCancelableSection {
-      result = installDownloadedPluginUpdates(downloadedPluginUpdates, null, false)
+    val result = ProgressManager.getInstance().computeInNonCancelableSection<PluginUpdateResult, RuntimeException> {
+      installDownloadedPluginUpdates(downloadedPluginUpdates, null, false)
     }
-    return result?.pluginsInstalled?.isNotEmpty() ?: false
+    return result.pluginsInstalled.isNotEmpty()
   }
 
   @JvmStatic
@@ -166,14 +165,14 @@ object UpdateInstaller {
       java = javaCopy.path
     }
 
-    val args = arrayListOf<String>()
+    val args = mutableListOf<String>()
 
     if (SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
-      if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {
-        args += launcher.copyTo(File(tempDir, launcher.name), true).path
-        elevator.copyTo(File(tempDir, elevator.name), true)
+      if (launcher != null && elevator != null && Files.isExecutable(launcher) && Files.isExecutable(elevator)) {
+        args.add(launcher.copy(tempDir.toPath().resolve(launcher.fileName)).toString())
+        elevator.copy(tempDir.toPath().resolve(elevator.fileName))
       }
     }
 
@@ -202,20 +201,14 @@ object UpdateInstaller {
 
   private fun findLib(libName: String): File {
     val libFile = File(PathManager.getLibPath(), libName)
-    return if (libFile.exists()) libFile else throw IOException("Missing: ${libFile}")
+    return if (libFile.exists()) libFile else throw IOException("Missing: $libFile")
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
-  private fun getJdkSuffix(): String {
-    var jreHome = File(PathManager.getHomePath(), "jbr")
-    if (!jreHome.exists()) jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
-    if (!jreHome.exists()) return "-no-jbr"
-    val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
-    val version = try {
-      releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature
-    }
-    catch (e: Exception) { 0 }
-    return if (version == 11) "-jbr11" else ""
+  private fun getJdkSuffix(): String = when {
+    !SystemInfo.isMac && Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr-x86")) -> "-jbr11-x86"
+    Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr")) -> "-jbr11"
+    else -> "-no-jbr"
   }
 }

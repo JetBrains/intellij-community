@@ -32,7 +32,8 @@ public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportPr
       @NotNull
       @Override
       public String getPresentableName() {
-        return "Java";
+        //noinspection HardCodedStringLiteral
+        return "Java"; //NON-NLS
       }
 
       @NotNull
@@ -51,7 +52,6 @@ public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportPr
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("id 'java'")
-      .addPropertyDefinition("sourceCompatibility = 1.8")
       .addRepositoriesDefinition("mavenCentral()")
       .addDependencyNotation("testCompile group: 'junit', name: 'junit', version: '4.12'");
   }

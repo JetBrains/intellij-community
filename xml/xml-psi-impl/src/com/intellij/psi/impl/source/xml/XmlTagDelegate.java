@@ -1,5 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -11,18 +14,56 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.xml.*;
-import com.intellij.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.xml.IXmlAttributeElementType;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -37,12 +78,22 @@ import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.*;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.intellij.util.ObjectUtils.doIfNotNull;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.StringTokenizer;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public abstract class XmlTagDelegate {
@@ -119,8 +170,7 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @NotNull
-  PsiReference[] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
+  PsiReference @NotNull [] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
     ProgressManager.checkCanceled();
     if (hints == PsiReferenceService.Hints.NO_HINTS) {
       return CachedValuesManager
@@ -132,8 +182,7 @@ public abstract class XmlTagDelegate {
     return getReferencesImpl(hints);
   }
 
-  @NotNull
-  private PsiReference[] getReferencesImpl(@NotNull PsiReferenceService.Hints hints) {
+  private PsiReference @NotNull [] getReferencesImpl(@NotNull PsiReferenceService.Hints hints) {
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(myTag.getNode());
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(myTag.getNode());
@@ -183,8 +232,7 @@ public abstract class XmlTagDelegate {
     return i >= 0 || ranges[-i - 2].containsOffset(offsetInTag);
   }
 
-  @NotNull
-  private TextRange[] getValueTextRanges() {
+  private TextRange @NotNull [] getValueTextRanges() {
     TextRange[] elements = myTextElements;
     if (elements == null) {
       List<TextRange> list = new SmartList<>();
@@ -322,11 +370,8 @@ public abstract class XmlTagDelegate {
 
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, NullableLazyValue.createValue(() -> {
-      final XmlFile[] file = new XmlFile[1];
-      List<XmlNSDescriptor> descriptors = fileLocations.stream().map(s -> {
-        file[0] = retrieveFile(tag, s, version, namespace, nsDecl);
-        return getDescriptor(tag, file[0], s, namespace);
-      }).filter(Objects::nonNull).collect(Collectors.toList());
+      List<XmlNSDescriptor> descriptors =
+      ContainerUtil.mapNotNull(fileLocations, s->getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
 
       XmlNSDescriptor descriptor = null;
       if (descriptors.size() == 1) {
@@ -340,7 +385,8 @@ public abstract class XmlTagDelegate {
       }
       XmlExtension extension = XmlExtension.getExtensionByElement(tag);
       if (extension != null) {
-        descriptor = extension.wrapNSDescriptor(tag, descriptor);
+        String prefix = tag.getPrefixByNamespace(namespace);
+        descriptor = extension.wrapNSDescriptor(tag, notNull(prefix, ""), descriptor);
       }
       return descriptor;
     }));
@@ -540,8 +586,7 @@ public abstract class XmlTagDelegate {
     XmlPsiUtil.processXmlElementChildren(myTag, processor, false);
   }
 
-  @NotNull
-  XmlAttribute[] calculateAttributes() {
+  XmlAttribute @NotNull [] calculateAttributes() {
     final List<XmlAttribute> result = new ArrayList<>(10);
     processChildren(element -> {
       if (element instanceof XmlAttribute) {
@@ -601,16 +646,14 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @NotNull
-  XmlTag[] getSubTags(boolean processIncludes) {
+  XmlTag @NotNull [] getSubTags(boolean processIncludes) {
     Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
     XmlTag[] cached = CachedValuesManager.getCachedValue(myTag, key, () ->
       Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));
     return cached.clone();
   }
 
-  @NotNull
-  protected XmlTag[] calcSubTags(boolean processIncludes) {
+  protected XmlTag @NotNull [] calcSubTags(boolean processIncludes) {
     List<XmlTag> result = new ArrayList<>();
     XmlPsiUtil.processXmlElements(myTag, element -> {
       if (element instanceof XmlTag) {
@@ -622,8 +665,7 @@ public abstract class XmlTagDelegate {
     return result.toArray(XmlTag.EMPTY);
   }
 
-  @NotNull
-  protected XmlTag[] findSubTags(@NotNull final String name, @Nullable final String namespace) {
+  protected XmlTag @NotNull [] findSubTags(@NotNull final String name, @Nullable final String namespace) {
     final XmlTag[] subTags = myTag.getSubTags();
     final List<XmlTag> result = new ArrayList<>();
     for (final XmlTag subTag : subTags) {
@@ -730,8 +772,7 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @NotNull
-  String[] knownNamespaces() {
+  String @NotNull [] knownNamespaces() {
     final PsiElement parentElement = myTag.getParent();
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     Set<String> known = Collections.emptySet();
@@ -899,7 +940,7 @@ public abstract class XmlTagDelegate {
   }
 
   XmlAttribute setAttribute(String name, String namespace, String value) throws IncorrectOperationException {
-    if (!Comparing.equal(namespace, "")) {
+    if (!Objects.equals(namespace, "")) {
       final String prefix = myTag.getPrefixByNamespace(namespace);
       if (prefix != null && !prefix.isEmpty()) name = prefix + ":" + name;
     }

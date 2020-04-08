@@ -120,8 +120,7 @@ public class TestClassCollector {
     return UrlClassLoader.build().allowLock().useCache().urls(urls).get();
   }
 
-  @Nullable
-  public static VirtualFile[] getRootPath(Module module, final boolean chooseSingleModule) {
+  public static VirtualFile @Nullable [] getRootPath(Module module, final boolean chooseSingleModule) {
     if (chooseSingleModule) {
       return OrderEnumerator.orderEntries(module)
         .withoutSdk()

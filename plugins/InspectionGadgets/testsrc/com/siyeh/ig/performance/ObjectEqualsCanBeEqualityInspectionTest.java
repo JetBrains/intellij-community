@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.InspectionGadgetsBundle;
@@ -19,7 +20,7 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
            "    one./*_*/equals(two);" +
            "  }" +
            "}");
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("equals.to.equality.quickfix"));
+    assertQuickFixNotAvailable(CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "=="));
   }
 
   public void testClass() {
@@ -28,7 +29,7 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
            "    return c1./*'equals()' can be replaced with '=='*//*_*/equals/**/(c2);" +
            "  }" +
            "}");
-    checkQuickFix(InspectionGadgetsBundle.message("equals.to.equality.quickfix"),
+    checkQuickFix(CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "=="),
                  "class X {" +
                  "  boolean m(Class c1, Class c2) {" +
                  "    return c1 == c2;" +
@@ -42,7 +43,7 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
            "    return !java.util.Objects./*'!equals()' can be replaced with '!='*//*_*/equals/**/(c1, c2);" +
            "  }" +
            "}");
-    checkQuickFix(InspectionGadgetsBundle.message("not.equals.to.equality.quickfix"),
+    checkQuickFix(CommonQuickFixBundle.message("fix.replace.x.with.y", "!equals()", "!="),
                   "class X {" +
                   "  boolean m(Class c1, Class c2) {" +
                   "    return c1 != c2;" +

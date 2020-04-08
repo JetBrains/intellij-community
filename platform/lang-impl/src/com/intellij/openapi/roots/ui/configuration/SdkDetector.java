@@ -2,21 +2,21 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -55,7 +55,21 @@ public class SdkDetector {
                                         @NotNull Disposable lifetime,
                                         @NotNull ModalityState callbackModality,
                                         @NotNull DetectedSdkListener listener) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
+    if (!isDetectorEnabled()) {
+      return;
+    }
+
+    /*
+      TODO[jo] fix: deadlock in combobox tests on {@link SdkDetector#myPublicationLock}
+       detection must be called from edt {@link SdkDetector#getDetectedSdksWithUpdate}
+       detection is synchronous for unit tests {@link com.intellij.openapi.progress.impl.CoreProgressManager#run}
+     */
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      LOG.warn("Sdks detection is skipped, because deadlock is coming for synchronous detection");
+      return;
+    }
 
     EdtDetectedSdkListener actualListener = new EdtDetectedSdkListener(callbackModality, listener);
     synchronized (myPublicationLock) {
@@ -107,6 +121,10 @@ public class SdkDetector {
     }
   };
 
+  private static boolean isDetectorEnabled() {
+    return Registry.is("sdk.detector.enabled");
+  }
+
   /**
    * Run Sdk detection assuming called in a background thread
    */
@@ -115,7 +133,9 @@ public class SdkDetector {
                          @NotNull DetectedSdkListener callback) {
     callback.onSearchStarted();
     try {
-      detect(type, indicator, callback);
+      if (isDetectorEnabled()) {
+        detect(type, indicator, callback);
+      }
     } finally {
       callback.onSearchCompleted();
     }
@@ -125,7 +145,8 @@ public class SdkDetector {
                              @NotNull ProgressIndicator indicator,
                              @NotNull DetectedSdkListener callback) {
     try {
-      for (String path : new HashSet<>(type.suggestHomePaths())) {
+      Collection<String> suggestedPaths = type.suggestHomePaths();
+      for (String path : suggestedPaths) {
         indicator.checkCanceled();
 
         if (path == null) continue;
@@ -168,7 +189,7 @@ public class SdkDetector {
                                         @NotNull DetectedSdkListener callback) {
     Task.Backgroundable task = new Task.Backgroundable(
       project,
-      "Detecting SDKs",
+      ProjectBundle.message("progress.title.detecting.sdks"),
       true,
       PerformInBackgroundOption.ALWAYS_BACKGROUND) {
 

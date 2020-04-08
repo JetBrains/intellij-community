@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.Job;
@@ -7,7 +7,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,21 +18,22 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CpuUsageData;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -123,7 +124,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
-    NonBlockingReadActionImpl.cancelAllTasks(); // someone might've submitted a task depending on app events which we disable now
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // someone might've submitted a task depending on app events which we disable now
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
     application.disableEventsUntil(disposable);
@@ -492,8 +493,27 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     assertNotNull(exception);
   }
 
+  public void testRunProcessWithProgressFromPooledThread() throws Throwable {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
+      try {
+        boolean result = ApplicationManagerEx.getApplicationEx()
+          .runProcessWithProgressSynchronously(EmptyRunnable.getInstance(), "title", true, getProject());
+        assertTrue(result);
+      }
+      catch (Throwable e) {
+        exception = e;
+      }
+    });
+    TestTimeOut p = setTimeout(500, TimeUnit.MILLISECONDS);
+    while (!p.timedOut()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    joinWithTimeout(Collections.singletonList(thread));
+    if (exception != null) throw exception;
+  }
+
   public void testRunProcessWithProgressSynchronouslyInReadAction() throws Throwable {
-    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+    boolean result = ApplicationManagerEx.getApplicationEx()
       .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, () -> {
         try {
           assertFalse(SwingUtilities.isEventDispatchThread());
@@ -507,10 +527,32 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
+  public void testRunProcessWithProgressSynchronouslyInReadActionFromPooledThread() throws Throwable {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
+      boolean result = ApplicationManagerEx.getApplicationEx()
+        .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, () -> {
+          try {
+            assertFalse(SwingUtilities.isEventDispatchThread());
+            assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+          }
+          catch (Throwable e) {
+            exception = e;
+          }
+        });
+      assertTrue(result);
+    });
+    TestTimeOut p = setTimeout(500, TimeUnit.MILLISECONDS);
+    while (!p.timedOut()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    joinWithTimeout(Collections.singletonList(thread));
+    if (exception != null) throw exception;
+  }
+
   public void testRunProcessWithProgressSynchronouslyInReadActionWithPendingWriteAction() throws Throwable {
     SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()));
     AtomicBoolean ran = new AtomicBoolean();
-    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+    boolean result = ApplicationManagerEx.getApplicationEx()
       .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null,
                                                        () -> ran.set(true));
     assertTrue(result);
@@ -525,9 +567,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
     int readIterations = 200_000_000;
-    ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
+    ReadMostlyRWLock lock = new ReadMostlyRWLock();
+    lock.setWriteThread(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-    final Field myThreadLocalsField = ObjectUtils.notNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
+    final Field myThreadLocalsField = Objects.requireNonNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
     //noinspection Convert2Lambda
     List<Callable<Void>> callables = Collections.nCopies(numOfThreads, new Callable<Void>() {
       @Override
@@ -734,8 +777,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     String oldHost = System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, host);
 
     try {
-      ApplicationInfoImpl applicationInfo = new ApplicationInfoImpl();
-
+      ApplicationInfoImpl applicationInfo = new ApplicationInfoImpl(new Element("state"));
       Assert.assertThat(applicationInfo.getPluginManagerUrl(), containsString(host));
       Assert.assertThat(applicationInfo.getPluginsListUrl(), containsString(host));
       Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), containsString(host));

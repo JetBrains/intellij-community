@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
@@ -19,9 +19,6 @@ import java.awt.font.FontRenderContext;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author max
- */
 public class ComplementaryFontsRegistry {
   private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
   private static final String DEFAULT_FALLBACK_FONT = Font.MONOSPACED;
@@ -43,13 +40,13 @@ public class ComplementaryFontsRegistry {
   private static FallBackInfo ourLastFallBackInfo = DEFAULT_FONT_INFO;
 
   // This matches style detection in JDK (class sun.font.Font2D)
-  private static final String[] BOLD_NAMES = {"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi" };
-  private static final String[] ITALIC_NAMES = {"italic", "cursiva", "oblique", "inclined"};
-  private static final String[] BOLD_ITALIC_NAMES = {"bolditalic", "bold-italic", "bold italic", "boldoblique", "bold-oblique", 
+  private static final @NonNls String[] BOLD_NAMES = {"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi" };
+  private static final @NonNls String[] ITALIC_NAMES = {"italic", "cursiva", "oblique", "inclined"};
+  private static final @NonNls String[] BOLD_ITALIC_NAMES = {"bolditalic", "bold-italic", "bold italic", "boldoblique", "bold-oblique",
     "bold oblique", "demibold italic", "negreta cursiva","demi oblique"};
 
   // Explicit mapping fontName->style for cases where generic rules (given above) don't work.
-  private static final Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<>();
+  private static final @NonNls Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<>();
   static {
     FONT_NAME_TO_STYLE.put("AnkaCoder-b",           Font.BOLD);
     FONT_NAME_TO_STYLE.put("AnkaCoder-i",           Font.ITALIC);
@@ -148,7 +145,7 @@ public class ComplementaryFontsRegistry {
    * pass not-null correct {@link FontRenderContext} to this method.
    */
   @NotNull
-  public static FontInfo getFontAbleToDisplay(@NotNull CharSequence text, int start, int end, 
+  public static FontInfo getFontAbleToDisplay(@NotNull CharSequence text, int start, int end,
                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
     assert 0 <= start && start < end && end <= text.length() : "Start: " + start + ", end: " + end + ", length: " + text.length();
@@ -171,7 +168,7 @@ public class ComplementaryFontsRegistry {
    * pass not-null correct {@link FontRenderContext} to this method.
    */
   @NotNull
-  public static FontInfo getFontAbleToDisplay(@NotNull char[] text, int start, int end, 
+  public static FontInfo getFontAbleToDisplay(char @NotNull [] text, int start, int end,
                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
     assert 0 <= start && start < end && end <= text.length : "Start: " + start + ", end: " + end + ", length: " + text.length;
@@ -187,10 +184,10 @@ public class ComplementaryFontsRegistry {
     }
     return getFontAbleToDisplay(firstCodePoint, text, secondOffset, end, style, preferences, context);
   }
-  
-  private static FontInfo getFontAbleToDisplay(int codePoint, @NotNull char[] remainingText, int start, int end, 
-                                              @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
-                                              FontRenderContext context) {
+
+  private static FontInfo getFontAbleToDisplay(int codePoint, char @NotNull [] remainingText, int start, int end,
+                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
+                                               FontRenderContext context) {
     boolean tryDefaultFallback = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     boolean useLigatures = !Patches.TEXT_LAYOUT_IS_SLOW && preferences.useLigatures();
@@ -289,7 +286,7 @@ public class ComplementaryFontsRegistry {
   }
 
   @Nullable
-  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int originalStyle, 
+  private static FontInfo doGetFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int originalStyle,
                                                  @NotNull String defaultFontFamily, boolean useLigatures, FontRenderContext context,
                                                  boolean disableFontFallback) {
     if (originalStyle < 0 || originalStyle > 3) originalStyle = Font.PLAIN;
@@ -324,7 +321,7 @@ public class ComplementaryFontsRegistry {
   }
 
   @NotNull
-  private static FontInfo doGetFontAbleToDisplay(int codePoint, char[] remainingText, int start, int end, 
+  private static FontInfo doGetFontAbleToDisplay(int codePoint, char[] remainingText, int start, int end,
                                                  int size, @JdkConstants.FontStyle int style, boolean useLigatures,
                                                  FontRenderContext context) {
     if (style < 0 || style > 3) style = Font.PLAIN;

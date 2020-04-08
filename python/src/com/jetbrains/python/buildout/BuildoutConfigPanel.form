@@ -19,7 +19,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Use paths from &amp;script: "/>
+          <text resource-bundle="messages/PyBundle" key="form.buildout.config.use.paths.from.script"/>
         </properties>
       </component>
       <component id="4d09c" class="javax.swing.JTextArea" binding="myNoticeTextArea">
@@ -30,7 +30,7 @@
         </constraints>
         <properties>
           <editable value="false"/>
-          <text value="Set to &lt;buildout-dir&gt;/bin/django.py for proper Django support "/>
+          <text resource-bundle="messages/PyBundle" key="form.buildout.config.set.to.buildout.dir.bin.django.py.for.proper.django.support"/>
           <wrapStyleWord value="true"/>
         </properties>
       </component>

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.javadoc;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReference;
@@ -29,12 +29,12 @@ abstract class ClassReferenceTagInfo implements JavadocTagInfo {
   public String checkTagValue(PsiDocTagValue value) {
     PsiElement refHolder = value != null ? value.getFirstChild() : null;
     if (refHolder == null) {
-      return JavaErrorMessages.message("javadoc.ref.tag.class.ref.expected");
+      return JavaPsiBundle.message("javadoc.ref.tag.class.ref.expected");
     }
 
     PsiElement refElement = refHolder.getFirstChild();
     if (!(refElement instanceof PsiJavaCodeReferenceElement)) {
-      return JavaErrorMessages.message("javadoc.exception.tag.wrong.tag.value");
+      return JavaPsiBundle.message("javadoc.exception.tag.wrong.tag.value");
     }
 
     return null;

@@ -20,14 +20,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class AntActionsBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "com.intellij.lang.ant.resources.AntActionsBundle";
+  @NonNls private static final String BUNDLE = "messages.AntActionsBundle";
   private static final AntActionsBundle INSTANCE = new AntActionsBundle();
 
   private AntActionsBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

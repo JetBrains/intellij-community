@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -64,7 +65,7 @@ public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Qualify " + getQualifierText();
+    return JavaAnalysisBundle.message("qualify.0", getQualifierText());
   }
 
   @Override

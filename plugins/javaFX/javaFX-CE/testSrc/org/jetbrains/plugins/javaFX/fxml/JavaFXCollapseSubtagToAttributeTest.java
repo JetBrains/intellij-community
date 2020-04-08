@@ -64,8 +64,7 @@ public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase 
 
     if (available) {
       assertNotNull("Collapse tag '" + tagName + "' to attribute", intentionAction);
-      assertTrue(CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor,
-                                                                   "Collapse tag '" + tagName + "' to attribute"));
+      assertTrue(CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor));
       checkResultByFile(getTestName(true) + "_after.fxml");
     } else {
       assertNull(intentionAction);

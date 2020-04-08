@@ -1,4 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("PackageDirectoryMismatch")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
@@ -133,40 +134,40 @@ fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyN
 
 private val serializer = MyXmlSerializer()
 
-private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
-  internal abstract class OldBindingProducer<ROOT_BINDING> {
-    private val cache: MutableMap<Type, ROOT_BINDING> = THashMap()
-    private val cacheLock = ReentrantReadWriteLock()
+private abstract class OldBindingProducer<ROOT_BINDING> {
+  private val cache: MutableMap<Type, ROOT_BINDING> = THashMap()
+  private val cacheLock = ReentrantReadWriteLock()
 
-    @get:TestOnly
-    internal val bindingCount: Int
-      get() = cacheLock.read { cache.size }
+  @get:TestOnly
+  internal val bindingCount: Int
+    get() = cacheLock.read { cache.size }
 
-    fun getRootBinding(aClass: Class<*>, originalType: Type = aClass): ROOT_BINDING {
-      val cacheKey = createCacheKey(aClass, originalType)
-      return cacheLock.read {
-        // create cache only under write lock
-        cache.get(cacheKey)
-      } ?: cacheLock.write {
-        cache.get(cacheKey)?.let {
-          return it
-        }
-
-        createRootBinding(aClass, originalType, cacheKey, cache)
+  fun getRootBinding(aClass: Class<*>, originalType: Type = aClass): ROOT_BINDING {
+    val cacheKey = createCacheKey(aClass, originalType)
+    return cacheLock.read {
+      // create cache only under write lock
+      cache.get(cacheKey)
+    } ?: cacheLock.write {
+      cache.get(cacheKey)?.let {
+        return it
       }
-    }
 
-    protected open fun createCacheKey(aClass: Class<*>, originalType: Type) = originalType
-
-    protected abstract fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, ROOT_BINDING>): ROOT_BINDING
-
-    fun clearBindingCache() {
-      cacheLock.write {
-        cache.clear()
-      }
+      createRootBinding(aClass, originalType, cacheKey, cache)
     }
   }
 
+  protected open fun createCacheKey(aClass: Class<*>, originalType: Type) = originalType
+
+  protected abstract fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, ROOT_BINDING>): ROOT_BINDING
+
+  fun clearBindingCache() {
+    cacheLock.write {
+      cache.clear()
+    }
+  }
+}
+
+private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
   val bindingProducer = object : OldBindingProducer<Binding>() {
     override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
       val binding = createClassBinding(aClass, null, type) ?: KotlinAwareBeanBinding(aClass)

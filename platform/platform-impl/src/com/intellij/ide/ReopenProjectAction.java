@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.OpenProjectTask;
@@ -21,9 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/**
-* @author yole
-*/
 @SuppressWarnings("ComponentNotRegistered")
 public class ReopenProjectAction extends AnAction implements DumbAware {
   private final String myProjectPath;
@@ -48,9 +45,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     Project project = e.getProject();
     Path file = Paths.get(myProjectPath);
     if (!Files.exists(file)) {
-      if (Messages.showDialog(project, "The path " + PathUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
-                                       "If it is on a removable or network drive, please make sure that the drive is connected.",
-                                       "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
+      if (Messages.showDialog(project, IdeBundle
+                                .message("message.the.path.0.does.not.exist.maybe.on.remote", PathUtil.toSystemDependentName(myProjectPath)),
+                              "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
         myIsRemoved = true;
         RecentProjectsManager.getInstance().removePath(myProjectPath);
       }

@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
@@ -14,10 +13,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
+import com.intellij.util.io.Bits;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class BatchEvaluator {
@@ -25,7 +27,7 @@ public class BatchEvaluator {
 
   private final DebugProcess myDebugProcess;
   private boolean myBatchEvaluatorChecked;
-  private ObjectReference myBatchEvaluatorObject;
+  private ClassType myBatchEvaluatorClass;
   private Method myBatchEvaluatorMethod;
 
   private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<>("BatchEvaluator");
@@ -39,13 +41,13 @@ public class BatchEvaluator {
       @Override
       public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         myBatchEvaluatorChecked = false;
-        myBatchEvaluatorObject= null;
+        myBatchEvaluatorClass = null;
         myBatchEvaluatorMethod = null;
       }
     });
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
+  public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
     if (!myBatchEvaluatorChecked) {
       myBatchEvaluatorChecked = true;
       if (DebuggerUtilsImpl.isRemote(myDebugProcess)) {
@@ -64,37 +66,22 @@ public class BatchEvaluator {
         return false;
       }
 
-      ClassType batchEvaluatorClass = null;
       try {
-        batchEvaluatorClass = (ClassType)myDebugProcess.findClass(evaluationContext, BatchEvaluatorServer.class.getName(),
+        myBatchEvaluatorClass = (ClassType)myDebugProcess.findClass(evaluationContext, BatchEvaluatorServer.class.getName(),
           evaluationContext.getClassLoader());
       }
-      catch (EvaluateException e) {
+      catch (EvaluateException ignored) {
       }
 
-      if (batchEvaluatorClass != null) {
-        Method constructor = DebuggerUtils.findMethod(batchEvaluatorClass, JVMNameUtil.CONSTRUCTOR_NAME, "()V");
-        if(constructor != null){
-          ObjectReference evaluator = null;
-          try {
-            evaluator = myDebugProcess.newInstance(evaluationContext, batchEvaluatorClass, constructor, Collections.emptyList());
-          }
-          catch (Exception e) {
-            LOG.debug(e);
-          }
-          myBatchEvaluatorObject = evaluator;
-
-          if(myBatchEvaluatorObject != null) {
-            myBatchEvaluatorMethod = DebuggerUtils.findMethod(batchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)[Ljava/lang/Object;");
-          }
-        }
+      if (myBatchEvaluatorClass != null) {
+          myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
       }
     }
     return myBatchEvaluatorMethod != null;
   }
 
   public void invoke(ToStringCommand command) {
-    LOG.assertTrue(DebuggerManager.getInstance(myDebugProcess.getProject()).isDebuggerManagerThread());
+    DebuggerManagerThreadImpl.assertIsManagerThread();
 
     final EvaluationContext evaluationContext = command.getEvaluationContext();
     final SuspendContext suspendContext = evaluationContext.getSuspendContext();
@@ -119,7 +106,8 @@ public class BatchEvaluator {
           public void action() {
             myBuffer.remove(suspendContext);
 
-            if(!doEvaluateBatch(commands, evaluationContext)) {
+            if ((commands.size() == 1 && !Registry.is("debugger.batch.evaluation.force")) ||
+                !doEvaluateBatch(commands, evaluationContext)) {
               commands.forEach(ToStringCommand::action);
             }
           }
@@ -145,7 +133,6 @@ public class BatchEvaluator {
     return batchEvaluator;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
@@ -160,41 +147,44 @@ public class BatchEvaluator {
       }
 
       ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
-      argArray.setValues(values);
-      List argList = new ArrayList(1);
-      argList.add(argArray);
-      Value value = debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorObject,
-                                              myBatchEvaluatorMethod, argList);
-      if (value instanceof ArrayReference) {
-        evaluationContext.keep(value); // to avoid ObjectCollectedException for both the array and its elements
-        final ArrayReference strings = (ArrayReference)value;
-        final List<Value> allValuesArray = strings.getValues();
-        final Value[] allValues = allValuesArray.toArray(new Value[0]);
-        int idx = 0;
-        for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext(); idx++) {
-          ToStringCommand request = iterator.next();
-          final Value strValue = allValues[idx];
-          if(strValue == null || strValue instanceof StringReference){
-            try {
-              String str = (strValue == null)? null : ((StringReference)strValue).value();
-              request.evaluationResult(str);
+      DebuggerUtilsEx.setValuesNoCheck(argArray, values);
+      String value = DebuggerUtils.processCollectibleValue(
+        () -> ((DebugProcessImpl)debugProcess).invokeMethod(
+          evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
+          MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
+        result -> result instanceof StringReference ? ((StringReference)result).value() : null
+      );
+      if (value != null) {
+        byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
+        try {
+          int pos = 0;
+          Iterator<ToStringCommand> iterator = requests.iterator();
+          while (pos < bytes.length) {
+            int length = Bits.getInt(bytes, pos);
+            boolean error = length < 0;
+            length = Math.abs(length);
+            String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
+            if (!iterator.hasNext()) {
+              return false;
             }
-            catch (ObjectCollectedException e) {
-              // ignored
+            ToStringCommand command = iterator.next();
+            if (error) {
+              command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message));
             }
+            else {
+              command.evaluationResult(message);
+            }
+            pos += length + 4;
           }
-          else if(strValue instanceof ObjectReference){
-            request.evaluationError(EvaluateExceptionUtil.createEvaluateException(new InvocationException((ObjectReference)strValue)).getMessage());
-          }
-          else {
-            LOG.assertTrue(false);
-          }
-          request.setEvaluated();
+        }
+        catch (StringIndexOutOfBoundsException e) {
+          LOG.error("Invalid batch toString response", e, Arrays.toString(bytes));
         }
       }
       return true;
     }
     catch (ClassNotLoadedException | ObjectCollectedException | EvaluateException | InvalidTypeException e) {
+      LOG.debug(e);
     }
     return false;
   }

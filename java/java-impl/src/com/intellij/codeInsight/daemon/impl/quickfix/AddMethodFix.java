@@ -32,7 +32,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     setText(QuickFixBundle.message("add.method.text", methodPrototype.getName(), implClass.getName()));
   }
 
-  public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, @NotNull String... exceptions) {
+  public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, String @NotNull ... exceptions) {
     this(createMethod(methodText, implClass), implClass);
     ContainerUtil.addAll(myExceptions, exceptions);
   }

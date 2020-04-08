@@ -20,9 +20,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface JpsAppEngineModuleExtension extends JpsElement {
   JpsModule getModule();
 

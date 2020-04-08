@@ -29,6 +29,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <depends optional="true" config-file="python-copyright-plugin.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-python-support.xml">org.intellij.intelliLang</depends>
   <depends optional="true" config-file="python-terminal-plugin.xml">org.jetbrains.plugins.terminal</depends>
+  <depends optional="true" config-file="python-grazie-plugin.xml">tanvd.grazi</depends>
 
   <application-components>
     <component>

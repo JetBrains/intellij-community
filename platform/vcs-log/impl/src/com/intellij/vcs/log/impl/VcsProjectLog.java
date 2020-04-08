@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -38,6 +39,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
+import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
+import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
 public class VcsProjectLog implements Disposable {
@@ -51,7 +54,7 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
-  @NotNull private final Disposable myMessageBusConnections = Disposer.newDisposable();
+  @NotNull private final Disposable myListenersDisposable = Disposer.newDisposable();
   @NotNull private final ExecutorService myExecutor;
   private volatile boolean myDisposeStarted = false;
   private int myRecreatedLogCount = 0;
@@ -65,13 +68,13 @@ public class VcsProjectLog implements Disposable {
     myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myMessageBus.connect(myListenersDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (myProject != project) return;
 
         myDisposeStarted = true;
-        Disposer.dispose(myMessageBusConnections);
+        Disposer.dispose(myListenersDisposable);
         disposeLog(false);
         myExecutor.shutdown();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -80,13 +83,15 @@ public class VcsProjectLog implements Disposable {
           }
           catch (InterruptedException ignored) {
           }
-        }, "Closing Vcs Log", false, project);
+        }, VcsLogBundle.message("vcs.log.closing.process"), false, project);
       }
     });
   }
 
-  private void subscribeToMappingsChanges() {
-    myMessageBus.connect(myMessageBusConnections).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+  private void subscribeToMappingsAndEPsChanges() {
+    myMessageBus.connect(myListenersDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+    LOG_PROVIDER_EP.getPoint(myProject).addExtensionPointListener(() -> disposeLog(true), false, myListenersDisposable);
+    LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.addExtensionPointListener(myProject, () -> disposeLog(true), myListenersDisposable);
   }
 
   @Nullable
@@ -153,10 +158,11 @@ public class VcsProjectLog implements Disposable {
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
     if ((++myRecreatedLogCount) % RECREATE_LOG_TRIES == 0) {
-      String message = String.format("VCS Log was recreated %d times due to data corruption\n" +
-                                     "Delete %s directory and restart %s if this happens often.\n%s",
-                                     myRecreatedLogCount, LOG_CACHE, ApplicationNamesInfo.getInstance().getFullProductName(),
-                                     t.getMessage());
+      String message = VcsLogBundle.message("vcs.log.recreated.due.to.corruption",
+                                            myRecreatedLogCount,
+                                            LOG_CACHE,
+                                            ApplicationNamesInfo.getInstance().getFullProductName(),
+                                            t.getMessage());
       LOG.error(message, t);
 
       VcsLogManager manager = getLogManager();
@@ -248,7 +254,7 @@ public class VcsProjectLog implements Disposable {
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
       Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
-      new Task.Backgroundable(project, "Loading Commits") {
+      new Task.Backgroundable(project, VcsLogBundle.message("vcs.log.creating.process")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -340,7 +346,7 @@ public class VcsProjectLog implements Disposable {
 
       VcsProjectLog projectLog = getInstance(project);
 
-      projectLog.subscribeToMappingsChanges();
+      projectLog.subscribeToMappingsAndEPsChanges();
       projectLog.createLogInBackground(false);
     }
   }

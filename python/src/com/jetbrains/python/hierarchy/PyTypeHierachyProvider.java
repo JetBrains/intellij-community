@@ -40,6 +40,6 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
 
   @Override
   public void browserActivated(@NotNull HierarchyBrowser hierarchyBrowser) {
-    ((PyTypeHierarchyBrowser)hierarchyBrowser).changeView(TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE);
+    ((PyTypeHierarchyBrowser)hierarchyBrowser).changeView(TypeHierarchyBrowserBase.getTypeHierarchyType());
   }
 }

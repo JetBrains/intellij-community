@@ -22,7 +22,7 @@ public class JavaFxEntryPoint extends EntryPoint {
   @Override
   @NotNull
   public String getDisplayName() {
-    return "JavaFX Applications";
+    return JavaFXBundle.message("javafx.entry.point.javafx.app");
   }
 
   @Override

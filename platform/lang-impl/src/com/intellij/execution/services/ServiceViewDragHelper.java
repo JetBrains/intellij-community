@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.execution.services.ServiceViewDnDDescriptor.Position;
 import com.intellij.ide.dnd.*;
@@ -11,7 +12,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.ui.SimpleColoredComponent;
@@ -202,10 +202,6 @@ class ServiceViewDragHelper {
     }
 
     @Override
-    public void dragDropEnd() {
-    }
-
-    @Override
     public void dropActionChanged(int gestureModifiers) {
     }
 
@@ -234,7 +230,7 @@ class ServiceViewDragHelper {
         c.append(getDisplayName(presentation));
       }
       else {
-        String text = size + StringUtil.pluralize(" item", size);
+        String text = ExecutionBundle.message("service.view.items", size);
         c.append(text);
       }
 
@@ -254,14 +250,6 @@ class ServiceViewDragHelper {
 
     ServiceViewDnDTarget(@NotNull JTree tree) {
       myTree = tree;
-    }
-
-    @Override
-    public void cleanUpOnLeave() {
-    }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
 
     @Override

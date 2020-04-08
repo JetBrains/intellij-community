@@ -3,6 +3,7 @@ package com.siyeh.igtest.style.field_final;
 import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class FieldMayBeFinal {
 
@@ -1118,4 +1119,35 @@ class Anonymous {
     X x = new X();
     x.z++;
   }
+}
+class Implicit {
+  private static final AtomicReferenceFieldUpdater<Implicit, String> triggeringPolicyUpdater =
+    AtomicReferenceFieldUpdater.newUpdater(Implicit.class, String.class, "triggeringPolicy");
+
+  private volatile String triggeringPolicy;
+
+  public Implicit(String defaultPolicy) {
+    this.triggeringPolicy = defaultPolicy;
+  }
+
+  public void update(String newValue) {
+    triggeringPolicyUpdater.set(this, newValue);
+  }
+}
+class TryCatchFinal {
+  private String value;
+
+  public TryCatchFinal() {
+    try {
+      value = create();
+    } catch (ClassNotFoundException | IllegalAccessException e) {
+      value = "";
+    }
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public static native <T> T create() throws ClassNotFoundException, IllegalAccessException;
 }

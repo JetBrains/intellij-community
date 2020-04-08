@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
@@ -26,6 +25,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.index.XmlNamespaceIndex;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.apache.xerces.xni.XMLResourceIdentifier;
 import org.apache.xerces.xni.XNIException;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
@@ -146,6 +146,15 @@ public class XmlResourceResolver implements XMLEntityResolver {
           relativePath = systemId.substring(systemId.lastIndexOf('/') + 1);
         }
 
+        String res = myExternalResourcesMap.get(relativePath);
+        if (res != null) {
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(res);
+          if (file != null) {
+            psiFile = PsiManager.getInstance(myProject).findFile(file);
+            if (psiFile != null) return psiFile;
+          }
+        }
+
         if (LOG.isDebugEnabled()) {
           LOG.debug("next to relative file checking:"+relativePath+","+myExternalResourcesMap.size()+")");
         }
@@ -250,7 +259,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
       if (publicId != null && publicId.contains(":/")) {
         try {
           myErrorReporter.processError(
-            new SAXParseException(XmlErrorMessages.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), ValidateXmlActionHandler.ProblemType.ERROR);
+            new SAXParseException(XmlPsiBundle.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
         }
         catch (SAXException ignore) {
 

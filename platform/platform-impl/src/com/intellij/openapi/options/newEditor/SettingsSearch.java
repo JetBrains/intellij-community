@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
@@ -15,9 +15,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-/**
- * @author Sergey.Malenkov
- */
 abstract class SettingsSearch extends SearchTextField implements KeyListener {
   private boolean myDelegatingNow;
 

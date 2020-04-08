@@ -606,7 +606,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   /**
    * @param siteSubstitutor should contain mapping for both candidates sites to align types in hierarchy
    */
-  private boolean isApplicableTo(@NotNull PsiType[] types2AtSite,
+  private boolean isApplicableTo(PsiType @NotNull [] types2AtSite,
                                  @NotNull PsiMethod method1,
                                  @NotNull LanguageLevel languageLevel,
                                  boolean varargsPosition,
@@ -649,8 +649,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return false;
   }
 
-  @NotNull
-  private static PsiType[] typesAtSite(@NotNull PsiType[] types1, @NotNull PsiSubstitutor siteSubstitutor1) {
+  private static PsiType @NotNull [] typesAtSite(PsiType @NotNull [] types1, @NotNull PsiSubstitutor siteSubstitutor1) {
     final PsiType[] types = PsiType.createArray(types1.length);
     for (int i = 0; i < types1.length; i++) {
       types[i] = siteSubstitutor1.substitute(types1[i]);
@@ -659,11 +658,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @NotNull
-  private static PsiSubstitutor calculateMethodSubstitutor(@NotNull PsiTypeParameter[] typeParameters,
+  private static PsiSubstitutor calculateMethodSubstitutor(PsiTypeParameter @NotNull [] typeParameters,
                                                            @NotNull PsiMethod method,
                                                            @NotNull PsiSubstitutor siteSubstitutor,
-                                                           @NotNull PsiType[] types1,
-                                                           @NotNull PsiType[] types2,
+                                                           PsiType @NotNull [] types1,
+                                                           PsiType @NotNull [] types2,
                                                            @NotNull LanguageLevel languageLevel) {
     PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(method.getProject())
       .inferTypeArguments(typeParameters, types1, types2, languageLevel);

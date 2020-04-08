@@ -95,9 +95,8 @@ public class CoreLocalVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return FileUtil.loadFileBytes(myIoFile);
   }
 

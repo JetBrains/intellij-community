@@ -92,7 +92,7 @@ public class ExistingTemplatesComponent {
               SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
               SSRBundle.message("template.in.use.title", configurationName),
               CommonBundle.message("button.remove"),
-              Messages.CANCEL_BUTTON,
+              Messages.getCancelButton(),
               AllIcons.General.WarningDialog
             )) {
               return;
@@ -197,7 +197,7 @@ public class ExistingTemplatesComponent {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         if (patternTree.isVisible() && getSelectedConfiguration() != null) {
           owner.close(DialogWrapper.OK_EXIT_CODE);
         }

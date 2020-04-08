@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -60,7 +61,7 @@ public class AnnotateCapitalizationIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Annotate capitalization type";
+    return JavaI18nBundle.message("intention.family.annotate.capitalization.type");
   }
 
   @Override

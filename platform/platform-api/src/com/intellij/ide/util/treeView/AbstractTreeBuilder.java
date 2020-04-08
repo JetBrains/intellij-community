@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.treeView;
 
@@ -45,14 +45,14 @@ public class AbstractTreeBuilder implements Disposable {
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
-                             @Nullable Comparator<? super NodeDescriptor> comparator) {
+                             @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     this(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
   }
 
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
-                             @Nullable Comparator<? super NodeDescriptor> comparator,
+                             @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                              boolean updateIfInactive) {
     init(tree, treeModel, treeStructure, comparator, updateIfInactive);
   }
@@ -64,7 +64,7 @@ public class AbstractTreeBuilder implements Disposable {
   protected void init(@NotNull JTree tree,
                       @NotNull DefaultTreeModel treeModel,
                       AbstractTreeStructure treeStructure,
-                      @Nullable final Comparator<? super NodeDescriptor> comparator,
+                      @Nullable final Comparator<? super NodeDescriptor<?>> comparator,
                       final boolean updateIfInactive) {
 
     tree.putClientProperty(TREE_BUILDER, new WeakReference<>(this));
@@ -171,9 +171,11 @@ public class AbstractTreeBuilder implements Disposable {
     return ui == null ? null : ui.getRootNode();
   }
 
-  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor> nodeDescriptorComparator) {
+  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor<?>> nodeDescriptorComparator) {
     AbstractTreeUi ui = getUi();
-    if (ui != null) ui.setNodeDescriptorComparator(nodeDescriptorComparator);
+    if (ui != null) {
+      ui.setNodeDescriptorComparator(nodeDescriptorComparator);
+    }
   }
 
   /**
@@ -360,7 +362,7 @@ public class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  protected void yield(@NotNull Runnable runnable) {
+  protected void yieldToEDT(@NotNull Runnable runnable) {
     AbstractTreeUi ui = getUi();
     if (ui == null) return;
 
@@ -420,7 +422,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected void sortChildren(Comparator<? super TreeNode> nodeComparator, DefaultMutableTreeNode node, List<? extends TreeNode> children) {
-    Collections.sort(children, nodeComparator);
+    children.sort(nodeComparator);
   }
 
   public void setPassthroughMode(boolean passthrough) {
@@ -467,7 +469,7 @@ public class AbstractTreeBuilder implements Disposable {
 
     @Override
     @NotNull
-    public Collection<AbstractTreeNode> getChildren() {
+    public Collection<AbstractTreeNode<?>> getChildren() {
       return Collections.emptyList();
     }
 

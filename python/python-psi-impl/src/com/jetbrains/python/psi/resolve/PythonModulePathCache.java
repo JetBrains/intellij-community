@@ -4,7 +4,6 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonModulePathCache extends PythonPathCache implements Disposable {
   public static PythonPathCache getInstance(Module module) {
-    return ModuleServiceManager.getService(module, PythonPathCache.class);
+    return module.getService(PythonPathCache.class);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})

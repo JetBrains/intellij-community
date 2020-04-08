@@ -119,7 +119,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
       for (IElementType key : attributes.keySet()) {
         myMap.remove(key);
       }
-      registerAdditionalHighlighters(myMap, extension);
+      registerAdditionalHighlighters(myMap);
     }
   }
 
@@ -152,8 +152,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     //noinspection SynchronizationOnGetClass,SynchronizeOnThis
     synchronized (getClass()) {
       return Holder.ourMap.get(tokenType).toArray(TextAttributesKey.EMPTY_ARRAY);
