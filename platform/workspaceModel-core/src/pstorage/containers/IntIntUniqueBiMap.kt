@@ -3,10 +3,10 @@ package com.intellij.workspace.api.pstorage.containers
 
 import gnu.trove.TIntIntHashMap
 
-class IntIntUniqueBiMap internal constructor(
-  key2Value: TIntIntHashMap,
-  value2Key: TIntIntHashMap
-) : AbstractIntIntUniqueBiMap(key2Value, value2Key) {
+internal class IntIntUniqueBiMap internal constructor(
+  override val key2Value: TIntIntHashMap,
+  override val value2Key: TIntIntHashMap
+) : AbstractIntIntUniqueBiMap() {
 
   constructor() : this(TIntIntHashMap(), TIntIntHashMap())
 
@@ -18,10 +18,10 @@ class IntIntUniqueBiMap internal constructor(
                                                                        value2Key.clone() as TIntIntHashMap)
 }
 
-class MutableIntIntUniqueBiMap internal constructor(
-  key2Value: TIntIntHashMap,
-  value2Key: TIntIntHashMap
-) : AbstractIntIntUniqueBiMap(key2Value, value2Key) {
+internal class MutableIntIntUniqueBiMap internal constructor(
+  override val key2Value: TIntIntHashMap,
+  override val value2Key: TIntIntHashMap
+) : AbstractIntIntUniqueBiMap() {
 
   constructor() : this(TIntIntHashMap(), TIntIntHashMap())
 
@@ -68,10 +68,15 @@ class MutableIntIntUniqueBiMap internal constructor(
   }
 }
 
-sealed class AbstractIntIntUniqueBiMap(
-  protected var key2Value: TIntIntHashMap,
-  protected var value2Key: TIntIntHashMap
-) {
+internal sealed class AbstractIntIntUniqueBiMap {
+
+  protected abstract val key2Value: TIntIntHashMap
+  protected abstract val value2Key: TIntIntHashMap
+
+  inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
+    key2Value.forEachEntry { key, value -> action(key, value); true }
+  }
+
   fun containsKey(key: Int) = key in key2Value
 
   fun containsValue(value: Int) = value in value2Key
