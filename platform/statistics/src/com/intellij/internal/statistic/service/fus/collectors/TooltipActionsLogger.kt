@@ -20,9 +20,9 @@ class TooltipActionsLogger : FeatureUsagesCollector() {
     private val GROUP = EventLogGroup("tooltip.action.events", 1)
 
 
-    private val executeEvent = GROUP.registerEvent("execute", EventFields.Project, EventFields.InputEvent)
-    val showAllEvent = GROUP.registerEvent("show.all", EventFields.Project)
-    private val showDescriptionEvent = GROUP.registerEvent("show.description", EventFields.Project, EventFields.Enum<Source>("source"), EventFields.InputEvent)
+    private val executeEvent = GROUP.registerEvent("execute", EventFields.InputEvent)
+    val showAllEvent = GROUP.registerEvent("show.all")
+    private val showDescriptionEvent = GROUP.registerEvent("show.description", EventFields.Enum<Source>("source"), EventFields.InputEvent)
 
     @JvmStatic
     fun logExecute(project: Project?, inputEvent: InputEvent?) {

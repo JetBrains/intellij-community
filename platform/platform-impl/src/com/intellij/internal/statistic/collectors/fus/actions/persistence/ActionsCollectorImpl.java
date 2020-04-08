@@ -58,7 +58,6 @@ public class ActionsCollectorImpl extends ActionsCollector {
     PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
 
     List<EventPair> data = new ArrayList<>();
-    data.add(EventFields.Project.with(project));
     data.add(EventFields.PluginInfoFromInstance.with(action));
 
     if (event != null) {
@@ -70,7 +69,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
       data.addAll(customData);
     }
     addActionClass(data, action, info);
-    eventId.log(data.toArray(new EventPair[0]));
+    eventId.log(project, data.toArray(new EventPair[0]));
   }
 
   @NotNull

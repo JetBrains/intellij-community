@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -105,22 +107,22 @@ public class FUCounterUsageLogger {
   }
 
   private void registerGroupFromEP(CounterUsageCollectorEP ep) {
-    if (ep.implementationClass != null) {
-      FeatureUsagesCollector collector = ep.instantiateClass(ep.implementationClass, ApplicationManager.getApplication().getPicoContainer());
-      EventLogGroup group = collector.getGroup();
-      if (group == null) {
-        LOG.error("Collector " + ep.implementationClass + " does not implement the getGroup() method");
-      }
-      else {
-        register(group);
-      }
-    }
-    else {
+    if (ep.implementationClass == null) {
       final String id = ep.getGroupId();
       if (StringUtil.isNotEmpty(id)) {
         register(new EventLogGroup(id, ep.version));
       }
     }
+  }
+
+  public static List<FeatureUsagesCollector> instantiateCounterCollectors() {
+    List<FeatureUsagesCollector> result = new ArrayList<>();
+    for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensions()) {
+      if (ep.implementationClass != null) {
+        result.add(ep.instantiateClass(ep.implementationClass, ApplicationManager.getApplication().getPicoContainer()));
+      }
+    }
+    return result;
   }
 
   private void register(@NotNull EventLogGroup group) {
@@ -130,6 +132,9 @@ public class FUCounterUsageLogger {
   public void logRegisteredGroups() {
     for (EventLogGroup group : myGroups.values()) {
       FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
+    }
+    for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
+      FeatureUsageLogger.INSTANCE.log(collector.getGroup(), EventLogSystemEvents.COLLECTOR_REGISTERED);
     }
   }
 

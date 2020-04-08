@@ -3,10 +3,7 @@ package com.intellij.internal.statistic.eventLog.whitelist
 
 import com.google.gson.GsonBuilder
 import com.intellij.internal.statistic.eventLog.*
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationStarter
 import kotlin.system.exitProcess
@@ -54,9 +51,6 @@ private fun valueSchema(field: EventField<*>): List<String> = when(field) {
 }
 
 private fun fieldSchema(field: EventField<*>): List<WhitelistField> {
-  if (field == EventFields.Project) {
-    return listOf()  // this field is handled implicitly
-  }
   if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
     return listOf(
       WhitelistField("plugin", listOf("{util#plugin}")),
@@ -69,9 +63,7 @@ private fun fieldSchema(field: EventField<*>): List<WhitelistField> {
 
 private fun buildWhitelist(): List<WhitelistGroup> {
   val result = mutableListOf<WhitelistGroup>()
-  collectWhitelistFromExtensions(result, "counter", CounterUsageCollectorEP.EP_NAME.extensions.mapNotNull { ep ->
-    ep.implementationClass?.let { ep.instantiateClass<FeatureUsagesCollector>(it, ApplicationManager.getApplication().picoContainer) }
-  })
+  collectWhitelistFromExtensions(result, "counter", FUCounterUsageLogger.instantiateCounterCollectors())
   collectWhitelistFromExtensions(result, "state", ApplicationUsagesCollector.EP_NAME.extensionList)
   collectWhitelistFromExtensions(result, "state", ProjectUsagesCollector.EP_NAME.extensionList)
   return result

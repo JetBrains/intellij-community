@@ -118,14 +118,6 @@ object EventFields {
   fun StringList(name: String): StringListEventField = StringListEventField(name)
 
   @JvmField
-  val Project = object : EventField<Project?>() {
-    override val name = "project"
-    override fun addData(fuData: FeatureUsageData, value: Project?) {
-      fuData.addProject(value)
-    }
-  }
-
-  @JvmField
   val InputEvent = object : EventField<FusInputEvent?>() {
     override val name = "input_event"
     override fun addData(fuData: FeatureUsageData, value: FusInputEvent?) {
@@ -228,12 +220,20 @@ class EventId(private val group: EventLogGroup, eventId: String) : BaseEventId(e
     FeatureUsageLogger.log(group, eventId)
   }
 
+  fun log(project: Project?) {
+    FeatureUsageLogger.log(group, eventId, FeatureUsageData().addProject(project).build())
+  }
+
   override fun getFields(): List<EventField<*>> = emptyList()
 }
 
 class EventId1<T>(private val group: EventLogGroup, eventId: String, private val field1: EventField<T>) : BaseEventId(eventId) {
   fun log(value1: T) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(value1).build())
+  }
+
+  fun log(project: Project?, value1: T) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(value1).addProject(project).build())
   }
 
   fun metric(value1: T): MetricEvent {
@@ -254,6 +254,10 @@ class EventId2<T1, T2>(private val group: EventLogGroup, eventId: String, privat
     FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2).build())
   }
 
+  fun log(project: Project?, value1: T1, value2: T2) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2).addProject(project).build())
+  }
+
   fun metric(value1: T1, value2: T2): MetricEvent {
     return MetricEvent(eventId, buildUsageData(value1, value2))
   }
@@ -271,6 +275,10 @@ class EventId2<T1, T2>(private val group: EventLogGroup, eventId: String, privat
 class EventId3<T1, T2, T3>(private val group: EventLogGroup, eventId: String, private val field1: EventField<T1>, private val field2: EventField<T2>, private val field3: EventField<T3>) : BaseEventId(eventId) {
   fun log(value1: T1, value2: T2, value3: T3) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2, value3).build())
+  }
+
+  fun log(project: Project?, value1: T1, value2: T2, value3: T3) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(value1, value2, value3).addProject(project).build())
   }
 
   fun metric(value1: T1, value2: T2, value3: T3): MetricEvent {
@@ -308,6 +316,10 @@ class VarargEventId internal constructor(private val group: EventLogGroup, event
 
   fun log(vararg pairs: EventPair<*>) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())
+  }
+
+  fun log(project: Project?, vararg pairs: EventPair<*>) {
+    FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).addProject(project).build())
   }
 
   fun metric(vararg pairs: EventPair<*>): MetricEvent {

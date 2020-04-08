@@ -21,7 +21,6 @@ class ActionsEventLogGroup : FeatureUsagesCollector() {
     fun registerActionInvokedEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
       return group.registerVarargEvent(
         eventId,
-        EventFields.Project,
         EventFields.PluginInfoFromInstance,
         EventFields.InputEvent,
         EventFields.ActionPlace,

@@ -38,12 +38,12 @@ public final class LifecycleUsageTriggerCollector extends FeatureUsagesCollector
   private static final VarargEventId IDE_EVENT_START = LIFECYCLE.registerVarargEvent("ide.start", eapField, testField, commandLineField,
                                                                                      internalField, headlessField, debugAgentField);
   private static final EventId1<Boolean> IDE_CLOSE = LIFECYCLE.registerEvent("ide.close", EventFields.Boolean("restart"));
-  private static final EventId2<Project, Long> PROJECT_OPENING_FINISHED = LIFECYCLE.registerEvent("project.opening.finished", EventFields.Project, EventFields.Long("duration_ms"));
-  private static final EventId1<Project> PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened", EventFields.Project);
-  private static final EventId1<Project> PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed", EventFields.Project);
-  private static final EventId1<Project> PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached", EventFields.Project);
-  private static final EventId1<Project> FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated", EventFields.Project);
-  private static final EventId1<Project> FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated", EventFields.Project);
+  private static final EventId1<Long> PROJECT_OPENING_FINISHED = LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"));
+  private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
+  private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed");
+  private static final EventId PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached");
+  private static final EventId FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated");
+  private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
   private static final EventId2<Long, String> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"), EventFields.String("duration_grouped"));
 
   private static final EventField<String> errorField = EventFields.String("error");

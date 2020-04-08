@@ -40,6 +40,6 @@ class AntActionsUsagesCollector : FeatureUsagesCollector() {
     private val GROUP = EventLogGroup("build.ant.actions", 1)
 
     @JvmField
-    val runSelectedBuildAction = GROUP.registerEvent("RunSelectedBuild", EventFields.Project)
+    val runSelectedBuildAction = GROUP.registerEvent("RunSelectedBuild")
   }
 }

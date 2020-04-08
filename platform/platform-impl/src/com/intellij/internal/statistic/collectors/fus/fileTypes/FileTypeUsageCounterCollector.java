@@ -54,7 +54,7 @@ public class FileTypeUsageCounterCollector extends FeatureUsagesCollector {
   }
 
   private static VarargEventId registerFileTypeEvent(String eventId) {
-    return GROUP.registerVarargEvent(eventId, EventFields.Project, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
+    return GROUP.registerVarargEvent(eventId, EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA);
   }
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
@@ -85,7 +85,7 @@ public class FileTypeUsageCounterCollector extends FeatureUsagesCollector {
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
-    eventId.log(EventFields.Project.with(project),
+    eventId.log(project,
         EventFields.PluginInfoFromInstance.with(fileType),
         FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
         EventFields.AnonymizedPath.with(file.getPath()),
