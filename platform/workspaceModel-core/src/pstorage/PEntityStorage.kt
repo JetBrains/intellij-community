@@ -839,7 +839,12 @@ internal object ClassConversion {
 
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifiableEntityToEntity(clazz: KClass<out M>): KClass<T> {
     return modifiableToEntityCache.getOrPut(clazz) {
-      Class.forName(getPackage(clazz) + clazz.simpleName!!.drop(10)).kotlin
+      try {
+        Class.forName(getPackage(clazz) + clazz.simpleName!!.drop(10)).kotlin
+      }
+      catch (e: ClassNotFoundException) {
+        error("Cannot get modifiable class for $clazz")
+      }
     } as KClass<T>
   }
 
