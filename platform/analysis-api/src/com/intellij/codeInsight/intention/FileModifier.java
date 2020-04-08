@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -63,7 +64,12 @@ public interface FileModifier extends WriteActionAware {
       if (Modifier.isStatic(field.getModifiers())) continue;
       Class<?> type = field.getType();
       if (type.isPrimitive() || type.isEnum() || type.equals(String.class) ||
-          type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class)) continue;
+          type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class) ||
+          // Back-link to the parent inspection looks safe, as inspection should not depend on the file 
+          (field.isSynthetic() && field.getName().equals("this$0") && 
+           LocalInspectionTool.class.isAssignableFrom(type))) {
+        continue;
+      }
       return null;
     }
     // No PSI-specific state: it's safe to apply this action to a file copy
