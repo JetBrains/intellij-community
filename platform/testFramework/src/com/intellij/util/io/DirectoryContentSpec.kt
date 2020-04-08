@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.impl.*
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Builds a data structure specifying content (files, their content, sub-directories, archives) of a directory. It can be used to either check
@@ -41,6 +43,14 @@ inline fun zipFile(content: DirectoryContentBuilder.() -> Unit): DirectoryConten
   val builder = DirectoryContentBuilderImpl(ZipSpec())
   builder.content()
   return builder.result
+}
+
+/**
+ * Builds [DirectoryContentSpec] structure by an existing directory. Can be used to check that generated directory matched expected data
+ * from testData directory.
+ */
+fun directoryContentOf(dir: Path): DirectoryContentSpec {
+  return createSpecByDirectory(dir)
 }
 
 abstract class DirectoryContentBuilder {

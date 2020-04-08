@@ -3,13 +3,12 @@ package com.intellij.util.io.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.io.Compressor
-import com.intellij.util.io.DirectoryContentBuilder
-import com.intellij.util.io.DirectoryContentSpec
-import com.intellij.util.io.ZipUtil
+import com.intellij.util.io.*
 import org.junit.Assert.*
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec
@@ -155,4 +154,22 @@ private fun assertDirectoryMatches(file: File, spec: DirectorySpecBase, relative
   actualChildrenNames.forEach { child ->
     assertDirectoryContentMatches(File(file, child), children[child]!!, "$relativePath/$child")
   }
+}
+
+internal fun createSpecByDirectory(dir: Path): DirectorySpec {
+  val spec = DirectorySpec()
+  dir.directoryStreamIfExists { children ->
+    children.forEach {
+      spec.addChild(it.fileName.toString(), createSpecByPath(it))
+    }
+  }
+  return spec
+}
+
+private fun createSpecByPath(path: Path): DirectoryContentSpecImpl {
+  if (path.isFile()) {
+    return FileSpec(Files.readAllBytes(path))
+  }
+  //todo support zip files
+  return createSpecByDirectory(path)
 }
