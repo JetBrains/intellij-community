@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -54,7 +55,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
     startupManager.runStartupActivities()
 
-    TestLoggerFactory.enableDebugLogging(myProject, "#" + NewMappings::class.java.name)
+    TestLoggerFactory.enableDebugLogging(myProject, "#" + NewMappings::class.java.name, "#" + VcsInitialization::class.java.name)
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)

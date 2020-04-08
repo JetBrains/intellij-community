@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -15,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -59,6 +58,9 @@ public final class VcsInitialization {
         if (!vcsInitObject.isCanBeLast()) {
           LOG.info("Registering startup activity AFTER initialization ", new Throwable());
         }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("scheduling late initialization: init step - %s, runnable - %s", vcsInitObject, runnable));
+        }
         BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
         return;
       }
@@ -90,6 +92,10 @@ public final class VcsInitialization {
           return;
         }
 
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("running initialization: init step - %s, runnable - %s", pair.getFirst().name(), pair.getSecond()));
+        }
+
         ProgressManager.checkCanceled();
         pair.getSecond().run();
       }
@@ -106,7 +112,8 @@ public final class VcsInitialization {
 
     // do not leave VCS initialization run in background when the project is closed
     Future<?> future = myFuture;
-    LOG.debug("cancelBackgroundInitialization() future=" + future +" from "+Thread.currentThread()+" with write access="+ApplicationManager.getApplication().isWriteAccessAllowed());
+    LOG.debug(String.format("cancelBackgroundInitialization() future=%s from %s with write access=%s",
+                            future, Thread.currentThread(), ApplicationManager.getApplication().isWriteAccessAllowed()));
     if (future != null) {
       future.cancel(false);
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -121,31 +128,33 @@ public final class VcsInitialization {
     }
   }
 
-  void waitNotRunning() {
-    waitFor(status -> status != Status.RUNNING);
+  private void waitNotRunning() {
+    boolean success = waitFor(status -> status != Status.RUNNING);
+    if (!success) {
+      LOG.warn("Failed to wait for VCS initialization cancellation for project " + myProject, new Throwable());
+    }
   }
 
+  @TestOnly
   void waitFinished() {
-    waitFor(status -> status == Status.FINISHED);
+    boolean success = waitFor(status -> status == Status.FINISHED);
+    if (!success) {
+      LOG.error("Failed to wait for VCS initialization completion for project " + myProject, new Throwable());
+    }
   }
 
-  private void waitFor(@NotNull Predicate<? super Status> predicate) {
+  private boolean waitFor(@NotNull Predicate<? super Status> predicate) {
     LOG.debug("waitFor() status=" + myStatus);
     // have to wait for task completion to avoid running it in background for closed project
     long start = System.currentTimeMillis();
-    Status status = null;
     while (System.currentTimeMillis() < start + 10000) {
       synchronized (myLock) {
-        status = myStatus;
-        if (predicate.test(status)) {
-          break;
+        if (predicate.test(myStatus)) {
+          return true;
         }
       }
       TimeoutUtil.sleep(10);
     }
-    if (status == Status.RUNNING) {
-      LOG.error("Failed to wait for completion of VCS initialization for project " + myProject,
-                new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
-    }
+    return false;
   }
 }
