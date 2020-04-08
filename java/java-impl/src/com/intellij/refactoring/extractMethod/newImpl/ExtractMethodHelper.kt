@@ -173,4 +173,17 @@ object ExtractMethodHelper {
       ArtificialBooleanOutput, is EmptyOutput -> this
     }
   }
+
+  fun areSemanticallySame(statements: List<PsiStatement>): Boolean {
+    if (statements.isEmpty()) return true
+    if (! areSame(statements)) return false
+    val returnExpressions = statements.mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
+    return returnExpressions.none { expression -> hasReference(expression) }
+    /* TODO it's also possible to extract single return expression with external references */
+  }
+
+  private fun hasReference(element: PsiElement): Boolean {
+    return PsiTreeUtil.findChildOfType(element, PsiJavaCodeReferenceElement::class.java, false) != null
+  }
+
 }

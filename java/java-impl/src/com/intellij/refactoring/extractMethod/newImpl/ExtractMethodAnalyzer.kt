@@ -43,7 +43,7 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   val dataOutput = when {
     expression != null  -> ExpressionOutput(getExpressionType(expression), null, listOf(expression), CodeFragmentAnalyzer.inferNullability(listOf(expression)))
     variableData is VariableOutput -> when {
-      ! ExtractMethodHelper.areSame(flowOutput.statements) && flowOutput is ConditionalFlow -> throw PrepareFailedException("Out var and different flow statements", flowOutput.statements.first())
+      ! ExtractMethodHelper.areSemanticallySame(flowOutput.statements) && flowOutput is ConditionalFlow -> throw PrepareFailedException("Out var and different flow statements", flowOutput.statements.first())
       variableData.nullability != Nullability.NOT_NULL && flowOutput is ConditionalFlow -> throw PrepareFailedException("Nullable out var and branching", variableData.variable)
       flowOutput is ConditionalFlow -> variableData.copy(nullability = Nullability.NULLABLE)
       else -> variableData

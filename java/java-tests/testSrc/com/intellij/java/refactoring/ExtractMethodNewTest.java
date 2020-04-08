@@ -699,6 +699,34 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testExtractVariableAndReturn() throws Exception {
+    doTest();
+  }
+
+  public void testExtractVariableAndReturn1() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract different returns");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testExtractVariableAndReturn2() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract internal references");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testExtractVariableAndReturn3() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract semantically different references");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
   public void testReturnStatementFolding() throws Exception {
     doTest();
   }
