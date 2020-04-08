@@ -79,7 +79,8 @@ final class ConfigurableWebBrowser extends WebBrowser {
       }
     }
     else if (family == BrowserFamily.FIREFOX) {
-      if (checkNameAndPath("dev") || checkNameAndPath("Dev")) {
+      String path = getPath();
+      if (StringUtil.containsIgnoreCase(getName(), "dev") || path != null && StringUtil.containsIgnoreCase(path, "dev")) {
         return AllIcons.Xml.Browsers.FirefoxDeveloper;
       }
     }
