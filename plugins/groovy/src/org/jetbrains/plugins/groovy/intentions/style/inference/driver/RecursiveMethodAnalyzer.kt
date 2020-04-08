@@ -6,6 +6,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
@@ -222,6 +224,15 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
       processRequiredParameters(initializerType, variable.type)
     }
     super.visitVariableDeclaration(variableDeclaration)
+  }
+
+  override fun visitForInClause(forInClause: GrForInClause) {
+    val rightType: PsiType? = forInClause.iteratedExpression?.type
+    if (rightType != null && rightType.isTypeParameter()) {
+      val iterable = GroovyPsiElementFactory.getInstance(forInClause.project).createTypeByFQClassName(CommonClassNames.JAVA_LANG_ITERABLE)
+      processRequiredParameters(rightType, iterable)
+    }
+    super.visitForInClause(forInClause)
   }
 
 

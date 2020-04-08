@@ -548,4 +548,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testOverriddenVarargParameter() {
     doTest(true)
   }
+
+  void testForInLoop() {
+    doTest(true)
+  }
 }
