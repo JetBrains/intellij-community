@@ -6,7 +6,6 @@ import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -35,22 +34,23 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     if (config.homePath.isNotBlank() && config.javaVersionString.isNotBlank()) return null
 
     return object : Introspector {
-      override fun introspect(subject: Introspectable): CompletableFuture<*>? {
+      override fun introspect(subject: Introspectable): CompletableFuture<JavaLanguageRuntimeConfiguration>? {
         if (config.homePath.isBlank()) {
           val home = subject.getEnvironmentVariable("JAVA_HOME")
           home?.let { config.homePath = home }
         }
 
-        if (config.javaVersionString.isBlank()) {
-          return null
+        if (config.javaVersionString.isNotBlank()) {
+          return CompletableFuture.completedFuture(config)
         }
 
         return subject.promiseExecuteScript("java -version")
-          .thenAccept {
-            it?.let { StringUtil.splitByLines(it, true) }
+          .thenApply { output ->
+            output?.let { StringUtil.splitByLines(output, true) }
               ?.firstOrNull()
               ?.let { JavaVersion.parse(it) }
               ?.let { config.javaVersionString = it.toString() }
+            return@thenApply config
           }
       }
     }
@@ -59,6 +59,5 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"
-    private val LOG: Logger = Logger.getInstance(JavaLanguageRuntimeType::class.java)
   }
 }
