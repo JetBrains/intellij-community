@@ -160,13 +160,15 @@ public class PerformanceTestInfo {
       "\n  Actual:   %sms (%s)" +
       "\n  Timings:  %s" +
       "\n  Threads:  %s" +
-      "\n  GC stats: %s",
+      "\n  GC stats: %s" +
+      "\n  Process:  %s",
       what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
       expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
       duration, StringUtil.formatDuration(duration),
       Timings.getStatistics(),
       data.getThreadStats(),
-      data.getGcStats());
+      data.getGcStats(),
+      data.getProcessCpuStats());
   }
 
   private enum IterationResult { acceptable, borderline, slow }
