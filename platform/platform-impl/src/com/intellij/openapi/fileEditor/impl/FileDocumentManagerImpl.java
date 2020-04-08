@@ -619,11 +619,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
         VirtualFile virtualFile = event.getFile();
 
         // when an empty unknown file is written into, re-run file type detection
-        long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
-        if (lastRecordedLength == 0 &&
-            FileTypeRegistry.getInstance()
-              .isFileOfType(virtualFile, UnknownFileType.INSTANCE)) { // check file type last to avoid content detection running
-          toRecompute.add(virtualFile);
+        if (virtualFile instanceof VirtualFileWithId) {
+          long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
+          if (lastRecordedLength == 0 &&
+              FileTypeRegistry.getInstance().isFileOfType(virtualFile, UnknownFileType.INSTANCE)) { // check file type last to avoid content detection running
+            toRecompute.add(virtualFile);
+          }
         }
 
         prepareForRangeMarkerUpdate(strongRefsToDocuments, virtualFile);
