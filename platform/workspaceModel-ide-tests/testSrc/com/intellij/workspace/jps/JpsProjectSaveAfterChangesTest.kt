@@ -141,10 +141,7 @@ class JpsProjectSaveAfterChangesTest {
       }
     }.map { it.entitySource }}
     val writer = JpsFileContentWriterImpl()
-    val sourceToUpdate = projectData.serializationData.saveEntities(builder.toStorage(), changedSources, writer)
-    sourceToUpdate.forEach {
-      builder.changeSource(it.first, it.second)
-    }
+    projectData.serializationData.saveEntities(builder.toStorage(), changedSources, writer)
     writer.writeFiles(projectData.projectDir)
     projectData.serializationData.checkConsistency(projectData.projectDirUrl, builder.toStorage())
 

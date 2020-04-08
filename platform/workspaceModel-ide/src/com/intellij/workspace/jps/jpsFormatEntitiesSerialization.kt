@@ -41,7 +41,7 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
   fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader)
-  fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out TypedEntity>, List<TypedEntity>>, writer: JpsFileContentWriter): List<TypedEntity>
+  fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out TypedEntity>, List<TypedEntity>>, writer: JpsFileContentWriter)
 
   val additionalEntityTypes: List<Class<out TypedEntity>>
     get() = emptyList()
@@ -232,7 +232,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
     }
   }
 
-  fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter): List<Pair<TypedEntity, JpsFileEntitySource>> {
+  fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
     val affectedFileFactories = HashSet<JpsFileSerializerFactory<*>>()
 
     fun processObsoleteSource(fileUrl: String, deleteObsoleteFilesFromFileFactories: Boolean) {
@@ -336,7 +336,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
       }
     }
 
-    return serializersToRun.flatMap {
+    serializersToRun.forEach {
       saveEntitiesBySerializer(it.first, it.second, writer)
     }
   }
@@ -372,10 +372,9 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
 
   private fun <E : TypedEntity> saveEntitiesBySerializer(serializer: JpsFileEntitiesSerializer<E>,
                                                          entities: Map<Class<out TypedEntity>, List<TypedEntity>>,
-                                                         writer: JpsFileContentWriter): List<Pair<TypedEntity, JpsFileEntitySource>> {
+                                                         writer: JpsFileContentWriter) {
     @Suppress("UNCHECKED_CAST")
-    val savedEntities = serializer.saveEntities(entities[serializer.mainEntityClass] as Collection<E>, entities, writer)
-    return savedEntities.filter { it.entitySource != serializer.entitySource }.map { Pair(it, serializer.entitySource) }
+    serializer.saveEntities(entities[serializer.mainEntityClass] as Collection<E>, entities, writer)
   }
 
   private fun <E : TypedEntity> createSerializersForDirectoryEntities(factory: JpsDirectoryEntitiesSerializerFactory<E>, entities: List<TypedEntity>)
