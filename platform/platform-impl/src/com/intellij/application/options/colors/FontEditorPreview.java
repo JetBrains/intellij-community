@@ -110,7 +110,6 @@ public class FontEditorPreview implements PreviewPanel{
     settings.setWhitespacesShown(true);
     settings.setLineMarkerAreaShown(false);
     settings.setIndentGuidesShown(false);
-    settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
