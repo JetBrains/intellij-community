@@ -16,10 +16,10 @@ import org.jetbrains.annotations.TestOnly
  */
 
 internal sealed class IntIntMultiMap(
-  values: IntArray,
-  links: TIntIntHashMap,
-  distinctValues: Boolean
-) : AbstractIntIntMultiMap(values, links, distinctValues) {
+  override var values: IntArray,
+  override val links: TIntIntHashMap,
+  override val distinctValues: Boolean
+) : AbstractIntIntMultiMap() {
 
   class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : IntIntMultiMap(values, links, true) {
     constructor() : this(IntArray(0), TIntIntHashMap())
@@ -72,10 +72,10 @@ internal sealed class IntIntMultiMap(
 }
 
 internal sealed class MutableIntIntMultiMap(
-  values: IntArray,
-  links: TIntIntHashMap,
-  distinctValues: Boolean
-) : AbstractIntIntMultiMap(values, links, distinctValues) {
+  override var values: IntArray,
+  override val links: TIntIntHashMap,
+  override val distinctValues: Boolean
+) : AbstractIntIntMultiMap() {
 
   class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : MutableIntIntMultiMap(values, links, true) {
     constructor() : this(IntArray(0), TIntIntHashMap())
@@ -330,11 +330,11 @@ internal sealed class MutableIntIntMultiMap(
   }
 }
 
-internal sealed class AbstractIntIntMultiMap(
-  protected var values: IntArray,
-  protected val links: TIntIntHashMap,
-  protected val distinctValues: Boolean
-) {
+internal sealed class AbstractIntIntMultiMap {
+
+  protected abstract var values: IntArray
+  protected abstract val links: TIntIntHashMap
+  protected abstract val distinctValues: Boolean
 
   abstract operator fun get(key: Int): IntSequence
 

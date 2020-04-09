@@ -2,9 +2,9 @@
 package com.intellij.workspace.api.pstorage.containers
 
 internal class IntIntBiMultiMap(
-  private var key2Values: IntIntMultiMap.BySet,
-  private var value2Keys: IntIntMultiMap.BySet
-) : AbstractIntIntBiMultiMap(key2Values, value2Keys) {
+  override val key2Values: IntIntMultiMap.BySet,
+  override val value2Keys: IntIntMultiMap.BySet
+) : AbstractIntIntBiMultiMap() {
   override fun copy(): IntIntBiMultiMap {
     val newKey2Values = key2Values.copy()
     val newValue2Keys = value2Keys.copy()
@@ -13,9 +13,9 @@ internal class IntIntBiMultiMap(
 }
 
 internal class MutableIntIntBiMultiMap(
-  private var key2Values: MutableIntIntMultiMap.BySet,
-  private var value2Keys: MutableIntIntMultiMap.BySet
-) : AbstractIntIntBiMultiMap(key2Values, value2Keys) {
+  override val key2Values: MutableIntIntMultiMap.BySet,
+  override val value2Keys: MutableIntIntMultiMap.BySet
+) : AbstractIntIntBiMultiMap() {
 
   constructor() : this(MutableIntIntMultiMap.BySet(), MutableIntIntMultiMap.BySet())
 
@@ -56,10 +56,9 @@ internal class MutableIntIntBiMultiMap(
   }
 }
 
-internal sealed class AbstractIntIntBiMultiMap(
-  private var key2Values: AbstractIntIntMultiMap,
-  private var value2Keys: AbstractIntIntMultiMap
-) {
+internal sealed class AbstractIntIntBiMultiMap {
+  protected abstract val key2Values: AbstractIntIntMultiMap
+  protected abstract val value2Keys: AbstractIntIntMultiMap
 
   fun getValues(key: Int): AbstractIntIntMultiMap.IntSequence = key2Values[key]
 

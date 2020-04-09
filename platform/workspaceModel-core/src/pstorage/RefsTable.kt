@@ -32,7 +32,7 @@ internal class RefsTable internal constructor(
   override val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap>,
   override val oneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, IntIntUniqueBiMap>,
   override val oneToAbstractManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
-) : AbstractRefsTable(oneToManyContainer, oneToOneContainer, oneToAbstractManyContainer) {
+) : AbstractRefsTable() {
   constructor() : this(HashMap(), HashMap(), BidirectionalMap())
 }
 
@@ -40,7 +40,7 @@ internal class MutableRefsTable(
   override val oneToManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntBiMap>,
   override val oneToOneContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntUniqueBiMap>,
   override val oneToAbstractManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
-) : AbstractRefsTable(oneToManyContainer, oneToOneContainer, oneToAbstractManyContainer) {
+) : AbstractRefsTable() {
 
   constructor() : this(HashMap(), HashMap(), BidirectionalMap())
 
@@ -225,11 +225,11 @@ internal class MutableRefsTable(
   }
 }
 
-internal sealed class AbstractRefsTable constructor(
-  internal open val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntBiMap>,
-  internal open val oneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntUniqueBiMap>,
-  internal open val oneToAbstractManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
-) {
+internal sealed class AbstractRefsTable {
+
+  internal abstract val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntBiMap>
+  internal abstract val oneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntUniqueBiMap>
+  internal abstract val oneToAbstractManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
 
   fun <T : TypedEntity, SUBT : TypedEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT>? {
     // TODO: 07.04.2020 broken for abstract container

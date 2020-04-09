@@ -4,11 +4,9 @@ package com.intellij.workspace.api.pstorage.containers
 import gnu.trove.TIntIntHashMap
 
 internal class IntIntBiMap(
-  key2Value: TIntIntHashMap,
+  override val key2Value: TIntIntHashMap,
   override val value2Keys: IntIntMultiMap.ByList
-) : AbstractIntIntBiMap(key2Value, value2Keys) {
-
-  constructor() : this(TIntIntHashMap(), IntIntMultiMap.ByList())
+) : AbstractIntIntBiMap() {
 
   override fun copy(): AbstractIntIntBiMap {
     val newKey2Values = TIntIntHashMap().clone() as TIntIntHashMap
@@ -22,9 +20,9 @@ internal class IntIntBiMap(
 }
 
 internal class MutableIntIntBiMap(
-  key2Value: TIntIntHashMap,
+  override val key2Value: TIntIntHashMap,
   override val value2Keys: MutableIntIntMultiMap.ByList
-) : AbstractIntIntBiMap(key2Value, value2Keys) {
+) : AbstractIntIntBiMap() {
 
   constructor() : this(TIntIntHashMap(), MutableIntIntMultiMap.ByList())
 
@@ -61,10 +59,10 @@ internal class MutableIntIntBiMap(
   override fun copy(): MutableIntIntBiMap = MutableIntIntBiMap(key2Value.clone() as TIntIntHashMap, value2Keys.copy())
 }
 
-internal sealed class AbstractIntIntBiMap(
-  protected val key2Value: TIntIntHashMap,
-  protected open val value2Keys: AbstractIntIntMultiMap
-) {
+internal sealed class AbstractIntIntBiMap {
+
+  protected abstract val key2Value: TIntIntHashMap
+  protected abstract val value2Keys: AbstractIntIntMultiMap
 
   inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
     key2Value.forEachEntry { key, value -> action(key, value); true }
