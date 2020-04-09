@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
+import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetPlatform;
@@ -67,7 +68,7 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
   }
 
   private static String nextSyntheticId() {
-    return LocalTargetEnvironmentRequest.class.getSimpleName() + ":volume:" + (nextSyntheticId++);
+    return LocalTargetEnvironmentRequest.class.getSimpleName() + ":volume:" + (nextSyntheticId++); //NON-NLS
   }
 
   public void setParentEnvironmentType(@NotNull GeneralCommandLine.ParentEnvironmentType parentEnvironmentType) {
@@ -123,9 +124,8 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
       return TargetValue.fixed(fullPath);
     }
 
-    // FIXME-226344: check local (not remote) separator
     private static String concatPaths(String parent, String child) {
-      return parent + "/" + child;
+      return parent + Platform.current().fileSeparator + child;
     }
   }
 }
