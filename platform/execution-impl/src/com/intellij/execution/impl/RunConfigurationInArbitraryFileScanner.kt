@@ -36,7 +36,6 @@ class RunConfigurationInArbitraryFileScanner : FilePropertyPusher<Nothing> {
     return false
   }
 
-  override fun acceptsFile(file: VirtualFile): Boolean = false
   override fun acceptsDirectory(file: VirtualFile, project: Project): Boolean = false
   private val key = Key.create<Nothing>("RCInArbitraryFileScanner")
   override fun getFileDataKey(): Key<Nothing> = key
