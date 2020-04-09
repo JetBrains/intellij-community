@@ -26,7 +26,6 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -759,31 +758,49 @@ public class EditorActionUtil {
   public static void moveCaretPageUp(@NotNull Editor editor, boolean isWithSelection) {
     int lineHeight = editor.getLineHeight();
     Rectangle visibleArea = getVisibleArea(editor);
-    int linesIncrement = visibleArea.height / lineHeight;
-    editor.getScrollingModel().scrollVertically(visibleArea.y - visibleArea.y % lineHeight - linesIncrement * lineHeight);
-    int lineShift = -linesIncrement;
+    editor.getScrollingModel().scrollVertically(adjustYToVisualLineBase(editor,
+                                                                         visibleArea.y - visibleArea.height / lineHeight * lineHeight));
+    int lineShift = calcVisualLineIncrement(editor, editor.getCaretModel().getVisualPosition().line, -visibleArea.height);
     editor.getCaretModel().moveCaretRelatively(0, lineShift, isWithSelection, editor.isColumnMode(), true);
   }
 
   public static void moveCaretPageDown(@NotNull Editor editor, boolean isWithSelection) {
     int lineHeight = editor.getLineHeight();
     Rectangle visibleArea = getVisibleArea(editor);
-    int linesIncrement = visibleArea.height / lineHeight;
     int allowedBottom = ((EditorEx)editor).getContentSize().height - visibleArea.height;
     editor.getScrollingModel().scrollVertically(
-      Math.min(allowedBottom, visibleArea.y - visibleArea.y % lineHeight + linesIncrement * lineHeight));
-    editor.getCaretModel().moveCaretRelatively(0, linesIncrement, isWithSelection, editor.isColumnMode(), true);
+      Math.min(allowedBottom, adjustYToVisualLineBase(editor, visibleArea.y + visibleArea.height / lineHeight * lineHeight)));
+    int lineShift = calcVisualLineIncrement(editor, editor.getCaretModel().getVisualPosition().line, visibleArea.height);
+    editor.getCaretModel().moveCaretRelatively(0, lineShift, isWithSelection, editor.isColumnMode(), true);
+  }
+
+  private static int adjustYToVisualLineBase(@NotNull Editor editor, int y) {
+    int visualLineBaseY = editor.visualLineToY(editor.yToVisualLine(y));
+    return y > visualLineBaseY && y < visualLineBaseY + editor.getLineHeight() ? visualLineBaseY : y;
+  }
+
+  private static int calcVisualLineIncrement(@NotNull Editor editor, int visualLine, int yIncrement) {
+    int startY = editor.visualLineToY(visualLine) + (yIncrement > 0 ? editor.getLineHeight() - 1 : 0);
+    int targetY = startY + yIncrement;
+    int targetVisualLine = editor.yToVisualLine(targetY);
+    int targetVisualLineBase = editor.visualLineToY(targetVisualLine);
+    if (targetY < targetVisualLineBase) {
+      if (yIncrement < 0) targetVisualLine--;
+    }
+    else if (targetY >= targetVisualLineBase + editor.getLineHeight()) {
+      if (yIncrement > 0) targetVisualLine++;
+    }
+    return targetVisualLine - visualLine;
   }
 
   public static void moveCaretPageTop(@NotNull Editor editor, boolean isWithSelection) {
-    int lineHeight = editor.getLineHeight();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
     LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     Rectangle visibleArea = getVisibleArea(editor);
-    int lineNumber = visibleArea.y / lineHeight;
-    if (visibleArea.y % lineHeight > 0) {
+    int lineNumber = editor.yToVisualLine(visibleArea.y);
+    if (visibleArea.y > editor.visualLineToY(lineNumber) && visibleArea.y + visibleArea.height > editor.visualLineToY(lineNumber + 1)) {
       lineNumber++;
     }
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
@@ -792,13 +809,16 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretPageBottom(@NotNull Editor editor, boolean isWithSelection) {
-    int lineHeight = editor.getLineHeight();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
     LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
     Rectangle visibleArea = getVisibleArea(editor);
-    int lineNumber = Math.max(0, (visibleArea.y + visibleArea.height) / lineHeight - 1);
+    int maxY = visibleArea.y + visibleArea.height - editor.getLineHeight();
+    int lineNumber = editor.yToVisualLine(maxY);
+    if (lineNumber > 0 && maxY < editor.visualLineToY(lineNumber) && visibleArea.y <= editor.visualLineToY(lineNumber - 1)) {
+      lineNumber--;
+    }
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
     editor.getCaretModel().moveToVisualPosition(pos);
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
