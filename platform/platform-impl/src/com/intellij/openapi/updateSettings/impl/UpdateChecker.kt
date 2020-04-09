@@ -265,7 +265,7 @@ object UpdateChecker {
     val updates = PluginsMetaLoader.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
-      val isOutdated = descriptor == null || PluginDownloader.comparePluginVersions(lastUpdate.version, descriptor.version) > 0
+      val isOutdated = descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(descriptor, lastUpdate.version) > 0
       if (isOutdated) {
         val newDescriptor = try {
           PluginsMetaLoader.loadPluginDescriptor(id.idString, lastUpdate, indicator)
