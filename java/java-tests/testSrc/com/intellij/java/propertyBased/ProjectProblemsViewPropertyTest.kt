@@ -6,10 +6,7 @@ import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.codeInsight.hints.BlockInlayRenderer
-import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
-import com.intellij.codeInsight.hints.presentation.OnClickPresentation
-import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
-import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
+import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.codeInsight.javadoc.JavaDocUtil
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
@@ -312,7 +309,10 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val root = presentation.root as RecursivelyUpdatingRootPresentation
       val hoverPresentation = root.content as OnHoverPresentation
       hoverPresentation.mouseMoved(click, point)
-      val delegatePresentation = hoverPresentation.presentation as DynamicDelegatePresentation
+      val usagesSequencePresentation = (hoverPresentation.presentation as SequencePresentation).presentations[0] as SequencePresentation
+      val usagesHoverPresentation = usagesSequencePresentation.presentations[1] as OnHoverPresentation
+      usagesHoverPresentation.mouseMoved(click, point)
+      val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
       val onClickPresentation = delegatePresentation.delegate as OnClickPresentation
       onClickPresentation.mouseClicked(click, point)
     }

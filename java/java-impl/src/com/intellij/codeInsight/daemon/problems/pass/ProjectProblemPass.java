@@ -85,6 +85,7 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     InlayPresentation presentation = getPresentation(myProject, myEditor, myEditor.getDocument(), factory, offset, psiMember, brokenUsages);
     BlockInlayRenderer renderer = createBlockRenderer(presentation);
     Inlay<?> newInlay = myEditor.getInlayModel().addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, renderer);
+    addListener(renderer, newInlay);
     inlays.put(psiMember, newInlay);
   }
 

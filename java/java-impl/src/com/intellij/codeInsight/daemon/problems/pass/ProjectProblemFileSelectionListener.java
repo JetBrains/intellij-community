@@ -88,7 +88,7 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
       PsiJavaFile psiJavaFile = tryCast(psiManager.findFile(virtualFile), PsiJavaFile.class);
       if (psiJavaFile == null) continue;
       ProjectProblemPassUtils.removeInlays(textEditor.getEditor());
-      FileStateUpdater.removeState(psiJavaFile);
+      FileStateUpdater.setPreviousState(psiJavaFile);
     }
   }
 

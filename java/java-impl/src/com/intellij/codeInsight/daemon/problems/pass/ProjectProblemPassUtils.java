@@ -5,12 +5,12 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
-import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation;
-import com.intellij.codeInsight.hints.presentation.SpacePresentation;
+import com.intellij.codeInsight.hints.InlayPresentationFactory;
+import com.intellij.codeInsight.hints.presentation.*;
+import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.find.FindUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,6 +26,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -44,13 +46,23 @@ public class ProjectProblemPassUtils {
                                                     int offset,
                                                     @NotNull PsiElement element,
                                                     @NotNull Set<PsiElement> brokenUsages) {
-    int line = document.getLineNumber(offset);
-    int column = offset - document.getLineStartOffset(line);
+    int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
-    SpacePresentation spacePresentation = new SpacePresentation(column * columnWidth, 0);
+    InlayPresentation usagesPresentation = getUsagesPresentation(project, factory, element, brokenUsages, column, columnWidth);
+    InlayPresentation settingsPresentation = getSettingsPresentation(project, factory);
+    InlayPresentation settingsPlaceholder = new SpacePresentation(columnWidth * 5, 0);
+    return createTopLevelPresentation(factory, usagesPresentation, settingsPresentation, settingsPlaceholder);
+  }
+
+  private static InlayPresentation getUsagesPresentation(Project project,
+                                                         PresentationFactory factory,
+                                                         PsiElement element,
+                                                         Set<PsiElement> brokenUsages,
+                                                         int column,
+                                                         int columnWidth) {
+    SpacePresentation usagesOffset = new SpacePresentation(column * columnWidth, 0);
     InlayPresentation textPresentation = factory.smallText(JavaErrorBundle.message("project.problems.broken.usages", brokenUsages.size()));
-    InlayPresentation presentation = factory.seq(spacePresentation, textPresentation);
-    return factory.referenceOnHover(presentation, (e, p) -> {
+    InlayPresentation usagesPresentation = factory.referenceOnHover(textPresentation, (e, p) -> {
       if (brokenUsages.size() == 1) {
         PsiElement usage = brokenUsages.iterator().next();
         if (usage instanceof Navigatable) ((Navigatable)usage).navigate(true);
@@ -58,6 +70,43 @@ public class ProjectProblemPassUtils {
       else {
         FindUtil.showInUsageView(element, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
                                  JavaErrorBundle.message("project.problems.title"), project);
+      }
+    });
+    SpacePresentation settingsOffset = new SpacePresentation(columnWidth, 0);
+    return factory.seq(usagesOffset, usagesPresentation, settingsOffset);
+  }
+
+  private static InlayPresentation getSettingsPresentation(Project project, PresentationFactory factory) {
+    InlayPresentation textPresentation = factory.smallText("Settings...");
+    return factory.referenceOnHover(textPresentation, (event, translated) -> {
+      InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE);
+    });
+  }
+
+  private static InlayPresentation createTopLevelPresentation(PresentationFactory factory,
+                                                              InlayPresentation usages,
+                                                              InlayPresentation settings,
+                                                              InlayPresentation settingsPlaceholder) {
+    BiStatePresentation settingsOrPlaceholder = new BiStatePresentation(() -> settings, () -> settingsPlaceholder, false) {
+      @Override
+      public int getWidth() {
+        return Math.max(settings.getWidth(), settingsPlaceholder.getWidth());
+      }
+
+      @Override
+      public int getHeight() {
+        return Math.max(settings.getHeight(), settingsPlaceholder.getHeight());
+      }
+    };
+    return factory.onHover(factory.seq(usages, settingsOrPlaceholder), new InlayPresentationFactory.HoverListener() {
+      @Override
+      public void onHover(@NotNull MouseEvent event, @NotNull Point translated) {
+        settingsOrPlaceholder.setFirst();
+      }
+
+      @Override
+      public void onHoverFinished() {
+        settingsOrPlaceholder.setSecond();
       }
     });
   }
@@ -68,6 +117,20 @@ public class ProjectProblemPassUtils {
     BlockConstrainedPresentation<InlayPresentation> constrainedPresentation =
       new BlockConstrainedPresentation<>(rootPresentation, constraints);
     return new BlockInlayRenderer(Collections.singletonList(constrainedPresentation));
+  }
+
+  static void addListener(BlockInlayRenderer renderer, Inlay<?> inlay) {
+    renderer.setListener(new PresentationListener() {
+      @Override
+      public void sizeChanged(@NotNull Dimension previous, @NotNull Dimension current) {
+        inlay.repaint();
+      }
+
+      @Override
+      public void contentChanged(@NotNull Rectangle area) {
+        inlay.repaint();
+      }
+    });
   }
 
   static int getMemberOffset(@NotNull PsiMember psiMember) {
