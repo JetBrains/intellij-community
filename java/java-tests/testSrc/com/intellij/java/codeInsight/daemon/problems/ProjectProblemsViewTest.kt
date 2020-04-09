@@ -30,7 +30,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
   }
 
   protected fun getProblems(psiFile: PsiFile): List<PsiElement> {
-    val reportedChanges: MutableMap<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(psiFile)
+    val reportedChanges: MutableMap<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(myFixture.editor)
     val targetFile = psiFile.virtualFile
     val problems: MutableList<PsiElement> = mutableListOf()
 

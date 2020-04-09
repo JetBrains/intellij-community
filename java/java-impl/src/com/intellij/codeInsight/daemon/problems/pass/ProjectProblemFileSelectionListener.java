@@ -5,9 +5,7 @@ import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,10 +40,11 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
     if (!hintsEnabled()) return;
     VirtualFile oldFile = event.getOldFile();
     VirtualFile newFile = event.getNewFile();
-    if (oldFile == null || oldFile instanceof VirtualFileWindow || !oldFile.isValid() || oldFile.equals(newFile)) return;
+    TextEditor oldEditor = tryCast(event.getOldEditor(), TextEditor.class);
+    if (oldFile == null || oldEditor == null || oldFile instanceof VirtualFileWindow || !oldFile.isValid() || oldFile.equals(newFile)) return;
     PsiJavaFile psiJavaFile = tryCast(PsiManager.getInstance(myProject).findFile(oldFile), PsiJavaFile.class);
     if (psiJavaFile == null) return;
-    ProjectProblemPassUtils.removeInlays(psiJavaFile);
+    ProjectProblemPassUtils.removeInlays(oldEditor.getEditor());
     FileStateUpdater.setPreviousState(psiJavaFile);
   }
 
@@ -80,11 +79,16 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
 
   private void onHintsDisabled() {
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    for (VirtualFile selectedFile : editorManager.getSelectedFiles()) {
-      PsiJavaFile psiJavaFile = tryCast(PsiManager.getInstance(myProject).findFile(selectedFile), PsiJavaFile.class);
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    for (FileEditor selectedEditor : editorManager.getSelectedEditors()) {
+      TextEditor textEditor = tryCast(selectedEditor, TextEditor.class);
+      if (textEditor == null) continue;
+      VirtualFile virtualFile = selectedEditor.getFile();
+      if (virtualFile == null) continue;
+      PsiJavaFile psiJavaFile = tryCast(psiManager.findFile(virtualFile), PsiJavaFile.class);
       if (psiJavaFile == null) continue;
-      ProjectProblemPassUtils.removeInlays(psiJavaFile);
-      FileStateUpdater.setPreviousState(psiJavaFile);
+      ProjectProblemPassUtils.removeInlays(textEditor.getEditor());
+      FileStateUpdater.removeState(psiJavaFile);
     }
   }
 

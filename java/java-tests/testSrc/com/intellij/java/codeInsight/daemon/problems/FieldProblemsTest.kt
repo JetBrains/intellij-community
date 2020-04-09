@@ -229,7 +229,8 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         modifiers.setModifierProperty(PsiModifier.STATIC, false)
       }
       myFixture.checkHighlighting()
-      UsefulTestCase.assertSize(1, ProjectProblemPassUtils.getInlays(targetClass.containingFile).entries)
+      val inlays = ProjectProblemPassUtils.getInlays(myFixture.editor)
+      UsefulTestCase.assertSize(1, inlays.entries)
     }
   }
 

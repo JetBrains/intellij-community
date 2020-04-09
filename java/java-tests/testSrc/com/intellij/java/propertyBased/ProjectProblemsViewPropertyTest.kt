@@ -73,8 +73,9 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         val members = findMembers(fileToChange)
         if (members.isEmpty()) continue
 
-        rehighlight(fileToChange)
-        if (getFilesReportedByProblemSearch(fileToChange).isNotEmpty()) continue
+        val editor = openEditor(fileToChange.virtualFile)
+        rehighlight(fileToChange, editor)
+        if (getFilesReportedByProblemSearch(editor, fileToChange).isNotEmpty()) continue
 
         env.logMessage("Selected file: ${fileToChange.name}")
 
@@ -93,8 +94,9 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val psiManager = PsiManager.getInstance(myProject)
     for (changedFile in changedFiles) {
       val psiFile = psiManager.findFile(changedFile)!!
-      rehighlight(psiFile)
-      val reportedChanges = ProjectProblemPassUtils.getInlays(psiFile)
+      val editor = openEditor(changedFile)
+      rehighlight(psiFile, editor)
+      val reportedChanges = ProjectProblemPassUtils.getInlays(editor)
       for ((member, inlay) in reportedChanges) {
         if (inlay != null) {
           TestCase.fail("Problems are still reported even after the fix. " +
@@ -112,6 +114,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val reportedFiles = mutableSetOf<VirtualFile>()
     val nChanges = env.generateValue(Generator.integers(1, 5), "Changes to make: %s")
     for (j in 0 until nChanges) {
+      val editor = (FileEditorManager.getInstance(myProject).selectedEditor as TextEditor).editor
       val member = env.generateValue(Generator.sampledFrom(members), null)
       env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, member)}")
       val usages = findUsages(member)
@@ -134,11 +137,11 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         continue
       }
 
-      rehighlight(fileToChange)
+      rehighlight(fileToChange, editor)
       WriteCommandAction.runWriteCommandAction(myProject) { modification.apply(myProject) }
       env.logMessage("Modification applied")
-      rehighlight(fileToChange)
-      reportedFiles.addAll(getFilesReportedByProblemSearch(fileToChange))
+      rehighlight(fileToChange, editor)
+      reportedFiles.addAll(getFilesReportedByProblemSearch(editor, fileToChange))
     }
     return reportedFiles
   }
@@ -149,7 +152,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return members
   }
 
-  private fun rehighlight(psiFile: PsiFile, editor: Editor = openEditor(psiFile.virtualFile)): List<HighlightInfo> {
+  private fun rehighlight(psiFile: PsiFile, editor: Editor): List<HighlightInfo> {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments()
     return CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
   }
@@ -230,7 +233,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   }
 
   private fun hasErrors(psiFile: PsiFile, members: List<PsiMember>? = null): Boolean {
-    val infos = rehighlight(psiFile)
+    val infos = rehighlight(psiFile, openEditor(psiFile.virtualFile))
     return infos.any { info ->
       if (info.severity != HighlightSeverity.ERROR) return@any false
       if (members == null) return@any true
@@ -277,8 +280,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return problems.joinToString { it.toString() }
   }
 
-  private fun getFilesReportedByProblemSearch(psiFile: PsiFile): Set<VirtualFile> {
-    val reportedChanges: Map<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(psiFile)
+  private fun getFilesReportedByProblemSearch(editor: Editor, psiFile: PsiFile): Set<VirtualFile> {
+    val reportedChanges: Map<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(editor)
     val virtualFile = psiFile.virtualFile
     val filesWithProblems = mutableSetOf<VirtualFile>()
     for (inlay in reportedChanges.values) {

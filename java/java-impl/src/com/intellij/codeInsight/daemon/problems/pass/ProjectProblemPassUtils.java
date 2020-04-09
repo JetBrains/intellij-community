@@ -35,6 +35,8 @@ public class ProjectProblemPassUtils {
 
   private static final Key<Map<SmartPsiElementPointer<PsiMember>, Inlay<?>>> PROBLEM_INLAY_HINTS = Key.create("ProjectProblemInlayHintsKey");
 
+  private static final Key<Long> PREV_MODIFICATION_COUNT = Key.create("ProjectProblemInlayPassModificationCount");
+
   static @NotNull InlayPresentation getPresentation(@NotNull Project project,
                                                     @NotNull Editor editor,
                                                     @NotNull Document document,
@@ -84,8 +86,8 @@ public class ProjectProblemPassUtils {
     return false;
   }
 
-  public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull PsiFile psiFile) {
-    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> oldInlays = psiFile.getUserData(PROBLEM_INLAY_HINTS);
+  public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull Editor editor) {
+    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> oldInlays = editor.getUserData(PROBLEM_INLAY_HINTS);
     Map<PsiMember, Inlay<?>> inlays = new SmartHashMap<>();
     if (oldInlays == null) return inlays;
     oldInlays.forEach((pointer, inlay) -> {
@@ -96,16 +98,29 @@ public class ProjectProblemPassUtils {
     return inlays;
   }
 
-  static void updateInlays(@NotNull PsiFile psiFile, @NotNull Map<PsiMember, Inlay<?>> inlays) {
+  static void updateInlays(@NotNull Editor editor, @NotNull Map<PsiMember, Inlay<?>> inlays) {
     Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> newInlays =
       ContainerUtil.map2Map(inlays.entrySet(), e -> Pair.create(SmartPointerManager.createPointer(e.getKey()), e.getValue()));
-    psiFile.putUserData(PROBLEM_INLAY_HINTS, newInlays);
+    editor.putUserData(PROBLEM_INLAY_HINTS, newInlays);
   }
 
-  static void removeInlays(@NotNull PsiFile psiFile) {
-    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> inlays = psiFile.getUserData(PROBLEM_INLAY_HINTS);
+  static void removeInlays(@NotNull Editor editor) {
+    Map<SmartPsiElementPointer<PsiMember>, Inlay<?>> inlays = editor.getUserData(PROBLEM_INLAY_HINTS);
     if (inlays == null) return;
     inlays.values().forEach(inlay -> Disposer.dispose(inlay));
-    psiFile.putUserData(PROBLEM_INLAY_HINTS, null);
+    editor.putUserData(PROBLEM_INLAY_HINTS, null);
+  }
+
+  static boolean isDocumentUpdated(@NotNull Editor editor) {
+    Document document = editor.getDocument();
+    long stamp = document.getModificationStamp();
+    Long prevStamp = document.getUserData(PREV_MODIFICATION_COUNT);
+    return prevStamp == null || prevStamp != stamp;
+  }
+
+  static void updateTimestamp(@NotNull Editor editor) {
+    Document document = editor.getDocument();
+    long timestamp = document.getModificationStamp();
+    document.putUserData(PREV_MODIFICATION_COUNT, timestamp);
   }
 }
