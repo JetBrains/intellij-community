@@ -339,7 +339,7 @@ public final class JdkUtil {
           fileArgs.addAll(vmParameters.getList());
         }
         else {
-          appendVmParameters(commandLine, 42, agentVolume, vmParameters);
+          appendVmParameters(commandLine, agentVolume, vmParameters);
         }
         try {
           if (classPathParameter != null) {
@@ -413,7 +413,7 @@ public final class JdkUtil {
         }
       }
       else {
-        appendVmParameters(commandLine, 42, agentVolume, vmParameters);
+        appendVmParameters(commandLine, agentVolume, vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -533,7 +533,7 @@ public final class JdkUtil {
         manifestText += "VM-Options: " + ParametersListUtil.join(properties) + "\n";
       }
       else {
-        appendVmParameters(commandLine, 42, agentVolume, vmParameters);
+        appendVmParameters(commandLine, agentVolume, vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -552,16 +552,15 @@ public final class JdkUtil {
         FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
       commandLine.addFileToDeleteOnTermination(classpathJarFile);
 
-      final TargetEnvironmentRequest.Volume volume = request.createTempVolume();
-
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
       if (dynamicVMOptions || dynamicParameters) {
         char pathSeparator = request.getTargetPlatform().getPlatform().pathSeparator;
-        commandLine.addParameter(volume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
-        commandLine.addParameter(volume.createUpload(commandLineWrapper.getName()));
+        commandLine
+          .addParameter(classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
+        commandLine.addParameter(classPathVolume.createUpload(commandLineWrapper.getName()));
       }
-      TargetValue<String> jarFileValue = volume.createUpload(jarFilePath);
+      TargetValue<String> jarFileValue = classPathVolume.createUpload(jarFilePath);
       commandLine.addParameter(jarFileValue);
 
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters);
@@ -616,7 +615,7 @@ public final class JdkUtil {
                                                     @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                     SimpleJavaParameters javaParameters,
                                                     ParametersList vmParameters) {
-    appendVmParameters(commandLine, 42, agentVolume, vmParameters);
+    appendVmParameters(commandLine, agentVolume, vmParameters);
     appendEncoding(javaParameters, commandLine, vmParameters);
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
@@ -634,7 +633,6 @@ public final class JdkUtil {
   }
 
   private static void appendVmParameters(TargetedCommandLineBuilder commandLine,
-                                         int dummy,
                                          TargetEnvironmentRequest.Volume agentVolume,
                                          ParametersList vmParameters) {
     for (String vmParameter : vmParameters.getList()) {
@@ -646,7 +644,7 @@ public final class JdkUtil {
                                         TargetEnvironmentRequest.Volume agentVolume,
                                         String vmParameter) {
     if (agentVolume.getRequest() instanceof LocalTargetEnvironmentRequest ||
-      SystemProperties.getBooleanProperty("remote.servers.ignore.vm.parameter", false)) {
+        SystemProperties.getBooleanProperty("run.targets.ignore.vm.parameter", false)) {
       commandLine.addParameter(vmParameter);
       return;
     }
