@@ -23,6 +23,9 @@ import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
 import git4idea.index.LightFileStatus
 import git4idea.index.getFileStatus
+import git4idea.util.lastInstance
+import git4idea.util.toShortenedString
+import git4idea.util.without
 import java.util.*
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
@@ -255,38 +258,4 @@ class LightGitTracker : Disposable {
 
 interface LightGitTrackerListener : EventListener {
   fun update()
-}
-
-fun <K, V> Map<K, V>.without(removed: K): Map<K, V> {
-  val result = this.toMutableMap()
-  result.remove(removed)
-  return result
-}
-
-fun <R> List<*>.lastInstance(klass: Class<R>): R? {
-  val iterator = this.listIterator(size)
-  while (iterator.hasPrevious()) {
-    val element = iterator.previous()
-    @Suppress("UNCHECKED_CAST")
-    if (klass.isInstance(element)) return element as R
-  }
-  return null
-}
-
-private fun <T> Collection<T>.toShortenedString(num: Int = 20): String {
-  if (size < num) return toString()
-  return "${take(num)} ... +${size - num} more"
-}
-
-private fun <K, V> Map<K, V>.toShortenedString(num: Int = 20): String {
-  if (size < num) return toString()
-  return "${asIterable().take(num).toMap()} ... +${size - num} more"
-}
-
-private fun <K, V> Iterable<Map.Entry<K, V>>.toMap(): Map<K, V> {
-  val result = mutableMapOf<K, V>()
-  for (entry in this) {
-    result[entry.key] = entry.value
-  }
-  return result
 }
