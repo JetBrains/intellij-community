@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -9,6 +10,7 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -81,6 +83,7 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
     LOG.assertTrue(suggestedInitializers[0] instanceof ExpressionLookupItem);
     final PsiExpression initializer = (PsiExpression)suggestedInitializers[0].getObject();
     variable.setInitializer(initializer);
+    if (!file.isPhysical()) return;
     Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(file));
     PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(document);
     runAssignmentTemplate(Collections.singletonList(variable.getInitializer()), suggestedInitializers, editor);
@@ -136,5 +139,11 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement var = getStartElement();
+    return var == null ? null : new AddVariableInitializerFix((PsiVariable)QuickFixWrapper.findSameElementInCopy(var, target));
   }
 }

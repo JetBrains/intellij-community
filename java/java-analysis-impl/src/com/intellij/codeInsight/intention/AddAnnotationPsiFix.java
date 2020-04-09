@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -36,8 +37,8 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   protected final String myAnnotation;
-  private final String[] myAnnotationsToRemove;
-  private final PsiNameValuePair[] myPairs; // not used when registering local quick fix
+  final String[] myAnnotationsToRemove;
+  final PsiNameValuePair[] myPairs; // not used when registering local quick fix
   protected final String myText;
   private final ExternalAnnotationsManager.AnnotationPlace myAnnotationPlace;
 
@@ -174,12 +175,19 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
         break;
       case IN_CODE:
         final PsiFile containingFile = myModifierListOwner.getContainingFile();
-        WriteCommandAction.runWriteCommandAction(project, null, null, () -> {
+        Runnable command = () -> {
           removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
 
           PsiAnnotation inserted = addPhysicalAnnotationTo(myAnnotation, myPairs, target);
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
-        }, containingFile);
+        };
+
+        if (!containingFile.isPhysical()) {
+          command.run();
+        }
+        else {
+          WriteCommandAction.runWriteCommandAction(project, null, null, command, containingFile);
+        } 
 
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);
@@ -341,5 +349,15 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                                                                            List<String> annotationsToRemove) {
     if (!isNullabilityAnnotationApplicable(owner)) return null;
     return new AddAnnotationPsiFix(annotationToAdd, owner, PsiNameValuePair.EMPTY_ARRAY, ArrayUtilRt.toStringArray(annotationsToRemove));
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement element = myStartElement.getElement();
+    if (element == null) return null;
+    // myPairs is used to copy from, so should be safe 
+    return new AddAnnotationPsiFix(
+      myAnnotation, (PsiModifierListOwner)QuickFixWrapper.findSameElementInCopy(element, target),
+      myPairs, myAnnotationsToRemove);
   }
 }

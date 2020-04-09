@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWi
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceGetClassWithClassLiteralFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.PriorityActionWrapper;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -234,8 +234,8 @@ public class HighlightFixUtil {
     if (expr instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, PriorityActionWrapper
-          .lowPriority(method, QUICK_FIX_FACTORY.createMethodReturnFix(method, toType, true)));
+        QuickFixAction.registerQuickFixAction(highlightInfo, PriorityIntentionActionWrapper
+          .lowPriority(QUICK_FIX_FACTORY.createMethodReturnFix(method, toType, true)));
       }
     }
   }

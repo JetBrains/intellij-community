@@ -159,14 +159,15 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
    * The exception is thrown on a best-effort basis, so you cannot rely on it. 
    */
   @Contract("null, _ -> null; !null, _ -> !null")
-  public static PsiElement findSameElementInCopy(@Nullable PsiElement element, @NotNull PsiFile copy) throws IllegalStateException {
+  public static <T extends PsiElement> T findSameElementInCopy(@Nullable T element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
     TextRange range = element.getTextRange();
     PsiElement newElement = copy.findElementAt(range.getStartOffset());
     while (newElement != null) {
       TextRange newRange = newElement.getTextRange();
       if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
-        return newElement;
+        //noinspection unchecked
+        return (T)newElement;
       }
       if (newRange.getStartOffset() < range.getStartOffset() || newRange.getEndOffset() > range.getEndOffset()) break;
       newElement = newElement.getParent();

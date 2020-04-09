@@ -207,6 +207,7 @@ public class CreateSwitchBranchesUtil {
    */
   public static @Nullable Editor prepareForTemplateAndObtainEditor(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
+    if (!file.isPhysical()) return null;
     Project project = file.getProject();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return null;

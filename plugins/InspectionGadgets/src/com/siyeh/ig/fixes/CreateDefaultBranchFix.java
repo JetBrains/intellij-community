@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
@@ -20,11 +22,12 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
 
-public class CreateDefaultBranchFix extends BaseSwitchFix {
+public final class CreateDefaultBranchFix extends BaseSwitchFix {
   private static final String PLACEHOLDER_NAME = "$EXPRESSION$";
   private final String myMessage;
 
@@ -70,6 +73,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
   }
 
   private static void adjustEditor(@NotNull PsiSwitchBlock block) {
+    if (!block.isPhysical()) return;
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
     Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(block);
@@ -129,5 +133,11 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
       }
       return Arrays.asList("default:", statement.getText());
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiSwitchBlock block = myBlock.getElement();
+    return block == null ? null : new CreateDefaultBranchFix(QuickFixWrapper.findSameElementInCopy(block, target), myMessage);
   }
 }

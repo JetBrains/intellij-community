@@ -93,11 +93,6 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    try {
-      return new SurroundWithTryCatchFix(QuickFixWrapper.findSameElementInCopy(myElement, target));
-    }
-    catch (IllegalStateException e) {
-      return null;
-    }
+    return new SurroundWithTryCatchFix(QuickFixWrapper.findSameElementInCopy(myElement, target));
   }
 }

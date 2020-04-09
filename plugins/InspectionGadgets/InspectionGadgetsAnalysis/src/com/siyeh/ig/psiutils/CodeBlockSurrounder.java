@@ -3,7 +3,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -125,18 +124,19 @@ public abstract class CodeBlockSurrounder {
 
   /**
    * Performs the refactoring ensuring that the expression is surrounded with the code block now.
-   * Must be called at most once. Requires write action.
+   * Must be called at most once. Modifiers the PSI,
+   * thus requires write action if applied to physical PSI.
    *
    * @return the expression that replaced the original expression
    */
   public @NotNull CodeBlockSurrounder.SurroundResult surround() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     Object marker = new Object();
     PsiTreeUtil.mark(myExpression, marker);
     Project project = myExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    boolean physical = myExpression.isPhysical();
     PsiStatement replacement = replace(project, factory);
-    assert replacement.isPhysical();
+    assert replacement.isPhysical() == physical;
     PsiExpression newExpression = Objects.requireNonNull((PsiExpression)PsiTreeUtil.releaseMark(replacement, marker));
     return new SurroundResult(newExpression, replacement);
   }
