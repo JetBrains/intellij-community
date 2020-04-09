@@ -79,7 +79,6 @@ object MarketplaceRequests {
   }
 
   @JvmStatic
-  @Throws(IOException::class)
   fun getBuildForPluginRepositoryRequests(): String {
     val instance = ApplicationInfoImpl.getShadowInstance()
     val compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild()
@@ -106,28 +105,38 @@ object MarketplaceRequests {
   }
 
   @JvmStatic
-  @Throws(IOException::class)
-  fun getAllPluginsVendors(): List<String> = HttpRequests
-    .request(MARKETPLACE_ORGANIZATIONS_URL)
-    .productNameAsUserAgent()
-    .connect {
-      objectMapper.readValue(
-        it.inputStream,
-        object : TypeReference<List<String>>() {}
-      )
-    }
+  fun getAllPluginsVendors(): List<String> = try {
+    HttpRequests
+      .request(MARKETPLACE_ORGANIZATIONS_URL)
+      .productNameAsUserAgent()
+      .connect {
+        objectMapper.readValue(
+          it.inputStream,
+          object : TypeReference<List<String>>() {}
+        )
+      }
+  }
+  catch (e: Exception) {
+    LOG.warn("Can not get organizations from Marketplace", e)
+    emptyList()
+  }
 
   @JvmStatic
-  @Throws(IOException::class)
-  fun getAllPluginsTags(): List<String> = HttpRequests
-    .request(MARKETPLACE_TAGS_URL)
-    .productNameAsUserAgent()
-    .connect {
-      objectMapper.readValue(
-        it.inputStream,
-        object : TypeReference<List<String>>() {}
-      )
-    }
+  fun getAllPluginsTags(): List<String> = try {
+    HttpRequests
+      .request(MARKETPLACE_TAGS_URL)
+      .productNameAsUserAgent()
+      .connect {
+        objectMapper.readValue(
+          it.inputStream,
+          object : TypeReference<List<String>>() {}
+        )
+      }
+  }
+  catch (e: Exception) {
+    LOG.warn("Can not get tags from Marketplace", e)
+    emptyList()
+  }
 
   @Throws(IOException::class)
   fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginNode {
@@ -202,14 +211,18 @@ object MarketplaceRequests {
 
   @JvmStatic
   @JvmOverloads
-  @Throws(IOException::class)
   fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null): PluginNode? {
-    val data = getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
+    val data = try {
+      getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
+    }
+    catch (e: Exception) {
+      LOG.warn("Can not get compatible update from Marketplace", e)
+      null
+    }
     return data?.let { loadPluginDescriptor(id, it) }
   }
 
   @JvmStatic
-  @Throws(IOException::class)
   fun parsePluginList(reader: Reader): List<PluginNode> {
     try {
       val parser = SAXParserFactory.newInstance().newSAXParser()
