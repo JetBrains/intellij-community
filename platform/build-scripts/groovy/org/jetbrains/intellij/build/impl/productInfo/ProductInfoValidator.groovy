@@ -58,7 +58,7 @@ class ProductInfoValidator {
       productJson = new Gson().fromJson(jsonText, ProductInfoData.class)
     }
     catch (Exception e) {
-      context.messages.error("Failed to parse product-info.json at $presentablePathToProductJson: $e.message")
+      context.messages.error("Failed to parse product-info.json at $presentablePathToProductJson: $e.message", e)
       return
     }
 
