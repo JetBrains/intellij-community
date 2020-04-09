@@ -80,7 +80,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     myDynamic = dynamic;
   }
 
-  final synchronized void setComponentManager(@NotNull ComponentManager value) {
+  final void setComponentManager(@NotNull ComponentManager value) {
     myComponentManager = value;
   }
 
@@ -386,10 +386,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     OpenTHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new OpenTHashSet<>(totalSize);
-
     ExtensionPointListener<T>[] listeners = myListeners;
     int extensionIndex = 0;
-
     for (int i = 0; i < adapters.size(); i++) {
       T extension = processAdapter(adapters.get(i), listeners, result, duplicates, extensionClass, adapters);
       if (extension != null) {
@@ -420,16 +418,30 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return ActivityCategory.MODULE_EXTENSION;
   }
 
-  private T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
-    return processAdapter(adapter, null, null, null, null, null);
+  final @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
+    try {
+      return adapter.createInstance(myComponentManager);
+    }
+    catch (ExtensionNotApplicableException ignore) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(adapter + " not loaded because it reported that not applicable");
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   private @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter,
                                      ExtensionPointListener<T> @Nullable [] listeners,
                                      T @Nullable [] result,
                                      @Nullable OpenTHashSet<T> duplicates,
-                                     @Nullable Class<T> extensionClassForCheck,
-                                     @Nullable List<? extends ExtensionComponentAdapter> adapters) {
+                                     @NotNull Class<T> extensionClassForCheck,
+                                     @NotNull List<? extends ExtensionComponentAdapter> adapters) {
     try {
       boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated() && !myDynamic;
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
@@ -448,14 +460,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         );
       }
       else {
-        if (extensionClassForCheck != null) {
-          checkExtensionType(extension, extensionClassForCheck, adapter);
-        }
-
+        checkExtensionType(extension, extensionClassForCheck, adapter);
         if (isNotifyThatAdded) {
           notifyListeners(ExtensionEvent.ADDED, extension, adapter.getPluginDescriptor(), listeners);
         }
-
         return extension;
       }
     }
