@@ -535,10 +535,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     return myCurrentTooltip != null;
   }
 
-  public boolean hasScheduled() {
-    return myShowRequest != null;
-  }
-
   public boolean hideCurrent(@Nullable MouseEvent me) {
     return hideCurrent(me, null, null, null);
   }

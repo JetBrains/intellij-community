@@ -487,9 +487,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     MouseEvent me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), 0, e.getY() + 1, e.getClickCount(),
                                               e.isPopupTrigger());
 
-    boolean newLook = Registry.is("editor.new.mouse.hover.popups");
     LightweightHint currentHint = getCurrentHint();
-    if (newLook && currentHint != null) {
+    if (currentHint != null) {
       if (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint))) {
         return true;
       }
@@ -515,12 +514,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         int eachEndY = range.getEndOffset();
         y = eachStartY + (eachEndY - eachStartY) / 2;
       }
-      if (newLook && currentHint != null && y == myCurrentHintAnchorY) return true;
+      if (currentHint != null && y == myCurrentHintAnchorY) return true;
       me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), me.getX(), y + 1, e.getClickCount(),
                           e.isPopupTrigger());
       TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
       if (bigRenderer != null) {
-        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(newLook));
+        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(true));
         myCurrentHint = new WeakReference<>(hint);
         myCurrentHintAnchorY = y;
         myKeepHint = false;
@@ -1186,15 +1185,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
-      if (Registry.is("editor.new.mouse.hover.popups")) {
-        hideMyEditorPreviewHint();
-        LightweightHint currentHint = getCurrentHint();
-        if (currentHint != null && !myKeepHint) {
-          closeHintOnMovingMouseAway(currentHint);
-        }
-      }
-      else {
-        cancelMyToolTips(e, true);
+      hideMyEditorPreviewHint();
+      LightweightHint currentHint = getCurrentHint();
+      if (currentHint != null && !myKeepHint) {
+        closeHintOnMovingMouseAway(currentHint);
       }
     }
 
@@ -1239,9 +1233,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private LightweightHint showTooltip(final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
-    if (Registry.is("editor.new.mouse.hover.popups")) {
-      hideMyEditorPreviewHint();
-    }
+    hideMyEditorPreviewHint();
     return TooltipController.getInstance().showTooltipByMouseMove(myEditor, hintHint.getTargetPoint(), tooltipObject,
                                                                   myEditor.getVerticalScrollbarOrientation() ==
                                                                   EditorEx.VERTICAL_SCROLLBAR_RIGHT, ERROR_STRIPE_TOOLTIP_GROUP, hintHint);

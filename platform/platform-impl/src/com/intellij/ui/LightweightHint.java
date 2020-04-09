@@ -11,14 +11,12 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -199,10 +197,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       JComponent actualComponent = new OpaquePanel(new BorderLayout());
       actualComponent.add(myComponent, BorderLayout.CENTER);
       if (isAwtTooltip()) {
-        if (!Registry.is("editor.new.mouse.hover.popups")) {
-          int inset = BalloonImpl.getNormalInset();
-          actualComponent.setBorder(new LineBorder(hintHint.getTextBackground(), inset));
-        }
         actualComponent.setBackground(hintHint.getTextBackground());
         actualComponent.validate();
       }

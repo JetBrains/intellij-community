@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GridBag;
@@ -32,8 +31,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +50,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
    */
   @NonNls @Nullable protected String myText;
 
-  //is used for suppressing some events while processing links
-  private volatile boolean myActiveLink;
   //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
 
@@ -77,10 +72,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   private static JPanel createMainPanel(@NotNull final HintHint hintHint,
                                         @NotNull JScrollPane pane,
                                         @NotNull JEditorPane editorPane,
-                                        boolean newLayout,
                                         boolean highlightActions,
                                         boolean hasSeparators) {
-    int leftBorder = newLayout ? 10 : 8;
+    int leftBorder = 10;
     int rightBorder = 12;
     class MyPanel extends JPanel implements WidthBasedLayout {
       private MyPanel() {
@@ -158,10 +152,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       .weighty(1.0)
       .fillCell();
 
-    pane.setBorder(JBUI.Borders.empty(newLayout ? 10 : 6,
-                                      leftBorder,
-                                      newLayout ? (highlightActions ? 10 : (hasSeparators ? 8 : 3)) : 6,
-                                      rightBorder));
+    pane.setBorder(JBUI.Borders.empty(10, leftBorder, (highlightActions ? 10 : (hasSeparators ? 8 : 3)), rightBorder));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
@@ -176,7 +167,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                               final boolean alignToRight,
                               @NotNull final TooltipGroup group,
                               @NotNull final HintHint hintHint) {
-    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, Registry.is("editor.new.mouse.hover.popups"), true, true,
+    LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, true, true,
                                       null);
     if (hint != null) {
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
@@ -192,7 +183,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                     final boolean alignToRight,
                                     @NotNull final TooltipGroup group,
                                     @NotNull final HintHint hintHint,
-                                    boolean newLayout,
                                     boolean highlightActions,
                                     boolean limitWidthToScreen,
                                     @Nullable TooltipReloader tooltipReloader) {
@@ -210,7 +200,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     if (!editorComponent.isShowing()) return null;
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
-    String textToDisplay = newLayout ? colorizeSeparators(dressedText) : dressedText;
+    String textToDisplay = colorizeSeparators(dressedText);
     JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true).setEagerWrap(true),
                                                         hintHint, layeredPane, limitWidthToScreen);
     editorPane.putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
@@ -231,13 +221,12 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
     scrollPane.setViewportBorder(null);
 
-    if (!newLayout) editorPane.setBorder(JBUI.Borders.emptyBottom(2));
     if (hintHint.isRequestFocus()) {
       editorPane.setFocusable(true);
     }
 
     List<AnAction> actions = new ArrayList<>();
-    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane, newLayout, highlightActions, !textToDisplay.equals(dressedText));
+    JPanel grid = createMainPanel(hintHint, scrollPane, editorPane, highlightActions, !textToDisplay.equals(dressedText));
     if (ScreenReader.isActive()) {
       grid.setFocusTraversalPolicyProvider(true);
       grid.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
@@ -255,7 +244,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
       @Override
       public void hide() {
-        onHide(editorPane);
         super.hide();
         for (AnAction action: actions) {
           action.unregisterCustomShortcutSet(contentComponent);
@@ -285,9 +273,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     editorPane.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(final HyperlinkEvent e) {
-        myActiveLink = true;
         if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-          myActiveLink = false;
           return;
         }
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -311,46 +297,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
     });
 
-    fillPanel(editor, grid, hint, hintHint, actions, reloader, newLayout, highlightActions);
-
-    if (!newLayout) {
-      grid.addMouseListener(new MouseAdapter() {
-
-        // This listener makes hint transparent for mouse events. It means that hint is closed
-        // by MousePressed and this MousePressed goes into the underlying editor component.
-        @Override
-        public void mouseReleased(final MouseEvent e) {
-          if (!myActiveLink) {
-            MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
-            hint.hide();
-            contentComponent.dispatchEvent(newMouseEvent);
-          }
-        }
-      });
-
-      ListenerUtil.addMouseListener(grid, new MouseAdapter() {
-        @Override
-        public void mouseExited(final MouseEvent e) {
-          if (expanded) return;
-
-          Container parentContainer = grid;
-          //ComponentWithMnemonics is top balloon component
-          while (!(parentContainer instanceof ComponentWithMnemonics)) {
-            Container candidate = parentContainer.getParent();
-            if (candidate == null) break;
-            parentContainer = candidate;
-          }
-
-          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
-
-          if (parentContainer.contains(newMouseEvent.getPoint())) {
-            return;
-          }
-
-          hint.hide();
-        }
-      });
-    }
+    fillPanel(editor, grid, hint, hintHint, actions, reloader, highlightActions);
 
     return hint;
   }
@@ -397,9 +344,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     hintHint.setShowImmediately(true);
     Point point = new Point(p);
-    if (!Registry.is("editor.new.mouse.hover.popups")) {
-      point.translate(-3, -3);
-    }
     TooltipController.getInstance().showTooltip(editor, point,
                                                 createRenderer(myText, expand ? pane.getWidth() : 0), alignToRight, group,
                                                 hintHint);
@@ -411,7 +355,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull HintHint hintHint,
                            @NotNull List<? super AnAction> actions,
                            @NotNull TooltipReloader expandCallback,
-                           boolean newLayout,
                            boolean highlightActions) {
     hintHint.setComponentBorder(JBUI.Borders.empty());
     hintHint.setBorderInsets(JBUI.insets(0));
@@ -507,9 +450,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         p.y = mouse.y + editor.getLineHeight();
       }
     }
-  }
-
-  protected void onHide(@NotNull JComponent contentComponent) {
   }
 
   @NotNull
