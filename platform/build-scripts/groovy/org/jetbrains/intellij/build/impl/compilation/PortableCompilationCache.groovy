@@ -37,9 +37,10 @@ class PortableCompilationCache {
   def warmUp() {
     def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit', 'false').toBoolean()
     def forceDownload = System.getProperty('intellij.jps.cache.download.force', 'false').toBoolean()
+    def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force', 'false').toBoolean()
     def cacheDir = context.compilationData.dataStorageRoot
     def downloader = new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
-    if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
+    if (!forceRebuild && (forceDownload || !cacheDir.isDirectory() || !cacheDir.list())) {
       downloader.downloadCachesAndOutput()
     }
     if (!downloader.availableForHeadCommit) {
