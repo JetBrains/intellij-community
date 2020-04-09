@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
+import com.google.common.collect.BiMap
+import com.google.common.collect.HashBiMap
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.containers.*
@@ -15,7 +17,8 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
   enum class ConnectionType {
     ONE_TO_ONE,
     ONE_TO_MANY,
-    ONE_TO_ABSTRACT_MANY
+    ONE_TO_ABSTRACT_MANY,
+    ABSTRACT_ONE_TO_ONE
   }
 
   companion object {
@@ -31,20 +34,23 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
 internal class RefsTable internal constructor(
   override val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap>,
   override val oneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, IntIntUniqueBiMap>,
-  override val oneToAbstractManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
+  override val oneToAbstractManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>,
+  override val abstractOneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BiMap<PId<*>, PId<*>>>
 ) : AbstractRefsTable() {
-  constructor() : this(HashMap(), HashMap(), BidirectionalMap())
+  constructor() : this(HashMap(), HashMap(), BidirectionalMap(), HashBiMap.create())
 }
 
 internal class MutableRefsTable(
   override val oneToManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntBiMap>,
   override val oneToOneContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntUniqueBiMap>,
-  override val oneToAbstractManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
+  override val oneToAbstractManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>,
+  override val abstractOneToOneContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, BiMap<PId<*>, PId<*>>>
 ) : AbstractRefsTable() {
 
-  constructor() : this(HashMap(), HashMap(), BidirectionalMap())
+  constructor() : this(HashMap(), HashMap(), BidirectionalMap(), HashBiMap.create())
 
   private val oneToAbstractManyCopiedToModify: MutableSet<ConnectionId<out TypedEntity, out TypedEntity>> = HashSet()
+  private val abstractOneToOneCopiedToModify: MutableSet<ConnectionId<out TypedEntity, out TypedEntity>> = HashSet()
 
   private fun <T : TypedEntity, SUBT : TypedEntity> getOneToManyMutableMap(connectionId: ConnectionId<T, SUBT>): MutableIntIntBiMap {
     val bimap = oneToManyContainer[connectionId] ?: run {
@@ -80,6 +86,23 @@ internal class MutableRefsTable(
     }
   }
 
+  private fun <T : TypedEntity, SUBT : TypedEntity> getAbstractOneToOneMutableMap(connectionId: ConnectionId<T, SUBT>): BiMap<PId<*>, PId<*>> {
+    if (connectionId !in abstractOneToOneContainer) {
+      abstractOneToOneContainer[connectionId] = HashBiMap.create()
+    }
+
+    return if (connectionId in abstractOneToOneCopiedToModify) {
+      abstractOneToOneContainer[connectionId]!!
+    }
+    else {
+      val copy = HashBiMap.create<PId<*>, PId<*>>()
+      val original = abstractOneToOneContainer[connectionId]!!
+      original.forEach { (k, v) -> copy[k] = v }
+      abstractOneToOneContainer[connectionId] = copy
+      copy
+    }
+  }
+
   private fun <T : TypedEntity, SUBT : TypedEntity> getOneToOneMutableMap(connectionId: ConnectionId<T, SUBT>): MutableIntIntUniqueBiMap {
     val bimap = oneToOneContainer[connectionId] ?: run {
       val empty = MutableIntIntUniqueBiMap()
@@ -98,11 +121,13 @@ internal class MutableRefsTable(
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeRefsByParent(connectionId: ConnectionId<T, SUBT>, parentId: PId<T>) {
+    @Suppress("IMPLICIT_CAST_TO_ANY")
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).removeValue(parentId.arrayId)
       ConnectionId.ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).removeValue(parentId.arrayId)
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).removeValue(parentId)
-    }
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).inverse().remove(parentId)
+    }.let { }
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeOneToOneRefByParent(connectionId: ConnectionId<T, SUBT>, parentId: Int) {
@@ -120,11 +145,13 @@ internal class MutableRefsTable(
   fun <T : TypedEntity, SUBT : TypedEntity> removeParentToChildRef(connectionId: ConnectionId<T, SUBT>,
                                                                    parentId: PId<T>,
                                                                    childId: PId<SUBT>) {
+    @Suppress("IMPLICIT_CAST_TO_ANY")
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> getOneToManyMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
       ConnectionId.ConnectionType.ONE_TO_ONE -> getOneToOneMutableMap(connectionId).remove(childId.arrayId, parentId.arrayId)
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> getOneToAbstractManyMutableMap(connectionId).remove(childId, parentId)
-    }
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> getAbstractOneToOneMutableMap(connectionId).remove(childId, parentId)
+    }.let { }
   }
 
   internal fun <T : TypedEntity, SUBT : TypedEntity> updateChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
@@ -145,7 +172,12 @@ internal class MutableRefsTable(
         copiedMap.removeValue(parentId)
         childrenIds.forEach { copiedMap[it] = parentId }
       }
-    }
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+        val copiedMap = getAbstractOneToOneMutableMap(connectionId)
+        copiedMap.inverse().remove(parentId)
+        childrenIds.forEach { copiedMap[it] = parentId }
+      }
+    }.let { }
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
@@ -162,6 +194,14 @@ internal class MutableRefsTable(
     val copiedMap = getOneToAbstractManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
     childrenEntities.forEach { copiedMap[it.id] = parentId }
+  }
+
+  fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToAbstractOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
+                                                                                  childId: PId<SUBT>,
+                                                                                  parentEntity: T) {
+    val copiedMap = getAbstractOneToOneMutableMap(connectionId)
+    copiedMap.remove(childId)
+    copiedMap[childId] = parentEntity.id
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
@@ -199,7 +239,12 @@ internal class MutableRefsTable(
         copiedMap.remove(childId)
         copiedMap[childId] = parentId
       }
-    }
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+        val copiedMap = getAbstractOneToOneMutableMap(connectionId)
+        copiedMap.remove(childId)
+        copiedMap[childId] = parentId
+      }
+    }.let { }
   }
 
   fun <T : PTypedEntity, SUBT : TypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>, childId: Int, parent: T) {
@@ -216,12 +261,20 @@ internal class MutableRefsTable(
                                                value.forEach { (k, v) -> map[k] = v }
                                                map
                                              }
+                                           },
+                                           abstractOneToOneContainer.mapValues {
+                                             it.value.let { value ->
+                                               val map = HashBiMap.create<PId<*>, PId<*>>()
+                                               value.forEach { (k, v) -> map[k] = v }
+                                               map
+                                             }
                                            }
   )
 
   companion object {
     fun from(other: RefsTable): MutableRefsTable = MutableRefsTable(HashMap(other.oneToManyContainer), HashMap(other.oneToOneContainer),
-                                                                    HashMap(other.oneToAbstractManyContainer))
+                                                                    HashMap(other.oneToAbstractManyContainer),
+                                                                    HashMap(other.abstractOneToOneContainer))
   }
 }
 
@@ -230,12 +283,18 @@ internal sealed class AbstractRefsTable {
   internal abstract val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntBiMap>
   internal abstract val oneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, AbstractIntIntUniqueBiMap>
   internal abstract val oneToAbstractManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
+  internal abstract val abstractOneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BiMap<PId<*>, PId<*>>>
 
   fun <T : TypedEntity, SUBT : TypedEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId<T, SUBT>? {
     // TODO: 07.04.2020 broken for abstract container
     return (oneToManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
             ?: oneToOneContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin }
-            ?: oneToAbstractManyContainer.keys.find { it.parentClass == parentClass.kotlin && it.childClass == childClass.kotlin })
+            ?: oneToAbstractManyContainer.keys.find {
+              it.parentClass.java.isAssignableFrom(parentClass) && it.childClass.java.isAssignableFrom(childClass)
+            }
+            ?: abstractOneToOneContainer.keys.find {
+              it.parentClass.java.isAssignableFrom(parentClass) && it.childClass.java.isAssignableFrom(childClass)
+            })
       as ConnectionId<T, SUBT>?
   }
 
@@ -265,10 +324,20 @@ internal sealed class AbstractRefsTable {
       if (existingValue != null) error("This parent already exists")
     }
 
-    val filteredOneToAbstractOne = oneToAbstractManyContainer
-      .filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+    val filteredOneToAbstractMany = oneToAbstractManyContainer
+      .filterKeys { it.childClass.java.isAssignableFrom(childClass) && (!hardReferencesOnly || it.isHard) }
       as Map<ConnectionId<out TypedEntity, SUBT>, BidirectionalMap<PId<*>, PId<*>>>
-    for ((connectionId, bimap) in filteredOneToAbstractOne) {
+    for ((connectionId, bimap) in filteredOneToAbstractMany) {
+      if (!bimap.containsKey(childId)) continue
+      val value = bimap[childId] ?: continue
+      val existingValue = res.putIfAbsent(connectionId, value)
+      if (existingValue != null) error("This parent already exists")
+    }
+
+    val filteredAbstractOneToOne = abstractOneToOneContainer
+      .filterKeys { it.childClass.java.isAssignableFrom(childClass) && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<out TypedEntity, SUBT>, BiMap<PId<*>, PId<*>>>
+    for ((connectionId, bimap) in filteredAbstractOneToOne) {
       if (!bimap.containsKey(childId)) continue
       val value = bimap[childId] ?: continue
       val existingValue = res.putIfAbsent(connectionId, value)
@@ -307,7 +376,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredOneToAbstractMany = oneToAbstractManyContainer
-      .filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) && (!hardReferencesOnly || it.isHard) }
       as Map<ConnectionId<T, out TypedEntity>, BidirectionalMap<PId<*>, PId<*>>>
     for ((connectionId, bimap) in filteredOneToAbstractMany) {
       val keys: List<PId<*>> = bimap.getKeysByValue(parentId) ?: continue
@@ -315,6 +384,16 @@ internal sealed class AbstractRefsTable {
         val existingValue = res.putIfAbsent(connectionId, keys.toSet())
         if (existingValue != null) error("These children already exist")
       }
+    }
+
+    val filteredAbstractOneToOne = abstractOneToOneContainer
+      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) && (!hardReferencesOnly || it.isHard) }
+      as Map<ConnectionId<T, out TypedEntity>, BiMap<PId<*>, PId<*>>>
+    for ((connectionId, bimap) in filteredAbstractOneToOne) {
+      val key: PId<*>? = bimap.inverse().get(parentId)
+      if (key == null) continue
+      val existingValue = res.putIfAbsent(connectionId, setOf(key))
+      if (existingValue != null) error("These children already exist")
     }
 
     return res
@@ -330,6 +409,18 @@ internal sealed class AbstractRefsTable {
                                                                          parentId: PId<*>): List<PId<*>>? {
     // TODO: 26.03.2020 What about missing values?
     return oneToAbstractManyContainer[connectionId]?.getKeysByValue(parentId)
+  }
+
+  fun <T : TypedEntity, SUBT : TypedEntity> getAbstractOneToOneChildren(connectionId: ConnectionId<T, SUBT>,
+                                                                        parentId: PId<*>): PId<*>? {
+    // TODO: 26.03.2020 What about missing values?
+    return abstractOneToOneContainer[connectionId]?.inverse()?.get(parentId)
+  }
+
+  fun <T : TypedEntity, SUBT : TypedEntity> getOneToAbstractOneParent(connectionId: ConnectionId<T, SUBT>,
+                                                                      childId: PId<*>): PId<*>? {
+    // TODO: 26.03.2020 What about missing values?
+    return abstractOneToOneContainer[connectionId]?.get(childId)
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> getOneToOneChild(connectionId: ConnectionId<T, SUBT>,

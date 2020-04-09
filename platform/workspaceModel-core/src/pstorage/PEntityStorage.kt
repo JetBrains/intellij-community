@@ -24,7 +24,7 @@ internal fun <T : TypedEntity> ParentConnectionsInfo<T>.replaceByMapParent(repla
 }
 
 internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : EntityReference<E>() {
-  override fun resolve(storage: TypedEntityStorage): E = (storage as AbstractPEntityStorage).entityDataById(id)?.createEntity(storage)!!
+  override fun resolve(storage: TypedEntityStorage): E = (storage as AbstractPEntityStorage).entityDataByIdOrDie(id).createEntity(storage)
 }
 
 internal class PEntityStorage constructor(
@@ -114,9 +114,9 @@ internal class PEntityStorageBuilder(
   // modificationCount is not incremented
   // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
   private fun <T : TypedEntity, E : TypedEntity> addEntityWithRefs(entity: PEntityData<T>,
-                                                                           clazz: Class<E>,
-                                                                           storage: AbstractPEntityStorage,
-                                                                           replaceMap: MutableMap<PId<*>, PId<*>>) {
+                                                                   clazz: Class<E>,
+                                                                   storage: AbstractPEntityStorage,
+                                                                   replaceMap: MutableMap<PId<*>, PId<*>>) {
     clazz as Class<T>
     entitiesByType.add(entity, clazz)
 
@@ -267,20 +267,26 @@ internal class PEntityStorageBuilder(
   }
 
   fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
-                                                                                       parentId: PId<T>,
-                                                                                       children: Sequence<SUBT>) {
+                                                                              parentId: PId<T>,
+                                                                              children: Sequence<SUBT>) {
     refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, children)
   }
 
   fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
-                                                                                               parentId: PId<T>,
-                                                                                               children: Sequence<SUBT>) {
+                                                                                      parentId: PId<T>,
+                                                                                      children: Sequence<SUBT>) {
     refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, children)
   }
 
+  fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToAbstractOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
+                                                                                  childId: PId<SUBT>,
+                                                                                  parent: T) {
+    refs.updateOneToAbstractOneParentOfChild(connectionId, childId, parent)
+  }
+
   fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
-                                                                                   parentId: PId<T>,
-                                                                                   child: SUBT?) {
+                                                                          parentId: PId<T>,
+                                                                          child: SUBT?) {
     if (child != null) {
       refs.updateOneToOneChildOfParent(connectionId, parentId.arrayId, child)
     }
@@ -290,8 +296,8 @@ internal class PEntityStorageBuilder(
   }
 
   fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>,
-                                                                                    childId: PId<SUBT>,
-                                                                                    parent: T?) {
+                                                                           childId: PId<SUBT>,
+                                                                           parent: T?) {
     if (parent != null) {
       refs.updateOneToManyParentOfChild(connectionId, childId.arrayId, parent)
     }
@@ -301,8 +307,8 @@ internal class PEntityStorageBuilder(
   }
 
   fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
-                                                                                   childId: PId<SUBT>,
-                                                                                   parent: T?) {
+                                                                          childId: PId<SUBT>,
+                                                                          parent: T?) {
     if (parent != null) {
       refs.updateOneToOneParentOfChild(connectionId, childId.arrayId, parent)
     }
@@ -343,7 +349,7 @@ internal class PEntityStorageBuilder(
 
         val newData = newEntities.firstOrNull { it.first.persistentId() == persistentId && sourceFilter(it.first.entitySource) }
         if (newData != null) {
-          replaceMap[PId(oldData.id, clazz.kotlin)] = PId(newData.first.id, newData.second.kotlin)
+          replaceMap[oldData.createPid()] = newData.first.createPid()
 
           if (!shallowEquals(oldData, newData.first, emptyBiMap, replaceWith)) {
             val replaceWithData = newData.first.clone() as PEntityData<TypedEntity>
@@ -358,7 +364,7 @@ internal class PEntityStorageBuilder(
         else {
           // Remove right here?
           // TODO Don't forget to check sourceFilter
-          entitiesToRemove.add(PId(oldData.id, clazz.kotlin))
+          entitiesToRemove.add(oldData.createPid())
         }
       }
     }
@@ -376,7 +382,7 @@ internal class PEntityStorageBuilder(
         if (oldData == null) {
           // Add sub-graph right here?
           // TODO Don't forget to check sourceFilter
-          entitiesToAdd.add(PId(newData.id, clazz.kotlin))
+          entitiesToAdd.add(newData.createPid())
         }
       }
     }
@@ -400,11 +406,11 @@ internal class PEntityStorageBuilder(
       val newChildren = replaceWith.refs.getChildrenRefsOfParentBy(newId, false)
         .flatMap { it.value }
         .filter { it !in entitiesToAdd && !replaceMap.containsKey(it) }
-        .map { replaceWith.entityDataById(it)!! }
+        .map { replaceWith.entityDataByIdOrDie(it) }
       val oldChildren = this.refs.getChildrenRefsOfParentBy(oldId, false)
         .flatMap { it.value }
         .filter { it !in entitiesToRemove && !replaceMap.containsKey(it) }
-        .map { this.entityDataById(it)!! }
+        .map { this.entityDataByIdOrDie(it) }
 
       val eq = classifyByEquals(
         c1 = oldChildren,
@@ -413,8 +419,8 @@ internal class PEntityStorageBuilder(
         equalsFunc = { v1, v2 -> shallowEquals(v1, v2, replaceMap, replaceWith) })
 
       for ((oldChildData, newChildData) in eq.equal) {
-        val newPId = (newChildData.createEntity(replaceWith) as PTypedEntity).id
-        val oldPId = (oldChildData.createEntity(this) as PTypedEntity).id
+        val newPId = newChildData.createPid()
+        val oldPId = oldChildData.createPid()
         if (newPId in entitiesToAdd) error("id=${newChildData.id} already exists in entriesToAdd")
         if (oldPId in entitiesToRemove) error("id=${oldChildData.id} already exists in entitiesToRemove")
 
@@ -424,7 +430,7 @@ internal class PEntityStorageBuilder(
 
       // TODO Check we won't get any persistent id nodes?
       for (data in eq.onlyIn1) {
-        traverseNodes(this, (data.createEntity(this) as PTypedEntity).id) { id ->
+        traverseNodes(this, data.createPid()) { id ->
           if (replaceMap.containsKey(id)) {
             error("Trying to remove node with id=$id: it's already marked for replacement")
           }
@@ -477,18 +483,18 @@ internal class PEntityStorageBuilder(
     }
 
     for (data in eq.onlyIn1) {
-      val id = (data.createEntity(this) as PTypedEntity).id
+      val id = data.createPid()
       entitiesToRemove.add(id)
     }
 
     for (data in eq.onlyIn2) {
-      val id = (data.createEntity(this) as PTypedEntity).id
+      val id = data.createPid()
       entitiesToAdd.add(id)
     }
 
     for ((oldChildData, newChildData) in eq.equal) {
-      val oldId = (oldChildData.createEntity(this) as PTypedEntity).id
-      val newId = (newChildData.createEntity(this) as PTypedEntity).id
+      val oldId = oldChildData.createPid()
+      val newId = newChildData.createPid()
       replaceMap[oldId] = newId
     }
 
@@ -516,7 +522,7 @@ internal class PEntityStorageBuilder(
     val parents = storage.refs.getParentRefsOfChild(id, false)
     for ((conId, parentId) in parents) {
       if (!replaceMap.containsValue(parentId)) {
-        if (sourceFilter(storage.entityDataById(parentId)!!.entitySource)) {
+        if (sourceFilter(storage.entityDataByIdOrDie(parentId).entitySource)) {
           recursiveAddEntity(parentId/*, backReferrers*/, storage, replaceMap, sourceFilter)
         }
         else {
@@ -525,9 +531,9 @@ internal class PEntityStorageBuilder(
       }
     }
 
-    val data = storage.entityDataById(id)!!
+    val data = storage.entityDataByIdOrDie(id)
     val newData = data.clone()
-    replaceMap[(newData.createEntity(this) as PTypedEntity).id] = id
+    replaceMap[newData.createPid()] = id
     //copyEntityProperties(data, newData, replaceMap.inverse())
     addEntityWithRefs(newData, id.clazz.java, storage, HashMap())
     //addEntity(newData, null, handleReferrers = true)
@@ -550,8 +556,8 @@ internal class PEntityStorageBuilder(
     */
                          equalsCache: MutableMap<Pair<PId<out TypedEntity>, PId<out TypedEntity>>, Boolean>): Boolean {
 
-    val id1 = (data1.createEntity(this) as PTypedEntity).id
-    val id2 = (data2.createEntity(this) as PTypedEntity).id
+    val id1 = data1.createPid()
+    val id2 = data2.createPid()
     val cachedResult = equalsCache[id1 to id2]
     if (cachedResult != null) return cachedResult
 
@@ -559,8 +565,8 @@ internal class PEntityStorageBuilder(
 
 
     // TODO: 03.04.2020 OneToMany children
-    val data1parents = storage1.refs.getParentRefsOfChild(id1, false).map { storage1.entityDataById(it.value)!! }
-    val data2parents = storage2.refs.getParentRefsOfChild(id2, false).map { storage2.entityDataById(it.value)!! }
+    val data1parents = storage1.refs.getParentRefsOfChild(id1, false).map { storage1.entityDataByIdOrDie(it.value) }
+    val data2parents = storage2.refs.getParentRefsOfChild(id2, false).map { storage2.entityDataByIdOrDie(it.value) }
 
     val eq = classifyByEquals(data1parents, data2parents, this::shallowHashCode, this::shallowHashCode) { e1, e2 ->
       deepEquals(e1, e2, replaceMap, storage1, storage2/*, backReferrers1, backReferrers2*/, equalsCache)
@@ -579,7 +585,7 @@ internal class PEntityStorageBuilder(
                                         block: (PEntityData<out TypedEntity>) -> Unit) {
     for (entityFamily in storage.entitiesByType.all().values) {
       entityFamily.all().filter { sourceFilter(it.entitySource) }.forEach {
-        val id = (it.createEntity(this) as PTypedEntity).id
+        val id = it.createPid()
         if (!replaceMap.containsKey(id) && !otherProcessedSet.contains(id)) {
           block(it)
         }
@@ -858,6 +864,10 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     return entitiesByType[id.clazz.java]?.get(id.arrayId)
   }
 
+  internal fun <E : TypedEntity> entityDataByIdOrDie(id: PId<E>): PEntityData<E> {
+    return entitiesByType[id.clazz.java]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
+  }
+
   override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
                                                             entityClass: KClass<R>,
                                                             property: KProperty1<R, EntityReference<E>>): Sequence<R> {
@@ -878,8 +888,20 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToAbstractManyChildren(connectionId: ConnectionId<T, SUBT>,
                                                                                   parentId: PId<T>): Sequence<SUBT> {
     return refs.getOneToAbstractManyChildren(connectionId, parentId)?.asSequence()?.map { pid ->
-      entityDataById(pid)?.createEntity(this) as SUBT
+      entityDataByIdOrDie(pid).createEntity(this) as SUBT
     } ?: emptySequence()
+  }
+
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractAbstractOneToOneChildren(connectionId: ConnectionId<T, SUBT>,
+                                                                                 parentId: PId<T>): Sequence<SUBT> {
+    return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { pid ->
+      sequenceOf(entityDataByIdOrDie(pid).createEntity(this) as SUBT)
+    } ?: emptySequence()
+  }
+
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToAbstractOneParent(connectionId: ConnectionId<T, SUBT>,
+                                                                               childId: PId<SUBT>): T? {
+    return refs.getOneToAbstractOneParent(connectionId, childId)?.let { entityDataByIdOrDie(it).createEntity(this) as T }
   }
 
   open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneChild(connectionId: ConnectionId<T, SUBT>,

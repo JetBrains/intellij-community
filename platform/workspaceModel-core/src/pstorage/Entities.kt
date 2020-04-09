@@ -36,6 +36,7 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
       ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id as PId<PTypedEntity>)
       ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild(connectionId, id as PId<PTypedEntity>)?.let { sequenceOf(it) } ?: emptySequence()
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id as PId<PTypedEntity>)
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id as PId<PTypedEntity>)
     }
   }
 
@@ -78,9 +79,10 @@ abstract class PModifiableTypedEntity<T : PTypedEntity> : PTypedEntity(), Modifi
 internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
   init {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
+    if (clazz.isAbstract) error("An abstract class cannot have an id: $clazz")
   }
 
-  override fun toString(): String = arrayId.toString()
+  override fun toString(): String = clazz.simpleName + "-:-"+ arrayId.toString()
 }
 
 abstract class PEntityData<E : TypedEntity> {
@@ -112,7 +114,7 @@ abstract class PEntityData<E : TypedEntity> {
     res as PModifiableTypedEntity
     res.original = this
     res.diff = diff
-    res.id = PId(this.id, res.getEntityClass() as KClass<TypedEntity>)
+    res.id = createPid() as PId<TypedEntity>
     res.entitySource = this.entitySource
     return res
   }
