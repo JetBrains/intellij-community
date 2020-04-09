@@ -3,7 +3,8 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.openapi.util.Comparing;
+
+import java.util.Objects;
 
 public abstract class LoopEvaluator implements Evaluator {
   private final String myLabelName;
@@ -19,7 +20,7 @@ public abstract class LoopEvaluator implements Evaluator {
       evaluateBody(context);
     }
     catch (BreakException e) {
-      if (Comparing.equal(e.getLabelName(), myLabelName)) {
+      if (Objects.equals(e.getLabelName(), myLabelName)) {
         return true;
       }
       else {
@@ -27,7 +28,7 @@ public abstract class LoopEvaluator implements Evaluator {
       }
     }
     catch (ContinueException e) {
-      if (!Comparing.equal(e.getLabelName(), myLabelName)) {
+      if (!Objects.equals(e.getLabelName(), myLabelName)) {
         throw e;
       }
     }

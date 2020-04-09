@@ -75,7 +75,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   @NotNull
   private static JPanel createMainPanel(@NotNull final HintHint hintHint,
-                                        @NotNull JComponent pane,
+                                        @NotNull JScrollPane pane,
                                         @NotNull JEditorPane editorPane,
                                         boolean newLayout,
                                         boolean highlightActions,
@@ -95,11 +95,15 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       @Override
       public int getPreferredHeight(int width) {
         Dimension size = editorPane.getSize();
-        int sideComponentsWidth = getSideComponentWidth();
-        editorPane.setSize(width - leftBorder - rightBorder - sideComponentsWidth, Math.max(1, size.height));
+        int editorPaneInsets = leftBorder + rightBorder + getSideComponentWidth();
+        editorPane.setSize(width - editorPaneInsets, Math.max(1, size.height));
         int height;
         try {
           height = getPreferredSize().height;
+          if (width - editorPaneInsets < editorPane.getMinimumSize().width) {
+            JScrollBar scrollBar = pane.getHorizontalScrollBar();
+            if (scrollBar != null) height += scrollBar.getPreferredSize().height;
+          }
         }
         finally {
           editorPane.setSize(size);
@@ -207,8 +211,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     String textToDisplay = newLayout ? colorizeSeparators(dressedText) : dressedText;
-    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true), hintHint, layeredPane,
-                                                        limitWidthToScreen);
+    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true).setEagerWrap(true),
+                                                        hintHint, layeredPane, limitWidthToScreen);
     editorPane.putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
     hintHint.setContentActive(isContentAction(dressedText));
     if (!hintHint.isAwtTooltip()) {
@@ -301,7 +305,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return;
           }
 
-          TooltipActionsLogger.INSTANCE.logShowDescription(editor.getProject(), "more.link", e.getInputEvent(), null);
+          TooltipActionsLogger.logShowDescription(editor.getProject(), TooltipActionsLogger.Source.MoreLink, e.getInputEvent(), null);
           reloader.reload(!expanded);
         }
       }
@@ -555,7 +559,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     public void actionPerformed(@NotNull final AnActionEvent e) {
       // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
       myHintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
-      TooltipActionsLogger.INSTANCE.logShowDescription(e.getProject(), "shortcut", e.getInputEvent(), e.getPlace());
+      TooltipActionsLogger.logShowDescription(e.getProject(), TooltipActionsLogger.Source.Shortcut, e.getInputEvent(), e.getPlace());
       myReloader.reload(!myExpanded);
     }
   }

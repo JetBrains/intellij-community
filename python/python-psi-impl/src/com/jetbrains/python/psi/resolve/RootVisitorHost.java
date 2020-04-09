@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,9 +44,7 @@ public class RootVisitorHost {
     }
     else {
       if (PythonRuntimeService.getInstance().isInScratchFile(elt)) {
-        for (Module mod : ModuleManager.getInstance(elt.getProject()).getModules()) {
-          visitRoots(mod, true, visitor);
-        }
+        visitRootsInAllModules(elt.getProject(), visitor);
       }
       final PsiFile containingFile = elt.getContainingFile();
       if (containingFile != null) {
@@ -54,8 +53,22 @@ public class RootVisitorHost {
     }
   }
 
+  public static void visitRootsInAllModules(@NotNull Project project, @NotNull RootVisitor visitor) {
+    for (Module mod : ModuleManager.getInstance(project).getModules()) {
+      visitRoots(mod, true, false, visitor);
+    }
+  }
+
   public static void visitRoots(@NotNull Module module, final boolean skipSdk, final RootVisitor visitor) {
-    OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).recursively();
+    visitRoots(module, skipSdk, true, visitor);
+  }
+
+  private static void visitRoots(@NotNull Module module, final boolean skipSdk, boolean processModuleDeps,
+                                 final RootVisitor visitor) {
+    OrderEnumerator enumerator = OrderEnumerator.orderEntries(module);
+    if (processModuleDeps) {
+      enumerator = enumerator.recursively();
+    }
     if (skipSdk) {
       enumerator = enumerator.withoutSdk();
     }

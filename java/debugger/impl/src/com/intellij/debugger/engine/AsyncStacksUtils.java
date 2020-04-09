@@ -8,6 +8,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.GeneratedLocation;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -40,20 +41,23 @@ public class AsyncStacksUtils {
   }
 
   @Nullable
-  public static List<StackFrameItem> getAgentRelatedStack(JavaStackFrame frame, @NotNull SuspendContextImpl suspendContext) {
-    if (isAgentEnabled() && suspendContext.getDebugProcess().isEvaluationPossible(suspendContext)) {
-      Location location = frame.getDescriptor().getLocation();
-      if (location != null) {
-        Method method = DebuggerUtilsEx.getMethod(location);
-        // TODO: use com.intellij.rt.debugger.agent.CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX
-        if (method != null && method.name().endsWith("$$$capture")) {
-          try {
-            return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame.getStackFrameProxy()));
-          }
-          catch (EvaluateException e) {
-            LOG.error(e);
-          }
-        }
+  public static List<StackFrameItem> getAgentRelatedStack(StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+    if (!isAgentEnabled()) {
+      return null;
+    }
+    try {
+      Method method = DebuggerUtilsEx.getMethod(frame.location());
+      // TODO: use com.intellij.rt.debugger.agent.CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX
+      if (method != null && method.name().endsWith("$$$capture")) {
+        return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame));
+      }
+    }
+    catch (EvaluateException e) {
+      if (e.getCause() instanceof IncompatibleThreadStateException) {
+        LOG.warn(e);
+      }
+      else {
+        LOG.error(e);
       }
     }
     return null;

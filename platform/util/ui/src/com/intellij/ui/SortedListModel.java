@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -95,7 +95,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
   public void setAll(Collection<? extends T> items) {
     clear();
     myItems.addAll(items);
-    if (myComparator != null) Collections.sort(myItems, myComparator);
+    if (myComparator != null) myItems.sort(myComparator);
     int newSize = getSize();
     if (newSize > 0) fireIntervalAdded(this, 0, newSize - 1);
   }

@@ -9,6 +9,7 @@ import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -37,8 +38,10 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.Window
-import java.util.*
-import javax.swing.*
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
 
 // @formatter:off
 private val settings get() = UISettings.instance
@@ -70,29 +73,30 @@ private val cdUseContrastToolbars                     get() = CheckboxDescriptor
 private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 // @formatter:on
 
-internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
-  cdAnimateWindows,
-  cdShowToolWindowBars,
-  cdShowToolWindowNumbers,
-  cdDisableMenuMnemonics,
-  cdDisableControlsMnemonics,
-  cdAllowMergingButtons,
-  cdSmoothScrolling,
-  cdShowMenuIcons,
-  cdWidescreenToolWindowLayout,
-  cdLeftToolWindowLayout,
-  cdRightToolWindowLayout,
-  cdCyclicListScrolling,
-  cdShowQuickNavigationIcons,
-  cdUseCompactTreeIndents,
-  cdShowTreeIndents,
-  cdMoveCursorOnButton,
-  cdHideNavigationPopups,
-  cdDnDWithAlt,
-  cdFullPathsInTitleBar
-).map(CheckboxDescriptor::asOptionDescriptor)
+internal val appearanceOptionDescriptors: List<OptionDescription>
+  get() = listOf(
+    cdAnimateWindows,
+    cdShowToolWindowBars,
+    cdShowToolWindowNumbers,
+    cdDisableMenuMnemonics,
+    cdDisableControlsMnemonics,
+    cdAllowMergingButtons,
+    cdSmoothScrolling,
+    cdShowMenuIcons,
+    cdWidescreenToolWindowLayout,
+    cdLeftToolWindowLayout,
+    cdRightToolWindowLayout,
+    cdCyclicListScrolling,
+    cdShowQuickNavigationIcons,
+    cdUseCompactTreeIndents,
+    cdShowTreeIndents,
+    cdMoveCursorOnButton,
+    cdHideNavigationPopups,
+    cdDnDWithAlt,
+    cdFullPathsInTitleBar
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
-class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
+internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
   private var shouldUpdateLaF = false
 
   override fun createPanel(): DialogPanel {
@@ -145,8 +149,11 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
         if (supportedValues.isNotEmpty()) {
           val modelBinding = PropertyBinding({ settings.colorBlindness }, { settings.colorBlindness = it })
           val onApply = {
-            DefaultColorSchemesManager.getInstance().reload()
-            (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+            // callback executed not when all changes are applied, but one component by one, so, reload later when everything were applied
+            ApplicationManager.getApplication().invokeLater(Runnable {
+              DefaultColorSchemesManager.getInstance().reload()
+              (EditorColorsManager.getInstance() as EditorColorsManagerImpl).schemeChangedOrSwitched(null)
+            })
           }
 
           fullRow {

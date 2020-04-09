@@ -22,22 +22,6 @@
   <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
 </clientProperties>
         <children>
-          <component id="74001" class="javax.swing.JLabel" binding="smartZoomingWidthLabel">
-            <constraints>
-              <grid row="10" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="settings.preffered.smart.zoom.width"/>
-            </properties>
-          </component>
-          <component id="e096e" class="javax.swing.JLabel" binding="smartZoomingHeightLabel">
-            <constraints>
-              <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="settings.preffered.smart.zoom.height"/>
-            </properties>
-          </component>
           <component id="5d722" class="javax.swing.JCheckBox" binding="showGrid">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -54,22 +38,6 @@
               <text resource-bundle="messages/ImagesBundle" key="show.transparency.chessboard"/>
             </properties>
           </component>
-          <component id="1d481" class="javax.swing.JCheckBox" binding="wheelZooming">
-            <constraints>
-              <grid row="8" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="enable.mousewheel.zooming"/>
-            </properties>
-          </component>
-          <component id="135b7" class="javax.swing.JCheckBox" binding="smartZooming">
-            <constraints>
-              <grid row="9" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="smart.zoom"/>
-            </properties>
-          </component>
           <component id="f13" class="javax.swing.JLabel" binding="chessboardSizeLabel">
             <constraints>
               <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -81,18 +49,6 @@
           <component id="3c25" class="javax.swing.JSpinner" binding="chessboardSize">
             <constraints>
               <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="a8778" class="javax.swing.JSpinner" binding="smartZoomingWidth">
-            <constraints>
-              <grid row="10" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="57450" class="javax.swing.JSpinner" binding="smartZoomingHeight">
-            <constraints>
-              <grid row="11" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
@@ -140,48 +96,6 @@
               </grid>
             </constraints>
           </hspacer>
-          <component id="e7c83" class="javax.swing.JLabel" binding="chessboardWhiteColorLabel">
-            <constraints>
-              <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="white.cell.color"/>
-            </properties>
-          </component>
-          <component id="5a0c4" class="javax.swing.JLabel" binding="chessboardBlackColorLabel">
-            <constraints>
-              <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="black.cell.color"/>
-            </properties>
-          </component>
-          <component id="b2df3" class="com.intellij.ui.ColorPanel" binding="chessboardWhiteColor">
-            <constraints>
-              <grid row="6" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="e12c2" class="com.intellij.ui.ColorPanel" binding="chessboardBlackColor">
-            <constraints>
-              <grid row="7" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="729f9" class="javax.swing.JLabel" binding="gridLineColorLabel">
-            <constraints>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ImagesBundle" key="grid.line.color"/>
-            </properties>
-          </component>
-          <component id="61a7d" class="com.intellij.ui.ColorPanel" binding="gridLineColor">
-            <constraints>
-              <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-          </component>
         </children>
       </grid>
       <hspacer id="e0712">

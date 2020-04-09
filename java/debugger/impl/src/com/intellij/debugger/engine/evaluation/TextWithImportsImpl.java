@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
@@ -17,6 +16,8 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class TextWithImportsImpl implements TextWithImports{
 
@@ -84,7 +85,7 @@ public final class TextWithImportsImpl implements TextWithImports{
       return false;
     }
     TextWithImportsImpl item = ((TextWithImportsImpl)object);
-    return Comparing.equal(item.myText, myText) && Comparing.equal(item.myImports, myImports);
+    return Objects.equals(item.myText, myText) && Objects.equals(item.myImports, myImports);
   }
 
   public String toString() {

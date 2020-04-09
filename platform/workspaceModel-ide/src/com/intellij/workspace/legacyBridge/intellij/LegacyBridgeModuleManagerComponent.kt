@@ -244,6 +244,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
           }
         }
       })
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, LegacyBridgeProjectRootsChangeListener(project))
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, FacetEntityChangeListener(project))
     }
   }

@@ -399,16 +399,16 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  @Contract("!null -> !null")
-  public static ShortcutSet getCommonShortcut(Buttons button) {
+  public static @NotNull ShortcutSet getCommonShortcut(@NotNull Buttons button) {
     switch (button) {
       case ADD: return CommonShortcuts.getNewForDialogs();
       case EDIT: return CustomShortcutSet.fromString("ENTER");
       case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
       case UP: return CommonShortcuts.MOVE_UP;
       case DOWN: return CommonShortcuts.MOVE_DOWN;
+      default:
+        throw new IllegalStateException("Unexpected value: " + button);
     }
-    return null;
   }
 
   interface ListenerFactory {

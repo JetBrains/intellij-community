@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -37,8 +38,7 @@ public final class BootstrapClassLoaderUtil {
     return Logger.getInstance(BootstrapClassLoaderUtil.class);
   }
 
-  @NotNull
-  public static ClassLoader initClassLoader() throws MalformedURLException {
+  public static @NotNull ClassLoader initClassLoader() throws MalformedURLException {
     List<String> jarOrder = loadJarOrder();
 
     Collection<URL> classpath = new LinkedHashSet<>();
@@ -91,10 +91,9 @@ public final class BootstrapClassLoaderUtil {
     return builder.get();
   }
 
-  private static void addParentClasspath(@NotNull Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
+  private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
     if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       if (!ext) {
-        // ManagementFactory.getRuntimeMXBean().getClassPath() = System.getProperty("java.class.path"), but 100 times faster
         parseClassPathString(System.getProperty("java.class.path"), classpath);
       }
     }
@@ -147,8 +146,7 @@ public final class BootstrapClassLoaderUtil {
     }
   }
 
-  private static void addIdeaLibraries(@NotNull Collection<? super URL> classpath,
-                                       @NotNull Collection<String> jarOrder) throws MalformedURLException {
+  private static void addIdeaLibraries(Collection<URL> classpath, Collection<String> jarOrder) throws MalformedURLException {
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     assert selfRoot != null;
@@ -171,20 +169,18 @@ public final class BootstrapClassLoaderUtil {
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
-  @NotNull
   private static List<String> loadJarOrder() {
-    try {
-      try (BufferedReader stream = new BufferedReader(new InputStreamReader(BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE), StandardCharsets.UTF_8))) {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") InputStream resource = BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE);
+    if (resource != null) {
+      try (BufferedReader stream = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
         return FileUtilRt.loadLines(stream);
       }
-    }
-    catch (Exception ignored) {
-      // skip, we can load the app
+      catch (Exception ignored) { }  // skip, we can load the app
     }
     return Collections.emptyList();
   }
 
-  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
+  private static void addLibraries(Collection<URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
     File[] files = fromDir.listFiles();
     if (files == null) return;
 
@@ -198,11 +194,11 @@ public final class BootstrapClassLoaderUtil {
     }
   }
 
-  private static void addAdditionalClassPath(Collection<? super URL> classpath) {
+  private static void addAdditionalClassPath(Collection<URL> classpath) {
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
   }
 
-  private static void parseClassPathString(String pathString, Collection<? super URL> classpath) {
+  private static void parseClassPathString(String pathString, Collection<URL> classpath) {
     if (pathString == null || pathString.isEmpty()) {
       return;
     }
@@ -240,7 +236,7 @@ public final class BootstrapClassLoaderUtil {
   private static class TransformingLoader extends UrlClassLoader {
     private final List<BytecodeTransformer> myTransformers;
 
-    TransformingLoader(@NotNull Builder builder, List<BytecodeTransformer> transformers) {
+    TransformingLoader(Builder builder, List<BytecodeTransformer> transformers) {
       super(builder);
       myTransformers = Collections.unmodifiableList(transformers);
     }

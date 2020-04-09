@@ -503,10 +503,9 @@ object DynamicPlugins {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       PluginManagerCore.initClassLoader(pluginDescriptor)
     }
-    val application = ApplicationManager.getApplication() as ApplicationImpl
+    val application = ApplicationManager.getApplication()
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     application.runWriteAction {
-
       try {
         loadPluginDescriptor(pluginDescriptor, pluginDescriptor)
 

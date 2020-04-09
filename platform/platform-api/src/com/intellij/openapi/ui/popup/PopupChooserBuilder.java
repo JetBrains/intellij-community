@@ -34,6 +34,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private Runnable myItemChosenRunnable;
   private JComponent mySouthComponent;
   private JComponent myEastComponent;
+  private JComponent myPreferableFocusComponent;
 
   private JBPopup myPopup;
 
@@ -299,6 +300,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  public JComponent getPreferableFocusComponent() {
+    return myPreferableFocusComponent;
+  }
+
   @Override
   @NotNull
   public JBPopup createPopup() {
@@ -339,7 +344,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       registerClosePopupKeyboardAction(keystroke, true);
     }
 
-    JComponent finalComponent = myChooserComponent.buildFinalComponent();
+    myPreferableFocusComponent = myChooserComponent.buildFinalComponent();
     myScrollPane = myChooserComponent.createScrollPane();
 
     myScrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -347,7 +352,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     ((JComponent)myScrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
     if (myChooserComponent.hasOwnScrollPane()) {
-      addCenterComponentToContentPane(contentPane, finalComponent);
+      addCenterComponentToContentPane(contentPane, myPreferableFocusComponent);
     }
     else {
       addCenterComponentToContentPane(contentPane, myScrollPane);
@@ -361,7 +366,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       addEastComponentToContentPane(contentPane, myEastComponent);
     }
 
-    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, finalComponent);
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myPreferableFocusComponent);
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
     }

@@ -5,11 +5,7 @@ import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,10 +64,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setShouldDisposeContent(boolean value);
 
-  @Nls @NlsContexts.ContentTooltip
+  @NlsContexts.Tooltip
   String getDescription();
 
-  void setDescription(@Nls @NlsContexts.ContentTooltip String description);
+  void setDescription(@NlsContexts.Tooltip String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
 

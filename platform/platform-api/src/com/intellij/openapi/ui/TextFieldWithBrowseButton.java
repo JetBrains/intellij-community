@@ -8,12 +8,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +51,8 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
          browseActionListener, parent);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
-                                      @Nullable @Nls @NlsUI.Label String description,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     installPathCompletion(fileChooserDescriptor);

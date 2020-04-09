@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.util.List;
@@ -28,9 +27,8 @@ public abstract class WindowManagerEx extends WindowManager {
     return (WindowManagerEx)WindowManager.getInstance();
   }
 
-  @Nullable
   @Override
-  public abstract IdeFrameImpl getFrame(@Nullable Project project);
+  public abstract @Nullable IdeFrameImpl getFrame(@Nullable Project project);
 
   @Override
   public void requestUserAttention(@NotNull IdeFrame frame, boolean critical) {
@@ -53,10 +51,9 @@ public abstract class WindowManagerEx extends WindowManager {
    */
   public abstract @Nullable Component getFocusedComponent(@Nullable Project project);
 
-  public abstract Window getMostRecentFocusedWindow();
+  public abstract @Nullable Window getMostRecentFocusedWindow();
 
-  @Nullable
-  public abstract IdeFrame findFrameFor(@Nullable Project project);
+  public abstract @Nullable IdeFrame findFrameFor(@Nullable Project project);
 
   /**
    * @return default layout for tool windows.
@@ -81,12 +78,12 @@ public abstract class WindowManagerEx extends WindowManager {
    * For example, the left monitor has negative coordinates on Win32 platform with dual monitor support
    * (right monitor is the primer one) .
    */
-  public abstract Rectangle getScreenBounds();
+  public abstract @NotNull Rectangle getScreenBounds();
 
   /**
    * @return bounds for the screen device for the given project frame
    */
-  public abstract Rectangle getScreenBounds(@NotNull final Project project);
+  public abstract @Nullable Rectangle getScreenBounds(@NotNull Project project);
 
   public abstract void setWindowMask(Window window, Shape mask);
 
@@ -94,37 +91,26 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract void resetWindow(final Window window);
 
-  /**
-   * Either dispose the dialog immediately if project's frame has focus or just hide and dispose when frame gets focus or closes.
-   * @param dialog to hide and dispose later
-   * @param project the dialog has been shown for
-   */
-  public abstract void hideDialog(JDialog dialog, Project project);
+  public abstract void adjustContainerWindow(@NotNull Component component, Dimension oldSize, Dimension newSize);
 
-  public abstract void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize);
-
-  @Nullable
   @ApiStatus.Internal
-  public abstract ProjectFrameHelper getFrameHelper(@Nullable Project project);
+  public abstract @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project);
 
   /**
    * Find frame for project or if project is null, for a last focused window.
    */
-  @Nullable
   @ApiStatus.Internal
-  public abstract IdeFrameEx findFrameHelper(@Nullable Project project);
+  public abstract @Nullable IdeFrameEx findFrameHelper(@Nullable Project project);
 
   /**
    * GUI test only.
    */
   @ApiStatus.Internal
-  @Nullable
-  public abstract IdeFrameEx findFirstVisibleFrameHelper();
+  public abstract @Nullable IdeFrameEx findFirstVisibleFrameHelper();
 
   @ApiStatus.Internal
   public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
 
-  @NotNull
   @ApiStatus.Internal
-  public abstract List<ProjectFrameHelper> getProjectFrameHelpers();
+  public abstract @NotNull List<ProjectFrameHelper> getProjectFrameHelpers();
 }

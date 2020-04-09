@@ -21,6 +21,8 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 
 import java.lang.reflect.Type
+import java.nio.charset.StandardCharsets
+import java.util.stream.Collectors
 
 @CompileStatic
 class CompilationOutputsDownloader {
@@ -33,15 +35,20 @@ class CompilationOutputsDownloader {
   private final CompilationContext context
   private final String remoteCacheUrl
   private final String gitUrl
+  /**
+   * If set to true then latest commit in current repository will be used to download caches.
+   */
+  boolean availableForHeadCommit = false
 
   private final NamedThreadPoolExecutor executor
 
   private final SourcesStateProcessor sourcesStateProcessor
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl) {
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
+    this.availableForHeadCommit = availableForHeadCommit
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("Using $executorThreadsCount threads to download caches.")
@@ -51,17 +58,22 @@ class CompilationOutputsDownloader {
   }
 
   void downloadCachesAndOutput() {
-    Set<String> availableCachesKeys = getAvailableCachesKeys()
-
     def commits = getLastCommits()
-    int depth = commits.findIndexOf { availableCachesKeys.contains(it) }
-
+    int depth = availableForHeadCommit ? 0 : commits.findIndexOf { getAvailableCachesKeys().contains(it) }
+    if (depth == 0) availableForHeadCommit = true
     if (depth != -1) {
       String lastCachedCommit = commits[depth]
+      if (lastCachedCommit == null) {
+        context.messages.error("Unable to find last cached commit for $depth in $commits")
+      }
       context.messages.info("Using cache for commit $lastCachedCommit ($depth behind last commit).")
 
-      executor.submit {
-        saveCache(lastCachedCommit)
+      // In case if outputs are available for the current commit
+      // cache is not needed as we are not going to compile anything.
+      if (!availableForHeadCommit) {
+        executor.submit {
+          saveCache(lastCachedCommit)
+        }
       }
 
       def sourcesState = getSourcesState(lastCachedCommit)
@@ -150,15 +162,15 @@ class CompilationOutputsDownloader {
   }
 
   private List<String> getLastCommits() {
-    def proc = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
-    def output = new StringBuffer()
-    proc.consumeProcessOutputStream(output)
-    proc.waitForOrKill(COMMITS_SEARCH_TIMEOUT)
-    if (proc.exitValue() != 0) {
-      throw new IllegalStateException("git log failed: ${proc.getErrorStream().getText()}")
+    def log = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
+    def output = new BufferedReader(new InputStreamReader(log.inputStream, StandardCharsets.UTF_8)).withCloseable {
+      it.lines().map { it.trim() }.collect(Collectors.toList())
     }
-
-    return output.readLines()*.trim()
+    log.waitForOrKill(COMMITS_SEARCH_TIMEOUT)
+    if (log.exitValue() != 0) {
+      throw new IllegalStateException("git log failed:\n$log.errorStream.text\n$output")
+    }
+    return output
   }
 }
 

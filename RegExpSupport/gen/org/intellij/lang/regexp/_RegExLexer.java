@@ -1301,7 +1301,12 @@ class _RegExLexer implements FlexLexer {
                             return RegExpTT.MYSQL_CHAR_BEGIN;
                           } else {
                             yypushback(1);
-                            return allowNestedCharacterClasses ? RegExpTT.CLASS_BEGIN : RegExpTT.CHARACTER;
+                            if (allowNestedCharacterClasses) {
+                              yypushstate(CLASS1);
+                              return RegExpTT.CLASS_BEGIN;
+                            } else {
+                              return RegExpTT.CHARACTER;
+                            }
                           }
             } 
             // fall through

@@ -11,7 +11,6 @@ import com.intellij.util.PathUtil
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.toVirtualFileUrl
-import com.intellij.workspace.ide.IdeUiEntitySource
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
 import junit.framework.AssertionFailedError
@@ -28,11 +27,13 @@ internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePat
 internal data class LoadedProjectData(
   val storage: TypedEntityStorage,
   val serializationData: JpsEntitiesSerializationData,
-  val projectDir: File,
+  val storagePlace: JpsProjectStoragePlace,
   val originalProjectDir: File
 ) {
   val projectDirUrl: String
-    get() = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(projectDir.absolutePath))
+    get() = storagePlace.baseDirectoryUrlString
+  val projectDir: File
+    get() = File(VfsUtilCore.urlToPath(storagePlace.baseDirectoryUrlString))
 }
 
 internal fun copyAndLoadProject(originalProjectFile: File): LoadedProjectData {
@@ -41,8 +42,9 @@ internal fun copyAndLoadProject(originalProjectFile: File): LoadedProjectData {
   FileUtil.copyDir(originalProjectDir, projectDir)
   val originalBuilder = TypedEntityStorageBuilder.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
-  val data = JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), originalBuilder)
-  val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), data, projectDir, originalProjectDir)
+  val storagePlace = projectFile.asStoragePlace()
+  val data = JpsProjectEntitiesLoader.loadProject(storagePlace, originalBuilder)
+  val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), data, storagePlace, originalProjectDir)
   data.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage)
   return loadedProjectData
 }
@@ -130,7 +132,7 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
 
 internal fun createSerializationData(projectDir: File): JpsEntitiesSerializationData {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
-  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader, true, true)
+  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader, true)
 }
 
 fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {
@@ -166,7 +168,6 @@ fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, sto
   }
 
   val allSources = storage.entitiesBySource { true }
-  assertNull(allSources[IdeUiEntitySource])
   val urlsFromSources = allSources.keys.filterIsInstance<JpsFileEntitySource>().mapTo(HashSet()) { getNonNullActualFileUrl(it) }
   urlsFromSources += fileSerializerFactoriesByUrl.keys
   assertEquals(urlsFromSources.sorted(), (fileSerializersByUrl.keySet() + fileSerializerFactoriesByUrl.keys).sorted())

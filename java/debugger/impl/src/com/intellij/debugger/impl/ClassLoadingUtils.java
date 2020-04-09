@@ -2,6 +2,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -9,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +29,9 @@ public class ClassLoadingUtils {
     try {
       ClassType loaderClass = (ClassType)process.findClass(context, "java.security.SecureClassLoader", context.getClassLoader());
       Method ctorMethod = DebuggerUtils.findMethod(loaderClass, JVMNameUtil.CONSTRUCTOR_NAME, "(Ljava/lang/ClassLoader;)V");
-      return context.computeAndKeep(() -> (ClassLoaderReference)process
-        .newInstance(context, loaderClass, ctorMethod, Collections.singletonList(context.getClassLoader())));
+      return context.computeAndKeep(() -> (ClassLoaderReference)((DebugProcessImpl)process)
+        .newInstance(context, loaderClass, ctorMethod, Collections.singletonList(context.getClassLoader()),
+                     MethodImpl.SKIP_ASSIGNABLE_CHECK, true));
     }
     catch (VMDisconnectedException e) {
       throw e;
@@ -47,11 +50,13 @@ public class ClassLoadingUtils {
       VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
       Method defineMethod =
         DebuggerUtils.findMethod(classLoader.referenceType(), "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-      process.invokeMethod(context, classLoader, defineMethod,
-                           Arrays.asList(DebuggerUtilsEx.mirrorOfString(name, proxy, context),
-                                         mirrorOf(bytes, context, process),
-                                         proxy.mirrorOf(0),
-                                         proxy.mirrorOf(bytes.length)));
+      ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,
+                                                       Arrays.asList(DebuggerUtilsEx.mirrorOfString(name, proxy, context),
+                                                                     mirrorOf(bytes, context, process),
+                                                                     proxy.mirrorOf(0),
+                                                                     proxy.mirrorOf(bytes.length)),
+                                                       MethodImpl.SKIP_ASSIGNABLE_CHECK,
+                                                       true);
     }
     catch (VMDisconnectedException e) {
       throw e;
@@ -107,7 +112,7 @@ public class ClassLoadingUtils {
       setChuckByChunk(reference, mirrors);
     }
     else {
-      reference.setValues(mirrors);
+      DebuggerUtilsEx.setValuesNoCheck(reference, mirrors);
     }
 
     return reference;

@@ -64,6 +64,18 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyItem(12, 26, "another");
   }
 
+  public void testMultipleAuthors() {
+    configure("package some;\n" +
+              "\n" +
+              "/**\n" +
+              " * @author foo\n" +
+              " * @author bar\n" +
+              " */\n" +
+              "class C {}", true);
+    verifyItem(15, 52,"<table class='sections'><p><tr><td valign='top' class='section'><p>Author:</td>" +
+                      "<td valign='top'><p>foo, bar</td></table>");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);

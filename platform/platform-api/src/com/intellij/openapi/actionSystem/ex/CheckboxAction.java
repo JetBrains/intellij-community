@@ -4,11 +4,10 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +22,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
 
   protected CheckboxAction() {}
 
-  protected CheckboxAction(@Nls @NlsUI.Checkbox String text) {
+  protected CheckboxAction(@NlsContexts.Checkbox String text) {
     super(text);
   }
 
@@ -31,8 +30,8 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     super(dynamicText);
   }
 
-  protected CheckboxAction(@Nls @NlsUI.Checkbox String text,
-                           @Nls @NlsUI.CheckboxTooltip String description,
+  protected CheckboxAction(@NlsContexts.Checkbox String text,
+                           @NlsContexts.Tooltip String description,
                            final Icon icon) {
     super(text, description, icon);
   }

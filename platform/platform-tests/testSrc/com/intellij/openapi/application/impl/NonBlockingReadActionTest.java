@@ -18,10 +18,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -449,5 +446,16 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       () -> ReadAction.nonBlocking(computation).executeSynchronously());
     assertEquals("x", PlatformTestUtil.waitForFuture(future2, 1000));
     assertEquals(10, count.get());
+  }
+
+  public void testReportTooManyUnboundedCalls() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
+      WriteAction.run(() -> {
+        for (int i = 0; i < 1000; i++) {
+          ReadAction.nonBlocking(() -> {}).submit(AppExecutorUtil.getAppExecutorService());
+        }
+      });
+    });
   }
 }

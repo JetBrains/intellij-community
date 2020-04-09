@@ -104,7 +104,7 @@ open class IdeStarter : ApplicationStarter {
       }
 
       // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-      if (app.isHeadlessEnvironment()) {
+      if (app.isHeadlessEnvironment) {
         needToOpenProject = false
       }
       else {

@@ -336,7 +336,12 @@ public class TypeConstraints {
     @Override
     public StreamEx<Exact> superTypes() {
       List<Exact> superTypes = new ArrayList<>();
-      InheritanceUtil.processSupers(myClass, false, t -> superTypes.add(exactClass(t)));
+      InheritanceUtil.processSupers(myClass, false, t -> {
+        if (!t.hasModifierProperty(PsiModifier.FINAL)) {
+          superTypes.add(exactClass(t));
+        }
+        return true;
+      });
       return StreamEx.of(superTypes);
     }
 
@@ -429,6 +434,11 @@ public class TypeConstraints {
         return CommonClassNames.JAVA_LANG_OBJECT.equals(((ExactClass)other).myClass.getQualifiedName());
       }
       return false;
+    }
+
+    @Override
+    public @NotNull Exact getArrayComponent() {
+      return myComponent;
     }
   }
 

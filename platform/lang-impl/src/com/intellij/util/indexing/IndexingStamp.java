@@ -108,6 +108,7 @@ public class IndexingStamp {
   }
   
   public static synchronized void rewriteVersion(@NotNull ID<?,?> indexId, final int version) throws IOException {
+    if (FileBasedIndex.USE_IN_MEMORY_INDEX) return;
     File file = IndexInfrastructure.getVersionFile(indexId);
     if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
       FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
@@ -195,9 +196,11 @@ public class IndexingStamp {
     return version;
   }
 
-  public static boolean isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
+  public static FileIndexingState isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
     try {
-      return getIndexStamp(fileId, indexName) == getIndexCreationStamp(indexName);
+      long stamp = getIndexStamp(fileId, indexName);
+      if (stamp == 0) return FileIndexingState.NOT_INDEXED;
+      return stamp == getIndexCreationStamp(indexName) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
@@ -206,7 +209,7 @@ public class IndexingStamp {
       }
     }
 
-    return false;
+    return FileIndexingState.OUT_DATED;
   }
 
   public static void setFileIndexedStateCurrent(int fileId, ID<?, ?> id) {

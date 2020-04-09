@@ -2,6 +2,7 @@ package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.idea.Bombed
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -36,6 +37,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import java.util.*
 
 class LegacyBridgeModulesTest {
   @Rule
@@ -379,6 +381,7 @@ class LegacyBridgeModulesTest {
     assertEquals(1, TestModuleExtension.commitCalled.get())
   }
 
+  @Bombed(month = Calendar.APRIL, day = 15, user = "nik")
   @Test
   @RunsInEdt
   fun `test module libraries loaded from cache`() {
@@ -386,13 +389,16 @@ class LegacyBridgeModulesTest {
 
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
-    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = IdeUiEntitySource)
+    val iprFile = File(tempDir, "testProject.ipr")
+    val storagePlace = iprFile.asStoragePlace()
+    val source = JpsFileEntitySource.FileInDirectory(storagePlace.baseDirectoryUrl, storagePlace)
+    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
       tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
       roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(), LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = IdeUiEntitySource
+      source = source
     )
     builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       dependencies = listOf(ModuleDependencyItem.Exportable.LibraryDependency(
@@ -400,7 +406,7 @@ class LegacyBridgeModulesTest {
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
+      val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
       ProjectManagerEx.getInstanceEx().openProject(project)
       disposableRule.disposable.attach { ProjectUtil.closeAndDispose(project) }
 
@@ -425,17 +431,18 @@ class LegacyBridgeModulesTest {
 
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
+    val iprFile = File(tempDir, "testProject.ipr")
     val jarUrl = File(tempDir, "a.jar").toVirtualFileUrl()
     builder.addLibraryEntity(
       name = "my_lib",
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = IdeUiEntitySource
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(iprFile.asStoragePlace())
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
+      val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
       ProjectManagerEx.getInstanceEx().openProject(project)
       disposableRule.disposable.attach { ProjectUtil.closeAndDispose(project) }
 

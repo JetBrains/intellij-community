@@ -69,8 +69,11 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     final List<InspectionGadgetsFix> fixes = new ArrayList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     final PsiMethod constructor = getNullArgConstructor(aClass);
+    final boolean isOnTheFly = (boolean)infos[1];
     if (constructor == null) {
-      fixes.add(new CreateEmptyPrivateConstructor());
+      if (isOnTheFly || !hasImplicitConstructorUsage(aClass)) {
+        fixes.add(new CreateEmptyPrivateConstructor());
+      }
     }
     else {
       final Query<PsiReference> query = ReferencesSearch.search(constructor, constructor.getUseScope());
@@ -92,6 +95,19 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UtilityClassWithoutPrivateConstructorVisitor();
+  }
+
+  private static boolean hasImplicitConstructorUsage(PsiClass aClass) {
+    final Query<PsiReference> query = ReferencesSearch.search(aClass, aClass.getUseScope());
+    for (PsiReference reference : query) {
+      if (reference == null) continue;
+      final PsiElement element = reference.getElement();
+      final PsiElement context = element.getParent();
+      if (context instanceof PsiNewExpression) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -122,22 +138,11 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         return;
       }
       final PsiClass aClass = (PsiClass)parent;
-      final Query<PsiReference> query = ReferencesSearch.search(aClass, aClass.getUseScope());
-      for (PsiReference reference : query) {
-        if (reference == null) {
-          continue;
-        }
-        final PsiElement element = reference.getElement();
-        final PsiElement context = element.getParent();
-        if (context instanceof PsiNewExpression) {
-          if (isOnTheFly()) {
-            SwingUtilities.invokeLater(() -> Messages.showInfoMessage(
-              aClass.getProject(),
-              InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.message"),
-              InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.title")));
-          }
-          return;
-        }
+      if (isOnTheFly() && hasImplicitConstructorUsage(aClass)) {
+        SwingUtilities.invokeLater(() -> Messages.showInfoMessage(
+          aClass.getProject(),
+          InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.message"),
+          InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.title")));
       }
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -208,7 +213,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       if (subclass != null) {
         return;
       }
-      registerClassError(aClass, aClass);
+      registerClassError(aClass, aClass, isOnTheFly());
     }
 
     private boolean hasOnlyMain(PsiClass aClass) {

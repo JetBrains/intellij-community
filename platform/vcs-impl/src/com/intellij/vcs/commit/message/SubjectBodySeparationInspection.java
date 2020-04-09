@@ -5,7 +5,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiFile;
@@ -50,7 +50,7 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
 
   protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
-    public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @NlsContexts.ListItem @NotNull String getFamilyName() {
       return VcsBundle.getString("settings.commit.message.body.add.blank.line.fix");
     }
 

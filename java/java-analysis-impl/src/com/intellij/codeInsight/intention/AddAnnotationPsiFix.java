@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -21,6 +24,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,8 +208,51 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     return annotationsManager.chooseAnnotationsPlaceNoUi(modifierListOwner);
   }
 
+  /**
+   * @deprecated use {@link #addPhysicalAnnotationIfAbsent(String, PsiNameValuePair[], PsiAnnotationOwner)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiModifierList modifierList) {
     return addPhysicalAnnotationTo(fqn, pairs, modifierList);
+  }
+
+  /**
+   * Add new physical (non-external) annotation to the annotation owner. Annotation will not be added if it already exists
+   * on the same annotation owner (externally or explicitly) or if there's a {@link PsiTypeElement} that follows the owner,
+   * and its innermost component type has the annotation with the same fully-qualified name. 
+   * E.g. the method like {@code java.lang.@Foo String[] getStringArray()} will not be annotated with another {@code @Foo}
+   * annotation. 
+   *
+   * @param fqn fully-qualified annotation name
+   * @param pairs name/value pairs for the new annotation (not changed by this method, 
+   *              could be result of {@link PsiAnnotationParameterList#getAttributes()} of existing annotation).
+   * @param owner an owner object to add the annotation to ({@link PsiModifierList} or {@link PsiType}).
+   * @return added physical annotation; null if annotation already exists (in this case, no changes are performed) 
+   */
+  @Nullable
+  public static PsiAnnotation addPhysicalAnnotationIfAbsent(@NotNull String fqn,
+                                                            @NotNull PsiNameValuePair @NotNull [] pairs,
+                                                            @NotNull PsiAnnotationOwner owner) {
+    if (owner.hasAnnotation(fqn)) return null;
+    if (owner instanceof PsiModifierList) {
+      PsiElement modListOwner = ((PsiModifierList)owner).getParent();
+      if (modListOwner instanceof PsiModifierListOwner) {
+        if (ExternalAnnotationsManager.getInstance(modListOwner.getProject())
+              .findExternalAnnotation((PsiModifierListOwner)modListOwner, fqn) != null) {
+          return null;
+        }
+        PsiTypeElement typeElement = modListOwner instanceof PsiMethod ? ((PsiMethod)modListOwner).getReturnTypeElement() :
+                                     modListOwner instanceof PsiVariable ? ((PsiVariable)modListOwner).getTypeElement() : null;
+        while (typeElement != null && typeElement.getType() instanceof PsiArrayType) {
+          typeElement = PsiTreeUtil.getChildOfType(typeElement, PsiTypeElement.class);
+        }
+        if (typeElement != null && typeElement.getType().hasAnnotation(fqn)) {
+          return null;
+        }
+      }
+    }
+    return addPhysicalAnnotationTo(fqn, pairs, owner);
   }
 
   public static PsiAnnotation addPhysicalAnnotationTo(String fqn, PsiNameValuePair[] pairs, PsiAnnotationOwner owner) {

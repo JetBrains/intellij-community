@@ -66,7 +66,7 @@ public class ToggleOptionAction extends ToggleAction {
      * @return a not null string to override an action name
      */
     @Nullable
-    @Nls @ActionText
+    @ActionText
     default String getName() {
       return null;
     }
@@ -75,7 +75,7 @@ public class ToggleOptionAction extends ToggleAction {
      * @return a not null string to override an action description
      */
     @Nullable
-    @Nls @ActionDescription
+    @ActionDescription
     default String getDescription() {
       return null;
     }

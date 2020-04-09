@@ -568,6 +568,7 @@ public class StringUtilTest {
   public void testFormatDuration() {
     assertEquals("0 ms", StringUtil.formatDuration(0));
     assertEquals("1 ms", StringUtil.formatDuration(1));
+    assertEquals("1 s", StringUtil.formatDuration(1000));
     assertEquals("24 d 20 h 31 m 23 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE));
     assertEquals("82 d 17 h 24 m 43 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE+5000000000L));
 

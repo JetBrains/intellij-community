@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -58,7 +59,8 @@ class DocRenderer implements EditorCustomElementRenderer {
   private static final int MAX_WIDTH = 680;
   private static final int LEFT_INSET = 14;
   private static final int RIGHT_INSET = 12;
-  private static final int TOP_BOTTOM_INSETS = 4;
+  private static final int TOP_BOTTOM_INSETS = 2;
+  private static final int ARC_RADIUS = 5;
 
   private static StyleSheet ourCachedStyleSheet;
   private static String ourCachedStyleSheetLinkColor = "non-existing";
@@ -91,7 +93,8 @@ class DocRenderer implements EditorCustomElementRenderer {
     Editor editor = inlay.getEditor();
     int width = Math.max(0, calcInlayWidth(editor) - calcInlayStartX() + editor.getInsets().left - scale(LEFT_INSET) - scale(RIGHT_INSET));
     JComponent component = getRendererComponent(inlay, width, -1);
-    return component.getPreferredSize().height + scale(TOP_BOTTOM_INSETS) * 2 + scale(getTopMargin()) + scale(getBottomMargin());
+    return Math.max(editor.getLineHeight(),
+                    component.getPreferredSize().height + scale(TOP_BOTTOM_INSETS) * 2 + scale(getTopMargin()) + scale(getBottomMargin()));
   }
 
   @Override
@@ -111,8 +114,20 @@ class DocRenderer implements EditorCustomElementRenderer {
     Color bgColor = currentBgColor == null ? defaultBgColor
                                            : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(),
                                                            Registry.doubleValue("editor.render.doc.comments.bg.transparency"));
-    g.setColor(bgColor);
-    g.fillRect(startX, filledStartY, endX - startX, filledHeight);
+    if (currentBgColor != null) {
+      g.setColor(bgColor);
+      int arcDiameter = ARC_RADIUS * 2;
+      if (endX - startX >= arcDiameter) {
+        g.fillRect(startX, filledStartY, endX - startX - ARC_RADIUS, filledHeight);
+        Object savedHint = ((Graphics2D)g).getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.fillRoundRect(endX - arcDiameter, filledStartY, arcDiameter, filledHeight, arcDiameter, arcDiameter);
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+      }
+      else {
+        g.fillRect(startX, filledStartY, endX - startX, filledHeight);
+      }
+    }
     g.setColor(editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
     g.fillRect(startX, filledStartY, scale(getLineWidth()), filledHeight);
 
@@ -140,11 +155,7 @@ class DocRenderer implements EditorCustomElementRenderer {
 
   @Override
   public ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-    return new DefaultActionGroup(getToggleAction(), new DocRenderItem.ChangeFontSize());
-  }
-
-  private AnAction getToggleAction() {
-    return Objects.requireNonNull(myItem.highlighter.getGutterIconRenderer()).getClickAction();
+    return new DefaultActionGroup(myItem.createToggleAction(), new DocRenderItem.ChangeFontSize());
   }
 
   private static int getTopMargin() {
@@ -170,9 +181,11 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private int calcInlayStartX() {
+    RangeHighlighter highlighter = myItem.highlighter;
+    if (!highlighter.isValid()) return 0;
     Document document = myItem.editor.getDocument();
-    int lineStartOffset = document.getLineStartOffset(document.getLineNumber(myItem.highlighter.getEndOffset()) + 1);
-    int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t");
+    int lineStartOffset = document.getLineStartOffset(document.getLineNumber(highlighter.getEndOffset()) + 1);
+    int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
     return myItem.editor.offsetToXY(contentStartOffset, false, true).x;
   }
 
@@ -358,8 +371,10 @@ class DocRenderer implements EditorCustomElementRenderer {
     if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor) || !Objects.equals(editorFontName, ourCachedStyleSheetMonoFont)) {
       String escapedFontName = StringUtil.escapeQuotes(editorFontName);
       ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
+        "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family:\"" + escapedFontName + "\"}" +
-        "pre {font-family:\"" + escapedFontName + "\"}" +
+        "pre {font-family:\"" + escapedFontName + "\";" +
+             "white-space: pre-wrap}" + // supported by JetBrains Runtime
         "h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }" +
         "a { color: #" + linkColorHex + "; text-decoration: none;}" +
         "p { padding: 1px 0 2px 0; }" +
@@ -367,7 +382,12 @@ class DocRenderer implements EditorCustomElementRenderer {
         "ul { padding: 0 16px 0 0; }" +
         "li { padding: 1px 0 2px 0; }" +
         "table p { padding-bottom: 0}" +
-        "th { text-align: left; }"
+        "th { text-align: left; }" +
+        "td {padding: 2px 0 2px 0}" +
+        "td p {padding-top: 0}" +
+        ".sections {border-spacing: 0}" +
+        ".section {padding-right: 4px; white-space: nowrap}" +
+        ".content {padding: 2px 0 2px 0}"
       );
       ourCachedStyleSheetLinkColor = linkColorHex;
       ourCachedStyleSheetMonoFont = editorFontName;

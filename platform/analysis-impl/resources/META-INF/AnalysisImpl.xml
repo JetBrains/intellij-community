@@ -47,5 +47,10 @@
              order="last"/>
 
     <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
+
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter"/>
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonInspectionsReportConverter"/>
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.JsonSingleFileInspectionsReportConverter"/>
+    <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.StaticAnalysisReportConverter"/>
   </extensions>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
@@ -130,7 +130,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       if (producers.isEmpty()) return;
       if (producers.size() > 1) {
         final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-        Collections.sort(producers, ConfigurationFromContext.NAME_COMPARATOR);
+        producers.sort(ConfigurationFromContext.NAME_COMPARATOR);
         final ListPopup popup =
           JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationFromContext>(ExecutionBundle.message("configuration.action.chooser.title"), producers) {
             @Override

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +30,7 @@ import java.util.Objects;
 public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory {
   private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
+  private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
@@ -39,8 +41,12 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     long current = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
+    boolean iconsEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     Long existing = editor.getUserData(MODIFICATION_STAMP);
-    return editor.getProject() == null || existing != null && existing == current ? null : new DocRenderPass(editor, file);
+    Boolean iconsWereEnabled = editor.getUserData(ICONS_ENABLED);
+    return editor.getProject() == null ||
+           existing != null && existing == current && iconsWereEnabled != null && iconsWereEnabled == iconsEnabled
+           ? null : new DocRenderPass(editor, file);
   }
 
   static void forceRefreshOnNextPass(@NotNull Editor editor) {
@@ -88,7 +94,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
           text = DocumentationManager.getProviderFromElement(owner).generateRenderedDoc(owner);
         }
       }
-      return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : text;
+      return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
     }
     catch (IndexNotReadyException e) {
       LOG.warn(e);
@@ -96,11 +102,16 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     }
   }
 
+  private static String preProcess(String text) {
+    return DocumentationComponent.addExternalLinksIcon(text);
+  }
+
   public static void applyItemsToRender(@NotNull Editor editor,
                                         @NotNull Project project,
                                         @NotNull Items items,
                                         boolean collapseNewRegions) {
     editor.putUserData(MODIFICATION_STAMP, PsiModificationTracker.SERVICE.getInstance(project).getModificationCount());
+    editor.putUserData(ICONS_ENABLED, DocRenderDummyLineMarkerProvider.isGutterIconEnabled());
     DocRenderItem.setItemsToEditor(editor, items, collapseNewRegions);
   }
 

@@ -47,8 +47,8 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     try {
       return findClass(className, myPluginDescriptor);
     }
-    catch (ClassNotFoundException e) {
-      throw new ExtensionInstantiationException(e, myPluginDescriptor);
+    catch (Throwable t) {
+      throw new ExtensionInstantiationException(t, myPluginDescriptor);
     }
   }
 
@@ -64,8 +64,8 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     try {
       return findClass(className);
     }
-    catch (ClassNotFoundException e) {
-      LOG.error(new ExtensionInstantiationException(e, myPluginDescriptor));
+    catch (Throwable t) {
+      LOG.error(new ExtensionInstantiationException(t, myPluginDescriptor));
       return null;
     }
   }

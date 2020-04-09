@@ -86,5 +86,15 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
 
   companion object {
     private val LOG = Logger.getInstance(CompoundParallelOperationTrace::class.java)
+
+    fun <Id, R> CompoundParallelOperationTrace<Id>.task(taskId: Id, action: () -> R): R {
+      startTask(taskId)
+      try {
+        return action()
+      }
+      finally {
+        finishTask(taskId)
+      }
+    }
   }
 }

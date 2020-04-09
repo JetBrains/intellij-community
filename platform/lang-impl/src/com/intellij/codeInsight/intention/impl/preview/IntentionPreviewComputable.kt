@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
 import java.util.concurrent.Callable
 
 internal class IntentionPreviewComputable(private val project: Project,
@@ -24,7 +23,7 @@ internal class IntentionPreviewComputable(private val project: Project,
                                           private val originalFile: PsiFile,
                                           private val originalEditor: Editor) : Callable<IntentionPreviewResult?> {
   override fun call(): IntentionPreviewResult? {
-    val psiFileCopy = nonPhysicalPsiCopy(originalFile, project)
+    val psiFileCopy = originalFile.copy() as PsiFile
     ProgressManager.checkCanceled()
     val editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.caretModel.offset)
 
@@ -62,14 +61,6 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
   }
 
-  private fun nonPhysicalPsiCopy(psiFile: PsiFile, project: Project): PsiFile {
-    ProgressManager.checkCanceled()
-    return PsiFileFactory.getInstance(project).createFileFromText(psiFile.name,
-                                                                  psiFile.language,
-                                                                  psiFile.text, false, true, false,
-                                                                  psiFile.virtualFile)
-  }
-
   companion object {
     private val LOG = Logger.getInstance(IntentionPreviewComputable::class.java)
 
@@ -83,6 +74,8 @@ internal class IntentionPreviewComputable(private val project: Project,
                                   editorCopy: Editor,
                                   psiFileCopy: PsiFile,
                                   originalAction: IntentionAction): IntentionAction? {
+      val transferred = originalAction.getFileModifierForPreview(psiFileCopy) as? IntentionAction
+      if (transferred != null) return transferred
       val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy, false)
       val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -413,11 +399,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     ArrayList<PsiField> initializedFields = new ArrayList<>(fieldsToInitializers.keySet());
 
-    Collections.sort(initializedFields, (field1, field2) -> {
+    initializedFields.sort((field1, field2) -> {
       Initializer i1 = fieldsToInitializers.get(field1);
       Initializer i2 = fieldsToInitializers.get(field2);
-      if(i1.movedFieldsUsed.contains(field2)) return 1;
-      if(i2.movedFieldsUsed.contains(field1)) return -1;
+      if (i1.movedFieldsUsed.contains(field2)) return 1;
+      if (i2.movedFieldsUsed.contains(field1)) return -1;
       if (i1.usedParameters.stream().anyMatch(p -> p.isVarArgs())) return 1;
       if (i2.usedParameters.stream().anyMatch(p -> p.isVarArgs())) return -1;
       return 0;

@@ -171,12 +171,7 @@ class LanguageResolvingUtil {
 
   private static boolean isSuperConstructorCall(@Nullable UCallExpression callExpression) {
     if (callExpression == null) return false;
-    UastCallKind kind = callExpression.getKind();
-    String name = callExpression.getMethodName();
-
-    // TODO: Simplify once IDEA-229756 fixed
-    return kind == UastCallKind.CONSTRUCTOR_CALL && "<init>".equals(name) // Kotlin way
-           || kind == UastCallKind.METHOD_CALL && "super".equals(name); // Java way
+    return callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL;
   }
 
   @Nullable

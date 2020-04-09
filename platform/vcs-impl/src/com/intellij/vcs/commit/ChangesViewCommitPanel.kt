@@ -171,7 +171,8 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
       .addToBottom(panel(VerticalLayout(0)).apply {
         background = getButtonPanelBackground()
 
-        add(commitAuthorComponent.apply { border = empty(0, 6, 4, 0) })
+        add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
+        add(ChangesViewCommitStatusPanel(changesView, this@ChangesViewCommitPanel, getButtonPanelBackground()))
         add(buttonPanel)
       })
     addToCenter(centerPanel)
@@ -201,7 +202,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   }
 
   private fun getButtonPanelBorder(): Border =
-    EmptyBorder(0, scale(4), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
+    EmptyBorder(0, scale(3), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
 
   private fun getButtonPanelBackground() =
     JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }

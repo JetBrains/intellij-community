@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -132,7 +133,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     task.release();
 
     if (EDT.isCurrentThreadEdt()) {
-      ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
         // Waiting rationale: a task to write thread might have not been submitted yet
         TimeoutUtil.sleep(100);
         // Dispatching rationale: a task might be submitted to write thread. Hence, we need to ensure flush queue
@@ -340,7 +341,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     if (runInDispatchThread()) {
       EdtTestUtilKt.runInEdtAndWait(() -> {
         if (myReleaseIWLockOnRun) {
-          return ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+          return ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
             runnable.run();
             return null;
           });
@@ -388,7 +389,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   private static void dispatchEverything() {
     if (EDT.isCurrentThreadEdt()) {
-      ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
         LaterInvocator.dispatchPendingFlushes();
         LaterInvocator.dispatchPendingFlushes();
         return null;
@@ -396,7 +397,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     }
     else if (ApplicationManager.getApplication().isWriteThread()) {
       LaterInvocator.pollWriteThreadEventsOnce();
-      ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
         ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance(), ModalityState.any());
         return null;
       });

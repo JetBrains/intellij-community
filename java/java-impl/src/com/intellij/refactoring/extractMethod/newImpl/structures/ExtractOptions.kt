@@ -2,25 +2,23 @@
 package com.intellij.refactoring.extractMethod.newImpl.structures
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiTypeParameterList
-import com.intellij.psi.PsiVariable
+import com.intellij.psi.*
 
 data class ExtractOptions(
-  val anchor: PsiElement,
+  val anchor: PsiMember,
   val elements: List<PsiElement>,
   val flowOutput: FlowOutput,
   val dataOutput: DataOutput,
-  val thrownExceptions: List<PsiClassType>,
-  val requiredVariablesInside: List<PsiVariable>,
-  val inputParameters: List<InputParameter>,
-  val typeParameters: PsiTypeParameterList,
-  val methodName: String,
-  val isStatic: Boolean,
-  val visibility: String,
-  val exposedLocalVariables: List<PsiVariable>,
-  val isConstructor: Boolean
+  val thrownExceptions: List<PsiClassType> = emptyList(),
+  val requiredVariablesInside: List<PsiVariable> = emptyList(),
+  val inputParameters: List<InputParameter> = emptyList(),
+  val typeParameters: List<PsiTypeParameter> = emptyList(),
+  val methodName: String = "extracted",
+  val isStatic: Boolean = false,
+  val visibility: String? = PsiModifier.PRIVATE,
+  val exposedLocalVariables: List<PsiVariable> = emptyList(),
+  val disabledParameters: List<InputParameter> = emptyList(),
+  val isConstructor: Boolean = false
 ) {
   val project: Project
     get() = elements.first().project

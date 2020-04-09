@@ -52,26 +52,6 @@ import java.util.concurrent.Future;
 public interface Application extends ComponentManager {
 
   /**
-   * Private API to use in instrumented code.
-   * <p>
-   * Acquires IW lock if it's not acquired by the current thread.
-   *
-   * @return {@code true} if IW lock was acquired, or {@code false} if it is held by the current thread already.
-   */
-  @ApiStatus.Internal
-  boolean acquireWriteIntentLockIfNeeded();
-
-  /**
-   * Private API to use in instrumented code.
-   * <p>
-   * Releases IW lock if the parameter is {@code true}.
-   *
-   * @param needed whether IW lock should be released or not
-   */
-  @ApiStatus.Internal
-  void releaseWriteIntentLockIfNeeded(boolean needed);
-
-  /**
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * with {@link ModalityState#defaultModalityState()} modality state.
    *
@@ -102,26 +82,6 @@ public interface Application extends ComponentManager {
   @ApiStatus.Experimental
   void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired);
 
-  /**
-   * Runs the specified action, releasing Write Intent lock if it is acquired at the moment of the call.
-   * <p>
-   * This method is used to implement higher-level API, please do not use it directly.
-   */
-  @ApiStatus.Internal
-  <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E;
-
-  /**
-   * Runs the specified action under Write Intent lock. Can be called from any thread. The action is executed immediately
-   * if no write intent action is currently running, or blocked until the currently running write intent action completes.
-   * <p>
-   * This method is used to implement higher-level API, please do not use it directly.
-   * Use {@link #invokeLaterOnWriteThread}, {@link WriteThread} or {@link AppUIExecutor#onWriteThread()} to
-   * run code under Write Intent lock asynchronously.
-   *
-   * @param action the action to run
-   */
-  @ApiStatus.Internal
-  void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action);
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
    * if no write action is currently running, or blocked until the currently running write action completes.<p></p>

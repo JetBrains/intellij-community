@@ -131,8 +131,8 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   protected final void fireEditorStateChanged() {
-    if (myIsInUpdate || myListeners == null) return;
-    for (SettingsEditorListener listener : myListeners) {
+    if (myIsInUpdate) return;
+    for (SettingsEditorListener<Settings> listener : myListeners) {
       listener.stateChanged(this);
     }
   }

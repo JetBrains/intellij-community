@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
 
+import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
+
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
   public static final int COLUMN_RESIZE_AREA_WIDTH = 3; // same as in BasicTableHeaderUI
@@ -296,7 +298,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     TableModel model = getModel();
     int modelRows = model == null ? 0 : model.getRowCount();
-    boolean forceVisibleRowCount = getClientProperty("forceVisibleRowCount") != null;
+    boolean forceVisibleRowCount = Boolean.TRUE.equals(UIUtil.getClientProperty(this, FORCE_VISIBLE_ROW_COUNT_KEY));
     if (!forceVisibleRowCount) {
       visibleRows = Math.min(modelRows, visibleRows);
     }

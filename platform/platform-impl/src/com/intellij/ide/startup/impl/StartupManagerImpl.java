@@ -16,7 +16,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -366,8 +369,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  @NotNull
-  private List<Runnable> takeDumbUnawareStartupActivities() {
+  private @NotNull List<Runnable> takeDumbUnawareStartupActivities() {
     synchronized (myLock) {
       if (myNotDumbAwarePostStartupActivities.isEmpty()) {
         return Collections.emptyList();
@@ -495,19 +497,16 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void runAfterOpened(@NotNull Runnable runnable) {
     checkNonDefaultProject();
 
-    if (postStartupActivitiesPassed) {
-      runnable.run();
-    }
-    else {
+    if (!postStartupActivitiesPassed) {
       synchronized (myLock) {
-        if (postStartupActivitiesPassed) {
-          runnable.run();
+        if (!postStartupActivitiesPassed) {
+          myDumbAwarePostStartupActivities.add(runnable);
           return;
         }
-
-        myDumbAwarePostStartupActivities.add(runnable);
       }
     }
+
+    runnable.run();
   }
 
   private void runDumbUnawareActivity(@NotNull DumbService dumbService, @NotNull Runnable action) {

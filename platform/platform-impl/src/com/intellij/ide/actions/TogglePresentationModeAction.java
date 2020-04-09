@@ -151,7 +151,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     }
   }
 
-  private static boolean hideAllToolWindows(ToolWindowManagerEx manager) {
+  private static boolean hideAllToolWindows(@NotNull ToolWindowManagerEx manager) {
     // to clear windows stack
     manager.clearSideStack();
 

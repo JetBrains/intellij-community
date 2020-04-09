@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -36,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
@@ -47,12 +47,10 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +66,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
+public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -77,8 +75,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final NewMappings myMappings;
   private final Project myProject;
-
-  private ConsoleView myConsole;
 
   @Nullable private final VcsInitialization myInitialization;
 
@@ -115,7 +111,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
 
     myMappings = new NewMappings(myProject, this);
-    Disposer.register(this, myMappings);
+    Disposer.register(myProject, myMappings);
   }
 
   static final class MyStartUpActivity implements StartupActivity.DumbAware {
@@ -177,11 +173,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   public boolean haveVcses() {
     return !AllVcses.getInstance(myProject).isEmpty();
-  }
-
-  @Override
-  public void dispose() {
-    releaseConsole();
   }
 
   @NotNull
@@ -266,7 +257,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Nullable
   @Override
   public ContentManager getContentManager() {
-    ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     return changes == null ? null : changes.getContentManager();
   }
 
@@ -318,49 +309,32 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         myPendingOutput.add(Pair.create(message, contentType));
       }
       else {
-        getOrCreateConsoleContent(contentManager);
-        printToConsole(message, contentType);
+        VcsConsoleContent panel = getOrCreateConsoleContent(contentManager);
+        panel.printToConsole(message, contentType);
       }
     }, ModalityState.defaultModalityState());
   }
 
-  private void getOrCreateConsoleContent(final ContentManager contentManager) {
-    final String displayName = VcsBundle.message("vcs.console.toolwindow.display.name");
-    Content content = contentManager.findContent(displayName);
-    if (content == null) {
-      releaseConsole();
-
-      ConsoleView console = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
-      myConsole = console;
-
-      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
-      panel.setContent(console.getComponent());
-
-      ActionToolbar toolbar = ActionManager.getInstance()
-        .createActionToolbar("VcsManager", new DefaultActionGroup(console.createConsoleActions()), false);
-      panel.setToolbar(toolbar.getComponent());
-
-      content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
-      content.setDisposer(() -> releaseConsole());
-      content.setPreferredFocusedComponent(() -> console.getPreferredFocusableComponent());
-      contentManager.addContent(content);
-
-      for (Pair<String, ConsoleViewContentType> pair : myPendingOutput) {
-        printToConsole(pair.first, pair.second);
-      }
-      myPendingOutput.clear();
-    }
+  @Nullable
+  private static VcsConsoleContent getConsoleContent(@NotNull ContentManager contentManager) {
+    return ContainerUtil.findInstance(contentManager.getContents(), VcsConsoleContent.class);
   }
 
-  private void printToConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
-    myConsole.print(message + "\n", contentType);
-  }
+  @NotNull
+  @CalledInAwt
+  private VcsConsoleContent getOrCreateConsoleContent(@NotNull ContentManager contentManager) {
+    LOG.assertTrue(Registry.is("vcs.showConsole"));
+    VcsConsoleContent console = getConsoleContent(contentManager);
+    if (console != null) return console;
 
-  private void releaseConsole() {
-    if (myConsole != null) {
-      Disposer.dispose(myConsole);
-      myConsole = null;
+    VcsConsoleContent newConsole = new VcsConsoleContent(myProject);
+    for (Pair<String, ConsoleViewContentType> pair : myPendingOutput) {
+      newConsole.printToConsole(pair.first, pair.second);
     }
+    myPendingOutput.clear();
+
+    contentManager.addContent(newConsole);
+    return newConsole;
   }
 
   @Override
@@ -880,7 +854,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     if (!Registry.is("vcs.showConsole")) {
       return;
     }
-    ToolWindow vcsToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    ToolWindow vcsToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (vcsToolWindow == null) {
       return;
     }
@@ -906,9 +880,15 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     if (!Registry.is("vcs.showConsole")) {
       return;
     }
-    if (myConsole != null) {
-      myConsole.requestScrollingToEnd();
+    ContentManager cm = getContentManager();
+    if (cm == null) {
+      return;
     }
+    VcsConsoleContent consoleContent = getConsoleContent(cm);
+    if (consoleContent == null) {
+      return;
+    }
+    consoleContent.scrollToEnd();
   }
 
   private void showConsoleInternal() {
@@ -916,11 +896,40 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     if (cm == null) {
       return;
     }
-    Content console = cm.findContent(VcsBundle.message("vcs.console.toolwindow.display.name"));
-    if (console == null) {
+    VcsConsoleContent consoleContent = getConsoleContent(cm);
+    if (consoleContent == null) {
       return;
     }
-    cm.setSelectedContent(console);
+    cm.setSelectedContent(consoleContent);
+  }
+
+  private static class VcsConsoleContent extends ContentImpl {
+    @NotNull private final ConsoleView myConsole;
+
+    private VcsConsoleContent(@NotNull Project project) {
+      super(null, VcsBundle.message("vcs.console.toolwindow.display.name"), true);
+
+      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
+
+      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+      Disposer.register(this, myConsole);
+      panel.setContent(myConsole.getComponent());
+
+      DefaultActionGroup actionGroup = new DefaultActionGroup(myConsole.createConsoleActions());
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsManager", actionGroup, false);
+      panel.setToolbar(toolbar.getComponent());
+
+      setComponent(panel);
+      setPreferredFocusedComponent(myConsole::getPreferredFocusableComponent);
+    }
+
+    public void scrollToEnd() {
+      myConsole.requestScrollingToEnd();
+    }
+
+    public void printToConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
+      myConsole.print(message + "\n", contentType);
+    }
   }
 
   private static class ActionKey {
@@ -955,14 +964,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       }
 
       getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> VcsRootScanner.start(project));
-    }
-
-    @Override
-    public void projectClosed(@NotNull Project project) {
-      ProjectLevelVcsManagerImpl manager = (ProjectLevelVcsManagerImpl)project.getServiceIfCreated(ProjectLevelVcsManager.class);
-      if (manager != null) {
-        manager.releaseConsole();
-      }
     }
   }
 }

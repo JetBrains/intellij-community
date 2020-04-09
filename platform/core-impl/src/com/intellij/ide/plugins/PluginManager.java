@@ -35,8 +35,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.intellij.ide.plugins.DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
-
 @Service
 public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
@@ -52,8 +50,7 @@ public final class PluginManager {
     }
   );
 
-  @NotNull
-  public static PluginManager getInstance() {
+  public static @NotNull PluginManager getInstance() {
     return ApplicationManager.getApplication().getService(PluginManager.class);
   }
 
@@ -76,23 +73,20 @@ public final class PluginManager {
   /**
    * @return file with list of once installed plugins if it exists, null otherwise
    */
-  @Nullable
-  public static Path getOnceInstalledIfExists() {
+  public static @Nullable Path getOnceInstalledIfExists() {
     Path onceInstalledFile = PathManager.getConfigDir().resolve(INSTALLED_TXT);
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
   // not in PluginManagerCore because it is helper method
-  @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
+  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
     return loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins(), false);
   }
 
-  @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                        @NotNull String fileName,
-                                                        @Nullable Set<PluginId> disabledPlugins,
-                                                        boolean bundled) {
+  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
+                                                                  @NotNull String fileName,
+                                                                  @Nullable Set<PluginId> disabledPlugins,
+                                                                  boolean bundled) {
     Set<PluginId> disabled = disabledPlugins == null ? Collections.emptySet() : disabledPlugins;
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabled);
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
@@ -146,7 +140,7 @@ public final class PluginManager {
     return PluginManagerCore.getPlugin(id);
   }
 
-  public static @NotNull IdeaPluginDescriptor[] getPlugins() {
+  public static IdeaPluginDescriptor @NotNull [] getPlugins() {
     return PluginManagerCore.getPlugins();
   }
 
@@ -172,8 +166,7 @@ public final class PluginManager {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @NotNull
-  public static List<String> getDisabledPlugins() {
+  public static @NotNull List<String> getDisabledPlugins() {
     return PluginManagerCore.getDisabledPlugins();
   }
 
@@ -204,8 +197,8 @@ public final class PluginManager {
     return PluginManagerCore.enablePlugin(id);
   }
 
-  @NotNull
-  public static Logger getLogger() {
+  @ApiStatus.Internal
+  public static @NotNull Logger getLogger() {
     return PluginManagerCore.getLogger();
   }
 
@@ -217,7 +210,7 @@ public final class PluginManager {
                                             @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
     int flags = 0;
     if (ignoreMissingInclude) {
-      flags |= IGNORE_MISSING_INCLUDE;
+      flags |= DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
     }
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
     DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, descriptor.isBundled(), /* doesn't matter */ false,

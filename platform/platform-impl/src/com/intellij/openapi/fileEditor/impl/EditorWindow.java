@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
@@ -54,13 +53,13 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-public class EditorWindow {
+public final class EditorWindow {
   private static final Logger LOG = Logger.getInstance(EditorWindow.class);
 
   public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
 
   protected JPanel myPanel;
-  @NotNull private final EditorTabbedContainer myTabbedPane;
+  private final @NotNull EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
 
   private boolean myIsDisposed;
@@ -108,7 +107,7 @@ public class EditorWindow {
   }
 
   public void closeAllExcept(final VirtualFile selectedFile) {
-    getManager().runBulkTabChange(myOwner, splitters -> {
+    FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
       for (VirtualFile file : getFiles()) {
         if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
           closeFile(file);
@@ -157,9 +156,9 @@ public class EditorWindow {
     }
   }
 
-  public void closeFile(@NotNull final VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
+  public void closeFile(final @NotNull VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
-    editorManager.runBulkTabChange(myOwner, splitters -> {
+    FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
       final List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
       if (editors.isEmpty()) return;
       try {
@@ -306,7 +305,7 @@ public class EditorWindow {
     myTabbedPane.setForegroundAt(index, color);
   }
 
-  void setWaveColor(final int index, @Nullable final Color color) {
+  void setWaveColor(final int index, final @Nullable Color color) {
     myTabbedPane.setWaveColor(index, color);
   }
 
@@ -363,8 +362,7 @@ public class EditorWindow {
     return myPanel.getSize();
   }
 
-  @NotNull
-  public EditorTabbedContainer getTabbedPane() {
+  public @NotNull EditorTabbedContainer getTabbedPane() {
     return myTabbedPane;
   }
 
@@ -377,7 +375,7 @@ public class EditorWindow {
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
-    @NotNull final EditorWithProviderComposite myEditor;
+    final @NotNull EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
 
     /*@Override
@@ -431,9 +429,8 @@ public class EditorWindow {
       });
     }
 
-    @NotNull
     @Override
-    public EditorWindow getEditorWindow() {
+    public @NotNull EditorWindow getEditorWindow() {
       return myWindow;
     }
 
@@ -454,17 +451,15 @@ public class EditorWindow {
     LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
   }
 
-  @Nullable
-  public EditorWithProviderComposite getSelectedEditor() {
+  public @Nullable EditorWithProviderComposite getSelectedEditor() {
     return getSelectedEditor(false);
   }
 
   /**
-   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
+   * @param ignorePopup if {@code false} and context menu is shown currently for some tab,
    *                    editor for which menu is invoked will be returned
    */
-  @Nullable
-  public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
+  public @Nullable EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     TComp comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
     return comp == null ? null : comp.myEditor;
   }
@@ -500,11 +495,11 @@ public class EditorWindow {
     }
   }
 
-  public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean focusEditor) {
+  public void setEditor(final @Nullable EditorWithProviderComposite editor, final boolean focusEditor) {
     setEditor(editor, true, focusEditor);
   }
 
-  public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean selectEditor, final boolean focusEditor) {
+  public void setEditor(final @Nullable EditorWithProviderComposite editor, final boolean selectEditor, final boolean focusEditor) {
     if (editor != null) {
       onBeforeSetEditor(editor.getFile());
 
@@ -521,7 +516,7 @@ public class EditorWindow {
         if (initialIndex != null) {
           indexToInsert = initialIndex;
         }
-        else if (RegistryManager.getInstance().is("ide.editor.tabs.open.at.the.end")) {
+        else if (UISettings.getInstance().getOpenTabsAtTheEnd()) {
           indexToInsert = myTabbedPane.getTabCount();
         }
         else {
@@ -557,8 +552,7 @@ public class EditorWindow {
     return getTabCount() >= 1;
   }
 
-  @Nullable
-  public EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
+  public @Nullable EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
     checkConsistency();
     if (!splitAvailable()) {
       return null;
@@ -719,7 +713,7 @@ public class EditorWindow {
   /**
    * @return icon which represents file's type and modification status
    */
-  private Icon getFileIcon(@NotNull final VirtualFile file) {
+  private Icon getFileIcon(final @NotNull VirtualFile file) {
     if (!file.isValid()) {
       Icon fakeIcon = FileTypes.UNKNOWN.getIcon();
       assert fakeIcon != null : "Can't find the icon for unknown file type";
@@ -831,8 +825,7 @@ public class EditorWindow {
     return editor == null ? null : editor.getFile();
   }
 
-  @Nullable
-  public EditorWithProviderComposite findFileComposite(VirtualFile file) {
+  public @Nullable EditorWithProviderComposite findFileComposite(VirtualFile file) {
     if (file instanceof BackedVirtualFile)
       file = ((BackedVirtualFile)file).getOriginFile();
 
@@ -904,7 +897,7 @@ public class EditorWindow {
     }
   }
 
-  void trimToSize(@Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
+  void trimToSize(final @Nullable VirtualFile fileToIgnore, final boolean transferFocus) {
     getManager().getReady(this).doWhenDone(() -> {
       if (!isDisposed()) {
         doTrimSize(fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
@@ -1023,7 +1016,7 @@ public class EditorWindow {
     closeFile(file, true, transferFocus);
   }
 
-  private boolean fileCanBeClosed(final VirtualFile file, @Nullable final VirtualFile fileToIgnore) {
+  private boolean fileCanBeClosed(final VirtualFile file, final @Nullable VirtualFile fileToIgnore) {
     return isFileOpen (file) && !file.equals(fileToIgnore) && !isFilePinned(file);
   }
 

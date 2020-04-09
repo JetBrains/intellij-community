@@ -66,10 +66,10 @@ public class HgBranchPopupActions {
   }
 
   ActionGroup createActions() {
-    return createActions(null, "", false);
+    return createActions(null, null, false);
   }
 
-  ActionGroup createActions(@Nullable LightActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
+  ActionGroup createActions(@Nullable LightActionGroup toInsert, @Nullable HgRepository specificRepository, boolean firstLevelGroup) {
     LightActionGroup popupGroup = new LightActionGroup(false);
     popupGroup.addAction(new HgNewBranchAction(myProject, Collections.singletonList(myRepository), myRepository));
     popupGroup.addAction(new HgNewBookmarkAction(Collections.singletonList(myRepository), myRepository));
@@ -79,7 +79,9 @@ public class HgBranchPopupActions {
       popupGroup.addAll(toInsert);
     }
 
-    popupGroup.addSeparator("Bookmarks" + repoInfo);
+    popupGroup.addSeparator(specificRepository == null ?
+                            "Bookmarks":
+                            "Bookmarks in " + DvcsUtil.getShortRepositoryName(specificRepository));
     String currentBookmark = myRepository.getCurrentBookmark();
     List<BookmarkActions> bookmarkActions = StreamEx.of(getSortedNamesWithoutHashes(myRepository.getBookmarks()))
       .filter(bm -> !bm.equals(currentBookmark))
@@ -95,7 +97,9 @@ public class HgBranchPopupActions {
                                firstLevelGroup ? HgBranchPopup.SHOW_ALL_BOOKMARKS_KEY : null, firstLevelGroup);
 
     //only opened branches have to be shown
-    popupGroup.addSeparator("Branches" + repoInfo);
+    popupGroup.addSeparator(specificRepository == null ?
+                            "Branches":
+                            "Branches in " + DvcsUtil.getShortRepositoryName(specificRepository));
     List<BranchActions> branchActions = StreamEx.of(myRepository.getOpenedBranches())
       .sorted(StringUtil::naturalCompare)
       .filter(b -> !b.equals(myRepository.getCurrentBranch()))

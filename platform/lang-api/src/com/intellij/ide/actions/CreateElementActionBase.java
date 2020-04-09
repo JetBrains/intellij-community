@@ -43,8 +43,8 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
   protected CreateElementActionBase() {
   }
 
-  protected CreateElementActionBase(@Nls @NlsActions.ActionText String text,
-                                    @Nls @NlsActions.ActionDescription String description,
+  protected CreateElementActionBase(@NlsActions.ActionText String text,
+                                    @NlsActions.ActionDescription String description,
                                     Icon icon) {
     super(text, description, icon);
   }

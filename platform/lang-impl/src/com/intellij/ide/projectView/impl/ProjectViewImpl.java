@@ -803,8 +803,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
-    IdeFocusManager.getInstance(myProject).requestFocusInProject(newPane.getComponentToFocus(), myProject);
-
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(selectedPsiElement);
@@ -1090,7 +1088,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public void changeView() {
     final List<AbstractProjectViewPane> views = new ArrayList<>(myId2Pane.values());
     views.remove(getCurrentProjectViewPane());
-    Collections.sort(views, PANE_WEIGHT_COMPARATOR);
+    views.sort(PANE_WEIGHT_COMPARATOR);
 
     IPopupChooserBuilder<AbstractProjectViewPane> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(views)

@@ -7,9 +7,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +150,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   Dimension getSize();
 
-  void setCaption(@NotNull @Nls @NlsContexts.PopupTitle String title);
+  void setCaption(@NotNull @NlsContexts.PopupTitle String title);
 
   boolean isPersistent();
 

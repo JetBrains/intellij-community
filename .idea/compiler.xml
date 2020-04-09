@@ -25,10 +25,6 @@
       <entry name="!*.iml" />
       <entry name="!*.gant" />
     </wildcardResourcePatterns>
-    <bytecodeTargetLevel>
-      <module name="java-runtime" target="1.2" />
-      <module name="junit_rt" target="1.2" />
-    </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">
     <option name="GENERATE_NO_WARNINGS" value="true" />

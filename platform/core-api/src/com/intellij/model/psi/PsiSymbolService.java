@@ -30,7 +30,4 @@ public interface PsiSymbolService {
   @Contract(pure = true)
   @Nullable
   PsiElement extractElementFromSymbol(@NotNull Symbol symbol);
-
-  @Contract(pure = true)
-  @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences(@NotNull PsiElement element);
 }

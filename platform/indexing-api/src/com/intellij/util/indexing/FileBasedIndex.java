@@ -235,4 +235,6 @@ public abstract class FileBasedIndex {
     return !ourDisableIndexAccessDuringDumbMode;
   }
   private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
+
+  public static final boolean USE_IN_MEMORY_INDEX = SystemProperties.is("idea.use.in.memory.file.based.index");
 }

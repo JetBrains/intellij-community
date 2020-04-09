@@ -5,15 +5,16 @@ import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.ide.ui.components.GrazieUIComponent
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.components.dsl.padding
-import com.intellij.grazie.ide.ui.components.dsl.setEmptyTextPlaceholder
 import com.intellij.grazie.ide.ui.components.utils.ConfigurableListCellRenderer
 import com.intellij.grazie.ide.ui.components.utils.configure
 import com.intellij.grazie.utils.toSet
 import com.intellij.grazie.utils.trimToNull
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.AddDeleteListPanel
-import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.ListSpeedSearch
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -22,11 +23,11 @@ class GrazieExceptionsListComponent(exceptions: List<String>) : GrazieUIComponen
   init {
     ListSpeedSearch(myList) { it }
 
-    emptyText.setEmptyTextPlaceholder(
-      mainText = msg("grazie.settings.grammar.exceptions.empty.text"),
-      shortcutText = msg("grazie.settings.grammar.exceptions.empty.action"),
-      shortcutButton = CommonActionsPanel.Buttons.ADD,
-      shortcutAction = { addElement(findItemToAdd()) }
+    emptyText.text = msg("grazie.settings.grammar.exceptions.empty.text")
+
+    emptyText.appendSecondaryText(
+      msg("grazie.settings.grammar.exceptions.empty.text.explanation", KeymapUtil.getShortcutText("ShowIntentionActions")),
+      SimpleTextAttributes.GRAYED_ATTRIBUTES, null
     )
   }
 
@@ -39,6 +40,10 @@ class GrazieExceptionsListComponent(exceptions: List<String>) : GrazieUIComponen
       border = padding(JBUI.insets(5))
       text = value
     }
+  }
+
+  override fun customizeDecorator(decorator: ToolbarDecorator?) {
+    decorator?.disableAddAction()
   }
 
   override val component: JComponent = this

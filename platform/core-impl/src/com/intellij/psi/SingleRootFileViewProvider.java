@@ -154,19 +154,34 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile) {
-    if (!checkFileSizeLimit(vFile)) {
+    return isTooLargeForIntelligence(vFile, null);
+  }
+
+  public static boolean isTooLargeForIntelligence(@NotNull VirtualFile file,
+                                                  @Nullable("if content size should be retrieved from a file") Long contentSize) {
+    if (!checkFileSizeLimit(file)) {
       return false;
     }
-    if (vFile instanceof LightVirtualFile && ((LightVirtualFile)vFile).isTooLargeForIntelligence() == ThreeState.YES) {
+    if (file instanceof LightVirtualFile && ((LightVirtualFile)file).isTooLargeForIntelligence() == ThreeState.YES) {
       return false;
     }
-    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.getMaxIntellisenseFileSize());
+    int maxSize = PersistentFSConstants.getMaxIntellisenseFileSize();
+    return contentSize == null
+           ? fileSizeIsGreaterThan(file, maxSize)
+           : contentSize > maxSize;
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile) {
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
   }
 
+  public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile,
+                                                    @Nullable("if content size should be retrieved from a file") Long contentSize) {
+    long maxLength = PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    return contentSize == null
+           ? fileSizeIsGreaterThan(vFile, maxLength)
+           : contentSize > maxLength;
+  }
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
     if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
       return false;
@@ -177,19 +192,9 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     }
     return true;
   }
+
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
     vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
-  }
-
-  public static boolean isTooLargeForIntelligence(@NotNull VirtualFile file, long contentSize) {
-    if (!checkFileSizeLimit(file)) {
-      return false;
-    }
-    return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
-  }
-
-  public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile, final long contentSize) {
-    return contentSize > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
   }
 
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {

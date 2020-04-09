@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 final class ConfigurableWebBrowser extends WebBrowser {
@@ -79,7 +81,8 @@ final class ConfigurableWebBrowser extends WebBrowser {
       }
     }
     else if (family == BrowserFamily.FIREFOX) {
-      if (checkNameAndPath("dev") || checkNameAndPath("Dev")) {
+      String path = getPath();
+      if (StringUtil.containsIgnoreCase(getName(), "dev") || path != null && StringUtil.containsIgnoreCase(path, "dev")) {
         return AllIcons.Xml.Browsers.FirefoxDeveloper;
       }
     }
@@ -133,7 +136,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
            family.equals(browser.family) &&
            active == browser.active &&
            Comparing.strEqual(name, browser.name) &&
-           Comparing.equal(path, browser.path) &&
+           Objects.equals(path, browser.path) &&
            Comparing.equal(specificSettings, browser.specificSettings);
   }
 

@@ -24,6 +24,7 @@ import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,6 +78,12 @@ public final class ActionMenu extends JBMenu {
 
     // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     getPopupMenu();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    if (!(getParent() instanceof JMenuBar)) return super.getComponentGraphics(graphics);
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public void updateContext(DataContext context) {

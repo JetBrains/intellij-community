@@ -3,13 +3,12 @@ package com.intellij.openapi.vcs.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.util.NlsUI
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.nls.NlsContexts
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -27,7 +26,7 @@ open class MergeDialogCustomizer {
    *
    * @param files the files that have conflicted changes and are shown in the dialog.
    */
-  open fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): @Nls @NlsUI.Label String = ""
+  open fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): @NlsContexts.Label String = ""
 
   /**
    * Returns the title of the merge dialog invoked for a 3-way merge of a file (after pressing the "Merge" button).
@@ -75,7 +74,7 @@ open class MergeDialogCustomizer {
    *
    * Don't mix with [getMergeWindowTitle] which is the title of the 3-way merge dialog displayed for a single file.
    */
-  open fun getMultipleFileDialogTitle(): @Nls @NlsContexts.DialogTitle String = VcsBundle.message("multiple.file.merge.title")
+  open fun getMultipleFileDialogTitle(): @NlsContexts.DialogTitle String = VcsBundle.message("multiple.file.merge.title")
 
   /**
    * Allows to override the names of the columns of the multiple files merge dialog, defined in [MergeSession.getMergeInfoColumns].

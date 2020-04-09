@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.NavigationUtil
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.*
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.findAllTargetElements
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.gotoTargetElement
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -32,8 +32,7 @@ object GotoDeclarationOnlyHandler : CodeInsightActionHandler {
     dumbService.runWithAlternativeResolveEnabled<RuntimeException> {
       try {
         val offset = editor.caretModel.offset
-        val elements = ActionUtil.underModalProgress(project,
-                                                     "Resolving Reference...") {
+        val elements = underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
           findAllTargetElements(project, editor, offset)
         }
         if (elements.size == 1) {
@@ -49,8 +48,7 @@ object GotoDeclarationOnlyHandler : CodeInsightActionHandler {
           val reference = TargetElementUtil.findReference(editor, offset)
           var executed = false
           if (reference != null) {
-            val targets = ActionUtil.underModalProgress(project,
-                                                        "Resolving Reference...") {
+            val targets = underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
               TargetElementUtil.getInstance().getTargetCandidates(reference)
             }
             if (targets.isNotEmpty()) {
@@ -58,9 +56,8 @@ object GotoDeclarationOnlyHandler : CodeInsightActionHandler {
               executed = true
             }
           }
-          //disable 'no declaration found' notification for keywords
-          if (!executed && !isKeywordUnderCaret(project, file, offset)) {
-            HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to")
+          if (!executed) {
+            notifyNowhereToGo(project, editor, file, offset)
           }
         }
         else {
@@ -68,7 +65,7 @@ object GotoDeclarationOnlyHandler : CodeInsightActionHandler {
         }
       }
       catch (e: IndexNotReadyException) {
-        dumbService.showDumbModeNotification("Navigation is not available here during index update")
+        dumbService.showDumbModeNotification(CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"))
       }
     }
   }

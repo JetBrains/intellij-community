@@ -24,16 +24,17 @@ private val mySyncTagEditing                                            get() = 
 private val mySelectWholeCssIdentifierOnDoubleClick                     get() = CheckboxDescriptor(XmlBundle.message("smart.keys.select.whole.css.identifiers.on.double.click"), PropertyBinding(model::isSelectWholeCssIdentifierOnDoubleClick, model::setSelectWholeCssIdentifierOnDoubleClick))
 // @formatter:on
 
-private val webEditorOptionDescriptors = listOf(
-  myAutomaticallyInsertClosingTagCheckBox,
-  myAutomaticallyInsertRequiredAttributesCheckBox,
-  myAutomaticallyInsertRequiredSubTagsCheckBox,
-  myAutomaticallyStartAttributeAfterCheckBox,
-  myAddQuotasForAttributeValue,
-  myAutoCloseTagCheckBox,
-  mySyncTagEditing,
-  mySelectWholeCssIdentifierOnDoubleClick
-).map(CheckboxDescriptor::asOptionDescriptor)
+private val webEditorOptionDescriptors
+  get() = listOf(
+    myAutomaticallyInsertClosingTagCheckBox,
+    myAutomaticallyInsertRequiredAttributesCheckBox,
+    myAutomaticallyInsertRequiredSubTagsCheckBox,
+    myAutomaticallyStartAttributeAfterCheckBox,
+    myAddQuotasForAttributeValue,
+    myAutoCloseTagCheckBox,
+    mySyncTagEditing,
+    mySelectWholeCssIdentifierOnDoubleClick
+  ).map(CheckboxDescriptor::asOptionDescriptor)
 
 internal class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
   override fun createPanel(): DialogPanel {

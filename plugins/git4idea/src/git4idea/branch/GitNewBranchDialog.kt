@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
-import com.intellij.util.nls.NlsContexts
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.UIUtil.BR
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -36,7 +36,7 @@ enum class GitBranchOperationType(@Nls val text: String, @Nls val description: S
 
 internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
                                                             private val repositories: Collection<GitRepository>,
-                                                            dialogTitle: @Nls @NlsContexts.DialogTitle String,
+                                                            dialogTitle: @NlsContexts.DialogTitle String,
                                                             initialName: String?,
                                                             private val showCheckOutOption: Boolean = true,
                                                             private val showResetOption: Boolean = false,

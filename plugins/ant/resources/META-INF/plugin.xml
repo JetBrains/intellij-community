@@ -23,7 +23,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <tipAndTrick file="CreateTargetTag.html" />
 
     <statistics.projectUsagesCollector implementation="com.intellij.lang.ant.AntSettingsCollector"/>
-    <statistics.counterUsagesCollector groupId="build.ant.actions" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.lang.ant.AntActionsUsagesCollector"/>
 
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
     <projectService serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>

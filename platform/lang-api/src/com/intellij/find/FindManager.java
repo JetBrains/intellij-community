@@ -10,10 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +60,7 @@ public abstract class FindManager {
    * interface.
    */
   @PromptResultValue
-  public abstract int showPromptDialog(@NotNull FindModel model, @Nls @NlsContexts.DialogTitle String title);
+  public abstract int showPromptDialog(@NotNull FindModel model, @NlsContexts.DialogTitle String title);
 
   /**
    * Returns the settings of the last performed Find in File operation, or the
@@ -121,7 +120,7 @@ public abstract class FindManager {
    */
   @PromptResultValue
   public abstract int showMalformedReplacementPrompt(@NotNull FindModel model,
-                                                     @Nls @NlsContexts.DialogTitle String title,
+                                                     @NlsContexts.DialogTitle String title,
                                                      MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {

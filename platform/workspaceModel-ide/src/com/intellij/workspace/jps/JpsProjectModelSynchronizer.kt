@@ -123,9 +123,9 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   internal fun loadInitialProject(storagePlace: JpsProjectStoragePlace) {
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
-    val baseDirUrl = storagePlace.baseDirectoryUrl
+    val baseDirUrl = storagePlace.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
-    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false, true)
+    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false)
     this.serializationData.set(serializationData)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()
@@ -133,10 +133,12 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val modulePaths = serializationData.fileSerializersByUrl.values().filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
     loadStateOfUnloadedModules(modulePaths)
 
-    serializationData.loadAll(fileContentReader, builder)
-    WriteAction.runAndWait<RuntimeException> {
-      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-        updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
+    if (!WorkspaceModelInitialTestContent.hasInitialContent) {
+      serializationData.loadAll(fileContentReader, builder)
+      WriteAction.runAndWait<RuntimeException> {
+        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+          updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
+        }
       }
     }
     activity.end()

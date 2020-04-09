@@ -4,10 +4,8 @@ package com.intellij.notification
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.nls.NlsContexts
-import com.intellij.util.nls.NlsContexts.NotificationContent
-import com.intellij.util.nls.NlsContexts.NotificationTitle
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -21,13 +19,13 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
     }
   }
 
-  fun notify(content: @Nls @NotificationContent String, project: Project?): Boolean {
+  fun notify(content: @NotificationContent String, project: Project?): Boolean {
     return notify("", content, project)
   }
 
   @JvmOverloads
-  fun notify(title: @Nls @NotificationTitle String = "",
-             content: @Nls @NotificationContent String,
+  fun notify(title: @NotificationTitle String = "",
+             content: @NotificationContent String,
              project: Project? = null, listener: NotificationListener? = defaultListener, action: AnAction? = null): Boolean {
     val oldNotification = notification.get()
     // !oldNotification.isExpired() is not enough - notification could be closed, but not expired

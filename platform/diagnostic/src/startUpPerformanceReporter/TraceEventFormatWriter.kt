@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
-import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter
@@ -29,25 +27,18 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     }
   }
 
-  fun writeServiceEvents(writer: JsonGenerator, unsortedServices: List<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>?) {
+  private fun writeServiceEvents(writer: JsonGenerator, unsortedServices: List<ActivityImpl>) {
     val servicesSortedByTime = unsortedServices.sortedWith(Comparator(::compareTime))
     val ownDurations = computeOwnTime(servicesSortedByTime, threadNameManager)
 
     for (event in servicesSortedByTime) {
       writer.obj {
-        @Suppress("DuplicatedCode")
         val computedOwnDuration = ownDurations.get(event)
         val duration = if (computedOwnDuration == -1L) event.end - event.start else computedOwnDuration
 
         writeCompleteEvent(event, writer, extraArgWriter = {
           writer.writeNumberField("ownDur", TimeUnit.NANOSECONDS.toMicros(duration))
         })
-
-        if (pluginCostMap != null) {
-          event.pluginId?.let {
-            StartUpMeasurer.doAddPluginCost(it, event.category?.name ?: "unknown", duration, pluginCostMap)
-          }
-        }
       }
     }
   }
@@ -67,7 +58,7 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
             }
           }
 
-          writeServiceEvents(writer, services, pluginCostMap = null /* computed only by idea format writer */)
+          writeServiceEvents(writer, services)
 
           for (events in categoryToActivity.values) {
             for (event in events) {

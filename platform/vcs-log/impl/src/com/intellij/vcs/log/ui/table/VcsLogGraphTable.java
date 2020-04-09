@@ -646,7 +646,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return mySelection;
   }
 
-  public void handleAnswer(@Nullable GraphAnswer<Integer> answer) {
+  public void handleAnswer(@NotNull GraphAnswer<Integer> answer) {
     GraphCommitCellController controller = (GraphCommitCellController)Objects.requireNonNull(getController(VcsLogColumn.COMMIT));
     Cursor cursor = controller.handleGraphAnswer(answer, true, null, null);
     myMouseAdapter.handleCursor(cursor);
@@ -750,9 +750,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private class StringCellRenderer extends ColoredTableCellRenderer {
+    private StringCellRenderer() {
+      setCellState(new GraphCommitCellRenderer.BorderlessTableCellState());
+    }
+
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      setBorder(null);
       if (value == null) {
         return;
       }

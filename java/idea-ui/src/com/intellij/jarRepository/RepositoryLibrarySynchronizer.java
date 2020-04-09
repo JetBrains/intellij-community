@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.ProjectTopics;
@@ -46,10 +32,13 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.jarRepository.SyncLoadingKt.loadDependenciesSync;
+
 /**
  * @author gregsh
  */
 public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
+
   private static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
     if (version == null) {
@@ -142,39 +131,50 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final Runnable syncTask = () -> {
-        final Collection<Library> toSync = collectLibraries(project, library -> {
-          if (library instanceof LibraryEx) {
-            final LibraryEx libraryEx = (LibraryEx)library;
-            return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
-                   isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
-          }
-          return false;
-        });
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      loadDependenciesSync(project);
+      return;
+    }
 
-        ApplicationManager.getApplication().invokeLater(() -> {
-          for (Library library : toSync) {
-            if (LibraryTableImplUtil.isValidLibrary(library)) {
-              RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
-            }
-          }
-        }, project.getDisposed());
-      };
-      project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-        private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-        @Override
-        public void rootsChanged(@NotNull final ModuleRootEvent event) {
-          if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
-            myAlarm.cancelAllRequests();
-            myAlarm.addRequest(syncTask, 300L);
+    final Runnable syncTask = () -> {
+      final Collection<Library> toSync = collectLibrariesToSync(project);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        for (Library library : toSync) {
+          if (LibraryTableImplUtil.isValidLibrary(library)) {
+            RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
           }
         }
-      });
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        removeDuplicatedUrlsFromRepositoryLibraries(project);
-        syncTask.run();
-      });
-    }
+      }, project.getDisposed());
+
+    };
+
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+
+      @Override
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+        if (!myAlarm.isDisposed() && event.getSource() instanceof Project) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(syncTask, 300L);
+        }
+      }
+    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      removeDuplicatedUrlsFromRepositoryLibraries(project);
+      syncTask.run();
+    });
+  }
+
+  @NotNull
+  public static Set<Library> collectLibrariesToSync(@NotNull Project project) {
+    return collectLibraries(project, library -> {
+      if (library instanceof LibraryEx) {
+        final LibraryEx libraryEx = (LibraryEx)library;
+        return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
+               isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
+      }
+      return false;
+    });
   }
 }

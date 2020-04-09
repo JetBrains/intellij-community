@@ -4,8 +4,8 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.IdeUiEntitySource
 import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.JpsProjectStoragePlace
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.ClassRule
 import org.junit.Test
@@ -14,19 +14,19 @@ import java.io.File
 class JpsProjectSaveAfterChangesTest {
   @Test
   fun `modify module`() {
-    checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml") { builder, projectDirUrl ->
+    checkSaveProjectAfterChange("common/modifyIml", "common/modifyIml") { builder, storagePlace ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       val sourceRoot = utilModule.sourceRoots.first()
       builder.modifyEntity(ModifiableSourceRootEntity::class.java, sourceRoot) {
-        url = VirtualFileUrlManager.fromUrl("$projectDirUrl/util/src2")
+        url = storagePlace.baseDirectoryUrl.append("util/src2")
       }
       builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, utilModule.customImlData!!) {
         rootManagerTagCustomData = """<component LANGUAGE_LEVEL="JDK_1_7">
   <annotation-paths>
-    <root url="$projectDirUrl/lib/anno2" />
+    <root url="${storagePlace.baseDirectoryUrlString}/lib/anno2" />
   </annotation-paths>
   <javadoc-paths>
-    <root url="$projectDirUrl/lib/javadoc2" />
+    <root url="${storagePlace.baseDirectoryUrlString}/lib/javadoc2" />
   </javadoc-paths>
 </component>"""
       }
@@ -56,22 +56,22 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `add library`() {
-    checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, projectDirUrl ->
-      val root = LibraryRoot(VirtualFileUrlManager.fromUrl("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/"),
+    checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, storagePlace ->
+      val root = LibraryRoot(VirtualFileUrlManager.fromUrl("jar://${JpsPathUtil.urlToPath(storagePlace.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
-      builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), IdeUiEntitySource)
+      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(storagePlace)
+      builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
     }
   }
 
   @Test
   fun `add module`() {
-    checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule") { builder, projectDirUrl ->
-      val projectPlace = (builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource).projectPlace
-      val source = JpsFileEntitySource.FileInDirectory(VirtualFileUrlManager.fromUrl(projectDirUrl), projectPlace)
+    checkSaveProjectAfterChange("directoryBased/addModule", "fileBased/addModule") { builder, storagePlace ->
+      val source = JpsFileEntitySource.FileInDirectory(storagePlace.baseDirectoryUrl, storagePlace)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
       val module = builder.addModuleEntity("newModule", dependencies, source)
-      builder.addContentRootEntity(VirtualFileUrlManager.fromUrl("$projectDirUrl/new"), emptyList(), emptyList(), module, source)
-      val sourceRootEntity = builder.addSourceRootEntity(module, VirtualFileUrlManager.fromUrl("$projectDirUrl/new"), false, "java-source", source)
+      builder.addContentRootEntity(storagePlace.baseDirectoryUrl.append("new"), emptyList(), emptyList(), module, source)
+      val sourceRootEntity = builder.addSourceRootEntity(module, storagePlace.baseDirectoryUrl.append("new"), false, "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "", source)
       builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)
     }
@@ -92,9 +92,9 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `modify library`() {
-    checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, projectDirUrl ->
+    checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, storagePlace ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
-      val root = LibraryRoot(VirtualFileUrlManager.fromUrl("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/"),
+      val root = LibraryRoot(VirtualFileUrlManager.fromUrl("jar://${JpsPathUtil.urlToPath(storagePlace.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
       builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
         roots = listOf(root)
@@ -122,16 +122,16 @@ class JpsProjectSaveAfterChangesTest {
 
   private fun checkSaveProjectAfterChange(directoryNameForDirectoryBased: String,
                                           directoryNameForFileBased: String,
-                                          change: (TypedEntityStorageBuilder, String) -> Unit) {
+                                          change: (TypedEntityStorageBuilder, JpsProjectStoragePlace) -> Unit) {
     checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, change)
     checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, change)
   }
 
   private fun checkSaveProjectAfterChange(originalProjectFile: File, changedFilesDirectoryName: String?,
-                                          change: (TypedEntityStorageBuilder, String) -> Unit) {
+                                          change: (TypedEntityStorageBuilder, JpsProjectStoragePlace) -> Unit) {
     val projectData = copyAndLoadProject(originalProjectFile)
     val builder = TypedEntityStorageBuilder.from(projectData.storage)
-    change(builder, projectData.projectDirUrl)
+    change(builder, projectData.storagePlace)
     val changesMap = builder.collectChanges(projectData.storage)
     val changedSources = changesMap.values.flatMapTo(HashSet()) { changes -> changes.flatMap { change ->
       when (change) {
@@ -141,10 +141,7 @@ class JpsProjectSaveAfterChangesTest {
       }
     }.map { it.entitySource }}
     val writer = JpsFileContentWriterImpl()
-    val sourceToUpdate = projectData.serializationData.saveEntities(builder.toStorage(), changedSources, writer)
-    sourceToUpdate.forEach {
-      builder.changeSource(it.first, it.second)
-    }
+    projectData.serializationData.saveEntities(builder.toStorage(), changedSources, writer)
     writer.writeFiles(projectData.projectDir)
     projectData.serializationData.checkConsistency(projectData.projectDirUrl, builder.toStorage())
 

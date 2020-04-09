@@ -77,10 +77,10 @@ internal class InstallPluginService : RestService() {
   private fun installPlugin(request: FullHttpRequest,
                             context: ChannelHandlerContext,
                             pluginId: String): Nothing? {
-    if (isAvailable) {
-      isAvailable = false
-      val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
-      PluginId.findId(pluginId)?.let {
+    PluginId.findId(pluginId)?.let {
+      if (isAvailable) {
+        isAvailable = false
+        val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
         ApplicationManager.getApplication().invokeLater(Runnable {
           AppIcon.getInstance().requestAttention(effectiveProject, true)
           PluginsAdvertiser.installAndEnable(setOf(it)) { }
@@ -136,10 +136,9 @@ internal class InstallPluginService : RestService() {
       LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
     }
 
-    return (originHost != null &&
-            (originHost == "plugins.jetbrains.com" ||
-             originHost.endsWith(".dev.marketplace.intellij.net") ||
-             NetUtils.isLocalhost(originHost))) ||
-           super.isHostTrusted(request, urlDecoder)
+    return (originHost != null && (
+      listOf("plugins.jetbrains.com", "package-search.services.jetbrains.com", "package-search.jetbrains.com").contains(originHost) ||
+      originHost.endsWith(".dev.marketplace.intellij.net") ||
+      NetUtils.isLocalhost(originHost))) || super.isHostTrusted(request, urlDecoder)
   }
 }

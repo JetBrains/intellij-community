@@ -8,8 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,7 @@ import java.util.List;
 
 public interface ComponentPopupBuilder {
   @NotNull
-  ComponentPopupBuilder setTitle(@Nls @NlsContexts.DialogTitle String title);
+  ComponentPopupBuilder setTitle(@NlsContexts.DialogTitle String title);
 
   @NotNull
   ComponentPopupBuilder setResizable(boolean forceResizable);

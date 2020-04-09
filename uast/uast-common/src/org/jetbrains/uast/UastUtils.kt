@@ -98,7 +98,7 @@ fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpress
     }
   }?.firstOrNull()
 
-fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java)
+fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java, false)
 
 fun UElement.getContainingUClass(): UClass? = getParentOfType(UClass::class.java)
 fun UElement.getContainingUMethod(): UMethod? = getParentOfType(UMethod::class.java)

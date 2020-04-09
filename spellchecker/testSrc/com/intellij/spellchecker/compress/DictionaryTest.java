@@ -17,6 +17,7 @@ package com.intellij.spellchecker.compress;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.spellchecker.DefaultBundledDictionariesProvider;
 import com.intellij.spellchecker.StreamLoader;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -28,6 +29,9 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -91,9 +95,16 @@ public class DictionaryTest {
   private Dictionary loadDictionaryPerformanceTest(final String name, int time) {
     final Ref<Dictionary> ref = Ref.create();
 
-    PlatformTestUtil.startPerformanceTest(
-      "load dictionary", time, () -> ref.set(CompressedDictionary.create(getLoader(name), myTransformation))
-    ).assertTiming();
+    try {
+      byte[] bytes = FileUtil.loadBytes(getResourceAsStream(name));
+      StreamLoader loader = new StreamLoader(new ByteArrayInputStream(bytes), name);
+      PlatformTestUtil.startPerformanceTest(
+        "load dictionary", time, () -> ref.set(CompressedDictionary.create(loader, myTransformation))
+      ).assertTiming();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     assertFalse(ref.isNull());
     return ref.get();
@@ -119,7 +130,11 @@ public class DictionaryTest {
   }
 
   private static StreamLoader getLoader(@NotNull String name) {
-    return new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name);
+    return new StreamLoader(getResourceAsStream(name), name);
+  }
+
+  private static InputStream getResourceAsStream(@NotNull String name) {
+    return DefaultBundledDictionariesProvider.class.getResourceAsStream(name);
   }
 
   private Pair<Set<String>, Set<String>> createWordSets(Dictionary dictionary, int maxCount, int mod) {

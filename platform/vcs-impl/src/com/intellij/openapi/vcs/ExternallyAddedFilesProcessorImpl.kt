@@ -117,6 +117,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     }
   }
 
+  override val notificationDisplayId: String = "externally.added.files.notification"
   override val askedBeforeProperty = ASKED_ADD_EXTERNAL_FILES_PROPERTY
   override val doForCurrentProjectProperty: String? = null
 

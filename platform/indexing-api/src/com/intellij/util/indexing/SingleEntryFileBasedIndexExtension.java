@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -23,9 +24,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Base implementation for indices that produce single value per single file
- *
- * @author Eugene Zhuravlev
+ * Base implementation for <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward indices</a>
+ * that produce single value per single file.
+ * <p>
+ * Can be used to cache heavy computable file's data while the IDE is indexing.
  */
 @ApiStatus.OverrideOnly
 public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedIndexExtension<Integer, V>{
@@ -54,7 +56,13 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
     return true;
   }
 
-  /** Use this method to get key for extracting the value from index */
+  /**
+   * @deprecated
+   *
+   * Should not be used because "index key" (namely, file id) should be not directly accessed in case of {@link SingleEntryFileBasedIndexExtension}.
+   * Use {@link FileBasedIndex#getFileData(ID, VirtualFile, Project)} instead for index queries.
+   */
+  @Deprecated
   public static int getFileKey(@NotNull VirtualFile file) {
     return Math.abs(FileBasedIndex.getFileId(file));
   }

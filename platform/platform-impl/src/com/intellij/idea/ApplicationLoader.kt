@@ -187,7 +187,7 @@ private fun startApp(app: ApplicationImpl,
 
       val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
-        app.loadComponents(SplashManager.getProgressIndicator())
+        app.loadComponents(SplashManager.createProgressIndicator())
       }, edtExecutor)
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
@@ -229,11 +229,11 @@ private fun startApp(app: ApplicationImpl,
       }
       else {
         // backward compatibility
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        ApplicationManager.getApplication().invokeLater {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
             starter.main(args)
           }
-        })
+        }
       }
     }
     .exceptionally {

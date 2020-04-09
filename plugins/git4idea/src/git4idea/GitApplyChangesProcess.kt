@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
+import com.intellij.xml.util.XmlStringUtil.wrapInHtml
+import com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag
 import git4idea.GitUtil.refreshChangedVfs
 import git4idea.changes.GitChangeUtils.getStagedChanges
 import git4idea.commands.GitCommandResult
@@ -28,6 +30,7 @@ import git4idea.commands.GitSimpleEventDetector
 import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
+import git4idea.i18n.GitBundle
 import git4idea.merge.GitConflictResolver
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitRepository
@@ -388,7 +391,13 @@ private class MergeDialogCustomizer(
   private val operationName: String
 ) : GitDefaultMergeDialogCustomizer(project) {
 
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) =
-    "<html>Conflicts during ${operationName}ing commit <code>$commitHash</code> " +
-    "made by $commitAuthor<br/><code>\"$commitMessage\"</code></html>"
+  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) = wrapInHtml(
+    GitBundle.message(
+      "apply.conflict.dialog.description.label.text",
+      operationName,
+      wrapInHtmlTag(commitHash, "code"),
+      commitAuthor,
+      "<br/>" + wrapInHtmlTag(commitMessage, "code")
+    )
+  )
 }

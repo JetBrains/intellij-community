@@ -803,7 +803,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       if (method.getName().equals(changeInfo.getNewName())) {
         final PsiTypeElement typeElement = method.getReturnTypeElement();
         if (typeElement != null) {
-          javaCodeStyleManager.shortenClassReferences(typeElement.replace(factory.createTypeElement(returnType)));
+          PsiTypeElement replacementType = factory.createTypeElement(returnType);
+          javaCodeStyleManager.shortenClassReferences(typeElement.replace(replacementType));
+          if (replacementType.getText().startsWith("@")) {
+            // Annotation could be moved to modifier list during the replace
+            javaCodeStyleManager.shortenClassReferences(method.getModifierList());
+          }
         }
       }
     }
@@ -818,7 +823,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       processMethodParams(changeInfo, baseMethod, factory, substitutor, list, method.getBody());
     }
     if (isRecordCanonicalConstructor) {
-      processRecordHeader(factory, Objects.requireNonNull(aClass.getRecordHeader()), changeInfo);
+      PsiRecordHeader header = aClass.getRecordHeader();
+      if (header == null) {
+        header = factory.createRecordHeaderFromText("", aClass);
+        header = (PsiRecordHeader)aClass.addAfter(header, aClass.getTypeParameterList());
+      }
+      processRecordHeader(factory, Objects.requireNonNull(header), changeInfo);
       if (method instanceof SyntheticElement) {
         method = Objects.requireNonNull(JavaPsiRecordUtil.findCanonicalConstructor(aClass));
       }

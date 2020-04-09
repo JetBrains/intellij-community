@@ -14,7 +14,6 @@ import com.intellij.openapi.extensions.impl.BeanExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
@@ -113,21 +112,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     myBundled = bundled;
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public ContainerDescriptor getApp() {
+  public @NotNull ContainerDescriptor getApp() {
     return myAppContainerDescriptor;
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public ContainerDescriptor getProject() {
+  public @NotNull ContainerDescriptor getProject() {
     return myProjectContainerDescriptor;
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public ContainerDescriptor getModule() {
+  public @NotNull ContainerDescriptor getModule() {
     return myModuleContainerDescriptor;
   }
 
@@ -136,9 +132,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myPath.toFile();
   }
 
-  @NotNull
   @Override
-  public Path getPluginPath() {
+  public @NotNull Path getPluginPath() {
     return myPath;
   }
 
@@ -294,7 +289,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
         case "resource-bundle":
           String value = StringUtil.nullize(child.getTextTrim());
-          if (myResourceBundleBaseName != null && !Comparing.equal(myResourceBundleBaseName, value)) {
+          if (myResourceBundleBaseName != null && !Objects.equals(myResourceBundleBaseName, value)) {
             context.parentContext.getLogger().warn("Resource bundle redefinition for plugin '" + rootDescriptor.getPluginId() + "'. " +
                      "Old value: " + myResourceBundleBaseName + ", new value: " + value);
           }
@@ -537,8 +532,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return value.isEmpty() || value.equalsIgnoreCase("true");
   }
 
-  @Nullable
-  private Date parseReleaseDate(@Nullable String dateStr, @NotNull DescriptorListLoadingContext context) {
+  private @Nullable Date parseReleaseDate(@Nullable String dateStr, @NotNull DescriptorListLoadingContext context) {
     if (StringUtil.isEmpty(dateStr)) {
       return null;
     }
@@ -588,8 +582,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
   }
 
-  @Nullable
-  private ContainerDescriptor getContainerDescriptorByExtensionArea(@Nullable String area) {
+  private @Nullable ContainerDescriptor getContainerDescriptorByExtensionArea(@Nullable String area) {
     if (area == null) {
       return myAppContainerDescriptor;
     }
@@ -604,18 +597,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
   }
 
-  @NotNull
-  public ContainerDescriptor getAppContainerDescriptor() {
+  public @NotNull ContainerDescriptor getAppContainerDescriptor() {
     return myAppContainerDescriptor;
   }
 
-  @NotNull
-  public ContainerDescriptor getProjectContainerDescriptor() {
+  public @NotNull ContainerDescriptor getProjectContainerDescriptor() {
     return myProjectContainerDescriptor;
   }
 
-  @NotNull
-  public ContainerDescriptor getModuleContainerDescriptor() {
+  public @NotNull ContainerDescriptor getModuleContainerDescriptor() {
     return myModuleContainerDescriptor;
   }
 
@@ -711,15 +701,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myName;
   }
 
-  @Nullable
   @Override
-  public String getProductCode() {
+  public @Nullable String getProductCode() {
     return myProductCode;
   }
 
-  @Nullable
   @Override
-  public Date getReleaseDate() {
+  public @Nullable Date getReleaseDate() {
     return myReleaseDate;
   }
 
@@ -774,8 +762,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     myCategory = category;
   }
 
-  @Nullable
-  public Map<String, List<Element>> getExtensions() {
+  public @Nullable Map<String, List<Element>> getExtensions() {
     if (myExtensionsCleared) {
       throw new IllegalStateException("Trying to retrieve extensions list after extension elements have been cleared");
     }
@@ -792,9 +779,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   /**
    * @deprecated Do not use. If you want to get class loader for own plugin, just use your current class's class loader.
    */
-  @NotNull
   @Deprecated
-  public List<File> getClassPath() {
+  public @NotNull List<File> getClassPath() {
     File path = myPath.toFile();
     if (!path.isDirectory()) {
       return Collections.singletonList(path);
@@ -825,7 +811,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return result;
   }
 
-  @NotNull List<Path> collectClassPath() {
+  @NotNull List<Path> collectClassPath(@NotNull Map<String, String[]> additionalLayoutMap) {
     if (!Files.isDirectory(myPath)) {
       return Collections.singletonList(myPath);
     }
@@ -834,6 +820,20 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     Path classesDir = myPath.resolve("classes");
     if (Files.exists(classesDir)) {
       result.add(classesDir);
+    }
+
+    if (PluginManagerCore.usePluginClassLoader) {
+      Path productionDirectory = myPath.getParent();
+      if (productionDirectory.endsWith("production")) {
+        result.add(myPath);
+        String moduleName = myPath.getFileName().toString();
+        String[] additionalPaths = additionalLayoutMap.get(moduleName);
+        if (additionalPaths != null) {
+          for (String path : additionalPaths) {
+            result.add(productionDirectory.resolve(path));
+          }
+        }
+      }
     }
 
     try (DirectoryStream<Path> childStream = Files.newDirectoryStream(myPath.resolve("lib"))) {
@@ -858,8 +858,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   @Override
-  @Nullable
-  public List<Element> getActionDescriptionElements() {
+  public @Nullable List<Element> getActionDescriptionElements() {
     return myActionElements;
   }
 
@@ -995,8 +994,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myImplementationDetail;
   }
 
-  @NotNull
-  public List<PluginId> getModules() {
+  public @NotNull List<PluginId> getModules() {
     return ContainerUtil.notNullize(myModules);
   }
 
@@ -1051,8 +1049,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     public IdeaPluginDescriptorImpl dependency;
   }
 
-  @Nullable
-  public String findOptionalDependencyConfigFile(@NotNull PluginId pluginId) {
+  public @Nullable String findOptionalDependencyConfigFile(@NotNull PluginId pluginId) {
     if (myDependencies == null) {
       return null;
     }
@@ -1112,7 +1109,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
       descriptor.myName = name;
       if (descriptor.myId == null) {
-        descriptor.myId = StringUtil.isEmpty(idString) ? null : PluginId.getId(idString);
+        descriptor.myId = idString == null || idString.isEmpty() ? null : PluginId.getId(idString);
       }
     }
 
@@ -1188,11 +1185,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       int size = collapseDuplicateDependencies(dependencies);
 
       for (PluginDependency dependency : dependencies) {
-        if (dependency == null) continue;
+        if (dependency == null) {
+          continue;
+        }
 
         // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
         String configFile = dependency.configFile;
         if (configFile == null) {
+          continue;
+        }
+
+        if (pathResolver instanceof ClassPathXmlPathResolver &&
+            context.parentContext.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
           continue;
         }
 
@@ -1201,7 +1205,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           element = pathResolver.resolvePath(descriptor.myBasePath, configFile, context.parentContext.getXmlFactory());
         }
         catch (IOException | JDOMException e) {
-          context.parentContext.getLogger().info("Plugin " + rootDescriptor.getPluginId() + " misses optional descriptor " + configFile);
+          context.parentContext.getLogger().info("Plugin " + rootDescriptor + " misses optional descriptor " + configFile);
           continue;
         }
 
@@ -1391,8 +1395,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       }
     }
 
-    @NotNull
-    private static String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginId effectivePluginId) {
+    private static @NotNull String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginId effectivePluginId) {
       String pointName = extensionPointElement.getAttributeValue("qualifiedName");
       if (pointName == null) {
         String name = extensionPointElement.getAttributeValue("name");

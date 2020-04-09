@@ -165,7 +165,7 @@ public final class TargetElementUtilBase {
     return getReferencedElement(ref, flags);
   }
 
-  static @Nullable PsiElement getReferencedElement(@NotNull PsiReference ref, int flags) {
+  private static @Nullable PsiElement getReferencedElement(@NotNull PsiReference ref, int flags) {
     final Language language = ref.getElement().getLanguage();
     TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     if (evaluator != null) {
@@ -240,11 +240,11 @@ public final class TargetElementUtilBase {
   }
 
   @Nullable
-  static PsiElement getReferencedElement(@NotNull PsiFile file,
-                                         int offset,
-                                         int flags,
-                                         @NotNull Editor editor,
-                                         @Nullable PsiElement leafElement) {
+  private static PsiElement getReferencedElement(@NotNull PsiFile file,
+                                                 int offset,
+                                                 int flags,
+                                                 @NotNull Editor editor,
+                                                 @Nullable PsiElement leafElement) {
     final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
     //if (referenceOrReferencedElement == null) {
     //  return getReferenceOrReferencedElement(file, editor, flags, offset);

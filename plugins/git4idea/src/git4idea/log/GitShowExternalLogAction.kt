@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -17,7 +19,6 @@ import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.ui.WindowWrapperBuilder
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -27,6 +28,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -73,6 +75,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
         content.isCloseable = true
         cm.addContent(content)
         cm.setSelectedContent(content)
+        doOnProviderRemoval(project, component.disposable) { cm.removeContent(content, true) }
       }
     }
     if (!window.isVisible) {
@@ -112,6 +115,7 @@ private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>
         .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
         .build()
       Disposer.register(window, content.disposable)
+      doOnProviderRemoval(project, content.disposable) { window.close() }
       window.show()
     }
   }
@@ -183,4 +187,14 @@ private fun selectAlreadyOpened(cm: ContentManager, roots: Collection<VirtualFil
   } ?: return false
   cm.setSelectedContent(content)
   return true
+}
+
+private fun doOnProviderRemoval(project: Project, disposable: Disposable, closeTab: () -> Unit) {
+  VcsLogProvider.LOG_PROVIDER_EP.getPoint(project).addExtensionPointListener(object : ExtensionPointListener<VcsLogProvider> {
+    override fun extensionRemoved(extension: VcsLogProvider, pluginDescriptor: PluginDescriptor) {
+      if (extension.supportedVcs == GitVcs.getKey()) {
+        closeTab()
+      }
+    }
+  }, false, disposable)
 }

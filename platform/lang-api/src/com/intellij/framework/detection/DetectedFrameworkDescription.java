@@ -17,9 +17,8 @@ package com.intellij.framework.detection;
 
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -40,7 +39,7 @@ public abstract class DetectedFrameworkDescription {
    * @return text to show in 'Setup Frameworks' dialog when this framework is selected
    */
   @NotNull
-  @Nls @NlsUI.Label
+  @NlsContexts.Label
   public abstract String getSetupText();
 
   /**

@@ -70,8 +70,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
 
-  @Nullable
-  private IdeFrameDecorator myFrameDecorator;
+  private @Nullable IdeFrameDecorator myFrameDecorator;
 
   @SuppressWarnings("unused")
   private volatile Image selfie;
@@ -88,8 +87,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     Disposer.register(ApplicationManager.getApplication(), this);
   }
 
-  @Nullable
-  public static ProjectFrameHelper getFrameHelper(@Nullable Window window) {
+  public static @Nullable ProjectFrameHelper getFrameHelper(@Nullable Window window) {
     if (window == null) {
       return null;
     }
@@ -118,9 +116,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myFrameDecorator = IdeFrameDecorator.decorate(myFrame, this);
 
     myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
-      @Nullable
       @Override
-      public Object getData(@NotNull String dataId) {
+      public @Nullable Object getData(@NotNull String dataId) {
         return ProjectFrameHelper.this.getData(dataId);
       }
 
@@ -150,15 +147,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         ProjectFrameHelper.this.updateView();
       }
 
-      @Nullable
       @Override
-      public Project getProject() {
+      public @Nullable Project getProject() {
         return myProject;
       }
 
-      @NotNull
       @Override
-      public IdeFrame getHelper() {
+      public @NotNull IdeFrame getHelper() {
         return ProjectFrameHelper.this;
       }
 
@@ -179,8 +174,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
-  @NotNull
-  protected IdeRootPane createIdeRootPane() {
+  protected @NotNull IdeRootPane createIdeRootPane() {
     return new IdeRootPane(myFrame, this, this);
   }
 
@@ -234,14 +228,12 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     });
   }
 
-  @NotNull
-  protected CloseProjectWindowHelper createCloseProjectWindowHelper() {
+  protected @NotNull CloseProjectWindowHelper createCloseProjectWindowHelper() {
     return new CloseProjectWindowHelper();
   }
 
-  @Nullable
   @Override
-  public IdeStatusBarImpl getStatusBar() {
+  public @Nullable IdeStatusBarImpl getStatusBar() {
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
@@ -266,8 +258,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Override
-  @Nullable
-  public IdeRootPaneNorthExtension getNorthExtension(String key) {
+  public @Nullable IdeRootPaneNorthExtension getNorthExtension(String key) {
     return myRootPane.findByName(key);
   }
 
@@ -301,7 +292,14 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (extensions != null && !extensions.isEmpty()) {
-        extensions.stream().filter(it -> it.isActive()).map(it -> it.getValue()).filter(it -> !it.isEmpty()).forEach(it -> builder.append(it, " "));
+        for (TitleInfoProvider extension : extensions) {
+          if (extension.isActive()) {
+            String it = extension.getValue();
+            if (!it.isEmpty()) {
+              builder.append(it, " ");
+            }
+          }
+        }
       }
 
       frame.setTitle(builder.toString());
@@ -344,7 +342,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       if (myProject != null) {
         return myProject.isInitialized() ? myProject : null;
@@ -436,20 +434,17 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
-  @NotNull
-  public IdeFrameImpl getFrame() {
+  public @NotNull IdeFrameImpl getFrame() {
     return myFrame;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  IdeRootPane getRootPane() {
+  @Nullable IdeRootPane getRootPane() {
     return myRootPane;
   }
 
-  @NotNull
   @Override
-  public Rectangle suggestChildFrameBounds() {
+  public @NotNull Rectangle suggestChildFrameBounds() {
     Rectangle b = myFrame.getBounds();
     b.x += 100;
     b.width -= 200;
@@ -458,9 +453,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return b;
   }
 
-  @Nullable
   @Override
-  public final BalloonLayout getBalloonLayout() {
+  public final @Nullable BalloonLayout getBalloonLayout() {
     return myBalloonLayout;
   }
 
@@ -469,9 +463,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
   }
 
-  @NotNull
   @Override
-  public Promise<?> toggleFullScreen(boolean state) {
+  public @NotNull Promise<?> toggleFullScreen(boolean state) {
     if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
       return Promises.resolvedPromise();
     }

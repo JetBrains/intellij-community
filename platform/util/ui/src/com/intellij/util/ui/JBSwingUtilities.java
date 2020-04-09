@@ -2,15 +2,16 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.util.PairFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
 
 /**
  * @author gregsh
@@ -34,11 +35,10 @@ public final class JBSwingUtilities {
     return SwingUtilities.isRightMouseButton(anEvent);
   }
 
+  private static final List<BiFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D>> ourGlobalTransform =
+    new CopyOnWriteArrayList<>(Collections.emptyList());
 
-  private static final List<PairFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D>> ourGlobalTransform =
-    ContainerUtil.createEmptyCOWList();
-
-  public static Disposable addGlobalCGTransform(final PairFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D> fun) {
+  public static Disposable addGlobalCGTransform(@NotNull BiFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D> fun) {
     ourGlobalTransform.add(fun);
     return new Disposable() {
       @Override
@@ -48,11 +48,10 @@ public final class JBSwingUtilities {
     };
   }
 
-  @NotNull
-  public static Graphics2D runGlobalCGTransform(@NotNull JComponent c, @NotNull Graphics g) {
+  public static @NotNull Graphics2D runGlobalCGTransform(@NotNull JComponent c, @NotNull Graphics g) {
     Graphics2D gg = (Graphics2D)g;
-    for (PairFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D> transform : ourGlobalTransform) {
-      gg = Objects.requireNonNull(transform.fun(c, gg));
+    for (BiFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D> transform : ourGlobalTransform) {
+      gg = Objects.requireNonNull(transform.apply(c, gg));
     }
     return gg;
   }

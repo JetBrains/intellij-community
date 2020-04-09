@@ -793,6 +793,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private void notifyMessage(@NotNull AnActionEvent e, boolean next) {
+    if (!myContentPanel.isShowing()) return;
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc

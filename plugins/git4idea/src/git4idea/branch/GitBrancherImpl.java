@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.openapi.application.Application;
@@ -21,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
@@ -158,8 +145,20 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new GitCompareBranchesUi(myProject, repositories, branchName).create();
+  public void compare(@NotNull String branchName,
+                      @NotNull List<? extends GitRepository> repositories,
+                      @NotNull GitRepository selectedRepository) {
+    if (Registry.is("git.compare.branches.as.tab")) {
+      new GitCompareBranchesUi(myProject, repositories, branchName).create();
+    }
+    else {
+      new CommonBackgroundTask(myProject, GitBundle.message("branch.compare.progress", branchName), null) {
+        @Override
+        public void execute(@NotNull ProgressIndicator indicator) {
+          newWorker(indicator).compare(branchName, repositories, selectedRepository);
+        }
+      }.runInBackground();
+    }
   }
 
   @Override

@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import {DataManager} from "@/state/DataManager"
-import {IconData, InputDataV11AndLess, Item} from "@/state/data"
+import {IconData, InputDataV11AndLess, ItemV0} from "@/state/data"
 import {getShortName} from "@/charts/ActivityChartDescriptor"
 import {BaseTreeMapChartManager} from "@/charts/BaseTreeMapChartManager"
 
@@ -41,7 +41,7 @@ export class TreeMapChartManager extends BaseTreeMapChartManager {
 
     this.addServicesOrComponents(data, items, "component", "appComponents", "projectComponents")
     this.addServicesOrComponents(data, items, "service", "appServices", "projectServices")
-    this.addIcons(data, items)
+    TreeMapChartManager.addIcons(data, items)
 
     this.chart.data = items
   }
@@ -59,7 +59,7 @@ export class TreeMapChartManager extends BaseTreeMapChartManager {
     })
 
     let duration = 0
-    const durationComputer = (it: Item) => duration += it.duration
+    const durationComputer = (it: ItemV0) => duration += it.duration
     const v = data[appFieldName]
     if (v != null) {
       v.forEach(durationComputer)
@@ -79,7 +79,7 @@ export class TreeMapChartManager extends BaseTreeMapChartManager {
     })
   }
 
-  private addIcons(data: DataManager, items: Array<any>) {
+  private static addIcons(data: DataManager, items: Array<any>) {
     const icons = data.data.icons
     if (icons != null) {
       const iconList: Array<any> = []
@@ -112,7 +112,7 @@ export class TreeMapChartManager extends BaseTreeMapChartManager {
   }
 }
 
-function toTreeMapItem(items: Array<Item> | null | undefined) {
+function toTreeMapItem(items: Array<ItemV0> | null | undefined) {
   return items == null ? [] : items.map(it => {
     return {...it, name: getShortName(it)}
   })

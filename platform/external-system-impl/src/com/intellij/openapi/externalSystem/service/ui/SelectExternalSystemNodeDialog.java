@@ -18,10 +18,9 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +56,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
                                         @NotNull Project project,
-                                        @NotNull @Nls @NlsContexts.DialogTitle String title,
+                                        @NotNull @NlsContexts.DialogTitle String title,
                                         final Class<? extends ExternalSystemNode>[] nodeClasses,
                                         @Nullable Predicate<SimpleNode> selector) {
     super(project, false);

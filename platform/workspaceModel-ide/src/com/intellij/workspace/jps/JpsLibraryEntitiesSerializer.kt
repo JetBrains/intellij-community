@@ -54,18 +54,14 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
                             entities: Map<Class<out TypedEntity>, List<TypedEntity>>,
-                            writer: JpsFileContentWriter): List<TypedEntity> {
-    if (mainEntities.isEmpty()) {
-      return emptyList()
-    }
+                            writer: JpsFileContentWriter) {
+    if (mainEntities.isEmpty()) return
 
-    val savedEntities = ArrayList<TypedEntity>()
     val componentTag = JDomSerializationUtil.createComponentElement(LIBRARY_TABLE_COMPONENT_NAME)
     mainEntities.sortedBy { it.name }.forEach {
-      componentTag.addContent(saveLibrary(it, savedEntities))
+      componentTag.addContent(saveLibrary(it))
     }
     writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
-    return savedEntities
   }
 }
 
@@ -120,8 +116,7 @@ internal fun loadLibrary(name: String,
   return libraryEntity
 }
 
-internal fun saveLibrary(library: LibraryEntity, savedEntities: MutableList<TypedEntity>): Element {
-  savedEntities.add(library)
+internal fun saveLibrary(library: LibraryEntity): Element {
   val libraryTag = Element(LIBRARY_TAG)
   val legacyName = LegacyBridgeLibraryImpl.getLegacyLibraryName(library.persistentId())
   if (legacyName != null) {
@@ -129,7 +124,6 @@ internal fun saveLibrary(library: LibraryEntity, savedEntities: MutableList<Type
   }
   val customProperties = library.getCustomProperties()
   if (customProperties != null) {
-    savedEntities.add(customProperties)
     libraryTag.setAttribute(TYPE_ATTRIBUTE, customProperties.libraryType)
     val propertiesXmlTag = customProperties.propertiesXmlTag
     if (propertiesXmlTag != null) {

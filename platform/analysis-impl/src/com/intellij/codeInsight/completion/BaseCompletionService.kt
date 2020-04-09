@@ -17,15 +17,16 @@ import com.intellij.util.Consumer
 
 open class BaseCompletionService : CompletionService() {
   @JvmField
-  protected var myApiCompletionProcess: CompletionProcessEx? = null
+  protected var myApiCompletionProcess: CompletionProcess? = null
 
   override fun setAdvertisementText(text: String?) {
     if (text == null) return
-    myApiCompletionProcess?.addAdvertisement(text, null)
+
+    (myApiCompletionProcess as? CompletionProcessEx)?.addAdvertisement(text, null)
   }
 
   override fun performCompletion(parameters: CompletionParameters, consumer: Consumer<in CompletionResult>) {
-    myApiCompletionProcess = parameters.process as CompletionProcessEx
+    myApiCompletionProcess = parameters.process
     try {
       super.performCompletion(parameters, consumer)
     }

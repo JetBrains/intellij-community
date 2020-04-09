@@ -315,7 +315,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
         if (configurable instanceof Weighted) {
           if (((Weighted)configurable).getWeight() != 0) {
             myComparator = COMPARATOR;
-            Collections.sort(list, myComparator);
+            list.sort(myComparator);
             break;
           }
         }

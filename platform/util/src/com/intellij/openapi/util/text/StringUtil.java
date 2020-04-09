@@ -4,7 +4,6 @@ package com.intellij.openapi.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
@@ -1166,7 +1165,7 @@ public class StringUtil extends StringUtilRt {
   @Nullable
   @Contract(pure = true)
   public static String nullize(@Nullable String s, @Nullable String defaultValue) {
-    boolean empty = isEmpty(s) || Comparing.equal(s, defaultValue);
+    boolean empty = isEmpty(s) || Objects.equals(s, defaultValue);
     return empty ? null : s;
   }
 
@@ -1616,10 +1615,6 @@ public class StringUtil extends StringUtilRt {
       if (remainder != 0 || !unitValues.isEmpty()) {
         unitValues.insert(0, remainder);
         unitIndices.insert(0, i - 1);
-      }
-      else {
-        remainder = Math.round(remainder * 100 / (double)multiplier);
-        count += remainder / 100;
       }
     }
     unitValues.insert(0, count);

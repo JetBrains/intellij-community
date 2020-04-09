@@ -125,41 +125,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpClass(RegExpClass regExpClass) {
-    if (!(regExpClass.getParent() instanceof RegExpClass)) {
-      checkForDuplicates(regExpClass, new HashSet<>());
-    }
-  }
-
-  private void checkForDuplicates(RegExpClassElement element, Set<Object> seen) {
-    if (element instanceof RegExpChar) {
-      final RegExpChar regExpChar = (RegExpChar)element;
-      final int value = regExpChar.getValue();
-      if (value != -1 && !seen.add(value)) {
-        myHolder.newAnnotation(HighlightSeverity.WARNING,
-                               RegExpBundle.message("warning.duplicate.character.0.inside.character.class", regExpChar.getText()))
-          .range(regExpChar).create();
-      }
-    }
-    else if (element instanceof RegExpSimpleClass) {
-      final RegExpSimpleClass regExpSimpleClass = (RegExpSimpleClass)element;
-      final RegExpSimpleClass.Kind kind = regExpSimpleClass.getKind();
-      if (!seen.add(kind)) {
-        final String text = regExpSimpleClass.getText();
-        myHolder.newAnnotation(HighlightSeverity.WARNING,
-                               RegExpBundle.message("warning.duplicate.predefined.character.class.0.inside.character.class", text))
-          .range(regExpSimpleClass).create();
-      }
-    }
-    else if (element instanceof RegExpClass) {
-      final RegExpClass regExpClass = (RegExpClass)element;
-      for (RegExpClassElement classElement : regExpClass.getElements()) {
-        checkForDuplicates(classElement, seen);
-      }
-    }
-  }
-
-  @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final PsiElement child = ch.getFirstChild();
     final IElementType type = child.getNode().getElementType();
@@ -362,10 +327,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
-    if (!myLanguageHosts.supportsPythonConditionalRefs(condRef)) {
+  public void visitRegExpConditional(RegExpConditional conditional) {
+    if (!myLanguageHosts.supportsConditionals(conditional)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR,
-                             RegExpBundle.message("error.conditional.references.are.not.supported.in.this.regex.dialect")).create();
+                             RegExpBundle.message("error.conditionals.are.not.supported.in.this.regex.dialect")).create();
     }
   }
 
@@ -585,10 +550,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
 
     @Override
-    public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
-      super.visitRegExpPyCondRef(condRef);
+    public void visitRegExpConditional(RegExpConditional conditional) {
+      super.visitRegExpConditional(conditional);
       if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {
-        stopAndReportError(condRef, RegExpBundle.message("error.conditional.group.reference.not.allowed.inside.lookbehind"));
+        stopAndReportError(conditional, RegExpBundle.message("error.conditional.group.reference.not.allowed.inside.lookbehind"));
       }
     }
 

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YES
 import com.intellij.openapi.ui.Messages.getQuestionIcon
-import com.intellij.openapi.util.NlsUI
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.getString
@@ -26,10 +25,9 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
 import com.intellij.util.containers.notNullize
 import com.intellij.util.containers.stream
-import com.intellij.util.nls.NlsContexts
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.toList
@@ -135,7 +133,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
                         singlePathDialogTitle: (FilePath) -> String,
                         singlePathDialogMessage: (FilePath) -> String,
-                        multiplePathsDialogTitle: @Nls @NlsContexts.DialogTitle String): List<FilePath> {
+                        multiplePathsDialogTitle: @NlsContexts.DialogTitle String): List<FilePath> {
   if (paths.isEmpty()) return paths
 
   if (paths.size == 1) {

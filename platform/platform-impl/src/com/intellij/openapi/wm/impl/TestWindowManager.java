@@ -38,7 +38,7 @@ public final class TestWindowManager extends WindowManagerEx {
   public final void doNotSuggestAsParent(final Window window) { }
 
   @Override
-  public final Window suggestParentWindow(@Nullable final Project project) {
+  public final Window suggestParentWindow(final @Nullable Project project) {
     return null;
   }
 
@@ -58,15 +58,13 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
-  @Nullable
   @Override
-  public ProjectFrameHelper findFrameHelper(@Nullable Project project) {
+  public @Nullable ProjectFrameHelper findFrameHelper(@Nullable Project project) {
     return null;
   }
 
-  @Nullable
   @Override
-  public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
+  public @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project) {
     return null;
   }
 
@@ -91,9 +89,8 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
-  @Nullable
   @Override
-  public final IdeFrameImpl getFrame(Project project) {
+  public final @Nullable IdeFrameImpl getFrame(Project project) {
     return null;
   }
 
@@ -133,7 +130,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final Rectangle getScreenBounds() {
+  public final @NotNull Rectangle getScreenBounds() {
     throw new UnsupportedOperationException();
   }
 
@@ -168,12 +165,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public void hideDialog(JDialog dialog, Project project) {
-    dialog.dispose();
-  }
-
-  @Override
-  public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) { }
+  public void adjustContainerWindow(@NotNull Component c, Dimension oldSize, Dimension newSize) { }
 
   @Override
   public void addListener(@NotNull WindowManagerListener listener) { }
@@ -189,9 +181,8 @@ public final class TestWindowManager extends WindowManagerEx {
   private static final class DummyStatusBar implements StatusBarEx {
     private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<>();
 
-    @Nullable
     @Override
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return null;
     }
 
@@ -200,9 +191,8 @@ public final class TestWindowManager extends WindowManagerEx {
       return new Dimension(0, 0);
     }
 
-    @Nullable
     @Override
-    public StatusBar createChild(@NotNull IdeFrame frame) {
+    public @Nullable StatusBar createChild(@NotNull IdeFrame frame) {
       return null;
     }
 
@@ -323,15 +313,13 @@ public final class TestWindowManager extends WindowManagerEx {
     frameHelper.getFrame().dispose();
   }
 
-  @NotNull
   @Override
-  public List<ProjectFrameHelper> getProjectFrameHelpers() {
+  public @NotNull List<ProjectFrameHelper> getProjectFrameHelpers() {
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public IdeFrameEx findFirstVisibleFrameHelper() {
+  public @Nullable IdeFrameEx findFirstVisibleFrameHelper() {
     return null;
   }
 }

@@ -5,8 +5,11 @@ import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.util.RefactoringUtil
+import kotlin.math.exp
 
 class ExtractSelector {
 
@@ -41,15 +44,17 @@ class ExtractSelector {
 
   fun suggestElementsToExtract(editor: Editor): List<PsiElement> {
     val selectedElements = findSelectedElements(editor)
-    return alignElements(selectedElements)
+    val alignedElements = alignElements(selectedElements)
+    if (alignedElements.isEmpty()) throw PrepareFailedException("Fail", selectedElements.first())
+    return alignedElements
   }
 
   private fun alignElements(elements: List<PsiElement>): List<PsiElement> {
     val singleElement = elements.singleOrNull()
     val alignedElements = when {
       elements.size > 1 -> alignStatements(elements)
+      singleElement is PsiBlockStatement -> if (singleElement.codeBlock.firstBodyElement != null) listOf(singleElement) else emptyList()
       singleElement is PsiCodeBlock -> alignCodeBlock(singleElement)
-      singleElement is PsiStatement -> listOfNotNull(alignStatement(singleElement))
       singleElement is PsiExpression -> listOfNotNull(alignExpression(singleElement))
       else -> elements
     }
@@ -60,29 +65,45 @@ class ExtractSelector {
     }
   }
 
-  private fun alignExpression(expression: PsiExpression?): PsiExpression? {
-    return when (expression) {
-      null -> return null
-      is PsiReturnStatement -> alignExpression(expression.returnValue)
-      is PsiAssignmentExpression -> alignExpression(expression.rExpression)
+  private tailrec fun alignExpression(expression: PsiExpression?): PsiExpression? {
+    return when {
+      expression == null -> null
+      expression.type is PsiLambdaParameterType -> null
+      hasAssignmentInside(expression) -> null
+      isInsideAnnotation(expression) -> null
+      expression is PsiReturnStatement -> alignExpression(expression.returnValue)
+      expression is PsiParenthesizedExpression -> expression.takeIf { expression.expression != null }
+      //is PsiAssignmentExpression -> alignExpression(expression.rExpression)
       //expression.parent is PsiParenthesizedExpression -> alignExpression(expression.parent as PsiExpression)
       // PsiUtil.skipParenthesizedExprDown((PsiExpression)elements[0]);
       else -> expression
     }
   }
 
+  private fun hasAssignmentInside(expression: PsiExpression): Boolean {
+    return PsiTreeUtil.findChildOfType(expression, PsiAssignmentExpression::class.java, false) != null
+  }
+
   private fun alignStatements(statements: List<PsiElement>): List<PsiElement> {
-    val filteredStatements = statements.dropWhile { it is PsiSwitchLabelStatement }.dropLastWhile { it is PsiSwitchLabelStatement }
-    return when {
-      filteredStatements.any { it is PsiSwitchLabelStatement } -> emptyList()
-      else -> filteredStatements
+    val filteredStatements = statements
+      .dropWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
+      .dropLastWhile { it is PsiSwitchLabelStatement || it is PsiWhiteSpace }
+    return if (filteredStatements.any { it is PsiSwitchLabelStatement }) {
+      emptyList()
+    } else {
+      filteredStatements
     }
   }
 
+  private fun isInsideAnnotation(expression: PsiExpression): Boolean {
+    return PsiTreeUtil.getParentOfType(expression, PsiAnnotation::class.java) != null
+  }
+
   private fun alignCodeBlock(codeBlock: PsiCodeBlock): List<PsiElement> {
-    return when (codeBlock.parent) {
-      is PsiSwitchStatement -> listOf(codeBlock.parent)
-      else -> codeBlock.children.dropWhile { it !== codeBlock.firstBodyElement }.dropLastWhile { it !== codeBlock.lastBodyElement }
+    return if (codeBlock.parent is PsiSwitchStatement) {
+      listOf(codeBlock.parent)
+    } else {
+      codeBlock.children.dropWhile { it !== codeBlock.firstBodyElement }.dropLastWhile { it !== codeBlock.lastBodyElement }
     }
   }
 

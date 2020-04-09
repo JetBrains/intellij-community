@@ -29,8 +29,8 @@ public final class EmptyAction extends AnAction {
     myEnabled = enabled;
   }
 
-  public EmptyAction(@Nullable @Nls @NlsActions.ActionText String text,
-                     @Nullable @Nls @NlsActions.ActionDescription String description, @Nullable Icon icon) {
+  public EmptyAction(@Nullable @NlsActions.ActionText String text,
+                     @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 

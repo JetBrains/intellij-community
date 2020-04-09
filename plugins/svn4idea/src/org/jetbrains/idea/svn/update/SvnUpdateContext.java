@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -11,7 +11,10 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
@@ -23,7 +26,7 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
   public SvnUpdateContext(final SvnVcs vcs, FilePath[] contentRoots) {
     myVcs = vcs;
     myContentRoots = Arrays.asList(contentRoots);
-    Collections.sort(myContentRoots, FilePathByPathComparator.getInstance());
+    myContentRoots.sort(FilePathByPathComparator.getInstance());
     myUpdatedExternals = new HashSet<>();
   }
 

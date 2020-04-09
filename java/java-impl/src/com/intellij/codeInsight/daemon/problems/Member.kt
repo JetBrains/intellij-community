@@ -98,7 +98,7 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
 
   internal data class Method(override val name: String,
                              override val modifiers: Set<String>,
-                             val returnType: String,
+                             val returnType: String?,
                              val paramTypes: List<String>) : Member(name, modifiers) {
 
     override fun hasChanged(other: Member): Boolean {
@@ -110,7 +110,8 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
 
     companion object {
       internal fun create(psiMethod: PsiMethod): Method? {
-        val returnType = psiMethod.returnType?.canonicalText ?: return null
+        val returnType = psiMethod.returnType?.canonicalText
+        if (returnType == null && !psiMethod.isConstructor) return null
         val name = psiMethod.name
         val modifiers = extractModifiers(psiMethod.modifierList)
         val paramTypes = psiMethod.parameterList.parameters.map { it.type.canonicalText }

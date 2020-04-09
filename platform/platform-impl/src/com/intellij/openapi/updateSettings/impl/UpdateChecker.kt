@@ -210,6 +210,10 @@ object UpdateChecker {
     return HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
   }
 
+  /**
+   * If [buildNumber] is null, returns new versions of plugins compatible with the current IDE version. If not null, returns
+   * new versions of plugins compatible with the specified build.
+   */
   private fun checkPluginsUpdate(indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
                                  buildNumber: BuildNumber?): Collection<PluginDownloader>? {
@@ -262,8 +266,8 @@ object UpdateChecker {
     incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
     indicator: ProgressIndicator?
   ) {
-    val marketplacePlugins = PluginsMetaLoader.getMarketplacePlugins(indicator)
-    val idsToUpdate = updateable.map { it.key.idString }.filter { it in marketplacePlugins }
+    val marketplacePluginIds = PluginsMetaLoader.getMarketplacePlugins(indicator)
+    val idsToUpdate = updateable.map { it.key.idString }.filter { it in marketplacePluginIds }
     val updates = PluginsMetaLoader.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue

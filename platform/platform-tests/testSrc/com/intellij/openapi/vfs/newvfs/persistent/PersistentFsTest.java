@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -42,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Future;
 import java.util.jar.JarFile;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -727,6 +729,39 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
     for (VirtualFileSystemEntry f : fs.getIdToDirCache().values()) {
       assertTrue(f.isValid());
+    }
+  }
+
+  public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    for (int i=0; i<10; i++) {
+      File temp = createTempDir("", false);
+      File file = new File(temp, "file.txt");
+      FileUtil.createParentDirs(file);
+      FileUtil.writeToFile(file, "x");
+      VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
+      assertFalse(vTemp.allChildrenLoaded());
+      FileUtil.writeToFile(new File(temp, "new.txt"),"new" );
+      Future<FSRecords.NameId[]> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      Future<FSRecords.NameId[]> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      FSRecords.NameId[] children1 = f1.get();
+      FSRecords.NameId[] children2 = f2.get();
+      int[] nameIds1 = Arrays.stream(children1).mapToInt(n -> n.nameId).toArray();
+      int[] nameIds2 = Arrays.stream(children2).mapToInt(n -> n.nameId).toArray();
+      
+      // there can be one or two children, depending on whether the VFS refreshed in time or not.
+      // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
+      for (int i1 = 0; i1 < nameIds1.length; i1++) {
+        int nameId1 = nameIds1[i1];
+        int i2 = ArrayUtil.find(nameIds2, nameId1);
+        if (i2 >= 0) {
+          int id1 = children1[i1].id;
+          int id2 = children2[i2].id;
+          assertEquals("Duplicate ids found. children1=" + Arrays.toString(children1) + "; children2=" + Arrays.toString(children2), id1, id2);
+        }
+      }
     }
   }
 }

@@ -82,7 +82,8 @@ public class DiffManagerImpl extends DiffManagerEx {
   public void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
     if (Registry.is("show.diff.as.editor.tab") &&
         project != null &&
-        DiffUtil.getWindowMode(hints) == WindowWrapper.Mode.FRAME) {
+        DiffUtil.getWindowMode(hints) == WindowWrapper.Mode.FRAME &&
+        hints.getWindowConsumer() == null) {
       ChainDiffVirtualFile diffFile = new ChainDiffVirtualFile(requests, DiffBundle.message("label.default.diff.editor.tab.name"));
       FileEditorManager.getInstance(project).openFile(diffFile, true);
       return;

@@ -116,44 +116,9 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       for (int i = 0; i < parameters.length; i++) {
         ValueConstraint constraint = contract.getParameterConstraint(i);
         PsiParameter parameter = parameters[i];
-        PsiType type = parameter.getType();
-        switch (constraint) {
-          case ANY_VALUE:
-            break;
-          case NULL_VALUE:
-          case NOT_NULL_VALUE:
-            if (type instanceof PsiPrimitiveType) {
-              String message = JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability", 
-                                                          parameter.getName(), type.getPresentableText(), constraint);
-              return ParseException.forConstraint(message, text, clauseIndex, i);
-            } else {
-              NullabilityAnnotationInfo info =
-                NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(parameter);
-              if (info != null && info.getNullability() == Nullability.NOT_NULL) {
-                String message;
-                if (info.isInferred()) {
-                  if (constraint == ValueConstraint.NULL_VALUE && contract.getReturnValue().isFail()) {
-                    // null -> fail is ok if not-null was inferred
-                    break;
-                  }
-                  message = JavaAnalysisBundle.message("inspection.contract.checker.inferred.notnull.parameter.nullability",
-                                                       parameter.getName(), constraint);
-                } else {
-                  message = JavaAnalysisBundle.message("inspection.contract.checker.notnull.parameter.nullability",
-                                                       parameter.getName(), constraint);
-                }
-                return ParseException.forConstraint(message, text, clauseIndex, i);
-              }
-            }
-            break;
-          case TRUE_VALUE:
-          case FALSE_VALUE:
-            if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
-              String message = JavaAnalysisBundle.message("inspection.contract.checker.boolean.condition.for.nonboolean.parameter", 
-                                                          parameter.getName(), type.getPresentableText());
-              return ParseException.forConstraint(message, text, clauseIndex, i);
-            }
-            break;
+        String message = getConstraintProblem(method, contract, constraint, parameter);
+        if (message != null) {
+          return ParseException.forConstraint(message, text, clauseIndex, i);
         }
       }
       String problem = contract.getReturnValue().getMethodCompatibilityProblem(method);
@@ -177,5 +142,55 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static String getConstraintProblem(PsiMethod method,
+                                             StandardMethodContract contract,
+                                             ValueConstraint constraint, PsiParameter parameter) {
+    PsiType type = parameter.getType();
+    switch (constraint) {
+      case NULL_VALUE: {
+        if (type instanceof PsiPrimitiveType) {
+          return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
+                                            parameter.getName(), type.getPresentableText(), constraint);
+        }
+        NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(parameter);
+        if (info != null && info.getNullability() == Nullability.NOT_NULL) {
+          if (info.isInferred() && contract.getReturnValue().isFail()) {
+            // null -> fail is ok if not-null was inferred
+            return null;
+          }
+          return JavaAnalysisBundle.message(info.isInferred()
+                                            ? "inspection.contract.checker.inferred.notnull.parameter.null"
+                                            : "inspection.contract.checker.notnull.parameter.null",
+                                            parameter.getName(), constraint);
+        }
+        return null;
+      }
+      case NOT_NULL_VALUE: {
+        if (type instanceof PsiPrimitiveType) {
+          return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
+                                            parameter.getName(), type.getPresentableText(), constraint);
+        }
+        NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findEffectiveNullabilityInfo(parameter);
+        if (info != null && info.getNullability() == Nullability.NOT_NULL) {
+          return JavaAnalysisBundle.message(info.isInferred()
+                                            ? "inspection.contract.checker.inferred.notnull.parameter.notnull"
+                                            : "inspection.contract.checker.notnull.parameter.notnull",
+                                            parameter.getName(), constraint);
+        }
+        return null;
+      }
+      case TRUE_VALUE:
+      case FALSE_VALUE:
+        if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+          return JavaAnalysisBundle.message("inspection.contract.checker.boolean.condition.for.nonboolean.parameter",
+                                            parameter.getName(), type.getPresentableText());
+        }
+        return null;
+      default:
+        return null;
+    }
   }
 }

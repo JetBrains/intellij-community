@@ -89,7 +89,7 @@ class ImlReplaceBySourceTest {
     val data = JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder1)
 
     val storageBuilder2 = TypedEntityStorageBuilder.create()
-    val reader = CachingJpsFileContentReader(projectFile.asStoragePlace().baseDirectoryUrl)
+    val reader = CachingJpsFileContentReader(projectFile.asStoragePlace().baseDirectoryUrlString)
     data.loadAll(reader, storageBuilder2)
 
     //println(storageBuilder1.toGraphViz())

@@ -52,7 +52,7 @@ public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
       currentData = getCurrentDataEvaluator().compute();
     }
     catch (IOException e) {
-      throw new StorageException(e);
+      throw new StorageException("Error while applying " + this, e);
     }
     return currentData.differentiate(myNewData, addProcessor, updateProcessor, removeProcessor);
   }

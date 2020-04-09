@@ -8,5 +8,5 @@ foo -> UMethod (name = foo) from PsiIdentifier:foo
         variable -> ULocalVariable (name = variable) from PsiIdentifier:variable
         variable -> USimpleNameReferenceExpression (identifier = variable) from PsiIdentifier:variable
     runnable -> USimpleNameReferenceExpression (identifier = runnable) from PsiIdentifier:runnable
-    run -> UQualifiedReferenceExpression from PsiIdentifier:run
+    run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:run
     variable -> USimpleNameReferenceExpression (identifier = variable) from PsiIdentifier:variable

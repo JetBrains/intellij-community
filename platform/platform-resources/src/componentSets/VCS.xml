@@ -13,18 +13,6 @@
       <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
       <headless-implementation-class/>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
-    </component>
   </project-components>
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"

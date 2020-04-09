@@ -2,6 +2,8 @@
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.execution.filters.LineNumbersMapping
@@ -87,21 +89,34 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.openFileInEditor(getTestFile("Navigation.class"))
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
       myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
-      assertEquals(2, myFixture.doHighlighting().size)
+      assertEquals(2, highlightUnderCaret().size)
     }
   }
+
+  fun testNameHighlightingInsideCompiledFile() {
+    myFixture.setReadEditorMarkupModel(true)
+    myFixture.openFileInEditor(getTestFile("NamesHighlightingInsideCompiledFile.class"))
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
+      val infos = myFixture.doHighlighting()
+      assertTrue(infos.toString(), infos.all { info: HighlightInfo -> info.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY })
+      assertEquals(68, infos.size)
+    }
+  }
+
+  private fun highlightUnderCaret() =
+    myFixture.doHighlighting().filter { info -> info.severity.equals(HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) }
 
   fun testLineNumberMapping() {
     Registry.get("decompiler.use.line.mapping").withValue(true) {

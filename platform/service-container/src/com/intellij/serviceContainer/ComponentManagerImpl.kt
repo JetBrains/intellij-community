@@ -136,7 +136,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun getMessageBus(): MessageBus {
     if (containerState.get().ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal) {
-      throw IllegalStateException("Already disposed: $this")
+      throw AlreadyDisposedException("Already disposed: $this")
     }
     return messageBus ?: getOrCreateMessageBusUnderLock()
   }
@@ -149,7 +149,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return instantiatedComponentCount.toDouble() / componentConfigCount
   }
 
-  final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
+  final override fun getExtensionArea() = extensionArea
 
   @Internal
   fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, notifyListeners: Boolean) {

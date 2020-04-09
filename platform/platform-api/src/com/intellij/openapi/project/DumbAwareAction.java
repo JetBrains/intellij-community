@@ -24,7 +24,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static DumbAwareAction create(@Nullable @Nls @NlsActions.ActionText String text,
+  public static DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
                                        @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new SimpleDumbAwareAction(text, actionPerformed);
   }
@@ -37,7 +37,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(icon);
   }
 
-  protected DumbAwareAction(@Nullable @Nls @NlsActions.ActionText String text) {
+  protected DumbAwareAction(@Nullable @NlsActions.ActionText String text) {
     super(text);
   }
 
@@ -45,8 +45,8 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText);
   }
 
-  protected DumbAwareAction(@Nullable @Nls @NlsActions.ActionText String text,
-                            @Nullable @Nls @NlsActions.ActionDescription String description,
+  protected DumbAwareAction(@Nullable @NlsActions.ActionText String text,
+                            @Nullable @NlsActions.ActionDescription String description,
                             @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -66,7 +66,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
       myActionPerformed = actionPerformed;
     }
 
-    private SimpleDumbAwareAction(@Nls @NlsActions.ActionText String text,
+    private SimpleDumbAwareAction(@NlsActions.ActionText String text,
                                   Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;

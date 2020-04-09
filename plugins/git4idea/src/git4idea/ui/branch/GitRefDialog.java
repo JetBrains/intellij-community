@@ -1,5 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
+
+import static com.intellij.util.ui.UI.PanelFactory.grid;
+import static com.intellij.util.ui.UI.PanelFactory.panel;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.dvcs.repo.Repository;
@@ -34,16 +37,18 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-
-import static com.intellij.util.ui.UI.PanelFactory.grid;
-import static com.intellij.util.ui.UI.PanelFactory.panel;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GitRefDialog extends DialogWrapper {
   private final TextFieldWithCompletion myTextField;
@@ -210,7 +215,7 @@ public class GitRefDialog extends DialogWrapper {
 
     @Override
     public boolean equals(VcsRef o1, VcsRef o2) {
-      return Comparing.equal(o1.getName(), o2.getName()) &&
+      return Objects.equals(o1.getName(), o2.getName()) &&
              Comparing.equal(o1.getType(), o2.getType());
     }
   }

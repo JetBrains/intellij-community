@@ -158,7 +158,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
         annotations.add(child.getText());
       }
     }
-    Collections.sort(modifiers, new ModifierComparator());
+    modifiers.sort(new ModifierComparator());
     final List<String> result = new SmartList<>();
     result.addAll(annotations);
     result.addAll(modifiers);

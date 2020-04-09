@@ -30,7 +30,7 @@ import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-private fun testLoadDescriptorsFromDir(dir: Path, buildNumber: BuildNumber): PluginManagerState {
+private fun loadDescriptors(dir: Path, buildNumber: BuildNumber): DescriptorListLoadingContext {
   val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), buildNumber))
   context.usePluginClassLoader = true
 
@@ -44,7 +44,11 @@ private fun testLoadDescriptorsFromDir(dir: Path, buildNumber: BuildNumber): Plu
     }
   }
   context.result.finishLoading()
-  return PluginManagerCore.initializePlugins(context, UrlClassLoader.build().get(), false)
+  return context
+}
+
+private fun loadAndInitDescriptors(dir: Path, buildNumber: BuildNumber): PluginManagerState {
+  return PluginManagerCore.initializePlugins(loadDescriptors(dir, buildNumber), UrlClassLoader.build().get(), false)
 }
 
 class PluginDescriptorTest {
@@ -78,7 +82,6 @@ class PluginDescriptorTest {
 
   @Test
   fun testMalformedDescriptor() {
-    @Suppress("GrazieInspection")
     assertThatThrownBy { loadDescriptorInTest("malformed") }
       .hasMessageContaining("Content is not allowed in prolog.")
   }
@@ -102,14 +105,13 @@ class PluginDescriptorTest {
       Paths.get(testDataPath, "duplicate1.jar").toUri().toURL(),
       Paths.get(testDataPath, "duplicate2.jar").toUri().toURL()
     )
-    assertThat(
-      PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
+    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
   }
 
   @Test
   fun testProductionPlugins() {
     assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
+    val descriptors = loadAndInitDescriptors(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
     assertThat(descriptors).isNotEmpty()
     assertThat(descriptors.find { it!!.pluginId.idString == "com.intellij.java" }).isNotNull
   }
@@ -131,7 +133,7 @@ class PluginDescriptorTest {
   @Test
   fun testProduction2() {
     assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
+    val descriptors = loadAndInitDescriptors(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
     assertThat(descriptors).isNotEmpty()
   }
 
@@ -139,10 +141,8 @@ class PluginDescriptorTest {
   fun testDuplicateDependency() {
     val descriptor = loadDescriptorInTest("duplicateDependency")
     assertThat(descriptor).isNotNull()
-    assertThat(
-      descriptor.optionalDependentPluginIds).isEmpty()
-    assertThat(
-      descriptor.dependentPluginIds).containsExactly(PluginId.getId("foo"))
+    assertThat(descriptor.optionalDependentPluginIds).isEmpty()
+    assertThat(descriptor.dependentPluginIds).containsExactly(PluginId.getId("foo"))
   }
 
   @Test
@@ -185,9 +185,43 @@ class PluginDescriptorTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val result = testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber())
+    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber())
     val plugins = result.sortedEnabledPlugins
     assertThat(plugins).hasSize(1)
+    val foo = plugins[0]
+    assertThat(foo.version).isEqualTo("2.0")
+    assertThat(foo.pluginId.idString).isEqualTo("foo")
+
+    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
+    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
+  }
+
+  @Suppress("PluginXmlValidity")
+  @Test
+  fun `prefer bundled if custom is incompatible`() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    // names are important - will be loaded in alphabetical order
+    writeDescriptor("foo_1-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>2.0</version>
+        <idea-version until-build="2"/>
+      </idea-plugin>""")
+    writeDescriptor("foo_2-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>2.0</version>
+        <idea-version until-build="4"/>
+      </idea-plugin>""")
+
+    val result = loadDescriptors(pluginDir, BuildNumber.fromString("4.0")!!).result
+    assertThat(result.errors).isEmpty()
+    val plugins = result.enabledPlugins
+    assertThat(plugins).hasSize(1)
+    assertThat(result.duplicateModuleMap).isNull()
+    assertThat(result.incompletePlugins).isEmpty()
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
@@ -215,7 +249,7 @@ class PluginDescriptorTest {
         <idea-version since-build="2.0" until-build="4.*"/>
       </idea-plugin>""")
 
-    val result = testLoadDescriptorsFromDir(pluginDir, BuildNumber.fromString("3.12")!!)
+    val result = loadAndInitDescriptors(pluginDir, BuildNumber.fromString("3.12")!!)
 
     val plugins = result.sortedEnabledPlugins
     assertThat(plugins).hasSize(1)
@@ -244,7 +278,7 @@ class PluginDescriptorTest {
         <version>1.0</version>
       </idea-plugin>""")
 
-    val result = testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber())
+    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber())
     val plugins = result.sortedEnabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -302,7 +336,7 @@ class PluginDescriptorTest {
   }
 
   private fun checkClassLoader(pluginDir: Path) {
-    val list = testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber()).sortedEnabledPlugins
+    val list = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).sortedEnabledPlugins
     assertThat(list).hasSize(2)
 
     val bar = list[0]

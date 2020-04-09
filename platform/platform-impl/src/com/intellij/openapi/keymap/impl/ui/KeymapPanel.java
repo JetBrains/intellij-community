@@ -103,8 +103,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         @Override
         public void actionPerformed(ActionEvent e) {
           KeyboardSettingsExternalizable.getInstance().setPreferKeyPositionOverCharOption(preferKeyPositionOverCharOption.isSelected());
-          VMOptions.writeOption("com.jetbrains.use.old.keyevent.processing", "=",
-                                Boolean.toString(KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption()));
+          VMOptions.writeOption(KeyboardSettingsExternalizable.VMOption, "=",
+                                Boolean.toString(!KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption()));
           ApplicationManager.getApplication().invokeLater(
             () -> ApplicationManager.getApplication().restart(),
             ModalityState.NON_MODAL

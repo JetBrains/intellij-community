@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -150,7 +150,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       languages.add(provider.getLanguage());
     }
-    Collections.sort(languages, (l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
+    languages.sort((l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
     return languages;
   }
 

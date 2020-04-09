@@ -14,16 +14,24 @@ public class BatchEvaluatorServer {
    */
   public static String evaluate(Object[] objects) throws IOException {
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
-    for (int idx = 0; idx < objects.length; idx++) {
+    for (Object object : objects) {
       String res;
-      int length;
+      boolean error = false;
       try {
-        res = objects[idx].toString();
-        length = res.length();
+        res = object.toString();
+        if (res == null) {
+          res = "null";
+        }
       }
       catch (Throwable e) {
-        res = e.toString();
-        length = -res.length();
+        res = e.getClass().getName();
+        error = true;
+      }
+
+      byte[] bytes = res.getBytes("UTF-8");
+      int length = bytes.length;
+      if (error) {
+        length = -length;
       }
 
       // negative indicates an error
@@ -32,7 +40,7 @@ public class BatchEvaluatorServer {
       bas.write(length >>> 8);
       bas.write(length);
 
-      bas.write(res.getBytes("ISO-8859-1"));
+      bas.write(bytes);
     }
     return bas.toString("ISO-8859-1");
   }

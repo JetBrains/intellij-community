@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -43,12 +44,17 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.DeprecationStripePanel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +62,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,6 +72,7 @@ import java.util.concurrent.locks.LockSupport;
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
+  private static final @NotNull JBInsets DUMB_BALLOON_INSETS = JBInsets.create(5, 8);
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
@@ -466,9 +475,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     long startTimestamp = System.currentTimeMillis();
     UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonRequested, new FeatureUsageData().addProject(myProject));
     myBalloon = JBPopupFactory.getInstance().
-      createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
-      setShowCallout(false).
-      createBalloon();
+            createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
+            setBorderColor(JBColor.border()).
+            setBorderInsets(DUMB_BALLOON_INSETS).
+            setShowCallout(false).
+            createBalloon();
     myBalloon.setAnimationEnabled(false);
     myBalloon.addListener(new JBPopupListener() {
       @Override
@@ -501,8 +512,19 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return;
       }
       UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonShown, new FeatureUsageData().addProject(myProject));
-      myBalloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(context), Balloon.Position.above);
+      myBalloon.show(getDumbBalloonPopupPoint(myBalloon, context), Balloon.Position.above);
     });
+  }
+
+  @NotNull
+  private static RelativePoint getDumbBalloonPopupPoint(@NotNull Balloon balloon, DataContext context) {
+    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(context);
+    Dimension size = balloon.getPreferredSize();
+    Point point = relativePoint.getPoint();
+    point.translate(size.width / 2, 0);
+    //here are included hardcoded insets, icon width and small hardcoded delta to show before guessBestPopupLocation point
+    point.translate(-DUMB_BALLOON_INSETS.left - AllIcons.General.BalloonWarning.getIconWidth() - JBUIScale.scale(6), 0);
+    return new RelativePoint(relativePoint.getComponent(), point);
   }
 
   @Override
@@ -620,7 +642,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void showModalProgress() {
     NoAccessDuringPsiEvents.checkCallContext("modal indexing");
     try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IdeBundle.message("progress.indexing"), () -> {
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IndexingBundle.message("progress.indexing"), () -> {
         assertState(State.SCHEDULED_TASKS);
         runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator());
         assertState(State.SMART, State.WAITING_FOR_FINISH);
@@ -653,7 +675,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void startBackgroundProcess() {
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
         @Override
         public void run(@NotNull final ProgressIndicator visibleIndicator) {
           runBackgroundProcess(visibleIndicator);
@@ -728,10 +750,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ProgressManager.getInstance().runProcess(() -> {
       try {
         taskIndicator.checkCanceled();
-
         taskIndicator.setIndeterminate(true);
-        taskIndicator.setText(IdeBundle.message("progress.indexing.scanning"));
-
         task.performInDumbMode(taskIndicator);
       }
       catch (ProcessCanceledException ignored) {

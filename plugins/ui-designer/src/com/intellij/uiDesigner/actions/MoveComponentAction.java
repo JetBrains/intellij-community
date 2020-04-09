@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -8,7 +8,6 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,7 +31,7 @@ public class MoveComponentAction extends AbstractGuiEditorAction {
   protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     if (myColumnDelta != 0) {
       // sort the selection so that move in indexed layout will handle components in correct order
-      Collections.sort(selection, (o1, o2) -> {
+      selection.sort((o1, o2) -> {
         int index1 = o1.getParent().indexOfComponent(o1);
         int index2 = o2.getParent().indexOfComponent(o2);
         return (index2 - index1) * myColumnDelta;

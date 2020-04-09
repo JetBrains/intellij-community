@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -38,6 +38,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -288,11 +289,10 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     DiffLog diffLog;
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator == null) indicator = new EmptyProgressIndicator();
-    try (
+    try {
       BlockSupportImpl.ReparseResult result =
-        BlockSupportImpl.reparse(file, oldFileNode, changedPsiRange, newDocumentText, indicator, task.myLastCommittedText)) {
+        BlockSupportImpl.reparse(file, oldFileNode, changedPsiRange, newDocumentText, indicator, task.myLastCommittedText);
       diffLog = result.log;
-
 
       List<BooleanRunnable> injectedRunnables =
         documentManager.reparseChangedInjectedFragments(document, file, changedPsiRange, indicator, result.oldRoot, result.newRoot);
@@ -340,7 +340,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     if (oldFileNode.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
       String fileText = file.getText();
-      boolean sameText = Comparing.equal(fileText, documentText);
+      boolean sameText = Objects.equals(fileText, documentText);
       String errorMessage = "commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
                             "; node.length=" + oldFileNode.getTextLength() +
                             "; doc.text" + (sameText ? "==" : "!=") + "file.text" +

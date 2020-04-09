@@ -157,7 +157,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
-  protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
     return createProcess(directory, null);
   }
 

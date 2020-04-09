@@ -1244,19 +1244,21 @@ class Foo {
 
   void "test completion in dumb mode"() {
     TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate('hello_world', 'user', 'Hello, World')
+    Template template = manager.createTemplate('helloWorld', 'user', '"Hello, World"')
     TemplateContextType contextType = contextType(JavaCodeContextType.class)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable())
 
-    myFixture.configureByText "a.java", "class Foo {{ hello_<caret> }}"
+    myFixture.configureByText "a.java", "class Foo {{ System.out.println(helloW<caret>) }}"
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
     DumbServiceImpl.getInstance(getProject()).runInDumbMode(new Runnable() {
       @Override
       void run() {
         myFixture.completeBasic()
         assert myFixture.lookup
-        assert myFixture.lookupElementStrings.contains('hello_world')
+        assert myFixture.lookupElementStrings.contains('helloWorld')
+        myFixture.type('\t')
+        myFixture.checkResult "class Foo {{ System.out.println(\"Hello, World\") }}"
       }
     })
   }

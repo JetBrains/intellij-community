@@ -25,7 +25,6 @@ class RCInArbitraryFileScanner : FilePropertyPusher<Nothing> {
     return false
   }
 
-  override fun afterRootsChanged(project: Project) {}
   override fun acceptsFile(file: VirtualFile): Boolean = false
   override fun acceptsDirectory(file: VirtualFile, project: Project): Boolean = false
   private val key = Key.create<Nothing>("RCInArbitraryFileScanner")

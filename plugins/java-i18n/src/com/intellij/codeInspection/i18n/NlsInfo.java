@@ -158,6 +158,19 @@ public abstract class NlsInfo {
   }
 
   public static @NotNull NlsInfo forModifierListOwner(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof PsiParameter) {
+      PsiElement scope = ((PsiParameter)owner).getDeclarationScope();
+      if (scope instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)scope;
+        PsiParameterList list = method.getParameterList();
+        int index = list.getParameterIndex((PsiParameter)owner);
+        return fromMethodParameter(method, index, null);
+      }
+    }
+    if (owner instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)owner;
+      return fromMethodReturn(method, method.getReturnType(), null);
+    }
     return fromAnnotationOwner(owner.getModifierList());
   }
 
@@ -255,6 +268,15 @@ public abstract class NlsInfo {
     }
     if (method == null) return Unspecified.UNKNOWN;
 
+    return fromMethodReturn(method, returnType, null);
+  }
+
+  private static @NotNull NlsInfo fromMethodReturn(@NotNull PsiMethod method,
+                                                   @Nullable PsiType returnType,
+                                                   @Nullable Collection<? super PsiMethod> processed) {
+    if (processed != null && processed.contains(method)) {
+      return Unspecified.UNKNOWN;
+    }
     NlsInfo methodInfo = fromAnnotationOwner(method.getModifierList());
     if (methodInfo != Unspecified.UNKNOWN) {
       return methodInfo;
@@ -264,6 +286,17 @@ public abstract class NlsInfo {
       NlsInfo info = fromType(returnType);
       if (info != Unspecified.UNKNOWN) {
         return info;
+      }
+    }
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    if (superMethods.length > 0) {
+      if (processed == null) {
+        processed = new THashSet<>();
+      }
+      processed.add(method);
+      for (PsiMethod superMethod : superMethods) {
+        NlsInfo superInfo = fromMethodReturn(superMethod, null, processed);
+        if (superInfo != Unspecified.UNKNOWN) return superInfo;
       }
     }
     return new Unspecified(method);
@@ -354,13 +387,9 @@ public abstract class NlsInfo {
   private static @NotNull NlsInfo fromMethodParameter(@NotNull PsiMethod method,
                                                       int idx,
                                                       @Nullable Collection<? super PsiMethod> processed) {
-    if (processed != null) {
-      if (processed.contains(method)) return Unspecified.UNKNOWN;
+    if (processed != null && processed.contains(method)) {
+      return Unspecified.UNKNOWN;
     }
-    else {
-      processed = new THashSet<>();
-    }
-    processed.add(method);
 
     final PsiParameter[] params = method.getParameterList().getParameters();
     PsiParameter param;
@@ -378,9 +407,15 @@ public abstract class NlsInfo {
     }
 
     final PsiMethod[] superMethods = method.findSuperMethods();
-    for (PsiMethod superMethod : superMethods) {
-      NlsInfo superInfo = fromMethodParameter(superMethod, idx, processed);
-      if (superInfo != Unspecified.UNKNOWN) return superInfo;
+    if (superMethods.length > 0) {
+      if (processed == null) {
+        processed = new THashSet<>();
+      }
+      processed.add(method);
+      for (PsiMethod superMethod : superMethods) {
+        NlsInfo superInfo = fromMethodParameter(superMethod, idx, processed);
+        if (superInfo != Unspecified.UNKNOWN) return superInfo;
+      }
     }
     return fromContainer(method);
   }

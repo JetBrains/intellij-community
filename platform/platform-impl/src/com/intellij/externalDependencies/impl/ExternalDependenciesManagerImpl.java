@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -54,7 +54,7 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
   public void setAllDependencies(@NotNull List<? extends ProjectExternalDependency> dependencies) {
     myDependencies.clear();
     myDependencies.addAll(dependencies);
-    Collections.sort(myDependencies, DEPENDENCY_COMPARATOR);
+    myDependencies.sort(DEPENDENCY_COMPARATOR);
   }
 
   @NotNull

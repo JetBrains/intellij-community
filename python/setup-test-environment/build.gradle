@@ -103,7 +103,9 @@ envs {
 
   createPython("py38_django22_full",
                python38version,
-               ["ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+               // The version of Jinja2 is fixes due to a bug in recent versions which breaks the debugging.
+               // See: https://github.com/pallets/jinja/pull/1178.
+               ["ipython==7.8", "django==2.2", "behave", "jinja2==2.10.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                 "pytest-xdist", "untangle", "pandas"],
                "python3.8\npython3\nipython\nipython780\nskeletons\ndjango\nbehave\nbehave-django\ntox\njinja2\npackaging" +
                "\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\nxdist\nuntangle\npandas",

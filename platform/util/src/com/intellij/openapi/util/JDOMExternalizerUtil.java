@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public class JDOMExternalizerUtil {
   /**
    * Adds the {@code <option name="{fieldName}" value="{value}"/>} element to the parent.
    */
-  public static void writeField(@NotNull Element parent, @NotNull String fieldName, @Nullable String value) {
+  public static void writeField(@NotNull Element parent, @NotNull @NonNls String fieldName, @Nullable String value) {
     Element element = new Element(Constants.OPTION);
     element.setAttribute(Constants.NAME, fieldName);
     element.setAttribute(Constants.VALUE, value == null ? "" : value);
@@ -26,20 +27,20 @@ public class JDOMExternalizerUtil {
   /**
    * Adds the {@code <option name="{fieldName}" value="{value}"/>} element to the parent when the value differs from the default.
    */
-  public static void writeField(@NotNull Element parent, @NotNull String fieldName, @Nullable String value, @NotNull String defaultValue) {
+  public static void writeField(@NotNull Element parent, @NotNull @NonNls String fieldName, @Nullable String value, @NotNull String defaultValue) {
     if (!defaultValue.equals(value)) {
       writeField(parent, fieldName, value);
     }
   }
 
   @NotNull
-  public static String readField(@NotNull Element parent, @NotNull String fieldName, @NotNull String defaultValue) {
+  public static String readField(@NotNull Element parent, @NotNull @NonNls String fieldName, @NotNull String defaultValue) {
     String val = readField(parent, fieldName);
     return val == null ? defaultValue : val;
   }
 
   @Nullable
-  public static String readField(@NotNull Element parent, @NotNull String fieldName) {
+  public static String readField(@NotNull Element parent, @NonNls @NotNull String fieldName) {
     for (Element element : parent.getChildren(Constants.OPTION)) {
       if (fieldName.equals(element.getAttributeValue(Constants.NAME))) {
         return element.getAttributeValue(Constants.VALUE);

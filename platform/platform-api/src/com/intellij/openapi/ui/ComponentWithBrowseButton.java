@@ -14,18 +14,16 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,8 +149,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
-                                      @Nullable @Nls @NlsUI.Label String description,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor) {
@@ -163,8 +161,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
    */
   @Deprecated
-  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
-                                      @Nullable @Nls @NlsUI.Label String description,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
@@ -222,8 +220,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
-    public BrowseFolderActionListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
-                                      @Nullable @Nls @NlsUI.Label String description,
+    public BrowseFolderActionListener(@Nullable @NlsContexts.DialogTitle String title,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,

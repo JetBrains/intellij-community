@@ -160,6 +160,11 @@ public class CreatePatchConfigurationPanel {
     myReversePatchCheckbox.setSelected(reverse);
   }
 
+  public void setReverseEnabledAndVisible(boolean isAvailable) {
+    myReversePatchCheckbox.setVisible(isAvailable);
+    myReversePatchCheckbox.setEnabled(isAvailable);
+  }
+
   public boolean isToClipboard() {
     return myToClipboardButton.isSelected();
   }

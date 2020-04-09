@@ -17,8 +17,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 public interface InvertedIndex<Key, Value, Input> {
-  @ApiStatus.Internal
-  boolean ARE_COMPOSITE_INDEXERS_ENABLED = SystemProperties.getBooleanProperty("com.intellij.composite.indexers", true);
-
   @NotNull
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 

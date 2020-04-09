@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.intellij.util.io.Bits;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -85,12 +86,14 @@ public class BatchEvaluator {
     final EvaluationContext evaluationContext = command.getEvaluationContext();
     final SuspendContext suspendContext = evaluationContext.getSuspendContext();
 
-    if(!Registry.is("debugger.batch.evaluation") || !hasBatchEvaluator(evaluationContext)) {
+    if (!Registry.is("debugger.batch.evaluation") ||
+        !Registry.is("debugger.batch.evaluation.force") ||
+        !hasBatchEvaluator(evaluationContext)) {
       myDebugProcess.getManagerThread().invokeCommand(command);
     }
     else {
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
-      if(toStringCommands == null) {
+      if (toStringCommands == null) {
         final List<ToStringCommand> commands = new ArrayList<>();
         toStringCommands = commands;
         myBuffer.put(suspendContext, commands);
@@ -146,9 +149,11 @@ public class BatchEvaluator {
       }
 
       ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
-      argArray.setValues(values);
+      DebuggerUtilsEx.setValuesNoCheck(argArray, values);
       String value = DebuggerUtils.processCollectibleValue(
-        () -> debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray)),
+        () -> ((DebugProcessImpl)debugProcess).invokeMethod(
+          evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
+          MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
         result -> result instanceof StringReference ? ((StringReference)result).value() : null
       );
       if (value != null) {
@@ -160,7 +165,7 @@ public class BatchEvaluator {
             int length = Bits.getInt(bytes, pos);
             boolean error = length < 0;
             length = Math.abs(length);
-            String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
+            String message = new String(bytes, pos + 4, length, StandardCharsets.UTF_8);
             if (!iterator.hasNext()) {
               return false;
             }

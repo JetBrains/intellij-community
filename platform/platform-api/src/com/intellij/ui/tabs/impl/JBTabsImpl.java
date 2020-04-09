@@ -1542,7 +1542,7 @@ public class JBTabsImpl extends JComponent
       result.add(getIndexInVisibleArray(each), each);
     }
     if (isAlphabeticalMode()) {
-      Collections.sort(result, ABC_COMPARATOR);
+      result.sort(ABC_COMPARATOR);
     }
 
     myAllTabs = result;
@@ -1862,7 +1862,7 @@ public class JBTabsImpl extends JComponent
       return myVisibleInfos;
     } else {
       List<TabInfo> sortedCopy = new ArrayList<>(myVisibleInfos);
-      Collections.sort(sortedCopy, ABC_COMPARATOR);
+      sortedCopy.sort(ABC_COMPARATOR);
       return sortedCopy;
     }
   }
@@ -2668,7 +2668,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void sortTabs(Comparator<? super TabInfo> comparator) {
-    Collections.sort(myVisibleInfos, comparator);
+    myVisibleInfos.sort(comparator);
 
     relayout(true, false);
   }

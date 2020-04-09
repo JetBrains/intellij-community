@@ -18,7 +18,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
-import com.intellij.util.nls.NlsContexts
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
@@ -148,7 +148,7 @@ private fun setTitledBorder(@Nls(capitalization = Nls.Capitalization.Title) titl
  * Consider using [UI DSL](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
  */
 @JvmOverloads
-fun dialog(title: @Nls @NlsContexts.DialogTitle String,
+fun dialog(title: @NlsContexts.DialogTitle String,
            panel: JComponent,
            resizable: Boolean = false,
            focusedComponent: JComponent? = null,

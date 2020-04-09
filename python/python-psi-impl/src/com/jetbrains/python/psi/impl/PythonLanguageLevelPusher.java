@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.PythonCodeStyleService;
@@ -270,6 +271,8 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
         //final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+        indicator.setIndeterminate(true);
+        indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
         final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
         PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
         //if (!ApplicationManager.getApplication().isUnitTestMode()) {

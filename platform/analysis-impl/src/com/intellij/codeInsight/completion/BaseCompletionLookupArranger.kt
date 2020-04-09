@@ -53,6 +53,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     return element.getUserData(mySorterKey)
   }
 
+  @Synchronized
   override fun getRelevanceObjects(items: Iterable<LookupElement>, hideSingleValued: Boolean): Map<LookupElement, List<Pair<String, Any>>> {
     val map: MutableMap<LookupElement, MutableList<Pair<String, Any>>> = ContainerUtil.newIdentityHashMap()
     val inputBySorter = groupItemsBySorter(items)
@@ -114,6 +115,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     addElement(result.lookupElement, result.sorter, result.prefixMatcher, presentation)
   }
 
+  @Synchronized
   override fun addElement(element: LookupElement, presentation: LookupElementPresentation) {
     //StatisticsWeigher.clearBaseStatisticsInfo(element)
     val invariant = PresentationInvariant(presentation.itemText, presentation.tailText,
@@ -137,11 +139,8 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
   private var isInBatchUpdate = false
   private val batchItems = mutableListOf<kotlin.Pair<LookupElement, LookupElementPresentation>>()
 
-  /**
-   * Returns a "finishing" action to be run under Lookup lock. This method should be executed on a single (weighing) thread only.
-   */
   @ApiStatus.Internal
-  fun batchUpdate(runnable: Runnable): Runnable {
+  fun batchUpdate(runnable: Runnable) {
     if (isInBatchUpdate) {
       runnable.run()
     } else {
@@ -152,18 +151,25 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
         isInBatchUpdate = false
       }
       if (batchItems.isNotEmpty()) {
-        val copy = ArrayList(batchItems)
-        batchItems.clear()
-        return Runnable {
-          for ((element, presentation) in copy) {
-            super.addElement(element, presentation)
-          }
-          trimToLimit(createContext())
-        }
+        flushBatch()
       }
     }
-    return EmptyRunnable.INSTANCE
   }
+
+  @Synchronized
+  private fun flushBatch() {
+    for ((element, presentation) in batchItems) {
+      super.addElement(element, presentation)
+    }
+    batchItems.clear()
+    trimToLimit(createContext())
+  }
+
+  @Synchronized
+  override fun itemPattern(element: LookupElement): String = super.itemPattern(element)
+
+  @Synchronized
+  override fun prefixReplaced(lookup: Lookup, newPrefix: String) = super.prefixReplaced(lookup, newPrefix)
 
   override fun itemSelected(lookupItem: LookupElement?, completionChar: Char) {
     myProcess.itemSelected(lookupItem, completionChar)
@@ -264,6 +270,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     return doArrangeItems(lookup as LookupElementListPresenter, onExplicitAction)
   }
 
+  @Synchronized
   private fun doArrangeItems(lookup: LookupElementListPresenter, onExplicitAction: Boolean): Pair<MutableList<LookupElement>, Int> {
     val items = matchingItems
     var sortedByRelevance: Iterable<LookupElement> = sortByRelevance(groupItemsBySorter(items))
@@ -420,6 +427,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     return false
   }
 
+  @Synchronized
   override fun prefixChanged(lookup: Lookup) {
     myPrefixChanges++
     myFrozenItems.clear()

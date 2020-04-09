@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -70,7 +70,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
 
   protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
-    public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @NlsContexts.ListItem @NotNull String getFamilyName() {
       return "Wrap line";
     }
 

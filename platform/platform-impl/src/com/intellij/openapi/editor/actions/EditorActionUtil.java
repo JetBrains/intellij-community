@@ -259,12 +259,10 @@ public class EditorActionUtil {
            isQuotedToken(tokenIterator, text);
   }
 
-  @Contract("null, _ -> false")
   private static boolean isTokenStart(@NotNull HighlighterIterator tokenIterator, int offset) {
     return offset == tokenIterator.getStart();
   }
 
-  @Contract("null, _ -> false")
   private static boolean isTokenEnd(@NotNull HighlighterIterator tokenIterator, int offset) {
     return offset == tokenIterator.getEnd();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -57,6 +57,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -74,6 +75,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -143,6 +145,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private JPanel myScopeDetailsPanel;
 
   private JBTable myResultsPreviewTable;
+  private DefaultTableModel myResultsPreviewTableModel;
   private SimpleColoredComponent myUsagePreviewTitle;
   private UsagePreviewPanel myUsagePreviewPanel;
   private DialogWrapper myDialog;
@@ -302,12 +305,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
       root.setWindowDecorationStyle(JRootPane.NONE);
-      if (SystemInfo.isMac && StartupUiUtil.isUnderDarcula()) {
-        root.setBorder(PopupBorder.Factory.createColored(OnePixelDivider.BACKGROUND));
-      }
-      else {
-        root.setBorder(PopupBorder.Factory.create(true, true));
-      }
+      root.setBorder(PopupBorder.Factory.create(true, true));
       UIUtil.markAsPossibleOwner((Dialog)w);
       w.setBackground(UIUtil.getPanelBackground());
       w.setMinimumSize(panelSize);
@@ -639,7 +637,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myScopeSelectionToolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     mySelectedScope = scopeComponents[0].first;
 
-    myResultsPreviewTable = new JBTable(createTableModel()) {
+    myResultsPreviewTableModel = createTableModel();
+    myResultsPreviewTable = new JBTable(myResultsPreviewTableModel) {
       @Override
       public Dimension getPreferredScrollableViewportSize() {
         return new Dimension(getWidth(), 1 + getRowHeight() * 4);
@@ -714,7 +713,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       final List<UsageInfo> selection = new SmartList<>();
       VirtualFile file = null;
       for (int row : selectedRows) {
-        UsageInfo2UsageAdapter adapter = (UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(row, 0);
+        Object value = myResultsPreviewTable.getModel().getValueAt(row, 0);
+        UsageInfo usageInfo = FindInProjectExecutor.Companion.getInstance().getUsageInfo(value);
+        if (usageInfo != null) {
+          selection.add(usageInfo);
+          continue;
+        }
+        UsageInfo2UsageAdapter adapter = (UsageInfo2UsageAdapter) value;
         file = adapter.getFile();
         if (adapter.isValid()) {
           selection.addAll(Arrays.asList(adapter.getMergedInfos()));
@@ -765,7 +770,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     JBSplitter splitter = new OnePixelSplitter(true, .33f);
     splitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
-    splitter.setDividerWidth(JBUIScale.scale(2));
     splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
     JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
       @Override
@@ -826,10 +830,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     else {
       add(myFilterContextButton, "wrap");
     }
-    mySearchTextArea.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
+    mySearchTextArea.setBorder(
+      new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0),
+                         JBUI.Borders.empty(1, 0, 2, 0)));
     add(mySearchTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, gaptop 4, wrap");
-    myReplaceTextArea.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
-    add(myReplaceTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, gaptop 1, wrap");
+    myReplaceTextArea.setBorder(
+      new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 0, 0, 1, 0),
+                         JBUI.Borders.empty(1, 0, 2, 0)));
+    add(myReplaceTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, wrap");
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
     add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
     add(bottomPanel, "pushx, growx, dock south, sx 10");
@@ -850,6 +858,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private DefaultTableModel createTableModel() {
+    DefaultTableModel customModel = FindInProjectExecutor.Companion.getInstance().createTableModel();
+    if (customModel != null) return customModel;
+
     final DefaultTableModel model = new DefaultTableModel() {
       private String firstResultPath;
 
@@ -872,7 +883,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         return false;
       }
 
-      @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
+      @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked", "rawtypes"})
       @Override
       //Inserts search results in sorted order
       public void addRow(Object[] rowData) {
@@ -880,14 +891,14 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           dataVector.clear();
           fireTableDataChanged();
         }
-        final Vector<UsageInfo2UsageAdapter> v = convertToVector(rowData);
+        final Vector<UsageInfo2UsageAdapter> v = (Vector)convertToVector(rowData);
         if (dataVector.isEmpty()) {
           addRow(v);
           myResultsPreviewTable.getSelectionModel().setSelectionInterval(0, 0);
           firstResultPath = v.get(0).getFile().getPath();
         }
         else {
-          final int p = Collections.binarySearch(dataVector, v, COMPARATOR);
+          final int p = Collections.binarySearch((Vector<Vector<UsageInfo2UsageAdapter>>)((Vector)dataVector), v, COMPARATOR);
           assert p < 0 : "duplicate result found";
           int row = -(p + 1);
           insertRow(row, v);
@@ -1182,9 +1193,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     if (myHelper.myPreviousModel != null && myHelper.myPreviousModel.getStringToFind().length() < myHelper.getModel().getStringToFind().length()) {
       final DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
       for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
-        final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)previousModel.getValueAt(i, 0);
-        final VirtualFile file = usage.getFile();
-        if (file != null) filesToScanInitially.add(file);
+        final Object value = previousModel.getValueAt(i, 0);
+        if (value instanceof UsageInfo2UsageAdapter) {
+          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)value;
+          final VirtualFile file = usage.getFile();
+          if (file != null) filesToScanInitially.add(file);
+        }
       }
     }
 
@@ -1203,11 +1217,20 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
       FindInProjectUtil.getScopeFromModel(myProject, myHelper.myPreviousModel), myProject);
-    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer(scope));
+    TableCellRenderer renderer = FindInProjectExecutor.Companion.getInstance().createTableCellRenderer();
+    if (renderer == null) renderer = new UsageTableCellRenderer(scope);
+    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
+
+    if (FindInProjectExecutor.Companion.getInstance().startSearch(myResultsPreviewSearchProgress, myResultsPreviewTableModel, findModel, myProject)) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myCodePreviewComponent.setVisible(true);
+      });
+      return;
+    }
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
@@ -1621,7 +1644,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return Comparing.equal(mySelectedContextName, getTemplatePresentation().getText());
+      return Objects.equals(mySelectedContextName, getTemplatePresentation().getText());
     }
 
     @Override
@@ -1665,6 +1688,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private class MyShowFilterPopupAction extends DumbAwareAction {
+    private final PopupState myPopupState = new PopupState();
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {
@@ -1690,9 +1714,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (e.getData(PlatformDataKeys.CONTEXT_COMPONENT) == null) return;
+      if (myPopupState.isRecentlyHidden()) return;
 
       ListPopup listPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null, mySwitchContextGroup, e.getDataContext(), false, null, 10);
+      listPopup.addListener(myPopupState);
       listPopup.showUnderneathOf(myFilterContextButton);
     }
   }

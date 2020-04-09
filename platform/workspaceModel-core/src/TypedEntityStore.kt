@@ -1,5 +1,7 @@
 package com.intellij.workspace.api
 
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -91,6 +93,7 @@ abstract class EntityReference<out E : TypedEntity> {
  */
 abstract class PersistentEntityId<out E : TypedEntityWithPersistentId> {
   abstract val parentId: PersistentEntityId<*>?
+
   /** Text which can be shown in an error message if id cannot be resolved */
   abstract val presentableName: String
 
@@ -129,14 +132,33 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
   fun collectChanges(original: TypedEntityStorage): Map<Class<*>, List<EntityChange<*>>>
 
   // Reset all collected changes. TODO ugly!
+  // This method doesn't reset builder to it initial state, but just resets a changelog,
+  //   so next call to collectChanges will return empty list
   fun resetChanges()
 
   fun toStorage(): TypedEntityStorage
 
   companion object {
-    fun create(): TypedEntityStorageBuilder = TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+
+    private const val NEW_STORE_REGISTRY_KEY = "ide.new.project.model.newstorage"
+    private val newStoreEnabled = Registry.`is`(NEW_STORE_REGISTRY_KEY, false)
+
+    fun create(): TypedEntityStorageBuilder {
+      return if (newStoreEnabled) {
+        PEntityStorageBuilder.create()
+      }
+      else {
+        TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+      }
+    }
+
     fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder {
-      return TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
+      return if (newStoreEnabled) {
+        PEntityStorageBuilder.from(storage)
+      }
+      else {
+        TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
+      }
     }
   }
 }

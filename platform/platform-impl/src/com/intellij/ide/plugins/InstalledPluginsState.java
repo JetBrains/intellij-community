@@ -38,6 +38,27 @@ public final class InstalledPluginsState {
 
   private Runnable myShutdownCallback;
 
+  private static List<IdeaPluginDescriptor> myPreInstalledPlugins;
+
+  public static void addPreInstalledPlugin(@NotNull IdeaPluginDescriptor descriptor) {
+    if (myPreInstalledPlugins == null) {
+      myPreInstalledPlugins = new ArrayList<>();
+    }
+    myPreInstalledPlugins.add(descriptor);
+  }
+
+  public InstalledPluginsState() {
+    if (myPreInstalledPlugins != null) {
+      for (IdeaPluginDescriptor plugin : myPreInstalledPlugins) {
+        if (!PluginManagerCore.isPluginInstalled(plugin.getPluginId())) {
+          onPluginInstall(plugin, false, false);
+        }
+      }
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      myPreInstalledPlugins = null;
+    }
+  }
+
   @NotNull
   public Collection<IdeaPluginDescriptor> getInstalledPlugins() {
     synchronized (myLock) {

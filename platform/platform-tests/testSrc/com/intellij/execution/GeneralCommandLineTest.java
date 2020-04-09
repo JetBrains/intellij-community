@@ -7,7 +7,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -151,9 +150,10 @@ public class GeneralCommandLineTest {
   @Test(timeout = 60000)
   public void unicodePath() throws Exception {
     // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
+    // on Windows, Unicode-aware functions are used both for paths and child process creation
     String uni = IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Objects.equals(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     String mark = String.valueOf(new Random().nextInt());
     String command = SystemInfo.isWindows ? "@echo " + mark + '\n' : "#!/bin/sh\necho " + mark + '\n';
@@ -169,11 +169,12 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void unicodeClassPath() throws Exception {
-    // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
-    // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
+    // in addition to the above ...
+    // ... on Unix, JRE decodes arguments using "sun.jnu.encoding"
+    // ... on Windows, JRE receives arguments in ANSI code page and decodes using "sun.jnu.encoding"
     String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Objects.equals(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     File dir = tempDir.newFolder("spaces 'and quotes' and " + uni);
     Pair<GeneralCommandLine, File> command = makeHelperCommand(dir, CommandTestHelper.ARG, "test");
@@ -284,7 +285,7 @@ public class GeneralCommandLineTest {
     // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
     String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
     assumeTrue(uni != null);
-    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+    assumeTrue(SystemInfo.isWindows || Objects.equals(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
     String[] args = {"some", uni, "parameters"};
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, args);

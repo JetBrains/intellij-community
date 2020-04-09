@@ -2517,7 +2517,7 @@ public class HighlightUtil {
     while (element != null) {
       if (element instanceof PsiMethod || element instanceof PsiClass) break;
       if (element instanceof PsiLabeledStatement && element != statement &&
-          Comparing.equal(((PsiLabeledStatement)element).getLabelIdentifier().getText(), text)) {
+          Objects.equals(((PsiLabeledStatement)element).getLabelIdentifier().getText(), text)) {
         String description = JavaErrorBundle.message("duplicate.label", text);
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description).create();
       }

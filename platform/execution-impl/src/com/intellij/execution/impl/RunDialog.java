@@ -15,9 +15,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +101,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
 
   public static boolean editConfiguration(final Project project,
                                           @NotNull RunnerAndConfigurationSettings configuration,
-                                          @Nls @NlsContexts.DialogTitle String title,
+                                          @NlsContexts.DialogTitle String title,
                                           @Nullable final Executor executor) {
     SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration, executor);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, IdeModalityType.IDE) {
@@ -118,7 +117,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     return dialog.showAndGet();
   }
 
-  public static SingleConfigurableEditor editShortenClasspathSetting(final RunnerAndConfigurationSettings settings, @Nls @NlsContexts.DialogTitle String title) {
+  public static SingleConfigurableEditor editShortenClasspathSetting(final RunnerAndConfigurationSettings settings, @NlsContexts.DialogTitle String title) {
     SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(settings, null);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(settings.getConfiguration().getProject(), configurable, IdeModalityType.IDE) {
       @Override

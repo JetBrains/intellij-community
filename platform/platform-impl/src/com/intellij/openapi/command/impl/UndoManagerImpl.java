@@ -24,7 +24,9 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +34,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +63,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder(false);
 
   private final CommandMerger myMerger;
+  private final MessageBusConnection myConnection;
 
   private CommandMerger myCurrentMerger;
   private Project myCurrentActionProject = DummyProject.getInstance();
@@ -89,13 +93,15 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     myMerger = new CommandMerger(this);
 
     if (myProject != null && myProject.isDefault()) {
+      myConnection = null;
       return;
     }
 
     myEditorProvider = new FocusBasedCurrentEditorProvider();
 
     MessageBus messageBus = myProject == null ? ApplicationManager.getApplication().getMessageBus() : myProject.getMessageBus();
-    messageBus.connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
+    myConnection = messageBus.connect(this);
+    myConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
       private boolean myStarted;
 
       @Override
@@ -267,6 +273,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public void undoableActionPerformed(@NotNull UndoableAction action) {
     ApplicationManager.getApplication().assertIsWriteThread();
     if (myProject != null && myProject.isDisposed()) return;
+    if (myConnection != null) myConnection.deliverImmediately();
 
     if (myCurrentOperationState != OperationState.NONE) return;
 

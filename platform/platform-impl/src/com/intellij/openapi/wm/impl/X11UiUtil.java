@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.util.ArrayUtil.newLongArray;
 
-public class X11UiUtil {
+public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
 
   private static final int True = 1;
@@ -62,8 +62,7 @@ public class X11UiUtil {
     private long NET_WM_ACTION_FULLSCREEN;
     private long NET_WM_STATE_FULLSCREEN;
 
-    @Nullable
-    private static Xlib getInstance() {
+    private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
       if (!SystemInfo.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
         return null;
@@ -124,8 +123,7 @@ public class X11UiUtil {
       }
     }
 
-    @Nullable
-    private Long getNetWmWindow() throws Exception {
+    private @Nullable Long getNetWmWindow() throws Exception {
       long rootWindow = getRootWindow(0);
       long[] values = getLongArrayProperty(rootWindow, NET_SUPPORTING_WM_CHECK, XA_WINDOW);
       return values != null && values.length > 0 ? values[0] : null;
@@ -135,14 +133,12 @@ public class X11UiUtil {
       return getWindowProperty(window, name, type, FORMAT_LONG);
     }
 
-    @Nullable
-    private String getUtfStringProperty(long window, long name) throws Exception {
+    private @Nullable String getUtfStringProperty(long window, long name) throws Exception {
       byte[] bytes = getWindowProperty(window, name, UTF8_STRING, FORMAT_BYTE);
       return bytes != null ? new String(bytes, StandardCharsets.UTF_8) : null;
     }
 
-    @Nullable
-    private <T> T getWindowProperty(long window, long name, long type, long expectedFormat) throws Exception {
+    private @Nullable <T> T getWindowProperty(long window, long name, long type, long expectedFormat) throws Exception {
       long data = unsafe.allocateMemory(64);
       awtLock.invoke(null);
       try {
@@ -221,12 +217,11 @@ public class X11UiUtil {
     }
   }
 
-  @Nullable private static final Xlib X11 = Xlib.getInstance();
+  private static final @Nullable Xlib X11 = Xlib.getInstance();
 
   // WM detection and patching
 
-  @Nullable
-  public static String getWmName() {
+  public static @Nullable String getWmName() {
     if (X11 == null) return null;
 
     try {
@@ -290,8 +285,7 @@ public class X11UiUtil {
     }
   }
 
-  @Nullable
-  private static String getAwesomeWMVersion() {
+  private static @Nullable String getAwesomeWMVersion() {
     try {
       String version = ExecUtil.execAndReadLine(new GeneralCommandLine("awesome", "--version"));
       if (version != null) {

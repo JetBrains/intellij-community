@@ -776,7 +776,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         
         class C implements I {
             @Override
-            public @annotations.NotNull Object foo() {
+            public @NotNull Object foo() {
                 return ""; 
             }
         }

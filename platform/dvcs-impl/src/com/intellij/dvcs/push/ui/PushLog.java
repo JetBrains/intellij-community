@@ -401,7 +401,7 @@ public final class PushLog extends JPanel implements DataProvider {
     for (int row : rows) {
       sorted.add(row);
     }
-    Collections.sort(sorted, Collections.reverseOrder());
+    sorted.sort(Collections.reverseOrder());
     return sorted;
   }
 

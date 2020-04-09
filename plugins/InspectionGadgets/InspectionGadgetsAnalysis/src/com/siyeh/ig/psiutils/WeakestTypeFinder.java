@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -118,7 +118,7 @@ public class WeakestTypeFinder {
       }
       else if (referenceGrandParent instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)referenceGrandParent;
-        if (PsiUtil.skipParenthesizedExprUp(methodCallExpression.getParent()) instanceof PsiTypeCastExpression || 
+        if (PsiUtil.skipParenthesizedExprUp(methodCallExpression.getParent()) instanceof PsiTypeCastExpression ||
             !findWeakestType(methodCallExpression, weakestTypeClasses)) {
           return Collections.emptyList();
         }
@@ -387,7 +387,7 @@ public class WeakestTypeFinder {
       result.add(method12.getMethod());
       return true;
     });
-    Collections.sort(result, (method1, method2) -> {
+    result.sort((method1, method2) -> {
       // methods from deepest super classes first
       final PsiClass aClass1 = method1.getContainingClass();
       final PsiClass aClass2 = method2.getContainingClass();

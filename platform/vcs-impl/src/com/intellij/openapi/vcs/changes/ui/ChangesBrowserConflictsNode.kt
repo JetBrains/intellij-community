@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -13,9 +14,10 @@ import java.util.stream.Collectors
  */
 class ChangesBrowserConflictsNode(val project: Project) : ChangesBrowserNode<Unit>(Unit) {
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    renderer.append("Merge Conflicts", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+    renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     renderer.append(FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-    renderer.append("Resolve", SimpleTextAttributes.LINK_BOLD_ATTRIBUTES, Runnable { showResolveConflictsDialog() })
+    renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"), SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
+                    Runnable { showResolveConflictsDialog() })
   }
 
   private fun showResolveConflictsDialog() {

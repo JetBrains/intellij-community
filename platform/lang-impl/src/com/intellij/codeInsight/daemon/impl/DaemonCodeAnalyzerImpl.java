@@ -96,6 +96,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
   private final PassExecutorService myPassExecutorService;
+  // Timestamp of myUpdateRunnable which it's needed to start (in System.nanoTime() sense)
+  // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
+  // When it's so happens that future is started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
+  private long myScheduledUpdateTimestamp; // guarded by this
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project) {
     // DependencyValidationManagerImpl adds scope listener, so, we need to force service creation
@@ -130,7 +134,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myDisposed = true;
       myLastSettings = null;
     });
-    myPassExecutorService.resetNextPassId();
   }
 
   @Override
@@ -590,14 +593,23 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   // return true if the progress really was canceled
   synchronized boolean stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     boolean canceled = cancelUpdateProgress(toRestartAlarm, reason);
-    // optimisation: this check is to avoid too many re-schedules in case of thousands of events spikes
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
 
-    if (restart && myUpdateRunnableFuture.isDone()) {
-      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.getAutoReparseDelay(), TimeUnit.MILLISECONDS);
+    // reset myScheduledUpdateStart always, but re-schedule myUpdateRunnable only rarely because of thread scheduling overhead
+    if (restart) {
+      myScheduledUpdateTimestamp = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
+    }
+    // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
+    boolean isDone = myUpdateRunnableFuture.isDone();
+    if (restart && isDone) {
+      scheduleUpdateRunnable(mySettings.getAutoReparseDelay());
     }
 
     return canceled;
+  }
+
+  private void scheduleUpdateRunnable(long delayNanos) {
+    myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
   }
 
   // return true if the progress really was canceled
@@ -652,7 +664,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    * @param includeFixRange states whether the rage of a fix associated with an info should be taken into account during the range checking
    * @param highestPriorityOnly states whether to include all infos or only the ones with the highest HighlightSeverity
    * @param minSeverity the minimum HighlightSeverity starting from which infos are considered for collection
-   * @return
    */
   @Nullable
   public HighlightInfo findHighlightsByOffset(@NotNull Document document,
@@ -780,7 +791,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
-  // made this class static and fields cleareable to avoid leaks when this object stuck in invokeLater queue
+  // made this class static and fields clearable to avoid leaks when this object stuck in invokeLater queue
   private static class UpdateRunnable implements Runnable {
     private Project myProject;
     private UpdateRunnable(@NotNull Project project) {
@@ -801,7 +812,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         return;
       }
 
-      final Collection<FileEditor> activeEditors = dca.getSelectedEditors();
+      synchronized (dca) {
+        long actualDelay = dca.myScheduledUpdateTimestamp - System.nanoTime();
+        if (actualDelay > 0) {
+           // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
+          dca.scheduleUpdateRunnable(actualDelay);
+          return;
+        }
+      }
+
+      Collection<FileEditor> activeEditors = dca.getSelectedEditors();
       boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
       PassExecutorService.log(dca.getUpdateProgress(), null, "Update Runnable. myUpdateByTimerEnabled:",
                               updateByTimerEnabled, " something disposed:",
@@ -841,9 +861,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
         boolean hasPasses = false;
         for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
-          HighlightingPass[] filtered = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
-          entry.setValue(filtered);
-          hasPasses |= filtered.length != 0;
+          HighlightingPass[] dumbAwarePasses = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
+          entry.setValue(dumbAwarePasses);
+          hasPasses |= dumbAwarePasses.length != 0;
         }
         if (!hasPasses) {
           HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
@@ -966,10 +986,18 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @ApiStatus.Internal
   public void runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(boolean flag) {
-    doRestart("runLocalInspectionPassAfterCompletionOfGeneralHighlightPass("+flag+") called");
-    TextEditorHighlightingPassRegistrarImpl registrar =
-      (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
-    registrar.runInspectionsAfterCompletionOfGeneralHighlightPass(flag);
-    myPassExecutorService.resetNextPassId();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    setUpdateByTimerEnabled(false);
+    try {
+      cancelUpdateProgress(false, "runLocalInspectionPassAfterCompletionOfGeneralHighlightPass");
+      myPassExecutorService.cancelAll(true);
+
+      TextEditorHighlightingPassRegistrarImpl registrar =
+        (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
+      registrar.runInspectionsAfterCompletionOfGeneralHighlightPass(flag);
+    }
+    finally {
+      setUpdateByTimerEnabled(true);
+    }
   }
 }

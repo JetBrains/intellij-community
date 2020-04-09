@@ -218,6 +218,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // openProcessPopup may require dispatch thread
+
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
 
@@ -508,7 +510,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public Couple<String> setText(@Nullable final String text, @Nullable final String requestor) {
-    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
+    if (StringUtil.isEmpty(text) && !Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
       return Couple.of(myInfoPanel.getText(), myCurrentRequestor);
     }
 

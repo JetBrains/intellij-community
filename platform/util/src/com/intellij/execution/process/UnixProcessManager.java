@@ -22,10 +22,8 @@ import java.util.*;
 
 /**
  * Use {@link com.intellij.execution.process.OSProcessUtil} wherever possible.
- *
- * @author traff
  */
-public class UnixProcessManager {
+public final class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
   // https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals

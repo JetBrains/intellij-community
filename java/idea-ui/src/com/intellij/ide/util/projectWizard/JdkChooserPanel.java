@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -223,7 +223,7 @@ public class JdkChooserPanel extends JPanel {
     Sdk oldSelection = myList.getSelectedValue();
 
     myListModel.clear();
-    Collections.sort(allJdks, (o1, o2) -> {
+    allJdks.sort((o1, o2) -> {
       boolean unknown1 = !knownJdks.contains(o1);
       boolean unknown2 = !knownJdks.contains(o2);
       if (unknown1 != unknown2) {

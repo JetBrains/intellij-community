@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -329,7 +329,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         final String qualifiedName = aClass.getQualifiedName();
         for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
           ClassPattern classPattern = iterator.next();
-          if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+          if (Objects.equals(classPattern.pattern, qualifiedName)) {
             if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
               if (classPattern.method.isEmpty()) {
                 //todo if inheritance or pattern?

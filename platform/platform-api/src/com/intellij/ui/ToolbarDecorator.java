@@ -3,11 +3,12 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
@@ -363,7 +364,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   public JPanel createPanel() {
     CommonActionsPanel.Buttons[] buttons = getButtons();
     JComponent contextComponent = getComponent();
-    contextComponent.putClientProperty("forceVisibleRowCount", true);
+    UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition,
                              myExtraActions.toArray(new AnActionButton[0]),
@@ -558,20 +559,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(@Nls @NlsUI.Button String text,
-                               @Nls @NlsUI.ButtonTooltip String description,
+    public ElementActionButton(@NlsContexts.Button String text,
+                               @NlsContexts.Tooltip String description,
                                @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(@Nls @NlsUI.Button String text, Icon icon) {
+    public ElementActionButton(@NlsContexts.Button String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(@Nls @NlsUI.Button String text) {
+    public ElementActionButton(@NlsContexts.Button String text) {
       super(text);
     }
   }

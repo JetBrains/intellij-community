@@ -19,7 +19,7 @@ public final class SupportCode {
 
     // Parsing is copied from Presentation.setText(String, boolean)
     int index = -1;
-    final StringBuffer plainText = new StringBuffer();
+    final StringBuilder plainText = new StringBuilder();
     for (int i = 0; i < textWithMnemonic.length(); i++) {
       char ch = textWithMnemonic.charAt(i);
       if (ch == '&') {
@@ -73,9 +73,9 @@ public final class SupportCode {
    */
   public static void setDisplayedMnemonicIndex(JComponent component, int index) {
     try {
-      Method method = component.getClass().getMethod("setDisplayedMnemonicIndex", new Class[]{int.class});
+      Method method = component.getClass().getMethod("setDisplayedMnemonicIndex", int.class);
       method.setAccessible(true);
-      method.invoke(component, new Object[]{new Integer(index)});
+      method.invoke(component, Integer.valueOf(index));
     }
     catch (Exception e) {
       // JDK earlier than 1.4 - do nothing

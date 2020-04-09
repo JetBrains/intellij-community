@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -20,10 +19,18 @@ import com.intellij.xml.index.SchemaTypeInfo;
 import com.intellij.xml.index.SchemaTypeInheritanceIndex;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
+import org.jetbrains.annotations.NotNull;
 
 public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
@@ -51,7 +58,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
             Set<XmlFile> targetFiles = nsMap.get(info.getNamespaceUri());
             if (targetFiles == null) {
               targetFiles = new HashSet<>();
-              if (Comparing.equal(info.getNamespaceUri(), thisNs)) {
+              if (Objects.equals(info.getNamespaceUri(), thisNs)) {
                 targetFiles.add(file);
               }
               final Collection<XmlFile> files = ReadAction.compute(() -> XmlUtil.findNSFilesByURI(info.getNamespaceUri(), project, module));

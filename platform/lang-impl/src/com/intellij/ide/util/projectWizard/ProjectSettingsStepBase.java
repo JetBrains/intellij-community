@@ -116,7 +116,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   protected final JButton createActionButton() {
-    JButton button = new JButton("Create");
+    JButton button = new JButton(IdeBundle.message("new.dir.project.create"));
     button.putClientProperty(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
 
     myCreateButton = button;
