@@ -193,17 +193,18 @@ public class BuildTargetSourcesState implements BuildListener {
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
             String filePathString = path.toString();
-            if (!filePathString.endsWith(".class")) return FileVisitResult.CONTINUE;
-            byte[] calculatedHash = myCalculatedHashes.get(filePathString);
-            if (calculatedHash != null) {
-              targetRootHashes.add(calculatedHash);
-            }
-            else {
-              File file = path.toFile();
-              getOutputFileHash(file, rootFile).ifPresent(hash -> {
-                targetRootHashes.add(hash);
-                myCalculatedHashes.put(filePathString, hash);
-              });
+            if (filePathString.endsWith(".class")) {
+              byte[] calculatedHash = myCalculatedHashes.get(filePathString);
+              if (calculatedHash != null) {
+                targetRootHashes.add(calculatedHash);
+              }
+              else {
+                File file = path.toFile();
+                getOutputFileHash(file, rootFile).ifPresent(hash -> {
+                  targetRootHashes.add(hash);
+                  myCalculatedHashes.put(filePathString, hash);
+                });
+              }
             }
             return FileVisitResult.CONTINUE;
           }
@@ -249,7 +250,7 @@ public class BuildTargetSourcesState implements BuildListener {
                          myBuildRootIndex.getTargetRoots(target, context).stream().map(sourceRootHashCalculationFunction))
       .filter(it -> !ContainerUtil.isEmpty(it))
       .flatMap(List::stream)
-      .reduce((acc, value) -> sum(acc, value));
+      .reduce(BuildTargetSourcesState::sum);
   }
 
   @NotNull
