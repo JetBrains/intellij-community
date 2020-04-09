@@ -121,13 +121,12 @@ internal class GHPRComponentFactory(private val project: Project) {
     })
     loadingModel.future = contextValue.value
 
-    return GHLoadingPanel(loadingModel, contentContainer, uiDisposable,
-                          GHLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from GitHub")).apply {
-      errorHandler = GHLoadingErrorHandlerImpl(project, account) {
-        contextValue.drop()
-        loadingModel.future = contextValue.value
-      }
-    }
+    return GHLoadingPanel.create(loadingModel, contentContainer, uiDisposable,
+                                 GHLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from GitHub"),
+                                 GHLoadingErrorHandlerImpl(project, account) {
+                                   contextValue.drop()
+                                   loadingModel.future = contextValue.value
+                                 })
   }
 
   private fun createContent(dataContext: GHPRDataContext, disposable: Disposable): JComponent {
@@ -248,11 +247,12 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsModel = createValueModel(detailsLoadingModel)
 
     val detailsPanel = createDetailsPanel(dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
-    val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
-                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
-                                                                                   "Can't load details")).apply {
-      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadDetails() }
-    }.also {
+    val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, detailsPanel, disposable,
+                                                    GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
+                                                                                          "Can't load details"),
+                                                    GHLoadingErrorHandlerImpl(project, dataContext.account) {
+                                                      dataProvider.reloadDetails()
+                                                    }).also {
       (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerCustomShortcutSet(it, disposable)
     }
 
@@ -262,12 +262,11 @@ internal class GHPRComponentFactory(private val project: Project) {
         val panel = object : NonOpaquePanel(centerPanel), ComponentWithEmptyText {
           override fun getEmptyText() = viewer.emptyText
         }
-        return GHLoadingPanel(changesLoadingModel, panel, disposable,
-                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
-                                                                    "Can't load changes",
-                                                                    "Pull request does not contain any changes")).apply {
-          errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadChanges() }
-        }
+        return GHLoadingPanel.create(changesLoadingModel, panel, disposable,
+                                     GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
+                                                                           "Can't load changes",
+                                                                           "Pull request does not contain any changes"),
+                                     GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadChanges() })
       }
     }.also {
       actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
@@ -360,12 +359,13 @@ internal class GHPRComponentFactory(private val project: Project) {
       if (index != -1) ScrollingUtil.ensureRangeIsVisible(commitsList, index, index)
     }
 
-    val commitsLoadingPanel = GHLoadingPanel(changesLoadingModel, commitsBrowser, disposable,
-                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view commits",
-                                                                                   "Can't load commits",
-                                                                                   "Pull request does not contain any commits")).apply {
-      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { actionDataContext.pullRequestDataProvider.reloadChanges() }
-    }
+    val commitsLoadingPanel = GHLoadingPanel.create(changesLoadingModel, commitsBrowser, disposable,
+                                                    GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view commits",
+                                                                                          "Can't load commits",
+                                                                                          "Pull request does not contain any commits"),
+                                                    GHLoadingErrorHandlerImpl(project, dataContext.account) {
+                                                      actionDataContext.pullRequestDataProvider.reloadChanges()
+                                                    })
 
     return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {
       isOpaque = true

@@ -11,6 +11,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.NotNullFunction
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.util.getName
@@ -22,14 +23,40 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 
-class GHLoadingPanel<T>(private val model: GHLoadingModel,
-                        private val content: T,
-                        parentDisposable: Disposable,
-                        private val textBundle: EmptyTextBundle = EmptyTextBundle.Default)
+class GHLoadingPanel<T> @Deprecated("Replaced with factory method becuse JBLoadingPanel is not really needed for initial loading",
+                                    ReplaceWith("GHLoadingPanel.create"))
+constructor(model: GHLoadingModel,
+            content: T,
+            parentDisposable: Disposable,
+            textBundle: EmptyTextBundle = EmptyTextBundle.Default)
   : JBLoadingPanel(BorderLayout(), createDecorator(parentDisposable))
   where T : JComponent, T : ComponentWithEmptyText {
 
   companion object {
+
+    fun <C> create(model: GHLoadingModel,
+                   content: C,
+                   parentDisposable: Disposable,
+                   textBundle: EmptyTextBundle = EmptyTextBundle.Default,
+                   errorHandler: GHLoadingErrorHandler? = null): JComponent where C : JComponent, C : ComponentWithEmptyText {
+
+      val updateLoadingPanel =
+        ProgressStripe(content, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+          isOpaque = false
+        }
+
+      val loadingPanel = JBLoadingPanel(BorderLayout(), createDecorator(parentDisposable)).apply {
+        isOpaque = false
+
+        add(updateLoadingPanel, BorderLayout.CENTER)
+      }
+
+      Controller(model, loadingPanel, updateLoadingPanel,
+                 content.emptyText,
+                 textBundle) { errorHandler }
+      return loadingPanel
+    }
+
     private fun createDecorator(parentDisposable: Disposable): NotNullFunction<JPanel, LoadingDecorator> {
       return NotNullFunction<JPanel, LoadingDecorator> {
         object : LoadingDecorator(it, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -47,6 +74,60 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel,
         }
       }
     }
+
+    class Controller(private val model: GHLoadingModel,
+                     private val loadingPanel: JBLoadingPanel,
+                     private val updateLoadingPanel: ProgressStripe,
+                     private val statusText: StatusText,
+                     private val textBundle: EmptyTextBundle,
+                     private val errorHandlerProvider: () -> GHLoadingErrorHandler?) {
+
+      init {
+        model.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+          override fun onLoadingStarted() = update()
+          override fun onLoadingCompleted() = update()
+          override fun onReset() = update()
+        })
+        update()
+      }
+
+      private fun update() {
+        if (model.loading) {
+          loadingPanel.isFocusable = true
+          statusText.clear()
+          if (model.resultAvailable) {
+            updateLoadingPanel.startLoading()
+          }
+          else {
+            loadingPanel.startLoading()
+          }
+        }
+        else {
+          loadingPanel.stopLoading()
+          updateLoadingPanel.stopLoading()
+
+          if (model.resultAvailable) {
+            loadingPanel.isFocusable = false
+            loadingPanel.resetKeyboardActions()
+            statusText.text = textBundle.empty
+          }
+          else {
+            val error = model.error
+            if (error != null) {
+              statusText.clear()
+                .appendText(textBundle.errorPrefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
+                .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+
+              errorHandlerProvider()?.getActionForError(error)?.let {
+                statusText.appendSecondaryText(" ${it.getName()}", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
+                loadingPanel.registerKeyboardAction(it, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
+              }
+            }
+            else statusText.text = textBundle.default
+          }
+        }
+      }
+    }
   }
 
   private val updateLoadingPanel =
@@ -60,50 +141,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel,
 
     add(updateLoadingPanel, BorderLayout.CENTER)
 
-    model.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingStarted() = update()
-      override fun onLoadingCompleted() = update()
-      override fun onReset() = update()
-    })
-    update()
-  }
-
-  private fun update() {
-    if (model.loading) {
-      isFocusable = true
-      content.emptyText.clear()
-      if (model.resultAvailable) {
-        updateLoadingPanel.startLoading()
-      }
-      else {
-        startLoading()
-      }
-    }
-    else {
-      stopLoading()
-      updateLoadingPanel.stopLoading()
-
-      if (model.resultAvailable) {
-        isFocusable = false
-        resetKeyboardActions()
-        content.emptyText.text = textBundle.empty
-      }
-      else {
-        val error = model.error
-        if (error != null) {
-          val emptyText = content.emptyText
-          emptyText.clear()
-            .appendText(textBundle.errorPrefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
-            .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-
-          errorHandler?.getActionForError(error)?.let {
-            emptyText.appendSecondaryText(" ${it.getName()}", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
-            registerKeyboardAction(it, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
-          }
-        }
-        else content.emptyText.text = textBundle.default
-      }
-    }
+    Controller(model, this, updateLoadingPanel, content.emptyText, textBundle) { errorHandler }
   }
 
   interface EmptyTextBundle {
