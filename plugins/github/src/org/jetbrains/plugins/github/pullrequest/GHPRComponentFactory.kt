@@ -20,10 +20,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.SingleHeightTabs
@@ -59,7 +57,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
-import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -68,6 +65,7 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
+import javax.swing.border.Border
 
 @Service
 internal class GHPRComponentFactory(private val project: Project) {
@@ -100,30 +98,14 @@ internal class GHPRComponentFactory(private val project: Project) {
     val uiDisposable = Disposer.newDisposable()
     Disposer.register(parentDisposable, uiDisposable)
 
-    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable)
-    val contentContainer = JBPanelWithEmptyText(null).apply {
-      background = UIUtil.getListBackground()
+    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable).apply {
+      future = contextValue.value
     }
-    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        val dataContext = loadingModel.result
-        if (dataContext != null) {
-          val content = createContent(dataContext, uiDisposable)
 
-          with(contentContainer) {
-            layout = BorderLayout()
-            add(content, BorderLayout.CENTER)
-            validate()
-            repaint()
-          }
-        }
-      }
-    })
-    loadingModel.future = contextValue.value
-
-    return GHLoadingPanel.create(loadingModel, contentContainer, uiDisposable,
-                                 GHLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from GitHub"),
-                                 GHLoadingErrorHandlerImpl(project, account) {
+    return GHLoadingPanel.create(loadingModel,
+                                 { createContent(loadingModel.result!!, uiDisposable) }, uiDisposable,
+                                 errorPrefix = "Can't load data from GitHub",
+                                 errorHandler = GHLoadingErrorHandlerImpl(project, account) {
                                    contextValue.drop()
                                    loadingModel.future = contextValue.value
                                  })
@@ -246,10 +228,12 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val detailsModel = createValueModel(detailsLoadingModel)
 
-    val detailsPanel = createDetailsPanel(dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
-    val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, detailsPanel, disposable,
-                                                    GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
-                                                                                          "Can't load details"),
+    val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
+      createDetailsPanel(dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
+    },
+                                                    disposable,
+                                                    "Select pull request to view details",
+                                                    "Can't load details",
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
                                                       dataProvider.reloadDetails()
                                                     }).also {
@@ -257,17 +241,22 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     val changesBrowser = object : GHPRChangesBrowser(changesLoadingModel.cumulativeChangesModel, changesLoadingModel.diffHelper, project) {
+
       override fun createCenterPanel(): JComponent {
-        val centerPanel = super.createCenterPanel()
-        val panel = object : NonOpaquePanel(centerPanel), ComponentWithEmptyText {
-          override fun getEmptyText() = viewer.emptyText
+        return GHLoadingPanel.create(changesLoadingModel, { super.createCenterPanel() },
+                                     disposable,
+                                     "Select pull request to view changes",
+                                     "Can't load changes",
+                                     GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadChanges() }).apply {
+          border = IdeBorderFactory.createBorder(SideBorder.TOP)
         }
-        return GHLoadingPanel.create(changesLoadingModel, panel, disposable,
-                                     GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
-                                                                           "Can't load changes",
-                                                                           "Pull request does not contain any changes"),
-                                     GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadChanges() })
       }
+
+      override fun createViewerBorder(): Border = JBUI.Borders.empty()
+
+    }.apply {
+      background = UIUtil.getListBackground()
+      emptyText.text = "Pull request does not contain any changes"
     }.also {
       actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
     }
@@ -294,12 +283,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
   }
 
-  private fun createCommitsComponent(dataContext: GHPRDataContext,
-                                     actionDataContext: GHPRActionDataContext,
-                                     changesLoadingModel: GHPRChangesLoadingModel,
-                                     disposable: Disposable): JComponent {
-
-    val commitsModel = changesLoadingModel.commitsModel
+  private fun createCommitsBrowser(commitsModel: GHPRCommitsModel, changesModel: GHPRChangesModelImpl): JComponent {
     val commitsListModel = CollectionListModel(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
 
     val commitsList = JBList(commitsListModel).apply {
@@ -307,6 +291,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       val renderer = GHPRCommitsListCellRenderer()
       cellRenderer = renderer
       UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer.panel))
+      emptyText.text = "Pull request does not contain any commits"
     }.also {
       ScrollingUtil.installActions(it)
       GithubUIUtil.Lists.installSelectionOnFocus(it)
@@ -325,11 +310,6 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val commitDetailsModel = SingleValueModel<GHCommit?>(null)
     val commitDetailsComponent = createCommitDetailsComponent(commitDetailsModel)
-
-    val changesModel = GHPRChangesModelImpl(project)
-    val changesBrowser = GHPRChangesBrowser(changesModel, changesLoadingModel.diffHelper, project).apply {
-      emptyText.text = "Select commit to view changes"
-    }
 
     commitsList.addListSelectionListener { e ->
       if (e.valueIsAdjusting) return@addListSelectionListener
@@ -359,10 +339,25 @@ internal class GHPRComponentFactory(private val project: Project) {
       if (index != -1) ScrollingUtil.ensureRangeIsVisible(commitsList, index, index)
     }
 
-    val commitsLoadingPanel = GHLoadingPanel.create(changesLoadingModel, commitsBrowser, disposable,
-                                                    GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view commits",
-                                                                                          "Can't load commits",
-                                                                                          "Pull request does not contain any commits"),
+    return commitsBrowser
+  }
+
+  private fun createCommitsComponent(dataContext: GHPRDataContext,
+                                     actionDataContext: GHPRActionDataContext,
+                                     changesLoadingModel: GHPRChangesLoadingModel,
+                                     disposable: Disposable): JComponent {
+
+    val changesModel = GHPRChangesModelImpl(project)
+    val changesBrowser = GHPRChangesBrowser(changesModel, changesLoadingModel.diffHelper, project).apply {
+      emptyText.text = "Select commit to view changes"
+    }
+
+    val commitsLoadingPanel = GHLoadingPanel.create(changesLoadingModel, {
+      createCommitsBrowser(changesLoadingModel.commitsModel, changesModel)
+    },
+                                                    disposable,
+                                                    "Select pull request to view commits",
+                                                    "Can't load commits",
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
                                                       actionDataContext.pullRequestDataProvider.reloadChanges()
                                                     })
@@ -557,7 +552,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createDetailsPanel(dataContext: GHPRDataContext,
                                  detailsModel: SingleValueModel<GHPullRequest?>,
-                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JBPanelWithEmptyText {
+                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
 
     val metaPanel = GHPRMetadataPanel(project, detailsModel,
                                       dataContext.securityService,
@@ -583,16 +578,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     detailsModel.addValueChangedListener {
       scrollPane.isVisible = detailsModel.value != null
     }
-
-    val panel = JBPanelWithEmptyText(BorderLayout()).apply {
-      isOpaque = false
-
-      add(scrollPane, BorderLayout.CENTER)
-    }
-    detailsModel.addValueChangedListener {
-      panel.validate()
-    }
-    return panel
+    return scrollPane
   }
 
   private fun createChangesLoadingModel(commitsModel: GHPRCommitsModel,
