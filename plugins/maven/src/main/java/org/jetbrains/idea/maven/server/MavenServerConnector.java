@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +32,15 @@ public class MavenServerConnector implements @NotNull Disposable {
   private final MavenDistribution myDistribution;
   private final String myVmOptions;
 
-  public MavenServerConnector(@NotNull MavenServerManager manager, @NotNull MavenWorkspaceSettings settings, @NotNull Sdk jdk) {
+  public MavenServerConnector(@NotNull Project project,
+                              @NotNull MavenServerManager manager,
+                              @NotNull MavenWorkspaceSettings settings,
+                              @NotNull Sdk jdk) {
     myManager = manager;
     myDistribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
     myVmOptions = settings.importingSettings.getVmOptionsForImporter();
     myJdk = jdk;
-    mySupport = new MavenServerRemoteProcessSupport(this);
+    mySupport = new MavenServerRemoteProcessSupport(this, project);
     myMavenServer = connect();
   }
 

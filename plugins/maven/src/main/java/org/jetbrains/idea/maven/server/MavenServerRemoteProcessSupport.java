@@ -20,10 +20,13 @@ import java.nio.charset.StandardCharsets;
 
 class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object> {
   private final MavenServerConnector myServerConnector;
+  private final Project myProject;
 
-  public MavenServerRemoteProcessSupport(MavenServerConnector mavenServerConnector) {
+  public MavenServerRemoteProcessSupport(MavenServerConnector mavenServerConnector,
+                                         @NotNull Project project) {
     super(MavenServer.class);
     myServerConnector = mavenServerConnector;
+    myProject = project;
   }
 
 
@@ -38,7 +41,7 @@ class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, Maven
 
   @Override
   protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
-    return new MavenServerCMDState(myServerConnector);
+    return new MavenServerCMDState(myServerConnector, myProject);
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

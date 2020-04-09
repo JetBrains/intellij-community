@@ -3,24 +3,18 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -83,9 +77,8 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
       return false;
     }
 
-    Sdk jdk = ExternalSystemJdkUtil.getJdk(project, ExternalSystemJdkUtil.USE_PROJECT_JDK);
-    String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
-    if (!verifyMavenSdkRequirements(jdk, distribution.getVersion(), sdkConfigLocation)) {
+    Sdk jdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (!verifyMavenSdkRequirements(jdk, distribution.getVersion())) {
       console.showQuickFixJDK(distribution.getVersion());
       return false;
     }
@@ -143,39 +136,40 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
   public MavenServerConnector getConnector(Project project) {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-    try {
-      MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
-      if (distribution == null) {
-        new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                         RunnerBundle.message("external.maven.home.does.not.exist.with.fix", settings.generalSettings.getMavenHome()),
-                         NotificationType.ERROR).notify(project);
-        throw new RuntimeException("Maven not found Version"); //TODO
-      }
-      Sdk jdk = ExternalSystemJdkUtil.getJdk(project, ExternalSystemJdkUtil.USE_PROJECT_JDK);
-      String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
-      if (!verifyMavenSdkRequirements(jdk, distribution.getVersion(), sdkConfigLocation)) {
-        throw new RuntimeException("Wrong JDK Version"); //TODO
-      }
-      MavenServerConnector connector = myServerConnectors.get(project);
-      if (connector == null) {
-        connector = myServerConnectors.computeIfAbsent(project, p -> new MavenServerConnector(this, settings, jdk));
-        registerDisposable(project, connector);
+    MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
+    if (distribution == null) {
+      throw new RuntimeException("Maven not found Version"); //TODO
+    }
+    Sdk jdk = getJdk(project);
 
-        return connector;
-      }
+    if (!verifyMavenSdkRequirements(jdk, distribution.getVersion())) {
+      throw new RuntimeException("Wrong JDK Version"); //TODO
+    }
+    MavenServerConnector connector = myServerConnectors.get(project);
+    if (connector == null) {
+      connector = myServerConnectors.computeIfAbsent(project, p -> new MavenServerConnector(p, this, settings,  jdk));
+      registerDisposable(project, connector);
 
-      if (!compatibleParameters(connector, jdk, settings.importingSettings.getVmOptionsForImporter())) {
-        connector.shutdown(false);
-        connector = new MavenServerConnector(this, settings, jdk);
-        registerDisposable(project, connector);
-        myServerConnectors.put(project, connector);
-      }
       return connector;
     }
-    catch (ExternalSystemJdkException e) {
-      MavenLog.LOG.warn("cannot find JDK for project " + project, e);
-      throw new RuntimeException("cannot find JDK"); //TODO
+
+    if (!compatibleParameters(connector, jdk, settings.importingSettings.getVmOptionsForImporter())) {
+      connector.shutdown(false);
+      connector = new MavenServerConnector(project, this, settings, jdk);
+      registerDisposable(project, connector);
+      myServerConnectors.put(project, connector);
     }
+    return connector;
+  }
+
+  @NotNull
+  private Sdk getJdk(Project project) {
+    Sdk jdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (jdk == null) {
+      MavenLog.LOG.warn("cannot find JDK for project " + project);
+      jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    }
+    return jdk;
   }
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
@@ -188,7 +182,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
   }
 
   private boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, String vmOptions) {
-    return connector.getJdk() == jdk && StringUtil.equals(vmOptions, connector.getVMOptions());
+    return StringUtil.equals(connector.getJdk().getName(), jdk.getName()) && StringUtil.equals(vmOptions, connector.getVMOptions());
   }
 
   public MavenServerConnector getDefaultConnector() {
@@ -204,32 +198,10 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     myServerConnectors.values().forEach(c -> c.shutdown(wait));
   }
 
-  @NotNull
-  public static Sdk getJdk(State state) {
-    if (state.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
-      if (!StringUtil.isEmptyOrSpaces(javaHome)) {
-        return JavaSdk.getInstance().createJdk("", javaHome);
-      }
-    }
-
-    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (projectJdk.getName().equals(state.embedderJdk)) {
-        return projectJdk;
-      }
-    }
-
-    // By default use internal jdk
-    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-  }
-
-  public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion, @NotNull String sdkConfigLocation) {
+  public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
     String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") >= 0
         && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
-      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                       RunnerBundle.message("maven.3.3.1.bad.jdk", sdkConfigLocation),
-                       NotificationType.WARNING).notify(null);
       return false;
     }
     return true;
@@ -254,8 +226,8 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     if (!eventListenerJar.exists()) {
       if (ApplicationManager.getApplication().isInternal()) {
         MavenLog.LOG.warn("Event listener does not exist: Please run rebuild for maven modules:\n" +
-                           "community/plugins/maven/maven-event-listener\n" +
-                           "and all maven*-server* modules"
+                          "community/plugins/maven/maven-event-listener\n" +
+                          "and all maven*-server* modules"
         );
       }
       else {
@@ -386,6 +358,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
       }
     }
   }
+
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
                                              @Nullable String workingDirectory,
@@ -517,7 +490,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
   @NotNull
   private static MavenDistribution resolveEmbeddedMaven2HomeForTests() {
-    if(!ApplicationManager.getApplication().isUnitTestMode()){
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new IllegalStateException("Maven2 is for test purpose only");
     }
 

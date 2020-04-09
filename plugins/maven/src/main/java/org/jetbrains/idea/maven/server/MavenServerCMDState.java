@@ -18,7 +18,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -50,10 +49,12 @@ public class MavenServerCMDState extends CommandLineState {
 
 
   private final MavenServerConnector myServerConnector;
+  private final Project myProject;
 
-  public MavenServerCMDState(MavenServerConnector serverConnector) {
+  public MavenServerCMDState(MavenServerConnector serverConnector, Project project) {
     super(null);
     myServerConnector = serverConnector;
+    myProject = project;
   }
 
   SimpleJavaParameters createJavaParameters() {
@@ -123,8 +124,6 @@ public class MavenServerCMDState extends CommandLineState {
     }
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
-    String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
-    MavenServerManager.verifyMavenSdkRequirements(myServerConnector.getJdk(), mavenVersion, sdkConfigLocation);
 
     final List<String> classPath = new ArrayList<>();
     classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
@@ -191,19 +190,16 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   private void showInvalidMavenNotification(@Nullable String mavenVersion) {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    final Project project = openProjects.length == 1 ? openProjects[0] : null;
+    String message = invalidHomeMessageToShow(myServerConnector.getMavenDistribution(), mavenVersion, myProject);
 
-    String message = invalidHomeMessageToShow(myServerConnector.getMavenDistribution(), mavenVersion, project);
-
-    NotificationListener listener = project == null ? null : new NotificationListener() {
+    NotificationListener listener = new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenProjectBundle.message("configurable.MavenSettings.display.name"));
+        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("configurable.MavenSettings.display.name"));
       }
     };
 
-    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(null);
+    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(myProject);
   }
 
   private static String invalidHomeMessageToShow(@Nullable MavenDistribution mavenDistribution,
