@@ -38,7 +38,7 @@ object FeatureUsageLogger {
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
   fun log(group: EventLogGroup, action: String) {
-    return loggerProvider.logger.log(group, action, false)
+    loggerProvider.logger.logAsync(group, action, false)
   }
 
   /**
@@ -46,14 +46,14 @@ object FeatureUsageLogger {
    * Adds context information to the event, e.g. source and shortcut for an action.
    */
   fun log(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    loggerProvider.logger.log(group, action, data, false)
+    loggerProvider.logger.logAsync(group, action, data, false)
   }
 
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    */
   fun logState(group: EventLogGroup, action: String) {
-    return loggerProvider.logger.log(group, action, true)
+    loggerProvider.logger.logAsync(group, action, true)
   }
 
   /**
@@ -69,7 +69,7 @@ object FeatureUsageLogger {
    * @deprecated
    */
   fun log(groupId: String, action: String) {
-    return loggerProvider.logger.log(EventLogGroup(groupId, 1), action, true)
+    loggerProvider.logger.logAsync(EventLogGroup(groupId, 1), action, true)
   }
 
   fun cleanup() {

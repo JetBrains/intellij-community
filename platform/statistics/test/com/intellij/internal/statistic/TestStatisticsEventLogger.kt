@@ -11,8 +11,6 @@ class TestStatisticsEventLogger(private val session: String = "testSession",
                                 private val recorderVersion: String = "1") : StatisticsEventLogger {
   val logged = ArrayList<LogEvent>()
 
-  override fun log(group: EventLogGroup, eventId: String, isState: Boolean) { log(group, eventId, Collections.emptyMap(), isState)}
-
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
 

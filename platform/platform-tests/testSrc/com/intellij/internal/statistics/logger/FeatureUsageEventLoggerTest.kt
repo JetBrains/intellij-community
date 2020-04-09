@@ -7,7 +7,6 @@ import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Test
-import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
@@ -17,7 +16,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testSingleEvent() {
     testLogger(
-      { logger -> logger.log(EventLogGroup("group.id", 2), "test-action", false) },
+      { logger -> logger.logAsync(EventLogGroup("group.id", 2), "test-action", false) },
       newEvent("group.id", "test-action", groupVersion = "2")
     )
   }
@@ -26,8 +25,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testTwoEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "second-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2"),
       newEvent("group.id", "second-action", groupVersion = "2")
@@ -38,8 +37,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2", count = 2)
     )
@@ -49,9 +48,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testTwoMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "second-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2", count = 2),
       newEvent("group.id", "second-action", groupVersion = "2", count = 1)
@@ -62,9 +61,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testNotMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
-        logger.log(EventLogGroup("group.id", 2), "second-action", false)
-        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "second-action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2"),
       newEvent("group.id", "second-action", groupVersion = "2"),
@@ -75,7 +74,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testStateEvent() {
     testLogger(
-      { logger -> logger.log(EventLogGroup("group.id", 2), "state", true) },
+      { logger -> logger.logAsync(EventLogGroup("group.id", 2), "state", true) },
       newStateEvent("group.id", "state", groupVersion = "2")
     )
   }
@@ -90,7 +89,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     expected.event.addData("type", "close")
     expected.event.addData("state", 1)
 
-    testLogger({ logger -> logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
+    testLogger({ logger -> logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
   }
 
   @Test
@@ -106,8 +105,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false)
-        logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false)
+        logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
+        logger.logAsync(EventLogGroup("group.id", 2), "dialog-id", data, false)
       }, expected)
   }
 
@@ -123,7 +122,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     expected.event.addData("value", true)
     expected.event.addData("default", false)
 
-    testLogger({ logger -> logger.log(EventLogGroup("settings", 3), "ui", data, true) }, expected)
+    testLogger({ logger -> logger.logAsync(EventLogGroup("settings", 3), "ui", data, true) }, expected)
   }
 
   @Test
@@ -140,8 +139,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("settings", 5), "ui", data, true)
-        logger.log(EventLogGroup("settings", 5), "ui", data, true)
+        logger.logAsync(EventLogGroup("settings", 5), "ui", data, true)
+        logger.logAsync(EventLogGroup("settings", 5), "ui", data, true)
       },
       expected, expected
     )
@@ -151,9 +150,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testDontMergeEventsWithDifferentGroupIds() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group", "test.action", groupVersion = "2"),
@@ -165,9 +164,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testDontMergeEventsWithDifferentGroupVersions() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 3), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 3), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group.id", "test.action", groupVersion = "3"),
@@ -179,9 +178,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testDontMergeEventsWithDifferentActions() {
     testLogger(
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action.1", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action.1", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group.id", "test.action.1", groupVersion = "2"),
@@ -195,9 +194,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, recorderVersion = "99")
     )
@@ -209,9 +208,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, session = "test.session")
     )
@@ -223,9 +222,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, build = "123.456")
     )
@@ -237,9 +236,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, bucket = "215")
     )
@@ -251,9 +250,9 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
-        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
+        logger.logAsync(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent(
         recorderVersion = "29", groupId = "group.id", groupVersion = "2",

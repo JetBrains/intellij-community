@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SequentialTaskExecutor
-import java.util.*
 import java.util.concurrent.CompletableFuture
 
 open class StatisticsFileEventLogger(private val recorderId: String,
@@ -19,10 +18,6 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
-
-  override fun log(group: EventLogGroup, eventId: String, isState: Boolean) {
-    log(group, eventId, Collections.emptyMap(), isState)
-  }
 
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
