@@ -30,10 +30,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
@@ -88,7 +85,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // You must update all existing default configurations accordingly
   private static final int VERSION = 17;
-  private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
+  private static final ThreadLocal<Pair<VirtualFile, NotNullLazyValue<FileType>>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
 
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and AUTO_DETECTED_* flags stored in packedFlags are used instead.
@@ -712,11 +709,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
-    FileType fileType = file.getFileType();
-    Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
-    FILE_TYPE_FIXED_TEMPORARILY.set(Pair.create(file, fileType));
+    Pair<VirtualFile, NotNullLazyValue<FileType>> old = FILE_TYPE_FIXED_TEMPORARILY.get();
+    FILE_TYPE_FIXED_TEMPORARILY.set(Pair.create(file, NotNullLazyValue.createValue(() -> {
+      FileType fileType = file.getFileType();
+      if (toLog()) {
+        log("F: frozenFileTypeCalculation(" + file.getName() + ") to " + fileType + " in " + Thread.currentThread());
+      }
+      return fileType;
+    })));
     if (toLog()) {
-      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType.getName()+" in "+Thread.currentThread());
+      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") in "+Thread.currentThread());
     }
     try {
       runnable.run();
@@ -762,9 +764,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
   public FileType getByFile(@NotNull VirtualFile file) {
-    Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
+    Pair<VirtualFile, NotNullLazyValue<FileType>> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
     if (fixedType != null && fixedType.getFirst().equals(file)) {
-      FileType fileType = fixedType.getSecond();
+      FileType fileType = fixedType.getSecond().getValue();
       if (toLog()) {
         log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName()+" in "+Thread.currentThread());
       }
