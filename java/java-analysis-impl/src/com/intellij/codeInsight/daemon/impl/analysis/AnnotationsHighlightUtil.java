@@ -9,10 +9,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,7 +24,6 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -399,7 +397,9 @@ public class AnnotationsHighlightUtil {
 
   private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull String message) {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(message).create();
-    QuickFixAction.registerQuickFixAction(info, new DeleteAnnotationAction(annotation));
+    LocalQuickFixAndIntentionActionOnPsiElement fix =
+      QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+    QuickFixAction.registerQuickFixAction(info, fix);
     return info;
   }
 
@@ -451,7 +451,7 @@ public class AnnotationsHighlightUtil {
   static HighlightInfo checkCyclicMemberType(@NotNull PsiTypeElement typeElement, @NotNull PsiClass aClass) {
     PsiType type = typeElement.getType();
     Set<PsiClass> checked = new HashSet<>();
-    if (cyclicDependencies(aClass, type, checked, aClass.getManager())) {
+    if (cyclicDependencies(aClass, type, checked)) {
       String description = JavaErrorBundle.message("annotation.cyclic.element.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
@@ -460,8 +460,7 @@ public class AnnotationsHighlightUtil {
 
   private static boolean cyclicDependencies(@NotNull PsiClass aClass,
                                             @Nullable PsiType type,
-                                            @NotNull Set<? super PsiClass> checked,
-                                            @NotNull PsiManager manager) {
+                                            @NotNull Set<? super PsiClass> checked) {
     final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
     if (resolvedClass != null && resolvedClass.isAnnotationType()) {
       if (aClass == resolvedClass) {
@@ -470,7 +469,7 @@ public class AnnotationsHighlightUtil {
       if (!checked.add(resolvedClass) || !BaseIntentionAction.canModify(resolvedClass)) return false;
       final PsiMethod[] methods = resolvedClass.getMethods();
       for (PsiMethod method : methods) {
-        if (cyclicDependencies(aClass, method.getReturnType(), checked,manager)) return true;
+        if (cyclicDependencies(aClass, method.getReturnType(), checked)) return true;
       }
     }
     return false;
@@ -486,7 +485,8 @@ public class AnnotationsHighlightUtil {
           final String qualifiedName = containingClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) || CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(qualifiedName)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier).descriptionAndTooltip(
-              "@interface member clashes with '" + JavaHighlightUtil.formatMethod(method) + "' in " + HighlightUtil.formatClass(containingClass)).create();
+              JavaErrorBundle.message("error.interface.member.clashes", JavaHighlightUtil.formatMethod(method),
+                                      HighlightUtil.formatClass(containingClass))).create();
           }
         }
       }
@@ -753,47 +753,6 @@ public class AnnotationsHighlightUtil {
       }
 
       return classType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) || classType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-    }
-  }
-
-  private static class DeleteAnnotationAction implements IntentionAction {
-    private final PsiAnnotation myAnnotation;
-
-    private DeleteAnnotationAction(@NotNull PsiAnnotation annotation) {
-      myAnnotation = annotation;
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return JavaAnalysisBundle.message("intention.text.remove.annotation");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Nullable
-    @Override
-    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-      return myAnnotation;
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return myAnnotation.isValid();
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myAnnotation.delete();
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
     }
   }
 }
