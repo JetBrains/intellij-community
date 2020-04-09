@@ -44,8 +44,13 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
   }
 
   private static boolean isInTopSubTree(@NotNull TreeNode node) {
-    TreeNode parent = node.getParent();
-    return parent != null && parent.getChildCount() > 0 &&
-           node == parent.getChildAt(0);
+    while (node.getParent() != null) {
+      if (node != node.getParent().getChildAt(0)) {
+        return false;
+      }
+      node = node.getParent();
+    }
+
+    return true;
   }
 }
