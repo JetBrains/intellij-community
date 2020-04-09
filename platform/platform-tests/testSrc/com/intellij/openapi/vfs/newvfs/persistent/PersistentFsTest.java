@@ -744,12 +744,12 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
       assertFalse(vTemp.allChildrenLoaded());
       FileUtil.writeToFile(new File(temp, "new.txt"),"new" );
-      Future<ChildInfo[]> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
-      Future<ChildInfo[]> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
-      ChildInfo[] children1 = f1.get();
-      ChildInfo[] children2 = f2.get();
-      int[] nameIds1 = Arrays.stream(children1).mapToInt(n -> n.getNameId()).toArray();
-      int[] nameIds2 = Arrays.stream(children2).mapToInt(n -> n.getNameId()).toArray();
+      Future<List<? extends ChildInfo>> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      Future<List<? extends ChildInfo>>  f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      List<? extends ChildInfo> children1 = f1.get();
+      List<? extends ChildInfo> children2 = f2.get();
+      int[] nameIds1 = children1.stream().mapToInt(n -> n.getNameId()).toArray();
+      int[] nameIds2 = children2.stream().mapToInt(n -> n.getNameId()).toArray();
       
       // there can be one or two children, depending on whether the VFS refreshed in time or not.
       // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
@@ -757,9 +757,9 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
         int nameId1 = nameIds1[i1];
         int i2 = ArrayUtil.find(nameIds2, nameId1);
         if (i2 >= 0) {
-          int id1 = children1[i1].getId();
-          int id2 = children2[i2].getId();
-          assertEquals("Duplicate ids found. children1=" + Arrays.toString(children1) + "; children2=" + Arrays.toString(children2), id1, id2);
+          int id1 = children1.get(i1).getId();
+          int id2 = children2.get(i2).getId();
+          assertEquals("Duplicate ids found. children1=" + children1 + "; children2=" + children2, id1, id2);
         }
       }
     }

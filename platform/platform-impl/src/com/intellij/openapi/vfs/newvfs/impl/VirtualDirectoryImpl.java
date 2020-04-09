@@ -31,8 +31,6 @@ import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
-import one.util.streamex.Joining;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -357,12 +355,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     boolean caseSensitive = delegate.isCaseSensitive();
     synchronized (myData) {
       boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
-      ChildInfo[] childrenIds = ourPersistence.listAll(this);
-      int[] result = ArrayUtil.newIntArray(childrenIds.length);
-      VirtualFile[] files = childrenIds.length == 0 ? VirtualFile.EMPTY_ARRAY : new VirtualFile[childrenIds.length];
-      if (childrenIds.length != 0) {
+      List<? extends ChildInfo> children = ourPersistence.listAll(this);
+      int[] result = ArrayUtil.newIntArray(children.size());
+      VirtualFile[] files;
+      if (children.isEmpty()) {
+        files = VirtualFile.EMPTY_ARRAY;
+      }
+      else {
+        files = new VirtualFile[children.size()];
         int[] errorsCount = {0};
-        Arrays.sort(childrenIds, (o1, o2) -> {
+        children.sort((o1, o2) -> {
           CharSequence name1 = o1.getName();
           CharSequence name2 = o2.getName();
           int cmp = compareNames(name1, name2, caseSensitive);
@@ -373,7 +375,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                       " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
                       " wasChildrenLoaded: " + wasChildrenLoaded +
                       " in the dir: " + this + ";" +
-                      " children: " + StreamEx.of(childrenIds).map(Objects::toString).collect(Joining.with(", ").maxCodePoints(256)));
+                      " children: " + StringUtil.first(children.toString(), 300, true));
             errorsCount[0]++;
             if (!caseSensitive) {
               // Sometimes file system rules for case insensitive comparison differ from Java rules.
@@ -387,8 +389,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return cmp;
         });
         TIntHashSet prevChildren = new TIntHashSet(myData.myChildrenIds);
-        for (int i = 0; i < childrenIds.length; i++) {
-          ChildInfo child = childrenIds[i];
+        for (int i = 0; i < children.size(); i++) {
+          ChildInfo child = children.get(i);
           int id = child.getId();
           result[i] = id;
           assert id > 0 : child;
@@ -412,7 +414,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.myChildrenIds = result;
       setChildrenLoaded();
       if (CHECK) {
-        assertConsistency(caseSensitive, Arrays.asList(childrenIds));
+        assertConsistency(caseSensitive, children);
       }
 
       return files;

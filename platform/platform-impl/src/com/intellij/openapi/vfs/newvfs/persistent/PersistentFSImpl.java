@@ -134,16 +134,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    ChildInfo[] nameIds = listAll(file);
-    return ContainerUtil.map2Array(nameIds, String.class, id -> id.getName().toString());
+    List<? extends ChildInfo> children = listAll(file);
+    return ContainerUtil.map2Array(children, String.class, id -> id.getName().toString());
   }
 
   @Override
   public String @NotNull [] listPersisted(@NotNull VirtualFile parent) {
-    return listPersisted(FSRecords.list(getFileId(parent)));
-  }
-
-  private static String @NotNull [] listPersisted(int @NotNull [] childrenIds) {
+    int[] childrenIds = FSRecords.list(getFileId(parent));
     String[] names = ArrayUtil.newStringArray(childrenIds.length);
     for (int i = 0; i < childrenIds.length; i++) {
       names[i] = FSRecords.getName(childrenIds[i]);
@@ -151,13 +148,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return names;
   }
 
-  private static ChildInfo @NotNull [] persistAllChildren(@NotNull VirtualFile file, int id, ListResult current) {
+  @NotNull
+  // return actual children
+  private static List<? extends ChildInfo> persistAllChildren(@NotNull VirtualFile file, int id, @NotNull ListResult current) {
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
 
     String[] delegateNames = VfsUtil.filterNames(fs.list(file));
     List<? extends ChildInfo> currentChildren = current.children;
     if (delegateNames.length == 0 && !currentChildren.isEmpty()) {
-      return currentChildren.toArray(ChildInfo.EMPTY_ARRAY);
+      return currentChildren;
     }
 
     Set<String> toAddNames = new THashSet<>(Arrays.asList(delegateNames), FileUtil.PATH_HASHING_STRATEGY);
@@ -185,7 +184,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     ListResult saved = FSRecords.updateList(id, newChildren);
     setChildrenCached(id);
 
-    return saved.children.toArray(ChildInfo.EMPTY_ARRAY);
+    return saved.children;
   }
 
   private static void setChildrenCached(int id) {
@@ -194,7 +193,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public ChildInfo @NotNull [] listAll(@NotNull VirtualFile file) {
+  public @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
     int id = getFileId(file);
 
     ListResult nameIds = FSRecords.list(id, true);
@@ -202,7 +201,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return persistAllChildren(file, id, nameIds);
     }
 
-    return nameIds.children.toArray(ChildInfo.EMPTY_ARRAY);
+    return nameIds.children;
   }
 
   private static boolean areChildrenLoaded(int parentId) {
