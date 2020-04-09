@@ -30,7 +30,7 @@ import java.math.BigInteger;
  */
 class CpuTimings {
 
-  private static final Mandelbrot MANDELBROT = new Mandelbrot(825);
+  private static final Mandelbrot MANDELBROT = new Mandelbrot(765);
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static long calcStableCpuTiming() {
@@ -41,7 +41,7 @@ class CpuTimings {
 
     StringBuilder log = new StringBuilder();
     for (int i = 0;; i++) {
-      long time = TimeoutUtil.measureExecutionTime(CpuTimings::addBigIntegers);
+      long time = TimeoutUtil.measureExecutionTime(MANDELBROT::compute);
       if (time < minTime) {
         //log.append("Iteration " + i + ", time " + time + "\n");
         minTime = time;
