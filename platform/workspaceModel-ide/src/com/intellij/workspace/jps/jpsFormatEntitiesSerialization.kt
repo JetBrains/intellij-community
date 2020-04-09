@@ -4,6 +4,7 @@ import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
@@ -37,7 +38,7 @@ interface JpsFileContentWriter {
  * Represents a serializer for a configuration XML file in JPS format.
  */
 interface JpsFileEntitiesSerializer<E : TypedEntity> {
-  val entitySource: JpsFileEntitySource
+  val entitySource: EntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
   fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader)
@@ -90,24 +91,38 @@ interface JpsFileSerializerFactory<E : TypedEntity> {
 }
 
 /**
- *  Represents set of serializers corresponding to a project.
+ * Represents set of serializers for some project.
  */
-class JpsEntitiesSerializerFactories(val entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
-                                     val directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
-                                     val fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
-                                     val storagePlace: JpsProjectStoragePlace) {
-  fun createSerializers(reader: JpsFileContentReader): JpsEntitiesSerializationData {
-    return JpsEntitiesSerializationData(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, storagePlace)
+interface JpsProjectSerializers {
+  companion object {
+    fun createSerializers(entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
+                          directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
+                          fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
+                          storagePlace: JpsProjectStoragePlace, reader: JpsFileContentReader): JpsProjectSerializers {
+      return JpsProjectSerializersImpl(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, storagePlace)
+    }
   }
+
+  fun loadAll(reader: JpsFileContentReader, builder: TypedEntityStorageBuilder)
+
+  fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
+                             reader: JpsFileContentReader): Pair<Set<EntitySource>, TypedEntityStorageBuilder>
+
+  @TestOnly
+  fun saveAllEntities(storage: TypedEntityStorage, writer: JpsFileContentWriter)
+
+  fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
+  
+  fun getAllModulePaths(): List<ModulePath>
 }
 
 data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>, val removedFileUrls: Collection<String>, val changedFileUrls: Collection<String>)
 
-class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
-                                   fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
-                                   reader: JpsFileContentReader,
-                                   private val entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
-                                   private val storagePlace: JpsProjectStoragePlace) {
+class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
+                                fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
+                                reader: JpsFileContentReader,
+                                private val entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
+                                private val storagePlace: JpsProjectStoragePlace) : JpsProjectSerializers {
   internal val serializerToFileFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsFileSerializerFactory<*>>()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
   internal val fileSerializersByUrl = MultiMap.create<String, JpsFileEntitiesSerializer<*>>()
@@ -132,7 +147,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
   internal val directorySerializerFactoriesByUrl = directorySerializersFactories.associateBy { it.directoryUrl }
   internal val fileSerializerFactoriesByUrl = fileSerializerFactories.associateBy { it.fileUrl }
 
-  internal fun createFileInDirectorySource(directoryUrl: VirtualFileUrl, fileName: String): JpsFileEntitySource.FileInDirectory {
+  private fun createFileInDirectorySource(directoryUrl: VirtualFileUrl, fileName: String): JpsFileEntitySource.FileInDirectory {
     val source = JpsFileEntitySource.FileInDirectory(directoryUrl, storagePlace)
     fileIdToFileName.put(source.fileNameId, fileName)
     return source
@@ -147,8 +162,8 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
     }
   }
 
-  fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
-                             reader: JpsFileContentReader): Pair<Set<EntitySource>, TypedEntityStorageBuilder> {
+  override fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
+                                      reader: JpsFileContentReader): Pair<Set<EntitySource>, TypedEntityStorageBuilder> {
     val obsoleteSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     val newFileSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     for (addedFileUrl in change.addedFileUrls) {
@@ -208,14 +223,14 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
     return Pair(changedSources, builder)
   }
 
-  fun loadAll(reader: JpsFileContentReader, builder: TypedEntityStorageBuilder) {
+  override fun loadAll(reader: JpsFileContentReader, builder: TypedEntityStorageBuilder) {
     fileSerializersByUrl.values().forEach {
       it.loadEntities(builder, reader)
     }
   }
 
   @TestOnly
-  fun saveAllEntities(storage: TypedEntityStorage, writer: JpsFileContentWriter) {
+  override fun saveAllEntities(storage: TypedEntityStorage, writer: JpsFileContentWriter) {
     fileSerializerFactoriesByUrl.values.forEach {
       saveEntitiesList(it, storage, writer)
     }
@@ -232,7 +247,11 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
     }
   }
 
-  fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
+  override fun getAllModulePaths(): List<ModulePath> {
+    return fileSerializersByUrl.values().filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
+  }
+
+  override fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
     val affectedFileFactories = HashSet<JpsFileSerializerFactory<*>>()
 
     fun processObsoleteSource(fileUrl: String, deleteObsoleteFilesFromFileFactories: Boolean) {

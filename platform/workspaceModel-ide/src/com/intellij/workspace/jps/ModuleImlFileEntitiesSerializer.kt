@@ -26,7 +26,7 @@ private const val URL_ATTRIBUTE = "url"
 
 internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                override val fileUrl: VirtualFileUrl,
-                                               override val entitySource: JpsFileEntitySource) : JpsFileEntitiesSerializer<ModuleEntity> {
+                                               override val entitySource: EntitySource) : JpsFileEntitiesSerializer<ModuleEntity> {
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
@@ -389,6 +389,11 @@ internal class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePa
 private const val MODULE_MANAGER_COMPONENT_NAME = "ProjectModuleManager"
 
 internal class ModuleSerializersFactory(override val fileUrl: String) : JpsFileSerializerFactory<ModuleEntity> {
+  companion object {
+    internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl, source: JpsFileEntitySource) =
+      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source)
+  }
+
   override val entityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
@@ -397,7 +402,7 @@ internal class ModuleSerializersFactory(override val fileUrl: String) : JpsFileS
   }
 
   override fun createSerializer(source: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
-    return ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source)
+    return createModuleEntitiesSerializer(fileUrl, source)
   }
 
   override fun loadFileList(reader: JpsFileContentReader): List<VirtualFileUrl> {

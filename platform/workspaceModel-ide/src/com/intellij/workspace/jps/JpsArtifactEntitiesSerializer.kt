@@ -44,7 +44,7 @@ internal interface ArtifactsOrderEntity : ModifiableTypedEntity<ArtifactsOrderEn
 }
 
 internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
-                                                  override val entitySource: JpsFileEntitySource,
+                                                  override val entitySource: EntitySource,
                                                   private val preserveOrder: Boolean) : JpsFileEntitiesSerializer<ArtifactEntity> {
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java

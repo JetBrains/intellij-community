@@ -37,7 +37,7 @@ internal class JpsLibrariesFileSerializer(fileUrl: VirtualFileUrl, entitySource:
     get() = { it.tableId == libraryTableId }
 }
 
-internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl, override val entitySource: JpsFileEntitySource,
+internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl, override val entitySource: EntitySource,
                                                  protected val libraryTableId: LibraryTableId) : JpsFileEntitiesSerializer<LibraryEntity> {
   override val mainEntityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java

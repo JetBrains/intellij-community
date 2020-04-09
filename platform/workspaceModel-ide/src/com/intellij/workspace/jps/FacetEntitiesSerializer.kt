@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.serialization.facet.FacetState
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 
 internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
-                                       private val source: JpsFileEntitySource) {
+                                       private val source: EntitySource) {
   internal fun loadFacetEntities(builder: TypedEntityStorageBuilder, moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
     val facetManagerTag = reader.loadComponent(imlFileUrl.url, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME) ?: return
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)

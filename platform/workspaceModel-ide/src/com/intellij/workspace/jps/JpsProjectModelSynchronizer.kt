@@ -43,7 +43,7 @@ import kotlin.collections.LinkedHashSet
 internal class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
   private lateinit var fileContentReader: StorageJpsConfigurationReader
-  private val serializationData = AtomicReference<JpsEntitiesSerializationData?>()
+  private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
 
   init {
@@ -61,7 +61,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   internal fun needToReloadProjectEntities(): Boolean {
     if (!enabled) return false
     if (StoreReloadManager.getInstance().isReloadBlocked()) return false
-    if (serializationData.get() == null) return false
+    if (serializers.get() == null) return false
 
     synchronized(incomingChanges) {
       return incomingChanges.isNotEmpty()
@@ -72,10 +72,10 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     if (!enabled) return
 
     if (StoreReloadManager.getInstance().isReloadBlocked()) return
-    val data = serializationData.get() ?: return
+    val serializers = serializers.get() ?: return
     val changes = getAndResetIncomingChanges() ?: return
 
-    val (changedEntities, builder) = data.reloadFromChangedFiles(changes, fileContentReader)
+    val (changedEntities, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader)
     if (changedEntities.isEmpty() && builder.isEmpty()) return
 
     ApplicationManager.getApplication().invokeAndWait(Runnable {
@@ -125,16 +125,15 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     val baseDirUrl = storagePlace.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
-    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false)
-    this.serializationData.set(serializationData)
+    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false)
+    this.serializers.set(serializers)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()
 
-    val modulePaths = serializationData.fileSerializersByUrl.values().filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
-    loadStateOfUnloadedModules(modulePaths)
+    loadStateOfUnloadedModules(serializers.getAllModulePaths())
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
-      serializationData.loadAll(fileContentReader, builder)
+      serializers.loadAll(fileContentReader, builder)
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
@@ -165,7 +164,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
     if (!enabled) return
 
-    val data = serializationData.get() ?: return
+    val data = serializers.get() ?: return
     val storage = WorkspaceModel.getInstance(project).entityStore.current
     val affectedSources = synchronized(sourcesToSave) {
       val copy = HashSet(sourcesToSave)
