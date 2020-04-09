@@ -6,6 +6,7 @@
 package com.intellij.rt.debugger;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class BatchEvaluatorServer {
@@ -14,6 +15,7 @@ public class BatchEvaluatorServer {
    */
   public static String evaluate(Object[] objects) throws IOException {
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
+    DataOutputStream dos = new DataOutputStream(bas);
     for (Object object : objects) {
       String res;
       boolean error = false;
@@ -28,19 +30,8 @@ public class BatchEvaluatorServer {
         error = true;
       }
 
-      byte[] bytes = res.getBytes("UTF-8");
-      int length = bytes.length;
-      if (error) {
-        length = -length;
-      }
-
-      // negative indicates an error
-      bas.write(length >>> 24);
-      bas.write(length >>> 16);
-      bas.write(length >>> 8);
-      bas.write(length);
-
-      bas.write(bytes);
+      dos.writeBoolean(error);
+      dos.writeUTF(res);
     }
     return bas.toString("ISO-8859-1");
   }
