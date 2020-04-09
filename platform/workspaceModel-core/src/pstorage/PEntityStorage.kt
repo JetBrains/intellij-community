@@ -623,7 +623,7 @@ internal class PEntityStorageBuilder(
     val res = HashMultimap.create<Int, Pair<PEntityData<*>, Class<out TypedEntity>>>()
     for ((clazz, entityFamily) in storage.entitiesByType.all()) {
       for (pEntityData in entityFamily.all()) {
-        if (clazz !is TypedEntityWithPersistentId) continue
+        if (!TypedEntityWithPersistentId::class.java.isAssignableFrom(clazz)) continue
         val entity = pEntityData.createEntity(storage) as TypedEntityWithPersistentId
 
         res.put(entity.persistentId().hashCode(), pEntityData to clazz)
