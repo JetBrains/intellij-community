@@ -321,8 +321,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      return getFontMetrics(editor).stringWidth(myText) + 12;
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      return getFontMetrics(inlay.getEditor()).stringWidth(myText) + 12;
     }
 
     private static Font getFont() {
