@@ -154,6 +154,18 @@ public class FSRecords {
     return new File(DbConnection.getCachesDir());
   }
 
+  @NotNull
+  public static String diagnosticsForAlreadyCreatedFile(int id, int nameId, @NotNull Object existingData) {
+    invalidateCaches();
+    int parentId = getParent(id);
+    String msg = "File already created: id="+id + "; nameId="+nameId  + "; parentId=" + parentId+ "; existingData=" + existingData;
+    if (parentId > 0) {
+      msg += "; parent.name=" + getName(parentId);
+      msg += "; parent.children=" + list(parentId, true);
+    }
+    return msg;
+  }
+
   private static class DbConnection {
     private static boolean ourInitialized;
 
@@ -902,86 +914,32 @@ public class FSRecords {
     });
   }
 
-  public static class NameId implements ChildInfo {
-    public static final NameId[] EMPTY_ARRAY = new NameId[0];
-
-    public final int id;
-    public final CharSequence name;
-    public final int nameId;
-
-    public NameId(int id, int nameId, @NotNull CharSequence name) {
-      this.id = id;
-      this.nameId = nameId;
-      this.name = name;
-      if (id <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid argument ids: "+id+"; nameId: "+nameId);
-    }
-
-    @Override
-    public String toString() {
-      return name + " (" + id + ")";
-    }
-
-    @Override
-    public int getId() {
-      return id;
-    }
-
-    @Override
-    public @NotNull CharSequence getName() {
-      return name;
-    }
-
-    @Override
-    public int getNameId() {
-      return nameId;
-    }
-
-    @Override
-    public String getSymLinkTarget() {
-      return null;
-    }
-
-    @Override
-    public ChildInfo @Nullable("null means children are unknown") [] getChildren() {
-      return null;
-    }
-
-    @Override
-    public FileAttributes getFileAttributes() {
-      return null;
-    }
-  }
-
-  // returns fully loaded child infos - with id, nameId, name (sorted by id) and the timestamp of the last modification
-  @NotNull
-  public static ListResult<NameId> listAll(int parentId) {
-    return readAndHandleErrors(() -> doLoadChildren(parentId, true, (id, nameId) -> new NameId(id, nameId, FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId))));
-  }
   // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
   @NotNull
-  static ListResult<ChildInfo> listPartial(int parentId, boolean loadNameId) {
-    return readAndHandleErrors(() -> doLoadChildren(parentId, loadNameId, (id, nameId) -> new ChildInfoImpl(id, nameId, null, null, null)));
+  static ListResult list(int parentId, boolean loadNameId) {
+    return readAndHandleErrors(() -> doLoadChildren(parentId, loadNameId));
   }
 
   @NotNull
   public static List<CharSequence> listNames(int parentId) {
-    return ContainerUtil.map(listAll(parentId).children, c -> c.getName());
+    return ContainerUtil.map(list(parentId, true).children, c -> c.getName());
   }
 
   @NotNull
-  private static <T extends ChildInfo> ListResult<T> doLoadChildren(int parentId, boolean loadNameId, @NotNull ChildFactory<? extends T> childFactory) throws IOException {
+  private static ListResult doLoadChildren(int parentId, boolean loadNameId) throws IOException {
     assert parentId > 0 : parentId;
     try (DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
       int count = input == null ? 0 : DataInputOutputUtil.readINT(input);
-      List<T> result = count == 0 ? Collections.emptyList() : new ArrayList<>(count);
+      List<ChildInfo> result = count == 0 ? Collections.emptyList() : new ArrayList<>(count);
       int prevId = parentId;
       for (int i = 0; i < count; i++) {
         int id = DataInputOutputUtil.readINT(input) + prevId;
         prevId = id;
         int nameId = loadNameId ? doGetNameId(id) : ChildInfoImpl.UNKNOWN_ID_YET;
-        result.add(childFactory.create(id, nameId));
+        ChildInfo child = new ChildInfoImpl(id, nameId, null, null, null);
+        result.add(child);
       }
-      return new ListResult<>(result);
+      return new ListResult(result);
     }
   }
 
@@ -1034,17 +992,15 @@ public class FSRecords {
   }
 
   @NotNull
-  private static <T extends ChildInfo> ListResult<? extends T> updateList(int parentId,
-                                                                          @NotNull ListResult<? extends T> list,
-                                                                          @NotNull ChildFactory<? extends T> childFactory) {
+  static ListResult updateList(int parentId, @NotNull ListResult list) {
     assert parentId > 0 : parentId;
     // assume list is sorted by id
 
     return writeAndHandleErrors(() -> {
-      ListResult<? extends T> toSave;
+      ListResult toSave;
       // optimization: if the children were never changed, do not check for duplicates again
       if (list.childrenWereChangedSinceLastList()) {
-        ListResult<? extends T> existing = doLoadChildren(parentId, true, childFactory);
+        ListResult existing = doLoadChildren(parentId, true);
         toSave = replaceNameDuplicates(list, existing);
       }
       else {
@@ -1073,34 +1029,22 @@ public class FSRecords {
       return toSave;
     });
   }
-  static void updateList(int parentId, @NotNull ListResult<? extends ChildInfo> children) {
-    updateList(parentId, children, (id, nameId) -> new ChildInfoImpl(id, nameId, null, null, null));
-  }
-  @NotNull
-  static ListResult<? extends NameId> updateListAndRead(int parentId, @NotNull ListResult<? extends NameId> children) {
-    return updateList(parentId, children, (id, nameId) -> new NameId(id, nameId, doGetNameByNameId(nameId)));
-  }
-
-  interface ChildFactory<T extends ChildInfo> {
-    @NotNull
-    T create(int id, int nameId) throws IOException;
-  }
 
   // replace entries in `children` with the corresponding entries from `existing` if they both have the same nameId (to avoid duplicating ids)
   @NotNull
-  private static <T extends ChildInfo> ListResult<? extends T> replaceNameDuplicates(@NotNull ListResult<? extends T> childrenList, @NotNull ListResult<? extends T> existingList) {
-    List<? extends T> children = childrenList.children;
-    List<? extends T> existing = existingList.children;
+  private static ListResult replaceNameDuplicates(@NotNull ListResult childrenList, @NotNull ListResult existingList) {
+    List<? extends ChildInfo> children = childrenList.children;
+    List<? extends ChildInfo> existing = existingList.children;
     if (existing.isEmpty()) return childrenList;
     // both `children` and `existing` are sorted by id, but not nameId, so plain O(N) merge is not possible.
     // instead, try to eliminate children with the same id from both lists first, and compare the rest by (slower) nameId.
     // typically, when `children` contains 5K entries + couple absent from `existing`, and `existing` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
     TIntIntHashMap childId2I = new TIntIntHashMap(); // nameId -> index in `children' (if absent from `existing`)
     TIntIntHashMap existingId2I = new TIntIntHashMap(); // nameId -> index in `existing' (if absent from `children`)
-    List<T> result = null;
+    List<ChildInfo> result = null;
     for (int i = 0, j = 0; i < children.size() || j < existing.size(); ) {
-      T child = i == children.size() ? null : children.get(i);
-      T ex = j == existing.size() ? null : existing.get(j);
+      ChildInfo child = i == children.size() ? null : children.get(i);
+      ChildInfo ex = j == existing.size() ? null : existing.get(j);
       int childId = child == null ? Integer.MAX_VALUE : child.getId();
       int exId = ex == null ? Integer.MAX_VALUE : ex.getId();
       if (childId == exId) {
@@ -1138,7 +1082,7 @@ public class FSRecords {
         j++;
       }
     }
-    return result == null ? childrenList : new ListResult<>(result);
+    return result == null ? childrenList : new ListResult(result);
   }
 
   static @Nullable String readSymlinkTarget(int id) {

@@ -11,14 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 // stores result of various FSRecords.list*() methods and the current FSRecords.localModCount for optimistic locking support
-class ListResult<T extends ChildInfo> {
+class ListResult {
   private final int modStamp;
-  final List<? extends T> children;
+  final List<? extends ChildInfo> children;
 
-  ListResult(@NotNull List<? extends T> children) {
+  ListResult(@NotNull List<? extends ChildInfo> children) {
     this(FSRecords.getLocalModCount(), children);
   }
-  private ListResult(int modStamp, @NotNull List<? extends T> children) {
+  private ListResult(int modStamp, @NotNull List<? extends ChildInfo> children) {
     this.modStamp = modStamp;
     this.children = children;
   }
@@ -30,8 +30,8 @@ class ListResult<T extends ChildInfo> {
 
   @Contract(pure=true)
   @NotNull
-  ListResult<T> insert(@NotNull T child) {
-    List<T> newChildren = new ArrayList<>(children.size() + 1);
+  ListResult insert(@NotNull ChildInfo child) {
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() + 1);
     int id = child.getId();
     int i = ObjectUtils.binarySearch(0, children.size(), mid -> Integer.compare(children.get(mid).getId(), id));
     if (i >= 0) {
@@ -49,13 +49,13 @@ class ListResult<T extends ChildInfo> {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult<>(modStamp, newChildren);
+    return new ListResult(modStamp, newChildren);
   }
 
   @Contract(pure=true)
   @NotNull
-  ListResult<T> remove(@NotNull T child) {
-    List<T> newChildren = new ArrayList<>(children.size() + 1);
+  ListResult remove(@NotNull ChildInfo child) {
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() + 1);
     int id = child.getId();
     int toRemove = ObjectUtils.binarySearch(0, children.size(), mid -> Integer.compare(children.get(mid).getId(), id));
     if (toRemove < 0) {
@@ -70,28 +70,28 @@ class ListResult<T extends ChildInfo> {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult<>(modStamp, newChildren);
+    return new ListResult(modStamp, newChildren);
   }
 
   @Contract(pure=true)
   @NotNull
-  <U extends ChildInfo> ListResult<U> merge(@NotNull List<? extends U> list) {
+  ListResult merge(@NotNull List<? extends ChildInfo> list) {
     // assume list is sorted
-    List<U> newChildren = new ArrayList<>(children.size() + list.size());
-    ContainerUtil.processSortedListsInOrder(children, list, ChildInfo.BY_ID, true, out->newChildren.add((U)out));
-    return new ListResult<>(modStamp, newChildren);
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() + list.size());
+    ContainerUtil.processSortedListsInOrder(children, list, ChildInfo.BY_ID, true, out->newChildren.add(out));
+    return new ListResult(modStamp, newChildren);
   }
 
   @Contract(pure=true)
   @NotNull
-  ListResult<T> subtract(@NotNull List<? extends T> list) {
+  ListResult subtract(@NotNull List<? extends ChildInfo> list) {
     // assume list is sorted
-    List<T> newChildren = new ArrayList<>(children.size() + list.size());
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() + list.size());
     int index1 = 0;
     int index2 = 0;
     while (index1 < children.size() && index2 < list.size()) {
-      T element1 = children.get(index1);
-      T element2 = list.get(index2);
+      ChildInfo element1 = children.get(index1);
+      ChildInfo element2 = list.get(index2);
       int c = ChildInfo.BY_ID.compare(element1, element2);
       if (c == 0) {
         index1++;
@@ -109,7 +109,7 @@ class ListResult<T extends ChildInfo> {
     for (int i=index1; i<children.size(); i++) {
       newChildren.add(children.get(i));
     }
-    return new ListResult<>(modStamp, newChildren);
+    return new ListResult(modStamp, newChildren);
   }
 
   boolean childrenWereChangedSinceLastList() {

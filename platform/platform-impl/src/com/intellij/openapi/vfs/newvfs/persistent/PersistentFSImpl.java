@@ -134,8 +134,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    FSRecords.NameId[] nameIds = listAll(file);
-    return ContainerUtil.map2Array(nameIds, String.class, id -> id.name.toString());
+    ChildInfo[] nameIds = listAll(file);
+    return ContainerUtil.map2Array(nameIds, String.class, id -> id.getName().toString());
   }
 
   @Override
@@ -151,42 +151,41 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return names;
   }
 
-  private static FSRecords.NameId @NotNull [] persistAllChildren(@NotNull VirtualFile file, int id, @NotNull ListResult<? extends FSRecords.NameId> current) {
+  private static ChildInfo @NotNull [] persistAllChildren(@NotNull VirtualFile file, int id, ListResult current) {
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
 
     String[] delegateNames = VfsUtil.filterNames(fs.list(file));
-    List<? extends FSRecords.NameId> currentChildren = current.children;
+    List<? extends ChildInfo> currentChildren = current.children;
     if (delegateNames.length == 0 && !currentChildren.isEmpty()) {
-      return currentChildren.toArray(FSRecords.NameId.EMPTY_ARRAY);
+      return currentChildren.toArray(ChildInfo.EMPTY_ARRAY);
     }
 
     Set<String> toAddNames = new THashSet<>(Arrays.asList(delegateNames), FileUtil.PATH_HASHING_STRATEGY);
-    for (FSRecords.NameId nameId : currentChildren) {
-      toAddNames.remove(nameId.name.toString());
+    for (ChildInfo nameId : currentChildren) {
+      toAddNames.remove(nameId.getName().toString());
     }
 
     TIntArrayList childrenIds = new TIntArrayList(currentChildren.size() + toAddNames.size());
-    for (FSRecords.NameId nameId : currentChildren) {
-      childrenIds.add(nameId.id);
+    for (ChildInfo nameId : currentChildren) {
+      childrenIds.add(nameId.getId());
     }
-    List<FSRecords.NameId> toAddChildren = new ArrayList<>(toAddNames.size());
+    List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
     for (String newName : toAddNames) {
       Pair<FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
       if (childData != null) {
         ChildInfo newChild = makeChildRecord(id, newName, childData, fs, null, null);
-        FSRecords.NameId child = new FSRecords.NameId(newChild.getId(), newChild.getNameId(), newName);
-        childrenIds.add(child.id);
-        toAddChildren.add(child);
+        childrenIds.add(newChild.getId());
+        toAddChildren.add(newChild);
       }
     }
 
     // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
     toAddChildren.sort(ChildInfo.BY_ID);
-    ListResult<FSRecords.NameId> newChildren = current.merge(toAddChildren);
-    ListResult<? extends FSRecords.NameId> saved = FSRecords.updateListAndRead(id, newChildren);
+    ListResult newChildren = current.merge(toAddChildren);
+    ListResult saved = FSRecords.updateList(id, newChildren);
     setChildrenCached(id);
 
-    return saved.children.toArray(FSRecords.NameId.EMPTY_ARRAY);
+    return saved.children.toArray(ChildInfo.EMPTY_ARRAY);
   }
 
   private static void setChildrenCached(int id) {
@@ -195,15 +194,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public FSRecords.NameId @NotNull [] listAll(@NotNull VirtualFile file) {
+  public ChildInfo @NotNull [] listAll(@NotNull VirtualFile file) {
     int id = getFileId(file);
 
-    ListResult<FSRecords.NameId> nameIds = FSRecords.listAll(id);
+    ListResult nameIds = FSRecords.list(id, true);
     if (!areChildrenLoaded(id)) {
       return persistAllChildren(file, id, nameIds);
     }
 
-    return nameIds.children.toArray(FSRecords.NameId.EMPTY_ARRAY);
+    return nameIds.children.toArray(ChildInfo.EMPTY_ARRAY);
   }
 
   private static boolean areChildrenLoaded(int parentId) {
@@ -371,9 +370,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public ChildInfo getNameId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs) {
+  public ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs) {
     int parentId = getFileId(parent);
-    ListResult<ChildInfo> children = FSRecords.listPartial(parentId, true);
+    ListResult children = FSRecords.list(parentId, true);
 
     ChildInfo child = findExistingChildInfo(childName, children.children, fs);
     if (child == null) {
@@ -390,7 +389,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       if (child == null) {
         child = makeChildRecord(parentId, childName, childData, fs, null, null);
-        ListResult<ChildInfo> newChildren = children.insert(child);
+        ListResult newChildren = children.insert(child);
 
         FSRecords.updateList(parentId, newChildren);
       }
@@ -1007,7 +1006,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
 
       int parentId = getFileId(parent);
-      ListResult<ChildInfo> oldChildren = FSRecords.listPartial(parentId, false);
+      ListResult oldChildren = FSRecords.list(parentId, false);
       List<ChildInfo> deleted = new ArrayList<>(deleteEvents.size());
 
       List<CharSequence> childrenNamesDeleted = new ArrayList<>(deleteEvents.size());
@@ -1023,7 +1022,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         deleted.add(new ChildInfoImpl(id, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null));
       }
       deleted.sort(ChildInfo.BY_ID);
-      ListResult<ChildInfo> newChildren = oldChildren.subtract(deleted);
+      ListResult newChildren = oldChildren.subtract(deleted);
       FSRecords.updateList(parentId, newChildren);
       parent.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
     }
@@ -1046,7 +1045,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     parent = (VirtualDirectoryImpl)vf;  // retain in myIdToDirCache at least for the duration of this block in order to subsequent findFileById() won't crash
     final NewVirtualFileSystem delegate = replaceWithNativeFS(getDelegate(parent));
 
-    ListResult<FSRecords.NameId> oldChildren = FSRecords.listAll(parentId);
+    ListResult oldChildren = FSRecords.list(parentId, true);
     List<ChildInfo>
       childrenAdded = getOrCreateChildInfos(oldChildren.children, createEvents, VFileCreateEvent::getChildName, delegate,
                                             (createEvent, childId) -> {
@@ -1059,7 +1058,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     });
 
     childrenAdded.sort(ChildInfo.BY_ID);
-    ListResult<ChildInfo> newChildren = oldChildren.merge(childrenAdded);
+    ListResult newChildren = oldChildren.merge(childrenAdded);
     FSRecords.updateList(parentId, newChildren);
     parent.createAndAddChildren(childrenAdded, false, (__,___)->{});
 
@@ -1080,7 +1079,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           Pair<VirtualDirectoryImpl, ChildInfo[]> queued = queue.remove();
           VirtualDirectoryImpl directory = queued.first;
           List<ChildInfo> scannedChildren = Arrays.asList(queued.second);
-          ListResult<FSRecords.NameId> oldChildren = FSRecords.listAll(directory.getId());
+          ListResult oldChildren = FSRecords.list(directory.getId(), true);
           List<ChildInfo>
             added = getOrCreateChildInfos(oldChildren.children, scannedChildren, ChildInfo::getName, delegate,
                                           (childInfo, childId) -> {
@@ -1100,7 +1099,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           });
 
           added.sort(ChildInfo.BY_ID);
-          ListResult<ChildInfo> newChildren = oldChildren.merge(added);
+          ListResult newChildren = oldChildren.merge(added);
           FSRecords.updateList(directory.getId(), newChildren);
           setChildrenCached(directory.getId());
           // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
@@ -1119,7 +1118,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   // create ChildInfos and fill parentChildrenIds from createEvents.
   // N.B. be aware that the child can already exist for particular VFileCreateEvent, due to asynchronicity of "refresh created directory" process
   @NotNull
-  private static <T> List<ChildInfo> getOrCreateChildInfos(@NotNull List<? extends FSRecords.NameId> oldNameIds,
+  private static <T> List<ChildInfo> getOrCreateChildInfos(@NotNull List<? extends ChildInfo> oldNameIds,
                                                            @NotNull Collection<? extends T> createEvents,
                                                            @NotNull Function<? super T, ? extends CharSequence> nameExtractor,
                                                            @NotNull NewVirtualFileSystem delegate,
@@ -1127,8 +1126,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     CharSequenceHashingStrategy strategy =
       delegate.isCaseSensitive() ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
     Set<CharSequence> persistedNames = new THashSet<>(oldNameIds.size(), strategy);
-    for (FSRecords.NameId nameId : oldNameIds) {
-      persistedNames.add(nameId.name);
+    for (ChildInfo nameId : oldNameIds) {
+      persistedNames.add(nameId.getName());
     }
 
     List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
@@ -1365,8 +1364,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     Pair<FileAttributes, String> childData = getChildData(delegate, parent, name, attributes, symlinkTarget);
     if (childData != null) {
       ChildInfo childInfo = makeChildRecord(parentId, name, childData, delegate, null, null);
-      ListResult<ChildInfo> children = FSRecords.listPartial(parentId, false);
-      ListResult<ChildInfo> newChildren = children.insert(childInfo);
+      ListResult children = FSRecords.list(parentId, false);
+      ListResult newChildren = children.insert(childInfo);
       FSRecords.updateList(parentId, newChildren);
       int childId = childInfo.getId();
       assert parent instanceof VirtualDirectoryImpl : parent;
@@ -1412,9 +1411,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void appendIdToChildren(int parentId, int childId) {
-    ListResult<ChildInfo> children = FSRecords.listPartial(parentId, false);
+    ListResult children = FSRecords.list(parentId, false);
     ChildInfoImpl newChild = new ChildInfoImpl(childId, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null);
-    ListResult<ChildInfo> newChildren = children.insert(newChild);
+    ListResult newChildren = children.insert(newChild);
     FSRecords.updateList(parentId, newChildren);
   }
 
@@ -1466,9 +1465,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void removeIdFromChildren(int parentId, int childId) {
-    ListResult<ChildInfo> list = FSRecords.listPartial(parentId, false);
+    ListResult list = FSRecords.list(parentId, false);
 
-    ListResult<ChildInfo> newChildren = list.remove(new ChildInfoImpl(childId, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null));
+    ListResult newChildren = list.remove(new ChildInfoImpl(childId, ChildInfoImpl.UNKNOWN_ID_YET, null, null, null));
     FSRecords.updateList(parentId, newChildren);
   }
 

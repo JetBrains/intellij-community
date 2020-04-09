@@ -744,12 +744,12 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
       assertFalse(vTemp.allChildrenLoaded());
       FileUtil.writeToFile(new File(temp, "new.txt"),"new" );
-      Future<FSRecords.NameId[]> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
-      Future<FSRecords.NameId[]> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
-      FSRecords.NameId[] children1 = f1.get();
-      FSRecords.NameId[] children2 = f2.get();
-      int[] nameIds1 = Arrays.stream(children1).mapToInt(n -> n.nameId).toArray();
-      int[] nameIds2 = Arrays.stream(children2).mapToInt(n -> n.nameId).toArray();
+      Future<ChildInfo[]> f1 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      Future<ChildInfo[]> f2 = ApplicationManager.getApplication().executeOnPooledThread(() -> fs.listAll(vTemp));
+      ChildInfo[] children1 = f1.get();
+      ChildInfo[] children2 = f2.get();
+      int[] nameIds1 = Arrays.stream(children1).mapToInt(n -> n.getNameId()).toArray();
+      int[] nameIds2 = Arrays.stream(children2).mapToInt(n -> n.getNameId()).toArray();
       
       // there can be one or two children, depending on whether the VFS refreshed in time or not.
       // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
@@ -757,8 +757,8 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
         int nameId1 = nameIds1[i1];
         int i2 = ArrayUtil.find(nameIds2, nameId1);
         if (i2 >= 0) {
-          int id1 = children1[i1].id;
-          int id2 = children2[i2].id;
+          int id1 = children1[i1].getId();
+          int id2 = children2[i2].getId();
           assertEquals("Duplicate ids found. children1=" + Arrays.toString(children1) + "; children2=" + Arrays.toString(children2), id1, id2);
         }
       }

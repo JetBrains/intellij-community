@@ -148,7 +148,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      ChildInfo childInfo = ourPersistence.getNameId(this, name, delegate);
+      ChildInfo childInfo = ourPersistence.findChildInfo(this, name, delegate);
       if (childInfo == null) {
         myData.addAdoptedName(name, caseSensitive);
         return null;
@@ -247,12 +247,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     FileLoadingTracker.fileLoaded(this, nameId);
 
     VfsData.Segment segment = mySegment.vfsData.getSegment(id, true);
-    try {
-      VfsData.initFile(id, segment, nameId, attributes.isDirectory() ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
-    }
-    catch (VfsData.FileAlreadyCreatedException e) {
-      throw new RuntimeException("id="+id+"; nameId="+nameId+"; this.id=" + myId + "; dir.children=" + FSRecords.listAll(myId), e);
-    }
+    VfsData.initFile(id, segment, nameId, attributes.isDirectory() ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     LOG.assertTrue(!(getFileSystem() instanceof Win32LocalFileSystem));
 
     VirtualFileSystemEntry child = mySegment.vfsData.getFileById(id, this, true);
@@ -361,15 +356,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     NewVirtualFileSystem delegate = getFileSystem();
     boolean caseSensitive = delegate.isCaseSensitive();
     synchronized (myData) {
-      final boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
-      final FSRecords.NameId[] childrenIds = ourPersistence.listAll(this);
+      boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
+      ChildInfo[] childrenIds = ourPersistence.listAll(this);
       int[] result = ArrayUtil.newIntArray(childrenIds.length);
       VirtualFile[] files = childrenIds.length == 0 ? VirtualFile.EMPTY_ARRAY : new VirtualFile[childrenIds.length];
       if (childrenIds.length != 0) {
         int[] errorsCount = {0};
         Arrays.sort(childrenIds, (o1, o2) -> {
-          CharSequence name1 = o1.name;
-          CharSequence name2 = o2.name;
+          CharSequence name1 = o1.getName();
+          CharSequence name2 = o2.getName();
           int cmp = compareNames(name1, name2, caseSensitive);
           if (cmp == 0 && name1 != name2 && errorsCount[0] < 10) {
             LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
@@ -393,15 +388,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         });
         TIntHashSet prevChildren = new TIntHashSet(myData.myChildrenIds);
         for (int i = 0; i < childrenIds.length; i++) {
-          FSRecords.NameId child = childrenIds[i];
-          result[i] = child.id;
-          assert child.id > 0 : child;
-          prevChildren.remove(child.id);
-          VirtualFileSystemEntry file = mySegment.vfsData.getFileById(child.id, this, true);
+          ChildInfo child = childrenIds[i];
+          int id = child.getId();
+          result[i] = id;
+          assert id > 0 : child;
+          prevChildren.remove(id);
+          VirtualFileSystemEntry file = mySegment.vfsData.getFileById(id, this, true);
           if (file == null) {
-            FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(child.id));
-            boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(child.id);
-            file = createChild(child.id, child.nameId, delegate, attributes, isEmptyDirectory);
+            FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
+            boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
+            file = createChild(id, child.getNameId(), delegate, attributes, isEmptyDirectory);
           }
           files[i] = file;
         }
