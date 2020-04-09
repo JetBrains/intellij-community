@@ -3,6 +3,7 @@ package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
+import com.intellij.openapi.util.RecursionManager
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -11,6 +12,7 @@ class PropertyGraph(debugName: String? = null) {
   private val propagation = AnonymousParallelOperationTrace((if (debugName == null) "" else " of $debugName") + ": Graph propagation")
   private val properties = ConcurrentHashMap<ObservableClearableProperty<*>, PropertyNode>()
   private val dependencies = ConcurrentHashMap<PropertyNode, CopyOnWriteArrayList<Dependency<*>>>()
+  private val recursionGuard = RecursionManager.createGuard<PropertyNode>(PropertyGraph::class.java.name)
 
   fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>, update: () -> T) {
     val childNode = properties[child] ?: throw IllegalArgumentException("Unregistered child property")
@@ -28,7 +30,7 @@ class PropertyGraph(debugName: String? = null) {
     val node = PropertyNode()
     properties[property] = node
     property.afterChange {
-      node.recursionGuard.stepDownIfCan {
+      recursionGuard.doPreventingRecursion(node, false) {
         propagation.task {
           node.isPropagationBlocked = true
           propagateChange(node)
@@ -45,7 +47,7 @@ class PropertyGraph(debugName: String? = null) {
     for (dependency in dependencies) {
       val child = dependency.node
       if (child.isPropagationBlocked) continue
-      child.recursionGuard.stepDownIfCan {
+      recursionGuard.doPreventingRecursion(child, false) {
         dependency.applyUpdate()
         propagateChange(child)
       }
@@ -59,28 +61,11 @@ class PropertyGraph(debugName: String? = null) {
   private inner class PropertyNode {
     @Volatile
     var isPropagationBlocked = false
-    val recursionGuard = ThreadRecursionGuard()
   }
 
   private class Dependency<T>(val node: PropertyNode, private val property: AtomicProperty<T>, private val update: () -> T) {
     fun applyUpdate() {
       property.updateAndGet { update() }
-    }
-  }
-
-  private class ThreadRecursionGuard {
-    private val concurrentHashSet = ConcurrentHashMap.newKeySet<Long>()
-
-    fun stepDownIfCan(action: () -> Unit) {
-      val threadId = Thread.currentThread().id
-      if (concurrentHashSet.add(threadId)) {
-        try {
-          action()
-        }
-        finally {
-          concurrentHashSet.remove(threadId)
-        }
-      }
     }
   }
 }
