@@ -151,9 +151,9 @@ class CompilationOutputsUploader {
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
-      if (!uploader.isExist(sourcePath)) {
+//      if (!uploader.isExist(sourcePath)) {  TODO:: Uncomment after target_sources_state.json update
         uploader.upload(sourcePath, zipFile)
-      }
+//      }
       File zipCopy = new File(tmpDir, sourcePath)
       FileUtil.copy(zipFile, zipCopy)
       FileUtil.delete(zipFile)
