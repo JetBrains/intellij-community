@@ -25,20 +25,22 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.IntIntHashMap;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -1039,8 +1041,9 @@ public class FSRecords {
     // both `children` and `existing` are sorted by id, but not nameId, so plain O(N) merge is not possible.
     // instead, try to eliminate children with the same id from both lists first, and compare the rest by (slower) nameId.
     // typically, when `children` contains 5K entries + couple absent from `existing`, and `existing` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
-    TIntIntHashMap childId2I = new TIntIntHashMap(); // nameId -> index in `children' (if absent from `existing`)
-    TIntIntHashMap existingId2I = new TIntIntHashMap(); // nameId -> index in `existing' (if absent from `children`)
+    // IntIntHashMap is used to distinguish absence from the 0th index
+    IntIntHashMap childId2I = new IntIntHashMap(); // nameId -> index in `children' (if absent from `existing`)
+    IntIntHashMap existingId2I = new IntIntHashMap(); // nameId -> index in `existing' (if absent from `children`)
     List<ChildInfo> result = null;
     for (int i = 0, j = 0; i < children.size() || j < existing.size(); ) {
       ChildInfo child = i == children.size() ? null : children.get(i);
@@ -1054,30 +1057,30 @@ public class FSRecords {
       else if (childId < exId) {
         // childId is absent from `existing`
         int exI = existingId2I.get(child.getNameId());
-        if (exI == 0) {
-          childId2I.put(child.getNameId(), i+1); //to distinguish absence from the 0th index
+        if (exI == -1) {
+          childId2I.put(child.getNameId(), i);
         }
         else {
           // aha, found entry in `existing` with the same nameId - replace with ex
           if (result == null) {
             result = new ArrayList<>(children);
           }
-          result.set(i, existing.get(exI-1));
+          result.set(i, existing.get(exI));
         }
         i++;
       }
       else {
         // exId is absent from `children`
         int chI = childId2I.get(ex.getNameId());
-        if (chI == 0) {
-          existingId2I.put(ex.getNameId(), j+1); //to distinguish absence from the 0th index
+        if (chI == -1) {
+          existingId2I.put(ex.getNameId(), j);
         }
         else {
           // aha, found entry in `children` with the same nameId - replace with ex
           if (result == null) {
             result = new ArrayList<>(children);
           }
-          result.set(chI-1, ex);
+          result.set(chI, ex);
         }
         j++;
       }
