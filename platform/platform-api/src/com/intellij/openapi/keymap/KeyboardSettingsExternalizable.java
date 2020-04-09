@@ -21,6 +21,7 @@ import java.util.Locale;
 public class KeyboardSettingsExternalizable implements PersistentStateComponent<KeyboardSettingsExternalizable.OptionSet> {
 
   private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it", "uk"};
+  public static final String VMOption = "com.sun.awt.use.national.layouts";
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
     String keyboardLayoutLanguage = getLanguageForComponent(component);
