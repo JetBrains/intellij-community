@@ -23,10 +23,12 @@ import java.util.List;
 public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   private final ImaginaryCaretModel myCaretModel;
   private final ImaginarySelectionModel mySelectionModel;
+  private final Project myProject;
   @NotNull private final Document myDocument;
   private final ImaginarySoftWrapModel mySoftWrapModel = new ImaginarySoftWrapModel();
 
-  public ImaginaryEditor(@NotNull Document document) {
+  public ImaginaryEditor(@NotNull Project project, @NotNull Document document) {
+    myProject = project;
     myDocument = document;
     myCaretModel = new ImaginaryCaretModel(this);
     mySelectionModel = new ImaginarySelectionModel(this);
@@ -229,7 +231,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @Nullable
   @Override
   public Project getProject() {
-    throw notImplemented();
+    return myProject;
   }
 
   @Override
