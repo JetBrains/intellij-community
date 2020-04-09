@@ -17,11 +17,11 @@ class RunConfigurationInArbitraryFileScanner : FilePropertyPusher<Nothing> {
 
   companion object {
     fun isFileWithRunConfigs(file: VirtualFile): Boolean {
-      if (!StringUtil.endsWith(file.nameSequence, ".run.xml")) return false
+      if (!file.isInLocalFileSystem || !StringUtil.endsWith(file.nameSequence, ".run.xml")) return false
       var parent = file.parent
       while (parent != null) {
         if (StringUtil.equals(parent.nameSequence, ".idea")) return false
-        parent = file.parent
+        parent = parent.parent
       }
       return true
     }
