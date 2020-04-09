@@ -143,7 +143,7 @@ public class PerformanceTestInfo {
         return;
       }
       if (waitForJit) {
-        if (data.getCompilationTime() < data.durationMs / 10) {
+        if (data.getCompilationTime() <= data.durationMs / 10) {
           return;
         }
       }
