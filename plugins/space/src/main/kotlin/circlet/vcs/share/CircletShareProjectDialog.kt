@@ -100,7 +100,6 @@ class CircletShareProjectDialog(project: Project) : DialogWrapper(project, true)
                 try {
                     val repository = repoService.createRepository(prKey,
                                                                   repoNameField.text,
-                                                                  RepositoryLevel.ORG,
                                                                   repoDescription.text.orEmpty(),
                                                                   jsonObjectText { "initialize" put false }) // always create empty repo
                     val details = repoService.repositoryDetails(prKey, repository.name)
