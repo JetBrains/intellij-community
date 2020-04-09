@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -80,7 +81,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
 
   @Override
   protected JComponent getComponent() {
-    myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
+    myCanBeFinalCb = new NonFocusableCheckBox(GroovyRefactoringBundle.message("declare.final"));
     myCanBeFinalCb.setSelected(false);
     myCanBeFinalCb.setMnemonic('f');
     final GrFinalListener finalListener = new GrFinalListener(myEditor);
