@@ -63,6 +63,7 @@ public interface FileModifier extends WriteActionAware {
     for (Field field : ReflectionUtil.collectFields(((Object)this).getClass())) {
       if (Modifier.isStatic(field.getModifiers())) continue;
       Class<?> type = field.getType();
+      while (type.isArray()) type = type.getComponentType();
       if (type.isPrimitive() || type.isEnum() || type.equals(String.class) ||
           type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class) ||
           // Back-link to the parent inspection looks safe, as inspection should not depend on the file 
