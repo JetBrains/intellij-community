@@ -7,7 +7,6 @@ import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,6 +59,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
                                                                                errorFramesField,
                                                                                errorSizeField,
                                                                                tooManyErrorsField);
+  private enum ProjectOpenMode { New, Same, Attach }
+  private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
+  private static final EventId1<ProjectOpenMode> PROJECT_FRAME_SELECTED = LIFECYCLE.registerEvent("project.frame.selected", projectOpenModeField);
 
   private static final EventsRateThrottle ourErrorsRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
   private static final EventsIdentityThrottle ourErrorsIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
@@ -161,24 +163,23 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onProjectFrameSelected(int option) {
-    String optionValue;
+    ProjectOpenMode optionValue;
     switch (option) {
       case GeneralSettings.OPEN_PROJECT_NEW_WINDOW:
-        optionValue = "new";
+        optionValue = ProjectOpenMode.New;
         break;
 
       case GeneralSettings.OPEN_PROJECT_SAME_WINDOW:
-        optionValue = "same";
+        optionValue = ProjectOpenMode.Same;
         break;
 
       case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH:
-        optionValue = "attach";
+        optionValue = ProjectOpenMode.Attach;
         break;
 
       default:
         return;
     }
-    FUCounterUsageLogger.getInstance().logEvent("lifecycle", "project.frame.selected",
-                                                new FeatureUsageData().addData("mode", optionValue));
+    PROJECT_FRAME_SELECTED.log(optionValue);
   }
 }
