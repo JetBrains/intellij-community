@@ -797,6 +797,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun runConfigurationFirstLoaded() {
+    if (project.isDefault) return;
+
     if (selectedConfiguration == null) {
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId
       selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
