@@ -83,6 +83,6 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         WriteCommandAction.runWriteCommandAction(getProject(), (Runnable)() -> camelcase.getValue().replace(a.getValue()));
         myFixture.doHighlighting();
       }
-    }).attempts(10).assertTiming();
+    }).reattemptUntilJitSettlesDown().assertTiming();
   }
 }

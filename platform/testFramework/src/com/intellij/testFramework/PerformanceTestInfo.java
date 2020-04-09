@@ -17,6 +17,7 @@ public class PerformanceTestInfo {
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
   private int attempts = 4;             // number of retries if performance failed
+  private boolean waitForJit;
   private final String what;         // to print on fail
   private boolean adjustForIO = false;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
@@ -71,6 +72,12 @@ public class PerformanceTestInfo {
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo attempts(int attempts) {
     this.attempts = attempts;
+    return this;
+  }
+
+  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  public PerformanceTestInfo reattemptUntilJitSettlesDown() {
+    this.waitForJit = true;
     return this;
   }
 
@@ -132,16 +139,25 @@ public class PerformanceTestInfo {
         }
       }
 
-      if (attempts == 0 || iterationResult == IterationResult.acceptable) {
+      if (iterationResult == IterationResult.acceptable) {
+        return;
+      }
+      if (waitForJit) {
+        if (data.getCompilationTime() < data.durationMs / 10) {
+          return;
+        }
+      }
+      else if (attempts == 0) {
         if (testShouldPass) return;
         throw new AssertionFailedError(logMessage);
       }
 
-      // try again
-      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
-      TeamCityLogger.warning(s, null);
-      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-        System.out.println(s);
+      if (!waitForJit) {
+        String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
+        TeamCityLogger.warning(s, null);
+        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+          System.out.println(s);
+        }
       }
       //noinspection CallToSystemGC
       System.gc();

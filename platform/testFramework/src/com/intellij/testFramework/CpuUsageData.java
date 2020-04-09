@@ -69,6 +69,10 @@ public class CpuUsageData {
     return printLongestNames(myGcTimes) + "; free " + myMemStart + " -> " + myMemEnd + " MB";
   }
 
+  long getCompilationTime() {
+    return myCompilationTime;
+  }
+
   String getProcessCpuStats() {
     long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
     return myCompilationTime + "ms JITc " +

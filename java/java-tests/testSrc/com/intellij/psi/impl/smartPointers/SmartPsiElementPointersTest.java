@@ -694,7 +694,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     }).setup(() -> {
       document.setText(text);
       assertEquals(range, pointer.getRange());
-    }).attempts(10).assertTiming());
+    }).reattemptUntilJitSettlesDown().assertTiming());
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
