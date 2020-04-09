@@ -87,9 +87,15 @@ abstract class BuildTasks {
   static void buildProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths,
                            String communityHomeRelativePath, Script gantScript,
                            ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY) {
-    BuildContext context = createBuildContextFromProduct(productPropertiesClassName, groovyRootRelativePaths,
-      communityHomeRelativePath, gantScript, proprietaryBuildTools)
-    create(context).buildDistributions()
+    try {
+      BuildContext context = createBuildContextFromProduct(productPropertiesClassName, groovyRootRelativePaths,
+                                                           communityHomeRelativePath, gantScript, proprietaryBuildTools)
+      create(context).buildDistributions()
+    } catch (Throwable ex) {
+      // Print exception trace in any case. Sometimes exception handling at higher level may skip printing stacktraces.
+      ex.printStackTrace()
+      throw ex
+    }
   }
 
   static void compileModulesFromProduct(String productPropertiesClassName, List<String> groovyRootRelativePaths,
