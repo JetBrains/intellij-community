@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.common.io.Files
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
@@ -97,9 +96,8 @@ class CompilationOutputsUploader {
 
       // Publish metadata file
       def metadataFile = new File("$agentPersistentStorage/metadata.json")
-      Files.copy(sourceStateFile, metadataFile)
+      FileUtil.rename(sourceStateFile, metadataFile)
       messages.artifactBuilt(metadataFile.absolutePath)
-      FileUtil.delete(sourceStateFile)
 
       if (updateCommitHistory) {
         updateCommitHistory(uploader)
@@ -120,8 +118,7 @@ class CompilationOutputsUploader {
     zipBinaryData(zipFile, dataStorageRoot)
     uploader.upload(cachePath, zipFile)
     File zipCopy = new File(tmpDir, cachePath)
-    FileUtil.copy(zipFile, zipCopy)
-    FileUtil.delete(zipFile)
+    FileUtil.rename(zipFile, zipCopy)
 
     return true
   }
@@ -155,8 +152,7 @@ class CompilationOutputsUploader {
         uploader.upload(sourcePath, zipFile)
 //      }
       File zipCopy = new File(tmpDir, sourcePath)
-      FileUtil.copy(zipFile, zipCopy)
-      FileUtil.delete(zipFile)
+      FileUtil.rename(zipFile, zipCopy)
     }
   }
 
@@ -201,8 +197,7 @@ class CompilationOutputsUploader {
     messages.artifactBuilt(file.absolutePath)
     uploader.upload(COMMIT_HISTORY_FILE, file)
     File commitHistoryFileCopy = new File(tmpDir, COMMIT_HISTORY_FILE)
-    FileUtil.copy(file, commitHistoryFileCopy)
-    FileUtil.delete(file)
+    FileUtil.rename(file, commitHistoryFileCopy)
   }
 
   @CompileStatic
