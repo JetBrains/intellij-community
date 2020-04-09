@@ -24,7 +24,11 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -98,33 +102,33 @@ public class AsyncStacksUtils {
     VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
     List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
-    Value resArray = evaluationContext.computeAndKeep(
+    String value = DebuggerUtils.processCollectibleValue(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
-                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true));
-    if (resArray instanceof ArrayReference) {
-      List<Value> values = ((ArrayReference)resArray).getValues();
-      List<StackFrameItem> res = new ArrayList<>(values.size());
+                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true),
+      result -> result instanceof StringReference ? ((StringReference)result).value() : null
+    );
+    if (value != null) {
+      List<StackFrameItem> res = new ArrayList<>();
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
-      for (Value value : values) {
-        if (value == null) {
-          res.add(null);
+      try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
+        while (dis.available() > 0) {
+          ProcessStackFrameItem item = null;
+          if (dis.readBoolean()) {
+            String className = dis.readUTF();
+            String methodName = dis.readUTF();
+            int line = dis.readInt();
+            Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
+            item = new ProcessStackFrameItem(location, className, methodName);
+          }
+          res.add(item);
         }
-        else {
-          List<Value> values1 = ((ArrayReference)value).getValues();
-          String className = getStringRefValue((StringReference)values1.get(0));
-          String methodName = getStringRefValue((StringReference)values1.get(2));
-          int line = Integer.parseInt(((StringReference)values1.get(3)).value());
-          Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
-          res.add(new ProcessStackFrameItem(location, className, methodName));
-        }
+        return res;
       }
-      return res;
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     return null;
-  }
-
-  private static String getStringRefValue(StringReference ref) {
-    return ref != null ? ref.value() : null;
   }
 
   public static void setupAgent(DebugProcessImpl process) {
