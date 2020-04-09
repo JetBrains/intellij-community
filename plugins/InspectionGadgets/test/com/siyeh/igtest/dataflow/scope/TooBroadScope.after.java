@@ -6,8 +6,8 @@ public class TooBroadScope
 {
 
     private String getBaseFontInfo() {
-        final StringBuilder <caret>sb = new StringBuilder();
         final var sm = System.getSecurityManager();
+        final StringBuilder sb = new StringBuilder();
         sb.append(sm.getSecurityContext());
         sb.append(',');
         sb.append(sm.getClass());
@@ -15,22 +15,22 @@ public class TooBroadScope
     }
 
     String allowMovingStringBuilder() {
-        final StringBuilder  <warning descr="Scope of variable 'sb' is too broad">sb</warning> = new StringBuilder();
         System.out.println();
+        final StringBuilder sb = new StringBuilder();
         sb.append(1);
         return sb.toString();
     }
 
     void playThatRecord() {
         record Record(double rpm) {}
-        final var <warning descr="Scope of variable 'record' is too broad">record</warning> = new Record(33.3333333333);
         System.out.println();
+        final var record = new Record(33.3333333333);
         System.out.println(record);
     }
 
     void noClassCastException() {
-        <error descr="Cannot resolve symbol 'a'">a</error> b;
-        <error descr="Unknown class: 'b'">b</error> renderer = new <error descr="Cannot resolve symbol 'b'">b</error>();
+        a b;
+        b renderer = new b();
     }
 
     void looseThreads() {
@@ -45,9 +45,9 @@ public class TooBroadScope
     public void test() {
         // Example #1
         {
-            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>  = null; //scope too broad
             {
-                list = new ArrayList<Integer>();
+                //scope too broad
+                Collection<Integer> list = new ArrayList<Integer>();
                 list.add(new Integer(0));
             }
         }
@@ -55,28 +55,27 @@ public class TooBroadScope
         // Example #2
         {
 
-            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>; // scope too broad
-            list = new ArrayList<Integer>();
+            // scope too broad
+            Collection<Integer> list = new ArrayList<Integer>();
             list.add(new Integer(0));
         }
 
         // Example #3
         {
 
-            Collection<Integer> <warning descr="Scope of variable 'list' is too broad">list</warning>  = null; // nope
-            list = new ArrayList<Integer>();
+            // nope
+            Collection<Integer> list = new ArrayList<Integer>();
             list.add(new Integer(0));
         }
     }
 
     public void join() {
-        String <warning descr="Scope of variable 'test' is too broad">test</warning>;
-        test = "asdf";
+        String test = "asdf";
     }
 
     private int foo() {
-        final int flim;
         final boolean bar = new java.util.Random().nextBoolean();
+        final int flim;
         if(bar) {
             flim = 42;
         } else {
@@ -149,8 +148,7 @@ public class TooBroadScope
     }
 
     void forLoop() {
-        int <warning descr="Scope of variable 'i' is too broad">i</warning>  = 0;
-        for ( ; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             System.out.println(i);
         }
     }
@@ -171,10 +169,10 @@ public class TooBroadScope
     }
 
     void useConstant() {
-        int <warning descr="Scope of variable 'yes' is too broad">yes</warning> = NON_STATIC_CONSTANT;
         System.out.println();
         System.out.println();
         System.out.println();
+        int yes = NON_STATIC_CONSTANT;
         System.out.println(yes);
     }
 
@@ -189,29 +187,29 @@ public class TooBroadScope
     private final String[] EMPTY = {};
     private final String[] ONE = {"one"};
     void abc() {
-        String[] <warning descr="Scope of variable 'strings' is too broad">strings</warning> = EMPTY;
         System.out.println();
         System.out.println();
+        String[] strings = EMPTY;
         System.out.println(strings);
 
-        List<String> <warning descr="Scope of variable 'list' is too broad">list</warning> = new ArrayList<>(Arrays.asList(EMPTY));
         System.out.println();
         System.out.println();
+        List<String> list = new ArrayList<>(Arrays.asList(EMPTY));
         System.out.println(list);
 
-        String[] <warning descr="Scope of variable 'ss' is too broad">ss</warning> = new String[10];
         System.out.println();
         System.out.println();
+        String[] ss = new String[10];
         System.out.println(ss);
 
-        String[] <warning descr="Scope of variable 'ss2' is too broad">ss2</warning> = new String[] {""};
         System.out.println();
         System.out.println();
+        String[] ss2 = new String[]{""};
         System.out.println(ss2);
 
-        String[] <warning descr="Scope of variable 'ss3' is too broad">ss3</warning> = {};
         System.out.println();
         System.out.println();
+        String[] ss3 = {};
         System.out.println(ss3);
 
         String[] ss3a = {ONE[0]};
@@ -264,11 +262,9 @@ class T {
 class TryWithResources {
 
     void m() throws Throwable {
-        AutoCloseable <warning descr="Scope of variable 'closeable1' is too broad">closeable1</warning> = null;
-        try (closeable1) {}
+        try (AutoCloseable closeable1 = null) {}
 
-        AutoCloseable <warning descr="Scope of variable 'closeable2' is too broad">closeable2</warning> = null;
-        try (closeable2) {
+        try (AutoCloseable closeable2 = null) {
             System.out.println(closeable2);
         }
 

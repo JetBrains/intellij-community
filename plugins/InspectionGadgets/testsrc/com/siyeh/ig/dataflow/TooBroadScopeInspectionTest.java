@@ -10,6 +10,7 @@ public class TooBroadScopeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testTooBroadScope() {
     doTest();
+    checkQuickFixAll();
   }
 
   @Override
