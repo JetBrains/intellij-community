@@ -63,6 +63,17 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
+  public void testRandomActivityWithPreview() {
+    enableInspections();
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaPreviewIntentionPolicy()),
+                                    new InvokeCompletion(file, new JavaCompletionPolicy()),
+                                    new StripTestDataMarkup(file),
+                                    new DeleteRange(file));
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(fileActions));
+  }
+
   private void enableInspections() {
     MadTestingUtil.enableAllInspections(getProject());
   }

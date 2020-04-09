@@ -17,10 +17,15 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -104,6 +109,9 @@ public class InvokeIntention extends ActionOnFile {
     }
     IntentionAction intention = chooseIntention(env, intentions);
     if (intention == null) return;
+    if (myPolicy.shouldCheckPreview(intention)) {
+      checkPreview(intention, editor);
+    }
 
     String intentionString = intention.toString();
 
@@ -177,6 +185,30 @@ public class InvokeIntention extends ActionOnFile {
     finally {
       Disposer.dispose(disposable);
     }
+  }
+
+  private void checkPreview(IntentionAction intention, Editor editor) {
+    IntentionAction unwrapped = IntentionActionDelegate.unwrap(intention);
+    // Suppress actions are under submenu, no preview is generated for them anyway
+    if (unwrapped instanceof SuppressIntentionAction) return;
+    String previewText;
+    try {
+      // Should not require EDT or write-action
+      previewText = ApplicationManager.getApplication().executeOnPooledThread(
+        () -> ReadAction.compute(
+          () -> IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), intention, getFile(), editor))
+      ).get();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(
+        "Intention action " + MadTestingUtil.getIntentionDescription(intention) + " fails during preview", e);
+    }
+    if (previewText == null) {
+      throw new RuntimeException(
+        "Intention action " + MadTestingUtil.getIntentionDescription(intention) + " is not preview-friendly");
+    }
+    // TODO: check that preview text is the same as actual text
+    //       may require explicit formatting
   }
 
   @NotNull
