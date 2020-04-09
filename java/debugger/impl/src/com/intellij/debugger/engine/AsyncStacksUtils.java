@@ -45,8 +45,8 @@ public class AsyncStacksUtils {
   }
 
   @Nullable
-  public static List<StackFrameItem> getAgentRelatedStack(StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
-    if (!isAgentEnabled()) {
+  public static List<StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+    if (!isAgentEnabled() || !frame.threadProxy().equals(suspendContext.getThread())) { // only for the current thread for now
       return null;
     }
     try {
