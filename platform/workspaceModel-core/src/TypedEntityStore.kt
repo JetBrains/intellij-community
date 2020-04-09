@@ -152,6 +152,10 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
       }
     }
 
+    fun createProxy(): TypedEntityStorageBuilder {
+      return TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+    }
+
     fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder {
       return if (newStoreEnabled) {
         PEntityStorageBuilder.from(storage)
@@ -159,6 +163,10 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
       else {
         TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
       }
+    }
+
+    fun fromProxy(storage: TypedEntityStorage): TypedEntityStorageBuilder {
+      return TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
     }
   }
 }

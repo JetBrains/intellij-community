@@ -144,7 +144,7 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
   }
 
   fun applyDiff(diffBuilder: TypedEntityStorageDiffBuilder): TypedEntityStorage {
-    val builder = TypedEntityStorageBuilder.from(this) as TypedEntityStorageBuilderImpl
+    val builder = TypedEntityStorageBuilder.fromProxy(this) as TypedEntityStorageBuilderImpl
     builder.addDiff(diffBuilder)
     return builder.toStorage()
   }

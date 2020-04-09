@@ -35,14 +35,14 @@ class SerializationInProxyBasedStorageTest {
 
   @Test
   fun empty() {
-    verifySerializationRoundTrip(TypedEntityStorageBuilder.create().toStorage())
+    verifySerializationRoundTrip(TypedEntityStorageBuilder.createProxy().toStorage())
   }
 
   @Test
   fun smoke() {
     val tempFolder = tempDir.newFolder()
 
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val sampleEntity = builder.addSampleEntity("ggg", SampleEntitySource("y"), true, mutableListOf("5", "6"), tempFolder.toVirtualFileUrl())
     val child1 = builder.addSampleEntity("c1")
     val child2 = builder.addSampleEntity("c2")
@@ -63,7 +63,7 @@ class SerializationInProxyBasedStorageTest {
 
   @Test
   fun singletonEntitySource() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     builder.addSampleEntity("c2", source = SingletonEntitySource)
     verifySerializationRoundTrip(builder.toStorage())
   }
