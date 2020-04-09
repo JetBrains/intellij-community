@@ -31,7 +31,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private static final Logger LOG = Logger.getInstance(LightweightHint.class);
 
   private final JComponent myComponent;
-  private JComponent myFocusBackComponent;
   private final EventListenerList myListenerList = new EventListenerList();
   private MyEscListener myEscListener;
   private JBPopup myPopup;
@@ -110,8 +109,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
                    @NotNull final HintHint hintHint) {
     myParentComponent = parentComponent;
     myHintHint = hintHint;
-
-    myFocusBackComponent = focusBackComponent;
 
     LOG.assertTrue(myParentComponent.isShowing());
     myEscListener = new MyEscListener();
@@ -352,11 +349,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           JLayeredPane layeredPane = rootPane == null ? null : rootPane.getLayeredPane();
           if (layeredPane != null) {
             Rectangle bounds = myComponent.getBounds();
-            try {
-              layeredPane.remove(myComponent);
-            }
-            finally {}
-
+            layeredPane.remove(myComponent);
             layeredPane.paintImmediately(bounds.x, bounds.y, bounds.width, bounds.height);
           }
         }
