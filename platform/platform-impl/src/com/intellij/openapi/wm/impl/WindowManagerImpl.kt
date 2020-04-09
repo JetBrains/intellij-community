@@ -117,8 +117,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun getProjectFrameHelpers() = projectToFrame.values.toList()
 
-  override fun findVisibleFrame(): JFrame {
-    return projectToFrame.values.firstOrNull()?.frame ?: WelcomeFrame.getInstance() as JFrame
+  override fun findVisibleFrame(): JFrame? {
+    return projectToFrame.values.firstOrNull()?.frame ?: WelcomeFrame.getInstance() as? JFrame
   }
 
   override fun findFirstVisibleFrameHelper() = projectToFrame.values.firstOrNull()

@@ -307,13 +307,15 @@ private fun addActivateAndWindowsCliListeners() {
         return@invokeAndWait
       }
 
+      val windowManager = WindowManager.getInstance()
       if (result.project == null) {
-        val frame = WindowManager.getInstance().findVisibleFrame()
-        frame.toFront()
-        DialogEarthquakeShaker.shake(frame)
+        windowManager.findVisibleFrame()?.let { frame ->
+          frame.toFront()
+          DialogEarthquakeShaker.shake(frame)
+        }
       }
       else {
-        WindowManager.getInstance().getFrame(result.project)?.let {
+        windowManager.getFrame(result.project)?.let {
           AppIcon.getInstance().requestFocus()
         }
       }
