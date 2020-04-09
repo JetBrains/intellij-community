@@ -3,6 +3,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.ui.DeferredIcon;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.icons.RowIcon;
@@ -24,7 +25,14 @@ public class TestLookupElementPresentation extends LookupElementPresentation {
         return true;
       }
     };
-    e.renderElement(p);
+    //noinspection rawtypes
+    LookupElementRenderer renderer = e.getExpensiveRenderer();
+    if (renderer != null) {
+      //noinspection unchecked
+      renderer.renderElement(e, p);
+    } else {
+      e.renderElement(p);
+    }
     return p;
   }
 

@@ -208,8 +208,7 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     System.err.println("3. Ignore this warning.")
   }
 
-  private fun removeItem(element: LookupElement,
-                         context: ProcessingContext) {
+  protected open fun removeItem(element: LookupElement, context: ProcessingContext) {
     val sorter = obtainSorter(element)
     val classifier = myClassifiers[sorter]
     classifier!!.removeElement(element, context)
