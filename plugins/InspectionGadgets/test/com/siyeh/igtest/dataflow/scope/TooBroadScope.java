@@ -5,6 +5,13 @@ import java.util.*;
 public class TooBroadScope
 {
 
+    void playThatRecord() {
+        record Record(double rpm) {}
+        final var <warning descr="Scope of variable 'record' is too broad">record</warning> = new  Record(33.3333333333);
+        System.out.println();
+        System.out.println(record);
+    }
+
     void noClassCastException() {
         <error descr="Cannot resolve symbol 'a'">a</error> b;
         <error descr="Unknown class: 'b'">b</error> renderer = new <error descr="Cannot resolve symbol 'b'">b</error>();
