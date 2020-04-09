@@ -77,7 +77,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
       return false;
     }
 
-    Sdk jdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    Sdk jdk = getJdk(project);
     if (!verifyMavenSdkRequirements(jdk, distribution.getVersion())) {
       console.showQuickFixJDK(distribution.getVersion());
       return false;
