@@ -113,16 +113,14 @@ internal class PEntityStorageBuilder(
 
   // modificationCount is not incremented
   // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
-  private fun <T : TypedEntity, E : TypedEntity> cloneAndAddEntityWithRefs(entity: PEntityData<T>,
+  private fun <T : TypedEntity, E : TypedEntity> addEntityWithRefs(entity: PEntityData<T>,
                                                                            clazz: Class<E>,
                                                                            storage: AbstractPEntityStorage,
-                                                                           replaceMap: MutableMap<PId<*>, PId<*>>): PEntityData<T> {
+                                                                           replaceMap: MutableMap<PId<*>, PId<*>>) {
     clazz as Class<T>
-    val cloned = entitiesByType.cloneAndAdd(entity, clazz)
-    replaceMap[entity.createPid()] = cloned.createPid()
+    entitiesByType.add(entity, clazz)
 
     handleReferences(storage, entity, clazz, replaceMap)
-    return cloned
   }
 
   // modificationCount is not incremented
@@ -531,7 +529,7 @@ internal class PEntityStorageBuilder(
     val newData = data.clone()
     replaceMap[(newData.createEntity(this) as PTypedEntity).id] = id
     //copyEntityProperties(data, newData, replaceMap.inverse())
-    cloneAndAddEntityWithRefs(newData, id.clazz.java, storage, HashMap())
+    addEntityWithRefs(newData, id.clazz.java, storage, HashMap())
     //addEntity(newData, null, handleReferrers = true)
     updateChangeLog { it.add(createAddEntity(newData, id.clazz.java)) }
   }
@@ -600,10 +598,7 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun shallowHashCode(data: PEntityData<out TypedEntity>): Int {
-    // TODO: 30.03.2020 Implement
-    return data.hashCode()
-  }
+  private fun shallowHashCode(data: PEntityData<out TypedEntity>): Int = data.hashCode()
 
   data class EqualityResult<T1, T2>(
     val onlyIn1: List<T1>,
@@ -614,9 +609,7 @@ internal class PEntityStorageBuilder(
   private fun shallowEquals(oldData: PEntityData<out TypedEntity>,
                             newData: PEntityData<out TypedEntity>,
                             emptyBiMap: HashBiMap<PId<*>, PId<*>>?,
-                            newStorage: AbstractPEntityStorage): Boolean {
-    return oldData.createEntity(this).hasEqualProperties(newData.createEntity(newStorage))
-  }
+                            newStorage: AbstractPEntityStorage): Boolean = oldData == newData
 
 
   private fun groupByPersistentIdHash(storage: AbstractPEntityStorage): Multimap<Int, Pair<PEntityData<*>, Class<out TypedEntity>>> {
