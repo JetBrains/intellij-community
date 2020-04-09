@@ -96,6 +96,9 @@ public class PerformanceTestInfo {
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
+    if (waitForJit) {
+      attempts = 100;
+    }
 
     if (attempts == 1) {
       //noinspection CallToSystemGC
@@ -147,17 +150,15 @@ public class PerformanceTestInfo {
           return;
         }
       }
-      else if (attempts == 0) {
+      if (attempts == 0) {
         if (testShouldPass) return;
         throw new AssertionFailedError(logMessage);
       }
 
-      if (!waitForJit) {
-        String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
-        TeamCityLogger.warning(s, null);
-        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-          System.out.println(s);
-        }
+      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
+      TeamCityLogger.warning(s, null);
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        System.out.println(s);
       }
       //noinspection CallToSystemGC
       System.gc();
