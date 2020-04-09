@@ -23,6 +23,7 @@ interface StatisticsEventLogger {
   fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
   fun rollOver()
+  fun flush(): CompletableFuture<Void>
 }
 
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
@@ -72,6 +73,8 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun rollOver() = Unit
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> =
     CompletableFuture.completedFuture(null)
+
+  override fun flush(): CompletableFuture<Void> = CompletableFuture.completedFuture(null)
 }
 
 object EmptyEventLogFilesProvider: EventLogFilesProvider {

@@ -80,6 +80,10 @@ object FeatureUsageLogger {
     loggerProvider.logger.rollOver()
   }
 
+  fun flush() : CompletableFuture<Void> {
+    return loggerProvider.logger.flush()
+  }
+
   fun getConfig() : StatisticsEventLoggerProvider {
     return loggerProvider
   }

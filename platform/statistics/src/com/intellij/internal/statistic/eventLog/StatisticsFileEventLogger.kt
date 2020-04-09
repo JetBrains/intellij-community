@@ -40,24 +40,24 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       for (datum in validatedEventData) {
         event.event.addData(datum.key, datum.value)
       }
-      log(writer, event, creationTime)
+      log(event, creationTime)
     }, logExecutor)
   }
 
-  private fun log(writer: StatisticsEventLogWriter, event: LogEvent, createdTime: Long) {
+  private fun log(event: LogEvent, createdTime: Long) {
     if (lastEvent != null && event.time - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
       lastEventTime = event.time
       lastEvent!!.event.increment()
     }
     else {
-      logLastEvent(writer)
+      logLastEvent()
       lastEvent = event
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }
   }
 
-  private fun logLastEvent(writer: StatisticsEventLogWriter) {
+  private fun logLastEvent() {
     lastEvent?.let {
       if (it.event.isEventGroup()) {
         it.event.addData("last", lastEventTime)
@@ -85,13 +85,13 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   override fun dispose() {
-    dispose(writer)
+    flush()
+    logExecutor.shutdown()
   }
 
-  private fun dispose(writer: StatisticsEventLogWriter) {
-    logExecutor.execute(Runnable {
-      logLastEvent(writer)
-    })
-    logExecutor.shutdown()
+  override fun flush(): CompletableFuture<Void> {
+    return CompletableFuture.runAsync(Runnable {
+      logLastEvent()
+    }, logExecutor)
   }
 }

@@ -4,10 +4,12 @@ package com.intellij.internal.statistic.actions
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.EventLogNotificationService
 import com.intellij.internal.statistic.eventLog.LogEvent
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,8 +32,9 @@ internal object FusStatesRecorder {
         val logApplicationStatesFuture = statesLogger.logApplicationStates()
         val logProjectStatesFuture = statesLogger.logProjectStates(project, indicator)
 
-        logApplicationStatesFuture.get(10, TimeUnit.SECONDS)
-        logProjectStatesFuture.get(10, TimeUnit.SECONDS)
+        CompletableFuture.allOf(logApplicationStatesFuture, logProjectStatesFuture)
+          .thenCompose { FeatureUsageLogger.flush() }
+          .get(10, TimeUnit.SECONDS)
       }
       catch (e: Exception) {
         log.warn("Failed recording state collectors to log", e)
