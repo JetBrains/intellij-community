@@ -69,5 +69,6 @@ private fun createNewTab(project: Project, toolWindow: ToolWindow, recorderId: S
   val content = ContentFactory.SERVICE.getInstance().createContent(eventLogToolWindow.component, recorderId, true)
   content.preferredFocusableComponent = eventLogToolWindow.component
   toolWindow.contentManager.addContent(content)
+  toolWindow.contentManager.setSelectedContent(content)
   RecordStateStatisticsEventLogAction.checkLogRecordingEnabled(project, recorderId)
 }

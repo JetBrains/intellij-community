@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.getEventLogProvider
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CompletableFuture
 
 /**
  * An entry point class to record in event log an information about feature usages.
@@ -45,7 +46,7 @@ object FeatureUsageLogger {
    * Adds context information to the event, e.g. source and shortcut for an action.
    */
   fun log(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return loggerProvider.logger.log(group, action, data, false)
+    loggerProvider.logger.log(group, action, data, false)
   }
 
   /**
@@ -59,8 +60,8 @@ object FeatureUsageLogger {
    * Records a new state event in a group (e.g. 'run.configuration.type').
    * Adds context information to the event, e.g. if configuration is stored on project or on IDE level.
    */
-  fun logState(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return loggerProvider.logger.log(group, action, data, true)
+  fun logState(group: EventLogGroup, action: String, data: Map<String, Any>): CompletableFuture<Void> {
+    return loggerProvider.logger.logAsync(group, action, data, true)
   }
 
   /**

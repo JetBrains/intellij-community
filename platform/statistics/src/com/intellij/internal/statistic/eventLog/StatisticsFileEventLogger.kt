@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
@@ -23,22 +24,24 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     log(group, eventId, Collections.emptyMap(), isState)
   }
 
-  override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
+  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
-    logExecutor.execute(Runnable {
+
+    return CompletableFuture.runAsync(Runnable {
       val context = EventContext.create(eventId, data)
       val validator = SensitiveDataValidator.getInstance(recorderId)
       val validatedEventId = validator.guaranteeCorrectEventId(group, context)
       val validatedEventData = validator.guaranteeCorrectEventData(group, context)
 
       val creationTime = System.currentTimeMillis()
-      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, validatedEventId, isState)
+      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion,
+                              validatedEventId, isState)
       for (datum in validatedEventData) {
         event.event.addData(datum.key, datum.value)
       }
       log(writer, event, creationTime)
-    })
+    }, logExecutor)
   }
 
   private fun log(writer: StatisticsEventLogWriter, event: LogEvent, createdTime: Long) {

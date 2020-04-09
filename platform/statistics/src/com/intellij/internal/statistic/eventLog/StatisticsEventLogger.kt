@@ -1,14 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
@@ -16,7 +14,11 @@ private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.int
 
 interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, isState: Boolean)
-  fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
+  fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
+    logAsync(group, eventId, data, isState)
+  }
+
+  fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void>
   fun getActiveLogFile(): EventLogFile?
   fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
@@ -64,11 +66,12 @@ internal class EmptyStatisticsEventLoggerProvider(recorderId: String): Statistic
 
 internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
-  override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
   override fun getActiveLogFile(): EventLogFile? = null
   override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> =
+    CompletableFuture.completedFuture(null)
 }
 
 object EmptyEventLogFilesProvider: EventLogFilesProvider {
