@@ -42,16 +42,16 @@ internal class MutableEntityFamily<E : TypedEntity>(
   // This set contains empty slots at the moment of MutableEntityFamily creation
   //   New empty slots MUST NOT be added this this set.
   // TODO Fill the reason
-  private val emptySlots: TIntHashSet = TIntHashSet().also {
+  private val availableSlots: TIntHashSet = TIntHashSet().also {
     entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) }
   }
 
-  private var amountOfGapsInEntities = emptySlots.size()
+  private var amountOfGapsInEntities = availableSlots.size()
 
   private val copiedToModify: TIntHashSet = TIntHashSet()
 
   fun remove(id: Int) {
-    if (id in emptySlots) return
+    if (id in availableSlots) return
 
     copiedToModify.remove(id)
     entities[id] = null
@@ -59,12 +59,12 @@ internal class MutableEntityFamily<E : TypedEntity>(
   }
 
   fun add(other: PEntityData<E>) {
-    if (emptySlots.isEmpty) {
+    if (availableSlots.isEmpty) {
       other.id = entities.size
       entities += other
     }
     else {
-      val emptySlot = emptySlots.pop()
+      val emptySlot = availableSlots.pop()
       other.id = emptySlot
       entities[emptySlot] = other
       amountOfGapsInEntities--
@@ -74,7 +74,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   fun replaceById(entity: PEntityData<E>) {
     val id = entity.id
-    if (id in emptySlots) error("Nothing to replace")
+    if (id in availableSlots) error("Nothing to replace")
     entities[id] = entity
     copiedToModify.add(id)
   }
