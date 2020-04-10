@@ -237,8 +237,8 @@ class JavaPreviewIntentionPolicy extends JavaIntentionPolicy {
       // Actions like 'Create method from usage' heavily rely on templates
       // so it's not easy to support them
       familyName.matches("(?i)Create \\w+ from usage") ||
-      // Remove after cr-IDEA-1270
-      familyName.equals("Underscores in numeric literals");
+      // Does not change file content
+      familyName.equals("Rename File");
     return !skip;
   }
 }
