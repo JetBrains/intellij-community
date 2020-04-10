@@ -37,6 +37,9 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     ) {
       return true
     }
+    if (isSuperOrThisCall(node)) {
+      return true
+    }
     val resolved = node.resolve()
     if (resolved is PsiMethod) {
       if (isClassReferenceInConstructorInvocation(node) || isClassReferenceInKotlinSuperClassConstructor(node)) {
@@ -399,7 +402,16 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return callExpression.kind == UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
   }
 
+  private fun isSuperOrThisCall(simpleReference: USimpleNameReferenceExpression): Boolean {
+    val callExpression = simpleReference.uastParent as? UCallExpression ?: return false
+    return callExpression.kind == UastCallKind.CONSTRUCTOR_CALL &&
+           (callExpression.methodIdentifier?.name == "super" || callExpression.methodIdentifier?.name == "this")
+  }
+
   private fun isClassReferenceInConstructorInvocation(simpleReference: USimpleNameReferenceExpression): Boolean {
+    if (isSuperOrThisCall(simpleReference)) {
+      return false
+    }
     val callExpression = simpleReference.uastParent as? UCallExpression ?: return false
     if (callExpression.kind != UastCallKind.CONSTRUCTOR_CALL) {
       return false
