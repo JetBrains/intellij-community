@@ -1251,7 +1251,7 @@
                       implementationClass="com.siyeh.ig.javadoc.MissingPackageInfoInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PackageInfoWithoutPackage" bundle="messages.InspectionGadgetsBundle"
                      key="package.info.java.without.package.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.PackageInfoWithoutPackageInspection"/>
     <localInspection groupPath="Java" language="HTML" shortName="PackageDotHtmlMayBePackageInfo" bundle="messages.InspectionGadgetsBundle"
                      key="package.dot.html.may.be.package.info.display.name" groupBundle="messages.InspectionsBundle"
