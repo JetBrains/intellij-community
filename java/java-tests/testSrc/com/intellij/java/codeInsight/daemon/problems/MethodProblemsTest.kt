@@ -137,7 +137,7 @@ internal class MethodProblemsTest: ProjectProblemsViewTest() {
         method.returnTypeElement?.replace(newReturnType)
       }
 
-      assertTrue(hasReportedProblems<PsiAnnotation>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiMethod>(targetClass, refClass))
     }
   }
 
