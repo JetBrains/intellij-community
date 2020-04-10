@@ -17,14 +17,15 @@ package com.intellij.application.options;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProvider {
+public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public Language getLanguage() {
@@ -32,8 +33,39 @@ public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProv
   }
 
   @Override
+  public String getConfigurableDisplayName() {
+    return getDisplayName();
+  }
+
+  public static String getDisplayName() {
+    return "HTML";
+  }
+
+  @Nullable
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new HtmlCodeStyleSettings(settings);
+  }
+
+  @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
     return CodeStyleAbstractPanel.readFromFile(this.getClass(), "preview.html.template");
+  }
+
+  @Override
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
+                                                           @NotNull CodeStyleSettings modelSettings) {
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, getDisplayName()) {
+      @Override
+      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+        return new HtmlCodeStyleMainPanel(getCurrentSettings(), settings);
+      }
+
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.IDE.globalcodestyle.html";
+      }
+    };
   }
 
   @Override
@@ -44,6 +76,6 @@ public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProv
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    return new SmartIndentOptionsEditor();
+    return new HtmlIndentOptionsEditor();
   }
 }
