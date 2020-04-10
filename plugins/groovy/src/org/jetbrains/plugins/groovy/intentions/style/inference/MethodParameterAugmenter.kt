@@ -41,9 +41,7 @@ class MethodParameterAugmenter : TypeAugmenter() {
 
     private fun getFileScope(method: GrMethod): GlobalSearchScope? {
       val originalMethod = getOriginalMethod(method)
-      return with(originalMethod.containingFile?.virtualFile) {
-        if (this == null) return null else GlobalSearchScope.fileScope(originalMethod.project, this)
-      }
+      return originalMethod.containingFile?.run {GlobalSearchScope.fileScope(this)}
     }
 
   }
