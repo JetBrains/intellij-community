@@ -36,9 +36,10 @@ class PortableCompilationCache {
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
   def warmUp() {
-    def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit', 'false').toBoolean()
-    def forceDownload = System.getProperty('intellij.jps.cache.download.force', 'false').toBoolean()
-    def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force', 'false').toBoolean()
+    def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit')?.toBoolean() ?: false
+    def forceDownload = System.getProperty('intellij.jps.cache.download.force')?.toBoolean() ?: false
+    def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force')?.toBoolean() ?: false
+    def downloader = new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
     def cacheDir = context.compilationData.dataStorageRoot
     if (forceRebuild) {
       [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
@@ -46,8 +47,7 @@ class PortableCompilationCache {
         FileUtil.delete(it)
       }
     }
-    def downloader = new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
-    if (!forceRebuild && (forceDownload || !cacheDir.isDirectory() || !cacheDir.list())) {
+    else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
       downloader.downloadCachesAndOutput()
     }
     if (!downloader.availableForHeadCommit) {
@@ -66,7 +66,7 @@ class PortableCompilationCache {
     def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
     def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
     def commitHash = require("build.vcs.number", "Repository commit")
-    def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory', 'true').toBoolean()
+    def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
     context.messages.info("AWS sync folder $syncFolder")
     context.messages.info("Git remote url $remoteGitUrl")
     Map<String, String> remotePerCommitHash = [:]
