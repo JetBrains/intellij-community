@@ -33,6 +33,18 @@ public class ShShellParameterExpansionImpl extends ShCompositeElementImpl implem
 
   @Override
   @NotNull
+  public List<ShCommandSubstitutionCommand> getCommandSubstitutionCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCommandSubstitutionCommand.class);
+  }
+
+  @Override
+  @NotNull
+  public List<ShLiteral> getLiteralList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShLiteral.class);
+  }
+
+  @Override
+  @NotNull
   public List<ShShellParameterExpansion> getShellParameterExpansionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShShellParameterExpansion.class);
   }

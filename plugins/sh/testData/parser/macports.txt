@@ -27,7 +27,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('MACPORTS')
+                PsiElement(word)('MACPORTS')
                 PsiElement(})('}')
               PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')

@@ -1,6 +1,7 @@
 OPEN_QUOTE ('"')
 $ ('$')
 { ('{')
-parameter_expansion_body ('A%<')
+word ('A')
+parameter_expansion_body ('%<')
 } ('}')
 CLOSE_QUOTE ('"')
