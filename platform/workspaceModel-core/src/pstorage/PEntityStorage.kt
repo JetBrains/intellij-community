@@ -822,6 +822,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   protected fun assertConsistencyBase() {
     // Rules:
     //  1) Refs should not have links without a corresponding entity
+    //    1.1) For abstract containers: PId has the class of ConnectionId
     //  2) child entity should have only one parent --------------------------- Not Yet Implemented TODO
     //  3) There is no child without a parent under the hard reference -------- Not Yet Implemented TODO
 
@@ -841,11 +842,27 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
       }
     }
 
-    refs.oneToAbstractManyContainer.forEach { (_, map) ->
+    refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
         assertResolvable(parentId.clazz, parentId.arrayId)
-        assertResolvable(parentId.clazz, childId.arrayId)
+        assertResolvable(childId.clazz, childId.arrayId)
+
+        //  1.1) For abstract containers: PId has the class of ConnectionId
+        assertCorrectEntityClass(connectionId.parentClass, parentId)
+        assertCorrectEntityClass(connectionId.childClass, childId)
+      }
+    }
+
+    refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
+      map.forEach { (childId, parentId) ->
+        //  1) Refs should not have links without a corresponding entity
+        assertResolvable(parentId.clazz, parentId.arrayId)
+        assertResolvable(childId.clazz, childId.arrayId)
+
+        //  1.1) For abstract containers: PId has the class of ConnectionId
+        assertCorrectEntityClass(connectionId.parentClass, parentId)
+        assertCorrectEntityClass(connectionId.childClass, childId)
       }
     }
   }
@@ -853,6 +870,12 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   private fun assertResolvable(clazz: KClass<out TypedEntity>, id: Int) {
     assert(entitiesByType[clazz.java]?.get(id) != null) {
       "Reference to $clazz-:-$id cannot be resolved"
+    }
+  }
+
+  private fun assertCorrectEntityClass(connectionClass: KClass<out TypedEntity>, entityId: PId<out TypedEntity>) {
+    assert(connectionClass.java.isAssignableFrom(entityId.clazz.java)) {
+      "Entity storage with connection class $connectionClass contains entity data of wrong type $entityId"
     }
   }
 
