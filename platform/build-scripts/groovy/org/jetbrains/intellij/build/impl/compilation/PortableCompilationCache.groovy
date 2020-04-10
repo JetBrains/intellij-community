@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
@@ -39,6 +40,10 @@ class PortableCompilationCache {
     def forceDownload = System.getProperty('intellij.jps.cache.download.force', 'false').toBoolean()
     def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force', 'false').toBoolean()
     def cacheDir = context.compilationData.dataStorageRoot
+    if (forceRebuild) {
+      context.messages.info("Cleaning $cacheDir")
+      FileUtil.delete(cacheDir)
+    }
     def downloader = new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
     if (!forceRebuild && (forceDownload || !cacheDir.isDirectory() || !cacheDir.list())) {
       downloader.downloadCachesAndOutput()
