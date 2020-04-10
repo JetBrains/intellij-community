@@ -68,6 +68,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.LabelUI;
 import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -1865,14 +1867,22 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             g2.dispose();
           }
         }
+
+        @Override
+        public void setUI(LabelUI ui) {
+          super.setUI(ui);
+
+          if (!SystemInfo.isWindows) {
+            Font font = getFont();
+            font = new FontUIResource(font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2))); // Allow to reset the font by UI
+            setFont(font);
+          }
+        }
       };
 
       label.setForeground(colorsScheme.getColor(ICON_TEXT_COLOR));
       label.setIconTextGap(JBUIScale.scale(1));
 
-      Font font = label.getFont();
-      font = font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2));
-      label.setFont(font);
       return label;
     }
 
