@@ -10,9 +10,13 @@ interface MemoryAgentNames {
     String CAN_FIND_GC_ROOTS = "canFindGcRoots";
     String CAN_ESTIMATE_OBJECT_SIZE = "canEstimateObjectSize";
     String CAN_ESTIMATE_OBJECTS_SIZES = "canEstimateObjectsSizes";
+    String CAN_GET_SHALLOW_SIZE_BY_CLASSES = "canGetShallowSizeByClasses";
+    String CAN_GET_RETAINED_SIZE_BY_CLASSES = "canGetRetainedSizeByClasses";
 
     String ESTIMATE_OBJECT_SIZE = "size";
     String ESTIMATE_OBJECTS_SIZE = "estimateRetainedSize";
     String FIND_GC_ROOTS = "gcRoots";
+    String GET_SHALLOW_SIZE_BY_CLASSES = "getShallowSizeByClasses";
+    String GET_RETAINED_SIZE_BY_CLASSES = "getRetainedSizeByClasses";
   }
 }

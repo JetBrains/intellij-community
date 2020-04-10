@@ -15,6 +15,7 @@ import com.intellij.debugger.memory.agent.parsers.LongArrayParser;
 import com.intellij.debugger.memory.agent.parsers.LongValueParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,20 @@ class MemoryAgentOperations {
     throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, references);
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Collections.singletonList(array));
+    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  static long @NotNull [] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_SIZE_BY_CLASSES, Collections.singletonList(array));
+    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  static long @NotNull [] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
     return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
   }
 
@@ -78,6 +93,8 @@ class MemoryAgentOperations {
         .setCanEstimateObjectSize(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECT_SIZE))
         .setCanEstimateObjectsSizes(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECTS_SIZES))
         .setCanFindGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_GC_ROOTS))
+        .setCanGetShallowSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_SHALLOW_SIZE_BY_CLASSES))
+        .setCanGetRetainedSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_RETAINED_SIZE_BY_CLASSES))
         .buildLoaded();
     }
   }

@@ -63,6 +63,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private final DiffViewTableModel myModel;
   private final Map<TypeInfo, DiffValue> myCounts = new ConcurrentHashMap<>();
+  private final Map<TypeInfo, Long> myShallowSizes = new ConcurrentHashMap<>();
+  private final Map<TypeInfo, Long> myRetainedSizes = new ConcurrentHashMap<>();
   private final InstancesTracker myInstancesTracker;
   private final ClassesFilteredViewBase myParent;
   private final ReferenceCountProvider myCountProvider;
@@ -319,6 +321,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     updateCountsInternal(class2Count);
   }
 
+  public void updateContent(@NotNull Map<TypeInfo, Long> class2Count,
+                            @NotNull Map<TypeInfo, Long> class2ShallowSize,
+                            @NotNull Map<TypeInfo, Long> class2RetainedSize) {
+    myIsShowCounts = true;
+    myShallowSizes.putAll(class2ShallowSize);
+    myRetainedSizes.putAll(class2RetainedSize);
+    updateCountsInternal(class2Count);
+  }
+
   void hideContent(@NotNull String emptyText) {
     releaseMouseListener();
     getEmptyText().setText(emptyText);
@@ -475,7 +486,19 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         public Object getValue(int ix) {
           return myCounts.getOrDefault(getTypeInfoAt(ix), UNKNOWN_VALUE);
         }
-      }
+      },
+      new AbstractTableColumnDescriptor("Shallow size", Long.class) {
+        @Override
+        public Object getValue(int ix) {
+          return myShallowSizes.getOrDefault(getTypeInfoAt(ix), 0L);
+        }
+      },
+      new AbstractTableColumnDescriptor("Retained size", Long.class) {
+        @Override
+        public Object getValue(int ix) {
+          return myRetainedSizes.getOrDefault(getTypeInfoAt(ix), 0L);
+        }
+      },
     };
   }
 
