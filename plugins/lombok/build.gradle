@@ -1,5 +1,5 @@
 plugins {
-  id "org.jetbrains.intellij" version "0.4.17"
+  id "org.jetbrains.intellij" version "0.4.18"
   id "org.jetbrains.grammarkit" version "2020.1.2"
   id "com.github.ManifestClasspath" version "0.1.0-RELEASE"
 }
