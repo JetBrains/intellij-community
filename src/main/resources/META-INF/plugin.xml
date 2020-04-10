@@ -1,5 +1,5 @@
 <!--
-  Copyright 2019 Thomas Rosenau
+  Copyright 2020 Thomas Rosenau
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@
   limitations under the License.
   -->
 
-<idea-plugin>
+<idea-plugin url="https://github.com/ThomasR/intellij-diff-plugin">
   <id>de.thomasrosenau.diffplugin</id>
   <name>Diff / Patch File Support</name>
+  <category>Languages</category>
   <vendor email="thomasr@fantasymail.de" url="https://github.com/ThomasR/">Thomas Rosenau</vendor>
 
   <depends>com.intellij.modules.lang</depends>

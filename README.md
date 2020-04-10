@@ -17,7 +17,8 @@ In order to open this project in IntelliJ IDEA, follow these steps:
 
 1. Install [Java 8 JDK](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 1. [Define](https://www.jetbrains.com/help/idea/sdk.html#define-sdk) a project SDK named *1.8*. If you have a Java 8 SDK already, you may choose to rename or clone it.
-1. Open the project and wait for IntelliJ to download the required libraries.
+1. Open the project and wait for IntelliJ to download the required libraries.  
+  (This may take a long time, because several hundred MBs are downloaded.)
 
 Now, there are two [run configurations](https://www.jetbrains.com/help/idea/creating-and-editing-run-debug-configurations.html#e867c088), *Run in IDE* and *Build Plugin*.
 
