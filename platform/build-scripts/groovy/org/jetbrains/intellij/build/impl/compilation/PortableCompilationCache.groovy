@@ -6,14 +6,22 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 
 @CompileStatic
 class PortableCompilationCache {
   private final CompilationContext context
   private static final String REMOTE_CACHE_URL_PROPERTY = 'intellij.jps.remote.cache.url'
+  private static final String GIT_REPOSITORY_URL_PROPERTY = 'intellij.remote.url'
+  static final List<String> REQUIRED_PROPERTIES = [
+    REMOTE_CACHE_URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
+    JavaBackwardReferenceIndexWriter.PROP_KEY,
+    // TODO: update JPS and replace with org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES_PROPERTY
+    'org.jetbrains.jps.portable.caches'
+  ]
   @Lazy
-  private String remoteGitUrl = { require('intellij.remote.url', "Repository url") }()
+  private String remoteGitUrl = { require(GIT_REPOSITORY_URL_PROPERTY, "Repository url") }()
   @Lazy
   private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
   /**

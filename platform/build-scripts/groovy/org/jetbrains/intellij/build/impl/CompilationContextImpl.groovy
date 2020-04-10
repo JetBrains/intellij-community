@@ -268,6 +268,9 @@ class CompilationContextImpl implements CompilationContext {
     cleanOutput(outputDirectoriesToKeep)
   }
 
+  /**
+   * @return url attribute value of output tag from .idea/misc.xml
+   */
   File getProjectOutputDirectory() {
     JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)
   }
