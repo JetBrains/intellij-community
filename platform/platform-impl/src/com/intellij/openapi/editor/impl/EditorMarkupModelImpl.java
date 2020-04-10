@@ -2242,16 +2242,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     private MenuAction(@NotNull List<? extends AnAction> actions) {
       setPopup(true);
       addAll(actions);
-      add(new ToggleAction(EditorBundle.message("iw.show.toolbar")) {
+      add(new ToggleAction(EditorBundle.message("iw.compact.view")) {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
-          return showToolbar;
+          return !showToolbar;
         }
 
         @Override
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          showToolbar = state;
-          EditorSettingsExternalizable.getInstance().setShowInspectionWidget(state);
+          showToolbar = !state;
+          EditorSettingsExternalizable.getInstance().setShowInspectionWidget(showToolbar);
           updateTrafficLightVisibility();
           ActionsCollector.getInstance().record(e.getProject(), this, e, null);
         }
