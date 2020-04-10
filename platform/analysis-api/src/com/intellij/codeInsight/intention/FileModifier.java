@@ -23,6 +23,10 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -63,6 +67,7 @@ public interface FileModifier extends WriteActionAware {
     for (Field field : ReflectionUtil.collectFields(((Object)this).getClass())) {
       if (Modifier.isStatic(field.getModifiers())) continue;
       Class<?> type = field.getType();
+      if (field.getAnnotation(SafeFieldForPreview.class) != null) continue;
       while (type.isArray()) type = type.getComponentType();
       if (type.isPrimitive() || type.isEnum() || type.equals(String.class) ||
           type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class) ||
@@ -76,4 +81,14 @@ public interface FileModifier extends WriteActionAware {
     // No PSI-specific state: it's safe to apply this action to a file copy
     return this;
   }
+
+  /**
+   * Use this annotation to mark fields in implementors that are known to contain no file-related state.
+   * It's mainly useful for the fields in abstract classes: marking unknown abstract class field as 
+   * safe for preview will enable default {@link #getFileModifierForPreview(PsiFile)} behavior for all
+   * subclasses (unless subclass declares its own suspicious field).
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.FIELD)
+  @interface SafeFieldForPreview {}
 }
