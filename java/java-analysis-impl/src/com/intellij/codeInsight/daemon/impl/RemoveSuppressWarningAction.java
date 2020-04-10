@@ -208,19 +208,19 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
   private boolean removeFromValue(PsiAnnotation annotation, PsiAnnotationMemberValue value, boolean removeParent, PsiModifierListOwner owner) throws IncorrectOperationException {
     String text = StringUtil.unquoteString(value.getText());
     if (myID.equals(text)) {
+      ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(annotation.getProject());
       if (removeParent) {
-        if (annotation.isPhysical()) {
-          new CommentTracker().deleteAndRestoreComments(annotation);
-        } else {
+        if (manager.isExternalAnnotation(annotation)) {
           String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
           assert qualifiedName != null;
-          ExternalAnnotationsManager.getInstance(annotation.getProject()).deannotate(owner, qualifiedName);
+          manager.deannotate(owner, qualifiedName);
+        }
+        else {
+          new CommentTracker().deleteAndRestoreComments(annotation);
         }
       }
       else {
-        if (annotation.isPhysical()) {
-          value.delete();
-        } else {
+        if (manager.isExternalAnnotation(annotation)) {
           PsiAnnotation annotationCopy = (PsiAnnotation)annotation.copy();
           PsiTreeUtil.processElements(annotationCopy, e -> {
             if (e instanceof PsiAnnotationMemberValue && e.getText().equals(value.getText())) {
@@ -232,7 +232,10 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
           PsiNameValuePair[] nameValuePairs = annotationCopy.getParameterList().getAttributes();
           String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
           assert qualifiedName != null;
-          ExternalAnnotationsManager.getInstance(annotation.getProject()).editExternalAnnotation(owner, qualifiedName, nameValuePairs);
+          manager.editExternalAnnotation(owner, qualifiedName, nameValuePairs);
+        }
+        else {
+          value.delete();
         }
       }
       return true;
