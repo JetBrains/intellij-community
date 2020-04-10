@@ -4,6 +4,30 @@ import java.util.*;
 
 public class TooBroadScope
 {
+    private String string = "";
+
+    public String getString() {
+        return string;
+    }
+
+    void process() {
+        final String string = getString();
+        this.string = "hello";
+        System.out.println();
+        System.out.println(string);
+    }
+
+    public void systemProperty() {
+        String prop = System.getProperty("iesd.licensing.clt");
+
+        System.setProperty("iesd.licensing.clt", "true");
+
+        if (prop == null) {
+            System.clearProperty("iesd.licensing.clt");
+        } else {
+            System.setProperty("iesd.licensing.clt", prop);
+        }
+    }
 
     private String getBaseFontInfo() {
         final var sm = System.getSecurityManager();

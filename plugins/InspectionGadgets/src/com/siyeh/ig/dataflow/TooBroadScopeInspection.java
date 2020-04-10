@@ -208,7 +208,8 @@ public class TooBroadScopeInspection extends BaseInspection {
       return false;
     }
     final String qualifiedName = aClass.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread")) {
+    if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread") ||
+        qualifiedName.equals("java.lang.System") || qualifiedName.equals("java.lang.Runtime")) {
       return false;
     }
     final String methodName = method.getName();
