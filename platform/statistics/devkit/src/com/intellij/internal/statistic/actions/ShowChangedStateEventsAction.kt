@@ -37,26 +37,10 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
         StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.recording.state"))
       }
       else {
-        val difference = newState.filter { newEvent -> oldState.all { !isElementsEquals(newEvent, it) } }
+        val difference = newState.filter { newEvent -> oldState.all { !isEventsEquals(newEvent, it) } }
         ApplicationManager.getApplication().invokeLater { showResults(project, difference) }
       }
     }
-  }
-
-  private fun isElementsEquals(newEvent: LogEvent, oldEvent: LogEvent): Boolean {
-    if (newEvent.group != oldEvent.group) return false
-    if (newEvent.event.id != oldEvent.event.id) return false
-    if (newEvent.event.data.size != oldEvent.event.data.size) return false
-    if (newEvent.event.data.keys != oldEvent.event.data.keys) return false
-
-    val difference = Maps.difference(newEvent.event.data, oldEvent.event.data)
-    for (key in difference.entriesDiffering().keys) {
-      if (key !in SYSTEM_FIELDS) {
-        return false
-      }
-    }
-
-    return true
   }
 
   private fun showResults(project: Project, difference: Collection<LogEvent>) {
@@ -79,6 +63,22 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
   }
 
   companion object {
-    val SYSTEM_FIELDS = arrayOf("created", "system_event_id")
+    private val SYSTEM_FIELDS = arrayOf("created", "last", "system_event_id")
+
+    fun isEventsEquals(newEvent: LogEvent, oldEvent: LogEvent): Boolean {
+      if (newEvent == oldEvent) return true
+      if (newEvent.group != oldEvent.group) return false
+      if (newEvent.event.id != oldEvent.event.id) return false
+      if (newEvent.event.data.size != oldEvent.event.data.size) return false
+
+      val difference = Maps.difference(newEvent.event.data, oldEvent.event.data)
+      for (key in difference.entriesDiffering().keys) {
+        if (key !in SYSTEM_FIELDS) {
+          return false
+        }
+      }
+
+      return true
+    }
   }
 }

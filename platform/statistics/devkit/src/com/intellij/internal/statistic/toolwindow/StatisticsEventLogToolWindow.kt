@@ -28,7 +28,7 @@ import javax.swing.JPanel
 
 const val eventLogToolWindowsId = "Statistics Event Log"
 
-class StatisticsEventLogToolWindow(project: Project, private val recorderId: String) : SimpleToolWindowPanel(false, true), Disposable {
+internal class StatisticsEventLogToolWindow(project: Project, private val recorderId: String) : SimpleToolWindowPanel(false, true), Disposable {
   private val consoleLog: StatisticsEventLogConsole
   private val messageBuilder = StatisticsEventLogMessageBuilder()
   private val eventLogListener: (LogEvent) -> Unit

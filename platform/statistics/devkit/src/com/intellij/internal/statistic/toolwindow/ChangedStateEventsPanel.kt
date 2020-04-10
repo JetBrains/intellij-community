@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 
-class ChangedStateEventsPanel(val project: Project, difference: Collection<LogEvent>)
+internal class ChangedStateEventsPanel(val project: Project, difference: Collection<LogEvent>)
   : SimpleToolWindowPanel(false, true), Disposable {
   private val consoleLog = StatisticsEventLogConsole(project, StatisticsLogFilterModel())
 
