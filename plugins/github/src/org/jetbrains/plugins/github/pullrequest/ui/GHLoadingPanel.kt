@@ -39,7 +39,7 @@ constructor(model: GHLoadingModel,
   companion object {
 
     fun create(model: GHLoadingModel,
-               contentFactory: () -> JComponent,
+               contentFactory: (JPanel) -> JComponent,
                parentDisposable: Disposable,
                nothingToLoadText: String = "",
                errorPrefix: String = "Can't load data",
@@ -57,13 +57,13 @@ constructor(model: GHLoadingModel,
     }
 
     private class ContentController(private val model: GHLoadingModel, private val panel: JPanel,
-                                    contentFactory: () -> JComponent, parentDisposable: Disposable,
+                                    contentFactory: (JPanel) -> JComponent, parentDisposable: Disposable,
                                     private val errorPrefix: String,
                                     private val errorHandler: GHLoadingErrorHandler?) {
 
       private var lastResultAvailable = false
       private val contentProgressStripe by lazy(LazyThreadSafetyMode.NONE) {
-        ProgressStripe(contentFactory(), parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+        ProgressStripe(contentFactory(panel), parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
           isOpaque = false
         }
       }

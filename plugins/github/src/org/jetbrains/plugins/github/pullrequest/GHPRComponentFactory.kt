@@ -39,7 +39,6 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import java.util.function.Consumer
 import javax.swing.JComponent
-import javax.swing.border.Border
 
 @Service
 internal class GHPRComponentFactory(private val project: Project) {
@@ -213,27 +212,12 @@ internal class GHPRComponentFactory(private val project: Project) {
       (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerCustomShortcutSet(it, disposable)
     }
 
-    val changesBrowser = object : GHPRChangesBrowser(changesLoadingModel.cumulativeChangesModel, changesLoadingModel.diffHelper, project) {
-
-      override fun createCenterPanel(): JComponent {
-        return GHLoadingPanel.create(changesLoadingModel, { super.createCenterPanel() },
-                                     disposable,
-                                     "Select pull request to view changes",
-                                     "Can't load changes",
-                                     GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadChanges() }).apply {
-          border = IdeBorderFactory.createBorder(SideBorder.TOP)
-        }
-      }
-
-      override fun createViewerBorder(): Border = JBUI.Borders.empty()
-
-    }.apply {
-      background = UIUtil.getListBackground()
-      emptyText.text = "Pull request does not contain any changes"
-    }.also {
-      actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
-    }
-
+    val changesBrowser = GHPRChangesBrowser.create(project,
+                                                   changesLoadingModel,
+                                                   changesLoadingModel.cumulativeChangesModel,
+                                                   changesLoadingModel.diffHelper,
+                                                   "Select pull request to view changes",
+                                                   disposable)
 
     return OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.33f).apply {
       isOpaque = true
@@ -242,7 +226,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       firstComponent = detailsLoadingPanel
       secondComponent = changesBrowser
     }.also {
-      changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
         else when {
@@ -262,9 +245,6 @@ internal class GHPRComponentFactory(private val project: Project) {
                                      disposable: Disposable): JComponent {
 
     val changesModel = GHPRChangesModelImpl(project)
-    val changesBrowser = GHPRChangesBrowser(changesModel, changesLoadingModel.diffHelper, project).apply {
-      emptyText.text = "Select commit to view changes"
-    }
 
     val commitsLoadingPanel = GHLoadingPanel.create(changesLoadingModel, {
       GHPRCommitsBrowserComponent.create(changesLoadingModel.commitsModel, changesModel)
@@ -276,6 +256,12 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                       actionDataContext.pullRequestDataProvider.reloadChanges()
                                                     })
 
+    val changesBrowser = GHPRChangesBrowser.create(project,
+                                                   changesModel,
+                                                   changesLoadingModel.diffHelper,
+                                                   "Select commit to view changes",
+                                                   disposable)
+
     return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {
       isOpaque = true
       background = UIUtil.getListBackground()
@@ -284,7 +270,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       secondComponent = changesBrowser
     }.also {
       actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
-      changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
         else when {
