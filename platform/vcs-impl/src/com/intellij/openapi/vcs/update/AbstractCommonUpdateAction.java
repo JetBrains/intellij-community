@@ -105,14 +105,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         showOptionsDialog(vcsToVirtualFiles, project, context);
       }
 
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        // Not only documents, but also project settings should be saved,
-        // to ensure that if as result of Update some project settings will be changed,
-        // all local changes are saved in prior and do not overwrite remote changes.
-        // Also, there is a chance that save during update can break it -
-        // we do disable auto saving during update, but still, there is a chance that save will occur.
-        StoreUtil.saveDocumentsAndProjectSettings(project);
-      }
+      // Not only documents, but also project settings should be saved,
+      // to ensure that if as result of Update some project settings will be changed,
+      // all local changes are saved in prior and do not overwrite remote changes.
+      // Also, there is a chance that save during update can break it -
+      // we do disable auto saving during update, but still, there is a chance that save will occur.
+      StoreUtil.saveDocumentsAndProjectSettings(project);
 
       Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText());
 

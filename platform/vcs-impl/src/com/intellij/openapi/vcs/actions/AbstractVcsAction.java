@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,6 +51,7 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
 
   protected abstract void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation);
 
+  @CalledInAwt
   protected abstract void actionPerformed(@NotNull VcsContext e);
 
   /**
