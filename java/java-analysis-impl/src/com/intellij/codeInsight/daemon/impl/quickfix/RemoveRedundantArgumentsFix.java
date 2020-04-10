@@ -18,14 +18,17 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,14 +37,14 @@ import java.util.Arrays;
 /**
  * @author Danila Ponomarenko
  */
-public class RemoveRedundantArgumentsFix implements IntentionAction {
+public final class RemoveRedundantArgumentsFix implements IntentionAction {
   private final PsiMethod myTargetMethod;
   private final PsiExpression[] myArguments;
   private final PsiSubstitutor mySubstitutor;
 
   private RemoveRedundantArgumentsFix(@NotNull PsiMethod targetMethod,
-                                     PsiExpression @NotNull [] arguments,
-                                     @NotNull PsiSubstitutor substitutor) {
+                                      PsiExpression @NotNull [] arguments,
+                                      @NotNull PsiSubstitutor substitutor) {
     myTargetMethod = targetMethod;
     myArguments = arguments;
     mySubstitutor = substitutor;
@@ -123,7 +126,16 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (method != null && BaseIntentionAction.canModify(method)) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
+      QuickFixAction
+        .registerQuickFixAction(highlightInfo, fixRange, new RemoveRedundantArgumentsFix(method, arguments.getExpressions(), substitutor));
     }
+  }
+
+  @Override
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new RemoveRedundantArgumentsFix(
+      QuickFixWrapper.findSameElementInCopy(myTargetMethod, target),
+      ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> QuickFixWrapper.findSameElementInCopy(arg, target)),
+      mySubstitutor);
   }
 }
