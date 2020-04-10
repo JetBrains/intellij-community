@@ -19,9 +19,9 @@ internal class MutableIntIntBiMultiMap(
 
   constructor() : this(MutableIntIntMultiMap.BySet(), MutableIntIntMultiMap.BySet())
 
-  fun put(key: Int, value: Int) {
-    value2Keys.put(value, key)
-    key2Values.put(key, value)
+  fun putAll(keys: IntArray, values: IntArray) {
+    keys.forEach { key -> key2Values.putAll(key, values) }
+    values.forEach { value -> value2Keys.putAll(value, keys) }
   }
 
   fun removeKey(key: Int) {

@@ -112,10 +112,6 @@ internal sealed class MutableIntIntMultiMap(
 
   }
 
-  fun put(key: Int, value: Int) {
-    putAll(key, intArrayOf(value))
-  }
-
   private fun exists(value: Int, startRange: Int, endRange: Int): Boolean {
     for (i in startRange until endRange) {
       if (values[i] == value) return true

@@ -161,7 +161,8 @@ internal class MutableRefsTable(
       ConnectionId.ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
         copiedMap.removeValue(parentId.arrayId)
-        childrenIds.map { it.arrayId }.forEach { copiedMap.put(it, parentId.arrayId) }
+        val children = childrenIds.map { it.arrayId }.toIntArray()
+        copiedMap.putAll(children, parentId.arrayId)
       }
       ConnectionId.ConnectionType.ONE_TO_ONE -> {
         val copiedMap = getOneToOneMutableMap(connectionId)
@@ -185,7 +186,8 @@ internal class MutableRefsTable(
                                                                              childrenEntities: Sequence<SUBT>) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeValue(parentId)
-    childrenEntities.forEach { copiedMap.put(it.id.arrayId, parentId) }
+    val children = childrenEntities.map { it.id.arrayId }.toList().toIntArray()
+    copiedMap.putAll(children, parentId)
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
@@ -227,7 +229,7 @@ internal class MutableRefsTable(
       ConnectionId.ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
         copiedMap.removeKey(childId.arrayId)
-        copiedMap.put(childId.arrayId, parentId.arrayId)
+        copiedMap.putAll(intArrayOf(childId.arrayId), parentId.arrayId)
       }
       ConnectionId.ConnectionType.ONE_TO_ONE -> {
         val copiedMap = getOneToOneMutableMap(connectionId)
@@ -250,7 +252,7 @@ internal class MutableRefsTable(
   fun <T : PTypedEntity, SUBT : TypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>, childId: Int, parent: T) {
     val copiedMap = getOneToManyMutableMap(connectionId)
     copiedMap.removeKey(childId)
-    copiedMap.put(childId, parent.id.arrayId)
+    copiedMap.putAll(intArrayOf(childId), parent.id.arrayId)
   }
 
   fun toImmutable(): RefsTable = RefsTable(oneToManyContainer.mapValues { it.value.toImmutable() },
