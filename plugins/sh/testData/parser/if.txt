@@ -389,7 +389,7 @@ SHELL_SCRIPT
                   PsiElement($)('$')
                   SHELL_PARAMETER_EXPANSION
                     PsiElement({)('{')
-                    PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
+                    PsiElement(word)('USE_PREBUILT_HEXAOGON_BINARIES')
                     PsiElement(})('}')
                   PsiElement(CLOSE_QUOTE)('"')
               PsiWhiteSpace(' ')
@@ -413,7 +413,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
+                PsiElement(word)('QUALCOMM_SDK')
                 PsiElement(})('}')
               PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
@@ -452,7 +452,7 @@ SHELL_SCRIPT
                   PsiElement($)('$')
                   SHELL_PARAMETER_EXPANSION
                     PsiElement({)('{')
-                    PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
+                    PsiElement(word)('USE_PREBUILT_HEXAOGON_BINARIES')
                     PsiElement(})('}')
                   PsiElement(CLOSE_QUOTE)('"')
               PsiWhiteSpace(' ')
@@ -476,7 +476,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
+                PsiElement(word)('QUALCOMM_SDK')
                 PsiElement(})('}')
               PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
@@ -923,7 +923,7 @@ SHELL_SCRIPT
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
-              PsiElement(parameter_expansion_body)('NANO_KERNEL')
+              PsiElement(word)('NANO_KERNEL')
               PsiElement(})('}')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
@@ -964,7 +964,7 @@ SHELL_SCRIPT
                               PsiElement($)('$')
                               SHELL_PARAMETER_EXPANSION
                                 PsiElement({)('{')
-                                PsiElement(parameter_expansion_body)('NANO_KERNEL')
+                                PsiElement(word)('NANO_KERNEL')
                                 PsiElement(})('}')
                         PsiElement())(')')
                 PsiElement())(')')
@@ -990,7 +990,7 @@ SHELL_SCRIPT
                   PsiElement($)('$')
                   SHELL_PARAMETER_EXPANSION
                     PsiElement({)('{')
-                    PsiElement(parameter_expansion_body)('NANO_KERNEL')
+                    PsiElement(word)('NANO_KERNEL')
                     PsiElement(})('}')
                   PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
@@ -1037,7 +1037,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('a')
+          PsiElement(word)('a')
           PsiElement(})('}')
         PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')

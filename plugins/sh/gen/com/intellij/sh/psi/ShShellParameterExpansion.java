@@ -11,6 +11,12 @@ public interface ShShellParameterExpansion extends ShCompositeElement {
   List<ShArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
+  List<ShCommandSubstitutionCommand> getCommandSubstitutionCommandList();
+
+  @NotNull
+  List<ShLiteral> getLiteralList();
+
+  @NotNull
   List<ShShellParameterExpansion> getShellParameterExpansionList();
 
   @NotNull

@@ -278,7 +278,8 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('distrs[*]')
+          PsiElement(word)('distrs')
+          PsiElement(parameter_expansion_body)('[*]')
           PsiElement(})('}')
         LIST_TERMINATOR
           PsiElement(\n)('\n')

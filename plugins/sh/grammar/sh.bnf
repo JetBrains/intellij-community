@@ -287,8 +287,9 @@ list ::= newlines pipeline_command_list end_of_list? newlines {pin(".*")=2 eleme
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
 
+shell_parameter_expansion ::= '{' shell_parameter_expansion_inner+ '}' {pin=1}
 //noinspection BnfSuspiciousToken
-shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
+private shell_parameter_expansion_inner ::= word | parameter_expansion_body | string | vars {name="parameter expansion"}
 
 left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
                             {'=' <<parseUntilSpace literal >>}* {
