@@ -49,6 +49,8 @@
 
     <projectService serviceImplementation="com.intellij.vcs.commit.CommitWorkflowManager"/>
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitWorkflowManager$MyStartupActivity"/>
+
+    <editorNotificationProvider implementation="com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider"/>
   </extensions>
 
   <projectListeners>

@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
+import com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
@@ -90,9 +92,17 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
     ignoredHolderWaiter.waitFor()
   }
 
-  private fun assertNotificationByContent(notificationContent: String) =
-    vcsNotifier.notifications.find { it.content == notificationContent }
-    ?: fail("Notification $notificationContent not found")
+  private fun assertNotificationByContent(notificationContent: String) {
+    val gitignore = file(GITIGNORE)
+    val gitIgnoreVF = getVirtualFile(gitignore.file)
+    val editor =
+      invokeAndWaitIfNeeded { FileEditorManager.getInstance(project).openFile(gitIgnoreVF, false) }.firstOrNull()
+
+    assertNotNull("Editor for $gitignore not found", editor)
+
+    val notificationPanel = IgnoredToExcludeNotificationProvider().createNotificationPanel(gitIgnoreVF, editor!!, project)
+    assertTrue("Notification $notificationContent not found", notificationPanel?.text == notificationContent)
+  }
 
   private fun assertExcludedDirs(vararg expectedExcludes: VirtualFile) {
     val excludes = module.excludes()

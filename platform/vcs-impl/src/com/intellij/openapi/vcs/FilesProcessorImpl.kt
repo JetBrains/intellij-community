@@ -52,9 +52,7 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
   }
 
   @Synchronized
-  protected fun removeFiles(filesToRemove: Collection<VirtualFile>) {
-    files.removeAll(filesToRemove)
-  }
+  protected fun removeFiles(filesToRemove: Collection<VirtualFile>): Boolean = files.removeAll(filesToRemove)
 
   @Synchronized
   protected fun isFilesEmpty() = files.isEmpty()
