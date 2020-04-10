@@ -3769,6 +3769,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/argumentTypeMismatch.kt");
                 }
 
+                @TestMetadata("binaryOperationInCall.kt")
+                public void testBinaryOperationInCall() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/call/binaryOperationInCall.kt");
+                }
+
                 @TestMetadata("callInAnnotationEntry.kt")
                 public void testCallInAnnotationEntry() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/callInAnnotationEntry.kt");
@@ -4072,6 +4077,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("topLevelFunPlacement.kt")
                 public void testTopLevelFunPlacement() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createFunction/call/topLevelFunPlacement.kt");
+                }
+
+                @TestMetadata("unaryOperationInCall.kt")
+                public void testUnaryOperationInCall() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createFunction/call/unaryOperationInCall.kt");
                 }
 
                 @TestMetadata("unitFun.kt")
