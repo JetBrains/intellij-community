@@ -64,6 +64,18 @@ class MemoryAgentOperations {
   }
 
   @NotNull
+  static ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                        @NotNull ObjectReference reference, int number) throws EvaluateException {
+    IntegerValue numberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(number);
+    Value value = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.FIND_PATHS_TO_CLOSEST_GC_ROOTS,
+      Arrays.asList(reference, numberValue)
+    );
+    return GcRootsPathsParser.INSTANCE.parse(value);
+  }
+
+  @NotNull
   static MemoryAgent getAgent(@NotNull DebugProcessImpl debugProcess) {
     MemoryAgent agent = debugProcess.getUserData(MEMORY_AGENT_KEY);
     return agent == null ? MemoryAgentImpl.DISABLED : agent;
@@ -95,6 +107,7 @@ class MemoryAgentOperations {
         .setCanFindGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_GC_ROOTS))
         .setCanGetShallowSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_SHALLOW_SIZE_BY_CLASSES))
         .setCanGetRetainedSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_RETAINED_SIZE_BY_CLASSES))
+        .setCanFindPathsToClosestGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS))
         .buildLoaded();
     }
   }
