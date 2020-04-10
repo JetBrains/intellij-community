@@ -37,7 +37,7 @@ internal class RefsTable internal constructor(
   override val oneToAbstractManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BidirectionalMap<PId<out TypedEntity>, PId<out TypedEntity>>>,
   override val abstractOneToOneContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, BiMap<PId<out TypedEntity>, PId<out TypedEntity>>>
 ) : AbstractRefsTable() {
-  constructor() : this(HashMap(), HashMap(), BidirectionalMap(), HashBiMap.create())
+  constructor() : this(HashMap(), HashMap(), HashMap(), HashMap())
 }
 
 internal class MutableRefsTable(
@@ -47,7 +47,7 @@ internal class MutableRefsTable(
   override val abstractOneToOneContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, BiMap<PId<out TypedEntity>, PId<out TypedEntity>>>
 ) : AbstractRefsTable() {
 
-  constructor() : this(HashMap(), HashMap(), BidirectionalMap(), HashBiMap.create())
+  constructor() : this(HashMap(), HashMap(), HashMap(), HashMap())
 
   private val oneToAbstractManyCopiedToModify: MutableSet<ConnectionId<out TypedEntity, out TypedEntity>> = HashSet()
   private val abstractOneToOneCopiedToModify: MutableSet<ConnectionId<out TypedEntity, out TypedEntity>> = HashSet()
@@ -82,6 +82,7 @@ internal class MutableRefsTable(
       val original = oneToAbstractManyContainer[connectionId]!!
       original.forEach { (k, v) -> copy[k] = v }
       oneToAbstractManyContainer[connectionId] = copy
+      oneToAbstractManyCopiedToModify.add(connectionId)
       copy
     }
   }
@@ -99,6 +100,7 @@ internal class MutableRefsTable(
       val original = abstractOneToOneContainer[connectionId]!!
       original.forEach { (k, v) -> copy[k] = v }
       abstractOneToOneContainer[connectionId] = copy
+      abstractOneToOneCopiedToModify.add(connectionId)
       copy
     }
   }
