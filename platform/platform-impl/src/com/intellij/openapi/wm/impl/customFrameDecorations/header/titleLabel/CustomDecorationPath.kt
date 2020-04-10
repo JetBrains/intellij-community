@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -37,6 +38,13 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
 
   private val titleChangeListener = PropertyChangeListener{
     updateProjectName()
+  }
+
+  override fun getCustomTitle(): String? {
+    if (LightEdit.owns(project)) {
+      return frame.title
+    }
+    return null
   }
 
   fun setActive(value: Boolean) {

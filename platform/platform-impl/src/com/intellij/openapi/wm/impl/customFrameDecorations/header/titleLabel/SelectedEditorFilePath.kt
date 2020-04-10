@@ -284,6 +284,8 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
+  open fun getCustomTitle(): String? = null
+
   protected var isClipped = false
   var titleString = ""
 
@@ -321,6 +323,9 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       classTitle.getLong() + it
     } ?: pathPatterns.firstOrNull { it.preferredWidth < width }?.let { it.createTitle() } ?: ""
 
+    getCustomTitle()?.let {
+      titleString = it
+    }
     label.text = titleString
     HelpTooltip.dispose(label)
 
