@@ -111,15 +111,14 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
                                         @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange) {
     for (JavaResolveResult candidate : candidates) {
-      registerIntention(arguments, highlightInfo, fixRange, candidate, arguments);
+      registerIntention(arguments, highlightInfo, fixRange, candidate);
     }
   }
 
   private static void registerIntention(@NotNull PsiExpressionList arguments,
                                         @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange,
-                                        @NotNull JavaResolveResult candidate,
-                                        @NotNull PsiElement context) {
+                                        @NotNull JavaResolveResult candidate) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
