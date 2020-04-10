@@ -17,9 +17,11 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -39,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
+public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   static class Wrapper extends ArgumentFixerActionFactory {
     final Predicate<? super PsiType> myInTypeFilter;
     final Predicate<? super PsiType> myOutTypeFilter;
@@ -170,9 +172,13 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
   @Nullable private final Wrapper myWrapper;
 
   public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    this(type, expression, ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type)));
+  }
+  
+  private WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression, @Nullable Wrapper wrapper) {
     super(expression);
     myType = type;
-    myWrapper = ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type));
+    myWrapper = wrapper;
   }
 
   @Nls
@@ -241,5 +247,12 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
     for (Wrapper wrapper : WRAPPERS) {
       wrapper.registerCastActions(candidates, call, highlightInfo, fixRange);
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpression expression = (PsiExpression)getStartElement();
+    if (expression == null) return null;
+    return new WrapWithAdapterMethodCallFix(myType, QuickFixWrapper.findSameElementInCopy(expression, target), myWrapper);
   }
 }
