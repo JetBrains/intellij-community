@@ -35,10 +35,6 @@ class CompilationOutputsDownloader {
   private final CompilationContext context
   private final String remoteCacheUrl
   private final String gitUrl
-  /**
-   * If set to true then latest commit in current repository will be used to download caches.
-   */
-  boolean availableForHeadCommit = false
 
   private final NamedThreadPoolExecutor executor
 
@@ -48,26 +44,39 @@ class CompilationOutputsDownloader {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
-    this.availableForHeadCommit = availableForHeadCommit
+    this.availableForHeadCommitForced = availableForHeadCommit
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    context.messages.info("Using $executorThreadsCount threads to download caches.")
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
 
     sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
-  void downloadCachesAndOutput() {
-    def commits = getLastCommits()
-    int depth = availableForHeadCommit ? 0 : commits.findIndexOf { getAvailableCachesKeys().contains(it) }
-    if (depth == 0) availableForHeadCommit = true
-    if (depth != -1) {
-      String lastCachedCommit = commits[depth]
-      if (lastCachedCommit == null) {
-        context.messages.error("Unable to find last cached commit for $depth in $commits")
-      }
-      context.messages.info("Using cache for commit $lastCachedCommit ($depth behind last commit).")
+  private boolean availableForHeadCommitForced = false
+  /**
+   * If true then latest commit in current repository will be used to download caches.
+   */
+  @Lazy
+  boolean availableForHeadCommit = { availableCommitDepth == 0 }()
 
+  @Lazy
+  private List<String> lastCommits = { gitLog() }()
+
+  @Lazy
+  private int availableCommitDepth = {
+    availableForHeadCommitForced ? 0 : lastCommits.findIndexOf {
+      getAvailableCachesKeys().contains(it)
+    }
+  }()
+
+  void downloadCachesAndOutput() {
+    if (availableCommitDepth != -1) {
+      String lastCachedCommit = lastCommits[availableCommitDepth]
+      if (lastCachedCommit == null) {
+        context.messages.error("Unable to find last cached commit for $availableCommitDepth in $lastCommits")
+      }
+      context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
+      context.messages.info("Using $executor.corePoolSize threads to download caches.")
       // In case if outputs are available for the current commit
       // cache is not needed as we are not going to compile anything.
       if (!availableForHeadCommit) {
@@ -161,7 +170,7 @@ class CompilationOutputsDownloader {
     return commitsHistory[gitUrl] as Set<String>
   }
 
-  private List<String> getLastCommits() {
+  private List<String> gitLog() {
     def log = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
     def output = new BufferedReader(new InputStreamReader(log.inputStream, StandardCharsets.UTF_8)).withCloseable {
       it.lines().map { it.trim() }.collect(Collectors.toList())

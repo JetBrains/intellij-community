@@ -16,6 +16,10 @@ class PortableCompilationCache {
   private String remoteGitUrl = { require('intellij.remote.url', "Repository url") }()
   @Lazy
   private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
+  /**
+   * If true then current execution is expected to perform only warm up and upload of new commits caches, nothing else like tests execution
+   */
+  private boolean uploadOnly = System.getProperty('intellij.jps.cache.uploadOnly')?.toBoolean() ?: false
   @Lazy
   private CompilationOutputsDownloader downloader = {
     def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit')?.toBoolean() ?: false
@@ -49,6 +53,11 @@ class PortableCompilationCache {
         context.messages.info("Cleaning $it")
         FileUtil.delete(it)
       }
+    }
+    else if (uploadOnly && downloader.availableForHeadCommit) {
+      context.messages.info('Downloading is skipped because caches are ' +
+                            'available for the head commit so nothing new would be uploaded ' +
+                            '(current execution is expected to perform only upload of new commits caches)')
     }
     else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
       downloader.downloadCachesAndOutput()
