@@ -40,7 +40,7 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
     }
   }
 
-  override fun toString(): String = "${javaClass.simpleName}-:-$id"
+  override fun toString(): String = "$id"
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
