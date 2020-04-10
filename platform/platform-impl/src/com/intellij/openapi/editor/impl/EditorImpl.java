@@ -1756,6 +1756,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  public boolean isCursorHidden() {
+    return myDefaultCursor == EMPTY_CURSOR;
+  }
+
   public boolean isScrollToCaret() {
     return myScrollToCaret;
   }
