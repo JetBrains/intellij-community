@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 import java.util.Objects;
@@ -42,7 +43,7 @@ public class SerializableCtorInspection extends DevKitInspectionBase {
             }
             PsiAnnotation annotation = JavaPsiFacade.getElementFactory(aClass.getProject())
               .createAnnotationFromText(builder.append("})").toString(), aClass);
-            holder.registerProblem(constructor.getNameIdentifier(), "Non-default ctor should be annotated with @PropertyMapping",
+            holder.registerProblem(constructor.getNameIdentifier(), DevKitBundle.message("inspection.serializable.constructor.message"),
                                    new AddAnnotationPsiFix(fqn, constructor, annotation.getParameterList().getAttributes()));
           }
         }
