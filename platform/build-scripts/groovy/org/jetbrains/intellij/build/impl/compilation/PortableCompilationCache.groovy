@@ -41,8 +41,10 @@ class PortableCompilationCache {
     def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force', 'false').toBoolean()
     def cacheDir = context.compilationData.dataStorageRoot
     if (forceRebuild) {
-      context.messages.info("Cleaning $cacheDir")
-      FileUtil.delete(cacheDir)
+      [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
+        context.messages.info("Cleaning $it")
+        FileUtil.delete(it)
+      }
     }
     def downloader = new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
     if (!forceRebuild && (forceDownload || !cacheDir.isDirectory() || !cacheDir.list())) {
