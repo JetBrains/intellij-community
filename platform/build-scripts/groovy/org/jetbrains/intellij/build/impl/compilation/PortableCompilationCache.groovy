@@ -16,6 +16,11 @@ class PortableCompilationCache {
   private String remoteGitUrl = { require('intellij.remote.url', "Repository url") }()
   @Lazy
   private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
+  @Lazy
+  private CompilationOutputsDownloader downloader = {
+    def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit')?.toBoolean() ?: false
+    new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
+  }()
   boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && System.getProperty(REMOTE_CACHE_URL_PROPERTY)?.with {
     !StringUtil.isEmptyOrSpaces(it)
   } == true
@@ -36,10 +41,8 @@ class PortableCompilationCache {
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
   def warmUp() {
-    def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit')?.toBoolean() ?: false
     def forceDownload = System.getProperty('intellij.jps.cache.download.force')?.toBoolean() ?: false
     def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force')?.toBoolean() ?: false
-    def downloader = new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
     def cacheDir = context.compilationData.dataStorageRoot
     if (forceRebuild) {
       [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
@@ -62,18 +65,23 @@ class PortableCompilationCache {
    * Upload local compilation cache to remote cache
    */
   def upload() {
-    def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
-    def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
-    def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
-    def commitHash = require("build.vcs.number", "Repository commit")
-    def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
-    context.messages.info("AWS sync folder $syncFolder")
-    context.messages.info("Git remote url $remoteGitUrl")
-    Map<String, String> remotePerCommitHash = [:]
-    remotePerCommitHash[remoteGitUrl] = commitHash
-    new CompilationOutputsUploader(
-      context, remoteCacheUrl, remotePerCommitHash,
-      agentPersistentStorage, syncFolder, updateCommitHistory
-    ).upload()
+    if (downloader.availableForHeadCommit) {
+      context.messages.info('Nothing new to upload')
+    }
+    else {
+      def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
+      def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
+      def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
+      def commitHash = require("build.vcs.number", "Repository commit")
+      def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
+      context.messages.info("AWS sync folder $syncFolder")
+      context.messages.info("Git remote url $remoteGitUrl")
+      Map<String, String> remotePerCommitHash = [:]
+      remotePerCommitHash[remoteGitUrl] = commitHash
+      new CompilationOutputsUploader(
+        context, remoteCacheUrl, remotePerCommitHash,
+        agentPersistentStorage, syncFolder, updateCommitHistory
+      ).upload()
+    }
   }
 }
