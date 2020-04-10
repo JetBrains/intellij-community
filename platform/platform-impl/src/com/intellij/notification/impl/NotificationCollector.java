@@ -154,7 +154,7 @@ public class NotificationCollector {
     }
   }
 
-  public static class NotificationRuleValidator extends CustomWhiteListRule {
+  public static class NotificationGroupValidator extends CustomWhiteListRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
@@ -166,6 +166,21 @@ public class NotificationCollector {
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
       return ourNotificationWhitelist.containsKey(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+    }
+  }
+
+  public static class NotificationIdValidator extends CustomWhiteListRule {
+
+    @Override
+    public boolean acceptRuleId(@Nullable String ruleId) {
+      return "notification_display_id".equals(ruleId);
+    }
+
+    @NotNull
+    @Override
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+      if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      return acceptWhenReportedByJetBrainsPlugin(context);
     }
   }
 

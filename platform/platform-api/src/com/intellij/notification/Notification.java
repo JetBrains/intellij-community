@@ -52,6 +52,10 @@ public class Notification {
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final String id;
+
+  /**
+   * Unique ID for usage statistics.
+   */
   @Nullable
   public final String displayId;
 
