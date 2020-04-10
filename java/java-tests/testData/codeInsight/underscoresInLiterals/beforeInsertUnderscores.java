@@ -1,4 +1,4 @@
-// "Fix all 'No underscores in numeric literal' problems in file" "true"
+// "Fix all 'Unreadable numeric literal' problems in file" "true"
 
 class C {
   int c = <caret>299792000;

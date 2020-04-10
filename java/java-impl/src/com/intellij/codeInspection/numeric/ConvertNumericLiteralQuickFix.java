@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
  */
 final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
 
-  private static final Logger LOGGER = Logger.getInstance(ConvertNumericLiteralQuickFix.class);
-
   @NotNull private final String myConvertedValue;
   @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) private final String myName;
   @NotNull private @NlsContexts.ListItem final String myFamilyName;
@@ -49,10 +47,7 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
 
-    if (element == null) {
-      LOGGER.error("Problem descriptor cannot be without PsiElement");
-      return;
-    }
+    if (element == null) return;
 
     final PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myConvertedValue, null);
     element.replace(replacement);
