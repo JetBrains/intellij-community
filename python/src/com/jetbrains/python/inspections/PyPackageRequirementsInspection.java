@@ -107,7 +107,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       final Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
         if (file.getText().trim().isEmpty()) {
-          registerProblem(file, PyPsiBundle.message("python.requirements.file.empty"),
+          registerProblem(file, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
         }
         else {
@@ -558,7 +558,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return PyPsiBundle.message("python.requirements.quickfix.family.name");
+      return PyPsiBundle.message("INSP.package.requirements.quickfix.family.name");
     }
 
     @Override
