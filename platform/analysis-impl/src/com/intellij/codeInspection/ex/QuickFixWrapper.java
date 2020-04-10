@@ -161,6 +161,10 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   @Contract("null, _ -> null; !null, _ -> !null")
   public static <T extends PsiElement> T findSameElementInCopy(@Nullable T element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
+    if (element.getClass().equals(copy.getClass())) {
+      //noinspection unchecked
+      return (T)copy;
+    }
     TextRange range = element.getTextRange();
     PsiElement newElement = copy.findElementAt(range.getStartOffset());
     while (newElement != null) {
