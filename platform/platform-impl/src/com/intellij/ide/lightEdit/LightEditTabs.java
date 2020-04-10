@@ -10,10 +10,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -159,7 +161,22 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
           LightEditUtil.confirmClose(
             ApplicationBundle.message("light.edit.close.message"),
             ApplicationBundle.message("light.edit.close.title"),
-            () -> saveDocument(editorInfo))) {
+            new LightEditSaveConfirmationHandler() {
+              @Override
+              public void onSave() {
+                saveDocument(editorInfo);
+              }
+
+              @Override
+              public void onDiscard() {
+                FileEditor fileEditor = editorInfo.getFileEditor();
+                if (fileEditor instanceof TextEditor) {
+                  Editor editor = ((TextEditor)fileEditor).getEditor();
+                  FileDocumentManager.getInstance().reloadFromDisk(editor.getDocument());
+                }
+              }
+            })
+      ) {
         removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(editorInfo));
       }
     }
@@ -180,7 +197,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     }
   }
 
-  private void saveDocument(@NotNull LightEditorInfo editorInfo) {
+  void saveDocument(@NotNull LightEditorInfo editorInfo) {
     if (editorInfo.isNew()) {
       VirtualFile targetFile = LightEditUtil.chooseTargetFile(this.getParent(), editorInfo);
       if (targetFile != null) {

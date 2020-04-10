@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -96,10 +97,10 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     return editorInfo;
   }
 
-  public static void setImplicitSaveEnabled(@NotNull VirtualFile file, boolean isEnabled) {
+  private static void setImplicitSaveEnabled(@NotNull VirtualFile file, boolean isEnabled) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      document.putUserData(NO_IMPLICIT_SAVE, !isEnabled);
+      document.putUserData(NO_IMPLICIT_SAVE, isEnabled ? null : true);
     }
   }
 
@@ -116,6 +117,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   @Override
   public void closeEditor(@NotNull LightEditorInfo editorInfo) {
     myEditors.remove(editorInfo);
+    setImplicitSaveEnabled(editorInfo.getFile(), true);
     ((LightEditorInfoImpl)editorInfo).disposeEditor();
     myEventDispatcher.getMulticaster().afterClose(editorInfo);
   }
@@ -178,6 +180,11 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   @Override
   public boolean containsUnsavedDocuments() {
     return myEditors.stream().anyMatch(editorInfo -> editorInfo.isUnsaved());
+  }
+
+  @NotNull
+  List<LightEditorInfo> getUnsavedEditors() {
+    return ContainerUtil.filter(myEditors, editorInfo -> editorInfo.isUnsaved());
   }
 
   private String getUniqueName() {
