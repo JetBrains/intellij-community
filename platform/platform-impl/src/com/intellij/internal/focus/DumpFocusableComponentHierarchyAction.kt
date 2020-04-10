@@ -1,91 +1,88 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.focus;
+package com.intellij.internal.focus
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBScrollPane;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBScrollPane
+import java.awt.*
+import java.awt.datatransfer.StringSelection
+import java.awt.event.ActionEvent
+import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
+import javax.swing.*
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.concurrent.CopyOnWriteArrayList;
+class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
+  override fun actionPerformed(e: AnActionEvent) {
+    val visibleFrame = WindowManager.getInstance().findVisibleFrame()
+    val activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+    val focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+    val focusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+    val dump = CopyOnWriteArrayList<String>()
 
-public class DumpFocusableComponentHierarchyAction extends AnAction implements DumbAware {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
+    dump.add("Active Window: " + if (activeWindow == null) "null" else activeWindow.javaClass.name)
+    dump.add("Focused Window: " + if (focusedWindow == null) "null" else focusedWindow.javaClass.name)
+    dump.add("Focused Component: " + if (focusedComponent == null) "null" else focusedComponent.javaClass.name)
 
-    JFrame visibleFrame = WindowManager.getInstance().findVisibleFrame();
-    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    Component focusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-
-    CopyOnWriteArrayList<String> dump = new CopyOnWriteArrayList<>();
-
-    dump.add("Active Window: " +  (activeWindow == null ? "null" : activeWindow.getClass().getName()));
-    dump.add("Focused Window: " + (focusedWindow == null ? "null" : focusedWindow.getClass().getName()));
-    dump.add("Focused Component: " + (focusedComponent == null ? "null" : focusedComponent.getClass().getName()));
-
-    ArrayList<Component> componentTrace = new ArrayList<>();
-
-    Component c = focusedComponent;
+    val componentTrace = ArrayList<Component>()
+    var c = focusedComponent
 
     while (c != null) {
-      componentTrace.add(c);
-      c = c.getParent();
+      componentTrace.add(c)
+      c = c.parent
     }
 
-    for (int i = componentTrace.size() - 1; i >= 0; i--) {
-      dump.add(componentTrace.get(i).getClass().getName());
+    for (i in componentTrace.indices.reversed()) {
+      dump.add(componentTrace[i].javaClass.name)
       if (i != 0) {
-        dump.add("^");
+        dump.add("^")
       }
     }
 
-    dump.add("Children count in focused component: " + (focusedComponent == null ? "null" : ((JComponent)focusedComponent).getComponentCount()));
+    (focusedComponent as? JComponent?)?.let {
+      dump.add("Children count in focused component: ${it.componentCount}")
+    }
 
-    int FONT_HEIGHT = 30;
+    val fontHeight = 30
 
-    JPanel jPanel = new JPanel(new BorderLayout()) {
-      @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    val contentPanel:JPanel = JPanel(BorderLayout())
 
-        g.setColor(JBColor.BLACK);
-        g.fillRect(0, 0, getBounds().width, getBounds().height);
-        g.setColor(JBColor.WHITE);
-
-        for (int i = dump.size() - 1; i >= 0; i --) {
-          g.drawString(dump.get(i), 20, 50 + (i * FONT_HEIGHT));
+    val jPanel: JPanel = object : JPanel(BorderLayout()) {
+      override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+        g.color = JBColor.BLACK
+        g.fillRect(0, 0, bounds.width, bounds.height)
+        g.color = JBColor.WHITE
+        for (i in dump.indices.reversed()) {
+          g.drawString(dump[i], 20, 50 + i * fontHeight)
         }
       }
-    };
+    }
+    contentPanel.preferredSize = Dimension(visibleFrame!!.width, dump.size * fontHeight)
+    contentPanel.add(jPanel)
 
-    jPanel.setPreferredSize(new Dimension(visibleFrame.getWidth(), dump.size() * FONT_HEIGHT + 200));
+    val scrollPane: JScrollPane = JBScrollPane(contentPanel)
 
-    JScrollPane scrollPane = new JBScrollPane(jPanel);
-    scrollPane.setPreferredSize(visibleFrame.getSize());
+    scrollPane.preferredSize = visibleFrame.size
 
-    Popup popup = PopupFactory.getSharedInstance().getPopup(visibleFrame, scrollPane, visibleFrame.getX(), visibleFrame.getY());
-    popup.show();
+    val popup = PopupFactory.getSharedInstance().
+                  getPopup(visibleFrame, scrollPane, visibleFrame.x, visibleFrame.y)
 
-    JButton closeButton = new JButton(new AbstractAction("Close and copy into the clipboard") {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        StringBuilder dumpAsString = new StringBuilder();
-        for (int i = dump.size() - 1; i >= 0; i--) {
-          dumpAsString.append(dump.get(i)).append("\n");
+    val closeButton = JButton(object : AbstractAction("Close and copy into the clipboard") {
+      override fun actionPerformed(e: ActionEvent) {
+        val dumpAsString = StringBuilder()
+        for (i in dump.indices.reversed()) {
+          dumpAsString.append(dump[i]).append("\n")
         }
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(dumpAsString.toString()), null);
-        popup.hide();
+        Toolkit.getDefaultToolkit().systemClipboard.setContents(
+          StringSelection(dumpAsString.toString()), null)
+        popup.hide()
       }
-    });
+    })
+    jPanel.add(closeButton, BorderLayout.NORTH)
 
-    jPanel.add(closeButton, BorderLayout.SOUTH);
+    popup.show()
   }
 }
