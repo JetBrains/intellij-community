@@ -32,7 +32,8 @@ import java.awt.*;
 public class RefusedBequestInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations =
-    new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
+    new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper",
+                                "org.jetbrains.annotations.MustBeInvokedByOverriders");
   @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods;
   @SuppressWarnings("PublicField") public boolean ignoreDefaultSuperMethods;
   @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
