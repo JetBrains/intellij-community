@@ -17,10 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.psi.YAMLDocument;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLMapping;
-import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.*;
+
+import java.util.List;
 
 public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> implements InsertHandler<T> {
 
@@ -132,5 +131,19 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     final int startOffset = editor.getCaretModel().getOffset();
     final Document document = editor.getDocument();
     return document.getTextLength() > startOffset && document.getCharsSequence().charAt(startOffset) == ch;
+  }
+
+  public static void trimSequenceItemIndents(YAMLSequence yamlSequence) {
+    List<YAMLSequenceItem> items = yamlSequence.getItems();
+    if (items.size() > 1) {
+      YAMLElementGenerator elementGenerator = YAMLElementGenerator.getInstance(yamlSequence.getProject());
+      for (int i = 1; i < items.size(); i++) {
+        PsiElement element = items.get(i).getPrevSibling();
+        if (element != null && element.getNode().getElementType() == YAMLTokenTypes.INDENT) {
+          PsiElement newIndent = elementGenerator.createIndent(0);
+          element.replace(newIndent);
+        }
+      }
+    }
   }
 }
