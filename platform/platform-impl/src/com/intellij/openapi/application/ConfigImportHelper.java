@@ -114,11 +114,13 @@ public final class ConfigImportHelper {
         log.info("Custom migration option: " + customMigrationOption);
         vmOptionFileChanged = doesVmOptionFileExist(newConfigDir);
         try {
-          tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log);
-
           if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace) {
+            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false);
             Path location = ((CustomConfigMigrationOption.MigrateFromCustomPlace)customMigrationOption).getLocation();
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(location);
+          }
+          else {
+            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, true);
           }
         }
         catch (IOException e) {
@@ -220,11 +222,12 @@ public final class ConfigImportHelper {
   }
 
   @NotNull
-  private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log) throws IOException {
+  private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log, boolean smartDelete) throws IOException {
     File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
     FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir);
-    FileUtil.delete(currentConfig);
+
+    deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
     File pluginsDir = new File(PathManager.getPluginsPath());
     if (pluginsDir.exists() && !FileUtil.isAncestor(currentConfig.toFile(), pluginsDir, false)) {
@@ -240,6 +243,32 @@ public final class ConfigImportHelper {
     }
 
     return tempBackupDir;
+  }
+
+  private static void deleteCurrentConfigDir(@NotNull Path currentConfig, @NotNull Logger log, boolean smartDelete) throws IOException {
+    log.debug("Removing current config directory, smartDelete: " + smartDelete);
+    if (!smartDelete) {
+      FileUtil.delete(currentConfig);
+      return;
+    }
+
+    boolean removedViaCustomizer = false;
+    try {
+      for (RestoreDefaultConfigCustomizer customizer : ServiceLoader.load(RestoreDefaultConfigCustomizer.class)) {
+        log.debug("Found " + customizer);
+        customizer.removeCurrentConfigDir(currentConfig);
+        removedViaCustomizer = true;
+        break;
+      }
+    }
+    catch (Exception e) {
+      log.warn("Couldn't remove current config dir using the customizer", e);
+    }
+
+    if (!removedViaCustomizer) {
+      log.debug("RestoreDefaultConfigCustomizer not found, removing config directory manually...");
+      FileUtil.delete(currentConfig);
+    }
   }
 
   private static void moveTempBackupToStandardBackup(@NotNull File backupToMove,
