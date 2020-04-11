@@ -194,6 +194,11 @@ public class VcsNotifier {
   }
 
   @NotNull
+  public Notification notifyImportantWarning(@Nls @NotNull String title, @Nls @NotNull String message, NotificationAction... actions) {
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, actions);
+  }
+
+  @NotNull
   public Notification notifyImportantWarning(
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
