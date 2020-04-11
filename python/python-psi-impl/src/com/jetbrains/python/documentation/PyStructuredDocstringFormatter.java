@@ -2,9 +2,13 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -22,6 +26,8 @@ import java.util.List;
  * @author yole
  */
 public class PyStructuredDocstringFormatter {
+
+  private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);
 
   private PyStructuredDocstringFormatter() {
   }
@@ -50,7 +56,22 @@ public class PyStructuredDocstringFormatter {
 
     final StructuredDocString structuredDocString = DocStringUtil.parseDocStringContent(format, preparedDocstring);
 
-    final String output = PythonRuntimeService.getInstance().formatDocstring(module, format, preparedDocstring);
+    String output = null;
+    try {
+      Module finalModule = module;
+      output = ApplicationUtil.runWithCheckCanceled(
+        () -> PythonRuntimeService.getInstance().formatDocstring(finalModule, format, preparedDocstring),
+        // It's supposed to be run inside a non-blocking read action and, thus, have an associated progress indicator
+        ProgressManager.getInstance().getProgressIndicator()
+      );
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+
     if (output != null) {
       result.add(output);
     }
