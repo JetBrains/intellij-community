@@ -114,6 +114,34 @@ class PyGotoTypeDeclarationTest : PyTestCase() {
     }
   }
 
+  // PY-41452
+  fun testTypedDictClass() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      val type = findSymbolType(
+        "from typing import TypedDict\n" +
+        "class MyDict(TypedDict):\n" +
+        "    field_1: int\n" +
+        "    field_2: str\n" +
+        "my_d<caret>ict: MyDict = undefined"
+      )
+
+      assertEquals((myFixture.file as PyFile).findTopLevelClass("MyDict"), type)
+    }
+  }
+
+  // PY-41452
+  fun testTypedDictTarget() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      val type = findSymbolType(
+        "from typing import TypedDict\n" +
+        "Movie = TypedDict('Movie', {'name': str, 'year': int})\n" +
+        "my_d<caret>ict: Movie = undefined"
+      )
+
+      assertEquals((myFixture.file as PyFile).findTopLevelAttribute("Movie"), type)
+    }
+  }
+
   private fun findSymbolType(text: String): PsiElement = findSymbolTypes(text).single()
 
   private fun findSymbolTypes(text: String): List<PsiElement> {
