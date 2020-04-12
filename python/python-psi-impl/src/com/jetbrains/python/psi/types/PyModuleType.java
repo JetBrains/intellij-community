@@ -563,4 +563,11 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public static Set<String> getPossibleInstanceMembers() {
     return MODULE_MEMBERS;
   }
+
+  @Override
+  public @Nullable PyQualifiedNameOwner getDeclarationElement() {
+    final QualifiedName name = QualifiedName.fromDottedString("types.ModuleType");
+    final PyQualifiedNameResolveContext resolveContext = PyResolveImportUtil.fromFoothold(myModule);
+    return PyUtil.as(PyResolveImportUtil.resolveTopLevelMember(name, resolveContext), PyClass.class);
+  }
 }

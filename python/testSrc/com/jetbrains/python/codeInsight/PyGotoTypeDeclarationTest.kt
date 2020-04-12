@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 
@@ -63,6 +64,12 @@ class PyGotoTypeDeclarationTest : PyTestCase() {
 
       assertEquals(PyBuiltinCache.getInstance(myFixture.file).strType?.pyClass, type)
     }
+  }
+
+  // PY-41452
+  fun testModule() {
+    val type = findSymbolType("import typing\ntyp<caret>ing")
+    assertEquals("types.ModuleType", (type as PyClass).qualifiedName)
   }
 
   private fun findSymbolType(text: String): PsiElement = findSymbolTypes(text).single()
