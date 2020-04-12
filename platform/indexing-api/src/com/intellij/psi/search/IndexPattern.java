@@ -15,10 +15,13 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -33,6 +36,7 @@ public class IndexPattern {
   private Pattern myOptimizedIndexingPattern;
   private boolean myCaseSensitive;
   private Pattern myPattern;
+  private @NotNull List<String> myStringsToFindFirst = Collections.emptyList();
 
   /**
    * Creates an instance of an index pattern.
@@ -57,6 +61,11 @@ public class IndexPattern {
 
   public @Nullable Pattern getOptimizedIndexingPattern() {
     return myOptimizedIndexingPattern;
+  }
+
+  @NotNull
+  public List<String> getWordsToFindFirst() {
+    return myStringsToFindFirst;
   }
 
   public boolean isCaseSensitive() {
@@ -86,10 +95,17 @@ public class IndexPattern {
       String optimizedPattern = myPatternString;
       optimizedPattern = StringUtil.trimStart(optimizedPattern, ".*");
       myOptimizedIndexingPattern = Pattern.compile(optimizedPattern, flags);
+      try {
+        //myStringsToFindFirst = IndexPatternOptimizer.getInstance().extractStringsToFind(myPatternString);
+      }
+      catch (Throwable throwable) {
+        Logger.getInstance(IndexPattern.class).info("OLOLO", throwable);
+      }
     }
     catch(PatternSyntaxException e){
       myPattern = null;
       myOptimizedIndexingPattern = null;
+      myStringsToFindFirst = Collections.emptyList();
     }
   }
 

@@ -27,6 +27,10 @@ public final class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexE
   }
 
   public static boolean needsTodoIndex(@NotNull VirtualFile file) {
+    if (FileBasedIndex.IGNORE_PLAIN_TEXT_FILES && file.getFileType() == PlainTextFileType.INSTANCE) {
+      return false;
+    }
+
     for (ExtraPlaceChecker checker : EP_NAME.getExtensionList()) {
       if (checker.accept(null, file)) {
         return true;
@@ -34,10 +38,6 @@ public final class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexE
     }
 
     if (!file.isInLocalFileSystem() || !isInContentOfAnyProject(file)) {
-      return false;
-    }
-
-    if (FileBasedIndex.IGNORE_PLAIN_TEXT_FILES && file.getFileType() == PlainTextFileType.INSTANCE) {
       return false;
     }
 
