@@ -2,29 +2,46 @@
 package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.PyTargetExpression
 
-data class PyTypingNewType(internal val classType: PyClassType, internal val isDefinition: Boolean, internal val myName: String?) : PyClassTypeImpl(
-  classType.pyClass, isDefinition) {
+class PyTypingNewType(private val classType: PyClassType,
+                      private val name: String,
+                      private val declaration: PyTargetExpression?) : PyClassType by classType {
 
-  override fun getName(): String? = myName
+  override fun getName(): String = name
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteExpression): PyType? {
-    return PyTypingNewType(classType, false, name)
+    val instance = classType.toInstance()
+    return if (instance is PyClassType) {
+      PyTypingNewType(instance, name, declaration)
+    }
+    else {
+      classType.getCallType(context, callSite)
+    }
   }
 
   override fun toClass(): PyClassLikeType {
-    return if (isDefinition) this else PyTypingNewType(classType, true, name)
+    return if (isDefinition) this
+    else {
+      val definition = classType.toClass()
+      if (definition is PyClassType) PyTypingNewType(definition, name, declaration) else definition
+    }
   }
 
-  override fun toInstance(): PyClassType {
-    return if (isDefinition) PyTypingNewType(classType, false, name) else this
+  override fun toInstance(): PyClassLikeType {
+    return if (isDefinition) {
+      val instance = classType.toInstance()
+      if (instance is PyClassType) PyTypingNewType(instance, name, declaration) else instance
+    }
+    else this
   }
 
   override fun isBuiltin(): Boolean = false
 
   override fun isCallable(): Boolean = classType.isCallable || isDefinition
 
-  override fun toString(): String = "TypingNewType: $myName"
+  override fun toString(): String = "TypingNewType: $name"
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
     return if (isCallable) {
@@ -39,5 +56,24 @@ data class PyTypingNewType(internal val classType: PyClassType, internal val isD
 
   override fun getAncestorTypes(context: TypeEvalContext): List<PyClassLikeType> {
     return listOf(classType) + classType.getAncestorTypes(context)
+  }
+
+  override fun getDeclarationElement(): PyQualifiedNameOwner? = declaration ?: classType.declarationElement
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PyTypingNewType
+
+    if (classType != other.classType) return false
+    if (name != other.name) return false
+    if (declaration != null && other.declaration != null && declaration != other.declaration) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return 31 * classType.hashCode() + name.hashCode()
   }
 }

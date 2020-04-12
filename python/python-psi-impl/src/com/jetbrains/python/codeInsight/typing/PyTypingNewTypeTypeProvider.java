@@ -65,12 +65,21 @@ public class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyTypingNewType getNewTypeFromStub(@NotNull PsiElement referenceTarget,
+  private static PyTypingNewType getNewTypeFromStub(@NotNull PyTargetExpression target,
                                                     @Nullable PyTypingNewTypeStub stub,
                                                     @NotNull TypeEvalContext context) {
     if (stub == null) return null;
-    final PyType type = Ref.deref(PyTypingTypeProvider.getStringBasedType(stub.getClassType(), referenceTarget, context));
-    return type instanceof PyClassType ? new PyTypingNewType((PyClassType)type, true, stub.getName()) : null;
+    final PyClassType type = getClassType(stub, context, target);
+    return type != null ? new PyTypingNewType(type, stub.getName(), target) : null;
+  }
+
+  @Nullable
+  private static PyTypingNewType getNewTypeFromStub(@NotNull PyCallExpression call,
+                                                    @Nullable PyTypingNewTypeStub stub,
+                                                    @NotNull TypeEvalContext context) {
+    if (stub == null) return null;
+    final PyClassType type = getClassType(stub, context, call);
+    return type != null ? new PyTypingNewType(type, stub.getName(), getDeclaration(call, context)) : null;
   }
 
   @Nullable
@@ -83,5 +92,26 @@ public class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
   private static PyTypingNewType getNewTypeFromAST(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     if (!context.maySwitchToAST(call)) return null;
     return getNewTypeFromStub(call, PyTypingNewTypeStubImpl.Companion.create(call), context);
+  }
+
+  @Nullable
+  private static PyClassType getClassType(@NotNull PyTypingNewTypeStub stub,
+                                          @NotNull TypeEvalContext context,
+                                          @NotNull PsiElement anchor) {
+    final PyType type = Ref.deref(PyTypingTypeProvider.getStringBasedType(stub.getClassType(), anchor, context));
+    final PyClassType result = PyUtil.as(type, PyClassType.class);
+    if (result != null) {
+      return PyUtil.as(result.toClass(), PyClassType.class);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyTargetExpression getDeclaration(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PsiElement parent = call.getParent();
+    if (parent instanceof PyAssignmentStatement) {
+      return PyUtil.as(((PyAssignmentStatement)parent).getLeftHandSideExpression(), PyTargetExpression.class);
+    }
+    return null;
   }
 }

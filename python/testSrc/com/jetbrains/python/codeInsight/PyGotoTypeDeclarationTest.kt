@@ -72,6 +72,20 @@ class PyGotoTypeDeclarationTest : PyTestCase() {
     assertEquals("types.ModuleType", (type as PyClass).qualifiedName)
   }
 
+  // PY-41452
+  fun testTypingNewType() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      val type = findSymbolType(
+        "from typing import NewType\n" +
+        "NT = NewType(\"NT\", int)\n" +
+        "def foo(b<caret>ar: NT) -> None:\n" +
+        "  pass"
+      )
+
+      assertEquals((myFixture.file as PyFile).findTopLevelAttribute("NT"), type)
+    }
+  }
+
   private fun findSymbolType(text: String): PsiElement = findSymbolTypes(text).single()
 
   private fun findSymbolTypes(text: String): List<PsiElement> {
