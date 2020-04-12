@@ -86,6 +86,34 @@ class PyGotoTypeDeclarationTest : PyTestCase() {
     }
   }
 
+  // PY-41452
+  fun testNamedTupleClass() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      val type = findSymbolType(
+        "from typing import NamedTuple\n" +
+        "class MyNT(NamedTuple):\n" +
+        "    field_1: int\n" +
+        "    field_2: str\n" +
+        "my_n<caret>t: MyNT = undefined"
+      )
+
+      assertEquals((myFixture.file as PyFile).findTopLevelClass("MyNT"), type)
+    }
+  }
+
+  // PY-41452
+  fun testNamedTupleTarget() {
+    runWithLanguageLevel(LanguageLevel.getLatest()) {
+      val type = findSymbolType(
+        "from typing import NamedTuple\n" +
+        "Employee = NamedTuple('Employee', [('name', str), ('id', int)])\n" +
+        "my_n<caret>t: Employee = undefined"
+      )
+
+      assertEquals((myFixture.file as PyFile).findTopLevelAttribute("Employee"), type)
+    }
+  }
+
   private fun findSymbolType(text: String): PsiElement = findSymbolTypes(text).single()
 
   private fun findSymbolTypes(text: String): List<PsiElement> {
