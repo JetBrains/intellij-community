@@ -43,6 +43,10 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private lateinit var vcsCVS: MockAbstractVcs
 
   override fun setUpProject() {
+    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+                                         "#" + NewMappings::class.java.name,
+                                         "#" + VcsInitialization::class.java.name)
+
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
 
     projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
@@ -50,12 +54,6 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
     ProjectManagerEx.getInstanceEx().openTestProject(myProject)
-    UIUtil.dispatchAllInvocationEvents() // startup activities
-
-    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
-    startupManager.runStartupActivities()
-
-    TestLoggerFactory.enableDebugLogging(myProject, "#" + NewMappings::class.java.name, "#" + VcsInitialization::class.java.name)
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
@@ -69,6 +67,10 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
     mappings = NewMappings(myProject, vcsManager)
     Disposer.register(testRootDisposable, mappings)
+
+    UIUtil.dispatchAllInvocationEvents()
+    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
+    startupManager.runStartupActivities()
     startupManager.runPostStartupActivitiesRegisteredDynamically()
     vcsManager.waitForInitialized()
   }
