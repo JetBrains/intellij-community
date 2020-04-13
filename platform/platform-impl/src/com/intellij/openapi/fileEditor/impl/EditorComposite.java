@@ -427,6 +427,13 @@ public class EditorComposite implements Disposable {
   }
 
   /**
+   * @return component which represents set of file editors in the UI
+   */
+  public JComponent getFocusComponent() {
+    return myComponent.myFocusComponent.get();
+  }
+
+  /**
    * @return {@code true} if the composite contains at least one
    * modified myEditor
    */
@@ -461,6 +468,7 @@ public class EditorComposite implements Disposable {
 
     MyComponent(@NotNull JComponent realComponent, @NotNull Supplier<JComponent> focusComponent) {
       super(new BorderLayout());
+      setFocusable(false);
       myFocusComponent = focusComponent;
       add(realComponent, BorderLayout.CENTER);
     }

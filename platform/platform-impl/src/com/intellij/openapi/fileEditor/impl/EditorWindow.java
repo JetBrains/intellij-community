@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -170,7 +171,7 @@ public final class EditorWindow {
         beforePublisher.beforeFileClosed(editorManager, file);
 
         if (editor != null) {
-          final int componentIndex = findComponentIndex(editor.getComponent());
+          final int componentIndex = findComponentIndex(editor.getFocusComponent());
           if (componentIndex >= 0) { // editor could close itself on decomposition
             final int indexToSelect = calcIndexToSelect(file, componentIndex);
             FileEditorOpenOptions options = new FileEditorOpenOptions().withIndex(componentIndex).withPin(editor.isPinned());
@@ -276,7 +277,7 @@ public final class EditorWindow {
         if (editor == null) {
           continue; // ????
         }
-        final int histFileIndex = findComponentIndex(editor.getComponent());
+        final int histFileIndex = findComponentIndex(editor.getFocusComponent());
         if (histFileIndex >= 0) {
           // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
           return histFileIndex;
@@ -404,27 +405,27 @@ public final class EditorWindow {
       setFocusTraversalPolicy(new FocusTraversalPolicy() {
         @Override
         public Component getComponentAfter(Container aContainer, Component aComponent) {
-          return myEditor.getComponent();
+          return myEditor.getFocusComponent();
         }
 
         @Override
         public Component getComponentBefore(Container aContainer, Component aComponent) {
-          return myEditor.getComponent();
+          return myEditor.getFocusComponent();
         }
 
         @Override
         public Component getFirstComponent(Container aContainer) {
-          return myEditor.getComponent();
+          return myEditor.getFocusComponent();
         }
 
         @Override
         public Component getLastComponent(Container aContainer) {
-          return myEditor.getComponent();
+          return myEditor.getFocusComponent();
         }
 
         @Override
         public Component getDefaultComponent(Container aContainer) {
-          return myEditor.getComponent();
+          return myEditor.getFocusComponent();
         }
       });
     }
@@ -487,11 +488,11 @@ public final class EditorWindow {
     // select an editor in a tabbed pane and then focus an editor if needed
     final int index = findFileIndex(editor.getFile());
     if (index != -1) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (!isDisposed()) {
           myTabbedPane.setSelectedIndex(index, focusEditor);
         }
-      });
+      }, ModalityState.NON_MODAL);
     }
   }
 
@@ -616,7 +617,7 @@ public final class EditorWindow {
       res.setFilePinned(nextFile, isFilePinned(file));
       if (!focusNew) {
         res.setSelectedEditor(selectedEditor, true);
-        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getComponent(), true));
+        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(selectedEditor.getFocusComponent(), true));
       }
       panel.revalidate();
       return res;
