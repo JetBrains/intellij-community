@@ -76,8 +76,8 @@ class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
 
     ProjectManager.TOPIC.subscribe(this, this)
-    CheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
-    VcsCheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
+    CheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { commitHandlersChanged() }, this)
+    VcsCheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { commitHandlersChanged() }, this)
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
@@ -105,6 +105,15 @@ class ChangesViewCommitWorkflowHandler(
   private fun isDefaultCommitEnabled() =
     workflow.vcses.isNotEmpty() && !workflow.isExecuting && !amendCommitHandler.isLoading &&
     (amendCommitHandler.isAmendWithoutChangesAllowed() || !isCommitEmpty())
+
+  private fun commitHandlersChanged() {
+    if (workflow.isExecuting) return
+
+    saveCommitOptions(false)
+    disposeCommitOptions()
+
+    initCommitHandlers()
+  }
 
   override fun vcsesChanged() {
     initCommitHandlers()
