@@ -84,7 +84,7 @@ public class ChildInfoImpl implements ChildInfo {
 
   @Override
   public String toString() {
-    return getName()+"; nameId: "+nameId + "; id: " + id + " (" + getFileAttributes() + ")" +
+    return (nameId > 0 ? getName() : "?")+"; nameId: "+nameId + "; id: " + id + " (" + getFileAttributes() + ")" +
            (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 }
