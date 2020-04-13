@@ -62,11 +62,8 @@ public class TriggerAdditionOrDeletion {
       final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
       if (localChangesProvider == null) continue;
       final List<FilePath> filePaths = entry.getValue();
-      if (vcs.fileListenerIsSynchronous()) {
-        myAffected.addAll(filePaths);
-        continue;
-      }
-      myAffected.addAll(filePaths);
+      if (vcs.fileListenerIsSynchronous()) continue;
+
       localChangesProvider.scheduleMissingFileForDeletion(filePaths);
     }
     final List<FilePath> incorrectFilePath = new ArrayList<>();
@@ -75,11 +72,8 @@ public class TriggerAdditionOrDeletion {
       final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
       if (localChangesProvider == null) continue;
       final List<FilePath> filePaths = entry.getValue();
-      if (vcs.fileListenerIsSynchronous()) {
-        myAffected.addAll(filePaths);
-        continue;
-      }
-      myAffected.addAll(filePaths);
+      if (vcs.fileListenerIsSynchronous()) continue;
+
       final List<VirtualFile> virtualFiles = new ArrayList<>();
       ContainerUtil.process(filePaths, path -> {
         VirtualFile vf = path.getVirtualFile();
@@ -124,7 +118,10 @@ public class TriggerAdditionOrDeletion {
           toBeDeleted.add(file);
         }
       }
+
       if (toBeDeleted.isEmpty()) return;
+      myAffected.addAll(toBeDeleted);
+
       if (!vcs.fileListenerIsSynchronous()) {
         for (FilePath filePath : toBeDeleted) {
           myVcsFileListenerContextHelper.ignoreDeleted(filePath);
@@ -163,12 +160,12 @@ public class TriggerAdditionOrDeletion {
           }
         }
       }
-      if (toBeAdded.isEmpty()) {
-        return;
-      }
-      toBeAdded.sort(FilePathByPathComparator.getInstance());
+
+      if (toBeAdded.isEmpty()) return;
+      myAffected.addAll(toBeAdded);
+
       if (!vcs.fileListenerIsSynchronous()) {
-        for (FilePath filePath : toBeAdded) {
+        for (FilePath filePath : ContainerUtil.sorted(toBeAdded, FilePathByPathComparator.getInstance())) {
           myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
         }
       }
