@@ -161,7 +161,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
         else if (myCurrentComponent == null && myQueuedComponent == null) {
           maybeShowFor(myProcessingComponent, me);
         }
-        else {
+        else if (myQueuedComponent == null) {
           hideCurrent(me);
         }
       }
