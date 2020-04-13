@@ -19,7 +19,7 @@ public class FilePathInterner extends WeakInterner<CharSequence> {
   public CharSequence intern(@NotNull CharSequence path) {
     List<String> names = StringUtil.split(path.toString(), "/");
     int[] nameIds = names.stream().mapToInt(name -> FileNameCache.storeName(name)).toArray();
-    return super.intern(new FileSeparatedCharSequence(nameIds));
+    return nameIds.length == 0 ? "" : super.intern(new FileSeparatedCharSequence(nameIds));
   }
 
   private static class FileSeparatedCharSequence implements CharSequenceWithStringHash {
