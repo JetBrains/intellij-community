@@ -749,9 +749,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     FileType fileType = getByFile(file);
-    if (!(file instanceof StubVirtualFile)
-        && (fileType == null || mightBeReplacedByDetectedFileType(fileType) && isDetectable(file))) {
-      return getOrDetectFromContent(file, content);
+    if (!(file instanceof StubVirtualFile)) {
+      if (fileType == null) {
+        return getOrDetectFromContent(file, content);
+      }
+      if (mightBeReplacedByDetectedFileType(fileType) && isDetectable(file)) {
+        FileType detectedFromContent = getOrDetectFromContent(file, content);
+        // unknown file type means that it was detected as binary, it's better to keep it binary
+        if (detectedFromContent != PlainTextFileType.INSTANCE) {
+          return detectedFromContent;
+        }
+      }
     }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
