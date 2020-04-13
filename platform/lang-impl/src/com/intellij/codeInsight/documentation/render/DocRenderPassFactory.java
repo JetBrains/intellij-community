@@ -25,15 +25,11 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory {
   private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
   private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
-  private static final Pattern END_OF_BODY_PATTERN = Pattern.compile("</body>|</html>");
-  private static final char ZERO_WIDTH_SPACE = '\u200b';
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
@@ -97,23 +93,11 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
           text = DocumentationManager.getProviderFromElement(owner).generateRenderedDoc(owner);
         }
       }
-      return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
+      return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : text;
     }
     catch (IndexNotReadyException e) {
       LOG.warn(e);
       return CodeInsightBundle.message("doc.render.dumb.mode.text");
-    }
-  }
-
-  private static String preProcess(String text) {
-    // add zero width space to document's body, this makes JEditorPane wrap text not just at spaces, but e.g. on dots
-    Matcher matcher = END_OF_BODY_PATTERN.matcher(text);
-    if (matcher.find()) {
-      int endOfBody = matcher.start();
-      return text.substring(0, endOfBody) + ZERO_WIDTH_SPACE + text.substring(endOfBody);
-    }
-    else {
-      return text + ZERO_WIDTH_SPACE;
     }
   }
 
