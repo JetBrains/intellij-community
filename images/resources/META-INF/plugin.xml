@@ -31,6 +31,8 @@
 
     <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
     <registryKey key="ide.images.wheel.zooming" defaultValue="true"/>
+    <registryKey key="ide.images.show.chessboard" defaultValue="false"/>
+    <registryKey key="ide.images.show.grid" defaultValue="false"/>
   </extensions>
 
   <actions>

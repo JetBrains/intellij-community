@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMExternalizer
 import com.intellij.ui.JBColor
 import com.intellij.util.addOptionTag
+import org.intellij.images.options.DefaultImageEditorSettings
 import org.intellij.images.options.GridOptions
 import org.jdom.Element
 import java.awt.Color
@@ -29,12 +30,13 @@ import java.beans.PropertyChangeSupport
  * Grid options implementation.
  */
 internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChangeSupport) : GridOptions {
-  private var showDefault: Boolean? = null
+  private var showDefault: Boolean = DefaultImageEditorSettings.showGrid
   private var lineMinZoomFactor = GridOptions.DEFAULT_LINE_ZOOM_FACTOR
   private var lineSpan = GridOptions.DEFAULT_LINE_SPAN
   private var lineColor: Color? = null
+
   override fun isShowDefault(): Boolean {
-    return showDefault ?: false
+    return showDefault
   }
 
   override fun getLineZoomFactor(): Int {
@@ -48,14 +50,6 @@ internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChange
   override fun getLineColor(): Color {
     return lineColor?:
            EditorColorsManager.getInstance().globalScheme.getColor(GRID_LINE_COLOR_KEY) ?: JBColor.DARK_GRAY
-  }
-
-  fun setShowDefault(showDefault: Boolean) {
-    val oldValue = this.showDefault
-    if (oldValue != showDefault) {
-      this.showDefault = showDefault
-      propertyChangeSupport.firePropertyChange(GridOptions.ATTR_SHOW_DEFAULT, oldValue, this.showDefault)
-    }
   }
 
   fun setLineMinZoomFactor(lineMinZoomFactor: Int) {
@@ -75,14 +69,14 @@ internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChange
   }
 
   override fun inject(options: GridOptions) {
-    isShowDefault = options.isShowDefault
+    showDefault = options.isShowDefault
     setLineMinZoomFactor(options.lineZoomFactor)
     setLineSpan(options.lineSpan)
   }
 
   override fun setOption(name: String, value: Any): Boolean {
     if (GridOptions.ATTR_SHOW_DEFAULT == name) {
-      isShowDefault = value as Boolean
+      showDefault = value as Boolean
     }
     else if (GridOptions.ATTR_LINE_ZOOM_FACTOR == name) {
       setLineMinZoomFactor(value as Int)

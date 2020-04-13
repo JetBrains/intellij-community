@@ -18,6 +18,7 @@ package org.intellij.images.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import org.intellij.images.options.DefaultImageEditorSettings;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,7 @@ public final class ToggleTransparencyChessboardAction extends ToggleAction {
     ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
       decorator.setTransparencyChessboardVisible(state);
+      DefaultImageEditorSettings.INSTANCE.setShowChessboard(state);
     }
   }
 
