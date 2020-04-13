@@ -9,7 +9,7 @@ class FileNameStore {
   private val generator = IdGenerator()
   private val nameStore = BidirectionalMap<String, IdPerCount>()
 
-  fun generateIdForName(name: String): Long {
+  fun generateIdForName(name: String): Int {
     val idPerCount = nameStore[name]
     if (idPerCount != null) {
       idPerCount.usageCount++
@@ -31,7 +31,7 @@ class FileNameStore {
     }
   }
 
-  fun getNameForId(id: Long): String? {
+  fun getNameForId(id: Int): String? {
     val list = nameStore.getKeysByValue(IdPerCount(id, 1)) ?: return null
     if (list.isEmpty()) return null
     assert(list.size == 1)
@@ -47,7 +47,7 @@ class FileNameStore {
   }
 }
 
-private data class IdPerCount(val id: Long, var usageCount: Long) {
+private data class IdPerCount(val id: Int, var usageCount: Long) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -59,17 +59,4 @@ private data class IdPerCount(val id: Long, var usageCount: Long) {
   }
 
   override fun hashCode() = 31 * id.hashCode()
-}
-
-private class IdGenerator {
-  private val freeIdsQueue: Queue<Long> = LinkedList()
-  private var generator: Long = 0
-  fun generateId() = freeIdsQueue.poll() ?: ++generator
-  fun releaseId(id: Long) = freeIdsQueue.add(id)
-
-  @TestOnly
-  fun clear() {
-    generator = 0
-    freeIdsQueue.clear()
-  }
 }

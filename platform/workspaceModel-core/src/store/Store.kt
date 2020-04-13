@@ -1,28 +1,58 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.store
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.workspace.api.VirtualFileUrl
 import java.util.*
+import kotlin.collections.HashMap
 
 class Store {
   private var rootNode: FilePathNode? = null
+  private val idGenerator= IdGenerator()
+  private val id2NodeMapping = HashMap<Int, FilePathNode>()
   private val fileNameStore = FileNameStore()
 
+  companion object {
+    private val EMPTY_URL = VirtualFileUrl(0)
+  }
+
+  //url.split('/', '\\')
+  fun fromUrl(url: String): VirtualFileUrl = add(url, 1)
+
+  fun fromPath(path: String): VirtualFileUrl = fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
+
+  internal fun getParentVirtualUrlById(id: Int): VirtualFileUrl? = id2NodeMapping[id]?.parent?.let { VirtualFileUrl(it.nodeId) }
+
+  internal fun getUrlById(id: Int): String {
+    if (id <= 0) return ""
+
+    var node = id2NodeMapping[id]
+    val builder = StringBuilder()
+    while (node != null) {
+      builder.append(fileNameStore.getNameForId(node.contentId))
+      node = node.parent
+    }
+    return builder.reverse().toString()
+  }
+
   //fun add(path: String, entity: PEntityData<out TypedEntity>) {
-  fun add(path: String, entityId: Int) {
+  fun add(path: String, entityId: Int): VirtualFileUrl  {
     val names = splitNames(path)
     var latestNode: FilePathNode? = rootNode
     for (index in names.indices.reversed()) {
       val nameId = fileNameStore.generateIdForName(names[index])
       // Latest node can be NULL only if it's root node
       if (latestNode == null) {
-        val newNode = FilePathNode(nameId)
+        val nodeId = idGenerator.generateId()
+        val newNode = FilePathNode(nodeId, nameId)
+        id2NodeMapping[nodeId] = newNode
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == 0) {
           newNode.values.add(entityId)
           rootNode = newNode
-          return
+          return VirtualFileUrl(nodeId)
         }
         latestNode = newNode
         rootNode = newNode
@@ -33,7 +63,7 @@ class Store {
         if (latestNode.contentId == nameId) {
           if (index == 0) {
             latestNode.values.add(entityId)
-            return
+            return VirtualFileUrl(latestNode.nodeId)
           }
           continue
         }
@@ -41,23 +71,27 @@ class Store {
 
       val node = latestNode.children.find { it.contentId == nameId }
       if (node == null) {
-        val newNode = FilePathNode(nameId, latestNode)
+        val nodeId = idGenerator.generateId()
+        val newNode = FilePathNode(nodeId, nameId, latestNode)
+        id2NodeMapping[nodeId] = newNode
         latestNode.children.add(newNode)
         latestNode = newNode
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == 0) {
           newNode.values.add(entityId)
-          return
+          return VirtualFileUrl(nodeId)
         }
       } else {
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == 0) {
           node.values.add(entityId)
-          return
+          return VirtualFileUrl(node.nodeId)
+
         }
         latestNode = node
       }
     }
+    return EMPTY_URL
   }
 
   //fun remove(path: String, entity: PEntityData<out TypedEntity>) {
@@ -75,6 +109,8 @@ class Store {
       if (parent == null) {
         if (currentNode === rootNode && currentNode.values.isEmpty() && currentNode.children.isEmpty()) {
           removeNameUsage(currentNode.contentId)
+          idGenerator.releaseId(currentNode.nodeId)
+          id2NodeMapping.remove(currentNode.nodeId)
           rootNode = null
         }
         return
@@ -82,6 +118,8 @@ class Store {
 
       parent.children.remove(currentNode)
       removeNameUsage(currentNode.contentId)
+      idGenerator.releaseId(currentNode.nodeId)
+      id2NodeMapping.remove(currentNode.nodeId)
       currentNode = parent
     } while (currentNode.values.isEmpty() && currentNode.children.isEmpty())
   }
@@ -94,7 +132,7 @@ class Store {
     add(newPath, entityId)
   }
 
-  private fun removeNameUsage(contentId: Long) {
+  private fun removeNameUsage(contentId: Int) {
     val name = fileNameStore.getNameForId(contentId)
     assert(name != null)
     fileNameStore.removeName(name!!)
@@ -157,7 +195,7 @@ class Store {
 
   override fun toString() = "$rootNode"
 
-  private inner class FilePathNode(val contentId: Long, val parent: FilePathNode? = null) {
+  private inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
     val values: MutableSet<Int> = mutableSetOf()
     val children: MutableSet<FilePathNode> = mutableSetOf()
 
