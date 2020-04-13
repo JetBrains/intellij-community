@@ -457,19 +457,7 @@ public class GitUpdateProcess {
   @VisibleForTesting
   @NotNull
   static String getNoTrackedBranchError(@NotNull GitRepository repository, @NotNull String branchName) {
-    String recommendedCommand = recommendSetupTrackingCommand(repository, branchName);
-    return "No tracked branch configured for branch " + code(branchName) +
-    mention(repository) +
-    " or the branch doesn't exist.<br/>" +
-    "To make your branch track a remote branch call, for example,<br/>" +
-    "<code>" + recommendedCommand + "</code>";
-  }
-
-  @NotNull
-  private static String recommendSetupTrackingCommand(@NotNull GitRepository repository, @NotNull String branchName) {
-    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository) ?
-                         "git branch --set-upstream-to=origin/%1$s %1$s" :
-                         "git branch --set-upstream %1$s origin/%1$s", branchName);
+    return code(branchName) + mention(repository) + " has no tracked branch";
   }
 
   /**
