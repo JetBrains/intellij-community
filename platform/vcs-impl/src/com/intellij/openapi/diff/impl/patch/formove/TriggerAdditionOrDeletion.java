@@ -28,8 +28,8 @@ public class TriggerAdditionOrDeletion {
   private final Set<FilePath> myDeleted = new HashSet<>();
   private final Set<FilePath> myAffected = new HashSet<>();
 
-  private final Map<AbstractVcs, List<FilePath>> myPreparedAddition = new HashMap<>();
-  private final Map<AbstractVcs, List<FilePath>> myPreparedDeletion = new HashMap<>();
+  private final Map<AbstractVcs, Set<FilePath>> myPreparedAddition = new HashMap<>();
+  private final Map<AbstractVcs, Set<FilePath>> myPreparedDeletion = new HashMap<>();
 
   public TriggerAdditionOrDeletion(@NotNull Project project) {
     myProject = project;
@@ -58,18 +58,24 @@ public class TriggerAdditionOrDeletion {
   }
 
   public void processIt() {
-    for (Map.Entry<AbstractVcs, List<FilePath>> entry : myPreparedDeletion.entrySet()) {
+    final List<FilePath> incorrectFilePath = new ArrayList<>();
+
+    for (Map.Entry<AbstractVcs, Set<FilePath>> entry : myPreparedDeletion.entrySet()) {
       final AbstractVcs vcs = entry.getKey();
       final CheckinEnvironment localChangesProvider = requireNonNull(vcs.getCheckinEnvironment());
-      final List<FilePath> filePaths = entry.getValue();
+
+      final List<FilePath> filePaths = new ArrayList<>(entry.getValue());
+      if (filePaths.isEmpty()) continue;
 
       localChangesProvider.scheduleMissingFileForDeletion(filePaths);
     }
-    final List<FilePath> incorrectFilePath = new ArrayList<>();
-    for (Map.Entry<AbstractVcs, List<FilePath>> entry : myPreparedAddition.entrySet()) {
+
+    for (Map.Entry<AbstractVcs, Set<FilePath>> entry : myPreparedAddition.entrySet()) {
       final AbstractVcs vcs = entry.getKey();
       final CheckinEnvironment localChangesProvider = requireNonNull(vcs.getCheckinEnvironment());
-      final List<FilePath> filePaths = entry.getValue();
+
+      final List<FilePath> filePaths = new ArrayList<>(entry.getValue());
+      if (filePaths.isEmpty()) continue;
 
       final List<VirtualFile> virtualFiles = new ArrayList<>();
       for (FilePath path : filePaths) {
@@ -84,6 +90,7 @@ public class TriggerAdditionOrDeletion {
 
       localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles);
     }
+
     //if some errors occurred  -> notify
     if (!incorrectFilePath.isEmpty()) {
       notifyAndLogFiles(incorrectFilePath);
@@ -126,7 +133,7 @@ public class TriggerAdditionOrDeletion {
           myVcsFileListenerContextHelper.ignoreDeleted(filePath);
         }
 
-        List<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new ArrayList<>());
+        Set<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new HashSet<>());
         paths.addAll(toBeDeleted);
       }
     }
@@ -168,7 +175,7 @@ public class TriggerAdditionOrDeletion {
           myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
         }
 
-        List<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new ArrayList<>());
+        Set<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new HashSet<>());
         paths.addAll(toBeAdded);
       }
     }
