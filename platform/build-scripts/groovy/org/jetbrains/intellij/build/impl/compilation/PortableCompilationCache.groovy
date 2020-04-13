@@ -17,8 +17,7 @@ class PortableCompilationCache {
   static final List<String> REQUIRED_PROPERTIES = [
     REMOTE_CACHE_URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
     JavaBackwardReferenceIndexWriter.PROP_KEY,
-    // TODO: update JPS and replace with org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES_PROPERTY
-    'org.jetbrains.jps.portable.caches'
+    ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
   @Lazy
   private String remoteGitUrl = { require(GIT_REPOSITORY_URL_PROPERTY, "Repository url") }()

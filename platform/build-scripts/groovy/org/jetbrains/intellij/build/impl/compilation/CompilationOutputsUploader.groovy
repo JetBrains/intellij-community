@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.jps.incremental.storage.ProjectStamps
 
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
@@ -71,7 +72,7 @@ class CompilationOutputsUploader {
       def sourceStateFile = sourcesStateProcessor.sourceStateFile
       if (!sourceStateFile.exists()) {
         context.messages.
-          warning("Compilation outputs doesn't contain source state file, please enable 'org.jetbrains.jps.portable.caches' flag")
+          warning("Compilation outputs doesn't contain source state file, please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
         return
       }
       Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
