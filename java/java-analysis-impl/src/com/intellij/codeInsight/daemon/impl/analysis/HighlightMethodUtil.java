@@ -1226,10 +1226,10 @@ public class HighlightMethodUtil {
       }
       else if (isInterface) {
         if (isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-          description = "Static methods in interfaces should have a body";
+          description = JavaErrorBundle.message("static.methods.in.interfaces.should.have.body");
         }
         else if (isPrivate && languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
-          description = "Private methods in interfaces should have a body";
+          description = JavaErrorBundle.message("private.methods.in.interfaces.should.have.body");
         }
       }
       if (description != null) {
@@ -1656,7 +1656,7 @@ public class HighlightMethodUtil {
         final PsiReferenceParameterList typeArgumentList = ((PsiNewExpression)constructorCall).getTypeArgumentList();
         if (typeArgumentList.getTypeArguments().length > 0) {
           holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeArgumentList)
-            .descriptionAndTooltip("Anonymous class implements interface; cannot have type arguments").create());
+            .descriptionAndTooltip(JavaErrorBundle.message("anonymous.class.implements.interface.cannot.have.type.arguments")).create());
         }
       }
     }
@@ -1753,9 +1753,8 @@ public class HighlightMethodUtil {
       if (targetClass != null && !PsiUtil.isAccessible(targetClass, place, null)) {
         final PsiExpressionList argumentList = place.getArgumentList();
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .descriptionAndTooltip("Formal varargs element type " +
-                                 PsiFormatUtil.formatClass(targetClass, PsiFormatUtilBase.SHOW_FQ_NAME) +
-                                 " is inaccessible here")
+          .descriptionAndTooltip(JavaErrorBundle.message("formal.varargs.element.type.inaccessible.here",
+                                                         PsiFormatUtil.formatClass(targetClass, PsiFormatUtilBase.SHOW_FQ_NAME)))
           .range(argumentList != null ? argumentList : place)
           .create();
       }
