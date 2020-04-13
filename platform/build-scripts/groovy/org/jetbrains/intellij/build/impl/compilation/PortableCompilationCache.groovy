@@ -33,6 +33,7 @@ class PortableCompilationCache {
     new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
   }()
   private File cacheDir = context.compilationData.dataStorageRoot
+  private boolean forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force')?.toBoolean() ?: false
   boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && System.getProperty(REMOTE_CACHE_URL_PROPERTY)?.with {
     !StringUtil.isEmptyOrSpaces(it)
   } == true
@@ -57,7 +58,7 @@ class PortableCompilationCache {
   }
 
   private def compileProject() {
-    if (!downloader.availableForHeadCommit) {
+    if (forceRebuild || !downloader.availableForHeadCommit) {
       context.options.incrementalCompilation = true
       CompilationTasks.create(context).compileAllModulesAndTests()
     }
@@ -70,7 +71,6 @@ class PortableCompilationCache {
    */
   def warmUp() {
     def forceDownload = System.getProperty('intellij.jps.cache.download.force')?.toBoolean() ?: false
-    def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force')?.toBoolean() ?: false
     if (forceRebuild) {
       clearJpsOutputs()
     }
@@ -89,7 +89,7 @@ class PortableCompilationCache {
    * Upload local compilation cache to remote cache
    */
   def upload() {
-    if (downloader.availableForHeadCommit) {
+    if (!forceRebuild && downloader.availableForHeadCommit) {
       context.messages.info('Nothing new to upload')
     }
     else {
