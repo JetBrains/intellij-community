@@ -504,12 +504,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         assert info.getId() > 0 : info;
         FileAttributes attributes = info.getFileAttributes();
         boolean isEmptyDirectory = info.getChildren() != null && info.getChildren().length == 0;
-        VirtualFileSystemEntry file;
         synchronized (myData) {
-          file = createChild(info.getId(), info.getNameId(), getFileSystem(), attributes, isEmptyDirectory);
+          int[] oldIds = myData.myChildrenIds;
+          if (ArrayUtil.indexOf(oldIds, info.getId()) < 0) {
+            VirtualFileSystemEntry file = createChild(info.getId(), info.getNameId(), getFileSystem(), attributes, isEmptyDirectory);
+            addChild(file);
+            fileCreated.consume(file, info);
+          }
         }
-        addChild(file);
-        fileCreated.consume(file, info);
       }
       if (markAllChildrenLoaded) {
         setChildrenLoaded();

@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,11 +75,10 @@ class ListResult {
 
   @Contract(pure=true)
   @NotNull
-  ListResult merge(@NotNull List<? extends ChildInfo> list) {
+  ListResult merge(@NotNull List<? extends ChildInfo> newList, @NotNull TObjectHashingStrategy<CharSequence> hashingStrategy) {
     // assume list is sorted
-    List<ChildInfo> newChildren = new ArrayList<>(children.size() + list.size());
-    ContainerUtil.processSortedListsInOrder(children, list, ChildInfo.BY_ID, true, out->newChildren.add(out));
-    return new ListResult(modStamp, newChildren);
+    ListResult newChildren = FSRecords.mergeByName(this, new ListResult(newList), hashingStrategy);
+    return new ListResult(modStamp, newChildren.children);
   }
 
   @Contract(pure=true)

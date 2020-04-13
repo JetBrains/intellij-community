@@ -22,15 +22,13 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.containers.IntIntHashMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -44,13 +42,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public class FSRecords {
   private static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean WE_HAVE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
-         static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
+  static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
   private static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
   private static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
@@ -163,7 +162,7 @@ public class FSRecords {
     String msg = "File already created: id="+id + "; nameId="+nameId  + "; parentId=" + parentId+ "; existingData=" + existingData;
     if (parentId > 0) {
       msg += "; parent.name=" + getName(parentId);
-      msg += "; parent.children=" + list(parentId, true);
+      msg += "; parent.children=" + list(parentId);
     }
     return msg;
   }
@@ -636,7 +635,7 @@ public class FSRecords {
   }
 
   private static void markAsDeletedRecursively(final int id) {
-    for (int subRecord : list(id)) {
+    for (int subRecord : listIds(id)) {
       markAsDeletedRecursively(subRecord);
     }
 
@@ -651,7 +650,7 @@ public class FSRecords {
   }
 
   private static void doDeleteRecursively(final int id) {
-    for (int subRecord : list(id)) {
+    for (int subRecord : listIds(id)) {
       doDeleteRecursively(subRecord);
     }
 
@@ -891,7 +890,7 @@ public class FSRecords {
     });
   }
 
-  static int @NotNull [] list(int id) {
+  static int @NotNull [] listIds(int id) {
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
         if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -918,17 +917,17 @@ public class FSRecords {
 
   // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
   @NotNull
-  static ListResult list(int parentId, boolean loadNameId) {
-    return readAndHandleErrors(() -> doLoadChildren(parentId, loadNameId));
+  static ListResult list(int parentId) {
+    return readAndHandleErrors(() -> doLoadChildren(parentId));
   }
 
   @NotNull
   public static List<CharSequence> listNames(int parentId) {
-    return ContainerUtil.map(list(parentId, true).children, c -> c.getName());
+    return ContainerUtil.map(list(parentId).children, c -> c.getName());
   }
 
   @NotNull
-  private static ListResult doLoadChildren(int parentId, boolean loadNameId) throws IOException {
+  private static ListResult doLoadChildren(int parentId) throws IOException {
     assert parentId > 0 : parentId;
     try (DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
       int count = input == null ? 0 : DataInputOutputUtil.readINT(input);
@@ -937,7 +936,7 @@ public class FSRecords {
       for (int i = 0; i < count; i++) {
         int id = DataInputOutputUtil.readINT(input) + prevId;
         prevId = id;
-        int nameId = loadNameId ? doGetNameId(id) : ChildInfoImpl.UNKNOWN_ID_YET;
+        int nameId = doGetNameId(id);
         ChildInfo child = new ChildInfoImpl(id, nameId, null, null, null);
         result.add(child);
       }
@@ -993,99 +992,124 @@ public class FSRecords {
     }
   }
 
+  // try to apply `childrenConvertor` to the children of `parentId`.
+  // First, try optimistically: outside write lock and commit inside write lock if nothing changed
+  // Failing that, pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
-  static ListResult updateList(int parentId, @NotNull ListResult list) {
-    assert parentId > 0 : parentId;
-    // assume list is sorted by id
+  static ListResult update(int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
+    assert parentId > 0: parentId;
+    ListResult children = list(parentId);
+    ListResult result = childrenConvertor.apply(children);
 
     return writeAndHandleErrors(() -> {
       ListResult toSave;
       // optimization: if the children were never changed, do not check for duplicates again
-      if (list.childrenWereChangedSinceLastList()) {
-        ListResult existing = doLoadChildren(parentId, true);
-        toSave = replaceNameDuplicates(list, existing);
+      // because we assume they were
+      if (result.childrenWereChangedSinceLastList()) {
+        ListResult reloadedChildren = doLoadChildren(parentId);
+        toSave = childrenConvertor.apply(reloadedChildren);
       }
       else {
-        toSave = list;
+        toSave = result;
       }
 
-      DbConnection.markDirty();
-      try (DataOutputStream record = writeAttribute(parentId, ourChildrenAttr)) {
-        DataInputOutputUtil.writeINT(record, toSave.children.size());
-
-        int prevId = parentId;
-        for (ChildInfo childInfo : toSave.children) {
-          int childId = childInfo.getId();
-          if (childId <= 0) throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; list: "+list);
-          if (childId == parentId) {
-            LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+list);
-          }
-          else {
-            int delta = childId - prevId;
-            if (prevId != parentId && delta <= 0) throw new IllegalArgumentException("The list must be sorted by (unique) id but got: " + toSave + "; delta=" + delta);
-            DataInputOutputUtil.writeINT(record, delta);
-            prevId = childId;
-          }
-        }
-      }
+      doSaveChildren(parentId, toSave);
       return toSave;
     });
   }
 
-  // replace entries in `children` with the corresponding entries from `existing` if they both have the same nameId (to avoid duplicating ids)
-  @NotNull
-  private static ListResult replaceNameDuplicates(@NotNull ListResult childrenList, @NotNull ListResult existingList) {
-    List<? extends ChildInfo> children = childrenList.children;
-    List<? extends ChildInfo> existing = existingList.children;
-    if (existing.isEmpty()) return childrenList;
-    // both `children` and `existing` are sorted by id, but not nameId, so plain O(N) merge is not possible.
-    // instead, try to eliminate children with the same id from both lists first, and compare the rest by (slower) nameId.
-    // typically, when `children` contains 5K entries + couple absent from `existing`, and `existing` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
-    // IntIntHashMap is used to distinguish absence from the 0th index
-    IntIntHashMap childId2I = new IntIntHashMap(); // nameId -> index in `children' (if absent from `existing`)
-    IntIntHashMap existingId2I = new IntIntHashMap(); // nameId -> index in `existing' (if absent from `children`)
-    List<ChildInfo> result = null;
-    for (int i = 0, j = 0; i < children.size() || j < existing.size(); ) {
-      ChildInfo child = i == children.size() ? null : children.get(i);
-      ChildInfo ex = j == existing.size() ? null : existing.get(j);
-      int childId = child == null ? Integer.MAX_VALUE : child.getId();
-      int exId = ex == null ? Integer.MAX_VALUE : ex.getId();
-      if (childId == exId) {
-        i++;
-        j++;
-      }
-      else if (childId < exId) {
-        // childId is absent from `existing`
-        int exI = existingId2I.get(child.getNameId());
-        if (exI == -1) {
-          childId2I.put(child.getNameId(), i);
+  private static void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
+    DbConnection.markDirty();
+    try (DataOutputStream record = writeAttribute(parentId, ourChildrenAttr)) {
+      DataInputOutputUtil.writeINT(record, toSave.children.size());
+
+      int prevId = parentId;
+      for (ChildInfo childInfo : toSave.children) {
+        int childId = childInfo.getId();
+        if (childId <= 0) throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; list: "+toSave);
+        if (childId == parentId) {
+          LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+toSave);
         }
         else {
-          // aha, found entry in `existing` with the same nameId - replace with ex
-          if (result == null) {
-            result = new ArrayList<>(children);
-          }
-          result.set(i, existing.get(exI));
+          int delta = childId - prevId;
+          if (prevId != parentId && delta <= 0) throw new IllegalArgumentException("The list must be sorted by (unique) id but got: " + toSave + "; delta=" + delta);
+          DataInputOutputUtil.writeINT(record, delta);
+          prevId = childId;
+        }
+      }
+    }
+  }
+
+  // return entries from `existingList` plus `newList',
+  // in case of name clash use id from the corresponding `existingList` entry and name from the `newList` entry (to avoid duplicating ids: preserve old id but supply new name)
+  @NotNull
+  static ListResult mergeByName(@NotNull ListResult existingList,
+                                @NotNull ListResult newList,
+                                @NotNull TObjectHashingStrategy<CharSequence> hashingStrategy) {
+    List<? extends ChildInfo> newChildren = newList.children;
+    List<? extends ChildInfo> oldChildren = existingList.children;
+    if (oldChildren.isEmpty()) return newList;
+    // both `newChildren` and `oldChildren` are sorted by id, but not nameId, so plain O(N) merge is not possible.
+    // instead, try to eliminate entries with the same id from both lists first (since they have same nameId), and compare the rest by (slower) nameId.
+    // typically, when `newChildren` contains 5K entries + couple absent from `oldChildren`, and `oldChildren` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
+
+    // name -> index in result
+    // ObjectIntHashMap is used here to distinguish between absence and the 0th index
+    ObjectIntHashMap<CharSequence> name2I = new ObjectIntHashMap<>(Math.max(oldChildren.size(), newChildren.size()), hashingStrategy);
+
+    List<ChildInfo> result = new ArrayList<>(Math.max(oldChildren.size(), newChildren.size()));
+    for (int i = 0, j = 0; i < newChildren.size() || j < oldChildren.size(); ) {
+      ChildInfo newChild = i == newChildren.size() ? null : newChildren.get(i);
+      ChildInfo oldChild = j == oldChildren.size() ? null : oldChildren.get(j);
+      int newId = newChild == null ? Integer.MAX_VALUE : newChild.getId();
+      int oldId = oldChild == null ? Integer.MAX_VALUE : oldChild.getId();
+      if (newId == oldId) {
+        i++;
+        j++;
+        result.add(oldChild);
+      }
+      else if (newId < oldId) {
+        // newId is absent from `oldChildren`
+        CharSequence name = newChild.getName();
+        int dupI = name2I.put(name, result.size(), -1);
+        if (dupI == -1) {
+          result.add(newChild);
+        }
+        else {
+          // aha, found entry in `result` with the same name.
+          // That previous entry must come from the `oldChildren`
+          // so replace just the name (the new name must have changed its case), leave id the same
+          ChildInfo oldDup = result.get(dupI);
+          int nameId = newChild.getNameId();
+          assert nameId > 0 : newList;
+          ChildInfoImpl replaced = new ChildInfoImpl(oldDup.getId(), nameId, oldDup.getFileAttributes(), oldDup.getChildren(),
+                                                 oldDup.getSymLinkTarget());
+          result.set(dupI, replaced);
         }
         i++;
       }
       else {
-        // exId is absent from `children`
-        int chI = childId2I.get(ex.getNameId());
-        if (chI == -1) {
-          existingId2I.put(ex.getNameId(), j);
+        // oldId is absent from `newChildren`
+        CharSequence name = oldChild.getName();
+        int dupI = name2I.put(name, result.size(), -1);
+        if (dupI == -1) {
+          result.add(oldChild);
         }
         else {
-          // aha, found entry in `children` with the same nameId - replace with ex
-          if (result == null) {
-            result = new ArrayList<>(children);
-          }
-          result.set(chI, ex);
+          // aha, found entry in `result` with the same name.
+          // That previous entry must come from the `newChildren`
+          // so leave the new name (the new name must have changed its case), replace the id
+          ChildInfo dup = result.get(dupI);
+          int nameId = dup.getNameId();
+          assert nameId > 0 : existingList;
+          ChildInfoImpl replaced = new ChildInfoImpl(oldChild.getId(), nameId, dup.getFileAttributes(), dup.getChildren(),
+                                                     dup.getSymLinkTarget());
+          result.set(dupI, replaced);
         }
         j++;
       }
     }
-    return result == null ? childrenList : new ListResult(result);
+    return name2I.isEmpty() ? newList : new ListResult(result);
   }
 
   static @Nullable String readSymlinkTarget(int id) {
@@ -1239,7 +1263,7 @@ public class FSRecords {
 
   @NotNull
   private static CharSequence doGetNameSequence(int id) throws IOException {
-    final int nameId = getRecordInt(id, NAME_OFFSET);
+    int nameId = doGetNameId(id);
     return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
   }
 
@@ -1248,6 +1272,7 @@ public class FSRecords {
   }
 
   private static String doGetNameByNameId(int nameId) throws IOException {
+    assert nameId >= 0 : nameId;
     return nameId == 0 ? "" : getNames().valueOf(nameId);
   }
 
@@ -1256,6 +1281,7 @@ public class FSRecords {
     return writeAndHandleErrors(() -> {
       incModCount(id);
       int nameId = getNames().enumerate(name);
+      assert nameId > 0 : nameId;
       putRecordInt(id, NAME_OFFSET, nameId);
       return nameId;
     });

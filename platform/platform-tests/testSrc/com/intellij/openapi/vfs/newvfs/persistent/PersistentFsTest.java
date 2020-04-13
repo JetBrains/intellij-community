@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -762,6 +764,46 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
           assertEquals("Duplicate ids found. children1=" + children1 + "; children2=" + children2, id1, id2);
         }
       }
+    }
+  }
+
+  public void testMustNotDuplicateIdsOnRenameWithCaseChanged() throws IOException {
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    File temp = createTempDir("", false);
+    File file = new File(temp, "file.txt");
+    FileUtil.createParentDirs(file);
+    FileUtil.writeToFile(file, "x");
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getParent());
+    VirtualFile vf = assertOneElement(vDir.getChildren());
+    assertEquals("file.txt", vf.getName());
+    List<Future<?>> futures = new ArrayList<>();
+    String oldName = file.getName();
+    for (int i=0; i<100; i++) {
+      int u = i % oldName.length();
+      Future<?> f = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        String newName = oldName.substring(0, u) + Character.toUpperCase(oldName.charAt(u)) + oldName.substring(u + 1);
+        try {
+          FileUtil.rename(file, new File(temp, newName));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
+      futures.add(f);
+    }
+    for (int i=0; i<10; i++) {
+      Future<?> f = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (int u=0; u<100; u++) {
+          List<? extends ChildInfo> infos = fs.listAll(vDir);
+          assertOneElement(infos);
+        }
+      });
+      futures.add(f);
+    }
+
+    for (Future<?> future : futures) {
+      PlatformTestUtil.waitForFuture(future, 10_000);
     }
   }
 }
