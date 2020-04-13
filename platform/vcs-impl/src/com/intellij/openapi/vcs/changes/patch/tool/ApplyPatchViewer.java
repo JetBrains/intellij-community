@@ -628,7 +628,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       DocumentContent resultContent = myPatchRequest.getResultContent();
       DocumentContent localContent = DiffContentFactoryEx.getInstanceEx()
-        .readOnlyDocumentContent(myProject)
+        .documentContent(myProject, true)
         .contextByReferent(resultContent)
         .buildFromText(myPatchRequest.getLocalContent(), false);
 

@@ -136,7 +136,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType) {
-    return documentContent(project)
+    return documentContent(project, false)
       .contextByFileType(fileType)
       .buildFromText(text, true);
   }
@@ -235,7 +235,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent) {
     String text = StringUtil.notNullize(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
-    return documentContent(project)
+    return documentContent(project, false)
       .contextByReferent(referent)
       .withFileName("Clipboard.txt")
       .buildFromText(text, false);
@@ -527,16 +527,15 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  @Override
   @NotNull
-  public DocumentContentBuilder readOnlyDocumentContent(@Nullable Project project) {
-    return new DocumentContentBuilderImpl(project).withReadOnly(true);
+  private DocumentContentBuilder readOnlyDocumentContent(@Nullable Project project) {
+    return documentContent(project, true);
   }
 
   @Override
   @NotNull
-  public DocumentContentBuilder documentContent(@Nullable Project project) {
-    return new DocumentContentBuilderImpl(project);
+  public DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly) {
+    return new DocumentContentBuilderImpl(project).withReadOnly(readOnly);
   }
 
   private static class DocumentContentBuilderImpl implements DocumentContentBuilder {
@@ -551,7 +550,6 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       this.project = project;
     }
 
-    @Override
     @NotNull
     public DocumentContentBuilder withReadOnly(boolean readOnly) {
       this.readOnly = readOnly;

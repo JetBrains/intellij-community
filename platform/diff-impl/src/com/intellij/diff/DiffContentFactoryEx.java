@@ -35,10 +35,7 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
 
   @NotNull
-  public abstract DocumentContentBuilder readOnlyDocumentContent(@Nullable Project project);
-
-  @NotNull
-  public abstract DocumentContentBuilder documentContent(@Nullable Project project);
+  public abstract DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly);
 
 
   @NotNull
@@ -81,8 +78,6 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
 
   public interface DocumentContentBuilder {
-    @NotNull DocumentContentBuilder withReadOnly(boolean readOnly);
-
     @NotNull DocumentContentBuilder withFileName(@Nullable String fileName);
 
     @NotNull DocumentContentBuilder contextByFileType(@Nullable FileType fileType);
