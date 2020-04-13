@@ -28,6 +28,8 @@ abstract class CompilationTasks {
 
   abstract void resolveProjectDependencies()
 
+  abstract void resolveProjectDependenciesAndCompileAll()
+
   static CompilationTasks create(CompilationContext context) {
     return new CompilationTasksImpl(context)
   }

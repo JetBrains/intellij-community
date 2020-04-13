@@ -60,10 +60,7 @@ class PortableCompilationCache {
   private def compileProject() {
     if (forceRebuild || !downloader.availableForHeadCommit) {
       context.options.incrementalCompilation = true
-      CompilationTasks.create(context).with {
-        resolveProjectDependencies()
-        compileAllModulesAndTests()
-      }
+      CompilationTasks.create(context).resolveProjectDependenciesAndCompileAll()
     }
     context.options.incrementalCompilation = false
     context.options.useCompiledClassesFromProjectOutput = true
