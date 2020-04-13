@@ -219,20 +219,9 @@ public class InstalledPluginsTableModel {
       IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
       return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + (pluginDescriptor == null ? pluginId.getIdString() : pluginDescriptor.getName());
     }, "<br>");
-    String beginS, middleS, endS;
-    if (newEnabledState) {
-      beginS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
-      middleS = descriptorsWithChangedEnabledState.length == 1 ? "s" : "";
-      endS = deps.size() == 1 ? "" : "s";
-    }
-    else {
-      beginS = deps.size() == 1 ? "" : "s";
-      middleS = deps.size() == 1 ? "s" : "";
-      endS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
-    }
     String message = newEnabledState
-                     ? IdeBundle.message("dialog.message.enable.required.plugins", beginS, middleS, endS, listOfDependencies)
-                     : IdeBundle.message("dialog.message.disable.dependent.plugins", beginS, middleS, endS, listOfDependencies);
+                     ? IdeBundle.message("dialog.message.enable.required.plugins", descriptorsWithChangedEnabledState.length, deps.size(), listOfDependencies)
+                     : IdeBundle.message("dialog.message.disable.dependent.plugins", deps.size(), descriptorsWithChangedEnabledState.length, listOfDependencies);
     if (Messages.showOkCancelDialog(message, newEnabledState ? IdeBundle.message("dialog.title.enable.required.plugins")
                                                              : IdeBundle.message("dialog.title.disable.dependent.plugins"),
                                     newEnabledState ? IdeBundle.message("button.enable") : IdeBundle.message("button.disable"), Messages.getCancelButton(), Messages.getQuestionIcon()) == Messages.OK) {
