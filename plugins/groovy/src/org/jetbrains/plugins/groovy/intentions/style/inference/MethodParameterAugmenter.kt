@@ -26,13 +26,13 @@ class MethodParameterAugmenter : TypeAugmenter() {
         return null
       }
       val scope = getFileScope(method) ?: return null
-      val options = SignatureInferenceOptions(scope, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
-      return computeInferredMethod(method, options)
+      return computeInferredMethod(method, scope)
     }
 
-    private fun computeInferredMethod(method: GrMethod, options: SignatureInferenceOptions): InferenceResult? =
+    private fun computeInferredMethod(method: GrMethod, scope : GlobalSearchScope): InferenceResult? =
       RecursionManager.doPreventingRecursion(method, true) {
         CachedValuesManager.getCachedValue(method) {
+          val options = SignatureInferenceOptions(scope, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
           val typedMethod = runInferenceProcess(method, options)
           val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)
           CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
