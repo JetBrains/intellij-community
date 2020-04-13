@@ -147,7 +147,7 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiElement element = body.addAfter(newStatement, brace);
       final PsiElement element1 = styleManager.reformat(element);
       final PsiElement element2 = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element1);
-      if (isOnTheFly()) {
+      if (isOnTheFly() && element2.isPhysical()) {
         HighlightUtils.highlightElement(element2);
         if (element2 instanceof PsiDeclarationStatement) {
           final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element2;
