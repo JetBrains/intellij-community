@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -105,16 +106,23 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         showOptionsDialog(vcsToVirtualFiles, project, context);
       }
 
-      // Not only documents, but also project settings should be saved,
-      // to ensure that if as result of Update some project settings will be changed,
-      // all local changes are saved in prior and do not overwrite remote changes.
-      // Also, there is a chance that save during update can break it -
-      // we do disable auto saving during update, but still, there is a chance that save will occur.
-      StoreUtil.saveDocumentsAndProjectSettings(project);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        // Not only documents, but also project settings should be saved,
+        // to ensure that if as result of Update some project settings will be changed,
+        // all local changes are saved in prior and do not overwrite remote changes.
+        // Also, there is a chance that save during update can break it -
+        // we do disable auto saving during update, but still, there is a chance that save will occur.
+        StoreUtil.saveDocumentsAndProjectSettings(project);
+      }
 
       Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText());
 
-      ProgressManager.getInstance().run(task);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        task.run(new EmptyProgressIndicator());
+      }
+      else {
+        ProgressManager.getInstance().run(task);
+      }
     }
     catch (ProcessCanceledException ignored) {
     }

@@ -99,7 +99,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
       val result = updateProcess.update(UpdateMethod.MERGE)
 
       assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
-      assertErrorNotification("Can't Update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
+      assertErrorNotification("Can't update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
     }
     finally {
       settings.syncSetting = syncSetting
