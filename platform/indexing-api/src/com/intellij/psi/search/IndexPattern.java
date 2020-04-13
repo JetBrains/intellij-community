@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,12 +94,7 @@ public class IndexPattern {
       String optimizedPattern = myPatternString;
       optimizedPattern = StringUtil.trimStart(optimizedPattern, ".*");
       myOptimizedIndexingPattern = Pattern.compile(optimizedPattern, flags);
-      try {
-        //myStringsToFindFirst = IndexPatternOptimizer.getInstance().extractStringsToFind(myPatternString);
-      }
-      catch (Throwable throwable) {
-        Logger.getInstance(IndexPattern.class).info("OLOLO", throwable);
-      }
+      myStringsToFindFirst = IndexPatternOptimizer.getInstance().extractStringsToFind(myPatternString);
     }
     catch(PatternSyntaxException e){
       myPattern = null;
