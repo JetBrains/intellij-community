@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FilePathByPathComparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -18,39 +19,40 @@ import static com.intellij.util.Functions.identity;
 import static com.intellij.vcsUtil.VcsUtil.groupByRoots;
 
 public class TriggerAdditionOrDeletion {
-  private final Collection<FilePath> myExisting;
-  private final Collection<FilePath> myDeleted;
-  private final Set<FilePath> myAffected;
-  private final Project myProject;
   private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
+
+  private final Project myProject;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
-  private Map<AbstractVcs, List<FilePath>> myPreparedAddition;
-  private Map<AbstractVcs, List<FilePath>> myPreparedDeletion;
+  private final Set<FilePath> myExisting = new HashSet<>();
+  private final Set<FilePath> myDeleted = new HashSet<>();
+  private final Set<FilePath> myAffected = new HashSet<>();
 
-  public TriggerAdditionOrDeletion(final Project project) {
+  @Nullable private Map<AbstractVcs, List<FilePath>> myPreparedAddition;
+  @Nullable private Map<AbstractVcs, List<FilePath>> myPreparedDeletion;
+
+  public TriggerAdditionOrDeletion(@NotNull Project project) {
     myProject = project;
-    myExisting = new HashSet<>();
-    myDeleted = new HashSet<>();
-    myAffected = new HashSet<>();
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
 
-  public void addExisting(final Collection<? extends FilePath> files) {
+  public void addExisting(@NotNull Collection<? extends FilePath> files) {
     myExisting.addAll(files);
   }
 
-  public void addDeleted(final Collection<? extends FilePath> files) {
+  public void addDeleted(@NotNull Collection<? extends FilePath> files) {
     myDeleted.addAll(files);
   }
 
-  public void prepare() {
-    if (myExisting.isEmpty() && myDeleted.isEmpty()) return;
+  public Set<FilePath> getAffected() {
+    return myAffected;
+  }
 
-    if (! myExisting.isEmpty()) {
+  public void prepare() {
+    if (!myExisting.isEmpty()) {
       processAddition();
     }
-    if (! myDeleted.isEmpty()) {
+    if (!myDeleted.isEmpty()) {
       processDeletion();
     }
   }
@@ -106,10 +108,6 @@ public class TriggerAdditionOrDeletion {
     String message = VcsBundle.message("patch.apply.incorrectly.processed.warning", incorrectFilePath.size(), incorrectFilePath);
     LOG.warn(message);
     VcsNotifier.getInstance(myProject).notifyImportantWarning(VcsBundle.message("patch.apply.new.files.warning"), message);
-  }
-
-  public Set<FilePath> getAffected() {
-    return myAffected;
   }
 
   private void processDeletion() {
@@ -191,12 +189,11 @@ public class TriggerAdditionOrDeletion {
   }
 
   private static class RecursiveCheckAdder {
-    private final Set<FilePath> myToBeAdded;
+    private final Set<FilePath> myToBeAdded = new HashSet<>();
     private final VirtualFile myRoot;
 
     private RecursiveCheckAdder(final VirtualFile root) {
       myRoot = root;
-      myToBeAdded = new HashSet<>();
     }
 
     public void process(final FilePath path) {
