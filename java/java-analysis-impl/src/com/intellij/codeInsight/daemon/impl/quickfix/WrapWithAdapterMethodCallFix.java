@@ -238,6 +238,12 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
              ? QuickFixBundle.message("wrap.with.adapter.parameter.single.text", myArgumentFixerActionFactory)
              : QuickFixBundle.message("wrap.with.adapter.parameter.multiple.text", myIndex + 1, myArgumentFixerActionFactory);
     }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new MyMethodArgumentFix(QuickFixWrapper.findSameElementInCopy(myArgList, target), myIndex, myToType,
+                                     (Wrapper)myArgumentFixerActionFactory);
+    }
   }
 
   public static void registerCastActions(CandidateInfo @NotNull [] candidates,

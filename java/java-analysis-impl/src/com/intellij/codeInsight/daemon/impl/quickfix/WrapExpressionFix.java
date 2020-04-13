@@ -3,8 +3,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -180,5 +182,10 @@ public class WrapExpressionFix implements IntentionAction {
     if (expectedType != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new WrapExpressionFix(expectedType, expr));
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new WrapExpressionFix(myExpectedType, QuickFixWrapper.findSameElementInCopy(myExpression, target));
   }
 }

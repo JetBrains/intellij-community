@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -131,6 +133,12 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
       }
     }
     return null;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new AddTypeArgumentsFix(QuickFixWrapper.findSameElementInCopy(myArgList, target), myIndex, myToType,
+                                   myArgumentFixerActionFactory);
   }
 
   public static final ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
