@@ -139,12 +139,16 @@ class DebuggerDfaRunner extends DataFlowRunner {
     }
     PsiModifierListOwner psi = var.getPsiVariable();
     if (psi instanceof PsiClass) {
-      // this
+      // this; probably qualified
       PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
       return CaptureTraverser.create((PsiClass)psi, currentClass, true).traverse(frame.thisObject());
     }
     if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
       String varName = ((PsiVariable)psi).getName();
+      if (varName == null || PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(varName, myAnchor) != psi) {
+        // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location 
+        return null;
+      }
       try {
         LocalVariable variable = frame.visibleVariableByName(varName);
         if (variable != null) {
