@@ -31,13 +31,9 @@ import org.jetbrains.plugins.textmate.bundles.BundleFactory;
 import org.jetbrains.plugins.textmate.configuration.BundleConfigBean;
 import org.jetbrains.plugins.textmate.configuration.TextMateSettings;
 import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
-import org.jetbrains.plugins.textmate.editor.TextMateSnippet;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
-import org.jetbrains.plugins.textmate.language.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
-import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
+import org.jetbrains.plugins.textmate.language.preferences.*;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateCustomTextAttributes;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
@@ -53,7 +49,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TextMateServiceImpl extends TextMateService {
-  private static boolean ourBuiltinBundlesDisabled;
+  private boolean ourBuiltinBundlesDisabled;
 
   private final AtomicBoolean myInitialized = new AtomicBoolean(false); 
   
@@ -164,12 +160,6 @@ public class TextMateServiceImpl extends TextMateService {
     myShellVariablesRegistry.clear();
   }
 
-  @Override
-  @NotNull
-  public PlistReader getPlistReader() {
-    return myPlistReader;
-  }
-
   @NotNull
   @Override
   public Map<CharSequence, TextMateCustomTextAttributes> getCustomHighlightingColors() {
@@ -266,7 +256,7 @@ public class TextMateServiceImpl extends TextMateService {
   private void registerPreferences(@NotNull Bundle bundle) {
     for (File preferenceFile : bundle.getPreferenceFiles()) {
       try {
-        for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile)) {
+        for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile, myPlistReader)) {
           if (settingsPair != null) {
             CharSequence scopeName = myInterner.intern(settingsPair.first);
             myPreferencesRegistry.fillFromPList(scopeName, settingsPair.second);
@@ -283,7 +273,7 @@ public class TextMateServiceImpl extends TextMateService {
 
   private void readCustomHighlightingColors(@NotNull CharSequence scopeName, @NotNull Plist preferencesPList) {
     final TextAttributes textAttributes = new TextAttributes();
-    final boolean hasHighlightingSettings = PreferencesReadUtil.fillTextAttributes(textAttributes, preferencesPList, null);
+    final boolean hasHighlightingSettings = TextMateEditorUtils.fillTextAttributes(textAttributes, preferencesPList, null);
     if (hasHighlightingSettings) {
       final double backgroundAlpha = PreferencesReadUtil.getBackgroundAlpha(preferencesPList);
       myCustomHighlightingColors.put(scopeName, new TextMateCustomTextAttributes(textAttributes, backgroundAlpha));
@@ -307,12 +297,14 @@ public class TextMateServiceImpl extends TextMateService {
   }
 
   @TestOnly
-  public static void disableBuiltinBundles(Disposable disposable) {
+  public void disableBuiltinBundles(Disposable disposable) {
     ourBuiltinBundlesDisabled = true;
     TextMateService.getInstance().reloadEnabledBundles();
+    myInitialized.set(true);
     Disposer.register(disposable, () -> {
       ourBuiltinBundlesDisabled = false;
-      TextMateService.getInstance().reloadEnabledBundles();
+      unregisterAllBundles();
+      myInitialized.set(false);
     });
   }
 }

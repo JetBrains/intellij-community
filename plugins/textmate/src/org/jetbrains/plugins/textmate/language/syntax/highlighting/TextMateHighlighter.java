@@ -42,6 +42,7 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
 
   @Override
   public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+    // todo: extract to textmate.core
     if (!(tokenType instanceof TextMateElementType)) return PLAIN_SYNTAX_HIGHLIGHTER.getTokenHighlights(tokenType);
     TextMateService service = TextMateService.getInstance();
     Map<CharSequence, TextMateCustomTextAttributes> customHighlightingColors = service.getCustomHighlightingColors();

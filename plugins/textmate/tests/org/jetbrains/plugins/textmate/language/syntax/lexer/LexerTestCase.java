@@ -16,6 +16,7 @@ import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
+import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
   private CharSequence myRootScope;
   private TextMateSyntaxTable mySyntaxTable;
 
-  @Parameterized.Parameter()
+  @Parameterized.Parameter
   public String myFileName;
   @Parameterized.Parameter(1)
   public File myFile;
@@ -69,7 +70,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     CharSequence scope = null;
     Bundle bundle = TestUtil.getBundle(getBundleName());
     for (File grammarFile : bundle.getGrammarFiles()) {
-      Plist plist = TestUtil.PLIST_READER.read(grammarFile);
+      Plist plist = new CompositePlistReader().read(grammarFile);
       final CharSequence rootScope = mySyntaxTable.loadSyntax(plist, myInterner);
       Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
       for (String extension : extensions) {
@@ -84,7 +85,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     final List<String> extraBundleNames = getExtraBundleNames();
     for (String bundleName : extraBundleNames) {
       for (File grammarFile : TestUtil.getBundle(bundleName).getGrammarFiles()) {
-        mySyntaxTable.loadSyntax(TestUtil.PLIST_READER.read(grammarFile), myInterner);
+        mySyntaxTable.loadSyntax(new CompositePlistReader().read(grammarFile), myInterner);
       }
     }
     mySyntaxTable.compact();

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import com.google.common.collect.HashMultiset;
 import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -163,7 +163,7 @@ public class TextMateHighlightingLexer extends LexerBase {
     LOG.debug("Highlighting line: " + line);
 
     StringWithId string = new StringWithId(line);
-    final HashMultiset<List<TextMateLexerState>> localStates = HashMultiset.create();
+    final TObjectIntHashMap<List<TextMateLexerState>> localStates = new TObjectIntHashMap<>();
     while (true) {
       final TextMateLexerState lexerState = myStates.peek();
       if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null
@@ -240,9 +240,9 @@ public class TextMateHighlightingLexer extends LexerBase {
       }
 
       // local looping protection
-      final int currentStateLocalOccurrencesCount = localStates.count(myStates);
+      final int currentStateLocalOccurrencesCount = localStates.get(myStates);
       if (currentStateLocalOccurrencesCount <= MAX_LOOPS_COUNT) {
-        localStates.setCount(myStates, currentStateLocalOccurrencesCount + 1);
+        localStates.put(myStates, currentStateLocalOccurrencesCount + 1);
       }
       else {
         addToken(endLineOffset);

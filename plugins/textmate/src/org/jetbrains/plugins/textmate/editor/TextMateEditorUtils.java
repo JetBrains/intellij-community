@@ -1,21 +1,30 @@
 package org.jetbrains.plugins.textmate.editor;
 
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TextMateService;
+import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.Preferences;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
+import org.jetbrains.plugins.textmate.plist.PListValue;
+import org.jetbrains.plugins.textmate.plist.Plist;
 
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 public final class TextMateEditorUtils {
@@ -38,6 +47,49 @@ public final class TextMateEditorUtils {
         if (languageDescriptor != null) {
           return languageDescriptor.getScopeName();
         }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * @param attributes      attributes to fill
+   * @param settingsPlist   plist with text settings
+   * @param backgroundColor
+   * @return true if plist contains any text-presentation settings, false otherwise
+   */
+  public static boolean fillTextAttributes(TextAttributes attributes, Plist settingsPlist, @Nullable Color backgroundColor) {
+    boolean result = false;
+    for (Map.Entry<String, PListValue> entry : settingsPlist.entries()) {
+      final String propertyName = entry.getKey();
+      final String value = entry.getValue().getString();
+      if (Constants.FOREGROUND_KEY.equalsIgnoreCase(propertyName)) {
+        attributes.setForegroundColor(getColor(value, null));
+        result = true;
+      }
+      else if (Constants.FONT_STYLE_KEY.equalsIgnoreCase(propertyName)) {
+        if (Constants.ITALIC_FONT_STYLE.equalsIgnoreCase(value)) {
+          attributes.setFontType(Font.ITALIC);
+        }
+        else if (Constants.BOLD_FONT_STYLE.equalsIgnoreCase(value)) {
+          attributes.setFontType(Font.BOLD);
+        }
+        else if (Constants.UNDERLINE_FONT_STYLE.equalsIgnoreCase(value)) {
+          Color foregroundColor = attributes.getForegroundColor();
+          Color effectColor = foregroundColor != null
+                              ? foregroundColor
+                              : HighlighterColors.TEXT.getDefaultAttributes().getForegroundColor();
+          attributes.setEffectColor(effectColor);
+          attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+        }
+        else {
+          attributes.setFontType(Font.PLAIN);
+        }
+        result = true;
+      }
+      else if (Constants.BACKGROUND_KEY.equalsIgnoreCase(propertyName)) {
+        attributes.setBackgroundColor(getColor(value, backgroundColor));
+        result = true;
       }
     }
     return result;
@@ -146,24 +198,22 @@ public final class TextMateEditorUtils {
     return new HashSet<>(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
   }
 
-  private TextMateEditorUtils() {
+  private static Color getColor(@NotNull String value, @Nullable Color backgroundColor) {
+    if (value.length() > 7) {
+      int startOffset = StringUtil.startsWithChar(value, '#') ? 1 : 0;
+      Color color = ColorUtil.fromHex(value.substring(startOffset, startOffset + 6), null);
+      if (color != null && backgroundColor != null) {
+        final double alpha = PreferencesReadUtil.parseAlpha(value.substring(startOffset + 6));
+        if (alpha > -1) {
+          return ColorUtil.mix(backgroundColor, color, alpha);
+        }
+      }
+      return color;
+    }
+    return ColorUtil.fromHex(value, null);
   }
 
-  @NotNull
-  public static <K, V> Map<K, V> compactMap(@NotNull Map<K, V> map) {
-    if (map.isEmpty()) {
-      return Collections.emptyMap();
-    }
-    if (map.size() == 1) {
-      Map.Entry<K, V> singleEntry = map.entrySet().iterator().next();
-      return Collections.singletonMap(singleEntry.getKey(), singleEntry.getValue());
-    }
-    if (!(map instanceof HashMap)) {
-      return map;
-    }
-    HashMap<K, V> result = new HashMap<>(map.size(), 1.0f);
-    result.putAll(map);
-    return result;
+  private TextMateEditorUtils() {
   }
 
   public static void processExtensions(@NotNull CharSequence fileName, @NotNull Processor<? super CharSequence> processor) {
