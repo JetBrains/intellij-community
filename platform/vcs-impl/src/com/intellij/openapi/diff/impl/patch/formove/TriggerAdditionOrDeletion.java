@@ -72,7 +72,7 @@ public class TriggerAdditionOrDeletion {
       final List<FilePath> filePaths = entry.getValue();
 
       final List<VirtualFile> virtualFiles = new ArrayList<>();
-      ContainerUtil.process(filePaths, path -> {
+      for (FilePath path : filePaths) {
         VirtualFile vf = path.getVirtualFile();
         if (vf == null) {
           incorrectFilePath.add(path);
@@ -80,8 +80,8 @@ public class TriggerAdditionOrDeletion {
         else {
           virtualFiles.add(vf);
         }
-        return true;
-      });
+      }
+
       localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles);
     }
     //if some errors occurred  -> notify
@@ -110,9 +110,11 @@ public class TriggerAdditionOrDeletion {
       final Collection<FilePath> files = map.get(vcsRoot);
       final List<FilePath> toBeDeleted = new ArrayList<>();
       for (FilePath file : files) {
-        final FilePath parent = file.getParentPath();
-        if ((takeDirs || (!file.isDirectory())) && parent != null && parent.getIOFile().exists()) {
-          toBeDeleted.add(file);
+        if (takeDirs || !file.isDirectory()) {
+          FilePath parent = file.getParentPath();
+          if (parent != null && parent.getIOFile().exists()) {
+            toBeDeleted.add(file);
+          }
         }
       }
 
@@ -142,16 +144,15 @@ public class TriggerAdditionOrDeletion {
       final boolean takeDirs = vcs.areDirectoriesVersionedItems();
 
       final Collection<FilePath> files = map.get(vcsRoot);
-      final List<FilePath> toBeAdded;
+      final List<FilePath> toBeAdded = new ArrayList<>();
       if (takeDirs) {
         final RecursiveCheckAdder adder = new RecursiveCheckAdder(vcsRoot.getPath());
         for (FilePath file : files) {
           adder.process(file);
         }
-        toBeAdded = adder.getToBeAdded();
+        toBeAdded.addAll(adder.getToBeAdded());
       }
       else {
-        toBeAdded = new ArrayList<>();
         for (FilePath file : files) {
           if (!file.isDirectory()) {
             toBeAdded.add(file);
@@ -198,8 +199,8 @@ public class TriggerAdditionOrDeletion {
       }
     }
 
-    public List<FilePath> getToBeAdded() {
-      return new ArrayList<>(myToBeAdded);
+    public Collection<FilePath> getToBeAdded() {
+      return myToBeAdded;
     }
   }
 }
