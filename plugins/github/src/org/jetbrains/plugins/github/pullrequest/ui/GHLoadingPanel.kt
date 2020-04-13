@@ -14,7 +14,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.NotNullFunction
 import com.intellij.util.ui.*
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import org.jetbrains.plugins.github.ui.SingleComponentCenteringLayout
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.getName
 import java.awt.BorderLayout
