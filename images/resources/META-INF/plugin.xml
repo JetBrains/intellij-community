@@ -9,8 +9,6 @@
   <resource-bundle>messages.ImagesBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.ImagesConfigurable" id="Images"
-                             bundle="messages.ImagesBundle" key="settings.page.name"/>
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <colorSettingsPage implementation="org.intellij.images.options.impl.ImageEditorColorSchemeSettings"/>
     <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
