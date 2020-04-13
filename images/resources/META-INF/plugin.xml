@@ -32,7 +32,10 @@
     <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
     <registryKey key="ide.images.wheel.zooming" defaultValue="true"/>
     <registryKey key="ide.images.show.chessboard" defaultValue="false"/>
+    <registryKey key="ide.images.chessboard.cell.size" defaultValue="5"/>
     <registryKey key="ide.images.show.grid" defaultValue="false"/>
+    <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3"/>
+    <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1"/>
   </extensions>
 
   <actions>

@@ -31,8 +31,8 @@ import java.beans.PropertyChangeSupport
  */
 internal class GridOptionsImpl(private val propertyChangeSupport: PropertyChangeSupport) : GridOptions {
   private var showDefault: Boolean = DefaultImageEditorSettings.showGrid
-  private var lineMinZoomFactor = GridOptions.DEFAULT_LINE_ZOOM_FACTOR
-  private var lineSpan = GridOptions.DEFAULT_LINE_SPAN
+  private var lineMinZoomFactor = DefaultImageEditorSettings.showGridWhenZoomEqualOrMoreThan
+  private var lineSpan = DefaultImageEditorSettings.showGridAfterEveryXPixels
   private var lineColor: Color? = null
 
   override fun isShowDefault(): Boolean {

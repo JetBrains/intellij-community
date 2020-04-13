@@ -47,7 +47,7 @@ final class TransparencyChessboardOptionsImpl implements TransparencyChessboardO
 
   @Override
   public int getCellSize() {
-    return cellSize;
+    return DefaultImageEditorSettings.INSTANCE.getChessboardCellSize();
   }
 
   @Override
