@@ -4111,6 +4111,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/coroutines/suspendFunctionOnCoroutineScope/simple.kt");
             }
 
+            @TestMetadata("simple2.kt")
+            public void testSimple2() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/suspendFunctionOnCoroutineScope/simple2.kt");
+            }
+
             @TestMetadata("this.kt")
             public void testThis() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/suspendFunctionOnCoroutineScope/this.kt");
