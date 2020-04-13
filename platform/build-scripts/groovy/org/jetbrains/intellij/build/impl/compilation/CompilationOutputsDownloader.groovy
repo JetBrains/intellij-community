@@ -40,18 +40,6 @@ class CompilationOutputsDownloader {
 
   private final SourcesStateProcessor sourcesStateProcessor
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
-    this.context = context
-    this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
-    this.gitUrl = gitUrl
-    this.availableForHeadCommitForced = availableForHeadCommit
-
-    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
-
-    sourcesStateProcessor = new SourcesStateProcessor(context)
-  }
-
   private boolean availableForHeadCommitForced = false
   /**
    * If true then latest commit in current repository will be used to download caches.
@@ -68,6 +56,18 @@ class CompilationOutputsDownloader {
       getAvailableCachesKeys().contains(it)
     }
   }()
+
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
+    this.context = context
+    this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
+    this.gitUrl = gitUrl
+    this.availableForHeadCommitForced = availableForHeadCommit
+
+    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
+    executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
+
+    sourcesStateProcessor = new SourcesStateProcessor(context)
+  }
 
   void downloadCachesAndOutput() {
     if (availableCommitDepth != -1) {
