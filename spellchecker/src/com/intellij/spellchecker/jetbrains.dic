@@ -622,6 +622,7 @@ portlet
 posix
 postfix
 postgres
+postgresql
 postprocessing
 postprocessor
 pragma
