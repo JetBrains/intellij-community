@@ -53,8 +53,14 @@ class CompilationOutputsDownloader {
   @Lazy
   private int availableCommitDepth = {
     availableForHeadCommitForced ? 0 : lastCommits.findIndexOf {
-      getAvailableCachesKeys().contains(it)
+      availableCachesKeys.contains(it)
     }
+  }()
+
+  @Lazy
+  private Set<String> availableCachesKeys = {
+    def commitsHistory = getClient.doGet("$remoteCacheUrl/commit_history.json", COMMITS_HISTORY_TYPE)
+    return commitsHistory[gitUrl] as Set<String>
   }()
 
   CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
@@ -163,11 +169,6 @@ class CompilationOutputsDownloader {
     finally {
       outputIS.close()
     }
-  }
-
-  private Set<String> getAvailableCachesKeys() {
-    def commitsHistory = getClient.doGet("$remoteCacheUrl/commit_history.json", COMMITS_HISTORY_TYPE)
-    return commitsHistory[gitUrl] as Set<String>
   }
 
   private List<String> gitLog() {
