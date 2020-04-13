@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.RecursionGuard;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li>Cached arrays or lists should have the same number of elements, and they also should be equivalent and come in the same order.</li>
  *   <li>If the result object's class has a meaningful {@link #equals} method, it should hold.</li>
  * </ul>
- * This is enforced at runtime by occasional checks in {@link com.intellij.util.IdempotenceChecker#checkEquivalence(Object, Object, Class)}.
+ * This is enforced at runtime by occasional checks in {@link com.intellij.util.IdempotenceChecker#checkEquivalence(Object, Object, Class, Computable)}.
  * See that method's documentation for further information and advice, when a failure happens.<p></p>
  *
  * <b>Context-independence</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
