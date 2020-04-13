@@ -42,6 +42,22 @@ foo(1) { it.byteValue()<caret> }
 ''')
   }
 
+  void testInferArgumentTypeFromLambda() {
+    doBasicTest('''
+def foo(a, closure) {
+  closure(a)
+}
+
+foo(1, (it) -> it.byt<caret> )
+''', '''
+def foo(a, closure) {
+  closure(a)
+}
+
+foo(1, (it) -> it.byteValue()<caret> )
+''')
+  }
+
   void testInferArgumentTypeFromClosureInsideClass() {
     doBasicTest '''
 class K {
