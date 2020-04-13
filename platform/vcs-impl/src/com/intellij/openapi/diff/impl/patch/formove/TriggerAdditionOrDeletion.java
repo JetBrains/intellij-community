@@ -16,6 +16,7 @@ import java.util.*;
 
 import static com.intellij.util.Functions.identity;
 import static com.intellij.vcsUtil.VcsUtil.groupByRoots;
+import static java.util.Objects.requireNonNull;
 
 public class TriggerAdditionOrDeletion {
   private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
@@ -59,20 +60,16 @@ public class TriggerAdditionOrDeletion {
   public void processIt() {
     for (Map.Entry<AbstractVcs, List<FilePath>> entry : myPreparedDeletion.entrySet()) {
       final AbstractVcs vcs = entry.getKey();
-      final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
-      if (localChangesProvider == null) continue;
+      final CheckinEnvironment localChangesProvider = requireNonNull(vcs.getCheckinEnvironment());
       final List<FilePath> filePaths = entry.getValue();
-      if (vcs.fileListenerIsSynchronous()) continue;
 
       localChangesProvider.scheduleMissingFileForDeletion(filePaths);
     }
     final List<FilePath> incorrectFilePath = new ArrayList<>();
     for (Map.Entry<AbstractVcs, List<FilePath>> entry : myPreparedAddition.entrySet()) {
       final AbstractVcs vcs = entry.getKey();
-      final CheckinEnvironment localChangesProvider = vcs.getCheckinEnvironment();
-      if (localChangesProvider == null) continue;
+      final CheckinEnvironment localChangesProvider = requireNonNull(vcs.getCheckinEnvironment());
       final List<FilePath> filePaths = entry.getValue();
-      if (vcs.fileListenerIsSynchronous()) continue;
 
       final List<VirtualFile> virtualFiles = new ArrayList<>();
       ContainerUtil.process(filePaths, path -> {
@@ -126,9 +123,10 @@ public class TriggerAdditionOrDeletion {
         for (FilePath filePath : toBeDeleted) {
           myVcsFileListenerContextHelper.ignoreDeleted(filePath);
         }
+
+        List<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new ArrayList<>());
+        paths.addAll(toBeDeleted);
       }
-      List<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new ArrayList<>());
-      paths.addAll(toBeDeleted);
     }
   }
 
@@ -168,9 +166,10 @@ public class TriggerAdditionOrDeletion {
         for (FilePath filePath : ContainerUtil.sorted(toBeAdded, FilePathByPathComparator.getInstance())) {
           myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
         }
+
+        List<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new ArrayList<>());
+        paths.addAll(toBeAdded);
       }
-      List<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new ArrayList<>());
-      paths.addAll(toBeAdded);
     }
   }
 
