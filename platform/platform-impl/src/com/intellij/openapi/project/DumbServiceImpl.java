@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
@@ -56,7 +57,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -339,7 +339,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
       enterDumbMode(modality, trace);
-      new TrackedEdtActivity(this::startBackgroundProcess).invokeLater();
+      new TrackedEdtActivity(this::startBackgroundProcess).invokeLaterIfProjectNotDisposed();
     }
   }
 
@@ -887,14 +887,18 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     void invokeLater() {
-      ApplicationManager.getApplication().invokeLater(this, getExpirationCondition());
+      ApplicationManager.getApplication().invokeLater(this, getActivityExpirationCondition());
+    }
+
+    void invokeLaterIfProjectNotDisposed() {
+      ApplicationManager.getApplication().invokeLater(this, getProjectActivityExpirationCondition());
     }
 
     void invokeLaterAfterProjectInitialized() {
       StartupManager startupManager = StartupManager.getInstance(myProject);
       startupManager.runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
         Application app = ApplicationManager.getApplication();
-        app.invokeLater(this, myDumbStartModality, getExpirationCondition());
+        app.invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
       });
     }
 
@@ -906,7 +910,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     @SuppressWarnings({"RedundantCast", "unchecked", "rawtypes"})
     @NotNull
-    private Condition getExpirationCondition() {
+    private Condition getProjectActivityExpirationCondition() {
       return Conditions.or((Condition)myProject.getDisposed(), (Condition)getActivityExpirationCondition());
     }
 
