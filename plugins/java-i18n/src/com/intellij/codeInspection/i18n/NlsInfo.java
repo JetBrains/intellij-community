@@ -247,12 +247,12 @@ public abstract class NlsInfo {
         parent = parent.getUastParent();
       }
       if (parent == null) return Unspecified.UNKNOWN;
-      final UElement returnStmt =
+      final UReturnExpression returnStmt =
         UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
-      if (!(returnStmt instanceof UReturnExpression)) {
+      if (returnStmt == null) {
         return Unspecified.UNKNOWN;
       }
-      UElement jumpTarget = ((UReturnExpression)returnStmt).getJumpTarget();
+      UElement jumpTarget = returnStmt.getJumpTarget();
       if (jumpTarget instanceof UMethod) {
         method = ((UMethod)jumpTarget).getJavaPsi();
       }
