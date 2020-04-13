@@ -5,7 +5,11 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('var')
-        PsiElement(parameter_expansion_body)('[1+2-var]')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('1+2-var')
+          PsiElement(])(']')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -13,9 +17,13 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('#')
+        PsiElement(param_separator)('#')
         PsiElement(word)('var')
-        PsiElement(parameter_expansion_body)('[1+2-var]')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('1+2-var')
+          PsiElement(])(']')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -23,9 +31,19 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('#')
+        PsiElement(param_separator)('#')
         PsiElement(word)('var')
-        PsiElement(parameter_expansion_body)('[1+2-var]#[a-z]')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('1+2-var')
+          PsiElement(])(']')
+        PsiElement(param_separator)('#')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('a-z')
+          PsiElement(])(']')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -33,7 +51,12 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('#')
+        PsiElement(param_separator)('#')
         PsiElement(word)('A')
-        PsiElement(parameter_expansion_body)('[1]')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            NUMBER
+              PsiElement(int)('1')
+          PsiElement(])(']')
         PsiElement(})('}')

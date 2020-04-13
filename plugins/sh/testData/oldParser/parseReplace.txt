@@ -5,5 +5,8 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('myvar')
-        PsiElement(parameter_expansion_body)('/,/ ')
+        PsiElement(param_separator)('/')
+        PsiElement(word)(',')
+        PsiElement(param_separator)('/')
+        PsiElement(word)(' ')
         PsiElement(})('}')

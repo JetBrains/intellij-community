@@ -2255,14 +2255,14 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | parameter_expansion_body | string | vars
+  // w | array_expression | param_separator | vars
   static boolean shell_parameter_expansion_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion_inner")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, null, "<parameter expansion>");
-    r = consumeToken(b, WORD);
-    if (!r) r = consumeToken(b, PARAMETER_EXPANSION_BODY);
-    if (!r) r = string(b, l + 1);
+    r = w(b, l + 1);
+    if (!r) r = array_expression(b, l + 1);
+    if (!r) r = consumeToken(b, PARAM_SEPARATOR);
     if (!r) r = vars(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;

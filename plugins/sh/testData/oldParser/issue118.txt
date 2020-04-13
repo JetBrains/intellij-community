@@ -77,9 +77,8 @@ SHELL_SCRIPT
                     SHELL_PARAMETER_EXPANSION
                       PsiElement({)('{')
                       PsiElement(word)('FNAME')
-                      PsiElement(parameter_expansion_body)(':%.+')
-                      PsiElement(parameter_expansion_body)('(')
-                      PsiElement(parameter_expansion_body)('z|Z|gz)')
+                      PsiElement(param_separator)(':%')
+                      PsiElement(word)('.+(z|Z|gz)')
                       PsiElement(})('}')
                     PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(;)(';')

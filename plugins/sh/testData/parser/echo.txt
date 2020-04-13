@@ -182,10 +182,12 @@ SHELL_SCRIPT
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
           PsiElement(word)('SHA256MAP')
-          PsiElement(parameter_expansion_body)('[')
-          VARIABLE
-            PsiElement(var)('$VERSION')
-          PsiElement(parameter_expansion_body)(']')
+          ARRAY_EXPRESSION
+            PsiElement([)('[')
+            LITERAL_EXPRESSION
+              VARIABLE
+                PsiElement(var)('$VERSION')
+            PsiElement(])(']')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)(' /tmp/')
         VARIABLE

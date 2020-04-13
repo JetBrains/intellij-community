@@ -5,7 +5,7 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('a')
-        PsiElement(parameter_expansion_body)('-')
+        PsiElement(param_separator)('-')
         STRING
           PsiElement(OPEN_QUOTE)('"')
           PsiElement(STRING_CONTENT)('(x)')
@@ -18,9 +18,10 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('a')
-        PsiElement(parameter_expansion_body)('-')
-        PsiElement(parameter_expansion_body)('(')
-        PsiElement(parameter_expansion_body)('x)')
+        PsiElement(param_separator)('-')
+        PsiElement(word)('(')
+        PsiElement(word)('x')
+        PsiElement(word)(')')
         PsiElement(})('}')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('#is a valid expression, same as {a-"(x)"}')
@@ -31,7 +32,7 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('x')
-        PsiElement(parameter_expansion_body)('-')
+        PsiElement(param_separator)('-')
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(OPEN_BACKQUOTE)('`')
           COMPOUND_LIST
