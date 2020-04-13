@@ -3,6 +3,7 @@ package git4idea.index.ui
 
 import com.google.common.base.Objects
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.FilePath
@@ -18,6 +19,9 @@ import git4idea.index.vfs.filePath
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import java.util.stream.Stream
+
+val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
 
 abstract class GitStageTree(project: Project) : ChangesTree(project, false, true) {
   protected abstract val state: GitStageTracker.State
@@ -60,6 +64,14 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     updateTreeModel(builder.build())
   }
 
+  override fun getData(dataId: String): Any? {
+    return when {
+      GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> VcsTreeModelData.selected(this).userObjectsStream()
+        .filter { it is GitFileStatusNode }
+        .map { it as GitFileStatusNode }
+      else -> super.getData(dataId)
+    }
+  }
 
   private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory) :
     TreeModelBuilder(project, grouping) {

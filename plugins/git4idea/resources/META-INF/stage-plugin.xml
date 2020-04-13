@@ -14,9 +14,15 @@
   <actions>
     <action id="Git.Stage.Refresh" class="git4idea.index.actions.GitRefreshStageAction" icon="AllIcons.Actions.Refresh"
             use-shortcut-of="Refresh"/>
+    <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
+    <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
 
     <group id="Git.Stage.Toolbar">
       <reference id="Git.Stage.Refresh"/>
+    </group>
+    <group id="Git.Stage.Tree.Menu">
+      <reference id="Git.Stage.Add"/>
+      <reference id="Git.Stage.Reset"/>
     </group>
   </actions>
 </idea-plugin>

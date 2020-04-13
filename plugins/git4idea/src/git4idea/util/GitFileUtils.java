@@ -218,6 +218,16 @@ public class GitFileUtils {
     return nonIgnoredFiles;
   }
 
+  public static void resetPaths(@NotNull Project project, @NotNull VirtualFile root,
+                                @NotNull Collection<? extends FilePath> files) throws VcsException {
+    for (List<String> filesChunk : VcsFileUtil.chunkPaths(root, files)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
+      handler.endOptions();
+      handler.addParameters(filesChunk);
+      Git.getInstance().runCommand(handler).throwOnError();
+    }
+  }
+
   /**
    * Get file content for the specific revision
    *

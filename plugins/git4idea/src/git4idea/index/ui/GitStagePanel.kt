@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
@@ -45,6 +46,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true)
     toolbar.setTargetComponent(tree)
+
+    PopupHandler.installPopupHandler(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
     val scrolledTree = ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP)
     progressStripe = ProgressStripe(scrolledTree, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
