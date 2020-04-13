@@ -32,6 +32,7 @@ class PortableCompilationCache {
     def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit')?.toBoolean() ?: false
     new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
   }()
+  private File cacheDir = context.compilationData.dataStorageRoot
   boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && System.getProperty(REMOTE_CACHE_URL_PROPERTY)?.with {
     !StringUtil.isEmptyOrSpaces(it)
   } == true
@@ -48,18 +49,30 @@ class PortableCompilationCache {
     return value
   }
 
+  private def clearJpsOutputs() {
+    [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
+      context.messages.info("Cleaning $it")
+      FileUtil.delete(it)
+    }
+  }
+
+  private def compileProject() {
+    if (!downloader.availableForHeadCommit) {
+      context.options.incrementalCompilation = true
+      CompilationTasks.create(context).compileAllModulesAndTests()
+    }
+    context.options.incrementalCompilation = false
+    context.options.useCompiledClassesFromProjectOutput = true
+  }
+
   /**
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
   def warmUp() {
     def forceDownload = System.getProperty('intellij.jps.cache.download.force')?.toBoolean() ?: false
     def forceRebuild = System.getProperty('intellij.jps.cache.rebuild.force')?.toBoolean() ?: false
-    def cacheDir = context.compilationData.dataStorageRoot
     if (forceRebuild) {
-      [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
-        context.messages.info("Cleaning $it")
-        FileUtil.delete(it)
-      }
+      clearJpsOutputs()
     }
     else if (uploadOnly && downloader.availableForHeadCommit) {
       context.messages.info('Downloading is skipped because caches are ' +
@@ -69,12 +82,7 @@ class PortableCompilationCache {
     else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
       downloader.downloadCachesAndOutput()
     }
-    if (!downloader.availableForHeadCommit) {
-      context.options.incrementalCompilation = true
-      CompilationTasks.create(context).compileAllModulesAndTests()
-    }
-    context.options.incrementalCompilation = false
-    context.options.useCompiledClassesFromProjectOutput = true
+    compileProject()
   }
 
   /**
