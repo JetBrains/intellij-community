@@ -11,6 +11,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -450,6 +451,12 @@ public class PyTypeChecker {
   private static Optional<Boolean> match(@NotNull PyCallableType expected,
                                          @NotNull PyCallableType actual,
                                          @NotNull MatchContext matchContext) {
+    if (expected instanceof PyClassLikeType) {
+      return PyTypingTypeProvider.CALLABLE.equals(((PyClassLikeType)expected).getClassQName())
+             ? Optional.of(actual.isCallable())
+             : Optional.empty();
+    }
+
     if (expected.isCallable() && actual.isCallable()) {
       final TypeEvalContext context = matchContext.context;
       final List<PyCallableParameter> expectedParameters = expected.getParameters(context);
@@ -489,7 +496,7 @@ public class PyTypeChecker {
       return false;
     }
     final PyClassLikeType metaClass = actual.getMetaClassType(context.context, true);
-    return metaClass != null && match(expected, metaClass, context).orElse(true);
+    return metaClass != null && match(expected, metaClass.toInstance(), context).orElse(true);
   }
 
   private static boolean typeVarAcceptsBothClassAndInstanceTypes(@NotNull PyGenericType typeVar) {
