@@ -5,7 +5,12 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('B')
-        PsiElement(parameter_expansion_body)(':-a b c')
+        PsiElement(param_separator)(':-')
+        PsiElement(word)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('c')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -14,7 +19,12 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('B')
-        PsiElement(parameter_expansion_body)(':+a b c')
+        PsiElement(param_separator)(':+')
+        PsiElement(word)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('c')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -23,7 +33,12 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('B')
-        PsiElement(parameter_expansion_body)(':?a b c')
+        PsiElement(param_separator)(':?')
+        PsiElement(word)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('c')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -32,5 +47,10 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('B')
-        PsiElement(parameter_expansion_body)(':=a b c')
+        PsiElement(param_separator)(':=')
+        PsiElement(word)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('c')
         PsiElement(})('}')

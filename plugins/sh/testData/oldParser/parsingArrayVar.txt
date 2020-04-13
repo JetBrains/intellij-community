@@ -49,18 +49,16 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('x')
-        PsiElement(parameter_expansion_body)('[ ')
-        PsiElement(parameter_expansion_body)('(')
-        PsiElement(parameter_expansion_body)(' 1+1 ) ]')
-        PsiElement(})('}')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      PsiElement($)('$')
-      SHELL_PARAMETER_EXPANSION
-        PsiElement({)('{')
-        PsiElement(word)('x')
-        PsiElement(parameter_expansion_body)('[ ')
-        PsiElement(parameter_expansion_body)('((')
-        PsiElement(parameter_expansion_body)(' 1+1 )) ]')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PARENTHESES_EXPRESSION
+            PsiElement(()('(')
+            PsiWhiteSpace(' ')
+            LITERAL_EXPRESSION
+              PsiElement(word)('1+1')
+            PsiWhiteSpace(' ')
+            PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
         PsiElement(})('}')

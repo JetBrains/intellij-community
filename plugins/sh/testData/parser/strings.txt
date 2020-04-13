@@ -459,7 +459,8 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('rdev')
-        PsiElement(parameter_expansion_body)('%:*?')
+        PsiElement(param_separator)('%')
+        PsiElement(word)(':*?')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -467,8 +468,7 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(word)('@')
-        PsiElement(parameter_expansion_body)('!-+')
+        PsiElement(param_separator)('@!-+')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -477,7 +477,11 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('a')
-        PsiElement(parameter_expansion_body)('[@]')
+        ARRAY_EXPRESSION
+          PsiElement([)('[')
+          LITERAL_EXPRESSION
+            PsiElement(word)('@')
+          PsiElement(])(']')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -485,7 +489,7 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('\ ')
+        PsiElement(word)('\ ')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST

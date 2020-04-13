@@ -21,7 +21,7 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(word)('@')
+        PsiElement(param_separator)('@')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -29,7 +29,7 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(word)('?')
+        PsiElement(param_separator)('?')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -38,7 +38,8 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('B')
-        PsiElement(parameter_expansion_body)(':-B')
+        PsiElement(param_separator)(':-')
+        PsiElement(word)('B')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -55,7 +56,8 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(word)('$')
-        PsiElement(parameter_expansion_body)(':-x')
+        PsiElement(param_separator)(':-')
+        PsiElement(word)('x')
         PsiElement(})('}')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('#means the pid with substitution operator')

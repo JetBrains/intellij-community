@@ -11,16 +11,25 @@ public interface ShShellParameterExpansion extends ShCompositeElement {
   List<ShArithmeticExpansion> getArithmeticExpansionList();
 
   @NotNull
-  List<ShCommandSubstitutionCommand> getCommandSubstitutionCommandList();
+  List<ShArrayExpression> getArrayExpressionList();
 
   @NotNull
-  List<ShLiteral> getLiteralList();
+  List<ShBraceExpansion> getBraceExpansionList();
+
+  @NotNull
+  List<ShCommand> getCommandList();
+
+  @NotNull
+  List<ShNumber> getNumberList();
 
   @NotNull
   List<ShShellParameterExpansion> getShellParameterExpansionList();
 
   @NotNull
-  List<ShSubshellCommand> getSubshellCommandList();
+  List<ShString> getStringList();
+
+  @NotNull
+  List<ShVariable> getVariableList();
 
   @NotNull
   PsiElement getLeftCurly();

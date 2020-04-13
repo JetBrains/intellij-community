@@ -109,7 +109,7 @@
     EVAL_CONTENT = 'EVAL_CONTENT'
 
     FILEDESCRIPTOR='file descriptor'
-    PARAMETER_EXPANSION_BODY='parameter expansion body'
+    PARAM_SEPARATOR='param separator'
   ]
 
   pin('.*list(?:_\d.*)?')=1
@@ -289,7 +289,7 @@ private end_of_list ::= '\n' | ';' | '&'
 
 shell_parameter_expansion ::= '{' shell_parameter_expansion_inner+ '}' {pin=1}
 //noinspection BnfSuspiciousToken
-private shell_parameter_expansion_inner ::= word | parameter_expansion_body | string | vars {name="parameter expansion"}
+private shell_parameter_expansion_inner ::= w | array_expression | param_separator | vars { name="parameter expansion" }
 
 left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
                             {'=' <<parseUntilSpace literal >>}* {

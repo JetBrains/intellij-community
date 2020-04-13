@@ -20,7 +20,7 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('#')
+        PsiElement(param_separator)('#')
         PsiElement(word)('a')
         PsiElement(})('}')
   PsiElement(\n)('\n')

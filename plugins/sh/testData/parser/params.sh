@@ -145,7 +145,7 @@ function addConf {
     return 0
 }
 
-type="${entry[[:space:]]*}"
+type="${entry%[[:space:]]*}"
 
 ${parameter-word}
 ${parameter=word}
@@ -154,7 +154,7 @@ ${parameter+word}
 ${@}
 
 line="${line%$'\r'}"
-${parameter:-{}
+${parameter:-abc}
 
 line="${line%'\r'}"
 line="${line%$'\r'}"
