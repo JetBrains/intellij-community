@@ -52,6 +52,9 @@ public class TextMateFileType extends LanguageFileType implements PlainTextLikeF
 
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
+    if (file.isDirectory()) {
+      return false;
+    }
     CharSequence fileName = file.getNameSequence();
     FileType originalFileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     if (!isTypeShouldBeReplacedByTextMateType(originalFileType)) {
