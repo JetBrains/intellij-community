@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
@@ -36,9 +37,12 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     final YAMLDocument holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
     assert holdingDocument != null;
 
-    final YAMLValue oldValue = (holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
-                               deleteLookupTextAndRetrieveOldValue(context, currentElement) :
-                               null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
+    YAMLValue oldValue = (holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
+                         deleteLookupTextAndRetrieveOldValue(context, currentElement) :
+                         null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
+    if (oldValue instanceof YAMLSequence) {
+      trimSequenceItemIndents((YAMLSequence)oldValue);
+    }
 
     final YAMLKeyValue created = createNewEntry(holdingDocument, item, parent != null && parent.isValid() ? parent : null);
 
@@ -58,6 +62,12 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
 
+    createdValue = created.getValue(); // retrieve restored value
+    YAMLSequenceItem valueItem =
+      createdValue instanceof YAMLSequence ? ContainerUtil.getFirstItem(((YAMLSequence)createdValue).getItems()) : null;
+    if (valueItem != null) {
+      context.getEditor().getCaretModel().moveToOffset(valueItem.getTextOffset() + 1);
+    }
     if (!isCharAtCaret(context.getEditor(), ' ')) {
       EditorModificationUtil.insertStringAtCaret(context.getEditor(), " ");
     }
@@ -101,7 +111,14 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     WriteCommandAction.runWriteCommandAction(context.getProject(),
                                              YAMLBundle.message("YamlKeyCompletionInsertHandler.remove.key"),
                                              null,
-                                             () -> keyValue.getParentMapping().deleteKeyValue(keyValue));
+                                             () -> {
+                                               YAMLMapping parentMapping = keyValue.getParentMapping();
+                                               boolean delete = parentMapping.getNode().getChildren(null).length == 1;
+                                               parentMapping.deleteKeyValue(keyValue);
+                                               if (delete) {
+                                                 parentMapping.delete();
+                                               }
+                                             });
     return oldValue;
   }
 
