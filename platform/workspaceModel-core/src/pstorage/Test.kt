@@ -56,7 +56,7 @@ internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
 internal class PFolderEntity(
   val data: String
 ) : PTypedEntity() {
-  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(PSubFolderEntity::class)
+  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(PSubFolderEntity::class, true)
   val softChildren: Sequence<PSoftSubFolderEntity> by OneToMany.SoftRef(PSoftSubFolderEntity::class)
 }
 
@@ -73,7 +73,7 @@ internal class PSubFolderEntity(
 internal class ModifiablePFolderEntity : PModifiableTypedEntity<PFolderEntity>() {
   var data: String by EntityDataDelegation()
 
-  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(PFolderEntity::class, PSubFolderEntity::class)
+  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(PFolderEntity::class, PSubFolderEntity::class, true)
   var softChildren: Sequence<PSoftSubFolderEntity> by MutableOneToMany.SoftRef(PFolderEntity::class, PSoftSubFolderEntity::class)
 }
 

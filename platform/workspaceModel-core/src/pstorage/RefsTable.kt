@@ -11,8 +11,10 @@ import kotlin.reflect.KClass
 internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
   val parentClass: KClass<T>,
   val childClass: KClass<SUBT>,
-  var isHard: Boolean,
-  var connectionType: ConnectionType
+  val isHard: Boolean,
+  val connectionType: ConnectionType,
+  val isParentNullable: Boolean,
+  val isChildNullable: Boolean
 ) {
   enum class ConnectionType {
     ONE_TO_ONE,
@@ -23,8 +25,13 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
 
   companion object {
     fun <T : TypedEntity, SUBT : TypedEntity> create(
-      parentClass: KClass<T>, childClass: KClass<SUBT>, isHard: Boolean, connectionType: ConnectionType
-    ): ConnectionId<T, SUBT> = ConnectionId(parentClass, childClass, isHard, connectionType)
+      parentClass: KClass<T>,
+      childClass: KClass<SUBT>,
+      isHard: Boolean,
+      connectionType: ConnectionType,
+      isParentNullable: Boolean,
+      isChildNullable: Boolean
+    ): ConnectionId<T, SUBT> = ConnectionId(parentClass, childClass, isHard, connectionType, isParentNullable, isChildNullable)
   }
 }
 

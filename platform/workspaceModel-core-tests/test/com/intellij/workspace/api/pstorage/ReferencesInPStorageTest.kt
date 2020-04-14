@@ -46,11 +46,11 @@ internal class PParentEntity(
   val parentProperty: String
 ) : PTypedEntity() {
 
-  val children: Sequence<PChildEntity> by OneToMany.HardRef(PChildEntity::class)
+  val children: Sequence<PChildEntity> by OneToMany.HardRef(PChildEntity::class, false)
 
-  val noDataChildren: Sequence<PNoDataChildEntity> by OneToMany.HardRef(PNoDataChildEntity::class)
+  val noDataChildren: Sequence<PNoDataChildEntity> by OneToMany.HardRef(PNoDataChildEntity::class, false)
 
-  val optionalChildren: Sequence<PChildWithOptionalParentEntity> by OneToMany.HardRef(PChildWithOptionalParentEntity::class)
+  val optionalChildren: Sequence<PChildWithOptionalParentEntity> by OneToMany.HardRef(PChildWithOptionalParentEntity::class, true)
 }
 
 internal data class PDataClass(val stringProperty: String, val parent: EntityReference<PParentEntity>)
