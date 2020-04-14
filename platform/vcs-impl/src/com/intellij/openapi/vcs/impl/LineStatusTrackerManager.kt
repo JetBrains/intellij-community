@@ -747,6 +747,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   private inner class MyChangeListListener : ChangeListAdapter() {
     override fun defaultListChanged(oldDefaultList: ChangeList?, newDefaultList: ChangeList?) {
       runInEdt(ModalityState.any()) {
+        if (project.isDisposed) return@runInEdt
+
         expireInactiveRangesDamagedNotifications()
 
         EditorFactory.getInstance().allEditors
