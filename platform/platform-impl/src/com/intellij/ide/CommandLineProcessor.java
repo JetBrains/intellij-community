@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.SplashManager;
@@ -31,6 +32,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
@@ -75,7 +78,9 @@ public final class CommandLineProcessor {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       if (LightEdit.owns(project)) {
-        LightEdit.openFile(file);
+        if (LightEdit.openFile(file)) {
+          LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+        }
       }
       else {
         Navigatable navigatable = line > 0
