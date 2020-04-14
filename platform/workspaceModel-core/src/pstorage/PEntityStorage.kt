@@ -12,14 +12,14 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
 
-internal typealias ChildrenConnectionsInfo<T> = Map<ConnectionId<T, out TypedEntity>, Set<PId<out TypedEntity>>>
-internal typealias ParentConnectionsInfo<SUBT> = Map<ConnectionId<out TypedEntity, SUBT>, PId<out TypedEntity>>
+internal typealias ChildrenConnectionsInfo<T> = Map<ConnectionId<T, TypedEntity>, Set<PId<out TypedEntity>>>
+internal typealias ParentConnectionsInfo<SUBT> = Map<ConnectionId<TypedEntity, SUBT>, PId<out TypedEntity>>
 
-internal fun <T : TypedEntity> ChildrenConnectionsInfo<T>.replaceByMapChildren(replaceMap: Map<PId<*>, PId<*>>): ChildrenConnectionsInfo<T> {
+internal fun <T : TypedEntity> ChildrenConnectionsInfo<T>.replaceByMapChildren(replaceMap: Map<PId<out TypedEntity>, PId<out TypedEntity>>): ChildrenConnectionsInfo<T> {
   return mapValues { it.value.map { v -> replaceMap.getOrDefault(v, v) }.toSet() }
 }
 
-internal fun <T : TypedEntity> ParentConnectionsInfo<T>.replaceByMapParent(replaceMap: Map<PId<*>, PId<*>>): ParentConnectionsInfo<T> {
+internal fun <T : TypedEntity> ParentConnectionsInfo<T>.replaceByMapParent(replaceMap: Map<PId<out TypedEntity>, PId<out TypedEntity>>): ParentConnectionsInfo<T> {
   return mapValues { replaceMap.getOrDefault(it.value, it.value) }
 }
 
@@ -246,10 +246,7 @@ internal class PEntityStorageBuilder(
   /**
    * Cleanup references and accumulate hard linked entities in [accumulator]
    */
-  private fun <T : TypedEntity> accumulateEntitiesToRemove(id: PId<T>,
-                                                           accumulator: MutableSet<PId<out TypedEntity>>) {
-
-
+  private fun accumulateEntitiesToRemove(id: PId<out TypedEntity>, accumulator: MutableSet<PId<out TypedEntity>>) {
     val children = refs.getChildrenRefsOfParentBy(id, true)
     for ((connectionId, children) in children) {
       for (child in children) {
@@ -262,7 +259,7 @@ internal class PEntityStorageBuilder(
 
     val parents = refs.getParentRefsOfChild(id, true)
     for ((connectionId, parent) in parents) {
-      refs.removeParentToChildRef(connectionId as ConnectionId<TypedEntity, T>, parent as PId<TypedEntity>, id)
+      refs.removeParentToChildRef(connectionId, parent, id)
     }
   }
 
@@ -537,13 +534,15 @@ internal class PEntityStorageBuilder(
     //copyEntityProperties(data, newData, replaceMap.inverse())
     addEntityWithRefs(newData, id.clazz.java, storage, HashMap())
     //addEntity(newData, null, handleReferrers = true)
-    updateChangeLog { it.add(createAddEntity(newData, id.clazz.java)) }
+    //updateChangeLog { it.add(createAddEntity(newData, id.clazz.java)) }
   }
 
+/*
   private fun <E : TypedEntity, T : TypedEntity> createAddEntity(data: PEntityData<E>, clazz: Class<T>): ChangeEntry.AddEntity<E> {
     // Handle children and parent references
     return ChangeEntry.AddEntity(data, clazz as Class<E>, emptyMap(), emptyMap())
   }
+*/
 
   private fun deepEquals(data1: PEntityData<out TypedEntity>,
                          data2: PEntityData<out TypedEntity>,
