@@ -20,6 +20,8 @@ private class FileTypeHint: BaseState() {
   val extensions by stringSet()
   @get:XCollection
   val names by stringSet()
+  @get:XCollection
+  val prefixes by stringSet()
 }
 
 private class FileTypeHints : BaseState() {
@@ -81,6 +83,12 @@ class FileTypeHintService: FileTypeOverrider {
       val name = file.name
       if (names.contains(name)) {
         return true
+      }
+
+      for (prefix in prefixes) {
+        if (name.startsWith(prefix)) {
+          return true
+        }
       }
     }
 
