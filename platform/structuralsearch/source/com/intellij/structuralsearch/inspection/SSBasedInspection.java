@@ -156,7 +156,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   public List<LocalInspectionToolWrapper> getChildren() {
     return getConfigurations().stream()
       .filter(configuration -> configuration.getOrder() == 0)
-      .map(configuration -> new StructuralSearchInspectionToolWrapper(this, configuration))
+      .map(configuration -> new StructuralSearchInspectionToolWrapper(getConfigurationsWithUuid(configuration.getUuid())))
       .collect(Collectors.toList());
   }
 
@@ -195,25 +195,33 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   public List<Configuration> getConfigurationsWithUuid(@NotNull UUID uuid) {
-    return ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
+    final List<Configuration> configurations = ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
+    configurations.sort(Comparator.comparingInt(Configuration::getOrder));
+    return configurations;
   }
 
-  public void addConfiguration(@NotNull Configuration configuration) {
-    myConfigurations.add(configuration);
-  }
-
-  public void removeConfiguration(@NotNull Configuration configuration) {
-    for (int i = 0, size = myConfigurations.size(); i < size; i++) {
-      final Configuration c = myConfigurations.get(i);
-      if (c.equals(configuration)) {
-        myConfigurations.remove(i);
-        return;
-      }
+  public boolean addConfiguration(@NotNull Configuration configuration) {
+    if (myConfigurations.contains(configuration)) {
+      return false;
     }
+    myConfigurations.add(configuration);
+    return true;
   }
 
-  public void removeConfigurationWithUuid(@NotNull UUID uuid) {
-    myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+  public boolean addConfigurations(@NotNull Collection<? extends Configuration> configurations) {
+    boolean changed = false;
+    for (Configuration configuration : configurations) {
+      changed |= addConfiguration(configuration);
+    }
+    return changed;
+  }
+
+  public boolean removeConfiguration(@NotNull Configuration configuration) {
+    return myConfigurations.remove(configuration);
+  }
+
+  public boolean removeConfigurationWithUuid(@NotNull UUID uuid) {
+    return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
   }
 
   private static class InspectionResultSink extends DefaultMatchResultSink {

@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -95,7 +96,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final String shortName = selectedTool.getShortName();
       myPanel.removeSelectedRow();
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final SSBasedInspection inspection = getStructuralSearchInspection(profile);
+      final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
       inspection.removeConfigurationWithUuid(UUID.fromString(shortName));
       profile.removeTool(shortName);
       profile.getProfileManager().fireProfileChanged(profile);
@@ -133,12 +134,6 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
   }
 
-  static SSBasedInspection getStructuralSearchInspection(InspectionProfileImpl profile) {
-    final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, (Project)null);
-    assert wrapper != null;
-    return (SSBasedInspection)wrapper.getTool();
-  }
-
   public static void createNewInspection(@NotNull Configuration configuration, @NotNull Project project) {
     createNewInspection(configuration, project, InspectionProfileManager.getInstance(project).getCurrentProfile());
   }
@@ -146,7 +141,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   static boolean createNewInspection(@NotNull Configuration configuration,
                                      @NotNull Project project,
                                      @NotNull InspectionProfileImpl profile) {
-    final SSBasedInspection inspection = getStructuralSearchInspection(profile);
+    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
     configuration.setUuidFromName();
     if (!saveInspection(project, inspection, configuration)) {
       return false;
@@ -163,8 +158,8 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       // already added
       return;
     }
-    SSBasedInspection ssrInspection = (SSBasedInspection)profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project).getTool();
-    StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(ssrInspection, configuration);
+    final StructuralSearchInspectionToolWrapper wrapped =
+      new StructuralSearchInspectionToolWrapper(Collections.singletonList(configuration));
     profile.addTool(project, wrapped, null);
 
     // enable inspection even when profile is locked, because either:
