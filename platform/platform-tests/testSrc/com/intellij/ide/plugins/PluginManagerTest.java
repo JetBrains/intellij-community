@@ -123,6 +123,16 @@ public class PluginManagerTest {
   }
 
   @Test
+  public void testModulePluginIdContract() throws Exception {
+    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules");
+    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath, Collections.emptySet(), true);
+    Map<PluginId, IdeaPluginDescriptorImpl> idMap = PluginManagerCore.buildPluginIdMap(Collections.singletonList(descriptorBundled));
+    PluginId moduleId = PluginId.getId("foo.bar");
+    PluginId corePlugin = PluginId.getId("my.plugin");
+    assertEquals(corePlugin, idMap.get(moduleId).getPluginId());
+  }
+
+  @Test
   public void testIdentifyPreInstalledPlugins() {
     Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
