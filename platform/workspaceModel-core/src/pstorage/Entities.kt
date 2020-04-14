@@ -137,14 +137,14 @@ abstract class PEntityData<E : TypedEntity> {
     if (this::class != other::class) return false
 
     return this::class.memberProperties
-      .filter { it.name != PEntityData<*>::entitySource.name && it.name != PEntityData<*>::id.name }
+      .filter { it.name != PEntityData<*>::id.name }
       .map { it.getter }
       .all { it.call(this) == it.call(other) }
   }
 
   override fun hashCode(): Int {
     return this::class.memberProperties
-      .filter { it.name != PEntityData<*>::entitySource.name && it.name != PEntityData<*>::id.name }
+      .filter { it.name != PEntityData<*>::id.name }
       .map { it.getter.call(this).hashCode() }
       .fold(31) { acc, i -> acc * i * 31 }
   }
