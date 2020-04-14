@@ -664,9 +664,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       synchronized (this) {
         totalPointers = myRoots.values().stream().flatMapToInt(myPointers->myPointers.values().stream().mapToInt(root -> root.pointersUnder)).sum();
       }
-      LOG.warn("VirtualFilePointerManagerImpl.prepareChange("+eventsSize+" events): "+prepareElapsedMs+"ms." +
-               " after(toFireEvents: "+toFireEvents.size()+", toUpdateUrl: "+toUpdateUrls+", eventList: "+eventList+"): "+afterElapsedMs+"ms." +
-               " total pointers: "+totalPointers);
+      LOG.warn("VirtualFilePointerManagerImpl.prepareChange("+eventsSize+" events): "+prepareElapsedMs+"ms. total pointers: "+totalPointers
+               +"; afterElapsedMs: "+afterElapsedMs+"ms.; eventList.size(): "+eventList.size()+
+               "; toFireEvents.size(): "+toFireEvents.size()+"; toUpdateUrls.size(): "+toUpdateUrls.size()+"; eventList: "+
+               ContainerUtil.getFirstItems(eventList, 100));
     }
   }
 
