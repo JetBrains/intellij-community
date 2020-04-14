@@ -93,6 +93,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   @NotNull
   protected JComponent createEditor() {
+    if (myEditor.isFragmented()) {
+      return myEditor.getComponent();
+    }
     myComponentPlace.setLayout(new BorderLayout());
     myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
     DataManager.registerDataProvider(myWholePanel, dataId -> {
