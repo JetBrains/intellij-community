@@ -66,6 +66,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
     mappings = NewMappings(myProject, vcsManager)
+    mappings.activateActiveVcses()
     Disposer.register(testRootDisposable, mappings)
 
     UIUtil.dispatchAllInvocationEvents()

@@ -37,8 +37,8 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.impl.VcsStartupActivity;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -154,14 +154,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
   }
 
-  static final class MyAppLevelProjectManagerListener implements ProjectManagerListener {
+  static final class ShutDownProjectListener implements ProjectManagerListener {
     @Override
-    public void projectOpened(@NotNull Project project) {
-      ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).projectOpened();
-    }
-
-    @Override
-    public void projectClosed(@NotNull Project project) {
+    public void projectClosing(@NotNull Project project) {
       ChangeListManagerImpl manager = (ChangeListManagerImpl)project.getServiceIfCreated(ChangeListManager.class);
       if (manager == null) {
         return;
@@ -310,34 +305,25 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     deleteEmptyChangeLists();
   }
 
-  private void projectOpened() {
-    VcsListener vcsListener = new VcsListener() {
-      @Override
-      public void directoryMappingChanged() {
-        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myUpdater.initialized();
-      myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
-    }
-    else {
-      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject)
-        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, () -> {
-          myUpdater.initialized();
-          broadcastStateAfterLoad();
-          myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
-        });
-
+  private void startUpdater() {
+    myUpdater.initialized();
+    BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
+    myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED,
+                                                  () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myConflictTracker.startTracking();
     }
   }
 
-  private void broadcastStateAfterLoad() {
-    List<LocalChangeList> listCopy = getChangeListsCopy();
-    if (!myProject.isDisposed()) {
-      myProject.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
+  static final class MyStartupActivity implements VcsStartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      getInstanceImpl(project).startUpdater();
+    }
+
+    @Override
+    public int getOrder() {
+      return VcsInitObject.CHANGE_LIST_MANAGER.getOrder();
     }
   }
 

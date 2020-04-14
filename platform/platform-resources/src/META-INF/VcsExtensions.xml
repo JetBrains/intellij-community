@@ -212,6 +212,11 @@
 
     <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$ActivateVcsesStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyStartupActivity"/>
+    <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$DetectRootsStartupActivity"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
     <notificationWhitelist groupIds="Vcs Important Messages;Vcs Notifications;Vcs Silent Notifications;Vcs Messages;
@@ -222,17 +227,11 @@
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyProjectManagerListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    <listener class="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyAppLevelProjectManagerListener"
+    <listener class="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase$InitMappingsListenerActivity"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    <listener class="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyProjectManagerListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    <listener class="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyProjectManagerListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>

@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -400,6 +399,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   public void scheduleMappingsUpdate() {
     myMappings.scheduleMappingsUpdate();
+  }
+
+  private void activateActiveVcses() {
+    myMappings.activateActiveVcses();
   }
 
   @Override
@@ -904,14 +907,28 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
   }
 
-  static final class MyProjectManagerListener implements ProjectManagerListener {
+  static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
-    public void projectOpened(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return;
-      }
+    public void runActivity(@NotNull Project project) {
+      getInstanceImpl(project).activateActiveVcses();
+    }
 
-      getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> VcsRootScanner.start(project));
+    @Override
+    public int getOrder() {
+      return VcsInitObject.MAPPINGS.getOrder();
+    }
+  }
+
+  static final class DetectRootsStartupActivity implements VcsStartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      VcsRootScanner.start(project);
+    }
+
+    @Override
+    public int getOrder() {
+      return VcsInitObject.AFTER_COMMON.getOrder();
     }
   }
 }

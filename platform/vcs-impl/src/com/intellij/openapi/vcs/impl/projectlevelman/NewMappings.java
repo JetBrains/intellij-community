@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -72,12 +71,6 @@ public class NewMappings implements Disposable {
 
     myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
       .usePassThroughInUnitTestMode();
-
-    vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, () -> {
-      if (!myProject.isDisposed()) {
-        activateActiveVcses();
-      }
-    });
 
     myFilePointerListener = new VirtualFilePointerListener() {
       @Override

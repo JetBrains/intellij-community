@@ -29,7 +29,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -95,12 +94,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  class MyProjectManagerListener : ProjectManagerListener {
-    override fun projectOpened(project: Project) {
-      ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.OTHER_INITIALIZATION) {
-        LineStatusTrackerManager.getInstanceImpl(project).startListenForEditors()
-      }
+  class MyStartupActivity : VcsStartupActivity {
+    override fun runActivity(project: Project) {
+      LineStatusTrackerManager.getInstanceImpl(project).startListenForEditors()
     }
+
+    override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
   }
 
   private fun startListenForEditors() {
