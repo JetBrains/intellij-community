@@ -388,6 +388,137 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  public void testNpeInvoke() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    Object x = null;\n" +
+      "    System.out.println((x.toString().trim() + \"xyz\").toString());\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot invoke \"Object.toString()\" because \"x\" is null\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 27));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeSynchronized() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    Object x = null;\n" +
+      "    synchronized (x) { System.out.println(x.hashCode()); }\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot enter synchronized block because \"x\" is null\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 5));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeThrow() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    Error x = null;\n" +
+      "    throw args.length == 0 ? x : new Error();\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot throw exception\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:5)\n", 5, 5));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeArrayRead() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    int[] arr = null;\n" +
+      "    int[] arr2 = new int[1];\n" +
+      "    arr2[0] = arr[0];\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot load from int array because \"arr\" is null\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:6)\n", 6, 18));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeArrayWrite() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    int[] arr = new int[1];\n" +
+      "    int[] arr2 = null;\n" +
+      "    arr2[0] = arr[0];\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot store to int array because \"arr2\" is null\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:6)\n", 6, 9));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeArrayLength() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  int length;\n" +
+      "\n" +
+      "  public static void main(String[] args) {\n" +
+      "    int[] arr = null;\n" +
+      "    Test test = new Test();\n" +
+      "    test.length = test.length + arr.length;\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot read the array length because \"arr\" is null\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 37));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeFieldRead() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  int length;\n" +
+      "\n" +
+      "  public static void main(String[] args) {\n" +
+      "    int[] arr = new int[0];\n" +
+      "    Test test = null;\n" +
+      "    test.length = test.length + arr.length;\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot read field \"length\" because \"test\" is null\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 24));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeFieldWrite() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "class Test {\n" +
+      "  int length;\n" +
+      "\n" +
+      "  public static void main(String[] args) {\n" +
+      "    int[] arr = new int[0];\n" +
+      "    Test test = null, test2 = new Test();\n" +
+      "    test.length = test2.length + arr.length;\n" +
+      "  }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException: Cannot assign field \"length\" because \"test\" is null\n", null, null),
+      Trinity.create("\tat Test.main(Test.java:8)\n", 8, 10));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
   private void checkColumnFinder(String classText, List<Trinity<String, Integer, Integer>> traceAndPositions) {
     myFixture.configureByText("SomeClass.java", classText);
     Editor editor = myFixture.getEditor();
