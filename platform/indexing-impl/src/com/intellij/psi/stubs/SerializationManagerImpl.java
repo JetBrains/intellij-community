@@ -130,10 +130,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
-    LOG.info("START StubSerializationManager SHUTDOWN");
+    String name = myFile != null ? myFile.toString() : "in-memory storage";
+    LOG.info("Start shutting down " + name);
     try {
       closeNameStorage();
-      LOG.info("END StubSerializationManager SHUTDOWN");
+      LOG.info("Finished shutting down " + name);
     }
     catch (IOException e) {
       LOG.error(e);
