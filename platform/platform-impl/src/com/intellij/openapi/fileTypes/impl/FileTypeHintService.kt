@@ -80,7 +80,7 @@ class FileTypeHintService: FileTypeOverrider {
     }
 
     if (names.isNotEmpty() || prefixes.isNotEmpty()) {
-      val name = file.name
+      val name = file.nameSequence
       if (names.contains(name)) {
         return true
       }
