@@ -50,7 +50,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
       if (!DumbService.getInstance(project).isDumb()) {
         PsiClass objectClass = JavaPsiFacade
           .getInstance(project)
-          .findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithDependenciesAndLibrariesScope(false));
+          .findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope());
 
         if (objectClass == null) {
           if (ModuleRootManager.getInstance(module).isSdkInherited()) {
