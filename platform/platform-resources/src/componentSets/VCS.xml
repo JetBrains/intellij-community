@@ -1,11 +1,6 @@
 <idea-plugin>
   <project-components>
     <component>
-      <interface-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
       <headless-implementation-class/>
     </component>

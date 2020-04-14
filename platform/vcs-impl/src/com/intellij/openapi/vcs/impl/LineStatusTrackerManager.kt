@@ -29,7 +29,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -87,9 +87,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     private val LOG = Logger.getInstance(LineStatusTrackerManager::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project): LineStatusTrackerManagerI {
-      return project.getComponent(LineStatusTrackerManagerI::class.java)
-    }
+    fun getInstance(project: Project): LineStatusTrackerManagerI = project.service()
 
     @JvmStatic
     fun getInstanceImpl(project: Project): LineStatusTrackerManager {
@@ -97,8 +95,16 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  init {
-    val busConnection = project.messageBus.connect(this)
+  class MyProjectManagerListener : ProjectManagerListener {
+    override fun projectOpened(project: Project) {
+      ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.OTHER_INITIALIZATION) {
+        LineStatusTrackerManager.getInstanceImpl(project).startListenForEditors()
+      }
+    }
+  }
+
+  private fun startListenForEditors() {
+    val busConnection = project.messageBus.connect()
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
     busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
@@ -107,13 +113,16 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
-    StartupManager.getInstance(project).registerStartupActivity {
+    runInEdt {
+      if (project.isDisposed) return@runInEdt
+
       ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
       FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
 
-      val editorFactory = EditorFactory.getInstance()
-      editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
-      editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), this)
+      EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this)
+
+      MyEditorFactoryListener().install(this)
+      onEverythingChanged()
 
       val states = project.service<PartialLineStatusTrackerManagerState>().getStatesAndClear()
       if (states.isNotEmpty()) {
@@ -622,6 +631,16 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private inner class MyEditorFactoryListener : EditorFactoryListener {
+    fun install(disposable: Disposable) {
+      val editorFactory = EditorFactory.getInstance()
+      for (editor in editorFactory.allEditors) {
+        if (isTrackedEditor(editor)) {
+          requestTrackerFor(editor.document, editor)
+        }
+      }
+      editorFactory.addEditorFactoryListener(this, disposable)
+    }
+
     override fun editorCreated(event: EditorFactoryEvent) {
       val editor = event.editor
       if (isTrackedEditor(editor)) {

@@ -187,6 +187,8 @@
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateVcsVirtualFileAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$Provider" order="first"/>
 
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
@@ -228,6 +230,8 @@
     <listener class="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyProjectManagerListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyProjectManagerListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 
