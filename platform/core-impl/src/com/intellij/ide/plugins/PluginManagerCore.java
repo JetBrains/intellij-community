@@ -1992,7 +1992,8 @@ public final class PluginManagerCore {
       }
 
       IdeaPluginDescriptorImpl descriptor = idToMap.get(id);
-      switch (consumer.apply(id, descriptor)) {
+      PluginId pluginId = descriptor != null ? descriptor.getPluginId() : id;
+      switch (consumer.apply(pluginId, descriptor)) {
         case TERMINATE:
           return false;
         case CONTINUE:
