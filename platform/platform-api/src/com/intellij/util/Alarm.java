@@ -115,6 +115,9 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
+    if (threadToUse == ThreadToUse.OWN_THREAD || threadToUse == ThreadToUse.SHARED_THREAD) {
+      DeprecatedMethodException.report("Please use POOLED_THREAD instead");
+    }
 
     myExecutorService = threadToUse == ThreadToUse.SWING_THREAD ?
                         // pass straight to EDT
@@ -127,13 +130,7 @@ public class Alarm implements Disposable {
 
     if (parentDisposable == null) {
       if (threadToUse != ThreadToUse.SWING_THREAD) {
-        boolean crash = threadToUse == ThreadToUse.POOLED_THREAD || ApplicationManager.getApplication().isUnitTestMode();
-        IllegalArgumentException t = new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm");
-        if (crash) {
-          throw t;
-        }
-        // do not crash yet in case of deprecated SHARED_THREAD
-        LOG.warn(t);
+        LOG.error(new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm"));
       }
     }
     else {
