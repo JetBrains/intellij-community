@@ -48,7 +48,7 @@ internal class NonModalCommitCustomization : ApplicationInitializedListener {
 class CommitWorkflowManager(private val project: Project) : ProjectComponent {
 
   override fun projectOpened() {
-    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
+    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.OTHER_INITIALIZATION) {
       runInEdt {
         subscribeToChanges()
         updateWorkflow()

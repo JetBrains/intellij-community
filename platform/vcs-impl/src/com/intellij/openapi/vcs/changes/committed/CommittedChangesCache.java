@@ -16,8 +16,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -97,20 +95,19 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
-    ProjectLevelVcsManagerImpl.getInstanceImpl(project)
-      .addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE, () -> {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          if (myProject.isDisposed()) {
-            return;
-          }
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) {
+          return;
+        }
 
-          myTaskQueue.start();
+        myTaskQueue.start();
 
-          MessageBusConnection connection = project.getMessageBus().connect();
-          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-        });
+        MessageBusConnection connection = project.getMessageBus().connect();
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
       });
+    });
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {

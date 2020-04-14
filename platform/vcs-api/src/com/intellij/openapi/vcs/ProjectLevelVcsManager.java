@@ -245,4 +245,9 @@ public abstract class ProjectLevelVcsManager {
    */
   @CalledInAwt
   public abstract void scrollConsoleToTheEnd();
+
+  /**
+   * Executes task on pooled thread, delayed until core vcs services are initialized.
+   */
+  public abstract void runAfterInitialization(@NotNull Runnable runnable);
 }

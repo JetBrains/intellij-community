@@ -19,9 +19,6 @@ public enum VcsInitObject {
   MAPPINGS(10, false),
   CHANGE_LIST_MANAGER(100, false),
   DIRTY_SCOPE_MANAGER(110, false),
-  COMMITTED_CHANGES_CACHE(200, true),
-  BRANCHES(250, true),
-  REMOTE_REVISIONS_CACHE(300, true),
   OTHER_INITIALIZATION(350, true),
   AFTER_COMMON(400, true);
 
