@@ -23,7 +23,7 @@ Provides support for lombok annotations to write great Java code with IntelliJ I
 
 ## As of now, the workaround is to re-install the plugin in the IDE settings. 
 
-34nd version of plugin released.
+34th version of plugin released.
 
 Install it automatically from IntelliJ Idea plugin repository.
 
