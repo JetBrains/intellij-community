@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.AnnotationUtil.*
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil
 import com.intellij.codeInsight.navigation.NavigationUtil
@@ -11,7 +12,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
@@ -19,6 +19,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExp
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.VariableData
@@ -204,7 +205,7 @@ object ExtractMethodPipeline {
     if (! canBeConstructor(analyzer)) throw PrepareFailedException("Can't be a constructor", extractOptions.elements.first()) //TODO
     return extractOptions.copy(isConstructor = true,
                                methodName = "this",
-                               dataOutput = DataOutput.EmptyOutput(),
+                               dataOutput = EmptyOutput(),
                                requiredVariablesInside = emptyList()
     )
   }
@@ -236,5 +237,49 @@ object ExtractMethodPipeline {
       .findFieldUsages(holderClass, outStatements)
       .any { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
     return method.isConstructor && startsOnBegin && !hasOuterFinalFieldAssignments && analyzer.findOutputVariables().isEmpty()
+  }
+
+  private val annotationsToKeep: Set<String> = setOf(
+    NLS, NON_NLS, LANGUAGE, PROPERTY_KEY, PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER
+  )
+
+  private fun findAnnotationsToKeep(variable: PsiVariable?): List<PsiAnnotation> {
+    return variable?.annotations.orEmpty().filter { it.qualifiedName in annotationsToKeep }
+  }
+
+  private fun findAnnotationsToKeep(reference: PsiReference?): List<PsiAnnotation> {
+    return findAnnotationsToKeep(reference?.resolve() as? PsiVariable)
+  }
+
+  private fun withFilteredAnnotations(type: PsiType): PsiType {
+    val project = type.annotations.firstOrNull()?.project ?: return type
+    val factory = PsiElementFactory.getInstance(project)
+    val typeHolder = factory.createParameter("x", type)
+    typeHolder.type.annotations.filterNot { it.qualifiedName in annotationsToKeep }.forEach { it.delete() }
+    return typeHolder.type
+  }
+
+  private fun withFilteredAnnotations(inputParameter: InputParameter): InputParameter {
+    return inputParameter.copy(
+      annotations = findAnnotationsToKeep(inputParameter.references.firstOrNull() as? PsiReference),
+      type = withFilteredAnnotations(inputParameter.type)
+    )
+  }
+
+  private fun withFilteredAnnotation(output: DataOutput): DataOutput {
+    val filteredType = withFilteredAnnotations(output.type)
+    return when(output) {
+      is VariableOutput -> output.copy(annotations = findAnnotationsToKeep(output.variable), type = filteredType)
+      is ExpressionOutput -> output.copy(annotations = findAnnotationsToKeep(output.returnExpressions.singleOrNull() as? PsiReference), type = filteredType)
+      is EmptyOutput, ArtificialBooleanOutput -> output
+    }
+  }
+
+  fun withFilteredAnnotations(extractOptions: ExtractOptions): ExtractOptions {
+    return extractOptions.copy(
+      inputParameters = extractOptions.inputParameters.map { withFilteredAnnotations(it) },
+      disabledParameters = extractOptions.disabledParameters.map { withFilteredAnnotations(it) },
+      dataOutput = withFilteredAnnotation(extractOptions.dataOutput)
+    )
   }
 }

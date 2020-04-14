@@ -17,6 +17,7 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWithCodeBlock
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
@@ -124,7 +125,8 @@ class MethodExtractor {
     return true
   }
 
-  fun extractMethod(dependencies: ExtractOptions): PsiMethod {
+  fun extractMethod(extractOptions: ExtractOptions): PsiMethod {
+    val dependencies = withFilteredAnnotations(extractOptions)
     val factory = PsiElementFactory.getInstance(dependencies.project)
     val styleManager = CodeStyleManager.getInstance(dependencies.project)
     var flowOutput = dependencies.flowOutput
@@ -150,6 +152,7 @@ class MethodExtractor {
         dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
         dependencies.methodName,
         dependencies.inputParameters,
+        dependencies.dataOutput.annotations,
         dependencies.thrownExceptions,
         dependencies.anchor
       )

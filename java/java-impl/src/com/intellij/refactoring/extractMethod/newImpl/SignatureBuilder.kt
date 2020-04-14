@@ -22,6 +22,7 @@ class SignatureBuilder(private val project: Project) {
     returnType: PsiType? = null,
     methodName: String = "extracted",
     inputParameters: List<InputParameter> = emptyList(),
+    annotations: List<PsiAnnotation> = emptyList(),
     thrownExceptions: List<PsiClassType> = emptyList(),
     anchor: PsiMember
   ): PsiMethod {
@@ -33,6 +34,8 @@ class SignatureBuilder(private val project: Project) {
     } else {
       factory.createConstructor("methodName", context)
     }
+
+    annotations.forEach { annotation -> method.modifierList.add(annotation) }
 
     JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method)
 
@@ -70,6 +73,11 @@ class SignatureBuilder(private val project: Project) {
       }
       val methodParameter = parameterList.parameters.find { it.name == parameter.name }
       PsiUtil.setModifierProperty(methodParameter!!, PsiModifier.FINAL, shouldBeFinal)
+    }
+
+    inputParameters.forEach { inputParameter ->
+      val modifierList = parameterList.parameters.find { it.name == inputParameter.name }?.modifierList
+      inputParameter.annotations.forEach { annotation -> modifierList?.add(annotation) }
     }
 
     return parameterList

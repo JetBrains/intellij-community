@@ -75,8 +75,9 @@ object ExtractMethodHelper {
       Nullability.NULLABLE -> nullabilityManager.defaultNullable
       else -> return
     }
-    val modifierList = owner.modifierList ?: return
-    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList)
+    val target: PsiAnnotationOwner? = if (owner is PsiParameter) owner.typeElement else owner.modifierList
+    if (target == null) return
+    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, target)
     if (annotationElement != null) {
       JavaCodeStyleManager.getInstance(owner.project).shortenClassReferences(annotationElement)
     }
@@ -128,6 +129,7 @@ object ExtractMethodHelper {
     val declaration = factory.createVariableDeclarationStatement(requireNotNull(variable.name), variable.type, null)
     val declaredVariable = declaration.declaredElements.first() as PsiVariable
     PsiUtil.setModifierProperty(declaredVariable, PsiModifier.FINAL, variable.hasModifierProperty(PsiModifier.FINAL))
+    variable.annotations.forEach { annotation -> declaredVariable.modifierList?.add(annotation) }
     return declaration
   }
 
