@@ -3,6 +3,9 @@ package com.intellij.codeInspection;
 
 /**
  * Defines type used to determine highlighting of {@link ProblemDescriptor}.
+ * Please use {@link #GENERIC_ERROR_OR_WARNING} if you are not sure which one to pick, otherwise user's settings would be ignored.
+ *
+ * @see com.intellij.codeInspection.ProblemDescriptorUtil#getHighlightInfoType
  */
 public enum ProblemHighlightType {
 
