@@ -14,6 +14,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -113,6 +114,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       val editorFactory = EditorFactory.getInstance()
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
       editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), this)
+
+      val states = project.service<PartialLineStatusTrackerManagerState>().getStatesAndClear()
+      if (states.isNotEmpty()) {
+        ChangeListManager.getInstance(project).invokeAfterUpdate({ restoreTrackersForPartiallyChangedFiles(states) },
+                                                                 InvokeAfterUpdateMode.SILENT, null, null)
+      }
     }
   }
 
@@ -922,7 +929,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   @CalledInAwt
-  internal fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
+  private fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
     runWriteAction {
       synchronized(LOCK) {
         for (state in trackerStates) {
