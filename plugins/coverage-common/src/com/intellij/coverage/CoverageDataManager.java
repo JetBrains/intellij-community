@@ -91,7 +91,7 @@ public abstract class CoverageDataManager {
 
   public abstract void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite);
 
-  public abstract void addSuiteListener(CoverageSuiteListener listener, Disposable parentDisposable);
+  public abstract void addSuiteListener(@NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void triggerPresentationUpdate();
 

@@ -103,6 +103,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -1069,9 +1070,8 @@ public final class PlatformTestUtil {
                                                                  long timeoutInSeconds) throws InterruptedException {
     Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
     ProcessHandler processHandler = result.second.getProcessHandler();
-    if (!processHandler.waitFor(timeoutInSeconds * 1000)) {
-      fail("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler);
-    }
+    assertNotNull("Process handler must not be null!", processHandler);
+    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler, processHandler::isProcessTerminated, 60);
     return result.first;
   }
 
@@ -1137,6 +1137,32 @@ public final class PlatformTestUtil {
       fail("Process failed to start in 60 seconds");
     }
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
+  }
+
+  /**
+   * Wait and dispatch events during timeout
+   * @param errorMessage The error message if timeout happens
+   * @param condition Check whether finished
+   * @param timeoutInSeconds timeout in seconds
+   */
+  private static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+    long start = System.currentTimeMillis();
+    while (true) {
+      try {
+        if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
+          fail(errorMessage);
+        }
+        if (condition.getAsBoolean()) {
+          break;
+        }
+        dispatchAllEventsInIdeEventQueue();
+        //noinspection BusyWait
+        Thread.sleep(10);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
