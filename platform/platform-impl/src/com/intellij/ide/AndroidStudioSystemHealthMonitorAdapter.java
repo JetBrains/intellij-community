@@ -15,12 +15,12 @@
  */
 package com.intellij.ide;
 
-import com.android.annotations.NonNull;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class AndroidStudioSystemHealthMonitorAdapter {
 
@@ -46,8 +46,10 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     }
   }
 
-  public static void registerEventsListener(@NonNull EventsListener listener) {
-    assert ourListener == null;
+  public static void registerEventsListener(@NotNull EventsListener listener) {
+    if (ourListener != null) {
+      throw new IllegalStateException("listener already registered");
+    }
     ourListener = listener;
   }
 
