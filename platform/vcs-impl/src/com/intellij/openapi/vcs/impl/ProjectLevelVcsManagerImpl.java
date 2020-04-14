@@ -20,10 +20,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -76,8 +74,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   private final NewMappings myMappings;
   private final Project myProject;
 
-  private final @Nullable VcsInitialization myInitialization;
-
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
   @NonNls private static final String ATTRIBUTE_VCS = "vcs";
@@ -103,38 +99,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
-    if (project.isDefault()) {
-      myInitialization = null;
-    }
-    else {
-      myInitialization = new VcsInitialization(myProject);
-    }
-
     myMappings = new NewMappings(myProject, this);
     Disposer.register(myProject, myMappings);
-  }
-
-  static final class MyStartUpActivity implements StartupActivity.DumbAware {
-    MyStartUpActivity() {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-        @Override
-        public void projectClosing(@NotNull Project project) {
-          ProjectLevelVcsManagerImpl manager = (ProjectLevelVcsManagerImpl)project.getServiceIfCreated(ProjectLevelVcsManager.class);
-          if (manager != null && manager.myInitialization != null) {
-            // wait for the thread spawned in VcsInitialization to terminate
-            manager.myInitialization.cancelBackgroundInitialization();
-          }
-        }
-      });
-    }
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      ProjectLevelVcsManagerImpl manager = getInstanceImpl(project);
-      if (manager.myInitialization != null) {
-        manager.myInitialization.startInitialization();
-      }
-    }
   }
 
   public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
@@ -724,11 +690,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   /**
    * @see #runAfterInitialization(Runnable)
+   * @see VcsStartupActivity
    */
   public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
-    if (myInitialization != null) {
-      myInitialization.add(vcsInitObject, runnable);
-    }
+    VcsInitialization.getInstance(myProject).add(vcsInitObject, runnable);
   }
 
   @Override
@@ -820,9 +785,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @TestOnly
   public void waitForInitialized() {
-    if (myInitialization != null) {
-      myInitialization.waitFinished();
-    }
+    VcsInitialization.getInstance(myProject).waitFinished();
   }
 
   @Override

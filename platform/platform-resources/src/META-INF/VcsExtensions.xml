@@ -47,7 +47,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyStartUpActivity"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsInitialization"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
@@ -232,6 +233,8 @@
     <listener class="com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
     <listener class="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 
