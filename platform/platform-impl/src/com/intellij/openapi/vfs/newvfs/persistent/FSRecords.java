@@ -618,9 +618,6 @@ public class FSRecords {
   private static int length() {
     return (int)getRecords().length();
   }
-  public static int getMaxId() {
-    return readAndHandleErrors(() -> length() / RECORD_SIZE);
-  }
 
   static void deleteRecordRecursively(int id) {
     writeAndHandleErrors(() -> {
