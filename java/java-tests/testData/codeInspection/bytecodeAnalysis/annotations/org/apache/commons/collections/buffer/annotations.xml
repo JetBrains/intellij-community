@@ -261,6 +261,16 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.buffer.PriorityBuffer void clear()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.buffer.PriorityBuffer void grow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.buffer.SynchronizedBuffer SynchronizedBuffer(org.apache.commons.collections.Buffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

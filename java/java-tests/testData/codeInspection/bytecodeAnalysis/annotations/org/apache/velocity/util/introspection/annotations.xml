@@ -16,6 +16,11 @@
     <item name='org.apache.velocity.util.introspection.AbstractChainableUberspector org.apache.velocity.util.introspection.VelPropertySet getPropertySet(java.lang.Object, java.lang.String, java.lang.Object, org.apache.velocity.util.introspection.Info)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.velocity.util.introspection.AbstractChainableUberspector void wrap(org.apache.velocity.util.introspection.Uberspect)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.introspection.ClassMap java.lang.Class getCachedClass()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -144,6 +149,11 @@
     <item name='org.apache.velocity.util.introspection.SecureUberspector java.util.Iterator getIterator(java.lang.Object, org.apache.velocity.util.introspection.Info) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.velocity.util.introspection.SecureUberspector void setRuntimeServices(org.apache.velocity.runtime.RuntimeServices)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.introspection.UberspectImpl UberspectImpl()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -193,6 +203,11 @@
     </item>
     <item name='org.apache.velocity.util.introspection.UberspectImpl org.apache.velocity.util.introspection.VelPropertySet getPropertySet(java.lang.Object, java.lang.String, java.lang.Object, org.apache.velocity.util.introspection.Info) 3'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.velocity.util.introspection.UberspectImpl void setLog(org.apache.velocity.runtime.log.Log)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.util.introspection.UberspectImpl void setRuntimeLogger(org.apache.velocity.runtime.RuntimeLogger) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

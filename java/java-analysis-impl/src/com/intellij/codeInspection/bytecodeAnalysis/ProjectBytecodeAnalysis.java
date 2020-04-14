@@ -4,6 +4,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.components.ServiceManager;
@@ -111,7 +112,7 @@ public class ProjectBytecodeAnalysis {
       if (listOwner instanceof PsiMethod) {
         List<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
-        return toPsi(primaryKey, methodAnnotations);
+        return toPsi(primaryKey, methodAnnotations, ((PsiMethod)listOwner).getParameterList().getParametersCount());
       }
       else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
@@ -142,20 +143,44 @@ public class ProjectBytecodeAnalysis {
    *
    * @param primaryKey primary compressed key for method
    * @param methodAnnotations inferred annotations
+   * @param arity method arity
    * @return Psi annotations
    */
-  private PsiAnnotation @NotNull [] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
+  private PsiAnnotation @NotNull [] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations, int arity) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
-    boolean pure = methodAnnotations.pures.contains(primaryKey);
+    MutationSignature mutationSignature = methodAnnotations.mutates.getOrDefault(primaryKey, MutationSignature.unknown());
+    Map<String, String> annotationParameters = new LinkedHashMap<>();
     String contractValues = methodAnnotations.contractsValues.get(primaryKey);
-    String contractPsiText = null;
-
     if (contractValues != null) {
-      contractPsiText = pure ? "value=" + contractValues + ",pure=true" : contractValues;
+      annotationParameters.put("value", contractValues);
     }
-    else if (pure) {
-      contractPsiText = "pure=true";
+    if (mutationSignature == MutationSignature.pure()) {
+      annotationParameters.put("pure", "true");
+    }
+    else if (mutationSignature != MutationSignature.unknown()) {
+      List<String> mutations = new ArrayList<>();
+      if (mutationSignature.mutatesThis()) {
+        mutations.add("this");
+      }
+      for (int i = 0; i < arity; i++) {
+        if (mutationSignature.mutatesArg(i)) {
+          mutations.add("param" + (i + 1));
+        }
+      }
+      assert !mutations.isEmpty();
+      annotationParameters.put("mutates", '"'+String.join(",", mutations)+'"');
+    }
+    
+    String contractPsiText;
+    if (annotationParameters.isEmpty()) {
+      contractPsiText = null;
+    }
+    else if (annotationParameters.keySet().equals(Collections.singleton("value"))) {
+      contractPsiText = ContainerUtil.getOnlyItem(annotationParameters.values());
+    }
+    else {
+      contractPsiText = EntryStream.of(annotationParameters).join("=").joining(",");
     }
 
     PsiAnnotation psiAnnotation = contractPsiText == null ? null : createContractAnnotation(contractPsiText);
@@ -411,14 +436,15 @@ public class ProjectBytecodeAnalysis {
     throws EquationsLimitException {
     List<StandardMethodContract> contractClauses = new ArrayList<>();
     Set<EKey> notNulls = methodAnnotations.notNulls;
-    Set<EKey> pures = methodAnnotations.pures;
+    Map<EKey, MutationSignature> mutations = methodAnnotations.mutates;
     Map<EKey, String> contracts = methodAnnotations.contractsValues;
 
     ContractReturnValue fullReturnValue = methodAnnotations.returnValue.asContractReturnValue();
     for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot || (value == Value.Fail && !pures.contains(methodKey))) {
+      if (value == Value.Top || value == Value.Bot || 
+          (value == Value.Fail && mutations.get(methodKey) != MutationSignature.pure())) {
         continue;
       }
       EKey key = entry.getKey().mkStable();
@@ -431,7 +457,7 @@ public class ProjectBytecodeAnalysis {
         notNulls.add(methodKey);
       }
       else if (value == Value.Pure && direction == Pure) {
-        pures.add(methodKey);
+        mutations.put(methodKey, MutationSignature.pure());
       }
       else if (direction instanceof ParamValueBasedDirection) {
         ContractReturnValue contractReturnValue =
@@ -629,7 +655,7 @@ class MethodAnnotations {
   // @Nullable keys
   final Set<EKey> nullables = new HashSet<>(1);
   // @Contract(pure=true) part of contract
-  final Set<EKey> pures = new HashSet<>(1);
+  final Map<EKey, MutationSignature> mutates = new HashMap<>(1);
   // @Contracts
   final Map<EKey, String> contractsValues = new HashMap<>();
   DataValue returnValue = DataValue.UnknownDataValue1;

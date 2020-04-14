@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+/**
+ * Represents method mutation signature
+ */
 public class MutationSignature {
   public static final String ATTR_MUTATES = "mutates";
   static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
@@ -26,20 +29,52 @@ public class MutationSignature {
     myParameters = params;
   }
 
+  /**
+   * @return true if the instance method may mutate this object
+   */
   public boolean mutatesThis() {
     return myThis;
   }
 
+  /**
+   * @param n argument number (zero-based)
+   * @return true if the method may mutate given argument
+   */
   public boolean mutatesArg(int n) {
     return n < myParameters.length && myParameters[n];
   }
 
+  /**
+   * @return true if the method is static or never mutates this object
+   */
   public boolean preservesThis() {
     return this != UNKNOWN && !myThis;
   }
 
+  /**
+   * @param n argument number (zero-based)
+   * @return true if the method never mutates given argument
+   */
   public boolean preservesArg(int n) {
     return this != UNKNOWN && !mutatesArg(n);
+  }
+
+  /**
+   * @return a signature that is equivalent to this signature but may also mutate this object
+   */
+  public MutationSignature alsoMutatesThis() {
+    return myThis ? this : new MutationSignature(true, myParameters);
+  }
+
+  /**
+   * @param n argument number (zero-based)
+   * @return a signature that is equivalent to this signature but may also mutate n-th argument
+   */
+  public MutationSignature alsoMutatesArg(int n) {
+    if (myParameters.length > n && myParameters[n]) return this;
+    boolean[] params = Arrays.copyOf(myParameters, Math.max(n + 1, myParameters.length));
+    params[n] = true;
+    return new MutationSignature(myThis, params);
   }
 
   /**
@@ -121,8 +156,7 @@ public class MutationSignature {
    * @param method a method to apply the signature
    * @return error message or null if signature is valid
    */
-  @Nullable
-  public static String checkSignature(@NotNull String signature, @NotNull PsiMethod method) {
+  public static @Nullable String checkSignature(@NotNull String signature, @NotNull PsiMethod method) {
     try {
       MutationSignature ms = parse(signature);
       if (ms.myThis && method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -147,9 +181,22 @@ public class MutationSignature {
     return null;
   }
 
-  @NotNull
-  public static MutationSignature fromMethod(@Nullable PsiMethod method) {
+  public static @NotNull MutationSignature fromMethod(@Nullable PsiMethod method) {
     if (method == null) return UNKNOWN;
     return JavaMethodContractUtil.getContractInfo(method).getMutationSignature();
+  }
+
+  /**
+   * @return a signature of the pure method, which doesn't mutate anything
+   */
+  public static @NotNull MutationSignature pure() {
+    return PURE;
+  }
+
+  /**
+   * @return a signature of the unknown method, which may mutate anything
+   */
+  public static @NotNull MutationSignature unknown() {
+    return UNKNOWN;
   }
 }

@@ -55,6 +55,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAlternator java.lang.String alternate()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAlternator java.lang.String toString()'>

@@ -457,6 +457,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.time.DurationFormatUtils.Token void increment()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;false&quot;"/>
@@ -551,6 +556,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.CharacterLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.CharacterLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -565,6 +575,11 @@
     <item name='org.apache.commons.lang.time.FastDateFormat.PaddedNumberField int estimateLength()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.PaddedNumberField void appendTo(java.lang.StringBuffer, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.PaddedNumberField void appendTo(java.lang.StringBuffer, int) 0'>
@@ -598,6 +613,11 @@
     <item name='org.apache.commons.lang.time.FastDateFormat.StringLiteral int estimateLength()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.StringLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.StringLiteral void appendTo(java.lang.StringBuffer, java.util.Calendar) 0'>
@@ -684,6 +704,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitMonthField void appendTo(java.lang.StringBuffer, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitMonthField void appendTo(java.lang.StringBuffer, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -701,6 +726,11 @@
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitNumberField int estimateLength()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitNumberField void appendTo(java.lang.StringBuffer, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitNumberField void appendTo(java.lang.StringBuffer, int) 0'>
@@ -725,6 +755,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitYearField void appendTo(java.lang.StringBuffer, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.TwoDigitYearField void appendTo(java.lang.StringBuffer, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -747,6 +782,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedMonthField void appendTo(java.lang.StringBuffer, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedMonthField void appendTo(java.lang.StringBuffer, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -767,6 +807,11 @@
     <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedNumberField int estimateLength()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedNumberField void appendTo(java.lang.StringBuffer, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.time.FastDateFormat.UnpaddedNumberField void appendTo(java.lang.StringBuffer, int) 0'>
@@ -800,6 +845,16 @@
     <item name='org.apache.commons.lang.time.StopWatch long getStartTime()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.time.StopWatch void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.time.StopWatch void unsplit()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
 </root>

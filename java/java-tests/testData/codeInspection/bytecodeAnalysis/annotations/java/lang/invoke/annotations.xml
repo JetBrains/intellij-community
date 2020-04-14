@@ -162,6 +162,11 @@
     <item name='java.lang.invoke.CallSite void checkTargetChange(java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.CallSite void maybeReBoxElements(java.lang.Object[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.CallSite void maybeReBoxElements(java.lang.Object[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -663,7 +668,8 @@
     </item>
     <item name='java.lang.invoke.MemberName java.lang.invoke.MemberName changeReferenceKind(byte, byte)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -680,6 +686,16 @@
     </item>
     <item name='java.lang.invoke.MemberName java.lang.invoke.MethodType getMethodType()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.lang.invoke.MemberName void init(java.lang.Class&lt;?&gt;, java.lang.String, java.lang.Object, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.lang.invoke.MemberName void initResolved(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MemberName.Factory Factory()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -988,20 +1004,50 @@
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor short getElementS(short[], int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementB(byte[], int, byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementB(byte[], int, byte) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementC(char[], int, char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementC(char[], int, char) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementD(double[], int, double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementD(double[], int, double) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementF(float[], int, float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementF(float[], int, float) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementI(int[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementI(int[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementJ(long[], int, long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementJ(long[], int, long) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1012,6 +1058,11 @@
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementL(java.lang.Class&lt;?&gt;, java.lang.Object[], int, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementL(java.lang.Object, int, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementL(java.lang.Object, int, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1021,11 +1072,26 @@
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementL(java.lang.Object, java.lang.Object, int, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementL(java.lang.Object[], int, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementL(java.lang.Object[], int, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementS(short[], int, short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementS(short[], int, short) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementZ(boolean[], int, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleImpl.ArrayAccessor void setElementZ(boolean[], int, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1121,6 +1187,11 @@
     </item>
     <item name='java.lang.invoke.MethodHandleNatives boolean isCallerSensitive(java.lang.invoke.MemberName) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandleNatives boolean isCallerSensitiveMethod(java.lang.Class&lt;?&gt;, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleNatives boolean isCallerSensitiveMethod(java.lang.Class&lt;?&gt;, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1795,6 +1866,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodType java.lang.invoke.Invokers invokers()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodType java.lang.invoke.MethodType appendParameterTypes(java.lang.Class&lt;?&gt;...) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1893,6 +1969,11 @@
     </item>
     <item name='java.lang.invoke.MethodType void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodType void setForm(java.lang.invoke.MethodTypeForm)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodType void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

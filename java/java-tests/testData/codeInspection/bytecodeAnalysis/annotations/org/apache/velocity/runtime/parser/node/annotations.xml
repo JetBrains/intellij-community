@@ -136,6 +136,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.runtime.parser.node.ASTDirective void setDirectiveName(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTDivNode ASTDivNode(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -223,7 +228,8 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscape java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;param2&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;param2&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscape java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object) 0'>
@@ -1281,6 +1287,26 @@
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode org.apache.velocity.runtime.parser.node.Node jjtGetParent()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.node.SimpleNode void jjtSetParent(org.apache.velocity.runtime.parser.node.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.node.SimpleNode void setFirstToken(org.apache.velocity.runtime.parser.Token)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.node.SimpleNode void setInfo(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.node.SimpleNode void setInvalid()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
 </root>
