@@ -17,7 +17,7 @@ class Test {
       newMethod(s);
   }
 
-    private void newMethod(@Anno String s) {
+    private void newMethod(String s) {
         if (s == null) {}
     }
 }

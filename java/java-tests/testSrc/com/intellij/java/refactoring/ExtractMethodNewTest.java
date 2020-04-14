@@ -1208,7 +1208,23 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
-  public void testTypeUseAnnotationsOnParameter() throws Exception {
+  public void testSkipCustomAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNullabilityIsTypeAnnotation() throws Exception {
+    doTest();
+  }
+
+  public void testKeepDeclarationWithAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testFilterAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNullabilityAnnotationOverridden() throws Exception {
     doTest();
   }
 
