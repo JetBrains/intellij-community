@@ -53,7 +53,7 @@ Features / Supports
 - [@Delegate](https://projectlombok.org/features/Delegate.html)
 - [@Value](https://projectlombok.org/features/Value.html)
 - [@Accessors](https://projectlombok.org/features/experimental/Accessors.html)
-- [@Wither](https://projectlombok.org/features/experimental/Wither.html)
+- [@With](https://projectlombok.org/features/With.html)
 - [@SneakyThrows](https://projectlombok.org/features/SneakyThrows.html)
 - [@val](https://projectlombok.org/features/val.html) available from IntelliJ 14.1 (improved in 2016.2)
 - [@UtilityClass](https://projectlombok.org/features/experimental/UtilityClass.html) available from IntelliJ 2016.2
@@ -165,6 +165,7 @@ Developed By
 - [**@tagae** Sebastián González](https://github.com/tagae)
 - [**@wyhasany** Michał Rowicki](https://github.com/wyhasany)
 - [**@ocadaruma** Haruki Okada](https://github.com/ocadaruma)
+- [**@mackatozis** Alexandros Efthymiadis](https://github.com/mackatozis)
 
 Supporters
 --------
