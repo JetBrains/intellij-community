@@ -355,7 +355,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
     boolean isAvailable = true;
     IdeaPluginDescriptorImpl dependencyDescriptor = null;
-    if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
+    if (context.isPluginDisabled(dependencyId)) {
       if (!isOptional) {
         markAsIncomplete(context);
       }
