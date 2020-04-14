@@ -211,7 +211,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
           @Override
           public Insets getInsets() {
-            return myAction == nextErrorAction ? JBUI.insets(2, 2, 2, 1) :
+            return myAction == nextErrorAction ? JBUI.insets(2, 1) :
                    myAction == prevErrorAction ? JBUI.insets(2, 1, 2, 2) :
                    JBUI.insets(2);
           }
@@ -442,11 +442,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       updateTrafficLightVisibility();
     }
 
-    boolean analyzing = analyzerStatus.getAnalyzing();
+    boolean analyzing = analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE;
     hasAnalyzed = hasAnalyzed || (isAnalyzing && !analyzing);
     isAnalyzing = analyzing;
 
-    if (!(hasAnalyzed && isAnalyzing)) {
+    if (analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
       showNavigation = analyzerStatus.getShowNavigation();
     }
 
@@ -1686,7 +1686,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
         Icon newIcon = analyzerStatus.getIcon();
 
-        if (!(hasAnalyzed && isAnalyzing)) {
+        if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
           if (newStatus.isEmpty()) {
             newStatus = Collections.singletonList(new StatusItem("", newIcon));
             presentation.putClientProperty(EXPANDED_STATUS, newStatus);
@@ -1695,9 +1695,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           if (!Objects.equals(presentation.getClientProperty(EXPANDED_STATUS), newStatus)) {
             presentation.putClientProperty(EXPANDED_STATUS, newStatus);
           }
-          else {
-            presentation.putClientProperty(TRANSLUCENT_STATE, false);
-          }
+
+          presentation.putClientProperty(TRANSLUCENT_STATE, analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE);
         }
         else {
           presentation.putClientProperty(TRANSLUCENT_STATE, true);
@@ -1803,7 +1802,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         updateContents(newStatus);
       }
 
-      setBorder(JBUI.Borders.empty(2));
+      setBorder(JBUI.Borders.empty(2, 2, 2, 0));
     }
 
     @Override
@@ -2120,13 +2119,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
       myContent.removeAll();
 
-      GridBag gc = new GridBag();
-      myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getTitle())),
-                       gc.nextLine().next().
-                         anchor(GridBagConstraints.LINE_START).
-                         weightx(1).
-                         fillCellHorizontally().
-                         insets(10, 10, 10, 0));
+      GridBag gc = new GridBag().nextLine().next().
+        anchor(GridBagConstraints.LINE_START).
+        weightx(1).
+        fillCellHorizontally().
+        insets(10, 10, 10, 0);
+
+      boolean hasTitle = StringUtil.isNotEmpty(analyzerStatus.getTitle());
+
+      if (hasTitle) {
+        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getTitle())), gc);
+      }
+      else if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())), gc);
+      }
 
       Presentation presentation = new Presentation();
       presentation.setIcon(AllIcons.Actions.More);
@@ -2157,7 +2163,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
       myContent.add(myProgressPanel, gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
 
-      if (!analyzerStatus.getDetails().isEmpty()) {
+      if (hasTitle && StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
         int topIndent = !myProgressBarMap.isEmpty() ? 10 : 0;
         myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())),
                       gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().

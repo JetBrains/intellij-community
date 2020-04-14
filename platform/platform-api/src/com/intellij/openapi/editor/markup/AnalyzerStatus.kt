@@ -8,6 +8,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import org.jetbrains.annotations.PropertyKey
 import java.awt.Container
+import java.util.*
 import javax.swing.Icon
 import kotlin.math.roundToInt
 
@@ -38,16 +39,13 @@ data class PassWrapper(val presentableName: String, val progress: Double, val fi
 }
 
 /**
- * Standard (predefined) expanded status that's printed as text in the inspection widget component.
+ * Type of the analyzing status that's taking place.
  */
-enum class StandardStatus(private val bundleKey: String) {
-  NONE(""),
-  OFF("iw.status.off"),
-  ANALYZING("iw.status.analyzing");
-
-  override fun toString(): String = if (bundleKey.isNotEmpty()) EditorBundle.message(bundleKey) else ""
+enum class AnalyzingType {
+  COMPLETE, // Analyzing complete
+  PARTIAL,  // Analyzing has partial results available for displaying
+  EMPTY     // Analyzing in progress but no information is available
 }
-
 /**
  * Severity status item containing text (not necessarily a number) and a possible icon
  */
@@ -122,11 +120,16 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
   var showNavigation : Boolean = false
   var expandedStatus: List<StatusItem> = emptyList()
   var passes : List<PassWrapper> = emptyList()
-  var analyzing : Boolean = false
+  var analyzingType : AnalyzingType = AnalyzingType.COMPLETE
     private set
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true
+    return this
+  }
+
+  fun withExpandedStatus(status: StatusItem): AnalyzerStatus {
+    expandedStatus = Collections.singletonList(status)
     return this
   }
 
@@ -135,9 +138,8 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     return this
   }
 
-  fun withStandardStatus(status: StandardStatus): AnalyzerStatus {
-    expandedStatus = listOf(StatusItem(status.toString(), null))
-    analyzing = status == StandardStatus.ANALYZING
+  fun withAnalyzingType(type: AnalyzingType) : AnalyzerStatus {
+    analyzingType = type
     return this
   }
 
