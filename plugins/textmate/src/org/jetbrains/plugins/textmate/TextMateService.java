@@ -12,7 +12,7 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
-import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateCustomTextAttributes;
+import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
 
 import java.util.Map;
 
@@ -70,5 +70,5 @@ public abstract class TextMateService {
    * Note that background color in text attributes is stored in raw format and isn't merged with default background.
    */
   @NotNull
-  public abstract Map<CharSequence, TextMateCustomTextAttributes> getCustomHighlightingColors();
+  public abstract Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors();
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -35,7 +34,7 @@ import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.*;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
-import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateCustomTextAttributes;
+import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
@@ -53,7 +52,7 @@ public class TextMateServiceImpl extends TextMateService {
 
   private final AtomicBoolean myInitialized = new AtomicBoolean(false); 
   
-  private final THashMap<CharSequence, TextMateCustomTextAttributes> myCustomHighlightingColors = new THashMap<>();
+  private final THashMap<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new THashMap<>();
   private final THashMap<String, CharSequence> myExtensionsMapping = new THashMap<>();
 
   private final PlistReader myPlistReader = new CompositePlistReader();
@@ -162,7 +161,7 @@ public class TextMateServiceImpl extends TextMateService {
 
   @NotNull
   @Override
-  public Map<CharSequence, TextMateCustomTextAttributes> getCustomHighlightingColors() {
+  public Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors() {
     ensureInitialized();
     return myCustomHighlightingColors;
   }
@@ -272,11 +271,9 @@ public class TextMateServiceImpl extends TextMateService {
   }
 
   private void readCustomHighlightingColors(@NotNull CharSequence scopeName, @NotNull Plist preferencesPList) {
-    final TextAttributes textAttributes = new TextAttributes();
-    final boolean hasHighlightingSettings = TextMateEditorUtils.fillTextAttributes(textAttributes, preferencesPList, null);
-    if (hasHighlightingSettings) {
-      final double backgroundAlpha = PreferencesReadUtil.getBackgroundAlpha(preferencesPList);
-      myCustomHighlightingColors.put(scopeName, new TextMateCustomTextAttributes(textAttributes, backgroundAlpha));
+    TextMateTextAttributes textAttributes = TextMateTextAttributes.fromPlist(preferencesPList);
+    if (textAttributes != null) {
+      myCustomHighlightingColors.put(scopeName, new TextMateTextAttributesAdapter(scopeName, textAttributes));
     }
   }
 

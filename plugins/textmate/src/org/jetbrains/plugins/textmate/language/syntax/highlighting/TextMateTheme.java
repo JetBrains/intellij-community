@@ -12,10 +12,8 @@ import java.util.Set;
 
 public class TextMateTheme {
   public static final TextMateTheme INSTANCE = new TextMateTheme("IntelliJ");
-  public static final String DEFAULT_ATTRIBUTES_NAME = "textmate.default";
 
   private static final TextMateDefaultColorsProvider DEFAULT_COLORS_PROVIDER = new TextMateDefaultColorsProvider();
-
 
   private static final Map<CharSequence, CharSequence> EXTENSIONS_MAPPING = new HashMap<CharSequence, CharSequence>() {{
     // XmlHighlighterColors

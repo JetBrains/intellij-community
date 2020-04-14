@@ -16,6 +16,7 @@ import java.util.List;
 public class TextMateScopeComparator<T extends TextMateScopeSelectorOwner> implements Comparator<T> {
   @NotNull
   private static final TextMateSelectorWeigher myWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
+
   @NotNull
   private final CharSequence myScope;
 
@@ -30,7 +31,8 @@ public class TextMateScopeComparator<T extends TextMateScopeSelectorOwner> imple
 
   @NotNull
   public List<T> sortAndFilter(@NotNull Collection<? extends T> objects) {
-    return ContainerUtil.reverse(ContainerUtil.sorted(ContainerUtil.filter(objects, (Condition<T>)t -> myWeigher.weigh(t.getScopeSelector(), myScope).weigh > 0), this));
+    return ContainerUtil.reverse(ContainerUtil.sorted(
+      ContainerUtil.filter(objects, (Condition<T>)t -> myWeigher.weigh(t.getScopeSelector(), myScope).weigh > 0), this));
   }
 
   @Nullable
