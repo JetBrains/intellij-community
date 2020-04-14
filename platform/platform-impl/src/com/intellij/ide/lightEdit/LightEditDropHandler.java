@@ -13,6 +13,8 @@ import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.util.List;
 
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.DragAndDrop;
+
 class LightEditDropHandler implements EditorDropHandler {
   @Override
   public boolean canHandleDrop(DataFlavor[] transferFlavors) {
@@ -27,7 +29,8 @@ class LightEditDropHandler implements EditorDropHandler {
     if (fileList != null) {
       fileList.forEach(file -> {
         ObjectUtils.doIfNotNull(VfsUtil.findFileByIoFile(file, true), virtualFile -> {
-          LightEditService.getInstance().openFile(virtualFile);
+          if (LightEditService.getInstance().openFile(virtualFile))
+            LightEditFeatureUsagesUtil.logFileOpen(DragAndDrop);
           return true;
         });
       });

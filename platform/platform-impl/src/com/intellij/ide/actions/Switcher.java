@@ -5,7 +5,9 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
@@ -73,6 +75,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -1169,6 +1172,9 @@ public final class Switcher extends AnAction implements DumbAware {
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
                 manager.openFile(file, true, true);
+                if (LightEdit.owns(project)) {
+                  LightEditFeatureUsagesUtil.logFileOpen(RecentFiles);
+                }
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
                 }
