@@ -46,6 +46,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
       String address = matcher.group(2);
       int start = entireLength - line.length();
 
+      // to trick the code unwrapping single results in com.intellij.execution.filters.CompositeFilter#createFinalResult
       return new Result(Arrays.asList(
         new AttachInlayResult(start + matcher.start(), start + matcher.end(), transport, address),
         new ResultItem(0, 0, null)));
@@ -86,6 +87,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
       String exceptionFqn = matcher.group(2);
       int start = entireLength - line.length();
 
+      // to trick the code unwrapping single results in com.intellij.execution.filters.CompositeFilter#createFinalResult
       return new Result(Arrays.asList(
         new CreateExceptionBreakpointResult(start + matcher.start(), start + matcher.end(), exceptionFqn),
         new ResultItem(0, 0, null)));
