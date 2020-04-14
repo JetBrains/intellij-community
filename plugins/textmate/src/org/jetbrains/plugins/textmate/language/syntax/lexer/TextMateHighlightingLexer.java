@@ -307,24 +307,25 @@ public class TextMateHighlightingLexer extends LexerBase {
     TIntObjectHashMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
-      Stack<CaptureMatchData> starts = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.START_OFFSET_ORDERING));
-      Stack<CaptureMatchData> ends = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.END_OFFSET_ORDERING));
+      List<CaptureMatchData> nonEmptyMatches = ContainerUtil.filter(matches, m -> m.selectorName.length() > 0 && !m.range.isEmpty());
+      Stack<CaptureMatchData> starts = new Stack<>(ContainerUtil.sorted(nonEmptyMatches, CaptureMatchData.START_OFFSET_ORDERING));
+      Stack<CaptureMatchData> ends = new Stack<>(ContainerUtil.sorted(nonEmptyMatches, CaptureMatchData.END_OFFSET_ORDERING));
       while (!starts.isEmpty() || !ends.isEmpty()) {
         if (starts.isEmpty()) {
           CaptureMatchData end = ends.pop();
-          closeScopeSelector(startLineOffset + end.offset.getEndOffset());
+          closeScopeSelector(startLineOffset + end.range.getEndOffset());
         }
         else if (ends.isEmpty()) {
           CaptureMatchData start = starts.pop();
-          openScopeSelector(start.selectorName, startLineOffset + start.offset.getStartOffset());
+          openScopeSelector(start.selectorName, startLineOffset + start.range.getStartOffset());
         }
         else if (ends.peek().group < starts.peek().group) {
           CaptureMatchData end = ends.pop();
-          closeScopeSelector(startLineOffset + end.offset.getEndOffset());
+          closeScopeSelector(startLineOffset + end.range.getEndOffset());
         }
         else {
           CaptureMatchData start = starts.pop();
-          openScopeSelector(start.selectorName, startLineOffset + start.offset.getStartOffset());
+          openScopeSelector(start.selectorName, startLineOffset + start.range.getStartOffset());
         }
       }
       return !matches.isEmpty();

@@ -129,11 +129,8 @@ public final class SyntaxMatchUtils {
                                                      @NotNull String s) {
     List<CaptureMatchData> result = new ArrayList<>();
     for (int index : captures.keys()) {
-      CharSequence captureName = captures.get(index);
-      TextRange offset = index < matchData.count() ? matchData.charRange(s, string.bytes, index) : TextRange.EMPTY_RANGE;
-      if (captureName.length() > 0 && !offset.isEmpty()) {
-        result.add(new CaptureMatchData(offset, index, captureName));
-      }
+      TextRange range = index < matchData.count() ? matchData.charRange(s, string.bytes, index) : TextRange.EMPTY_RANGE;
+      result.add(new CaptureMatchData(range, index, captures.get(index)));
     }
     return result;
   }

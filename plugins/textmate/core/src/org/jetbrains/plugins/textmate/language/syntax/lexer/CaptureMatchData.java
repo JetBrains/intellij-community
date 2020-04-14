@@ -8,21 +8,21 @@ import java.util.Comparator;
 
 public class CaptureMatchData {
   public static final Comparator<CaptureMatchData> START_OFFSET_ORDERING = (o1, o2) -> {
-    int result = Comparing.compare(o2.offset.getStartOffset(), o1.offset.getStartOffset());
+    int result = Comparing.compare(o2.range.getStartOffset(), o1.range.getStartOffset());
     return result != 0 ? result : Comparing.compare(o2.group, o1.group);
   };
 
   public static final Comparator<CaptureMatchData> END_OFFSET_ORDERING = (o1, o2) -> {
-    int result = Comparing.compare(o2.offset.getEndOffset(), o1.offset.getEndOffset());
+    int result = Comparing.compare(o2.range.getEndOffset(), o1.range.getEndOffset());
     return result != 0 ? result : Comparing.compare(o1.group, o2.group);
   };
 
-  public final TextRange offset;
+  public final TextRange range;
   public final Integer group;
   public final CharSequence selectorName;
 
-  CaptureMatchData(@NotNull final TextRange offset, @NotNull final Integer group, @NotNull final CharSequence selectorName) {
-    this.offset = offset;
+  CaptureMatchData(@NotNull final TextRange range, @NotNull final Integer group, @NotNull final CharSequence selectorName) {
+    this.range = range;
     this.group = group;
     this.selectorName = selectorName;
   }
