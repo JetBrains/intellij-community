@@ -279,7 +279,9 @@ public class ProgressIndicatorUtils {
     if (application.isDispatchThread()) {
       throw new IllegalStateException("Mustn't be called from EDT");
     }
-    application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
+    Semaphore semaphore = new Semaphore(1);
+    application.invokeLater(semaphore::up, ModalityState.any());
+    awaitWithCheckCanceled(semaphore, ProgressIndicatorProvider.getGlobalProgressIndicator());
   }
 
   /**
