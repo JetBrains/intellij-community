@@ -623,6 +623,7 @@
     <statistics.counterUsagesCollector groupId="file.editor" version="2"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
+    <statistics.counterUsagesCollector groupId="inspection.widget" version="1"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
 
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="1"/>

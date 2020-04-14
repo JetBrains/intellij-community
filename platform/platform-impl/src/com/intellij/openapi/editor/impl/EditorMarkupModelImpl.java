@@ -2243,7 +2243,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                     addLanguage(level.getLanguage()).
                                     addData("level", inspectionsLevel.toString());
 
-                                  FUCounterUsageLogger.getInstance().logEvent("actions", "highlight.level.changed", data);
+                                  FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                                 }, true);
     }
   }
