@@ -33,25 +33,6 @@ public final class UnixProcessManager {
   public static final int SIGTERM = 15;
   public static final int SIGPIPE = getSignalNumber("PIPE");
 
-  private interface CLib extends Library {
-    int getpid();
-    int kill(int pid, int signal);
-  }
-
-  private static final CLib C_LIB;
-  static {
-    CLib lib = null;
-    try {
-      if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
-        lib = Native.load("c", CLib.class);
-      }
-    }
-    catch (Throwable t) {
-      Logger.getInstance(UnixProcessManager.class).warn("Can't load standard library", t);
-    }
-    C_LIB = lib;
-  }
-
   private UnixProcessManager() { }
 
   public static int getProcessId(@NotNull Process process) {
@@ -69,7 +50,7 @@ public final class UnixProcessManager {
   }
 
   public static int getCurrentProcessId() {
-    return C_LIB != null ? C_LIB.getpid() : 0;
+    return Java8Helper.C_LIB != null ? Java8Helper.C_LIB.getpid() : 0;
   }
 
   /**
@@ -94,11 +75,11 @@ public final class UnixProcessManager {
 
   public static int sendSignal(int pid, int signal) {
     checkCLib();
-    return C_LIB.kill(pid, signal);
+    return Java8Helper.C_LIB.kill(pid, signal);
   }
 
   private static void checkCLib() {
-    if (C_LIB == null) {
+    if (Java8Helper.C_LIB == null) {
       throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME + ", isUnix: " + SystemInfo.isUnix);
     }
   }
@@ -124,7 +105,7 @@ public final class UnixProcessManager {
   public static boolean sendSignalToProcessTree(int processId, int signal) {
     checkCLib();
 
-    final int ourPid = C_LIB.getpid();
+    int ourPid = Java8Helper.C_LIB.getpid();
     return sendSignalToProcessTree(processId, signal, ourPid);
   }
 
@@ -275,5 +256,28 @@ public final class UnixProcessManager {
       }
       sendSignal(pid, signal);
     }
+  }
+}
+
+final class Java8Helper {
+  interface CLib extends Library {
+    int getpid();
+
+    int kill(int pid, int signal);
+  }
+
+  static final CLib C_LIB;
+
+  static {
+    CLib lib = null;
+    try {
+      if (SystemInfoRt.isUnix && JnaLoader.isLoaded()) {
+        lib = Native.load("c", CLib.class);
+      }
+    }
+    catch (Throwable t) {
+      Logger.getInstance(UnixProcessManager.class).warn("Can't load standard library", t);
+    }
+    C_LIB = lib;
   }
 }
