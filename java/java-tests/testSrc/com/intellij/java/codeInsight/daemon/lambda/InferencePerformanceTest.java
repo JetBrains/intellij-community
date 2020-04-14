@@ -82,7 +82,7 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
         PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
       assertNotNull(callExpression);
       assertNotNull(callExpression.getText(), callExpression.getType());
-    }).usesAllCPUCores().assertTiming();
+    }).assertTiming();
   }
 
   public void testLongQualifierChainInsideLambdaInTypeCast() {
