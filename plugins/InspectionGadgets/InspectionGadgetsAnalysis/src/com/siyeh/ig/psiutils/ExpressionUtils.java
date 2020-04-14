@@ -1202,7 +1202,7 @@ public class ExpressionUtils {
       final IElementType opTo = myTo.getOperationTokenType();
       final IElementType opFrom = myFrom.getOperationTokenType();
 
-      if ((opTo == JavaTokenType.PLUS || opTo == JavaTokenType.MINUS) && opTo == opFrom) {
+      if (opTo == JavaTokenType.PLUS && opFrom == JavaTokenType.PLUS) {
         @NotNull final PsiExpression toLeft = myTo.getLOperand();
         @NotNull final PsiExpression toRight = myTo.getROperand() != null ? myTo.getROperand() : myTo;
 
