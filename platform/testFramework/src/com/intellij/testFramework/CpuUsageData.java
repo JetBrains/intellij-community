@@ -69,10 +69,6 @@ public class CpuUsageData {
     return printLongestNames(myGcTimes) + "; free " + myMemStart + " -> " + myMemEnd + " MB";
   }
 
-  long getCompilationTime() {
-    return myCompilationTime;
-  }
-
   String getProcessCpuStats() {
     long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
     return myCompilationTime + "ms JITc " +
@@ -123,7 +119,7 @@ public class CpuUsageData {
       threadTimes.put(id, ourThreadMXBean.getThreadUserTime(id));
     }
 
-    long compStart = ourCompilationMXBean.getTotalCompilationTime();
+    long compStart = getTotalCompilationMillis();
     long processStart = ourOSBean.getProcessCpuTime();
 
     long start = System.nanoTime();
@@ -131,7 +127,7 @@ public class CpuUsageData {
     long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
     long processTime = TimeUnit.NANOSECONDS.toMillis(ourOSBean.getProcessCpuTime() - processStart);
-    long compTime = ourCompilationMXBean.getTotalCompilationTime() - compStart;
+    long compTime = getTotalCompilationMillis() - compStart;
 
     FreeMemorySnapshot memEnd = new FreeMemorySnapshot();
 
@@ -144,6 +140,10 @@ public class CpuUsageData {
     }
 
     return new CpuUsageData(duration, gcTimes, threadTimes, compTime, processTime, memStart, memEnd);
+  }
+
+  static long getTotalCompilationMillis() {
+    return ourCompilationMXBean.getTotalCompilationTime();
   }
 
   private static class FreeMemorySnapshot {

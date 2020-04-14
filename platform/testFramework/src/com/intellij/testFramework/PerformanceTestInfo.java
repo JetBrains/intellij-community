@@ -10,6 +10,8 @@ import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PerformanceTestInfo {
   private final ThrowableRunnable<?> test; // runnable to measure
@@ -98,6 +100,7 @@ public class PerformanceTestInfo {
     Timings.getStatistics(); // warm-up, measure
     if (waitForJit) {
       attempts = 100;
+      updateJitUsage();
     }
 
     if (attempts == 1) {
@@ -145,12 +148,7 @@ public class PerformanceTestInfo {
       if (iterationResult == IterationResult.acceptable) {
         return;
       }
-      if (waitForJit) {
-        if (data.getCompilationTime() <= data.durationMs / 10) {
-          return;
-        }
-      }
-      if (attempts == 0) {
+      if (attempts == 0 || waitForJit && updateJitUsage() == JitUsageResult.definitelyLow) {
         if (testShouldPass) return;
         throw new AssertionFailedError(logMessage);
       }
@@ -187,6 +185,35 @@ public class PerformanceTestInfo {
       data.getGcStats(),
       data.getProcessCpuStats());
   }
+
+  private long lastJitUsage;
+  private long lastJitStamp = -1;
+
+  private JitUsageResult updateJitUsage() {
+    long timeNow = System.nanoTime();
+    long jitNow = CpuUsageData.getTotalCompilationMillis();
+
+    long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(timeNow - lastJitStamp);
+    if (lastJitStamp >= 0) {
+      if (elapsedMillis >= 3_000) {
+        if (jitNow - lastJitUsage <= elapsedMillis / 10) {
+          return JitUsageResult.definitelyLow;
+        }
+      } else {
+        // don't update stamps too frequently,
+        // because JIT times are quite discrete: they only change after a compilation is finished,
+        // and some compilations take a second or even more
+        return JitUsageResult.unclear;
+      }
+    }
+
+    lastJitStamp = timeNow;
+    lastJitUsage = jitNow;
+
+    return JitUsageResult.unclear;
+  }
+
+  private enum JitUsageResult {definitelyLow, unclear}
 
   private enum IterationResult { acceptable, borderline, slow }
 
