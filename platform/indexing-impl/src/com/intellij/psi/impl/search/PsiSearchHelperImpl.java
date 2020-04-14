@@ -163,11 +163,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
-                                              @NotNull String text,
-                                              short searchContext,
-                                              @NotNull EnumSet<Options> options,
-                                              @Nullable String containerName,
-                                              @NotNull BulkOccurrenceProcessor processor) {
+                                      @NotNull String text,
+                                      short searchContext,
+                                      @NotNull EnumSet<Options> options,
+                                      @Nullable String containerName,
+                                      @NotNull BulkOccurrenceProcessor processor) {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }

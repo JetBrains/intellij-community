@@ -18,9 +18,9 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiMethod[] myMethods;
   protected final PsiClass myContainingClass;
-  protected final boolean myStrictSignatureSearch;
+  private final boolean myStrictSignatureSearch;
 
-  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, final PsiMethod... methods) {
+  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, PsiMethod @NotNull ... methods) {
     super(strictSignatureSearch, Arrays.asList(methods));
     myMethods = methods;
     myContainingClass = aClass;
@@ -79,7 +79,7 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
       if (!myStrictSignatureSearch) {
         PsiManager manager = method.getManager();
         if (manager.areElementsEquivalent(refMethodClass, myContainingClass)) {
-          if (!consumer.process(ref)) return false;
+          return consumer.process(ref);
         }
       }
     }

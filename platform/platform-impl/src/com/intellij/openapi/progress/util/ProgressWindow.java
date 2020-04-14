@@ -364,8 +364,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   private void enableCancelButton(boolean enable) {
-    if (myDialog != null) {
-      myDialog.enableCancelButtonIfNeeded(enable);
+    ProgressDialog dialog = myDialog;
+    if (dialog != null) {
+      dialog.enableCancelButtonIfNeeded(enable);
     }
   }
 
@@ -379,8 +380,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     @Override
     public void cancel() {
       super.cancel();
-      if (myDialog != null) {
-        myDialog.cancel();
+      ProgressDialog dialog = myDialog;
+      if (dialog != null) {
+        dialog.cancel();
       }
     }
 
