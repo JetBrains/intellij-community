@@ -40,6 +40,7 @@ import java.util.concurrent.Callable
 class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), Disposable {
   val outOfTreeModulesPath: String =
     FileUtilRt.toSystemIndependentName(File(PathManager.getTempPath(), "outOfTreeProjectModules-${project.locationHash}").path)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
 
   private val LOG = Logger.getInstance(javaClass)
 
@@ -408,7 +409,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     val moduleFile = File(filePath)
 
     WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-      JpsProjectEntitiesLoader.loadModule(moduleFile, project.configLocation!!, builder)
+      JpsProjectEntitiesLoader.loadModule(moduleFile, project.configLocation!!, builder, virtualFileManager)
     }
 
     return findModuleByName(moduleName)

@@ -16,7 +16,7 @@ class TestEntityTypesResolver: EntityTypesResolver {
   }
 }
 
-fun verifySerializationRoundTrip(storage: TypedEntityStorage): ByteArray {
+fun verifySerializationRoundTrip(storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
   storage as ProxyBasedEntityStorage
 
   fun assertEntityDataEquals(expected: EntityData, actual: EntityData) {
@@ -63,8 +63,7 @@ fun verifySerializationRoundTrip(storage: TypedEntityStorage): ByteArray {
     }
   }
 
-  val serializer = KryoEntityStorageSerializer(
-    TestEntityTypesResolver())
+  val serializer = KryoEntityStorageSerializer(TestEntityTypesResolver(), virtualFileManager)
 
   val stream = ByteArrayOutputStream()
   serializer.serializeCache(stream, storage)

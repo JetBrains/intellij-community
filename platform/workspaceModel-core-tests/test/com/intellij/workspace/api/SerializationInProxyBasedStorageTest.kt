@@ -1,6 +1,8 @@
 package com.intellij.workspace.api
 
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -34,41 +36,46 @@ internal data class SampleEntityForSerializationSource(val name: String) : Entit
 
 class SerializationInProxyBasedStorageTest {
   @Rule @JvmField val tempDir = TempDirectory()
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManagerImpl()
+  }
 
   @Test
   fun empty() {
-    verifySerializationRoundTrip(TypedEntityStorageBuilder.createProxy().toStorage())
+    verifySerializationRoundTrip(TypedEntityStorageBuilder.createProxy().toStorage(), virtualFileManager)
   }
 
   @Test
   fun smoke() {
     val tempFolder = tempDir.newFolder()
-
+    val virtualFileUrl = tempFolder.toVirtualFileUrl(virtualFileManager)
     val builder = TypedEntityStorageBuilder.createProxy()
-    val sampleEntity = builder.addSampleEntity("ggg", SampleEntitySource("y"), true, mutableListOf("5", "6"), tempFolder.toVirtualFileUrl())
-    val child1 = builder.addSampleEntity("c1")
-    val child2 = builder.addSampleEntity("c2")
+    val sampleEntity = builder.addSampleEntity("ggg", SampleEntitySource("y"), true, mutableListOf("5", "6"), virtualFileManager, virtualFileUrl)
+    val child1 = builder.addSampleEntity("c1", virtualFileManager = virtualFileManager)
+    val child2 = builder.addSampleEntity("c2", virtualFileManager = virtualFileManager)
     builder.addEntity(ModifiableSampleEntityForSerialization::class.java, SampleEntityForSerializationSource("xx")) {
       parent = sampleEntity
       booleanProperty = true
       stringListProperty = mutableListOf("1", "2")
       stringMapProperty = mutableMapOf("1" to "2")
       children = listOf(child1, child2)
-      fileProperty = tempFolder.toVirtualFileUrl()
+      fileProperty = virtualFileUrl
       dataClasses = listOf(
-        SampleDataClassForSerialization(tempFolder.toVirtualFileUrl()),
-        SampleDataClassForSerialization(tempFolder.toVirtualFileUrl())
+        SampleDataClassForSerialization(virtualFileUrl),
+        SampleDataClassForSerialization(virtualFileUrl)
       )
     }
 
-    verifySerializationRoundTrip(builder.toStorage())
+    verifySerializationRoundTrip(builder.toStorage(), virtualFileManager)
   }
 
   @Test
   fun singletonEntitySource() {
     val builder = TypedEntityStorageBuilder.createProxy()
-    builder.addSampleEntity("c2", source = SingletonEntitySource)
-    verifySerializationRoundTrip(builder.toStorage())
+    builder.addSampleEntity("c2", source = SingletonEntitySource, virtualFileManager = virtualFileManager)
+    verifySerializationRoundTrip(builder.toStorage(), virtualFileManager)
   }
 
   object SingletonEntitySource : EntitySource

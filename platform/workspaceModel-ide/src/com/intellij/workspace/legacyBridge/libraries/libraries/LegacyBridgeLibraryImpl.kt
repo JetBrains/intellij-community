@@ -89,7 +89,7 @@ internal class LegacyBridgeLibraryImpl(
     Disposer.register(parent, this)
   }
 
-  val filePointerProvider = LegacyBridgeFilePointerProviderImpl().also { Disposer.register(this, it) }
+  val filePointerProvider = LegacyBridgeFilePointerProviderImpl(project).also { Disposer.register(this, it) }
 
   var entityStore: TypedEntityStore = initialEntityStore
     internal set(value) {

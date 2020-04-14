@@ -24,12 +24,9 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
-import com.intellij.workspace.ide.configLocation
+import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
-import com.intellij.workspace.virtualFileUrl
+import com.intellij.workspace.toVirtualFileUrl
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.LanguageLevel
@@ -56,10 +53,12 @@ class LegacyBridgeModulesTest {
   var disposableRule = DisposableRule()
 
   private lateinit var project: Project
+  private lateinit var virtualFileManager: VirtualFileUrlManager
 
   @Before
   fun prepareProject() {
     project = createEmptyTestProject(temporaryDirectoryRule, disposableRule)
+    virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
   }
 
   @Test
@@ -76,7 +75,7 @@ class LegacyBridgeModulesTest {
       assertTrue(moduleManager.modules.contains(module))
       assertSame(WorkspaceModel.getInstance(project).entityStore, module.entityStore)
 
-      val contentRootUrl = temporaryDirectoryRule.newPath("contentRoot").toVirtualFileUrl()
+      val contentRootUrl = temporaryDirectoryRule.newPath("contentRoot").toVirtualFileUrl(virtualFileManager)
 
       WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = it.resolve(module.moduleEntityId)!!
@@ -105,10 +104,10 @@ class LegacyBridgeModulesTest {
         val rootModel = m.rootManager.modifiableModel
 
         val temp = temporaryDirectoryRule.newPath()
-        rootModel.addContentEntry(temp.toVirtualFileUrl().url)
+        rootModel.addContentEntry(temp.toVirtualFileUrl(virtualFileManager).url)
         rootModel.commit()
 
-        assertArrayEquals(arrayOf(temp.toVirtualFileUrl().url), m.rootManager.contentRootUrls)
+        assertArrayEquals(arrayOf(temp.toVirtualFileUrl(virtualFileManager).url), m.rootManager.contentRootUrls)
       } finally {
         modulesModifiableModel.dispose()
       }
@@ -152,7 +151,7 @@ class LegacyBridgeModulesTest {
       assertSame(module, moduleManager.findModuleByName(newModuleName))
       assertEquals(newModuleName, module.name)
 
-      val moduleFile = module.moduleFile?.virtualFileUrl?.file
+      val moduleFile = module.moduleFile?.toVirtualFileUrl(virtualFileManager)?.file
       assertNotNull(moduleFile)
       assertEquals(newNameFile, moduleFile)
       assertTrue(module.moduleFilePath.endsWith(newNameFile.name))
@@ -228,7 +227,7 @@ class LegacyBridgeModulesTest {
         moduleManager.disposeModule(module)
       }
 
-      val moduleDirUrl = File(project.basePath).toVirtualFileUrl()
+      val moduleDirUrl = File(project.basePath).toVirtualFileUrl(virtualFileManager)
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
@@ -306,27 +305,27 @@ class LegacyBridgeModulesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val dir = File(project.basePath, "dir")
-      val moduleDirUrl = File(project.basePath).toVirtualFileUrl()
+      val moduleDirUrl = File(project.basePath).toVirtualFileUrl(virtualFileManager)
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectLocation = project.configLocation!!
 
       projectModel.updateProjectModel {
         val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(), false, "", JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(virtualFileManager), false, "", JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
       }
 
       val module = moduleManager.findModuleByName("name")
       assertNotNull(module)
 
       assertArrayEquals(
-        arrayOf(dir.toVirtualFileUrl().url),
+        arrayOf(dir.toVirtualFileUrl(virtualFileManager).url),
         ModuleRootManager.getInstance(module!!).contentRootUrls
       )
 
       val sourceRootUrl = ModuleRootManager.getInstance(module).contentEntries.single()
         .sourceFolders.single().url
-      assertEquals(dir.toVirtualFileUrl().url, sourceRootUrl)
+      assertEquals(dir.toVirtualFileUrl(virtualFileManager).url, sourceRootUrl)
     }
 
   @Test
@@ -385,13 +384,13 @@ class LegacyBridgeModulesTest {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
     val iprFile = File(tempDir, "testProject.ipr")
-    val configLocation = iprFile.asConfigLocation()
+    val configLocation = iprFile.asConfigLocation(virtualFileManager)
     val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
       tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
-      roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(), LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
+      roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
       source = source
     )
@@ -415,7 +414,7 @@ class LegacyBridgeModulesTest {
       assertTrue(libraryOrderEntry.isModuleLevel)
       assertSame(libraryOrderEntry.library, libraries[0])
       assertEquals(JpsLibraryTableSerializer.MODULE_LEVEL, libraryOrderEntry.libraryLevel)
-      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl().url)
+      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).url)
     }
   }
 
@@ -426,13 +425,13 @@ class LegacyBridgeModulesTest {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
     val iprFile = File(tempDir, "testProject.ipr")
-    val jarUrl = File(tempDir, "a.jar").toVirtualFileUrl()
+    val jarUrl = File(tempDir, "a.jar").toVirtualFileUrl(virtualFileManager)
     builder.addLibraryEntity(
       name = "my_lib",
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(iprFile.asConfigLocation())
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(iprFile.asConfigLocation(virtualFileManager))
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {

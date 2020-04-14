@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.api.store
+package com.intellij.workspace.ide
 
 import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 
-class FileNameStore {
+internal class VirtualFileNameStore {
   private val generator = IdGenerator()
   private val nameStore = BidirectionalMap<String, IdPerCount>()
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
@@ -45,6 +46,8 @@ class LegacyBridgeModifiableRootModel(
   override fun getModificationCount(): Long = diff.modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
+
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
 
   private val extensionsDelegate = lazy {
     RootModelViaTypedEntityImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
@@ -96,7 +99,7 @@ class LegacyBridgeModifiableRootModel(
         module = moduleEntity,
         excludedUrls = emptyList(),
         excludedPatterns = emptyList(),
-        url = VirtualFileUrlManager.fromUrl(url),
+        url = virtualFileManager.fromUrl(url),
         source = moduleEntity.entitySource
     )
 

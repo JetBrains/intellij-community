@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.project.isDirectoryBased
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.VirtualFileUrl
-import com.intellij.workspace.api.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -92,8 +91,8 @@ object NonPersistentEntitySource : EntitySource
  */
 val Project.configLocation: JpsProjectConfigLocation?
   get() = if (isDirectoryBased) {
-    basePath?.let { JpsProjectConfigLocation.DirectoryBased(VirtualFileUrlManager.fromPath(it)) }
+    basePath?.let { JpsProjectConfigLocation.DirectoryBased(VirtualFileUrlManagerImpl.getInstance(this).fromPath(it)) }
   }
   else {
-    projectFilePath?.let { JpsProjectConfigLocation.FileBased(VirtualFileUrlManager.fromPath(it)) }
+    projectFilePath?.let { JpsProjectConfigLocation.FileBased(VirtualFileUrlManagerImpl.getInstance(this).fromPath(it)) }
   }

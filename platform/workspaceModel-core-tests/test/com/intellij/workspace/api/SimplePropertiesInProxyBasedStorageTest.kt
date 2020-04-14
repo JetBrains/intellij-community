@@ -1,6 +1,8 @@
 package com.intellij.workspace.api
 
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 
 internal interface SampleEntity : TypedEntity {
@@ -25,7 +27,8 @@ internal fun TypedEntityStorageBuilder.addSampleEntity(stringProperty: String,
                                                        source: EntitySource = SampleEntitySource("test"),
                                                        booleanProperty: Boolean = false,
                                                        stringListProperty: MutableList<String> = ArrayList(),
-                                                       fileProperty: VirtualFileUrl = VirtualFileUrlManager.fromUrl("file:///tmp")): SampleEntity {
+                                                       virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
+                                                       fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp")): SampleEntity {
   return addEntity<ModifiableSampleEntity, SampleEntity>(source) {
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty
@@ -39,6 +42,12 @@ internal fun TypedEntityStorage.singleSampleEntity() = entities(SampleEntity::cl
 internal data class SampleEntitySource(val name: String) : EntitySource
 
 class SimplePropertiesInProxyBasedStorageTest {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManagerImpl()
+  }
+
   @Test
   fun `add entity`() {
     val builder = TypedEntityStorageBuilder.createProxy()
@@ -69,7 +78,7 @@ class SimplePropertiesInProxyBasedStorageTest {
       stringProperty = "foo"
       stringListProperty.add("first")
       booleanProperty = true
-      fileProperty = VirtualFileUrlManager.fromUrl("file:///xxx")
+      fileProperty = virtualFileManager.fromUrl("file:///xxx")
     }
     builder.checkConsistency()
     assertEquals("hello", original.stringProperty)
@@ -151,9 +160,9 @@ class SimplePropertiesInProxyBasedStorageTest {
   @Test
   fun `different entities with same properties`() {
     val builder = TypedEntityStorageBuilder.createProxy()
-    val foo1 = builder.addSampleEntity("foo1")
-    val foo2 = builder.addSampleEntity("foo1")
-    val bar = builder.addSampleEntity("bar")
+    val foo1 = builder.addSampleEntity("foo1", virtualFileManager = virtualFileManager)
+    val foo2 = builder.addSampleEntity("foo1", virtualFileManager = virtualFileManager)
+    val bar = builder.addSampleEntity("bar", virtualFileManager = virtualFileManager)
     builder.checkConsistency()
     assertFalse(foo1 == foo2)
     assertTrue(foo1.hasEqualProperties(foo1))

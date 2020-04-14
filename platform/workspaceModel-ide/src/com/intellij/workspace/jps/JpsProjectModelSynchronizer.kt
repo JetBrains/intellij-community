@@ -29,10 +29,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.EntityChange
-import com.intellij.workspace.api.EntitySource
-import com.intellij.workspace.api.EntityStoreChanged
-import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import org.jdom.Element
@@ -44,6 +41,7 @@ import kotlin.collections.LinkedHashSet
 
 internal class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
   private lateinit var fileContentReader: StorageJpsConfigurationReader
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
@@ -128,7 +126,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val baseDirUrl = configLocation.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
     val externalStoragePath = project.getExternalConfigurationDir()
-    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false)
+    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false, virtualFileManager)
     this.serializers.set(serializers)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()

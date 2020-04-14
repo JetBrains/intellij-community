@@ -15,6 +15,7 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.NonPersistentEntitySource
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
@@ -29,8 +30,8 @@ internal class LegacyBridgeModifiableModuleModel(
 
   private val myModulesToAdd = HashBiMap.create<String, LegacyBridgeModule>()
   private val myModulesToDispose = HashBiMap.create<String, LegacyBridgeModule>()
-
   private val myNewNameToModule = HashBiMap.create<String, LegacyBridgeModule>()
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
 
   // TODO Add cache?
   override fun getModules(): Array<Module> {
@@ -75,7 +76,7 @@ internal class LegacyBridgeModifiableModuleModel(
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
 
-    val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, VirtualFileUrlManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
+    val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,

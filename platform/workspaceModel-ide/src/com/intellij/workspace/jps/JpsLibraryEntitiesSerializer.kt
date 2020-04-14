@@ -26,8 +26,10 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
   override val entityFilter: (LibraryEntity) -> Boolean
     get() = { it.tableId == LibraryTableId.ProjectLibraryTableId }
 
-  override fun createSerializer(fileUrl: String, entitySource: JpsFileEntitySource.FileInDirectory): JpsFileEntitiesSerializer<LibraryEntity> {
-    return JpsLibraryEntitiesSerializer(VirtualFileUrlManager.fromUrl(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
+  override fun createSerializer(fileUrl: String,
+                                entitySource: JpsFileEntitySource.FileInDirectory,
+                                virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity> {
+    return JpsLibraryEntitiesSerializer(virtualFileManager.fromUrl(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
   }
 }
 
@@ -64,12 +66,12 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     get() = LibraryEntity::class.java
 
   override fun loadEntities(builder: TypedEntityStorageBuilder,
-                            reader: JpsFileContentReader) {
+                            reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
     val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
       val source = createEntitySource(libraryTag)
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
-      loadLibrary(name, libraryTag, libraryTableId, builder, source)
+      loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
     }
   }
 
@@ -92,11 +94,8 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
 
-internal fun loadLibrary(name: String,
-                         libraryElement: Element,
-                         libraryTableId: LibraryTableId,
-                         builder: TypedEntityStorageBuilder,
-                         source: EntitySource): LibraryEntity {
+internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, builder: TypedEntityStorageBuilder,
+                         source: EntitySource, virtualFileManager: VirtualFileUrlManager): LibraryEntity {
   val roots = ArrayList<LibraryRoot>()
   val excludedRoots = ArrayList<VirtualFileUrl>()
   val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(
@@ -117,7 +116,7 @@ internal fun loadLibrary(name: String,
       "excluded" -> excludedRoots.addAll(
         childElement.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)
           .map { it.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE) }
-          .map { VirtualFileUrlManager.fromUrl(it) }
+          .map { virtualFileManager.fromUrl(it) }
       )
       PROPERTIES_TAG -> {
         properties = JDOMUtil.write(childElement)
@@ -129,7 +128,7 @@ internal fun loadLibrary(name: String,
         for (rootTag in childElement.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)) {
           val url = rootTag.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE)
           val inclusionOptions = jarDirectories[Pair(rootType, url)] ?: LibraryRoot.InclusionOptions.ROOT_ITSELF
-          roots.add(LibraryRoot(VirtualFileUrlManager.fromUrl(url), LibraryRootTypeId(rootType), inclusionOptions))
+          roots.add(LibraryRoot(virtualFileManager.fromUrl(url), LibraryRootTypeId(rootType), inclusionOptions))
         }
       }
     }

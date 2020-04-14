@@ -1,6 +1,5 @@
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
-import com.intellij.configurationStore.serialize
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
@@ -12,11 +11,11 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jdom.Element
 
@@ -27,6 +26,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(originalLibrary.project)
   private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
   private var reloadKind = false
 
@@ -146,7 +146,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     assertModelIsLive()
 
     val rootTypeId = LibraryRootTypeId(rootType.name())
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
     update {
@@ -167,7 +167,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun moveRootUp(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
       val index = roots.withIndex().firstOrNull { it.value.url == virtualFileUrl } ?: return@update
@@ -183,7 +183,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun moveRootDown(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
       val index = roots.withIndex().firstOrNull { it.value.url == virtualFileUrl } ?: return@update
@@ -200,7 +200,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun addExcludedRoot(url: String) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
       if (!excludedRoots.contains(virtualFileUrl)) {
@@ -216,7 +216,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun addRoot(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     val root = LibraryRoot(
       url = virtualFileUrl,
@@ -285,7 +285,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun removeRoot(url: String, rootType: OrderRootType): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     if (!currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) return false
 
@@ -304,7 +304,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun removeExcludedRoot(url: String): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     if (!currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) return false
 

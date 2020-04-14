@@ -5,6 +5,8 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import org.junit.*
 import com.intellij.workspace.ide.JpsProjectConfigLocation
 import org.junit.Assert
 import org.junit.ClassRule
@@ -13,6 +15,12 @@ import org.junit.Test
 import java.io.File
 
 class ImlReplaceBySourceTest {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManagerImpl()
+  }
+
   @Test
   fun sampleProject() {
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
@@ -44,10 +52,10 @@ class ImlReplaceBySourceTest {
       </module>
     """.trimIndent())
 
-    val configLocation = JpsProjectConfigLocation.DirectoryBased(temp.root.toVirtualFileUrl())
+    val configLocation = JpsProjectConfigLocation.DirectoryBased(temp.root.toVirtualFileUrl(virtualFileManager))
 
     val builder = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(moduleFile, configLocation, builder)
+    JpsProjectEntitiesLoader.loadModule(moduleFile, configLocation, builder, virtualFileManager)
 
     moduleFile.writeText("""
       <module type="JAVA_MODULE" version="4">
@@ -66,7 +74,7 @@ class ImlReplaceBySourceTest {
 
     val replaceWith = TypedEntityStorageBuilder.create()
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
-    JpsProjectEntitiesLoader.loadModule(moduleFile, source, configLocation, replaceWith)
+    JpsProjectEntitiesLoader.loadModule(moduleFile, source, configLocation, replaceWith, virtualFileManager)
 
     val before = builder.toStorage()
 
@@ -80,16 +88,16 @@ class ImlReplaceBySourceTest {
     Assert.assertEquals(2, (changes[0] as EntityChange.Replaced<ModuleEntity>).newEntity.dependencies.size)
 
     // Changes 1 & 2 handle source roots ordering [ModuleSerializersFactory.SourceRootOrderEntry]
-    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl().url, (changes[3] as EntityChange.Added<SourceRootEntity>).entity.url.url)
+    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, (changes[3] as EntityChange.Added<SourceRootEntity>).entity.url.url)
     Assert.assertEquals(true, (changes[4] as EntityChange.Added<JavaSourceRootEntity>).entity.generated)
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {
     val storageBuilder1 = TypedEntityStorageBuilder.create()
-    val data = loadProject(projectFile.asConfigLocation(), storageBuilder1)
+    val data = loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder1, virtualFileManager)
 
     val storageBuilder2 = TypedEntityStorageBuilder.create()
-    val reader = CachingJpsFileContentReader(projectFile.asConfigLocation().baseDirectoryUrlString)
+    val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager).baseDirectoryUrlString)
     data.loadAll(reader, storageBuilder2)
 
     //println(storageBuilder1.toGraphViz())

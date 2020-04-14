@@ -29,7 +29,8 @@ interface EntityTypesResolver {
 }
 
 // TODO Investigate com.esotericsoftware.kryo.ReferenceResolver for all interning
-class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver): EntityStorageSerializer {
+class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver,
+                                  private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   override val serializerDataFormatVersion: String = "v1"
@@ -47,7 +48,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
       }
 
       override fun read(kryo: Kryo, input: Input, type: Class<VirtualFileUrl>): VirtualFileUrl =
-        VirtualFileUrlManager.fromUrl(input.readString())
+        virtualFileManager.fromUrl(input.readString())
     })
 
     kryo.register(TypeInfo::class.java)

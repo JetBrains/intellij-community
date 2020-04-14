@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
@@ -42,6 +43,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
   private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = LegacyBridgeModuleRootComponent.getInstance(module)
   private val modifiableModel = legacyBridge.getModifiableModel(builder, RootConfigurationAccessor())
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
   private val entitySource = MavenExternalSource.INSTANCE
 
   override fun init(isNewlyCreatedModule: Boolean) {}
@@ -84,7 +86,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
                                                  path: String,
                                                  generated: Boolean) {
     val typeId = getTypeId(rootType)
-    val sourceRootEntity = builder.addSourceRootEntity(moduleEntity, VirtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(path)),
+    val sourceRootEntity = builder.addSourceRootEntity(moduleEntity, virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)),
                                                        rootType.isForTests,
                                                        typeId,
                                                        entitySource)
@@ -130,7 +132,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
   override fun addExcludedFolder(path: String) {
     getContentRootFor(toUrl(path))?.let {
       builder.modifyEntity(ModifiableContentRootEntity::class.java, it) {
-        this.excludedUrls = this.excludedUrls + VirtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(path))
+        this.excludedUrls = this.excludedUrls + virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path))
       }
     }
 
@@ -186,7 +188,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
                                    scope: DependencyScope) {
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope) { "Artifact scope should be \"system\"" }
     val roots = ArrayList<LibraryRoot>()
-    roots.add(LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+    roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                           LibraryRootTypeId("CLASSES"),
                           LibraryRoot.InclusionOptions.ROOT_ITSELF))
 
@@ -206,15 +208,15 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
                                     project: MavenProject): LibraryOrderEntry {
     val roots = ArrayList<LibraryRoot>()
 
-    roots.add(LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+    roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                           LibraryRootTypeId("CLASSES"),
                           LibraryRoot.InclusionOptions.ROOT_ITSELF))
     roots.add(
-      LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
+      LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
                   LibraryRootTypeId("JAVADOC"),
                   LibraryRoot.InclusionOptions.ROOT_ITSELF))
     roots.add(
-      LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
+      LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
                   LibraryRootTypeId("SOURCES"),
                   LibraryRoot.InclusionOptions.ROOT_ITSELF))
 

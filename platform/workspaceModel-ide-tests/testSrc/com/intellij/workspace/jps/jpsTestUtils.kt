@@ -34,22 +34,22 @@ internal data class LoadedProjectData(
     get() = File(VfsUtilCore.urlToPath(configLocation.baseDirectoryUrlString))
 }
 
-internal fun copyAndLoadProject(originalProjectFile: File): LoadedProjectData {
+internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: VirtualFileUrlManager): LoadedProjectData {
   val projectDir = FileUtil.createTempDirectory("jpsProjectTest", null)
   val originalProjectDir = if (originalProjectFile.isFile) originalProjectFile.parentFile else originalProjectFile
   FileUtil.copyDir(originalProjectDir, projectDir)
   val originalBuilder = TypedEntityStorageBuilder.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
-  val configLocation = projectFile.asConfigLocation()
-  val serializers = loadProject(configLocation, originalBuilder) as JpsProjectSerializersImpl
+  val configLocation = projectFile.asConfigLocation(virtualFileManager)
+  val serializers = loadProject(configLocation, originalBuilder, virtualFileManager) as JpsProjectSerializersImpl
   val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, originalProjectDir)
-  serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage)
+  serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage, virtualFileManager)
   return loadedProjectData
 }
 
-internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: TypedEntityStorageBuilder): JpsProjectSerializers {
+internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: TypedEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
-  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath())
+  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(), virtualFileManager)
 }
 
 internal fun JpsProjectSerializersImpl.saveAllEntities(storage: TypedEntityStorage, projectDir: File) {
@@ -154,13 +154,13 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
   UsefulTestCase.assertEmpty(expectedFiles.keys - actualFiles.keys)
 }
 
-internal fun createProjectSerializers(projectDir: File): JpsProjectSerializersImpl {
+internal fun createProjectSerializers(projectDir: File, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializersImpl {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
   val externalStoragePath = projectDir.toPath().resolve("cache")
-  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asConfigLocation(), reader, externalStoragePath, true) as JpsProjectSerializersImpl
+  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asConfigLocation(virtualFileManager), reader, externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
 }
 
-fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {
+fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager) {
   fun getNonNullActualFileUrl(source: EntitySource): String {
     return getActualFileUrl(source) ?: throw AssertionFailedError("file name is not registered for $source")
   }
@@ -175,7 +175,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
   fileSerializerFactoriesByUrl.forEach { (url, fileSerializer) ->
     assertEquals(url, fileSerializer.fileUrl)
     val fileSerializers = serializerToFileFactory.getKeysByValue(fileSerializer) ?: emptyList()
-    val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl))
+    val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl), virtualFileManager)
     assertEquals(urlsFromFactory.map { it.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
@@ -207,9 +207,9 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
   assertTrue("There are stale mapping for some fileNameId: ${staleIds.joinToString { "$it -> ${fileIdToFileName.get(it)}" }}", staleIds.isEmpty())
 }
 
-internal fun File.asConfigLocation(): JpsProjectConfigLocation =
-  if (FileUtil.extensionEquals(name, "ipr")) JpsProjectConfigLocation.FileBased(toVirtualFileUrl())
-  else JpsProjectConfigLocation.DirectoryBased(toVirtualFileUrl())
+internal fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation =
+  if (FileUtil.extensionEquals(name, "ipr")) JpsProjectConfigLocation.FileBased(toVirtualFileUrl(virtualFileManager))
+  else JpsProjectConfigLocation.DirectoryBased(toVirtualFileUrl(virtualFileManager))
 
 internal class JpsFileContentWriterImpl : JpsFileContentWriter {
   val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()

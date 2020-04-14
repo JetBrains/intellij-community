@@ -18,8 +18,10 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   override val entityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun createSerializer(fileUrl: String, entitySource: JpsFileEntitySource.FileInDirectory): JpsArtifactEntitiesSerializer {
-    return JpsArtifactEntitiesSerializer(VirtualFileUrlManager.fromUrl(fileUrl), entitySource, false)
+  override fun createSerializer(fileUrl: String,
+                                entitySource: JpsFileEntitySource.FileInDirectory,
+                                virtualFileManager: VirtualFileUrlManager): JpsArtifactEntitiesSerializer {
+    return JpsArtifactEntitiesSerializer(virtualFileManager.fromUrl(fileUrl), entitySource, false, virtualFileManager)
   }
 
   override fun getDefaultFileName(entity: ArtifactEntity): String {
@@ -29,8 +31,8 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
 private const val ARTIFACT_MANAGER_COMPONENT_NAME = "ArtifactManager"
 
-internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource: JpsFileEntitySource) : JpsArtifactEntitiesSerializer(fileUrl, entitySource, true),
-                                                                                                        JpsFileEntityTypeSerializer<ArtifactEntity> {
+internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource: JpsFileEntitySource, virtualFileManager: VirtualFileUrlManager)
+  : JpsArtifactEntitiesSerializer(fileUrl, entitySource, true, virtualFileManager), JpsFileEntityTypeSerializer<ArtifactEntity> {
   override val additionalEntityTypes: List<Class<out TypedEntity>>
     get() = listOf(ArtifactsOrderEntity::class.java)
 }
@@ -45,11 +47,12 @@ internal interface ArtifactsOrderEntity : ModifiableTypedEntity<ArtifactsOrderEn
 
 internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
                                                   override val internalEntitySource: JpsFileEntitySource,
-                                                  private val preserveOrder: Boolean) : JpsFileEntitiesSerializer<ArtifactEntity> {
+                                                  private val preserveOrder: Boolean,
+                                                  private val virtualFileManager: VirtualFileUrlManager) : JpsFileEntitiesSerializer<ArtifactEntity> {
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader) {
+  override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
@@ -57,7 +60,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     val orderOfItems = ArrayList<String>()
     artifactListElement.getChildren("artifact").forEach {
       val state = XmlSerializer.deserialize(it, ArtifactState::class.java)
-      val outputUrl = VirtualFileUrlManager.fromPath(state.outputPath)
+      val outputUrl = virtualFileManager.fromPath(state.outputPath)
       val rootElement = loadPackagingElement(state.rootElement, source, builder)
       val artifactEntity = builder.addArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, outputUrl,
                                                      rootElement as CompositePackagingElementEntity, source)
@@ -87,7 +90,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source, builder) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
-    fun getPathAttribute(name: String) = VirtualFileUrlManager.fromPath(element.getAttributeValue(name)!!)
+    fun getPathAttribute(name: String) = virtualFileManager.fromPath(element.getAttributeValue(name)!!)
     return when (val typeId = getAttribute("id")) {
       "root" -> builder.addArtifactRootElementEntity(loadElementChildren(), source)
       "directory" -> builder.addDirectoryPackagingElementEntity(getAttribute("name"), loadElementChildren(), source)

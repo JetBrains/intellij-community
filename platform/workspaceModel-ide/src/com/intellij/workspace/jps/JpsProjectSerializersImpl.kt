@@ -29,7 +29,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                 reader: JpsFileContentReader,
                                 private val entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
                                 private val configLocation: JpsProjectConfigLocation,
-                                private val externalStorageMapping: JpsExternalStorageMapping) : JpsProjectSerializers {
+                                private val externalStorageMapping: JpsExternalStorageMapping,
+                                private val virtualFileManager: VirtualFileUrlManager) : JpsProjectSerializers {
   internal val serializerToFileFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsFileSerializerFactory<*>>()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
   private val internalSourceToExternal = HashMap<JpsFileEntitySource, JpsFileEntitySource>()
@@ -41,7 +42,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       createDirectorySerializers(factory).associateWithTo(serializerToDirectoryFactory) { factory }
     }
     for (factory in fileSerializerFactories) {
-      val fileList = factory.loadFileList(reader)
+      val fileList = factory.loadFileList(reader, virtualFileManager)
       fileList
         .map { factory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it) }
         .associateWithTo(serializerToFileFactory) { factory }
@@ -67,7 +68,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 ?: return emptyList()
     return files.map {
       factory.createSerializer("${factory.directoryUrl}/${it.name}",
-                               createFileInDirectorySource(VirtualFileUrlManager.fromUrl(factory.directoryUrl), it.name))
+                               createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), it.name),
+                               virtualFileManager)
     }
   }
 
@@ -78,7 +80,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     for (addedFileUrl in change.addedFileUrls) {
       val factory = directorySerializerFactoriesByUrl[PathUtil.getParentPath(addedFileUrl)]
       val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
-        VirtualFileUrlManager.fromUrl(factory.directoryUrl), PathUtil.getFileName(addedFileUrl)))
+        virtualFileManager.fromUrl(factory.directoryUrl), PathUtil.getFileName(addedFileUrl)), virtualFileManager)
       if (newFileSerializer != null) {
         newFileSerializers.add(newFileSerializer)
         serializerToDirectoryFactory[newFileSerializer] = factory
@@ -88,7 +90,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     for (changedUrl in change.changedFileUrls) {
       val serializerFactory = fileSerializerFactoriesByUrl[changedUrl]
       if (serializerFactory != null) {
-        val newFileUrls = serializerFactory.loadFileList(reader)
+        val newFileUrls = serializerFactory.loadFileList(reader, virtualFileManager)
         val oldSerializers: List<JpsFileEntitiesSerializer<*>> = serializerToFileFactory.getKeysByValue(serializerFactory) ?: emptyList()
         val oldFileUrls = oldSerializers.mapTo(HashSet()) { it.fileUrl }
         val newFileUrlsSet = newFileUrls.toSet()
@@ -128,14 +130,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val builder = TypedEntityStorageBuilder.create()
     affectedFileLoaders.forEach {
-      it.loadEntities(builder, reader)
+      it.loadEntities(builder, reader, virtualFileManager)
     }
     return Pair(changedSources, builder)
   }
 
   override fun loadAll(reader: JpsFileContentReader, builder: TypedEntityStorageBuilder) {
     fileSerializersByUrl.values().forEach {
-      it.loadEntities(builder, reader)
+      it.loadEntities(builder, reader, virtualFileManager)
     }
   }
 
@@ -251,7 +253,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       if (url != null && internalSource != null && url !in fileSerializersByUrl.keySet()) {
         fileSerializerFactoriesByUrl.values.forEach { factory ->
           if ((factory.entityClass in entities || factory.additionalEntityClass in entities) && factory.entitySourceFilter(source)) {
-            val newSerializer = factory.createSerializer(internalSource, VirtualFileUrlManager.fromUrl(url))
+            val newSerializer = factory.createSerializer(internalSource, virtualFileManager.fromUrl(url))
             fileSerializersByUrl.putValue(url, newSerializer)
             serializerToFileFactory[newSerializer] = factory
             affectedFileFactories.add(factory)
@@ -348,8 +350,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val currentSource = it.entitySource as? JpsFileEntitySource.FileInDirectory
         val source =
           if (currentSource != null && fileIdToFileName[currentSource.fileNameId] == fileName) currentSource
-          else createFileInDirectorySource(VirtualFileUrlManager.fromUrl(factory.directoryUrl), fileName)
-        Pair(factory.createSerializer("${factory.directoryUrl}/$fileName", source), entityMap)
+          else createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), fileName)
+        Pair(factory.createSerializer("${factory.directoryUrl}/$fileName", source, virtualFileManager), entityMap)
       }
   }
 
