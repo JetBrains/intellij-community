@@ -3,19 +3,20 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.EditorNotificationPanel.ActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +29,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
 
   @Override
   public boolean isApplicableFor(@NotNull Project project, @NotNull VirtualFile file) {
-    if (file.getFileType() != JavaClassFileType.INSTANCE) {
-      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile != null) {
-        return psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE);
-      }
-    }
-    return false;
+    return JavaSdk.getInstance().isRelevantForFile(project, file);
   }
 
   @Nullable
@@ -51,17 +46,42 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
           return JavaUiBundle.message("module.sdk.not.defined");
         }
       }
+
+      if (!DumbService.getInstance(project).isDumb()) {
+        PsiClass objectClass = JavaPsiFacade
+          .getInstance(project)
+          .findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithDependenciesAndLibrariesScope(false));
+
+        if (objectClass == null) {
+          if (ModuleRootManager.getInstance(module).isSdkInherited()) {
+            return JavaUiBundle.message("project.sdk.not.valid", sdk.getName());
+          }
+          else {
+            return JavaUiBundle.message("module.sdk.not.valid", sdk.getName());
+          }
+        }
+      }
     }
     return null;
   }
 
   @NotNull
   private static SdkPopupBuilder preparePopup(@NotNull Project project, @NotNull VirtualFile file) {
-    return SdkPopupFactory
+    SdkPopupBuilder builder = SdkPopupFactory
       .newBuilder()
       .withProject(project)
-      .withSdkTypeFilter(type -> type instanceof JavaSdkType)
-      .updateSdkForFile(file);
+      .withSdkTypeFilter(type -> type instanceof JavaSdkType);
+
+    final Module module = ModuleUtilCore.findModuleForFile(file, project);
+    if (module != null && !module.isDisposed()) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null) {
+        //filter probably broken SDK
+        builder = builder.withSdkFilter(it -> !it.getName().equalsIgnoreCase(sdk.getName()));
+      }
+    }
+
+    return builder.updateSdkForFile(file);
   }
 
   @NotNull
