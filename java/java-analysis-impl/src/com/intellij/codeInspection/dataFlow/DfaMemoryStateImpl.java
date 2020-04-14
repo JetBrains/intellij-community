@@ -83,7 +83,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public @NotNull DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
-    copy.forRecordedVariableTypes((value, dfType) -> {
+    forRecordedVariableTypes((value, dfType) -> {
       if (dfType instanceof DfReferenceType) {
         copy.setDfType(value, ((DfReferenceType)dfType).dropLocality());
       }
