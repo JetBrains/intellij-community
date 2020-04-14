@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -193,33 +194,35 @@ public class TextMateHighlightingLexer extends LexerBase {
                                  currentMatch.byteOffset().getStartOffset() >= endMatch.byteOffset().getStartOffset() ||
                                  lastState.equals(currentState))) {
         myStates.pop();
-        int startPosition = endPosition = endMatch.charOffset(string.bytes).getStartOffset();
+        TextRange endRange = endMatch.charRange(line, string.bytes);
+        int startPosition = endPosition = endRange.getStartOffset();
         closeScopeSelector(startPosition + startLineOffset); // closing content scope
         if (lastRule.getCaptures(Constants.CaptureKey.END_CAPTURES) == null
             && lastRule.getCaptures(Constants.CaptureKey.CAPTURES) == null
             && lastRule.getCaptures(Constants.CaptureKey.BEGIN_CAPTURES) == null
             ||
-            parseCaptures(Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, startLineOffset)
+            parseCaptures(Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, startLineOffset)
             ||
-            parseCaptures(Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, startLineOffset)) {
+            parseCaptures(Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, startLineOffset)) {
           // move line position only if anything was captured or if there is nothing to capture at all
-          endPosition = endMatch.charOffset(string.bytes).getEndOffset();
+          endPosition = endRange.getEndOffset();
         }
         closeScopeSelector(endPosition + startLineOffset); // closing basic scope
       }
       else if (currentMatch.matched()) {
-        int startPosition = currentMatch.charOffset(string.bytes).getStartOffset();
-        endPosition = currentMatch.charOffset(string.bytes).getEndOffset();
+        TextRange currentRange = currentMatch.charRange(line, string.bytes);
+        int startPosition = currentRange.getStartOffset();
+        endPosition = currentRange.getEndOffset();
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
-          parseCaptures(Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, startLineOffset);
-          parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, startLineOffset);
+          parseCaptures(Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
+          parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), endPosition + startLineOffset);
           myStates.push(currentState);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
           openScopeSelector(currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
-          parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, startLineOffset);
+          parseCaptures(Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
           closeScopeSelector(endPosition + startLineOffset);
         }
       }
@@ -295,10 +298,15 @@ public class TextMateHighlightingLexer extends LexerBase {
     }
   }
 
-  private boolean parseCaptures(Constants.CaptureKey capturesKey, SyntaxNodeDescriptor rule, MatchData matchData, StringWithId string, int startLineOffset) {
+  private boolean parseCaptures(Constants.CaptureKey capturesKey,
+                                SyntaxNodeDescriptor rule,
+                                MatchData matchData,
+                                StringWithId string,
+                                String line,
+                                int startLineOffset) {
     TIntObjectHashMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
-      List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string);
+      List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
       Stack<CaptureMatchData> starts = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.START_OFFSET_ORDERING));
       Stack<CaptureMatchData> ends = new Stack<>(ContainerUtil.sorted(matches, CaptureMatchData.END_OFFSET_ORDERING));
       while (!starts.isEmpty() || !ends.isEmpty()) {

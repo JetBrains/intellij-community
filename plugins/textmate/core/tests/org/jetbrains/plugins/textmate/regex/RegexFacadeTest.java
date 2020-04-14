@@ -15,7 +15,7 @@ public class RegexFacadeTest {
     RegexFacade regex = RegexFacade.regex("[0-9]+");
     StringWithId string = new StringWithId("12:00pm");
     MatchData match = regex.match(string);
-    assertEquals(TextRange.create(0, 2), match.charOffset(string.bytes));
+    assertEquals(TextRange.create(0, 2), match.codePointRange(string.bytes));
   }
 
   @Test
@@ -23,7 +23,7 @@ public class RegexFacadeTest {
     RegexFacade regex = RegexFacade.regex("[0-9]+");
     StringWithId string = new StringWithId("12:00pm");
     MatchData match = regex.match(string, 2);
-    assertEquals(TextRange.create(3, 5), match.charOffset(string.bytes));
+    assertEquals(TextRange.create(3, 5), match.codePointRange(string.bytes));
   }
 
   @Test
@@ -31,9 +31,9 @@ public class RegexFacadeTest {
     RegexFacade regex = RegexFacade.regex("([0-9]+):([0-9]+)");
     StringWithId string = new StringWithId("12:00pm");
     MatchData match = regex.match(string);
-    assertEquals(TextRange.create(0, 5), match.charOffset(string.bytes));
-    assertEquals(TextRange.create(0, 2), match.charOffset(string.bytes, 1));
-    assertEquals(TextRange.create(3, 5), match.charOffset(string.bytes, 2));
+    assertEquals(TextRange.create(0, 5), match.codePointRange(string.bytes));
+    assertEquals(TextRange.create(0, 2), match.codePointRange(string.bytes, 1));
+    assertEquals(TextRange.create(3, 5), match.codePointRange(string.bytes, 2));
   }
 
   @Test
@@ -46,8 +46,8 @@ public class RegexFacadeTest {
       regions.add(searcher.getCurrentMatchData());
     }
     assertEquals(2, regions.size());
-    assertEquals(TextRange.create(0, 2), regions.get(0).charOffset(stringBytes));
-    assertEquals(TextRange.create(3, 5), regions.get(1).charOffset(stringBytes));
+    assertEquals(TextRange.create(0, 2), regions.get(0).codePointRange(stringBytes));
+    assertEquals(TextRange.create(3, 5), regions.get(1).codePointRange(stringBytes));
   }
 
   @Test
@@ -56,7 +56,7 @@ public class RegexFacadeTest {
     String text = "привет, мир; привет, мир!";
     StringWithId string = new StringWithId(text);
     MatchData match = regex.match(string, RegexUtil.byteOffsetByCharOffset(text, 9));
-    assertEquals(TextRange.create(21, 24), match.charOffset(string.bytes));
+    assertEquals(TextRange.create(21, 24), match.codePointRange(string.bytes));
   }
 
   @Test
@@ -64,6 +64,16 @@ public class RegexFacadeTest {
     RegexFacade regex = RegexFacade.regex("мир");
     StringWithId string = new StringWithId("привет, мир!");
     MatchData match = regex.match(string);
-    assertEquals(TextRange.create(8, 11), match.charOffset(string.bytes));
+    assertEquals(TextRange.create(8, 11), match.codePointRange(string.bytes));
+  }
+
+  @Test
+  public void unicodeMatching() {
+    RegexFacade regex = RegexFacade.regex("мир");
+    String string = "\uD83D\uDEA7\uD83D\uDEA7\uD83D\uDEA7 привет, мир!";
+    StringWithId stringWithId = new StringWithId(string);
+    MatchData match = regex.match(stringWithId);
+    TextRange range = match.charRange(string, stringWithId.bytes);
+    assertEquals("мир", range.substring(string));
   }
 }

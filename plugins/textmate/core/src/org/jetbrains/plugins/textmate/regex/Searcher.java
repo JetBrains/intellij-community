@@ -31,7 +31,7 @@ public class Searcher {
   private void setCurrentPosition(int currentPosition) {
     this.currentPosition = currentPosition;
     currentCharPosition = currentPosition > 0
-                          ? RegexUtil.charOffsetByByteOffset(myStringBytes, currentPosition)
+                          ? RegexUtil.codePointOffsetByByteOffset(myStringBytes, currentPosition)
                           : currentPosition;
   }
 

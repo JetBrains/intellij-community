@@ -59,7 +59,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     if (files == null) return Collections.emptyList();
     return ContainerUtil.mapNotNull(files, file -> {
       String fileName = PathUtil.getFileName(file.getPath());
-      return !fileName.contains("_after.") ? new Object[]{fileName, file} : null;
+      return !fileName.contains("_after.") && !fileName.endsWith("_after") ? new Object[]{fileName, file} : null;
     });
   }
 
@@ -115,8 +115,9 @@ abstract public class LexerTestCase extends UsefulTestCase {
       lexer.advance();
     }
 
-    String expectedFilePath = myFile.getParent() + "/" +
-                              FileUtilRt.getNameWithoutExtension(myFileName) + "_after." + getExtension(myFileName);
+    String extension = getExtension(myFileName);
+    String suffix = extension.isEmpty() ? "" : "." + extension;
+    String expectedFilePath = myFile.getParent() + "/" + FileUtilRt.getNameWithoutExtension(myFileName) + "_after" + suffix;
     assertSameLinesWithFile(expectedFilePath, output.toString().trim());
   }
 

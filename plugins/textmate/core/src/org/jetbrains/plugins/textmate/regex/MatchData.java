@@ -46,13 +46,23 @@ public class MatchData {
     return TextRange.create(offsets[endIndex - 1], offsets[endIndex]);
   }
 
-  public TextRange charOffset(byte[] stringBytes) {
-    return charOffset(stringBytes, 0);
+  public TextRange charRange(String s, byte[] stringBytes) {
+    return charRange(s, stringBytes, 0);
+  }
+
+  public TextRange charRange(String s, byte[] stringBytes, int group) {
+    TextRange range = codePointRange(stringBytes, group);
+    return TextRange.create(s.offsetByCodePoints(0, range.getStartOffset()),
+                            s.offsetByCodePoints(0, range.getEndOffset()));
+  }
+
+  public TextRange codePointRange(byte[] stringBytes) {
+    return codePointRange(stringBytes, 0);
   }
 
   @NotNull
-  public TextRange charOffset(byte[] stringBytes, int group) {
-    return RegexUtil.charRangeByByteRange(stringBytes, byteOffset(group));
+  public TextRange codePointRange(byte[] stringBytes, int group) {
+    return RegexUtil.codePointsRangeByByteRange(stringBytes, byteOffset(group));
   }
 
   public boolean matched() {

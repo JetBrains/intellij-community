@@ -125,11 +125,12 @@ public final class SyntaxMatchUtils {
 
   public static List<CaptureMatchData> matchCaptures(@NotNull TIntObjectHashMap<CharSequence> captures,
                                                      @NotNull MatchData matchData,
-                                                     @NotNull StringWithId string) {
+                                                     @NotNull StringWithId string,
+                                                     @NotNull String s) {
     List<CaptureMatchData> result = new ArrayList<>();
     for (int index : captures.keys()) {
       CharSequence captureName = captures.get(index);
-      TextRange offset = index < matchData.count() ? matchData.charOffset(string.bytes, index) : TextRange.EMPTY_RANGE;
+      TextRange offset = index < matchData.count() ? matchData.charRange(s, string.bytes, index) : TextRange.EMPTY_RANGE;
       if (captureName.length() > 0 && !offset.isEmpty()) {
         result.add(new CaptureMatchData(offset, index, captureName));
       }

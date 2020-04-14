@@ -9,7 +9,7 @@ public class RegexUtil {
   private RegexUtil() {
   }
 
-  public static int charOffsetByByteOffset(byte[] stringBytes, int byteOffset) {
+  public static int codePointOffsetByByteOffset(byte[] stringBytes, int byteOffset) {
     if (byteOffset <= 0) {
       return 0;
     }
@@ -30,9 +30,9 @@ public class RegexUtil {
   }
 
   @NotNull
-  public static TextRange charRangeByByteRange(byte[] bytes, @NotNull TextRange byteRange) {
-    int startOffset = charOffsetByByteOffset(bytes, byteRange.getStartOffset());
-    int endOffset = charOffsetByByteOffset(bytes, byteRange.getEndOffset());
+  public static TextRange codePointsRangeByByteRange(byte[] bytes, @NotNull TextRange byteRange) {
+    int startOffset = codePointOffsetByByteOffset(bytes, byteRange.getStartOffset());
+    int endOffset = codePointOffsetByByteOffset(bytes, byteRange.getEndOffset());
     return TextRange.create(startOffset, endOffset);
   }
 }
