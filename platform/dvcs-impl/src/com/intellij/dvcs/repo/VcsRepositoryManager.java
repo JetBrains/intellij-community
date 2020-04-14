@@ -14,8 +14,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.impl.VcsStartupActivity;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
@@ -51,21 +51,31 @@ public class VcsRepositoryManager implements Disposable {
 
   @NotNull
   public static VcsRepositoryManager getInstance(@NotNull Project project) {
-    return Objects.requireNonNull(project.getComponent(VcsRepositoryManager.class));
+    return Objects.requireNonNull(project.getService(VcsRepositoryManager.class));
   }
 
   public VcsRepositoryManager(@NotNull Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> scheduleUpdate());
-    ((ProjectLevelVcsManagerImpl)myVcsManager).addInitializationRequest(VcsInitObject.OTHER_INITIALIZATION,
-                                                                        () -> checkAndUpdateRepositoriesCollection(null));
 
     VcsRepositoryCreator.EXTENSION_POINT_NAME.addExtensionPointListener(project, () -> {
       disposeAllRepositories(false);
       scheduleUpdate();
       BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }, project);
+  }
+
+  static final class MyStartupActivity implements VcsStartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      getInstance(project).checkAndUpdateRepositoriesCollection(null);
+    }
+
+    @Override
+    public int getOrder() {
+      return VcsInitObject.OTHER_INITIALIZATION.getOrder();
+    }
   }
 
   @Override
