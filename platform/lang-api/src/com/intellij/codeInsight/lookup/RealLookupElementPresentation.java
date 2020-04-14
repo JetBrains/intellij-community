@@ -7,16 +7,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class RealLookupElementPresentation extends LookupElementPresentation {
-  private final boolean myLookupSelectionTouched;
-
-  @ApiStatus.Internal
-  public RealLookupElementPresentation(boolean lookupSelectionTouched) {
-    myLookupSelectionTouched = lookupSelectionTouched;
-  }
-
-  public boolean isLookupSelectionTouched() {
-    return myLookupSelectionTouched;
-  }
 
   @Override
   public boolean isReal() {
