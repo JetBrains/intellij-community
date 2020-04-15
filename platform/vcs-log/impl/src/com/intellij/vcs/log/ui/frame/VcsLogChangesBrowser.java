@@ -430,14 +430,14 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       ChangesBrowserEmptyTextNode textNode = new ChangesBrowserEmptyTextNode(text);
       textNode.markAsHelperNode();
 
-      myModel.insertNodeInto(textNode, myRoot, myRoot.getChildCount());
+      insertSubtreeRoot(textNode);
     }
 
     public void addChangesFromParentNode(@NotNull Collection<? extends Change> changes, @NotNull CommitId commitId) {
       ChangesBrowserNode parentNode = new ChangesBrowserParentNode(commitId);
       parentNode.markAsHelperNode();
 
-      myModel.insertNodeInto(parentNode, myRoot, myRoot.getChildCount());
+      insertSubtreeRoot(parentNode);
       for (Change change : changes) {
         insertChangeNode(change, parentNode, createChangeNode(change, null));
       }

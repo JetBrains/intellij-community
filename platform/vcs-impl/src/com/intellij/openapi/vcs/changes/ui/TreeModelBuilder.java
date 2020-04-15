@@ -203,7 +203,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   private TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
                                                              @NotNull ChangesBrowserSpecificFilePathsNode node,
                                                              @NotNull FileStatus status) {
-    myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
+    insertSubtreeRoot(node);
     if (!node.isManyFiles()) {
       node.markAsHelperNode();
       insertLocalFilePathIntoNode(specificFiles, node, status);
@@ -227,7 +227,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
         ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
         listNode.markAsHelperNode();
 
-        myModel.insertNodeInto(listNode, myRoot, 0);
+        insertSubtreeRoot(listNode);
         changesParent = listNode;
       }
       else {
@@ -283,7 +283,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     ChangesBrowserNode<?> subtreeRoot = ChangesBrowserNode.createObject(tag);
     subtreeRoot.markAsHelperNode();
 
-    myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
+    insertSubtreeRoot(subtreeRoot);
     return subtreeRoot;
   }
 
@@ -365,7 +365,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
         ChangesBrowserNode<?> branchNode = ChangesBrowserNode.createObject(branchName);
         branchNode.markAsHelperNode();
 
-        myModel.insertNodeInto(branchNode, subtreeRoot, subtreeRoot.getChildCount());
+        insertSubtreeRoot(branchNode, subtreeRoot);
 
         for (VirtualFile file : switchedFileList) {
           insertChangeNode(file, branchNode, ChangesBrowserNode.createFile(myProject, file));
@@ -392,7 +392,13 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @NotNull
   @Override
   public TreeModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
-    myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
+    insertSubtreeRoot(node, myRoot);
+    return this;
+  }
+
+  @NotNull
+  public TreeModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node, @NotNull ChangesBrowserNode<?> subtreeRoot) {
+    myModel.insertNodeInto(node, subtreeRoot, subtreeRoot.getChildCount());
     return this;
   }
 
