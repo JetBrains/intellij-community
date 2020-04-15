@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.EditorNotificationPanel;
 
@@ -37,24 +38,73 @@ public class SdkSetupNotificationTest extends SdkSetupNotificationTestBase {
     assertSdkSetupPanelShown(panel, "Setup SDK");
   }
 
-  public void testBrokenSdk() {
-    Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", JavaSdk.getInstance());
+  private class SdkTestCases {
+    final Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", JavaSdk.getInstance());
+    final Sdk valid = IdeaTestUtil.getMockJdk18();
 
-    WriteAction.run(() -> {
-      SdkModificator mod = broken.getSdkModificator();
-      mod.setHomePath("invalid home path");
-      mod.setVersionString("11");
-      mod.commitChanges();
+    private SdkTestCases() {
+      WriteAction.run(() -> {
+        SdkModificator m = broken.getSdkModificator();
+        m.setHomePath("invalid home path");
+        m.setVersionString("11");
+        m.commitChanges();
 
-      ProjectJdkTable.getInstance().addJdk(broken, getTestRootDisposable());
+        ProjectJdkTable.getInstance().addJdk(broken, getTestRootDisposable());
+        ProjectJdkTable.getInstance().addJdk(valid, getTestRootDisposable());
+      });
+    }
+  }
 
-      ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-      m.setSdk(broken);
-      m.commit();
-    });
+  public void testBrokenModuleSdk() {
+    new SdkTestCases() {
+      {
+        WriteAction.run(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          m.setSdk(broken);
+          m.commit();
 
-    final EditorNotificationPanel panel = runOnText(myFixture, "Sample.java", "class Sample {}");
-    assertSdkSetupPanelShown(panel, "Setup SDK");
-    assertThat(panel.getText()).contains(broken.getName());
+          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+        });
+
+        final EditorNotificationPanel panel = runOnText(myFixture, "Sample.java", "class Sample {}");
+        assertSdkSetupPanelShown(panel, "Setup SDK");
+        assertThat(panel.getText()).contains(broken.getName());
+        assertThat(panel.getText()).containsIgnoringCase("Module JDK");
+      }
+    };
+  }
+
+  public void testValidProjectSdk() {
+    new SdkTestCases() {
+      {
+        WriteAction.run(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          m.inheritSdk();
+          m.commit();
+
+          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+        });
+
+        final EditorNotificationPanel panel = runOnText(myFixture, "Sample.java", "class Sample {}");
+        assertNull(panel);
+      }
+    };
+  }
+
+  public void testBrokenProjectValidModuleSdk() {
+    new SdkTestCases() {
+      {
+        WriteAction.run(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          m.setSdk(valid);
+          m.commit();
+
+          ProjectRootManager.getInstance(getProject()).setProjectSdk(broken);
+        });
+
+        final EditorNotificationPanel panel = runOnText(myFixture, "Sample.java", "class Sample {}");
+        assertNull(panel);
+      }
+    };
   }
 }

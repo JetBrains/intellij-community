@@ -47,18 +47,18 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
         }
       }
 
-      boolean isJdkBroken = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
-        () -> JavaPsiFacade
-                .getInstance(project)
-                .findPackage("java.lang") == null
-      );
+      if (!DumbService.getInstance(project).isDumb()) {
+        boolean isJdkBroken = JavaPsiFacade
+                                .getInstance(project)
+                                .findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope()) == null;
 
-      if (isJdkBroken) {
-        if (ModuleRootManager.getInstance(module).isSdkInherited()) {
-          return JavaUiBundle.message("project.sdk.not.valid", sdk.getName());
-        }
-        else {
-          return JavaUiBundle.message("module.sdk.not.valid", sdk.getName());
+        if (isJdkBroken) {
+          if (ModuleRootManager.getInstance(module).isSdkInherited()) {
+            return JavaUiBundle.message("project.sdk.not.valid", sdk.getName());
+          }
+          else {
+            return JavaUiBundle.message("module.sdk.not.valid", sdk.getName());
+          }
         }
       }
     }
