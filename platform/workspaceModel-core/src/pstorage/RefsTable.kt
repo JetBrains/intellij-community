@@ -3,9 +3,9 @@ package com.intellij.workspace.api.pstorage
 
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
-import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.containers.*
+import pstorage.containers.BidirectionalMap
 import kotlin.reflect.KClass
 
 internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
