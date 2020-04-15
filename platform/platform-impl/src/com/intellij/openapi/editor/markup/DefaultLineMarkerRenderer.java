@@ -21,7 +21,7 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
     this(myAttributesKey, thickness, 0, Position.RIGHT);
   }
 
-  public DefaultLineMarkerRenderer(@NotNull TextAttributesKey attributesKey, int thickness, int depth, Position position) {
+  public DefaultLineMarkerRenderer(@NotNull TextAttributesKey attributesKey, int thickness, int depth, @NotNull Position position) {
     myAttributesKey = attributesKey;
     myThickness = thickness;
     myDepth = depth;
@@ -50,7 +50,7 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
     g.fillRect(r.x + myThickness, r.y + r.height - myThickness, myDepth, myThickness);
   }
 
-  public TextAttributesKey getAttributesKey() {
+  public @NotNull TextAttributesKey getAttributesKey() {
     return myAttributesKey;
   }
 
