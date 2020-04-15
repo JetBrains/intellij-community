@@ -81,5 +81,6 @@
     </orderEntry>
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.rd.community" scope="RUNTIME" />
   </component>
 </module>

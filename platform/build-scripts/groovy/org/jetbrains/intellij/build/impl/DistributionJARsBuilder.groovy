@@ -136,6 +136,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util.classLoader", "util.jar")
       withModule("intellij.platform.util.ui")
       withModule("intellij.platform.util.ex")
+      withModule("intellij.platform.rd.community")
 
       withModule("intellij.platform.diagnostic")
       withModule("intellij.platform.ide.util.io")
