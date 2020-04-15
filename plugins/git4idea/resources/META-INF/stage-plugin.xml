@@ -23,6 +23,9 @@
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Add"/>
       <reference id="Git.Stage.Reset"/>
+      <separator/>
+      <reference id="Vcs.ShowTabbedFileHistory"/>
+      <reference id="LocalHistory"/>
     </group>
   </actions>
 </idea-plugin>

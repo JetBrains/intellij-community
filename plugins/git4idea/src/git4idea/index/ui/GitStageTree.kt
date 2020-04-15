@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
@@ -66,11 +67,17 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
 
   override fun getData(dataId: String): Any? {
     return when {
-      GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> VcsTreeModelData.selected(this).userObjectsStream()
-        .filter { it is GitFileStatusNode }
-        .map { it as GitFileStatusNode }
+      GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
+      VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
+      VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
       else -> super.getData(dataId)
     }
+  }
+
+  private fun selectedStatusNodes(): Stream<GitFileStatusNode> {
+    return VcsTreeModelData.selected(this).userObjectsStream()
+      .filter { it is GitFileStatusNode }
+      .map { it as GitFileStatusNode }
   }
 
   private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory) :
