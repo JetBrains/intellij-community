@@ -36,6 +36,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   private void doPerformanceTest(int expectedMs, String jsonFileNameWithoutExtension) {
+    myFixture.configureByFiles("/" + jsonFileNameWithoutExtension + ".json");
     final ThrowableRunnable<Exception> test = () -> skeleton(new Callback() {
       @Override
       public void registerSchemes() {
@@ -48,7 +49,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void configureFiles() {
-        myFixture.configureByFiles("/" + jsonFileNameWithoutExtension + ".json");
+        // files have been configured before the performance test started to not influence the results
       }
 
       @Override
