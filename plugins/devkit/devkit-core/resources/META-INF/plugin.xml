@@ -265,6 +265,8 @@
     <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion.withClientId"/>
     <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion$withClientId$1"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtilKt"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil$Companion$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
@@ -275,6 +277,8 @@
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
