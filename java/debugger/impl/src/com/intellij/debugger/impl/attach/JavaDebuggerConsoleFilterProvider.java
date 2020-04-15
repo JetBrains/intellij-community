@@ -8,6 +8,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
 import com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType;
 import com.intellij.execution.filters.ConsoleFilterProvider;
+import com.intellij.execution.filters.ExceptionInfo;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.InlayProvider;
 import com.intellij.openapi.editor.Editor;
@@ -76,20 +77,18 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
   }
 
   private static class JavaDebuggerExceptionFilter implements Filter {
-    static final Pattern PATTERN = Pattern.compile("Exception in thread \"(.+)\" (\\S+)");
-
     @Override
     public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
-      Matcher matcher = PATTERN.matcher(line);
-      if (!matcher.find()) {
+      ExceptionInfo exceptionInfo = ExceptionInfo.parseMessage(line);
+      if (exceptionInfo == null) {
         return null;
       }
-      String exceptionFqn = matcher.group(2);
-      int start = entireLength - line.length();
+      String exceptionFqn = exceptionInfo.getExceptionClassName();
+      int start = entireLength - line.length() + exceptionInfo.getClassNameOffset();
 
       // to trick the code unwrapping single results in com.intellij.execution.filters.CompositeFilter#createFinalResult
       return new Result(Arrays.asList(
-        new CreateExceptionBreakpointResult(start + matcher.start(), start + matcher.end(), exceptionFqn),
+        new CreateExceptionBreakpointResult(start, start + exceptionFqn.length(), exceptionFqn),
         new ResultItem(0, 0, null)));
     }
   }

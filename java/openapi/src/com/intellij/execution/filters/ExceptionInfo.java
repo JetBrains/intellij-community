@@ -369,7 +369,7 @@ public class ExceptionInfo {
   }
 
   @Nullable
-  static ExceptionInfo parseMessage(String line) {
+  public static ExceptionInfo parseMessage(String line) {
     int firstSpace = line.indexOf(' ');
     int colonPos = -1;
     ExceptionInfo info = null;
