@@ -81,6 +81,8 @@ public class LookupElementPresentation {
   }
 
   private void appendTailText(@NotNull TextFragment fragment) {
+    if (fragment.text.isEmpty()) return;
+
     if (myTail == null) {
       myTail = new SmartList<>();
     }
@@ -152,14 +154,6 @@ public class LookupElementPresentation {
 
   public boolean isStrikeout() {
     return myStrikeout;
-  }
-
-  /**
-   * @deprecated there can be multiple {@link #getTailFragments()}
-   */
-  @Deprecated
-  public boolean isTailGrayed() {
-    return myTail != null && myTail.get(0).myGrayed;
   }
 
   public boolean isItemTextBold() {

@@ -1161,7 +1161,7 @@ public class KeyVO {
     def presentation = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
     assertEquals 'Util.bar', presentation.itemText
     assertEquals '() bar', presentation.tailText
-    assert !presentation.tailGrayed
+    assert !presentation.tailFragments.any { it.grayed }
 
     myFixture.type 'f\n'
     myFixture.checkResult '''import foo.Util
