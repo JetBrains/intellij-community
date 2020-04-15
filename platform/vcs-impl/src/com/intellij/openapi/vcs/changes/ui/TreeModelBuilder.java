@@ -51,7 +51,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @NotNull public final ChangesBrowserNode<?> myRoot;
   @NotNull private final ChangesGroupingPolicyFactory myGroupingPolicyFactory;
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static final Comparator<ChangesBrowserNode> BROWSER_NODE_COMPARATOR = (node1, node2) -> {
     int sortWeightDiff = Comparing.compare(node1.getSortWeight(), node2.getSortWeight());
     if (sortWeightDiff != 0) return sortWeightDiff;
@@ -288,7 +288,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @Override
-  public void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
+  public void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode<?> subtreeRoot) {
     List<VirtualFile> sortedFiles = sorted(files, VirtualFileHierarchicalComparator.getInstance());
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
@@ -391,7 +391,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   @Override
-  public TreeModelBuilder insertChangeNode(@NotNull ChangesBrowserNode node) {
+  public TreeModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
     myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
     return this;
   }

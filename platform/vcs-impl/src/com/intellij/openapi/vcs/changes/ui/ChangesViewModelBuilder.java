@@ -9,9 +9,9 @@ import java.util.Collection;
 
 public interface ChangesViewModelBuilder {
   @NotNull
-  ChangesViewModelBuilder insertChangeNode(@NotNull ChangesBrowserNode node);
+  ChangesViewModelBuilder insertSubtreeRoot(@NotNull ChangesBrowserNode<?> node);
 
-  void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot);
+  void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode<?> subtreeRoot);
 
   void insertChanges(@NotNull Collection<? extends Change> changes, @NotNull ChangesBrowserNode<?> subtreeRoot);
 }
