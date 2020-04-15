@@ -10,8 +10,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities
 import com.intellij.vcsUtil.VcsImplUtil
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRAccountsComponent
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowComponentFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import java.util.*
 import javax.swing.JPanel
@@ -34,10 +33,7 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
       val content = event.content
       if (content.getUserData(INIT_DONE_KEY) != null) return
 
-      content.component = GHPRAccountsComponent(
-        GithubAuthenticationManager.getInstance(), project,
-        content.remoteUrl ?: return,
-        content.disposer ?: return)
+      content.component = GHPRToolWindowComponentFactory(project).createComponent(content.remoteUrl ?: return, content.disposer ?: return)
       IJSwingUtilities.updateComponentTreeUI(content.component)
       content.putUserData(INIT_DONE_KEY, Any())
     }
