@@ -92,6 +92,7 @@ public final class PluginManagerCore {
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
+  private static List<PluginError> ourLoadingErrors;
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
@@ -672,19 +673,24 @@ public final class PluginManagerCore {
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull List<PluginError> errors, @NotNull List<String> actions) {
-    if (errors.isEmpty()) {
-      return;
+    ourLoadingErrors = errors;
+    List<PluginError> errorsToReport = new ArrayList<>();
+    for (PluginError error : errors) {
+      if (error.isNotifyUser()) errorsToReport.add(error);
     }
 
+    // Log includes all messages, not only those which need to be reported to the user
     String message = "Problems found loading plugins:\n  " + errors.stream().map(PluginError::toString).collect(Collectors.joining("\n  "));
     Application app = ApplicationManager.getApplication();
     if (app == null || !app.isHeadlessEnvironment() || isUnitTestMode) {
-      String errorMessage = Stream.concat(errors.stream().map(o -> o.toUserError() + "."), actions.stream()).collect(Collectors.joining("<p/>"));
-      if (ourPluginError == null) {
-        ourPluginError = errorMessage;
-      }
-      else {
-        ourPluginError += "<p/>\n" + errorMessage;
+      if (!errorsToReport.isEmpty()) {
+        String errorMessage = Stream.concat(errorsToReport.stream().map(o -> o.toUserError() + "."), actions.stream()).collect(Collectors.joining("<p/>"));
+        if (ourPluginError == null) {
+          ourPluginError = errorMessage;
+        }
+        else {
+          ourPluginError += "<p/>\n" + errorMessage;
+        }
       }
 
       // as warn in tests
@@ -693,6 +699,39 @@ public final class PluginManagerCore {
     else {
       getLogger().error(message);
     }
+  }
+
+  @Nullable
+  public static String getLoadingError(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    PluginError error = findErrorForPlugin(ourLoadingErrors, pluginDescriptor.getPluginId());
+    if (error != null) {
+      String reason = error.getIncompatibleReason();
+      if (reason != null) {
+        return "Incompatible (" + reason + ")";
+      }
+      return error.getMessage();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PluginId getFirstDisabledDependency(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    PluginError error = findErrorForPlugin(ourLoadingErrors, pluginDescriptor.getPluginId());
+    if (error != null) {
+      return error.getDisabledDependency();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PluginError findErrorForPlugin(@Nullable List<PluginError> errors, @NotNull PluginId pluginId) {
+    if (errors == null) return null;
+    for (PluginError error : errors) {
+      if (error.plugin != null && error.plugin.getPluginId().equals(pluginId)) {
+        return error;
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -1522,11 +1561,6 @@ public final class PluginManagerCore {
     return isIncompatible(descriptor, getBuildNumber());
   }
 
-  @Nullable
-  public static String getIncompatible(@NotNull IdeaPluginDescriptor descriptor) {
-    return isIncompatible(getBuildNumber(), descriptor.getSinceBuild(), descriptor.getUntilBuild());
-  }
-
   public static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) {
     if (buildNumber == null) {
       buildNumber = getBuildNumber();
@@ -1783,10 +1817,17 @@ public final class PluginManagerCore {
 
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
-        errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null));
+        if (findErrorForPlugin(errors, depId) != null) {
+          errors.add(new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null));
+        }
+        else {
+          errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null));
+        }
       }
       else {
-        errors.add(new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null));
+        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null);
+        error.setDisabledDependency(dep.getPluginId());
+        errors.add(error);
       }
     }
     return result;
