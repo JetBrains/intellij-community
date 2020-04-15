@@ -398,6 +398,10 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return getFileCount();
   }
 
+  public boolean shouldExpandByDefault() {
+    return true;
+  }
+
   private static class Tag {
     @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
 

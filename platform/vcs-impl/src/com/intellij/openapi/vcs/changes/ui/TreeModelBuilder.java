@@ -278,9 +278,14 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
+    return createTagNode(tag, true);
+  }
+
+  @NotNull
+  public ChangesBrowserNode<?> createTagNode(@Nullable Object tag, boolean expandByDefault) {
     if (tag == null) return myRoot;
 
-    ChangesBrowserNode<?> subtreeRoot = ChangesBrowserNode.createObject(tag);
+    ChangesBrowserNode<?> subtreeRoot = new TagChangesBrowserNode(tag, expandByDefault);
     subtreeRoot.markAsHelperNode();
 
     insertSubtreeRoot(subtreeRoot);

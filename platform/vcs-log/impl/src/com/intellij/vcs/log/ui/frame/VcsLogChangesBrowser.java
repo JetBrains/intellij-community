@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -25,13 +24,11 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
@@ -42,7 +39,6 @@ import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -66,7 +62,6 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
-  private static final Logger LOG = Logger.getInstance(VcsLogChangesBrowser.class);
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -243,17 +238,21 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
     }
 
-    MyTreeModelBuilder builder = new MyTreeModelBuilder();
+    TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
     builder.setChanges(changes, null);
 
     if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
       if (changes.isEmpty()) {
-        builder.addEmptyTextNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
+        builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
       }
       for (CommitId commitId : changesToParents.keySet()) {
         Collection<Change> changesFromParent = changesToParents.get(commitId);
         if (!changesFromParent.isEmpty()) {
-          builder.addChangesFromParentNode(changesFromParent, commitId);
+          ChangesBrowserNode<?> parentNode = new ChangesBrowserParentNode(commitId);
+          parentNode.markAsHelperNode();
+
+          builder.insertSubtreeRoot(parentNode);
+          builder.insertChanges(changesFromParent, parentNode);
         }
       }
     }
@@ -421,38 +420,14 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     return VcsFileUtil.relativePath(aParentPath.getIOFile(), file.getIOFile());
   }
 
-  private class MyTreeModelBuilder extends TreeModelBuilder {
-    MyTreeModelBuilder() {
-      super(VcsLogChangesBrowser.this.myProject, VcsLogChangesBrowser.this.getGrouping());
-    }
-
-    public void addEmptyTextNode(@NotNull String text) {
-      ChangesBrowserEmptyTextNode textNode = new ChangesBrowserEmptyTextNode(text);
-      textNode.markAsHelperNode();
-
-      insertSubtreeRoot(textNode);
-    }
-
-    public void addChangesFromParentNode(@NotNull Collection<? extends Change> changes, @NotNull CommitId commitId) {
-      ChangesBrowserNode parentNode = new ChangesBrowserParentNode(commitId);
-      parentNode.markAsHelperNode();
-
-      insertSubtreeRoot(parentNode);
-      for (Change change : changes) {
-        insertChangeNode(change, parentNode, createChangeNode(change, null));
-      }
-    }
-  }
-
-  private static class ChangesBrowserEmptyTextNode extends ChangesBrowserNode<String> {
-    protected ChangesBrowserEmptyTextNode(@NotNull String text) {
-      super(text);
-    }
-  }
-
   private class ChangesBrowserParentNode extends ChangesBrowserNode<String> {
     protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
       super(getText(commitId));
+    }
+
+    @Override
+    public boolean shouldExpandByDefault() {
+      return false;
     }
   }
 
@@ -496,28 +471,6 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     @Override
     public int hashCode() {
       return Objects.hash(myCommit);
-    }
-  }
-
-  protected class MyChangesTree extends ChangesBrowserTreeList {
-    MyChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-      super(VcsLogChangesBrowser.this, project, showCheckboxes, highlightProblems);
-    }
-
-    @Override
-    protected void resetTreeState() {
-      long start = System.currentTimeMillis();
-      if (isShowChangesFromParents()) {
-        TreeUtil.expand(this, path -> {
-          if (path.getLastPathComponent() instanceof ChangesBrowserParentNode) return TreeVisitor.Action.SKIP_CHILDREN;
-          return TreeVisitor.Action.CONTINUE;
-        }, path -> {
-        });
-      }
-      else {
-        TreeUtil.expandAll(this);
-      }
-      LOG.debug("Resetting changes tree state took " + StopWatch.formatTime(System.currentTimeMillis() - start));
     }
   }
 }
