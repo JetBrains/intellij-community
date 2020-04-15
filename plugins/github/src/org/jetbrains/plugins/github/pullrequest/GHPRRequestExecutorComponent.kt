@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -25,8 +24,6 @@ class GHPRRequestExecutorComponent(private val requestExecutorManager: GithubApi
                                    val account: GithubAccount,
                                    parentDisposable: Disposable)
   : DisposingWrapper(parentDisposable) {
-
-  private val componentFactory by lazy(LazyThreadSafetyMode.NONE) { project.service<GHPRComponentFactory>() }
 
   private var requestExecutor: GithubApiRequestExecutor? = null
 
@@ -67,6 +64,6 @@ class GHPRRequestExecutorComponent(private val requestExecutorManager: GithubApi
   private fun setActualContent(executor: GithubApiRequestExecutor.WithTokenAuth) {
     requestExecutor = executor
     val disposable = Disposer.newDisposable()
-    setContent(componentFactory.createComponent(remoteUrl, account, executor, disposable), disposable)
+    setContent(GHPRComponentFactory(project).createComponent(remoteUrl, account, executor, disposable), disposable)
   }
 }

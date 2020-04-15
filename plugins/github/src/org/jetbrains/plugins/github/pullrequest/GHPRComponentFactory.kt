@@ -3,10 +3,8 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -41,23 +39,15 @@ import org.jetbrains.plugins.github.util.*
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-@Service
 internal class GHPRComponentFactory(private val project: Project) {
-
-  private val progressManager = ProgressManager.getInstance()
-  private val actionManager = ActionManager.getInstance()
-  private val avatarLoader = CachingGithubUserAvatarLoader.getInstance()
-  private val imageResizer = GithubImageResizer.getInstance()
-
-  private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
   @CalledInAwt
   fun createComponent(remoteUrl: GitRemoteUrlCoordinates, account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
                       parentDisposable: Disposable): JComponent {
 
     val contextDisposable = Disposer.newDisposable()
-    val contextValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
-      dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also { ctx ->
+    val contextValue = LazyCancellableBackgroundProcessValue.create(ProgressManager.getInstance()) { indicator ->
+      GHPRDataContextRepository.getInstance(project).getContext(indicator, account, requestExecutor, remoteUrl).also { ctx ->
         Disposer.register(contextDisposable, ctx)
         Disposer.register(ctx, Disposable {
           val editorManager = FileEditorManager.getInstance(project)
@@ -95,7 +85,8 @@ internal class GHPRComponentFactory(private val project: Project) {
                                         private val parentDisposable: Disposable) {
 
     private val avatarIconsProviderFactory =
-      CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
+      CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(), GithubImageResizer.getInstance(),
+                                               dataContext.requestExecutor)
 
     private val listComponent = GHPRListComponent.create(project, dataContext, avatarIconsProviderFactory, parentDisposable)
 
@@ -210,7 +201,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
                                                       dataProvider.reloadDetails()
                                                     }).also {
-      (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerCustomShortcutSet(it, disposable)
+      ActionManager.getInstance().getAction("Github.PullRequest.Details.Reload").registerCustomShortcutSet(it, disposable)
     }
 
     val changesBrowser = GHPRChangesBrowser.create(project,
@@ -269,7 +260,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       firstComponent = commitsLoadingPanel
       secondComponent = changesBrowser
     }.also {
-      actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
+      ActionManager.getInstance().getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
         else when {
