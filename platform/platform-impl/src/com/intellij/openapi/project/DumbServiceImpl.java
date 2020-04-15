@@ -49,6 +49,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
@@ -473,7 +474,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void tryShowBalloonTillSmartMode(@NotNull String balloonText,
                                            @NotNull Runnable runWhenSmartAndBalloonNotHidden) {
     LOG.assertTrue(myBalloon == null);
-    long startTimestamp = System.currentTimeMillis();
+    long startTimestamp = System.nanoTime();
     UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonRequested, new FeatureUsageData().addProject(myProject));
     myBalloon = JBPopupFactory.getInstance().
             createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
@@ -498,7 +499,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return;
       }
       FeatureUsageData data = new FeatureUsageData().addProject(myProject).
-        addData("duration_ms", System.currentTimeMillis() - startTimestamp);
+        addData("duration_ms", TimeoutUtil.getDurationMillis(startTimestamp));
       UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonProceededToActions, data);
       runWhenSmartAndBalloonNotHidden.run();
       Balloon balloon = myBalloon;
