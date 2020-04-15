@@ -1,17 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import git4idea.commands.Git
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -23,6 +28,7 @@ import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PullRequestEditedListener
 import org.jetbrains.plugins.github.pullrequest.data.service.*
@@ -30,15 +36,54 @@ import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQu
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import org.jetbrains.plugins.github.util.GithubUrlUtil
+import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.io.IOException
+import java.util.concurrent.CompletableFuture
 
 @Service
 internal class GHPRDataContextRepository(private val project: Project) {
+
+  private val repositories = mutableMapOf<GitRemoteUrlCoordinates, LazyCancellableBackgroundProcessValue<GHPRDataContext>>()
+
+  @CalledInAwt
+  fun acquireContext(gitRemoteCoordinates: GitRemoteUrlCoordinates,
+                     account: GithubAccount, requestExecutor: GithubApiRequestExecutor): CompletableFuture<GHPRDataContext> {
+
+    return repositories.getOrPut(gitRemoteCoordinates) {
+      val contextDisposable = Disposer.newDisposable()
+      LazyCancellableBackgroundProcessValue.create(ProgressManager.getInstance()) { indicator ->
+        loadContext(indicator, account, requestExecutor, gitRemoteCoordinates).also { ctx ->
+          invokeAndWaitIfNeeded {
+            if (Disposer.isDisposed(contextDisposable)) {
+              Disposer.dispose(ctx)
+            }
+            else {
+              Disposer.register(contextDisposable, ctx)
+              Disposer.register(ctx, Disposable {
+                val editorManager = FileEditorManager.getInstance(project)
+                editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
+              })
+            }
+          }
+        }
+      }.also {
+        it.addDropEventListener {
+          Disposer.dispose(contextDisposable)
+        }
+      }
+    }.value
+  }
+
+  @CalledInAwt
+  fun clearContext(gitRemoteCoordinates: GitRemoteUrlCoordinates) {
+    repositories.remove(gitRemoteCoordinates)?.drop()
+  }
+
   @CalledInBackground
   @Throws(IOException::class)
-  fun getContext(indicator: ProgressIndicator,
-                 account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
-                 gitRemoteCoordinates: GitRemoteUrlCoordinates): GHPRDataContext {
+  private fun loadContext(indicator: ProgressIndicator,
+                          account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
+                          gitRemoteCoordinates: GitRemoteUrlCoordinates): GHPRDataContext {
     val fullPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(gitRemoteCoordinates.url)
                    ?: throw IllegalArgumentException(
                      "Invalid GitHub Repository URL - ${gitRemoteCoordinates.url} is not a GitHub repository")

@@ -56,6 +56,9 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   fun addDropEventListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(dropEventDispatcher, disposable, listener)
 
+  fun addDropEventListener(listener: () -> Unit) =
+    SimpleEventListener.addListener(dropEventDispatcher, listener)
+
   companion object {
     fun <T> create(progressManager: ProgressManager, computer: (ProgressIndicator) -> T) =
       object : LazyCancellableBackgroundProcessValue<T>() {

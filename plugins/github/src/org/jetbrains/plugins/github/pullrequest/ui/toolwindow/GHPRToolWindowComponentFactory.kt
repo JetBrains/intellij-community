@@ -4,8 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
@@ -20,7 +18,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
@@ -28,7 +25,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -189,32 +185,24 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
     private fun createDataContextLoadingPanel(account: GithubAccount,
                                               requestExecutor: GithubApiRequestExecutor,
                                               disposable: Disposable): JComponent {
-      val contextDisposable = Disposer.newDisposable()
-      val contextValue = LazyCancellableBackgroundProcessValue.create(ProgressManager.getInstance()) { indicator ->
-        GHPRDataContextRepository.getInstance(project).getContext(indicator, account, requestExecutor, remoteUrl).also { ctx ->
-          Disposer.register(contextDisposable, ctx)
-          Disposer.register(ctx, Disposable {
-            val editorManager = FileEditorManager.getInstance(project)
-            editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
-          })
-        }
-      }
-      Disposer.register(disposable, contextDisposable)
-      Disposer.register(disposable, Disposable { contextValue.drop() })
+      Disposer.register(disposable, Disposable {
+        GHPRDataContextRepository.getInstance(project).clearContext(remoteUrl)
+      })
 
       val uiDisposable = Disposer.newDisposable()
       Disposer.register(disposable, uiDisposable)
 
       val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable).apply {
-        future = contextValue.value
+        future = GHPRDataContextRepository.getInstance(project).acquireContext(remoteUrl, account, requestExecutor)
       }
 
       return GHLoadingPanel.create(loadingModel,
                                    { GHPRComponentFactory(project).createComponent(loadingModel.result!!, uiDisposable) }, uiDisposable,
                                    errorPrefix = GithubBundle.message("cannot.load.data.from.github"),
                                    errorHandler = GHLoadingErrorHandlerImpl(project, account) {
-                                     contextValue.drop()
-                                     loadingModel.future = contextValue.value
+                                     val contextRepository = GHPRDataContextRepository.getInstance(project)
+                                     contextRepository.clearContext(remoteUrl)
+                                     loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
                                    })
     }
   }
