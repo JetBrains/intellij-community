@@ -35,7 +35,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -255,7 +254,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private final class FlatWelcomeScreen extends JPanel implements WelcomeScreen, DataProvider {
+  private final class FlatWelcomeScreen extends AbstractWelcomeScreen {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
@@ -265,7 +264,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private BalloonLayoutImpl myBalloonLayout;
 
     FlatWelcomeScreen() {
-      super(new BorderLayout());
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
       if (RecentProjectListActionProvider.getInstance().getActions(false, true).size() > 0) {
@@ -484,6 +482,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel;
     }
 
+    @Override
     public @Nullable BalloonLayout getBalloonLayout() {
       return myBalloonLayout;
     }
