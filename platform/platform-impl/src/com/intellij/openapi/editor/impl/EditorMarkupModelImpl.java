@@ -2133,6 +2133,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       else if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
         myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())), gc);
       }
+      else if (analyzerStatus.getExpandedStatus().size() > 0 && analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+        myContent.add(createDetailsPanel(), gc);
+      }
 
       Presentation presentation = new Presentation();
       presentation.setIcon(AllIcons.Actions.More);
@@ -2163,11 +2166,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
       myContent.add(myProgressPanel, gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
 
-      if (hasTitle && StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+      if (hasTitle) {
         int topIndent = !myProgressBarMap.isEmpty() ? 10 : 0;
-        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())),
-                      gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
-                        coverLine().weightx(1).insets(topIndent, 10, 10, 6));
+        gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(topIndent, 10, 10, 6);
+
+        if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+          myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())), gc);
+        }
+        else if (analyzerStatus.getExpandedStatus().size() > 0 && analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+          myContent.add(createDetailsPanel(), gc);
+        }
       }
 
       JLabel openProblemsViewLabel = new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), () -> {
@@ -2189,6 +2197,31 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         size.width = Math.max(size.width, JBUIScale.scale(296));
         myPopup.setSize(size);
       }
+    }
+
+    private @NotNull JPanel createDetailsPanel() {
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+      panel.setOpaque(false);
+
+      for (int i = 0; i < analyzerStatus.getExpandedStatus().size(); i++) {
+        boolean last = i == analyzerStatus.getExpandedStatus().size() - 1;
+        StatusItem item = analyzerStatus.getExpandedStatus().get(i);
+
+        StringBuilder text = new StringBuilder(item.getText()).append(" ").append(item.getType());
+        if (!last) {
+          text.append(", ");
+        }
+        else if (analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE) {
+          text.append(" ").append(EditorBundle.message("iw.found.so.far.suffix"));
+        }
+
+        JLabel label = new JLabel(text.toString(), item.getIcon(), SwingConstants.LEFT);
+        label.setIconTextGap(JBUIScale.scale(1));
+        panel.add(label);
+      }
+
+      return panel;
     }
 
     private @NotNull JPanel createLowerPanel(@NotNull UIController controller) {

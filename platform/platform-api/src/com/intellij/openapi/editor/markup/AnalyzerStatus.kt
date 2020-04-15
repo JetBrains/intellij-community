@@ -47,9 +47,9 @@ enum class AnalyzingType {
   EMPTY     // Analyzing in progress but no information is available
 }
 /**
- * Severity status item containing text (not necessarily a number) and a possible icon
+ * Severity status item containing text (not necessarily a number) possible icon and severity type
  */
-data class StatusItem(val text: String, val icon: Icon?)
+data class StatusItem @JvmOverloads constructor(val text: String, val icon: Icon? = null, val type: String? = null)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
