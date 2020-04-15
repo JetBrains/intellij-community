@@ -31,10 +31,7 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
-    inspection.loggerFactoryClassNames.add("java.util.logging.Logger");
-    inspection.loggerFactoryMethodNames.add("getLogger");
-    return inspection;
+    return new LoggerInitializedWithForeignClassInspection();
   }
 
   @Override
@@ -45,7 +42,23 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
       "  public static Logger getLogger(String name) {" +
       "    return null;" +
       "  }" +
+      "}",
+
+      "package org.apache.logging.log4j;" +
+      "public class LogManager {" +
+      "  public static Logger getLogger() {" +
+      "    return null;" +
+      "  }" +
       "}"
     };
+  }
+
+  public void testLog4J2() {
+    doTest("import org.apache.logging.log4j.*;\n" +
+           "class Other {}\n" +
+           "class Logging {\n" +
+           "  private static final Logger LOGGER = LogManager.getLogger(Other.class);\n" +
+           "}"
+    );
   }
 }

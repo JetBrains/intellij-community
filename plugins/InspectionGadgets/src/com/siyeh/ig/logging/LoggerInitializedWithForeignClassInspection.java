@@ -56,7 +56,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     // Apache Commons Logging
     "org.apache.commons.logging.LogFactory," +
     // Java Util Logging
-    "java.util.logging.Logger";
+    "java.util.logging.Logger," +
+    // Log4J 2
+    "org.apache.logging.log4j.LogManager";
 
   @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES =
     //Log4J 1
@@ -66,6 +68,8 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     // Apache Commons Logging
     "getLog," +
     // Java Util Logging
+    "getLogger," +
+    // Log4J 2
     "getLogger";
   protected final List<String> loggerFactoryClassNames = new ArrayList<>();
   protected final List<String> loggerFactoryMethodNames = new ArrayList<>();
