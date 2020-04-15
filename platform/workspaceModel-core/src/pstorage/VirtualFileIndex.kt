@@ -80,6 +80,7 @@ class NullableVirtualFileUrlProperty<T : PTypedEntity> : ReadOnlyProperty<T, Vir
     val virtualFiles = thisRef.snapshot.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
     if (virtualFiles == null) return null
     if (virtualFiles.size > 1) error("Property should have only one value")
+    if (virtualFiles.isEmpty()) return null
     return virtualFiles.first()
   }
 }
@@ -89,6 +90,7 @@ class MutableNullableVirtualFileUrlProperty<T : PModifiableTypedEntity<out PType
     val virtualFiles = thisRef.diff.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
     if (virtualFiles == null) return null
     if (virtualFiles.size > 1) error("Property should have only one value")
+    if (virtualFiles.isEmpty()) return null
     return virtualFiles.first()
   }
 

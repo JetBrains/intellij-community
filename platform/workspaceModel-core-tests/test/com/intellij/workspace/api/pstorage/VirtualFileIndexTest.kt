@@ -1,0 +1,147 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.workspace.api.pstorage
+
+import com.intellij.workspace.api.EntitySource
+import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.VirtualFileUrl
+import com.intellij.workspace.api.VirtualFileUrlManager
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
+
+internal class PVFUEntityData : PEntityData<PVFUEntity>() {
+  lateinit var data: String
+  lateinit var fileProperty: VirtualFileUrl
+}
+
+internal class PNullableVFUEntityData : PEntityData<PNullableVFUEntity>() {
+  lateinit var data: String
+  var fileProperty: VirtualFileUrl? = null
+}
+
+internal class PListVFUEntityData : PEntityData<PVFUEntity>() {
+  lateinit var data: String
+  lateinit var fileProperty: List<VirtualFileUrl>
+}
+
+internal class PVFUEntity(
+  val data: String
+) : PTypedEntity() {
+  val fileProperty: VirtualFileUrl by VirtualFileUrlProperty()
+}
+
+internal class PNullableVFUEntity(
+  val data: String
+) : PTypedEntity() {
+  val fileProperty: VirtualFileUrl? by NullableVirtualFileUrlProperty()
+}
+
+internal class PListVFUEntity(
+  val data: String
+) : PTypedEntity() {
+  val fileProperty: List<VirtualFileUrl> by VirtualFileUrlListProperty()
+}
+
+internal class ModifiablePVFUEntity : PModifiableTypedEntity<PVFUEntity>() {
+  var data: String by EntityDataDelegation()
+  var fileProperty: VirtualFileUrl by MutableVirtualFileUrlProperty()
+}
+
+internal class ModifiablePNullableVFUEntity : PModifiableTypedEntity<PNullableVFUEntity>() {
+  var data: String by EntityDataDelegation()
+  var fileProperty: VirtualFileUrl? by MutableNullableVirtualFileUrlProperty()
+}
+
+internal class ModifiablePListVFUEntity : PModifiableTypedEntity<PListVFUEntity>() {
+  var data: String by EntityDataDelegation()
+  var fileProperty: List<VirtualFileUrl> by MutableVirtualFileUrlListProperty()
+}
+
+internal fun TypedEntityStorageBuilder.addPVFUEntity(data: String,
+                                                     fileUrl: String,
+                                                     virtualFileManager: VirtualFileUrlManager,
+                                                     source: EntitySource = PSampleEntitySource("test")): PVFUEntity {
+  return addEntity(ModifiablePVFUEntity::class.java, source) {
+    this.data = data
+    this.fileProperty = virtualFileManager.fromUrl(fileUrl)
+  }
+}
+
+internal fun TypedEntityStorageBuilder.addPNullableVFUEntity(data: String,
+                                                     fileUrl: String?,
+                                                     virtualFileManager: VirtualFileUrlManager,
+                                                     source: EntitySource = PSampleEntitySource("test")): PNullableVFUEntity {
+  return addEntity(ModifiablePNullableVFUEntity::class.java, source) {
+    this.data = data
+    if (fileUrl != null) this.fileProperty = virtualFileManager.fromUrl(fileUrl)
+  }
+}
+
+internal fun TypedEntityStorageBuilder.addPListVFUEntity(data: String,
+                                                     fileUrl: List<String>,
+                                                     virtualFileManager: VirtualFileUrlManager,
+                                                     source: EntitySource = PSampleEntitySource("test")): PListVFUEntity {
+  return addEntity(ModifiablePListVFUEntity::class.java, source) {
+    this.data = data
+    this.fileProperty = fileUrl.map { virtualFileManager.fromUrl(it) }
+  }
+}
+
+private const val PROPERTY_NAME = "fileProperty"
+
+class VirtualFileIndexTest {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManagerImpl()
+  }
+
+  @Test
+  fun `add entity with not null vfu`() {
+    val fileUrl = "/user/opt/app/a.txt"
+    val builder = PEntityStorageBuilder.create()
+    val entity = builder.addPVFUEntity("hello", fileUrl, virtualFileManager)
+    assertEquals(fileUrl, entity.fileProperty.url)
+    assertEquals(entity.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entity.id, PROPERTY_NAME)?.first())
+  }
+
+  @Test
+  fun `add entity with nullable vfu`() {
+    val builder = PEntityStorageBuilder.create()
+    val entity = builder.addPNullableVFUEntity("hello", null, virtualFileManager)
+    assertNull(entity.fileProperty)
+    assertTrue(builder.virtualFileIndex.getVirtualFileForProperty(entity.id, PROPERTY_NAME)?.isEmpty() ?: false)
+  }
+
+  @Test
+  fun `add entity with vfu list`() {
+    val fileUrlList = listOf("/user/a.txt", "/user/opt/app/a.txt", "/user/opt/app/b.txt")
+    val builder = PEntityStorageBuilder.create()
+    val entity = builder.addPListVFUEntity("hello", fileUrlList, virtualFileManager)
+    assertEquals(fileUrlList, entity.fileProperty.map { it.url }.sorted())
+    assertEquals(fileUrlList.size, builder.virtualFileIndex.getVirtualFileForProperty(entity.id, PROPERTY_NAME)?.size)
+  }
+
+  @Test
+  fun `add entity with diff`() {
+    val fileUrlA = "/user/opt/app/a.txt"
+    val fileUrlB = "/user/opt/app/b.txt"
+    val builder = PEntityStorageBuilder.create()
+    val entityA = builder.addPVFUEntity("bar", fileUrlA, virtualFileManager)
+    assertEquals(fileUrlA, entityA.fileProperty.url)
+    assertEquals(entityA.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityA.id, PROPERTY_NAME)?.first())
+
+    val diff = PEntityStorageBuilder.from(builder.toStorage())
+    val entityB = diff.addPVFUEntity("foo", fileUrlB, virtualFileManager)
+    assertEquals(fileUrlB, entityB.fileProperty.url)
+    assertEquals(entityA.fileProperty, diff.virtualFileIndex.getVirtualFileForProperty(entityA.id, PROPERTY_NAME)?.first())
+    assertEquals(entityB.fileProperty, diff.virtualFileIndex.getVirtualFileForProperty(entityB.id, PROPERTY_NAME)?.first())
+
+    assertTrue(builder.virtualFileIndex.getVirtualFileForProperty(entityB.id, PROPERTY_NAME)?.isEmpty() ?: false)
+    builder.addDiff(diff)
+
+    assertEquals(entityA.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityA.id, PROPERTY_NAME)?.first())
+    assertEquals(entityB.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityB.id, PROPERTY_NAME)?.first())
+  }
+}
