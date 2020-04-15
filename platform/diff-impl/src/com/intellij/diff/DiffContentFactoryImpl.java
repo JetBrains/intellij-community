@@ -469,8 +469,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (fileType == StdFileTypes.PROPERTIES) {
       EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
       Charset propertiesCharset = e.getDefaultCharsetForPropertiesFiles(null);
-      if (propertiesCharset != null && e.isNative2AsciiForPropertiesFiles()) {
-        return Native2AsciiCharset.wrap(propertiesCharset);
+      if (propertiesCharset != null) {
+        if (e.isNative2AsciiForPropertiesFiles()) {
+          return Native2AsciiCharset.wrap(propertiesCharset);
+        }
+        else {
+          return propertiesCharset;
+        }
       }
     }
 
