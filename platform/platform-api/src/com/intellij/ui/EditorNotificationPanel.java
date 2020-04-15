@@ -98,6 +98,11 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return this;
   }
 
+  @NotNull
+  public String getText() {
+    return myLabel.getText();
+  }
+
   public EditorNotificationPanel icon(@NotNull Icon icon) {
     myLabel.setIcon(icon);
     return this;
