@@ -451,7 +451,7 @@ private fun processProgramArguments(args: List<String>): List<String> {
         continue
       }
     }
-    if (SplashManager.NO_SPLASH != arg) {
+    if (!CommandLineArgs.isKnownArgument(arg)) {
       arguments.add(arg)
     }
   }

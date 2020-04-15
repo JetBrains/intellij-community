@@ -277,7 +277,7 @@ public final class SocketLock {
       boolean result = ContainerUtil.intersects(paths, stringList);
       if (result) {
         // update property right now, without scheduling to EDT - in some cases, allows to avoid a splash flickering
-        System.setProperty(SplashManager.NO_SPLASH, "true");
+        System.setProperty(CommandLineArgs.NO_SPLASH, "true");
         EventQueue.invokeLater(() -> {
           Runnable hideSplashTask = SplashManager.getHideTask();
           if (hideSplashTask != null) hideSplashTask.run();

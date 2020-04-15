@@ -29,16 +29,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class SplashManager {
-  @SuppressWarnings("SpellCheckingInspection")
-  public static final String NO_SPLASH = "nosplash";
 
   private static JFrame PROJECT_FRAME;
   private static Splash SPLASH_WINDOW;
 
   public static void show(String @NotNull [] args, Boolean visible) {
     for (String arg : args) {
-      if (NO_SPLASH.equals(arg)) {
-        System.setProperty(NO_SPLASH, "true");
+      if (CommandLineArgs.NO_SPLASH.equals(arg)) {
+        System.setProperty(CommandLineArgs.NO_SPLASH, "true");
         return;
       }
     }

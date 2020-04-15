@@ -7,7 +7,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.idea.SplashManager;
+import com.intellij.idea.CommandLineArgs;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -166,7 +166,7 @@ public final class CommandLineProcessor {
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
-      if (SplashManager.NO_SPLASH.equals(arg) || OPTION_WAIT.equals(arg)) {
+      if (CommandLineArgs.isKnownArgument(arg) || OPTION_WAIT.equals(arg)) {
         continue;
       }
 

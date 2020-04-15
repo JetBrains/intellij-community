@@ -330,7 +330,7 @@ public final class StartupUtil {
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          if (!Main.isLightEdit() && !Boolean.getBoolean(SplashManager.NO_SPLASH)) {
+          if (!Main.isLightEdit() && !Boolean.getBoolean(CommandLineArgs.NO_SPLASH)) {
             Activity prepareSplashActivity = activity.endAndStart("splash preparation");
             EventQueue.invokeLater(() -> {
               Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");

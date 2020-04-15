@@ -110,6 +110,10 @@ public final class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
   public static Set<PluginId> ourPluginsToEnable;
+
+  @ApiStatus.Internal
+  public static boolean ourDisableNonBundledPlugins;
+
   /**
    * Bundled plugins that were updated.
    * When we update bundled plugin it becomes not bundled, so it is more difficult for analytics to use that data.
@@ -1461,6 +1465,9 @@ public final class PluginManagerCore {
   private static void disableIncompatiblePlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                                  @NotNull List<PluginError> errors) {
+    if (ourDisableNonBundledPlugins) {
+      getLogger().info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled");
+    }
     String selectedIds = System.getProperty("idea.load.plugins.id");
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
@@ -1521,6 +1528,10 @@ public final class PluginManagerCore {
       else if (!shouldLoadPlugins) {
         descriptor.setEnabled(false);
         errors.add(new PluginError(descriptor, "is skipped (plugins loading disabled)", null));
+      }
+      else if (!descriptor.isBundled() && ourDisableNonBundledPlugins) {
+        descriptor.setEnabled(false);
+        errors.add(new PluginError(descriptor, "is skipped (third-party plugins loading disabled)", null));
       }
     }
   }
