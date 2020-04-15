@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui
+package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.ide.DataManager
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Point
 import java.awt.Rectangle
