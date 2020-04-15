@@ -17,13 +17,11 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,7 +34,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
   @Override
   public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
-    presentation.setIcon(getRawIcon(item, presentation.isReal()));
+    presentation.setIcon(getRawIcon(item));
 
     presentation.setItemText(getName(item));
     presentation.setItemTextBold(item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
@@ -44,9 +42,18 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     presentation.setTypeText(getText3(item), null);
   }
 
+  /**
+   * @deprecated use {@link #getRawIcon(LookupElement)}
+   */
   @Nullable
+  @Deprecated
   public static Icon getRawIcon(final LookupElement item, boolean real) {
-    Icon icon = _getRawIcon(item, real);
+    return getRawIcon(item);
+  }
+
+  @Nullable
+  public static Icon getRawIcon(final LookupElement item) {
+    Icon icon = _getRawIcon(item);
     if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
     if (icon != null && icon.getIconHeight() > PlatformIcons.CLASS_ICON.getIconHeight()) {
       return new SizedIcon(icon, icon.getIconWidth(), PlatformIcons.CLASS_ICON.getIconHeight());
@@ -55,22 +62,13 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   }
 
   @Nullable
-  private static Icon _getRawIcon(LookupElement item, boolean real) {
+  private static Icon _getRawIcon(LookupElement item) {
     if (item instanceof LookupItem) {
       Icon icon = (Icon)((LookupItem)item).getAttribute(LookupItem.ICON_ATTR);
       if (icon != null) return icon;
     }
 
     Object o = item.getObject();
-
-    if (!real) {
-      if (item.getObject() instanceof String) {
-        return EmptyIcon.ICON_0;
-      }
-
-      int count = Registry.is("ide.completion.show.visibility.icon") ? 2 : 1;
-      return EmptyIcon.create(PlatformIcons.CLASS_ICON.getIconWidth() * count, PlatformIcons.CLASS_ICON.getIconHeight());
-    }
 
     if (o instanceof Iconable && !(o instanceof PsiElement)) {
       return ((Iconable)o).getIcon(Iconable.ICON_FLAG_VISIBILITY);
