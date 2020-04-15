@@ -9,19 +9,23 @@ lombok-intellij-plugin [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateC
 [![Gitter][badge-gitter-img]][badge-gitter] [![Donate][badge-paypal-img]][badge-paypal]
 
 
-## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317-lombok-plugin) to support [Lombok](https://projectlombok.org) annotations. ##
+## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317-lombok-plugin) to support [Lombok](https://projectlombok.org) annotations.
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
 **Last version (0.29) released on 01.03.2020**
 
-## The latest IntelliJ IDE version (2020.1) contains a BUG for several plugins (including plugin for Lombok) were shown as incompatible with the updated version of the IDE.
+---
 
-## You can find the issue with a detailed explanation here: https://youtrack.jetbrains.com/issue/IDEA-237113.
+:collision: **The latest IntelliJ IDEA version (2020.1) contains a BUG :beetle: for several plugins (including plugin for Lombok) were shown as incompatible with the updated version of the IDE.** :collision:
 
-## It has already been resolved and the fix will be in the nearest IDE patch (presumably 2020.1.1).
+You can find the issue with a detailed explanation here: https://youtrack.jetbrains.com/issue/IDEA-237113.
 
-## As of now, the workaround is to re-install the plugin in the IDE settings. 
+It has already been resolved and the fix will be in the nearest IDE patch (presumably 2020.1.1).
+
+:hammer_and_wrench: **FIX:** As of now, the workaround is to re-install the plugin in the IDE settings.
+
+---
 
 34th version of plugin released.
 
