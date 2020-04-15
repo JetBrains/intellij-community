@@ -33,7 +33,7 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
       val content = event.content
       if (content.getUserData(INIT_DONE_KEY) != null) return
 
-      content.component = GHPRToolWindowComponentFactory(project).createComponent(content.remoteUrl ?: return, content.disposer ?: return)
+      content.component = GHPRToolWindowComponentFactory(project, content.remoteUrl ?: return, content.disposer ?: return).createComponent()
       IJSwingUtilities.updateComponentTreeUI(content.component)
       content.putUserData(INIT_DONE_KEY, Any())
     }
