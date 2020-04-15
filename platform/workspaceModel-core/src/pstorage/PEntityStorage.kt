@@ -394,7 +394,7 @@ internal class PEntityStorageBuilder(
         val leftNode = leftMatchedNodes.find(matchedEntityData)
         if (leftNode != null) {
           replaceMap[leftNode.createPid()] = matchedEntityData.createPid()
-          if (leftNode.hasPersistentId()) {
+          if (leftNode.hasPersistentId() && leftNode != matchedEntityData) {
             val clonedEntity = matchedEntityData.clone()
             clonedEntity.id = leftNode.id
             this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz.java)
