@@ -670,7 +670,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     catch (e: Throwable) {
       when {
         e.cause is NoSuchMethodException || e.cause is IllegalArgumentException -> {
-          val exception = PluginException("Bean extension class constructor must not have parameters: $className", pluginId)
+          val exception = PluginException("Class constructor must not have parameters: $className", pluginId)
           if ((pluginDescriptor?.isBundled == true) || getApplication()?.isUnitTestMode == true) {
             LOG.error(exception)
           }
