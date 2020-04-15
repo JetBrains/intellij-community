@@ -210,8 +210,8 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @Override
-    void setComponentValue(final Object value) {
-      getComponent().setSelected(((Boolean) value).booleanValue());
+    void setComponentValue(Object value) {
+      getComponent().setSelected((Boolean)value);
     }
   }
 
