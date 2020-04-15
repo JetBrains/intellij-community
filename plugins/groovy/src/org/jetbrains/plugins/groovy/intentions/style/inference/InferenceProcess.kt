@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies
+import org.jetbrains.plugins.groovy.intentions.style.inference.search.searchWithClosureAvoidance
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
@@ -26,7 +26,7 @@ fun runInferenceProcess(method: GrMethod, options: SignatureInferenceOptions): G
     return convertToGroovyMethod(overridableMethod) ?: method
   }
   val newOptions = options.copy(calls = lazy(NONE) {
-    ReferencesSearch.search(originalMethod, options.searchScope).findAll().sortedBy { it.element.textOffset }
+    searchWithClosureAvoidance(originalMethod, options.searchScope).sortedBy { it.element.textOffset }
   })
   val driver = createDriver(originalMethod, newOptions)
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)
