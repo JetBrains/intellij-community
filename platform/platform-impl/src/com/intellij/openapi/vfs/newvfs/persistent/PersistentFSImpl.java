@@ -149,8 +149,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static List<? extends ChildInfo> persistAllChildren(@NotNull VirtualFile file, int id) {
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
     Map<String, ChildInfo> justCreated = new HashMap<>();
+    String[] delegateNames = VfsUtil.filterNames(fs.list(file));
     ListResult saved = FSRecords.update(id, current -> {
-      String[] delegateNames = VfsUtil.filterNames(fs.list(file));
       List<? extends ChildInfo> currentChildren = current.children;
       if (delegateNames.length == 0 && !currentChildren.isEmpty()) {
         return current;
