@@ -444,7 +444,7 @@ public class ProjectBytecodeAnalysis {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot || 
-          (value == Value.Fail && mutations.getOrDefault(methodKey, MutationSignature.unknown()).isPure())) {
+          (value == Value.Fail && !mutations.getOrDefault(methodKey, MutationSignature.unknown()).isPure())) {
         continue;
       }
       EKey key = entry.getKey().mkStable();
