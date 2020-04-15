@@ -90,10 +90,14 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myDisclaimerPanel.setVisible(settings.isTemplate() && ProjectManager.getInstance().getOpenProjects().length != 0);
   }
 
+  public boolean isFragmented() {
+    return myEditor.isFragmented();
+  }
+
   @Override
   @NotNull
   protected JComponent createEditor() {
-    if (myEditor.isFragmented()) {
+    if (isFragmented()) {
       return myEditor.getComponent();
     }
     myComponentPlace.setLayout(new BorderLayout());

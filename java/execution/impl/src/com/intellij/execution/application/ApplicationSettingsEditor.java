@@ -26,6 +26,8 @@ public class ApplicationSettingsEditor extends FragmentedSettingsEditor<Applicat
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments =
       new ArrayList<>(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
 
+    fragments.add(CommonTags.parallelRun());
+
     LabeledComponent<EditorTextFieldWithBrowseButton> mainClass = new LabeledComponent<>();
     mainClass.setLabelLocation(BorderLayout.WEST);
     mainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true));

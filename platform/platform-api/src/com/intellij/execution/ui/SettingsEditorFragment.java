@@ -23,7 +23,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
-  private boolean mySelected;
 
   public SettingsEditorFragment(String name, C component, int commandLinePosition, BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply) {
     myName = name;
@@ -31,7 +30,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myReset = reset;
     myApply = apply;
     myCommandLinePosition = commandLinePosition;
-    mySelected = name == null;
   }
 
   public SettingsEditorFragment(String name, C component, BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply)  {
@@ -48,12 +46,13 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myName;
   }
 
-  public boolean isSelected() {
-    return mySelected;
+  public boolean isTag() { return false; }
+
+  public boolean isVisible() {
+    return myComponent.isVisible();
   }
 
-  public void setSelected(boolean selected) {
-    mySelected = selected;
+  public void setVisible(boolean selected) {
     myComponent.setVisible(selected);
   }
 
@@ -73,7 +72,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   @Override
   protected @NotNull JComponent createEditor() {
-    myComponent.setVisible(isSelected());
+    myComponent.setVisible(isVisible());
     return myComponent;
   }
 }

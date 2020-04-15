@@ -698,7 +698,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myIsAllowRunningInParallel = configuration.isAllowRunningInParallel();
       myIsAllowRunningInParallelCheckBox.setEnabled(isManagedRunConfiguration);
       myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
-      myIsAllowRunningInParallelCheckBox.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
+      myIsAllowRunningInParallelCheckBox.setVisible(!((ConfigurationSettingsEditorWrapper)getEditor()).isFragmented() &&
+                                                    settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
 
     private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
