@@ -11,7 +11,6 @@ import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
 import org.cef.network.CefCookieManager;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +33,9 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 @ApiStatus.Experimental
 public class JBCefBrowser implements JBCefDisposable {
   private static final String BLANK_URI = "about:blank";
+
+  private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
+  private static final String HTML_STRING_URL = JBCefHtmlStringSchemeHandler.HTML_STRING_SCHEME_NAME + "://jbcefbrowser/loadstring";
 
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
@@ -74,7 +76,7 @@ public class JBCefBrowser implements JBCefDisposable {
       SwingUtilities.invokeLater(
         myHtml == null ?
           () -> browser.loadURL(myUrl) :
-          () -> browser.loadString(myHtml, myUrl));
+          () -> loadString(browser, myHtml, myUrl));
     }
   }
 
@@ -105,7 +107,9 @@ public class JBCefBrowser implements JBCefDisposable {
 
     myCefBrowser = cefBrowser != null ?
       cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : BLANK_URI, false, false);
-    myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
+    JComponent uiComp = (JComponent)myCefBrowser.getUIComponent();
+    uiComp.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
+    myComponent.add(uiComp, BorderLayout.CENTER);
 
     if (cefBrowser == null) {
       myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
@@ -165,7 +169,7 @@ public class JBCefBrowser implements JBCefDisposable {
    */
   public void loadHTML(@NotNull String html, @NotNull String url) {
     if (myIsCefBrowserCreated) {
-      myCefBrowser.loadString(html, url);
+      loadString(myCefBrowser, html, url);
     }
     else {
       myLoadDeferrer = LoadDeferrer.htmlDeferrer(html, url);
@@ -177,6 +181,12 @@ public class JBCefBrowser implements JBCefDisposable {
    */
   public void loadHTML(@NotNull String html) {
     loadHTML(html, BLANK_URI);
+  }
+
+  private static void loadString(CefBrowser cefBrowser, String html, String url) {
+    String loadUrl = HTML_STRING_URL + "?url=" + url;
+    JBCefHtmlStringSchemeHandler.registerRequest(cefBrowser, html, loadUrl);
+    cefBrowser.loadURL(loadUrl);
   }
 
   /**
@@ -289,11 +299,11 @@ public class JBCefBrowser implements JBCefDisposable {
     return myDisposeHelper.isDisposed();
   }
 
-  @SuppressWarnings("unused")
-  @Contract("null->null; !null->!null")
-  protected static JBCefBrowser getJBCefBrowser(CefBrowser browser) {
-    if (browser == null) return null;
-    return ((MyComponent)browser.getUIComponent().getParent()).getJBCefBrowser();
+  /**
+   * Returns {@code JBCefBrowser} instance associated with this {@code CefBrowser}.
+   */
+  public static JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
+    return (JBCefBrowser)((JComponent)browser.getUIComponent()).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
   }
 
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {

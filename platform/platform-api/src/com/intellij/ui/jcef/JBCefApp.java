@@ -34,6 +34,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
+import static com.intellij.ui.jcef.JBCefHtmlStringSchemeHandler.HTML_STRING_SCHEME_NAME;
 
 /**
  * A wrapper over {@link CefApp}.
@@ -60,7 +61,7 @@ public abstract class JBCefApp {
   private static final List<JBCefSchemeHandlerFactory> ourSchemeHandlerFactoryList = Collections.synchronizedList(new ArrayList<>());
 
   private JBCefApp() {
-    CefApp.startup();
+    CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
     //noinspection AbstractMethodCallInConstructor
     CefAppConfig config = getCefAppConfig();
     config.mySettings.windowless_rendering_enabled = false;
@@ -176,19 +177,20 @@ public abstract class JBCefApp {
     @Override
     protected CefAppConfig getCefAppConfig() {
       String ALT_CEF_FRAMEWORK_DIR = System.getenv("ALT_CEF_FRAMEWORK_DIR");
-      String ALT_CEF_BROWSER_SUBPROCESS = System.getenv("ALT_CEF_BROWSER_SUBPROCESS");
-      if (ALT_CEF_FRAMEWORK_DIR == null || ALT_CEF_BROWSER_SUBPROCESS == null) {
+      String ALT_CEF_HELPER_APP_DIR = System.getenv("ALT_CEF_HELPER_APP_DIR");
+      if (ALT_CEF_FRAMEWORK_DIR == null || ALT_CEF_HELPER_APP_DIR == null) {
         String CONTENTS_PATH = System.getProperty("java.home") + "/..";
         if (ALT_CEF_FRAMEWORK_DIR == null) {
           ALT_CEF_FRAMEWORK_DIR = CONTENTS_PATH + "/Frameworks/Chromium Embedded Framework.framework";
         }
-        if (ALT_CEF_BROWSER_SUBPROCESS == null) {
-          ALT_CEF_BROWSER_SUBPROCESS = CONTENTS_PATH + "/Helpers/jcef Helper.app/Contents/MacOS/jcef Helper";
+        if (ALT_CEF_HELPER_APP_DIR == null) {
+          ALT_CEF_HELPER_APP_DIR = CONTENTS_PATH + "/Frameworks/jcef Helper.app";
         }
       }
       return new CefAppConfig(new CefSettings(), new String[] {
         "--framework-dir-path=" + normalize(ALT_CEF_FRAMEWORK_DIR),
-        "--browser-subprocess-path=" + normalize(ALT_CEF_BROWSER_SUBPROCESS),
+        "--browser-subprocess-path=" + normalize(ALT_CEF_HELPER_APP_DIR + "/Contents/MacOS/jcef Helper"),
+        "--main-bundle-path=" + normalize(ALT_CEF_HELPER_APP_DIR),
         "--disable-in-process-stack-traces",
         "--use-mock-keychain"
       });
@@ -294,6 +296,13 @@ public abstract class JBCefApp {
         @Override
         public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
           return FILE_SCHEME_NAME.equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
+        }
+      });
+
+      getInstance().myCefApp.registerSchemeHandlerFactory(HTML_STRING_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
+        @Override
+        public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
+          return HTML_STRING_SCHEME_NAME.equals(schemeName) ? new JBCefHtmlStringSchemeHandler(browser, frame) : null;
         }
       });
     }

@@ -30,15 +30,16 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
 
   public static final String FILE_SCHEME_NAME = "file";
 
-  @NotNull private final CefBrowser myBrowser;
-  @NotNull private final CefFrame myFrame;
+  //@NotNull private final CefBrowser myBrowser;
+  //@NotNull private final CefFrame myFrame;
 
   @Nullable private Path myPath;
   @Nullable private InputStream myInputStream;
 
+  @SuppressWarnings("unused")
   JBCefFileSchemeHandler(@NotNull CefBrowser browser, @NotNull CefFrame frame) {
-    myBrowser = browser;
-    myFrame = frame;
+    //myBrowser = browser;
+    //myFrame = frame;
   }
 
   @Override
@@ -78,14 +79,27 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
     }
     response.setStatus(myInputStream != null ? 200 : 404);
   }
-
   @Override
   public boolean readResponse(byte@NotNull[] data_out, int bytes_to_read, IntRef bytes_read, CefCallback callback) {
+    boolean inProgress = readResponse(myInputStream, data_out, bytes_to_read, bytes_read, callback);
+    if (!inProgress) {
+      myPath = null;
+      myInputStream = null;
+    }
+    return inProgress;
+  }
+
+  static boolean readResponse(@Nullable InputStream inputStream,
+                              byte@NotNull[] data_out,
+                              int bytes_to_read,
+                              IntRef bytes_read,
+                              @SuppressWarnings("unused") CefCallback callback)
+  {
     try {
-      int availableSize = myInputStream != null ? myInputStream.available() : 0;
+      int availableSize = inputStream != null ? inputStream.available() : 0;
       if (availableSize > 0) {
         int bytesToRead = Math.min(bytes_to_read, availableSize);
-        bytesToRead = myInputStream.read(data_out, 0, bytesToRead);
+        bytesToRead = inputStream.read(data_out, 0, bytesToRead);
         bytes_read.set(bytesToRead);
         return true;
       }
@@ -94,20 +108,18 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter {
       LOG.error(e);
     }
     bytes_read.set(0);
-    myPath = null;
-    if (myInputStream != null) {
+    if (inputStream != null) {
       try {
-        myInputStream.close();
+        inputStream.close();
       }
       catch (IOException e) {
         LOG.error(e);
       }
-      myInputStream = null;
     }
     return false;
   }
 
-  private static boolean checkAccessAllowed(Path path) {
+  private static boolean checkAccessAllowed(@SuppressWarnings("unused") Path path) {
     // tav: todo Ask the user or query the settings for JCEF FS access.
     return true;
   }
