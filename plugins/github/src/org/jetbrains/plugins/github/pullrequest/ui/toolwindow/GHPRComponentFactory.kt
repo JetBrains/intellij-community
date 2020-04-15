@@ -5,8 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IdeBorderFactory
@@ -20,62 +18,28 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubImageResizer
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.util.function.Consumer
 import javax.swing.JComponent
 
 internal class GHPRComponentFactory(private val project: Project) {
 
   @CalledInAwt
-  fun createComponent(remoteUrl: GitRemoteUrlCoordinates, account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
-                      parentDisposable: Disposable): JComponent {
-
-    val contextDisposable = Disposer.newDisposable()
-    val contextValue = LazyCancellableBackgroundProcessValue.create(ProgressManager.getInstance()) { indicator ->
-      GHPRDataContextRepository.getInstance(project).getContext(indicator, account, requestExecutor, remoteUrl).also { ctx ->
-        Disposer.register(contextDisposable, ctx)
-        Disposer.register(ctx, Disposable {
-          val editorManager = FileEditorManager.getInstance(project)
-          editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
-        })
-      }
-    }
-    Disposer.register(parentDisposable, contextDisposable)
-    Disposer.register(parentDisposable, Disposable { contextValue.drop() })
-
-    val uiDisposable = Disposer.newDisposable()
-    Disposer.register(parentDisposable, uiDisposable)
-
-    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable).apply {
-      future = contextValue.value
-    }
-
-    return GHLoadingPanel.create(loadingModel,
-                                 { createContent(loadingModel.result!!, uiDisposable) }, uiDisposable,
-                                 errorPrefix = GithubBundle.message("cannot.load.data.from.github"),
-                                 errorHandler = GHLoadingErrorHandlerImpl(project, account) {
-                                   contextValue.drop()
-                                   loadingModel.future = contextValue.value
-                                 })
-  }
-
-  private fun createContent(dataContext: GHPRDataContext, disposable: Disposable): JComponent {
+  fun createComponent(dataContext: GHPRDataContext, disposable: Disposable): JComponent {
     val wrapper = Wrapper()
     ContentController(dataContext, wrapper, disposable)
     return wrapper
