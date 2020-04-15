@@ -45,10 +45,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public static final Key<Boolean> IS_CACHING_ROOT = Key.create("ChangesTree.IsCachingRoot");
 
   @Nullable
-  protected final Project myProject;
+  public final Project myProject;
 
-  @NotNull protected final DefaultTreeModel myModel;
-  @NotNull protected final ChangesBrowserNode<?> myRoot;
+  @NotNull public final DefaultTreeModel myModel;
+  @NotNull public final ChangesBrowserNode<?> myRoot;
   @NotNull private final ChangesGroupingPolicyFactory myGroupingPolicyFactory;
 
   @SuppressWarnings("unchecked")
@@ -68,8 +68,12 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     }
   };
 
-  protected final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
-  protected final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
+  /**
+   * Order in which nodes should be added into the tree while using {@link #insertChangeNode(Object, ChangesBrowserNode, ChangesBrowserNode)}.
+   * This ensures that helper {@link #createPathNode} node will not be created if there is already a 'data' node with the same path.
+   */
+  public final static Comparator<FilePath> PATH_COMPARATOR = comparingInt(path -> path.getPath().length());
+  public final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
 
   /**
    * @deprecated Use {@link #TreeModelBuilder(Project, ChangesGroupingPolicyFactory)}.
@@ -171,9 +175,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     insertChanges(changes, subtreeRoot, null);
   }
 
-  private void insertChanges(@NotNull Collection<? extends Change> changes,
-                             @NotNull ChangesBrowserNode<?> subtreeRoot,
-                             @Nullable ChangeNodeDecorator changeNodeDecorator) {
+  public void insertChanges(@NotNull Collection<? extends Change> changes,
+                            @NotNull ChangesBrowserNode<?> subtreeRoot,
+                            @Nullable ChangeNodeDecorator changeNodeDecorator) {
     for (Change change : sorted(changes, CHANGE_COMPARATOR)) {
       insertChangeNode(change, subtreeRoot, createChangeNode(change, changeNodeDecorator));
     }
@@ -248,7 +252,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  protected ChangesBrowserNode<?> createChangeNode(@NotNull Change change, @Nullable ChangeNodeDecorator decorator) {
+  public ChangesBrowserNode<?> createChangeNode(@NotNull Change change, @Nullable ChangeNodeDecorator decorator) {
     return new ChangesBrowserChangeNode(myProject, change, decorator);
   }
 
@@ -273,7 +277,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  protected ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
+  public ChangesBrowserNode<?> createTagNode(@Nullable Object tag) {
     if (tag == null) return myRoot;
 
     ChangesBrowserNode<?> subtreeRoot = ChangesBrowserNode.createObject(tag);
@@ -317,7 +321,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  private TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths, @NotNull ChangesBrowserNode<?> subtreeRoot) {
+  public TreeModelBuilder setFilePaths(@NotNull Collection<? extends FilePath> filePaths, @NotNull ChangesBrowserNode<?> subtreeRoot) {
     for (FilePath file : sorted(filePaths, PATH_COMPARATOR)) {
       assert file != null;
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFilePath(file));
@@ -392,9 +396,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  protected void insertChangeNode(@NotNull Object change,
-                                  @NotNull ChangesBrowserNode<?> subtreeRoot,
-                                  @NotNull ChangesBrowserNode<?> node) {
+  public void insertChangeNode(@NotNull Object change,
+                               @NotNull ChangesBrowserNode<?> subtreeRoot,
+                               @NotNull ChangesBrowserNode<?> node) {
     insertChangeNode(change, subtreeRoot, node, TreeModelBuilder::createPathNode);
   }
 
