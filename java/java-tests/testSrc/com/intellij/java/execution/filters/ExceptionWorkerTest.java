@@ -529,10 +529,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
       Filter.Result result = filter.applyFilter(stackLine, stackLine.length());
       Integer row = line.getSecond();
       Integer column = line.getThird();
-      if (row == null) {
-        assertNull(result);
-      }
-      else {
+      if (row != null) {
         HyperlinkInfo info = result.getFirstHyperlinkInfo();
         assertNotNull(info);
         info.navigate(getProject());

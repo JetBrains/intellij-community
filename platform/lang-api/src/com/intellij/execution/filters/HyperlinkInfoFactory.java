@@ -18,10 +18,12 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.ToIntFunction;
 
 public abstract class HyperlinkInfoFactory {
@@ -47,4 +49,13 @@ public abstract class HyperlinkInfoFactory {
                                                                  int line,
                                                                  @NotNull Project project,
                                                                  ToIntFunction<? super PsiFile> columnFinder);
+
+  /**
+   * Creates a hyperlink that points to several files with ability to navigate to specific element within the file
+   * 
+   * @param fileToElement map from files to elements
+   * @return newly create HyperlinkInfo that navigates to given psi elements
+   */
+  @NotNull
+  public abstract HyperlinkInfo createMultiplePsiElementHyperlinkInfo(@NotNull Map<? extends VirtualFile, ? extends PsiElement> fileToElement);
 }
