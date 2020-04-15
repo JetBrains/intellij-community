@@ -88,9 +88,8 @@ public class BatchEvaluator {
     final EvaluationContext evaluationContext = command.getEvaluationContext();
     final SuspendContext suspendContext = evaluationContext.getSuspendContext();
 
-    if (!Registry.is("debugger.batch.evaluation") ||
-        !Registry.is("debugger.batch.evaluation.force") ||
-        !hasBatchEvaluator(evaluationContext)) {
+    if (!Registry.is("debugger.batch.evaluation.force") &&
+        (!Registry.is("debugger.batch.evaluation") || !hasBatchEvaluator(evaluationContext))) {
       myDebugProcess.getManagerThread().invokeCommand(command);
     }
     else {
@@ -139,6 +138,9 @@ public class BatchEvaluator {
 
   private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
+      if (!hasBatchEvaluator(evaluationContext)) {
+        return false;
+      }
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
       List<Value> values = StreamEx.of(requests).map(ToStringCommand::getValue).toList();
 
