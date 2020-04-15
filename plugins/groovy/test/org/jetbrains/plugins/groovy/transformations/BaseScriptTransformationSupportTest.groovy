@@ -4,13 +4,15 @@ package org.jetbrains.plugins.groovy.transformations
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.InheritanceUtil
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 @CompileStatic
-class BaseScriptTransformationSupportTest extends GroovyLatestTest {
+class BaseScriptTransformationSupportTest extends GroovyLatestTest implements ResolveTest {
 
   private void doStubTest(String text, String packageName = null) {
     fixture.addFileToProject 'script/base.groovy', 'package script; abstract class MyBaseScript extends Script {}'
@@ -73,5 +75,18 @@ import root.foo.Bar
 '''
       checkHighlighting()
     }
+  }
+
+  @Test
+  void 'resolve to base class getter'() {
+    fixture.addFileToProject 'classes.groovy', '''\
+abstract class BaseClass extends Script {
+    int getStuffFromBaseClass() { 42 }
+}
+'''
+    resolveTest '''\
+@groovy.transform.BaseScript BaseClass script
+<caret>stuffFromBaseClass
+''', GrMethod
   }
 }
