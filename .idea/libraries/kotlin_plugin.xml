@@ -5,6 +5,9 @@
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/android-extensions-compiler.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/android-extensions-ide.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/annotations-13.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/completion-ranking-kotlin-0.0.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/ide-common.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/idea-gradle-tooling-api.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/javaslang-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/javaslang-match-2.0.6.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/javax.inject-1.jar!/" />
