@@ -13,6 +13,7 @@ internal interface SampleEntityForSerialization : TypedEntity, ReferableTypedEnt
   val booleanProperty: Boolean
   val stringProperty: String
   val stringListProperty: List<String>
+  val stringMapProperty: Map<String, String>
   val children: List<SampleEntity>
   val fileProperty: VirtualFileUrl
   val dataClasses: List<SampleDataClassForSerialization>
@@ -22,6 +23,7 @@ internal interface ModifiableSampleEntityForSerialization : SampleEntityForSeria
   override var booleanProperty: Boolean
   override var stringProperty: String
   override var stringListProperty: MutableList<String>
+  override var stringMapProperty: MutableMap<String, String>
   override var fileProperty: VirtualFileUrl
   override var parent: SampleEntity
   override var dataClasses: List<SampleDataClassForSerialization>
@@ -50,6 +52,7 @@ class SerializationInProxyBasedStorageTest {
       parent = sampleEntity
       booleanProperty = true
       stringListProperty = mutableListOf("1", "2")
+      stringMapProperty = mutableMapOf("1" to "2")
       children = listOf(child1, child2)
       fileProperty = tempFolder.toVirtualFileUrl()
       dataClasses = listOf(

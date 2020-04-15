@@ -301,6 +301,15 @@ internal class EntityMetaDataRegistry {
         val itemKind = getPropertyKind(typeArgument, owner)
         EntityPropertyKind.List(itemKind)
       }
+      type.rawType == Map::class.java -> {
+        if (getPropertyKind(type.actualTypeArguments[0], owner) is EntityPropertyKind.Primitive &&
+            getPropertyKind(type.actualTypeArguments[1], owner) is EntityPropertyKind.Primitive) {
+          EntityPropertyKind.Primitive(Map::class.java)
+        }
+        else {
+          error("Type arguments of Map must be of primitive types: $owner")
+        }
+      }
       type.rawType == EntityReference::class.java -> {
         val typeArgument = type.actualTypeArguments.single() as Class<out TypedEntity>
         if (!TypedEntity::class.java.isAssignableFrom(typeArgument)) {

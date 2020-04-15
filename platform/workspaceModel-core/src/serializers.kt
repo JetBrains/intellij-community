@@ -62,6 +62,8 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
     // TODO Reuse OCSerializer.registerUtilitySerializers ?
     // TODO Scan OCSerializer for useful kryo settings and tricks
     kryo.register(java.util.ArrayList::class.java).instantiator = ObjectInstantiator { java.util.ArrayList<Any>() }
+    kryo.register(HashMap::class.java).instantiator = ObjectInstantiator { HashMap<Any, Any>() }
+    kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     kryo.register(Arrays.asList("a").javaClass).instantiator = ObjectInstantiator { java.util.ArrayList<Any>() }
