@@ -81,9 +81,12 @@ final class PluginLoadingResult {
     return result;
   }
 
-  void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin) {
+  void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable PluginError error) {
     if (!idMap.containsKey(plugin.getPluginId())) {
       incompletePlugins.put(plugin.getPluginId(), plugin);
+    }
+    if (error != null) {
+      errors.put(plugin.getPluginId(), error);
     }
   }
 

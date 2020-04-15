@@ -22,6 +22,7 @@ public class InstalledPluginsTableModel {
 
   private final Map<PluginId, Boolean> myEnabled = new HashMap<>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
+  protected boolean myDependenciesUpdated = false;
 
   public InstalledPluginsTableModel() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
@@ -112,6 +113,7 @@ public class InstalledPluginsTableModel {
         myEnabled.put(pluginId, true);
       }
     }
+    myDependenciesUpdated = true;
   }
 
   public void enableRows(IdeaPluginDescriptor @NotNull [] ideaPluginDescriptors, @NotNull Boolean value) {

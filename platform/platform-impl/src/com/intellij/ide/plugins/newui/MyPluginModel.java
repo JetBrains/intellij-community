@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -976,24 +975,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return !plugin.isEnabled() && !PluginManagerCore.isDisabled(pluginId);
   }
 
-  @NotNull
+  @Nullable
   public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
-    String message;
-    String incompatible = PluginManagerCore.getIncompatible(pluginDescriptor);
+    String message = PluginManagerCore.getLoadingError(pluginDescriptor);
 
-    if (incompatible != null) {
-      message = IdeBundle.message("plugin.manager.incompatible.version.message", ApplicationNamesInfo.getInstance().getFullProductName(),
-                                  StringUtil.escapeXmlEntities(incompatible));
-    }
-    else {
+    PluginId disabledDependency = PluginManagerCore.getFirstDisabledDependency(pluginDescriptor);
+    if (disabledDependency != null) {
       Set<PluginId> requiredPlugins = filterRequiredPlugins(getRequiredPlugins(pluginDescriptor.getPluginId()));
-      if (ContainerUtil.isEmpty(requiredPlugins)) {
-        message = IdeBundle.message("plugin.manager.loading.error.message");
-      }
-      else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-        message =IdeBundle.message("plugin.manager.incompatible.ultimate.tooltip");
-      }
-      else {
+      if (requiredPlugins != null && !requiredPlugins.isEmpty()) {
         boolean[] enable = {true};
         String deps = StringUtil.join(requiredPlugins, id -> {
           IdeaPluginDescriptor plugin = findPlugin(id);
@@ -1008,6 +997,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         if (enable[0]) {
           enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
         }
+      }
+      else {
+        message = null;
       }
     }
 
