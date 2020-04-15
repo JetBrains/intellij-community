@@ -15,7 +15,12 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
+import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
+import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,7 +66,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
-public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
+public class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -70,6 +75,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
 
   @NotNull private final Set<VirtualFile> myRoots = new HashSet<>();
+  private boolean myHasMergeCommits = false;
   @NotNull private final List<Change> myChanges = new ArrayList<>();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
   @Nullable private Collection<FilePath> myAffectedPaths;
@@ -138,6 +144,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   @Override
   public void dispose() {
+    super.dispose();
     myUiProperties.removeChangeListener(myListener);
   }
 
@@ -163,6 +170,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
+    myHasMergeCommits = false;
     myUpdateEmptyText = this::updateEmptyText;
 
     update.run();
@@ -180,6 +188,12 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     updateModel(() -> myUpdateEmptyText = statusTextConsumer);
   }
 
+  @Override
+  protected void onActiveChangesFilterChanges() {
+    super.onActiveChangesFilterChanges();
+    myUpdateEmptyText.accept(myViewer.getEmptyText());
+  }
+
   public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
     myAffectedPaths = paths;
     myUpdateEmptyText.accept(myViewer.getEmptyText());
@@ -190,6 +204,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     updateModel(() -> {
       if (!detailsList.isEmpty()) {
         myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
+        myHasMergeCommits = ContainerUtil.exists(detailsList, detail -> detail.getParents().size() > 1);
 
         if (detailsList.size() == 1) {
           VcsFullCommitDetails detail = Objects.requireNonNull(getFirstItem(detailsList));
@@ -214,15 +229,20 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     }
     else if (!myChangesToParents.isEmpty()) {
-      myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
+      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
         appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
                             VcsLogUiUtil.getLinkAttributes(),
                             e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
     }
     else if (isShowOnlyAffectedSelected() && myAffectedPaths != null) {
+      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
+        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"), VcsLogUiUtil.getLinkAttributes(),
+                             e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
+    }
+    else if (!myHasMergeCommits && hasActiveChangesFilter()) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status"))
         .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"), VcsLogUiUtil.getLinkAttributes(),
-                             e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
+                             e -> clearActiveChangesFilter());
     }
     else {
       emptyText.setText("");
@@ -232,14 +252,17 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    Collection<Change> changes = collectAffectedChanges(myChanges);
+    List<Change> changes = collectAffectedChanges(myChanges);
+    ChangesFilterer.FilteredState filteredState = filterChanges(changes, !myHasMergeCommits);
+
     Map<CommitId, Collection<Change>> changesToParents = new LinkedHashMap<>();
     for (Map.Entry<CommitId, Set<Change>> entry : myChangesToParents.entrySet()) {
       changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
     }
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
-    builder.setChanges(changes, null);
+    builder.setChanges(filteredState.getChanges(), null);
+    setPendingChanges(builder, filteredState.getPending(), null);
 
     if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
       if (changes.isEmpty()) {
@@ -261,8 +284,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   @NotNull
-  private Collection<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
-    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return changes;
+  private List<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
+    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return new ArrayList<>(changes);
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
       if (filePath.isDirectory()) {
         return FileHistoryUtil.affectsDirectory(change, filePath);

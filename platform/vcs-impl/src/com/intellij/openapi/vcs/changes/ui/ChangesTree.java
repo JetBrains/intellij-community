@@ -674,6 +674,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
   }
 
+  public boolean isKeepTreeState() {
+    return myKeepTreeState;
+  }
+
   public void setKeepTreeState(boolean keepTreeState) {
     myKeepTreeState = keepTreeState;
   }
