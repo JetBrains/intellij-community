@@ -2,8 +2,11 @@
 package git4idea.index.ui
 
 import com.google.common.base.Objects
+import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.FilePath
@@ -13,6 +16,9 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.OpenSourceUtil
+import com.intellij.util.Processor
 import git4idea.i18n.GitBundle
 import git4idea.index.*
 import git4idea.index.vfs.GitIndexVirtualFile
@@ -21,11 +27,21 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.stream.Stream
+import kotlin.streams.toList
 
 val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
 
 abstract class GitStageTree(project: Project) : ChangesTree(project, false, true) {
   protected abstract val state: GitStageTracker.State
+
+  init {
+    doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
+
+      OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
+      true
+    }
+  }
 
   fun update() {
     val state = TreeState.createOn(this, root)
@@ -70,6 +86,8 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
+        .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
       else -> super.getData(dataId)
     }
   }
