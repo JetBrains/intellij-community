@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.impl.*
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -96,8 +95,19 @@ interface DirectoryContentSpec {
 /**
  * Checks that contents of the given directory matches [spec].
  */
-fun File.assertMatches(spec: DirectoryContentSpec) {
-  assertDirectoryContentMatches(this, spec as DirectoryContentSpecImpl, "")
+@JvmOverloads
+fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact()) {
+  assertDirectoryContentMatches(this, spec as DirectoryContentSpecImpl, "", fileTextMatcher)
+}
+
+interface FileTextMatcher {
+  companion object {
+    @JvmStatic
+    fun ignoreBlankLines(): FileTextMatcher = FileTextMatchers.ignoreBlankLines
+    @JvmStatic
+    fun exact(): FileTextMatcher = FileTextMatchers.exact
+  }
+  fun matches(actualText: String, expectedText: String): Boolean
 }
 
 fun DirectoryContentSpec.generateInVirtualTempDir(): VirtualFile {
