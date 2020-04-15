@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -47,4 +49,8 @@ public interface ScrollingModel {
 
   void addVisibleAreaListener(@NotNull VisibleAreaListener listener);
   void removeVisibleAreaListener(@NotNull VisibleAreaListener listener);
+  default void addVisibleAreaListener(@NotNull VisibleAreaListener listener, @NotNull Disposable disposable) {
+    addVisibleAreaListener(listener);
+    Disposer.register(disposable, () -> removeVisibleAreaListener(listener));
+  }
 }
