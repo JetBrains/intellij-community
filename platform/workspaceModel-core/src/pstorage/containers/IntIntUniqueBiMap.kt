@@ -31,7 +31,7 @@ internal class MutableIntIntUniqueBiMap internal constructor(
   }
 
   fun put(key: Int, value: Int) {
-    if (key in key2Value || value in value2Key) error("$key to $value already exists in the map")
+    if (key2Value.containsKey(key) && key2Value.get(key) == value) error("$key to $value already exists in the map")
     value2Key.put(value, key)
     key2Value.put(key, value)
   }
