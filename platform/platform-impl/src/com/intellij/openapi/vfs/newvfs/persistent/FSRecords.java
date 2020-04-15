@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -967,6 +968,10 @@ public class FSRecords {
       w.lock();
       return action.compute();
     }
+    catch (ProcessCanceledException e) {
+      // now JarFileSystem list methods can be interrupted now
+      throw e;
+    }
     catch (Throwable e) {
       DbConnection.handleError(e);
       throw new RuntimeException(e);
@@ -979,6 +984,10 @@ public class FSRecords {
     try {
       w.lock();
       action.run();
+    }
+    catch (ProcessCanceledException e) {
+      // now JarFileSystem list methods can be interrupted now
+      throw e;
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
