@@ -240,7 +240,9 @@ object ExtractMethodPipeline {
   }
 
   private val annotationsToKeep: Set<String> = setOf(
-    NLS, NON_NLS, LANGUAGE, PROPERTY_KEY, PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER
+    NLS, NON_NLS, LANGUAGE, PROPERTY_KEY, PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, "org.intellij.lang.annotations.RegExp",
+    "org.intellij.lang.annotations.Pattern", "org.intellij.lang.annotations.MagicConstant", "org.intellij.lang.annotations.Subst",
+    "org.intellij.lang.annotations.PrintFormat", "java.util.regex.Pattern"
   )
 
   private fun findAnnotationsToKeep(variable: PsiVariable?): List<PsiAnnotation> {
