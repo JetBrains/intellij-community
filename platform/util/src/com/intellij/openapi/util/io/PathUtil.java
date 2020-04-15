@@ -64,7 +64,7 @@ public class PathUtil {
     return c == '/' || c == '\\';
   }
 
-  private static boolean isDriveLetter(char c) {
+  public static boolean isDriveLetter(char c) {
     return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z';
   }
 

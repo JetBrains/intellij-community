@@ -946,4 +946,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertFalse("still valid: " + jarParentPointer, jarParentPointer.isValid());
     assertFalse("still valid: " + jarPointer, jarPointer.isValid());
   }
+
+  @Test
+  public void testProjectUnderNetworkMountDoesntOpenAnymoreAfterUpgradeTo2019_3() {
+    assertNotNull(myVirtualFilePointerManager.create("file://Z://.idea/Q.iml", disposable, null));
+  }
 }
