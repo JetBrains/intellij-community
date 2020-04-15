@@ -3,9 +3,6 @@ package com.intellij.workspace.api.pstorage
 
 import com.google.common.collect.*
 import com.intellij.workspace.api.*
-import java.util.*
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
@@ -319,8 +316,180 @@ internal class PEntityStorageBuilder(
   private fun PEntityData<*>.persistentId() =
     (this.createEntity(this@PEntityStorageBuilder) as TypedEntityWithPersistentId).persistentId()
 
+  private fun PEntityData<*>.hasPersistentId(): Boolean {
+    val entity = this.createEntity(this@PEntityStorageBuilder)
+    return entity is TypedEntityWithPersistentId
+  }
+
+  private fun PEntityData<*>.identificator(): Any {
+    val entity = this.createEntity(this@PEntityStorageBuilder)
+    return if (entity is TypedEntityWithPersistentId) {
+      entity.persistentId()
+    }
+    else {
+      this.hashCode()
+    }
+  }
+
+  private fun replaceBySourcePredicate(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage) {
+    replaceWith as AbstractPEntityStorage
+
+    val leftMatchedNodes: MutableMap<Any, PEntityData<out TypedEntity>> = HashMap()
+    val rightMatchedNodes: MutableMap<Any, PEntityData<out TypedEntity>> = HashMap()
+    val unmatchedLeftReferencedNodes: MutableMap<Any, PEntityData<out TypedEntity>> = HashMap()
+
+    // Local to remote
+    val replaceMap = HashBiMap.create<PId<out TypedEntity>, PId<out TypedEntity>>()
+
+    // 1) Traverse all entities and store matched only
+    this.entitiesByType.all().asSequence().map { it.value }.flatMap { it.all() }
+      .filter { sourceFilter(it.entitySource) }
+      .associateByTo(leftMatchedNodes) { it.identificator() }
+
+    // 1.1) Cleanup references
+    for (matchedEntityData in leftMatchedNodes.asSequence().map { it.value }) {
+      val entityId = matchedEntityData.createPid()
+      for ((connectionId, parentId) in this.refs.getParentRefsOfChild(entityId, false)) {
+        val parentEntity = this.entityDataByIdOrDie(parentId)
+        if (sourceFilter(parentEntity.entitySource)) {
+          // Remove the connection between matched entities
+          this.refs.removeParentToChildRef(connectionId, parentId, entityId)
+        }
+        else {
+          unmatchedLeftReferencedNodes[parentEntity.identificator()] = parentEntity
+        }
+      }
+
+      for ((connectionId, childrenIds) in this.refs.getChildrenRefsOfParentBy(entityId, false)) {
+        for (childId in childrenIds) {
+          val childEntity = this.entityDataByIdOrDie(childId)
+          if (sourceFilter(childEntity.entitySource)) {
+            this.refs.removeParentToChildRef(connectionId, entityId, childId)
+          }
+          else {
+            unmatchedLeftReferencedNodes[childEntity.identificator()] = childEntity
+          }
+        }
+      }
+    }
+
+    // 2) Traverse entities of the enemy
+    for ((clazz, entityFamily) in replaceWith.entitiesByType) {
+      for (matchedEntityData in entityFamily.all().filter { sourceFilter(it.entitySource) }) {
+        rightMatchedNodes[matchedEntityData.identificator()] = matchedEntityData
+
+        val leftNode = leftMatchedNodes[matchedEntityData.identificator()]
+        if (leftNode != null) {
+          replaceMap[leftNode.createPid()] = matchedEntityData.createPid()
+          if (!leftNode.hasPersistentId()) {
+            leftMatchedNodes.remove(leftNode.identificator())
+          }
+          else {
+            val clonedEntity = matchedEntityData.clone()
+            clonedEntity.id = leftNode.id
+            this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz.java)
+            // TODO: 15.04.2020 Children and parents?
+            updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyMap(), emptyMap())) }
+          }
+        }
+        else {
+          val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, clazz as Class<TypedEntity>)
+          replaceMap[newEntity.createPid()] = matchedEntityData.createPid()
+          // TODO: 15.04.2020 Children and parents?
+          updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz.java, emptyMap(), emptyMap())) }
+        }
+      }
+    }
+
+    // 3) Remove old entities
+    for (leftEntity in leftMatchedNodes.values) {
+      // XXX do not create entity
+      this.entitiesByType.remove(leftEntity.id, leftEntity.createEntity(this).javaClass)
+      updateChangeLog { it.add(ChangeEntry.RemoveEntity(leftEntity.createPid())) }
+    }
+
+    // 4) Restore references between matched and unmatched entities
+    for (unmatchedNode in unmatchedLeftReferencedNodes.values) {
+      val unmatchedId = unmatchedNode.createPid()
+      val unmatchedEntityData = replaceWith.entityDataById(unmatchedId)
+      if (unmatchedEntityData == null) {
+        // TODO: 14.04.2020 Don't forget about entities with persistence id
+        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId, false)) {
+          val parent = this.entityDataById(parentId)
+
+          if (parent == null) {
+            if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY
+                || connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY
+                || connectionId.isChildNullable) {
+              this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
+            }
+            else {
+              error("Cannot link old entity to the new one")
+            }
+          }
+        }
+        for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId, false)) {
+          for (childId in childIds) {
+            val child = this.entityDataById(childId)
+            if (child == null) {
+              if (connectionId.isParentNullable) {
+                this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
+              }
+              else {
+                error("Cannot link old entity to the new one")
+              }
+            }
+          }
+        }
+      }
+      else {
+        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId, false)) {
+          if (!sourceFilter(this.entityDataByIdOrDie(parentId).entitySource)) continue
+          this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
+        }
+
+        for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(unmatchedId, false)) {
+          if (!sourceFilter(this.entityDataByIdOrDie(parentId).entitySource)) continue
+          val localParentId = replaceMap.inverse().get(parentId)!!
+          this.refs.updateParentOfChild(connectionId, unmatchedId, localParentId)
+        }
+
+        for ((connectionId, childrenId) in this.refs.getChildrenRefsOfParentBy(unmatchedId, false)) {
+          for (childId in childrenId) {
+            if (!sourceFilter(this.entityDataByIdOrDie(childId).entitySource)) continue
+            this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
+          }
+        }
+
+        for ((connectionId, childrenId) in replaceWith.refs.getChildrenRefsOfParentBy(unmatchedId, false)) {
+          for (childId in childrenId) {
+            if (!sourceFilter(this.entityDataByIdOrDie(childId).entitySource)) continue
+            val localChildId = replaceMap.inverse()[childId]!!
+            this.refs.updateParentOfChild(connectionId, localChildId, unmatchedId)
+          }
+        }
+      }
+    }
+
+    // 5) Restore references in matching ids
+    for (rightMatchedNode in rightMatchedNodes.values) {
+      val nodeId = rightMatchedNode.createPid()
+      for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId, false)) {
+        if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
+
+        val localChildId = replaceMap.inverse().get(nodeId)!!
+        val localParentId = replaceMap.inverse().get(parentId)!!
+
+        this.refs.updateParentOfChild(connectionId as ConnectionId<TypedEntity, TypedEntity>, localChildId, localParentId)
+      }
+    }
+  }
+
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage) {
 
+    replaceBySourcePredicate(sourceFilter, replaceWith)
+
+/*
     val entitiesByPersistentIdHash = groupByPersistentIdHash(this)
     val replaceWithEntitiesByPersistentIdHash = groupByPersistentIdHash(replaceWith as AbstractPEntityStorage)
 
@@ -508,6 +677,7 @@ internal class PEntityStorageBuilder(
         recursiveAddEntity(idToAdd/*, replaceWithBackReferrers*/, replaceWith, replaceMap, sourceFilter)
       }
     }
+*/
 
   }
 
