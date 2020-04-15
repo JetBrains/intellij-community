@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
@@ -74,8 +74,8 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     PsiFile java2 = fileTree.addTestFile("Pair.java", "empty content");
     PsiFile java3 = fileTree.addTestFile("Pair2.java", "empty content");
 
-    PsiFile php = fileTree.addTestFile("Test.php", "empty content");
-    PsiFile js = fileTree.addTestFile("Test.js", "empty content");
+    PsiFile php = fileTree.addTestFile("Test.phpMask", "empty content");
+    PsiFile js = fileTree.addTestFile("Test.jsMask", "empty content");
 
     reformatDirectoryWithFileMask(myWorkingDirectory, null);
     assertWasFormatted(java1, java2, java3, php, js);
@@ -88,14 +88,14 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     PsiFile java2 = fileTree.addTestFile("Pair.java", "empty content");
     PsiFile java3 = fileTree.addTestFile("Pair2.java", "empty content");
 
-    PsiFile php = fileTree.addTestFile("Test.php", "empty content");
-    PsiFile js = fileTree.addTestFile("Test.js", "empty content");
+    PsiFile php = fileTree.addTestFile("Test.phpMask", "empty content");
+    PsiFile js = fileTree.addTestFile("Test.jsMask", "empty content");
 
     reformatDirectoryWithFileMask(myWorkingDirectory, "*.java");
     assertWasFormatted(java1, java2, java3);
     assertWasNotFormatted(php, js);
 
-    reformatDirectoryWithFileMask(myWorkingDirectory, "*.js");
+    reformatDirectoryWithFileMask(myWorkingDirectory, "*.jsMask");
     assertWasFormatted(js);
     assertWasNotFormatted(java1, java2, java3, php);
 
@@ -108,51 +108,51 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     PsiFile java2 = fileTree.addTestFile("Pair.java", "empty content");
     PsiFile java3 = fileTree.addTestFile("Pair2.java", "empty content");
 
-    PsiFile php1 = fileTree.addTestFile("Test.php", "empty content");
-    PsiFile php2 = fileTree.addTestFile("Test2.php", "empty content");
+    PsiFile php1 = fileTree.addTestFile("Test.phpMask", "empty content");
+    PsiFile php2 = fileTree.addTestFile("Test2.phpMask", "empty content");
 
-    PsiFile js1 = fileTree.addTestFile("Test1.js", "empty content");
-    PsiFile js2 = fileTree.addTestFile("Test2.js", "empty content");
-    PsiFile js3 = fileTree.addTestFile("Test3.js", "empty content");
+    PsiFile js1 = fileTree.addTestFile("Test1.jsMask", "empty content");
+    PsiFile js2 = fileTree.addTestFile("Test2.jsMask", "empty content");
+    PsiFile js3 = fileTree.addTestFile("Test3.jsMask", "empty content");
 
-    PsiFile py1 = fileTree.addTestFile("Test1.py", "empty content");
-    PsiFile py2 = fileTree.addTestFile("Test2.py", "empty content");
-    PsiFile py3 = fileTree.addTestFile("Test3.py", "empty content");
+    PsiFile py1 = fileTree.addTestFile("Test1.pyMask", "empty content");
+    PsiFile py2 = fileTree.addTestFile("Test2.pyMask", "empty content");
+    PsiFile py3 = fileTree.addTestFile("Test3.pyMask", "empty content");
 
-    reformatDirectoryWithFileMask(myWorkingDirectory, "*.js, *.java");
+    reformatDirectoryWithFileMask(myWorkingDirectory, "*.jsMask, *.java");
     assertWasFormatted(js1, js2, js3, java1, java2, java3);
     assertWasNotFormatted(php1, php2, py1, py2, py3);
 
-    reformatDirectoryWithFileMask(myWorkingDirectory, "*.php, *.js");
+    reformatDirectoryWithFileMask(myWorkingDirectory, "*.phpMask, *.jsMask");
     assertWasFormatted(js1, js2, js3, php1, php2);
     assertWasNotFormatted(java1, java2, java3, py1, py2, py3);
 
-    reformatDirectoryWithFileMask(myWorkingDirectory, "*.js, *.php, *.java");
+    reformatDirectoryWithFileMask(myWorkingDirectory, "*.jsMask, *.phpMask, *.java");
     assertWasFormatted(js1, js2, js3, php1, php2, java1, java2, java3);
     assertWasNotFormatted(py1, py2, py3);
 
-    reformatDirectoryWithFileMask(myWorkingDirectory, "*.js, *.php, *.java, *.py");
+    reformatDirectoryWithFileMask(myWorkingDirectory, "*.jsMask, *.phpMask, *.java, *.pyMask");
     assertWasFormatted(js1, js2, js3, php1, php2, java1, java2, java3, py1, py2, py3);
 
-    reformatDirectoryWithFileMask(myWorkingDirectory, "*.jsp, *.dart");
+    reformatDirectoryWithFileMask(myWorkingDirectory, "*.jsp, *.dartMask");
     assertWasNotFormatted(js1, js2, js3, php1, php2, java1, java2, java3, py1, py2, py3);
   }
 
   public void testDirectoryScope() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
     PsiFile java1 = fileTree.addTestFile("Test1.java", "empty content");
-    PsiFile php1 = fileTree.addTestFile("Pair1.php", "empty content");
-    PsiFile js1 = fileTree.addTestFile("Pair1.js", "empty content");
+    PsiFile php1 = fileTree.addTestFile("Pair1.phpMask", "empty content");
+    PsiFile js1 = fileTree.addTestFile("Pair1.jsMask", "empty content");
 
     PsiDirectory outer = fileTree.createDirectoryAndMakeItCurrent("toFormat");
     PsiFile java2 = fileTree.addTestFile("Test2.java", "empty content");
-    PsiFile php2 = fileTree.addTestFile("Pair2.php", "empty content");
-    PsiFile js2 = fileTree.addTestFile("Pair2.js", "empty content");
+    PsiFile php2 = fileTree.addTestFile("Pair2.phpMask", "empty content");
+    PsiFile js2 = fileTree.addTestFile("Pair2.jsMask", "empty content");
 
     PsiDirectory inner = fileTree.createDirectoryAndMakeItCurrent("toFormat");
     PsiFile java3 = fileTree.addTestFile("Test3.java", "empty content");
-    PsiFile php3 = fileTree.addTestFile("Pair3.php", "empty content");
-    PsiFile js3 = fileTree.addTestFile("Pair3.js", "empty content");
+    PsiFile php3 = fileTree.addTestFile("Pair3.phpMask", "empty content");
+    PsiFile js3 = fileTree.addTestFile("Pair3.jsMask", "empty content");
 
 
     reformatDirectoryWithScopeFilter(myWorkingDirectory, directoryScope(outer, true));
@@ -177,29 +177,29 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
   public void testDirectoryScopeWithMask() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
     PsiFile java1 = fileTree.addTestFile("Test1.java", "empty content");
-    PsiFile php1 = fileTree.addTestFile("Pair1.php", "empty content");
-    PsiFile js1 = fileTree.addTestFile("Pair1.js", "empty content");
+    PsiFile php1 = fileTree.addTestFile("Pair1.phpMask", "empty content");
+    PsiFile js1 = fileTree.addTestFile("Pair1.jsMask", "empty content");
 
     PsiDirectory outer = fileTree.createDirectoryAndMakeItCurrent("toFormat");
     PsiFile java2 = fileTree.addTestFile("Test2.java", "empty content");
-    PsiFile php2 = fileTree.addTestFile("Pair2.php", "empty content");
-    PsiFile js2 = fileTree.addTestFile("Pair2.js", "empty content");
+    PsiFile php2 = fileTree.addTestFile("Pair2.phpMask", "empty content");
+    PsiFile js2 = fileTree.addTestFile("Pair2.jsMask", "empty content");
 
     PsiDirectory inner = fileTree.createDirectoryAndMakeItCurrent("toFormat");
     PsiFile java3 = fileTree.addTestFile("Test3.java", "empty content");
-    PsiFile php3 = fileTree.addTestFile("Pair3.php", "empty content");
-    PsiFile js3 = fileTree.addTestFile("Pair3.js", "empty content");
+    PsiFile php3 = fileTree.addTestFile("Pair3.phpMask", "empty content");
+    PsiFile js3 = fileTree.addTestFile("Pair3.jsMask", "empty content");
 
 
-    reformatDirectory(myWorkingDirectory, "*.js", directoryScope(outer, true));
+    reformatDirectory(myWorkingDirectory, "*.jsMask", directoryScope(outer, true));
     assertWasFormatted(js2, js3);
     assertWasNotFormatted(java1, php1, js1, java2, php2, java3, php3);
 
-    reformatDirectory(myWorkingDirectory, "*.js", directoryScope(myWorkingDirectory, false));
+    reformatDirectory(myWorkingDirectory, "*.jsMask", directoryScope(myWorkingDirectory, false));
     assertWasFormatted(js1);
     assertWasNotFormatted(js2, js3, java1, php1, java2, php2, java3, php3);
 
-    reformatDirectory(myWorkingDirectory, "*.java, *.php", directoryScope(myWorkingDirectory, false).union(directoryScope(inner, false)));
+    reformatDirectory(myWorkingDirectory, "*.java, *.phpMask", directoryScope(myWorkingDirectory, false).union(directoryScope(inner, false)));
     assertWasFormatted(java1, php1, java3, php3);
     assertWasNotFormatted(java2, php2, js1, js2, js3);
   }
@@ -209,13 +209,13 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
 
     fileTree.createDirectoryAndMakeItCurrent("src");
     PsiFile java2 = fileTree.addTestFile("Test2.tj", "empty content");
-    PsiFile php2 = fileTree.addTestFile("Pair2.php", "empty content");
-    PsiFile js2 = fileTree.addTestFile("Pair2.js", "empty content");
+    PsiFile php2 = fileTree.addTestFile("Pair2.phpMask", "empty content");
+    PsiFile js2 = fileTree.addTestFile("Pair2.jsMask", "empty content");
 
     PsiDirectory test = fileTree.createDirectoryAndMakeItCurrent("test");
     PsiFile testJava1 = fileTree.addTestFile("testJava1.tj", "empty content");
-    PsiFile testPhp1 = fileTree.addTestFile("testPhp1.php", "empty content");
-    PsiFile testJs1 = fileTree.addTestFile("testJs1.js", "empty content");
+    PsiFile testPhp1 = fileTree.addTestFile("testPhp1.phpMask", "empty content");
+    PsiFile testJs1 = fileTree.addTestFile("testJs1.jsMask", "empty content");
 
     GlobalSearchScope testScope = directoryScope(test, true);
 
