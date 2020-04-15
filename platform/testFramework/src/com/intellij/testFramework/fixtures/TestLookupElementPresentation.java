@@ -19,12 +19,7 @@ public class TestLookupElementPresentation extends LookupElementPresentation {
 
   @NotNull
   public static TestLookupElementPresentation renderReal(@NotNull LookupElement e) {
-    TestLookupElementPresentation p = new TestLookupElementPresentation() {
-      @Override
-      public boolean isReal() {
-        return true;
-      }
-    };
+    TestLookupElementPresentation p = new TestLookupElementPresentation();
     //noinspection rawtypes
     LookupElementRenderer renderer = e.getExpensiveRenderer();
     if (renderer != null) {

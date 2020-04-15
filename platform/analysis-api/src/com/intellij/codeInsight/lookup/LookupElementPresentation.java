@@ -111,13 +111,12 @@ public class LookupElementPresentation {
   }
 
   /**
-   * Is equivalent to instanceof {@link RealLookupElementPresentation} check.
-   *
-   * @return whether the presentation is requested to actually render lookup element on screen, or just to estimate its width.
-   * In the second, 'non-real' case, some heavy operations (e.g. getIcon()) can be omitted (only icon width is important)
+   * @deprecated Always returns true. To speed up completion by delaying rendering more expensive parts,
+   * implement {@link LookupElement#getExpensiveRenderer()}.
    */
+  @Deprecated
   public boolean isReal() {
-    return false;
+    return true;
   }
 
   @Nullable
