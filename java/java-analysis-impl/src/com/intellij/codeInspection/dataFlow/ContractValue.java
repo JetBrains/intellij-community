@@ -68,7 +68,7 @@ public abstract class ContractValue {
       }
       argValues[i] = argValue;
     }
-    return makeCondition(factory, new DfaCallArguments(qualifierValue, argValues, JavaMethodContractUtil.isPure(method)));
+    return makeCondition(factory, new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call)));
   }
 
   /**
@@ -323,7 +323,7 @@ public abstract class ContractValue {
           if (!target.equals(dfType) && target != DfTypes.BOTTOM) {
             DfaValue[] newArguments = arguments.myArguments.clone();
             newArguments[index] = arg.getFactory().fromDfType(target);
-            return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myPure);
+            return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myMutation);
           }
         }
       }

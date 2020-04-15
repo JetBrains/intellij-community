@@ -155,7 +155,7 @@ public class ProjectBytecodeAnalysis {
     if (contractValues != null) {
       annotationParameters.put("value", contractValues);
     }
-    if (mutationSignature == MutationSignature.pure()) {
+    if (mutationSignature.isPure()) {
       annotationParameters.put("pure", "true");
     }
     else if (mutationSignature != MutationSignature.unknown()) {
@@ -444,7 +444,7 @@ public class ProjectBytecodeAnalysis {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot || 
-          (value == Value.Fail && mutations.get(methodKey) != MutationSignature.pure())) {
+          (value == Value.Fail && mutations.getOrDefault(methodKey, MutationSignature.unknown()).isPure())) {
         continue;
       }
       EKey key = entry.getKey().mkStable();

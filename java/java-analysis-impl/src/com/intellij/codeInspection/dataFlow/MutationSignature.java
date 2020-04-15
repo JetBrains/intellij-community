@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -75,6 +78,33 @@ public class MutationSignature {
     boolean[] params = Arrays.copyOf(myParameters, Math.max(n + 1, myParameters.length));
     params[n] = true;
     return new MutationSignature(myThis, params);
+  }
+
+  /**
+   * @return true if this signature represents a pure method
+   */
+  public boolean isPure() {
+    return this == PURE;
+  }
+
+  @Override
+  public int hashCode() {
+    return (myThis ? 137 : 731) + Arrays.hashCode(myParameters);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    return obj instanceof MutationSignature && ((MutationSignature)obj).myThis == myThis &&
+           Arrays.equals(((MutationSignature)obj).myParameters, myParameters);
+  }
+
+  @Override
+  public String toString() {
+    if (isPure()) return "(pure)";
+    if (this == UNKNOWN) return "(unknown)";
+    return IntStreamEx.range(myParameters.length).mapToEntry(idx -> "param" + (idx + 1), idx -> myParameters[idx])
+      .prepend("this", myThis).filterValues(b -> b).keys().joining(",");
   }
 
   /**
@@ -184,6 +214,37 @@ public class MutationSignature {
   public static @NotNull MutationSignature fromMethod(@Nullable PsiMethod method) {
     if (method == null) return UNKNOWN;
     return JavaMethodContractUtil.getContractInfo(method).getMutationSignature();
+  }
+
+  public static @NotNull MutationSignature fromCall(@Nullable PsiCall call) {
+    if (call == null) return UNKNOWN;
+    PsiMethod method = call.resolveMethod();
+    if (method != null) {
+      if (SpecialField.findSpecialField(method) != null) {
+        return PURE;
+      }
+      return fromMethod(method);
+    }
+    if (call instanceof PsiNewExpression) {
+      PsiNewExpression newExpression = (PsiNewExpression)call;
+      if (newExpression.isArrayCreation()) return PURE;
+      if (newExpression.getArgumentList() == null || !newExpression.getArgumentList().isEmpty()) return UNKNOWN;
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+      if (classReference == null) return UNKNOWN;
+      PsiClass clazz = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
+      if (clazz == null) return UNKNOWN;
+      Set<PsiClass> visited = new HashSet<>();
+      while (true) {
+        for (PsiMethod ctor : clazz.getConstructors()) {
+          if(ctor.getParameterList().isEmpty()) {
+            return fromMethod(ctor);
+          }
+        }
+        clazz = clazz.getSuperClass();
+        if (clazz == null || !visited.add(clazz)) return unknown();
+      }
+    }
+    return UNKNOWN;
   }
 
   /**

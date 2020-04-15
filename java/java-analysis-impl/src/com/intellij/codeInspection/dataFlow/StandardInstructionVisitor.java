@@ -270,7 +270,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
       }
     }
-    return new DfaCallArguments(qualifier, arguments, JavaMethodContractUtil.isPure(method));
+    return new DfaCallArguments(qualifier, arguments, MutationSignature.fromMethod(method));
   }
 
   @Override
@@ -376,7 +376,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
     for (DfaMemoryState state : finalStates) {
-      if (instruction.shouldFlushFields()) {
+      if (!instruction.getMutationSignature().isPure()) {
+        // TODO: support more precise mutations
         state.flushFields();
       }
       pushExpressionResult(state.pop(), instruction, state);
@@ -386,17 +387,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   protected @NotNull DfaCallArguments popCall(MethodCallInstruction instruction, DfaValueFactory factory, DfaMemoryState memState) {
-    PsiMethod method = instruction.getTargetMethod();
-    MutationSignature sig = MutationSignature.fromMethod(method);
-    DfaValue[] argValues = popCallArguments(instruction, factory, memState, sig);
-    final DfaValue qualifier = popQualifier(instruction, memState, sig);
-    return new DfaCallArguments(qualifier, argValues, !instruction.shouldFlushFields());
+    DfaValue[] argValues = popCallArguments(instruction, factory, memState);
+    final DfaValue qualifier = popQualifier(instruction, memState);
+    return new DfaCallArguments(qualifier, argValues, instruction.getMutationSignature());
   }
 
   private DfaValue @Nullable [] popCallArguments(MethodCallInstruction instruction,
                                                  DfaValueFactory factory,
-                                                 DfaMemoryState memState,
-                                                 MutationSignature sig) {
+                                                 DfaMemoryState memState) {
     final int argCount = instruction.getArgCount();
 
     PsiMethod method = instruction.getTargetMethod();
@@ -437,7 +435,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           checkNotNullable(memState, arg, NullabilityProblemKind.passingToNonAnnotatedMethodRefParameter.problem(methodRef, null));
         }
       }
-      if (sig.mutatesArg(paramIndex) && Mutability.fromDfType(memState.getDfType(arg)).isUnmodifiable()) {
+      if (instruction.getMutationSignature().mutatesArg(paramIndex) && Mutability.fromDfType(memState.getDfType(arg)).isUnmodifiable()) {
         reportMutabilityViolation(false, anchor);
         DfType dfType = memState.getDfType(arg);
         if (dfType instanceof DfReferenceType) {
@@ -454,16 +452,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   protected void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
   }
 
-  private DfaValue popQualifier(MethodCallInstruction instruction,
-                                DfaMemoryState memState,
-                                MutationSignature sig) {
+  private DfaValue popQualifier(@NotNull MethodCallInstruction instruction, @NotNull DfaMemoryState memState) {
     DfaValue value = memState.pop();
     if (instruction.getContext() instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)instruction.getContext();
       value = dereference(memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
     }
     DfType dfType = memState.getDfType(value);
-    if (sig.mutatesThis() && Mutability.fromDfType(dfType).isUnmodifiable()) {
+    if (instruction.getMutationSignature().mutatesThis() && Mutability.fromDfType(dfType).isUnmodifiable()) {
       reportMutabilityViolation(true, instruction.getContext());
       if (dfType instanceof DfReferenceType) {
         memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
@@ -471,7 +467,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     if (!(value.getType() instanceof PsiArrayType) &&
         (TypeConstraint.fromDfType(dfType).isComparedByEquals() ||
-         instruction.shouldFlushFields() || mayLeakFromType(instruction.getResultType()))) {
+         !instruction.getMutationSignature().isPure() || mayLeakFromType(instruction.getResultType()))) {
       value = dropLocality(value, memState);
     }
     return value;
@@ -642,7 +638,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfType dfType = instruction.getContext() instanceof PsiNewExpression ?
                       TypeConstraints.exact(type).asDfType().meet(NOT_NULL_OBJECT) :
                       TypeConstraints.instanceOf(type).asDfType().meet(DfaNullability.fromNullability(nullability).asDfType());
-      if (!instruction.shouldFlushFields() && instruction.getContext() instanceof PsiNewExpression) {
+      if (instruction.getMutationSignature().isPure() && instruction.getContext() instanceof PsiNewExpression) {
         dfType = dfType.meet(LOCAL_OBJECT);
       }
       return factory.fromDfType(dfType.meet(mutable.asDfType()));
