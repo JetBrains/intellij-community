@@ -1549,13 +1549,19 @@ public final class PluginManagerCore {
       }
     }
 
+    Map<PluginId, Set<String>> brokenPluginVersions = getBrokenPluginVersions();
     boolean shouldLoadPlugins = Boolean.parseBoolean(System.getProperty("idea.load.plugins", "true"));
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       if (descriptor == coreDescriptor) {
         continue;
       }
 
-      if (explicitlyEnabled != null) {
+      Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
+      if (set != null && set.contains(descriptor.getVersion())) {
+        descriptor.setEnabled(false);
+        errors.add(new PluginError(descriptor, "was marked as broken", "marked as broken"));
+      }
+      else if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor)) {
           descriptor.setEnabled(false);
           getLogger().info("Plugin " + toPresentableName(descriptor) + " " +

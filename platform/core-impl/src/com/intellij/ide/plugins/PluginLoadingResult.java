@@ -129,12 +129,6 @@ final class PluginLoadingResult {
     }
 
     if (!descriptor.isBundled()) {
-      Set<String> set = brokenPluginVersions.get(pluginId);
-      if (set != null && set.contains(descriptor.getVersion())) {
-        errors.put(pluginId, new PluginError(descriptor, "was marked as broken", "marked as broken"));
-        return true;
-      }
-
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
         String message = "defines no module dependencies (supported only in IntelliJ IDEA)";
         errors.put(pluginId, new PluginError(descriptor, message, "supported only in IntelliJ IDEA"));
