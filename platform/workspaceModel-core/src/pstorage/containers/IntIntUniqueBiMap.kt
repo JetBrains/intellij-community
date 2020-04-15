@@ -49,8 +49,8 @@ internal class MutableIntIntUniqueBiMap internal constructor(
   }
 
   fun remove(key: Int, value: Int) {
-    if (key !in key2Value || value !in value2Key)
-      key2Value.remove(key)
+    if (key !in key2Value || value !in value2Key) return
+    key2Value.remove(key)
     value2Key.remove(value)
   }
 

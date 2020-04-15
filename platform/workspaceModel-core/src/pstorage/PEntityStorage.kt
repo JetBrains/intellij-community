@@ -331,12 +331,25 @@ internal class PEntityStorageBuilder(
     }
   }
 
+  private fun ArrayListMultimap<Any, PEntityData<out TypedEntity>>.find(entity: PEntityData<out TypedEntity>): PEntityData<out TypedEntity>? {
+    val possibleValues = this[entity.identificator()]
+    return if (entity.hasPersistentId()) {
+      possibleValues.find {
+        (it.createEntity(this@PEntityStorageBuilder) as TypedEntityWithPersistentId).persistentId() ==
+          (entity.createEntity(this@PEntityStorageBuilder) as TypedEntityWithPersistentId).persistentId()
+      }
+    }
+    else {
+      possibleValues.find { it == entity }
+    }
+  }
+
   private fun replaceBySourcePredicate(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage) {
     replaceWith as AbstractPEntityStorage
 
-    val leftMatchedNodes: MutableMap<Any, PEntityData<out TypedEntity>> = HashMap()
-    val rightMatchedNodes: MutableMap<Any, PEntityData<out TypedEntity>> = HashMap()
-    val unmatchedLeftReferencedNodes: MutableMap<Any, PEntityData<out TypedEntity>> = HashMap()
+    val leftMatchedNodes = ArrayListMultimap.create<Any, PEntityData<out TypedEntity>>()
+    val rightMatchedNodes = ArrayListMultimap.create<Any, PEntityData<out TypedEntity>>()
+    val unmatchedLeftReferencedNodes = ArrayListMultimap.create<Any, PEntityData<out TypedEntity>>()
 
     // Local to remote
     val replaceMap = HashBiMap.create<PId<out TypedEntity>, PId<out TypedEntity>>()
@@ -344,10 +357,10 @@ internal class PEntityStorageBuilder(
     // 1) Traverse all entities and store matched only
     this.entitiesByType.all().asSequence().map { it.value }.flatMap { it.all() }
       .filter { sourceFilter(it.entitySource) }
-      .associateByTo(leftMatchedNodes) { it.identificator() }
+      .forEach { leftMatchedNodes.put(it.identificator(), it) }
 
     // 1.1) Cleanup references
-    for (matchedEntityData in leftMatchedNodes.asSequence().map { it.value }) {
+    for (matchedEntityData in leftMatchedNodes.values()) {
       val entityId = matchedEntityData.createPid()
       for ((connectionId, parentId) in this.refs.getParentRefsOfChild(entityId, false)) {
         val parentEntity = this.entityDataByIdOrDie(parentId)
@@ -356,7 +369,7 @@ internal class PEntityStorageBuilder(
           this.refs.removeParentToChildRef(connectionId, parentId, entityId)
         }
         else {
-          unmatchedLeftReferencedNodes[parentEntity.identificator()] = parentEntity
+          unmatchedLeftReferencedNodes.put(parentEntity.identificator(), parentEntity)
         }
       }
 
@@ -367,7 +380,7 @@ internal class PEntityStorageBuilder(
             this.refs.removeParentToChildRef(connectionId, entityId, childId)
           }
           else {
-            unmatchedLeftReferencedNodes[childEntity.identificator()] = childEntity
+            unmatchedLeftReferencedNodes.put(childEntity.identificator(), childEntity)
           }
         }
       }
@@ -376,21 +389,19 @@ internal class PEntityStorageBuilder(
     // 2) Traverse entities of the enemy
     for ((clazz, entityFamily) in replaceWith.entitiesByType) {
       for (matchedEntityData in entityFamily.all().filter { sourceFilter(it.entitySource) }) {
-        rightMatchedNodes[matchedEntityData.identificator()] = matchedEntityData
+        rightMatchedNodes.put(matchedEntityData.identificator(), matchedEntityData)
 
-        val leftNode = leftMatchedNodes[matchedEntityData.identificator()]
+        val leftNode = leftMatchedNodes.find(matchedEntityData)
         if (leftNode != null) {
           replaceMap[leftNode.createPid()] = matchedEntityData.createPid()
-          if (!leftNode.hasPersistentId()) {
-            leftMatchedNodes.remove(leftNode.identificator())
-          }
-          else {
+          if (leftNode.hasPersistentId()) {
             val clonedEntity = matchedEntityData.clone()
             clonedEntity.id = leftNode.id
             this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz.java)
             // TODO: 15.04.2020 Children and parents?
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyMap(), emptyMap())) }
           }
+          leftMatchedNodes.remove(leftNode.identificator(), leftNode)
         }
         else {
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, clazz as Class<TypedEntity>)
@@ -402,14 +413,14 @@ internal class PEntityStorageBuilder(
     }
 
     // 3) Remove old entities
-    for (leftEntity in leftMatchedNodes.values) {
+    for (leftEntity in leftMatchedNodes.values()) {
       // XXX do not create entity
       this.entitiesByType.remove(leftEntity.id, leftEntity.createEntity(this).javaClass)
       updateChangeLog { it.add(ChangeEntry.RemoveEntity(leftEntity.createPid())) }
     }
 
     // 4) Restore references between matched and unmatched entities
-    for (unmatchedNode in unmatchedLeftReferencedNodes.values) {
+    for (unmatchedNode in unmatchedLeftReferencedNodes.values()) {
       val unmatchedId = unmatchedNode.createPid()
       val unmatchedEntityData = replaceWith.entityDataById(unmatchedId)
       if (unmatchedEntityData == null) {
@@ -472,7 +483,7 @@ internal class PEntityStorageBuilder(
     }
 
     // 5) Restore references in matching ids
-    for (rightMatchedNode in rightMatchedNodes.values) {
+    for (rightMatchedNode in rightMatchedNodes.values()) {
       val nodeId = rightMatchedNode.createPid()
       for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId, false)) {
         if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
