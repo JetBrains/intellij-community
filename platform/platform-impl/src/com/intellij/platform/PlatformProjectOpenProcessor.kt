@@ -2,7 +2,6 @@
 package com.intellij.platform
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
-import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
@@ -12,7 +11,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -76,7 +75,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @Suppress("UNUSED_PARAMETER")
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
-    fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean, line: Int, callback: ProjectOpenedCallback?, isReopen: Boolean): Project? {
+    fun doOpenProject(virtualFile: VirtualFile,
+                      projectToClose: Project?,
+                      forceOpenInNewFrame: Boolean,
+                      line: Int,
+                      callback: ProjectOpenedCallback?,
+                      isReopen: Boolean): Project? {
       val options = OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, line = line)
       return doOpenProject(Paths.get(virtualFile.path), options)
     }
@@ -84,7 +88,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
-    fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, line: Int, callback: ProjectOpenedCallback?, options: EnumSet<Option>): Project? {
+    fun doOpenProject(virtualFile: VirtualFile,
+                      projectToClose: Project?,
+                      line: Int,
+                      callback: ProjectOpenedCallback?,
+                      options: EnumSet<Option>): Project? {
       val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME), projectToClose = projectToClose, callback = callback, line = line)
       return doOpenProject(Paths.get(virtualFile.path), openProjectOptions)
     }
@@ -159,11 +167,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
             // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
             val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
             projectToClose = lastFocusedFrame?.project
-            if (projectToClose == null || LightEdit.owns(projectToClose)) {
+            if (projectToClose == null || projectToClose is LightEditCompatible) {
               projectToClose = openProjects[openProjects.size - 1]
             }
           }
-          if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectDir)) {
+          if (checkExistingProjectOnOpen(projectToClose, options.callback, projectDir)) {
             return null
           }
         }
@@ -173,36 +181,19 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       runInAutoSaveDisabledMode {
         val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, file)
         val isCompleted = frameAllocator.run {
-          var project = options.project
-          if (project == null) {
-            var cannotConvertException: CannotConvertException? = null
-            try {
-              activity.end()
-              result = prepareProject(file, options, projectDir!!)
-            }
-            catch (e: ProcessCanceledException) {
-              throw e
-            }
-            catch (e: CannotConvertException) {
-              LOG.info(e)
-              cannotConvertException = e
-              result = null
-            }
-            catch (e: Exception) {
-              result = null
-              LOG.error(e)
-            }
-
-            project = result?.project
-            if (project == null) {
-              frameAllocator.projectNotLoaded(cannotConvertException)
+          activity.end()
+          if (options.project == null) {
+            result = prepareProject(file, options, projectDir!!)
+            if (result?.project == null) {
+              frameAllocator.projectNotLoaded(error = null)
               return@run
             }
           }
           else {
-            result = PrepareProjectResult(project, null)
+            result = PrepareProjectResult(options.project, null)
           }
 
+          val project = result!!.project
           frameAllocator.projectLoaded(project)
           if (ProjectManagerEx.getInstanceEx().openProject(project)) {
             frameAllocator.projectOpened(project)

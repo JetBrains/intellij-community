@@ -193,7 +193,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
           newComponentConfigCount++
         }
         catch (e: Throwable) {
-          handleInitComponentError(e, null, plugin.descriptor.pluginId)
+          handleInitComponentError(e, descriptor.implementationClass ?: descriptor.interfaceClass, plugin.descriptor.pluginId)
         }
       }
 
@@ -321,14 +321,29 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   @Internal
-  fun handleInitComponentError(t: Throwable, componentClassName: String?, pluginId: PluginId) {
+  internal fun handleInitComponentError(error: Throwable, componentClassName: String, pluginId: PluginId) {
     if (handlingInitComponentError) {
       return
     }
 
     handlingInitComponentError = true
     try {
-      handleComponentError(t, componentClassName, pluginId)
+      // not logged but thrown PluginException means some fatal error
+      if (error is StartupAbortedException || error is ProcessCanceledException || error is PluginException) {
+        throw error
+      }
+
+      var effectivePluginId = pluginId
+      if (effectivePluginId == PluginManagerCore.CORE_ID) {
+        if (error is ExtensionInstantiationException) {
+          effectivePluginId = error.extensionOwnerId ?: PluginManagerCore.CORE_ID
+        }
+        if (effectivePluginId == PluginManagerCore.CORE_ID) {
+          effectivePluginId = PluginManagerCore.getPluginOrPlatformByClassName(componentClassName) ?: PluginManagerCore.CORE_ID
+        }
+      }
+
+      throw PluginException("Fatal error initializing '$componentClassName'", error, effectivePluginId)
     }
     finally {
       handlingInitComponentError = false
@@ -943,7 +958,7 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   }
 
   if (effectivePluginId != null && PluginManagerCore.CORE_ID != effectivePluginId) {
-    throw StartupAbortedException("Fatal error initializing plugin ${effectivePluginId.idString}", PluginException(t, effectivePluginId))
+    throw StartupAbortedException("Fatal error initializing plugin $effectivePluginId", PluginException(t, effectivePluginId))
   }
   else {
     throw StartupAbortedException("Fatal error initializing '$componentClassName'", t)
