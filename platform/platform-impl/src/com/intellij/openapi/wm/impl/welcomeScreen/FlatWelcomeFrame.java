@@ -31,6 +31,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -93,7 +94,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
   public static final int DEFAULT_HEIGHT = 460;
   public static final int MAX_DEFAULT_WIDTH = 777;
-  private BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
   private boolean myDisposed;
 
@@ -164,8 +164,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     });
 
-    myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
-
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
     Disposer.register(ApplicationManager.getApplication(), this);
@@ -189,10 +187,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     myDisposed = true;
     super.dispose();
-    if (myBalloonLayout != null) {
-      ((BalloonLayoutImpl)myBalloonLayout).dispose();
-      myBalloonLayout = null;
-    }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
   }
@@ -268,6 +262,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     public Computable<Point> myEventLocation;
     private LinkLabel<Object> myUpdatePluginsLink;
     private boolean inDnd;
+    private BalloonLayoutImpl myBalloonLayout;
 
     FlatWelcomeScreen() {
       super(new BorderLayout());
@@ -485,7 +480,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Point location = SwingUtilities.convertPoint(panel, 0, 0, getRootPane().getLayeredPane());
         return new Point(location.x, location.y + 5);
       };
+      myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myEventListener, myEventLocation);
       return panel;
+    }
+
+    public @Nullable BalloonLayout getBalloonLayout() {
+      return myBalloonLayout;
     }
 
     private JComponent createActionLink(@Nls String text, final String groupId, Icon icon, boolean focusListOnLeft) {
@@ -859,7 +859,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     @Override
     public void dispose() {
-
+      if (myBalloonLayout != null) {
+        myBalloonLayout.dispose();
+        myBalloonLayout = null;
+      }
     }
 
     private JComponent createUpdatePluginsLink() {
@@ -916,7 +919,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Nullable
   @Override
   public BalloonLayout getBalloonLayout() {
-    return myBalloonLayout;
+    return myScreen.getBalloonLayout();
   }
 
   @NotNull
