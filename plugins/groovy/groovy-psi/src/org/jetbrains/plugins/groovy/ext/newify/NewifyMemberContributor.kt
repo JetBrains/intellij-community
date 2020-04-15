@@ -58,11 +58,11 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
 
   private fun getClassesForPatternAttribute(annotation: PsiAnnotation, referenceName: String, place: PsiElement): List<PsiClass> {
     val regex = try {
-      val pattern = GrAnnotationUtil.inferStringAttribute(annotation, "pattern") ?: ""
+      val pattern = GrAnnotationUtil.inferStringAttribute(annotation, "pattern") ?: return emptyList()
       Regex(pattern)
     }
     catch (e: PatternSyntaxException) {
-      Regex("")
+      return emptyList()
     }
     return if (regex matches referenceName) {
       val classProcessor = ClassProcessor(referenceName, place)
