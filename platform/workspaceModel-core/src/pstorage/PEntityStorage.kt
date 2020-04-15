@@ -6,6 +6,10 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.VirtualFileIndex.MutableVirtualFileIndex
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
@@ -30,7 +34,8 @@ internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : Entit
 internal class PEntityStorage constructor(
   override val entitiesByType: EntitiesBarrel,
   override val refs: RefsTable,
-  override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
+  override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>,
+  override val virtualFileIndex: VirtualFileIndex
 ) : AbstractPEntityStorage() {
   override fun assertConsistency() {
     entitiesByType.assertConsistency()
@@ -43,7 +48,8 @@ internal class PEntityStorageBuilder(
   private val origStorage: PEntityStorage,
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
-  override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
+  override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>,
+  override val virtualFileIndex: MutableVirtualFileIndex
 ) : TypedEntityStorageBuilder, AbstractPEntityStorage() {
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
@@ -56,7 +62,7 @@ internal class PEntityStorageBuilder(
     modificationCount++
   }
 
-  private constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create()), MutableEntitiesBarrel(), MutableRefsTable(), HashMultimap.create())
+  private constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create(), VirtualFileIndex()), MutableEntitiesBarrel(), MutableRefsTable(), HashMultimap.create(), MutableVirtualFileIndex())
 
   private sealed class ChangeEntry {
     data class AddEntity<E : TypedEntity>(
@@ -585,7 +591,8 @@ internal class PEntityStorageBuilder(
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val copiedLinks = HashMultimap.create(this.softLinks)
-    return PEntityStorage(newEntities, newRefs, copiedLinks)
+    val newVirtualFileIndex = virtualFileIndex.toImmutable()
+    return PEntityStorage(newEntities, newRefs, copiedLinks, newVirtualFileIndex)
   }
 
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
@@ -655,13 +662,15 @@ internal class PEntityStorageBuilder(
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
           val copiedRefs = MutableRefsTable.from(storage.refs)
           val copiedSoftLinks = HashMultimap.create(storage.softLinks)
-          PEntityStorageBuilder(storage, copiedBarrel, copiedRefs, copiedSoftLinks)
+          val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex)
+          PEntityStorageBuilder(storage, copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex)
         }
         is PEntityStorageBuilder -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
           val copiedSoftLinks = HashMultimap.create(storage.softLinks)
-          PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs, copiedSoftLinks)
+          val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex.toImmutable())
+          PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex)
         }
       }
     }
@@ -674,6 +683,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   internal abstract val entitiesByType: AbstractEntitiesBarrel
   internal abstract val refs: AbstractRefsTable
   internal abstract val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
+  internal abstract val virtualFileIndex: VirtualFileIndex
 
   abstract fun assertConsistency()
 
