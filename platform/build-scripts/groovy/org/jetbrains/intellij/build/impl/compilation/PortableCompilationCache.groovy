@@ -88,7 +88,7 @@ class PortableCompilationCache {
   /**
    * Upload local compilation cache to remote cache
    */
-  def upload() {
+  def upload(Boolean publishCaches) {
     if (!forceRebuild && downloader.availableForHeadCommit) {
       context.messages.info('Nothing new to upload')
     }
@@ -105,7 +105,7 @@ class PortableCompilationCache {
       new CompilationOutputsUploader(
         context, remoteCacheUrl, remotePerCommitHash,
         agentPersistentStorage, syncFolder, updateCommitHistory
-      ).upload()
+      ).upload(publishCaches)
     }
   }
 }
