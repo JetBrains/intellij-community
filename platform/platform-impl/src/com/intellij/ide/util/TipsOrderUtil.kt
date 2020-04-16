@@ -58,18 +58,27 @@ object TipsOrderUtil {
     }
 
     private fun sync() {
-      LOG.debug("Fetching tips order from the server: $TIPS_SERVER_URL...")
+      LOG.debug("Fetching tips order from the server: $TIPS_SERVER_URL")
       val allTips = ContainerUtil.map(TipAndTrickBean.EP_NAME.extensionList) { x: TipAndTrickBean -> x.fileName }
       val actionsSummary: Map<String, UsageInfo> = service<ActionsLocalSummary>().state.data.mapValues {
         UsageInfo(it.value.times, it.value.last)
       }
 
+      val startTimestamp = System.currentTimeMillis()
       HttpRequests.post(TIPS_SERVER_URL, HttpRequests.JSON_CONTENT_TYPE)
         .connect(HttpRequests.RequestProcessor { request ->
           val bucket = EventLogConfiguration.bucket
           val tipsRequest = TipsRequest(allTips, actionsSummary, PlatformUtils.getPlatformPrefix(), bucket)
           request.write(MAPPER.writeValueAsBytes(tipsRequest))
-          serverRecommendation = MAPPER.readValue(request.readString(), ServerRecommendation::class.java)
+          val recommendation = MAPPER.readValue(request.readString(), ServerRecommendation::class.java)
+
+          if (LOG.isDebugEnabled) {
+            val duration = System.currentTimeMillis() - startTimestamp
+            val algorithmInfo = "${recommendation.usedAlgorithm}:${recommendation.version}"
+            LOG.debug("Server recommendation made. Algorithm: $algorithmInfo. Duration: ${duration}")
+          }
+
+          serverRecommendation = recommendation
         }, null, LOG)
     }
   }
