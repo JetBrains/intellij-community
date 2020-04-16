@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.JBProtocolCommand;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
@@ -39,7 +38,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.*;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
@@ -61,9 +59,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -80,6 +76,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 
@@ -240,7 +237,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
       if (RecentProjectListActionProvider.getInstance().getActions(false, true).size() > 0) {
-        JComponent recentProjects = createRecentProjects();
+        JComponent recentProjects = createRecentProjects(this);
         add(recentProjects, BorderLayout.WEST);
         JList<?> projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
         if (projectsList != null) {
@@ -574,56 +571,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return null;
     }
 
-    /**
-     * Wraps an {@link ActionLink} component and delegates accessibility support to it.
-     */
-    protected class JActionLinkPanel extends JPanel {
-      @NotNull private final ActionLink myActionLink;
-
-      public JActionLinkPanel(@NotNull ActionLink actionLink) {
-        super(new BorderLayout());
-        myActionLink = actionLink;
-        add(myActionLink);
-        setOpaque(false);
-      }
-
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        if (accessibleContext == null) {
-          accessibleContext = new AccessibleJActionLinkPanel(myActionLink.getAccessibleContext());
-        }
-        return accessibleContext;
-      }
-
-      protected final class AccessibleJActionLinkPanel extends AccessibleContextDelegate {
-        private final AccessibleJComponent myAccessibleHelper = new AccessibleJComponent() {};
-
-        AccessibleJActionLinkPanel(AccessibleContext context) {
-          super(context);
-        }
-
-        @Override
-        public Container getDelegateParent() {
-          return getParent();
-        }
-
-        @Override
-        public AccessibleRole getAccessibleRole() {
-          return AccessibleRole.PUSH_BUTTON;
-        }
-
-        @Override
-        public int getAccessibleChildrenCount() {
-          return myAccessibleHelper.getAccessibleChildrenCount();
-        }
-
-        @Override
-        public Accessible getAccessibleChild(int i) {
-          return myAccessibleHelper.getAccessibleChild(i);
-        }
-      }
-    }
-
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
         final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, () -> goBack(), this);
@@ -670,54 +617,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           group.add(action);
         }
       }
-    }
-
-    @NotNull
-    private JComponent createLogo() {
-      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-
-      NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-
-      String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
-      if (welcomeScreenLogoUrl != null) {
-        JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl));
-        logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
-        logo.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(logo, BorderLayout.NORTH);
-      }
-
-      String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                               ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                               : ApplicationNamesInfo.getInstance().getFullProductName();
-      JLabel appName = new JLabel(applicationName);
-      appName.setForeground(JBColor.foreground());
-      appName.setFont(getProductFont(36).deriveFont(Font.PLAIN));
-      appName.setHorizontalAlignment(SwingConstants.CENTER);
-      String appVersion = "Version ";
-
-      appVersion += appInfo.getFullVersion();
-
-      if (appInfo.isEAP() && !appInfo.getBuild().isSnapshot()) {
-        appVersion += " (" + appInfo.getBuild().asStringWithoutProductCode() + ")";
-      }
-
-      JLabel version = new JLabel(appVersion);
-      version.setFont(getProductFont(16));
-      version.setHorizontalAlignment(SwingConstants.CENTER);
-      version.setForeground(Gray._128);
-
-      panel.add(appName);
-      panel.add(version, BorderLayout.SOUTH);
-      panel.setBorder(JBUI.Borders.emptyBottom(20));
-      return panel;
-    }
-
-    private JComponent createRecentProjects() {
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(new NewRecentProjectPanel(this), BorderLayout.CENTER);
-      panel.setBackground(getProjectsBackground());
-      panel.setBorder(new CustomLineBorder(getSeparatorColor(), JBUI.insetsRight(1)));
-      return panel;
     }
 
     private void installFocusable(final JComponent comp, final AnAction action, final int prevKeyCode, final int nextKeyCode, final boolean focusListOnLeft) {
@@ -841,21 +740,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Override
   public void hidePluginUpdates() {
     myScreen.hidePluginUpdates();
-  }
-
-  private static JLabel createArrow(final ActionLink link) {
-    JLabel arrow = new JLabel(AllIcons.General.ArrowDown);
-    arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    arrow.setVerticalAlignment(SwingConstants.BOTTOM);
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        final MouseEvent newEvent = MouseEventAdapter.convert(e, link, e.getX(), e.getY());
-        link.doClick(newEvent);
-        return true;
-      }
-    }.installOn(arrow);
-    return arrow;
   }
 
   @Nullable
