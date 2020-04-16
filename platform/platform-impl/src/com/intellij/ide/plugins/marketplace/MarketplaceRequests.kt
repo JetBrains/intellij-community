@@ -94,12 +94,14 @@ object MarketplaceRequests {
   @JvmStatic
   @Throws(IOException::class)
   fun searchPlugins(query: String, count: Int): List<PluginNode> {
-    val marketplaceSearchPluginData = HttpRequests.request(createSearchUrl(query, count)).connect {
-      objectMapper.readValue(
-        it.inputStream,
-        object : TypeReference<List<MarketplaceSearchPluginData>>() {}
-      )
-    }
+    val marketplaceSearchPluginData = HttpRequests.request(createSearchUrl(query, count))
+      .throwStatusCodeException(false)
+      .connect {
+        objectMapper.readValue(
+          it.inputStream,
+          object : TypeReference<List<MarketplaceSearchPluginData>>() {}
+        )
+      }
     // Marketplace Search Service can produce objects without "externalUpdateId". It means that an update is not in the search index yet.
     return marketplaceSearchPluginData.filter { it.externalUpdateId != null }.map { it.toPluginNode() }
   }
@@ -109,6 +111,7 @@ object MarketplaceRequests {
     HttpRequests
       .request(MARKETPLACE_ORGANIZATIONS_URL)
       .productNameAsUserAgent()
+      .throwStatusCodeException(false)
       .connect {
         objectMapper.readValue(
           it.inputStream,
@@ -126,6 +129,7 @@ object MarketplaceRequests {
     HttpRequests
       .request(MARKETPLACE_TAGS_URL)
       .productNameAsUserAgent()
+      .throwStatusCodeException(false)
       .connect {
         objectMapper.readValue(
           it.inputStream,
@@ -199,6 +203,7 @@ object MarketplaceRequests {
     return HttpRequests
       .post(url, HttpRequests.JSON_CONTENT_TYPE)
       .productNameAsUserAgent()
+      .throwStatusCodeException(false)
       .connect {
         it.write(data)
         objectMapper
