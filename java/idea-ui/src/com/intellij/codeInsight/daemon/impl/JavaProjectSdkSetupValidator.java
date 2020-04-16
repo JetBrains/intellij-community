@@ -47,7 +47,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
         }
       }
 
-      if (!DumbService.getInstance(project).isDumb()) {
+      if (sdk.getSdkType().equals(JavaSdk.getInstance()) && !DumbService.getInstance(project).isDumb()) {
         boolean isJdkBroken = JavaPsiFacade
                                 .getInstance(project)
                                 .findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope()) == null;
