@@ -51,11 +51,12 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.MathUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,7 +352,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private JComponent createBody() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.add(createLogo(), BorderLayout.NORTH);
-      panel.add(createActionPanel(), BorderLayout.CENTER);
+      myTouchbarActions.removeAll();
+      ActionPanel actionPanel = createQuickStartActionPanel();
+      panel.add(actionPanel, BorderLayout.CENTER);
+      myTouchbarActions.addAll(actionPanel.getActions());
       panel.add(createUpdatesSettingsAndDocs(), BorderLayout.SOUTH);
       return panel;
     }
@@ -490,12 +494,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
 
     @NotNull
-    private JComponent createActionPanel() {
+    private ActionPanel createQuickStartActionPanel() {
       DefaultActionGroup group = new DefaultActionGroup();
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       collectAllActions(group, quickStart);
 
-      JPanel mainPanel = new JPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
+      ActionPanel mainPanel = new ActionPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
       mainPanel.setOpaque(false);
 
       JPanel panel = new JPanel(new VerticalLayout(JBUI.scale(5))) {
@@ -525,7 +529,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       extendActionsGroup(mainPanel);
       mainPanel.add(panel);
 
-      myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
         AnActionEvent e =
           AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
@@ -555,8 +558,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
 
           panel.add(button);
-
-          myTouchbarActions.add(action);
+          mainPanel.addAction(action);
         }
       }
 
