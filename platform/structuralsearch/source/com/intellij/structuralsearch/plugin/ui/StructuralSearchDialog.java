@@ -1101,6 +1101,9 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       // We need to reset search within hierarchy scope during online validation since the scope works with user participation
       matchOptions.setScope(searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : scope);
     }
+    else {
+      matchOptions.setScope(null);
+    }
     matchOptions.setFileType(myFileType);
     matchOptions.setDialect(myDialect);
     matchOptions.setPatternContext(myPatternContext);
