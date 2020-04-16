@@ -181,7 +181,7 @@ public class BatchEvaluator {
           }
         }
         catch (IOException e) {
-          LOG.error(e);
+          LOG.error("Failed to read batch response", e, "reply was " + Arrays.toString(bytes));
           return false;
         }
         return true;
