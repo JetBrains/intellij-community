@@ -9,19 +9,23 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class GroovyImporterTest extends MavenImportingTestCase {
+  private String repoPath;
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setRepositoryPath(new File(myDir, "repo").getPath());
+    repoPath = new File(myDir, "repo").getPath();
+    setRepositoryPath(repoPath);
   }
 
   public void testConfiguringFacetWithoutLibrary() {
@@ -231,10 +235,18 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertEquals("", compilerSettings.getState().greclipsePath);
   }
 
-  public void testGroovyEclipsePluginWhenOnlyCompilerDependency() {
+  public void testGroovyEclipsePluginWhenOnlyCompilerDependency() throws IOException {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
                          "src/test/groovy");
+
+    File batchDir = new File(repoPath, "org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/");
+    //noinspection ResultOfMethodCallIgnored
+    batchDir.mkdirs();
+    File batchJar = new File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar");
+    //noinspection ResultOfMethodCallIgnored
+    batchJar.createNewFile();
+
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -286,7 +298,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertTestResources("project", "src/test/resources");
 
     GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
-    assertEquals("", compilerSettings.getState().greclipsePath);
+    assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
   }
 
   public void testAddingCustomGroovySpecificSources() {
