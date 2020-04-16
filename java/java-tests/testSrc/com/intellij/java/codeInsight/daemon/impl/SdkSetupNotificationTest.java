@@ -38,6 +38,26 @@ public class SdkSetupNotificationTest extends SdkSetupNotificationTestBase {
     assertSdkSetupPanelShown(panel, "Setup SDK");
   }
 
+  @TestFor(issues = "IDEA-237884")
+  public void testShouldNotRantOnCustomSDKType() {
+    final Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", SimpleJavaSdkType.getInstance());
+    WriteAction.run(() -> {
+      SdkModificator m = broken.getSdkModificator();
+      m.setHomePath("invalid home path");
+      m.setVersionString("11");
+      m.commitChanges();
+
+      ProjectJdkTable.getInstance().addJdk(broken, getTestRootDisposable());
+
+      ModifiableRootModel mod = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      mod.setSdk(broken);
+      mod.commit();
+
+    });
+    final EditorNotificationPanel panel = runOnText(myFixture, "Sample.java", "class Sample {}");
+    assertThat(panel).isNull();
+  }
+
   private class SdkTestCases {
     final Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", JavaSdk.getInstance());
     final Sdk valid = IdeaTestUtil.getMockJdk18();
