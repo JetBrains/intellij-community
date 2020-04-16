@@ -58,6 +58,7 @@ import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -120,15 +121,37 @@ public final class GradleManager
       }
 
       GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
+
+      DistributionType defaultDistributionType = null;
+      final String defaultDistributionTypeValue = GradleEnvironment.GRADLE_DEFAULT_DISTRIBUTION_TYPE;
+      if (defaultDistributionTypeValue != null) {
+        try {
+          defaultDistributionType = DistributionType.valueOf(defaultDistributionTypeValue);
+          LOG.info(String.format("Found gradle default distribution type: %s", defaultDistributionType));
+        } catch (final IllegalArgumentException e) {
+          LOG.warn(String.format(
+            "Exception occurred on attempt to parse gradle default distribution type property: %s",
+            defaultDistributionTypeValue
+          ), e);
+        }
+      }
+
       final DistributionType distributionType;
       if (projectLevelSettings == null) {
-        distributionType =
-          GradleUtil.isGradleDefaultWrapperFilesExist(projectPath) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
+        distributionType = defaultDistributionType == null
+                           ? (GradleUtil.isGradleDefaultWrapperFilesExist(projectPath)
+                              ? DistributionType.DEFAULT_WRAPPED
+                              : DistributionType.BUNDLED)
+                           : defaultDistributionType;
       }
       else {
-        distributionType =
-          projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
+        distributionType = projectLevelSettings.getDistributionType() == null
+                           ? (defaultDistributionType == null
+                              ? DistributionType.LOCAL
+                              : defaultDistributionType)
+                           : projectLevelSettings.getDistributionType();
       }
+      LOG.info(String.format("Instructing gradle to use distribution type: %s", distributionType));
 
       GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                    settings.getServiceDirectoryPath(),
