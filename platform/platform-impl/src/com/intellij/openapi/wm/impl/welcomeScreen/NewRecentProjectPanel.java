@@ -35,10 +35,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
     super(parentDisposable);
     setBorder(null);
-    setBackground(FlatWelcomeFrame.getProjectsBackground());
+    setBackground(WelcomeScreenUIManager.getProjectsBackground());
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
-      scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackground());
+      scrollPane.setBackground(WelcomeScreenUIManager.getProjectsBackground());
       JBDimension size = JBUI.size(300, 460);
       scrollPane.setSize(size);
       scrollPane.setMinimumSize(size);
@@ -46,7 +46,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
-      panel.setBackground(FlatWelcomeFrame.getProjectsBackground());
+      panel.setBackground(WelcomeScreenUIManager.getProjectsBackground());
     }
   }
 
@@ -66,10 +66,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   }
 
   @Override
-  protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
-    final JBList list = super.createList(recentProjectActions, size);
+  protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
+    final JBList<AnAction> list = super.createList(recentProjectActions, size);
 
-    list.setBackground(FlatWelcomeFrame.getProjectsBackground());
+    list.setBackground(WelcomeScreenUIManager.getProjectsBackground());
     list.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -178,7 +178,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
       @Override
       protected Color getListBackground(boolean isSelected, boolean hasFocus) {
-        return isSelected ? FlatWelcomeFrame.getListSelectionColor(hasFocus) : FlatWelcomeFrame.getProjectsBackground();
+        return isSelected ? WelcomeScreenUIManager.getListSelectionColor(hasFocus) : WelcomeScreenUIManager.getProjectsBackground();
       }
 
       @Override

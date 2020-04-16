@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
@@ -75,14 +74,13 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 
 /**
@@ -199,31 +197,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Override
   public StatusBar getStatusBar() {
     return null;
-  }
-
-  public static Color getMainBackground() {
-    return JBColor.namedColor("WelcomeScreen.background", new JBColor(0xf7f7f7, 0x45474a));
-  }
-
-  public static Color getProjectsBackground() {
-    return JBColor.namedColor("WelcomeScreen.Projects.background", new JBColor(Gray.xFF, Gray.x39));
-  }
-
-  public static Color getLinkNormalColor() {
-    return new JBColor(Gray._0, Gray.xBB);
-  }
-
-  public static Color getListSelectionColor(boolean hasFocus) {
-    return hasFocus ? JBColor.namedColor("WelcomeScreen.Projects.selectionBackground", new JBColor(0x3875d6, 0x4b6eaf))
-                    : JBColor.namedColor("WelcomeScreen.Projects.selectionInactiveBackground", new JBColor(Gray.xDD, Gray.x45));
-  }
-
-  public static Color getActionLinkSelectionColor() {
-    return new JBColor(0xdbe5f5, 0x485875);
-  }
-
-  public static JBColor getSeparatorColor() {
-    return JBColor.namedColor("WelcomeScreen.separatorColor", new JBColor(Gray.xEC, new Color(72, 75, 78)));
   }
 
   @Override
@@ -737,36 +710,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       panel.add(version, BorderLayout.SOUTH);
       panel.setBorder(JBUI.Borders.emptyBottom(20));
       return panel;
-    }
-
-    @NotNull
-    private Font getProductFont(int size) {
-      try {
-        return loadFont().deriveFont((float)JBUIScale.scale(size));
-      }
-      catch (Throwable t) {
-        Logger.getInstance(AppUIUtil.class).warn(t);
-      }
-      return StartupUiUtil.getLabelFont().deriveFont(JBUIScale.scale((float)size));
-    }
-
-    @NotNull
-    private Font loadFont() {
-      @SuppressWarnings("SpellCheckingInspection")
-      String fontPath = "/fonts/Roboto-Light.ttf";
-      URL url = AppUIUtil.class.getResource(fontPath);
-      if (url == null) {
-        Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + fontPath);
-      }
-      else {
-        try (InputStream is = url.openStream()) {
-          return Font.createFont(Font.TRUETYPE_FONT, is);
-        }
-        catch (Throwable t) {
-          Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
-        }
-      }
-      return StartupUiUtil.getLabelFont();
     }
 
     private JComponent createRecentProjects() {
