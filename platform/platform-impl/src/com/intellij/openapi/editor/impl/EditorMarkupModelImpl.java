@@ -171,8 +171,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
     trafficLightVisible = true;
 
-    AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
-    AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
+    AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
+    AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
     DefaultActionGroup navigateGroup = new DefaultActionGroup(nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
