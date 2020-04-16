@@ -676,7 +676,7 @@ internal class PEntityStorageBuilder(
 
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
 
-  override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
+  override fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity> {
 
     // TODO: 08.04.2020 probably we should accept only diffs based on the same or empty snapshot
 
@@ -700,6 +700,7 @@ internal class PEntityStorageBuilder(
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
           if (this.entityDataById(usedPid) != null) {
             removeEntity(usedPid)
+            replaceMap.remove(outdatedId, usedPid)
           }
           updateChangeLog { it.add(ChangeEntry.RemoveEntity(usedPid)) }
         }
@@ -722,6 +723,11 @@ internal class PEntityStorageBuilder(
       }
     }
     // TODO: 27.03.2020 Here should be consistency check
+    val res = HashMap<TypedEntity, TypedEntity>()
+    replaceMap.forEach { (oldId, newId) ->
+      res[diff.entityDataByIdOrDie(oldId).createEntity(diff)] = this.entityDataByIdOrDie(newId).createEntity(this)
+    }
+    return res
   }
 
   companion object {

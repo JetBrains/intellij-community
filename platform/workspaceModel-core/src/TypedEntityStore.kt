@@ -184,7 +184,8 @@ interface TypedEntityStorageDiffBuilder {
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
   fun removeEntity(e: TypedEntity)
 
-  fun addDiff(diff: TypedEntityStorageDiffBuilder)
+  // Returns an association between an entity in diff and an entity in the current builder
+  fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity>
 
   val modificationCount: Long
 

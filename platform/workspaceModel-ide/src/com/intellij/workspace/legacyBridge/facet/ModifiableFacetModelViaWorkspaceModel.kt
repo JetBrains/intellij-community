@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.facet
 
+import com.google.common.collect.HashBiMap
 import com.intellij.facet.Facet
 import com.intellij.facet.ModifiableFacetModel
 import com.intellij.facet.impl.FacetUtil
@@ -77,16 +78,23 @@ internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage:
   }
 
   override fun commit() {
-    facetManager.model.populateFrom(entityToFacet)
     val moduleDiff = legacyBridgeModule.diff
     if (moduleDiff != null) {
-      moduleDiff.addDiff(diff)
+      val res = moduleDiff.addDiff(diff)
+      populateModel(res)
     }
     else {
       WorkspaceModel.getInstance(legacyBridgeModule.project).updateProjectModel {
-        it.addDiff(diff)
+        val res = it.addDiff(diff)
+        populateModel(res)
       }
     }
+  }
+
+  private fun populateModel(replaceMap: Map<TypedEntity, TypedEntity>) {
+    val mapInNewStore: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
+    entityToFacet.forEach { (key, value) -> mapInNewStore[replaceMap.getOrDefault(key, key) as FacetEntity] = value }
+    facetManager.model.populateFrom(mapInNewStore)
   }
 
   override fun isModified(): Boolean {
