@@ -171,17 +171,8 @@ public class ProjectBytecodeAnalysis {
       assert !mutations.isEmpty();
       annotationParameters.put("mutates", '"'+String.join(",", mutations)+'"');
     }
-    
-    String contractPsiText;
-    if (annotationParameters.isEmpty()) {
-      contractPsiText = null;
-    }
-    else if (annotationParameters.keySet().equals(Collections.singleton("value"))) {
-      contractPsiText = ContainerUtil.getOnlyItem(annotationParameters.values());
-    }
-    else {
-      contractPsiText = EntryStream.of(annotationParameters).join("=").joining(",");
-    }
+
+    String contractPsiText = generateAnnotationAttributesText(annotationParameters);
 
     PsiAnnotation psiAnnotation = contractPsiText == null ? null : createContractAnnotation(contractPsiText);
 
@@ -201,6 +192,17 @@ public class ProjectBytecodeAnalysis {
       return new PsiAnnotation[]{psiAnnotation};
     }
     return PsiAnnotation.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  private static String generateAnnotationAttributesText(Map<String, String> attributesMap) {
+    if (attributesMap.isEmpty()) {
+      return null;
+    }
+    if (attributesMap.keySet().equals(Collections.singleton(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME))) {
+      return ContainerUtil.getOnlyItem(attributesMap.values());
+    }
+    return EntryStream.of(attributesMap).join("=").joining(",");
   }
 
   /**
