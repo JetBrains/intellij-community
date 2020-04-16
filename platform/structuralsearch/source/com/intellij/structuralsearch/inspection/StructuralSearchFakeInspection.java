@@ -200,7 +200,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
     if (profile == null) return;
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfigurationWithUuid(myMainConfiguration.getUuid());
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
     inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
   }
@@ -248,7 +248,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
     if (profile == null) return;
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfigurationWithUuid(myMainConfiguration.getUuid());
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
     inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
   }

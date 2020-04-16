@@ -63,22 +63,22 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup(
-      new AddTemplateAction(panel, false),
-      new AddTemplateAction(panel, true)
+      new AddInspectionAction(panel, false),
+      new AddInspectionAction(panel, true)
     );
     actionGroup.setPopup(true);
     actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
     presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
-    return Arrays.asList(actionGroup, new RemoveTemplateAction(panel));
+    return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
   }
 
-  private static class RemoveTemplateAction extends DumbAwareAction {
+  private static class RemoveInspectionAction extends DumbAwareAction {
 
     private final SingleInspectionProfilePanel myPanel;
 
-    private RemoveTemplateAction(SingleInspectionProfilePanel panel) {
+    private RemoveInspectionAction(SingleInspectionProfilePanel panel) {
       super(SSRBundle.message("remove.inspection.button"), null, AllIcons.General.Remove);
       myPanel = panel;
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myPanel);
@@ -96,18 +96,18 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myPanel.removeSelectedRow();
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-      inspection.removeConfigurationWithUuid(UUID.fromString(shortName));
+      inspection.removeConfigurationsWithUuid(UUID.fromString(shortName));
       profile.removeTool(shortName);
-      profile.getProfileManager().fireProfileChanged(profile);
+      InspectionProfileUtil.fireProfileChanged(profile);
     }
   }
 
-  private static class AddTemplateAction extends DumbAwareAction {
+  private static class AddInspectionAction extends DumbAwareAction {
 
     private final SingleInspectionProfilePanel myPanel;
     private final boolean myReplace;
 
-    private AddTemplateAction(SingleInspectionProfilePanel panel, boolean replace) {
+    private AddInspectionAction(SingleInspectionProfilePanel panel, boolean replace) {
       super(replace
             ? SSRBundle.message("SSRInspection.add.replace.template.button")
             : SSRBundle.message("SSRInspection.add.search.template.button"));
@@ -145,12 +145,13 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     if (!dialog.showAndGet()) return false;
     configuration.setUuid(null);
     inspection.addConfiguration(configuration);
-    addConfigurationToProfile(project, profile, configuration);
+    addInspectionToProfile(project, profile, configuration);
+    InspectionProfileUtil.fireProfileChanged(profile);
     profile.getProfileManager().fireProfileChanged(profile);
     return true;
   }
 
-  private static void addConfigurationToProfile(@NotNull Project project, InspectionProfileImpl profile, Configuration configuration) {
+  private static void addInspectionToProfile(@NotNull Project project, InspectionProfileImpl profile, Configuration configuration) {
     final String shortName = configuration.getUuid().toString();
     final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
     if (toolWrapper != null) {
@@ -260,23 +261,23 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
 
     public String getName() {
-      return convertEmptyToNull(myNameTextField.getText().trim());
+      return convertEmptyToNull(myNameTextField.getText());
     }
 
     public String getDescription() {
-      return convertEmptyToNull(myDescriptionTextArea.getText().trim());
+      return convertEmptyToNull(myDescriptionTextArea.getText());
     }
 
     public String getSuppressId() {
-      return convertEmptyToNull(mySuppressIdTextField.getText().trim());
+      return convertEmptyToNull(mySuppressIdTextField.getText());
     }
 
     public String getProblemDescriptor() {
-      return convertEmptyToNull(myProblemDescriptorTextField.getText().trim());
+      return convertEmptyToNull(myProblemDescriptorTextField.getText());
     }
 
     private static String convertEmptyToNull(String s) {
-      return StringUtil.isEmpty(s) ? null : s;
+      return StringUtil.isEmpty(s.trim()) ? null : s;
     }
   }
 }

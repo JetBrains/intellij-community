@@ -29,7 +29,7 @@ public class InspectionProfileUtil {
     return panel.getProfile();
   }
 
-  public static void fireProfileChanged(InspectionProfileModifiableModel profile) {
+  public static void fireProfileChanged(InspectionProfileImpl profile) {
     profile.getProfileManager().fireProfileChanged(profile);
   }
 }

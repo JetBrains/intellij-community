@@ -255,7 +255,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return myConfigurations.remove(configuration);
   }
 
-  public boolean removeConfigurationWithUuid(@NotNull UUID uuid) {
+  public boolean removeConfigurationsWithUuid(@NotNull UUID uuid) {
     return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
   }
 
