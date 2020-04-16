@@ -394,18 +394,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void initWorkers() {
-    myReadingProcessor =
-      new MavenProjectsProcessor(this, myProject, MavenProjectBundle.message("maven.reading"), false, myEmbeddersManager);
-    myResolvingProcessor =
-      new MavenProjectsProcessor(this, myProject, MavenProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
+    myReadingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.reading"), false, myEmbeddersManager);
+    myResolvingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
     myPluginsResolvingProcessor =
-      new MavenProjectsProcessor(this, myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
+      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
     myFoldersResolvingProcessor =
-      new MavenProjectsProcessor(this, myProject, MavenProjectBundle.message("maven.updating.folders"), true, myEmbeddersManager);
+      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.updating.folders"), true, myEmbeddersManager);
     myArtifactsDownloadingProcessor =
-      new MavenProjectsProcessor(this, myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
-    myPostProcessor =
-      new MavenProjectsProcessor(this, myProject, MavenProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
+      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
+    myPostProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 

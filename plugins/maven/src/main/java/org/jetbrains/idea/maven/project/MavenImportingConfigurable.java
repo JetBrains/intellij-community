@@ -91,7 +91,6 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
 
   @Override
   public void reset() {
-    //readGlobalOptions(myImportingSettings);
     mySettingsForm.setData(myImportingSettings, myProject);
 
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
