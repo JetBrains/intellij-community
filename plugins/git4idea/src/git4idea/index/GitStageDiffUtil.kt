@@ -9,6 +9,7 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -36,6 +37,10 @@ fun createTwoSidesDiffRequestProducer(project: Project, statusNode: GitFileStatu
     NodeKind.UNSTAGED -> UnStagedProducer(project, statusNode)
     NodeKind.CONFLICTED, NodeKind.IGNORED, NodeKind.UNTRACKED -> UnversionedDiffRequestProducer.create(project, statusNode.filePath)
   }
+}
+
+fun createThreeSidesDiffRequestProducer(project: Project, statusNode: GitFileStatusNode): ChangeDiffRequestChain.Producer {
+  return ThreeSidesProducer(project, statusNode)
 }
 
 @Throws(VcsException::class, IOException::class)
@@ -82,11 +87,26 @@ private class StagedProducer constructor(private val project: Project, file: Git
   }
 }
 
+class ThreeSidesProducer(private val project: Project,
+                         statusNode: GitFileStatusNode) : GitFileStatusNodeProducerBase(statusNode) {
+  @Throws(VcsException::class, IOException::class)
+  override fun processImpl(): DiffRequest {
+    val title = if (statusNode is GitFileStatusNode.Saved) getTitle(statusNode.status) else getTitle(statusNode)
+    return StagedDiffRequest(headContent(project, statusNode), stagedContent(project, statusNode), localContent(project, statusNode),
+                             GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
+                             title).apply { putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true) }
+  }
+}
+
 private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String>, title: String? = null) :
   SimpleDiffRequest(title, contents, titles) {
 
   constructor(content1: DiffContent, content2: DiffContent, title1: String, title2: String, title: String? = null) :
     this(listOf(content1, content2), listOf(title1, title2), title)
+
+  constructor(content1: DiffContent, content2: DiffContent, content3: DiffContent,
+              title1: String, title2: String, title3: String, title: String? = null) :
+    this(listOf(content1, content2, content3), listOf(title1, title2, title3), title)
 
   override fun onAssigned(isAssigned: Boolean) {
     super.onAssigned(isAssigned)
@@ -161,4 +181,8 @@ private fun GitFileStatusNode.path(contentVersion: ContentVersion): FilePath {
 
 private fun getTitle(statusNode: GitFileStatusNode): String {
   return DiffRequestFactoryImpl.getTitle(statusNode.filePath, statusNode.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
+}
+
+private fun getTitle(status: GitFileStatus): String {
+  return DiffRequestFactoryImpl.getTitle(status.path, status.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
 }

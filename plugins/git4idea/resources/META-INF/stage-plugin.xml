@@ -9,6 +9,8 @@
     <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
 
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
   </extensions>
 
   <actions>
@@ -18,11 +20,13 @@
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
 
     <group id="Git.Stage.Toolbar">
+      <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Add"/>
       <reference id="Git.Stage.Reset"/>
+      <reference id="Diff.ShowDiff"/>
       <separator/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="LocalHistory"/>
