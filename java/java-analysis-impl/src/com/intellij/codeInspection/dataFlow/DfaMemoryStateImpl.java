@@ -20,9 +20,11 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import one.util.streamex.StreamEx;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1234,27 +1236,39 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  public void flushFieldsQualifiedBy(@NotNull Set<DfaValue> qualifiers) {
+    flushFields(new QualifierStatus(qualifiers));
+  }
+
+  @Override
   public void flushFields() {
-    Set<DfaVariableValue> vars = new LinkedHashSet<>(myVariableTypes.keySet());
+    flushFields(new QualifierStatus(null));
+  }
+  
+  public void flushFields(@NotNull QualifierStatus qualifierStatus) {
+    Set<DfaVariableValue> vars = new LinkedHashSet<>();
+    for (DfaVariableValue value : myVariableTypes.keySet()) {
+      if (value.isFlushableByCalls() && qualifierStatus.shouldFlush(value.getQualifier(), value.containsCalls())) {
+        vars.add(value);
+      }
+    }
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
-        ContainerUtil.addAll(vars, aClass);
+        for (DfaVariableValue value : aClass) {
+          if (value.isFlushableByCalls() && qualifierStatus.shouldFlush(value.getQualifier(), value.containsCalls())) {
+            vars.add(value);
+          }
+        }
       }
     }
     for (DfaVariableValue value : vars) {
-      if (!value.isFlushableByCalls()) continue;
-      DfaVariableValue qualifier = value.getQualifier();
-      if (qualifier != null) {
-        DfReferenceType dfType = ObjectUtils.tryCast(getDfType(qualifier), DfReferenceType.class);
-        if (dfType != null && (dfType.getMutability() == Mutability.UNMODIFIABLE || dfType.isLocal())) continue;
-      }
       doFlush(value, shouldMarkFlushed(value));
     }
     myStack.replaceAll(val -> {
       DfType type = val.getDfType();
       if (type instanceof DfReferenceType) {
         SpecialField field = ((DfReferenceType)type).getSpecialField();
-        if (field != null && !field.isStable() && ((DfReferenceType)type).getMutability() != Mutability.UNMODIFIABLE) {
+        if (field != null && !field.isStable() && qualifierStatus.shouldFlush(val, field.isCall())) {
           return myFactory.fromDfType(((DfReferenceType)type).dropSpecialField());
         }
       }
@@ -1562,6 +1576,67 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       });
       s.append("}");
       return s.toString();
+    }
+  }
+
+  private class QualifierStatus {
+    private static final int NOT_CALCULATED = 0;
+    private static final int SHOULD_FLUSH_ALWAYS = 1;
+    private static final int SHOULD_FLUSH_CALLS = 2;
+    private static final int SHOULD_NOT_FLUSH = 3;
+
+    private final TIntIntHashMap myMap = new TIntIntHashMap();
+    private final @Nullable Set<DfaValue> myQualifiersToFlush;
+
+    private QualifierStatus(@Nullable Set<DfaValue> qualifiersToFlush) {
+      myQualifiersToFlush = qualifiersToFlush;
+    }
+
+    boolean shouldFlush(@Nullable DfaValue qualifier, boolean hasCall) {
+      if (qualifier == null) return true;
+      int status = myMap.get(qualifier.getID());
+      if (status == NOT_CALCULATED) {
+        status = calculate(qualifier);
+        if (status != SHOULD_FLUSH_ALWAYS && qualifier instanceof DfaVariableValue) {
+          DfaVariableValue qualifierVar = (DfaVariableValue)qualifier;
+          if (qualifierVar.isFlushableByCalls()) {
+            DfaVariableValue qualifierQualifier = qualifierVar.getQualifier();
+            if (shouldFlush(qualifierQualifier, qualifierVar.containsCalls())) {
+              status = SHOULD_FLUSH_ALWAYS;
+            }
+          }
+        }
+        myMap.put(qualifier.getID(), status);
+      }
+      return status == SHOULD_FLUSH_ALWAYS || (hasCall && status == SHOULD_FLUSH_CALLS);
+    }
+
+    private @MagicConstant(valuesFromClass = QualifierStatus.class) int calculate(DfaValue qualifier) {
+      final DfReferenceType dfType = ObjectUtils.tryCast(getDfType(qualifier), DfReferenceType.class);
+      if (dfType == null) return SHOULD_FLUSH_ALWAYS;
+      if (dfType.getMutability() == Mutability.UNMODIFIABLE) return SHOULD_NOT_FLUSH;
+      if (dfType.isLocal()) {
+        return myQualifiersToFlush != null && myQualifiersToFlush.contains(qualifier) ?
+               SHOULD_FLUSH_ALWAYS : SHOULD_NOT_FLUSH;
+      }
+      if (myQualifiersToFlush == null) return SHOULD_FLUSH_ALWAYS;
+      boolean flushCalls = false;
+      for (final DfaValue qualifierToFlush : myQualifiersToFlush) {
+        final RelationType relation = getRelation(qualifier, qualifierToFlush);
+        if (relation == RelationType.EQ) return SHOULD_FLUSH_ALWAYS;
+        final DfType typeToFlush = getDfType(qualifierToFlush);
+        if (typeToFlush instanceof DfReferenceType && ((DfReferenceType)typeToFlush).isLocal()) {
+          continue;
+        }
+        // Calls may refer to changed object indirectly (unless it's local)
+        flushCalls = true;
+        if (relation != null) continue;
+        if (typeToFlush.meet(dfType) != DfTypes.BOTTOM) {
+          // possible aliasing
+          return SHOULD_FLUSH_ALWAYS;
+        }
+      }
+      return flushCalls ? SHOULD_FLUSH_CALLS : SHOULD_NOT_FLUSH;
     }
   }
 }

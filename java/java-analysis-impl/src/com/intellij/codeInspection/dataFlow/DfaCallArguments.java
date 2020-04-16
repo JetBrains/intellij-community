@@ -19,7 +19,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /* package */ final class DfaCallArguments {
   final DfaValue myQualifier;
@@ -45,5 +47,25 @@ import java.util.Objects;
   @Override
   public int hashCode() {
     return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+myMutation.hashCode();
+  }
+
+  public void flush(DfaMemoryState state) {
+    if (myMutation.isPure()) {
+      return;
+    }
+    if (myMutation == MutationSignature.UNKNOWN || myArguments == null) {
+      state.flushFields();
+      return;
+    }
+    Set<DfaValue> qualifiers = new HashSet<>();
+    if (myQualifier != null && myMutation.mutatesThis()) {
+      qualifiers.add(myQualifier);
+    }
+    for (int i = 0; i < myArguments.length; i++) {
+      if (myMutation.mutatesArg(i)) {
+        qualifiers.add(myArguments[i]);
+      }
+    }
+    state.flushFieldsQualifiedBy(qualifiers);
   }
 }

@@ -376,10 +376,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
     for (DfaMemoryState state : finalStates) {
-      if (!instruction.getMutationSignature().isPure()) {
-        // TODO: support more precise mutations
-        state.flushFields();
-      }
+      callArguments.flush(state);
       pushExpressionResult(state.pop(), instruction, state);
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }
@@ -388,7 +385,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected @NotNull DfaCallArguments popCall(MethodCallInstruction instruction, DfaValueFactory factory, DfaMemoryState memState) {
     DfaValue[] argValues = popCallArguments(instruction, factory, memState);
-    final DfaValue qualifier = popQualifier(instruction, memState);
+    final DfaValue qualifier = popQualifier(instruction, memState, argValues);
     return new DfaCallArguments(qualifier, argValues, instruction.getMutationSignature());
   }
 
@@ -418,7 +415,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue arg = memState.pop();
       int paramIndex = argCount - i - 1;
 
-      arg = dropLocality(arg, memState);
+      if (!(instruction.getMutationSignature().isPure() ||
+            instruction.getMutationSignature().equals(MutationSignature.pure().alsoMutatesArg(paramIndex))) ||
+          mayLeakFromType(instruction.getResultType())) {
+        // If we write to local object only, it should not leak
+        arg = dropLocality(arg, memState);
+      }
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
       if (instruction.getContext() instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)instruction.getContext();
@@ -452,7 +454,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   protected void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
   }
 
-  private DfaValue popQualifier(@NotNull MethodCallInstruction instruction, @NotNull DfaMemoryState memState) {
+  private DfaValue popQualifier(@NotNull MethodCallInstruction instruction,
+                                @NotNull DfaMemoryState memState,
+                                DfaValue @Nullable [] argValues) {
     DfaValue value = memState.pop();
     if (instruction.getContext() instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)instruction.getContext();
@@ -466,11 +470,27 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     if (!(value.getType() instanceof PsiArrayType) &&
-        (TypeConstraint.fromDfType(dfType).isComparedByEquals() ||
-         !instruction.getMutationSignature().isPure() || mayLeakFromType(instruction.getResultType()))) {
+        (TypeConstraint.fromDfType(dfType).isComparedByEquals() || mayLeakThis(instruction, memState, argValues))) {
       value = dropLocality(value, memState);
     }
     return value;
+  }
+
+  private static boolean mayLeakThis(@NotNull MethodCallInstruction instruction,
+                                     @NotNull DfaMemoryState memState, DfaValue @Nullable [] argValues) {
+    MutationSignature signature = instruction.getMutationSignature();
+    if (signature == MutationSignature.unknown()) return true;
+    if (mayLeakFromType(instruction.getResultType())) return true;
+    if (argValues == null) {
+      return signature.isPure() || signature.equals(MutationSignature.pure().alsoMutatesThis());
+    }
+    for (int i = 0; i < argValues.length; i++) {
+      if (signature.mutatesArg(i)) {
+        PsiType type = memState.getPsiType(argValues[i]);
+        if (mayLeakFromType(type)) return true;
+      }
+    }
+    return false;
   }
 
   private static boolean mayLeakFromType(PsiType type) {
@@ -638,7 +658,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfType dfType = instruction.getContext() instanceof PsiNewExpression ?
                       TypeConstraints.exact(type).asDfType().meet(NOT_NULL_OBJECT) :
                       TypeConstraints.instanceOf(type).asDfType().meet(DfaNullability.fromNullability(nullability).asDfType());
-      if (instruction.getMutationSignature().isPure() && instruction.getContext() instanceof PsiNewExpression) {
+      if (instruction.getMutationSignature().isPure() && instruction.getContext() instanceof PsiNewExpression &&
+          !TypeConstraint.fromDfType(dfType).isComparedByEquals()) {
         dfType = dfType.meet(LOCAL_OBJECT);
       }
       return factory.fromDfType(dfType.meet(mutable.asDfType()));
