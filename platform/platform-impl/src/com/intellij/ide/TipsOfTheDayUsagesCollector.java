@@ -22,21 +22,19 @@ public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   public static final EventId1<DialogType> DIALOG_SHOWN =
     GROUP.registerEvent("dialog.shown", EventFields.Enum("type", DialogType.class));
 
-  private static final EventId2<String, String> TIP_SHOWN =
+  private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
-                        EventFields.String("feature_id").withCustomRule("tip_info"),
-                        EventFields.String("filename").withCustomRule("tip_info"));
-
-  private static final String NO_FEATURE_ID = "no.feature.id";
+                        EventFields.String("filename").withCustomRule("tip_info"),
+                        EventFields.String("algorithm").withCustomEnum("tips_order_algorithm"),
+                        EventFields.Version);
 
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
   }
 
-  public static void triggerTipShown(@NotNull TipAndTrickBean tip) {
-    String featureId = tip.featureId;
-    TIP_SHOWN.log(featureId != null ? featureId : NO_FEATURE_ID, tip.fileName);
+  public static void triggerTipShown(@NotNull TipAndTrickBean tip, @NotNull String algorithm, @Nullable String version) {
+    TIP_SHOWN.log(tip.fileName, algorithm, version);
   }
 
   public static class TipInfoWhiteListRule extends CustomWhiteListRule {
@@ -48,7 +46,6 @@ public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (NO_FEATURE_ID.equals(data) || isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
       PluginInfo info = context.pluginInfo;
       if (info != null) {
         return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;

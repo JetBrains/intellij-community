@@ -16,6 +16,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,6 +41,8 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   private final JLabel myPoweredByLabel;
   final AbstractAction myPreviousTipAction;
   final AbstractAction myNextTipAction;
+  private @NotNull String myAlgorithm = "unknown";
+  private @Nullable String myAlgorithmVersion = null;
   private List<TipAndTrickBean> myTips = Collections.emptyList();
   private final List<String> mySeenIds = new ArrayList<>();
   private TipAndTrickBean myCurrentTip = null;
@@ -70,8 +73,10 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   void setTips(@NotNull List<? extends TipAndTrickBean> list) {
-    myTips = new ArrayList<>(list);
-    Collections.shuffle(myTips);
+    TipsOrderUtil.RecommendationDescription recommendation = TipsOrderUtil.sort(list);
+    myTips = new ArrayList<>(recommendation.getTips());
+    myAlgorithm = recommendation.getAlgorithm();
+    myAlgorithmVersion = recommendation.getVersion();
     for (String id : mySeenIds) {
       TipAndTrickBean tip = findByFileName(id);
       if (tip != null) {
@@ -118,7 +123,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     TipUIUtil.openTipInBrowser(myCurrentTip, myBrowser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(myCurrentTip));
     myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
-    TipsOfTheDayUsagesCollector.triggerTipShown(tip);
+    TipsOfTheDayUsagesCollector.triggerTipShown(tip, myAlgorithm, myAlgorithmVersion);
 
     if (!mySeenIds.contains(myCurrentTip.fileName)) {
       mySeenIds.add(myCurrentTip.fileName);
