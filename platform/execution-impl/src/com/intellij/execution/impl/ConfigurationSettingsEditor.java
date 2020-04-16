@@ -189,6 +189,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     super(settings.createFactory());
 
     myConfigurationEditor = (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
+    myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());
     Disposer.register(this, myConfigurationEditor);
     myConfiguration = settings.getConfiguration();
   }

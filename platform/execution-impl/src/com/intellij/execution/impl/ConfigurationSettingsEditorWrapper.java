@@ -56,6 +56,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   public ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
+    myEditor.addSettingsEditorListener(editor -> fireStepsBeforeRunChanged());
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
     myDecorator = new HideableDecorator(myBeforeLaunchContainer, "", false) {

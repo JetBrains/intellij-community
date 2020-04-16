@@ -54,6 +54,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public void setVisible(boolean selected) {
     myComponent.setVisible(selected);
+    fireEditorStateChanged();
   }
 
   public int getCommandLinePosition() {
