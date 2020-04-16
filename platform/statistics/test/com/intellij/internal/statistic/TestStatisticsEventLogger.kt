@@ -29,6 +29,4 @@ class TestStatisticsEventLogger(private val session: String = "testSession",
   override fun cleanup() {}
 
   override fun rollOver() {}
-
-  override fun flush(): CompletableFuture<Void> = CompletableFuture.completedFuture(null)
 }

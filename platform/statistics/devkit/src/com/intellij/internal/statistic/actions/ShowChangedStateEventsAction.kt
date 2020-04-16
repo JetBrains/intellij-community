@@ -48,11 +48,12 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
       StatisticsDevKitUtil.showNotification(project, NotificationType.INFORMATION, StatisticsBundle.message("stats.no.changed.events"))
       return
     }
-    val contentManager = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId)?.contentManager ?: return
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId) ?: return
     val displayName = "Changed events: $recorderId"
-    val eventLogToolWindow = ChangedStateEventsPanel(project, difference)
-    val content = ContentFactory.SERVICE.getInstance().createContent(eventLogToolWindow.component, displayName, true)
-    content.preferredFocusableComponent = eventLogToolWindow.component
+    val changedEventsComponent = ChangedStateEventsPanel(project, toolWindow.disposable, difference).component
+    val content = ContentFactory.SERVICE.getInstance().createContent(changedEventsComponent, displayName, true)
+    content.preferredFocusableComponent = changedEventsComponent
+    val contentManager = toolWindow.contentManager
     contentManager.addContent(content)
     contentManager.setSelectedContent(content)
   }

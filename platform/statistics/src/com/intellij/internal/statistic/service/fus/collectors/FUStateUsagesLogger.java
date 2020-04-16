@@ -62,10 +62,11 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
       return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
   }
-  private static CompletableFuture<Void> logUsagesAsStateEvents(@Nullable Project project,
-                                                                @NotNull EventLogGroup group,
-                                                                @Nullable FeatureUsageData context,
-                                                                @NotNull Promise<? extends Set<MetricEvent>> metricsPromise) {
+
+  private static @NotNull CompletableFuture<Void> logUsagesAsStateEvents(@Nullable Project project,
+                                                                         @NotNull EventLogGroup group,
+                                                                         @Nullable FeatureUsageData context,
+                                                                         @NotNull Promise<? extends Set<MetricEvent>> metricsPromise) {
     CompletableFuture<Void> future = new CompletableFuture<>();
     metricsPromise.onSuccess(metrics -> {
       if (project != null && project.isDisposed()) {
@@ -96,7 +97,6 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
       return CompletableFuture.completedFuture(null);
     }
     return FeatureUsageLogger.INSTANCE.logState(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED,
-
                                                 new FeatureUsageData().addProject(project).build());
   }
 

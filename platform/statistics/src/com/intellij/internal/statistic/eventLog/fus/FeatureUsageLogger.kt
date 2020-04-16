@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.internal.statistic.eventLog.EmptyStatisticsEventLogger
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
-import com.intellij.internal.statistic.eventLog.getEventLogProvider
+import com.intellij.internal.statistic.eventLog.*
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 
@@ -81,7 +78,11 @@ object FeatureUsageLogger {
   }
 
   fun flush() : CompletableFuture<Void> {
-    return loggerProvider.logger.flush()
+    val logger = loggerProvider.logger
+    if (logger is StatisticsFileEventLogger) {
+      return logger.flush()
+    }
+    return CompletableFuture.completedFuture(null)
   }
 
   fun getConfig() : StatisticsEventLoggerProvider {

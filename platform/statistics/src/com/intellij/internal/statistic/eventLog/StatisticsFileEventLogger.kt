@@ -84,7 +84,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     logExecutor.shutdown()
   }
 
-  override fun flush(): CompletableFuture<Void> {
+  fun flush(): CompletableFuture<Void> {
     return CompletableFuture.runAsync(Runnable {
       logLastEvent()
     }, logExecutor)

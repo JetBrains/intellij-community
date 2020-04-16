@@ -10,8 +10,7 @@ internal class StatisticsEventLogConsole(val project: Project, val model: LogFil
   : LogConsoleBase(project, null, eventLogToolWindowsId, false, model) {
 
   override fun isActive(): Boolean {
-    return ToolWindowManager.getInstance(project).getToolWindow(
-      eventLogToolWindowsId)?.isVisible ?: false
+    return ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId)?.isVisible ?: false
   }
 
   fun addLogLine(line: String) {

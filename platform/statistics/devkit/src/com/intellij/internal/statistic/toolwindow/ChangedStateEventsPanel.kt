@@ -5,9 +5,12 @@ import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Disposer
 
-internal class ChangedStateEventsPanel(val project: Project, difference: Collection<LogEvent>)
-  : SimpleToolWindowPanel(false, true), Disposable {
+internal class ChangedStateEventsPanel(val project: Project,
+                                       parentDisposable: Disposable,
+                                       difference: Collection<LogEvent>)
+  : SimpleToolWindowPanel(false, true) {
   private val consoleLog = StatisticsEventLogConsole(project, StatisticsLogFilterModel())
 
   init {
@@ -16,9 +19,6 @@ internal class ChangedStateEventsPanel(val project: Project, difference: Collect
     for (logEvent in difference) {
       consoleLog.addLogLine(messageBuilder.buildLogMessage(logEvent))
     }
-  }
-
-  override fun dispose() {
-    consoleLog.dispose()
+    Disposer.register(parentDisposable, consoleLog)
   }
 }
