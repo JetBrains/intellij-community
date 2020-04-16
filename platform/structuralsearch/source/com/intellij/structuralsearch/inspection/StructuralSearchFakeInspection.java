@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -120,7 +121,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(button);
       if (profile == null) return;
       final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-      if (StructuralSearchProfileActionProvider.saveInspection(project, inspection, myMainConfiguration)) {
+      if (saveInspection(project, inspection, myMainConfiguration)) {
         for (Configuration configuration : myConfigurations) {
           configuration.setName(myMainConfiguration.getName());
         }
@@ -154,6 +155,28 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       .getPanel();
     panel.setBorder(JBUI.Borders.emptyTop(10));
     return panel;
+  }
+
+  private static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      inspection.addConfiguration(configuration);
+      return true;
+    }
+
+    final StructuralSearchProfileActionProvider.InspectionDataDialog
+      dialog = new StructuralSearchProfileActionProvider.InspectionDataDialog(project, inspection, configuration);
+    if (!dialog.showAndGet()) {
+      return false;
+    }
+    final List<Configuration> configurations = inspection.getConfigurationsWithUuid(configuration.getUuid());
+    configurations.removeIf(c -> c.getOrder() == 0);
+    final String name = dialog.getName();
+    for (Configuration c : inspection.getConfigurationsWithUuid(configuration.getUuid())) {
+      c.setName(name);
+    }
+    configurations.add(configuration);
+    inspection.addConfigurations(configurations);
+    return true;
   }
 
   private void performMove(JList<Configuration> list, boolean up) {

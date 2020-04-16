@@ -85,6 +85,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   }
 
   public void setName(@NotNull String value) {
+    if (uuid == null) {
+      uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+    }
     name = value;
   }
 

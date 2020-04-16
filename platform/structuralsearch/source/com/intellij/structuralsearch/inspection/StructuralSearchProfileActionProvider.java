@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -142,10 +141,10 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
                                      @NotNull Project project,
                                      @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
+    final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
+    if (!dialog.showAndGet()) return false;
     configuration.setUuidFromName();
-    if (!saveInspection(project, inspection, configuration)) {
-      return false;
-    }
+    inspection.addConfiguration(configuration);
     addConfigurationToProfile(project, profile, configuration);
     profile.getProfileManager().fireProfileChanged(profile);
     return true;
@@ -168,29 +167,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     profile.setToolEnabled(shortName, true);
   }
 
-  public static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      inspection.addConfiguration(configuration);
-      return true;
-    }
-    final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
-    final boolean result = dialog.showAndGet();
-    if (result) {
-      inspection.removeConfiguration(configuration);
-      final String name = dialog.getName();
-      for (Configuration c : inspection.getConfigurationsWithUuid(configuration.getUuid())) {
-        c.setName(name);
-      }
-      configuration.setName(name);
-      configuration.setDescription(dialog.getDescription());
-      configuration.setSuppressId(dialog.getSuppressId());
-      configuration.setProblemDescriptor(dialog.getProblemDescriptor());
-      inspection.addConfiguration(configuration);
-    }
-    return result;
-  }
-
-  private static class InspectionDataDialog extends DialogWrapper {
+  static class InspectionDataDialog extends DialogWrapper {
     private final Pattern mySuppressIdPattern = Pattern.compile(LocalInspectionTool.VALID_ID_PATTERN);
 
     private final SSBasedInspection myInspection;
@@ -258,6 +235,17 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         }
       }
       return result;
+    }
+
+    @Override
+    protected void doOKAction() {
+      super.doOKAction();
+      if (getOKAction().isEnabled()) {
+        myConfiguration.setName(getName());
+        myConfiguration.setDescription(getDescription());
+        myConfiguration.setSuppressId(getSuppressId());
+        myConfiguration.setProblemDescriptor(getProblemDescriptor());
+      }
     }
 
     @Nullable
