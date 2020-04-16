@@ -42,14 +42,14 @@ class GitIndexStatusTest : GitPlatformTest() {
 
   fun `test no changes`() {
     for (file in repositoryFiles) {
-      TestCase.assertEquals(GitFileStatus.NotChanged(file.relativePath()), gitFileStatus(file))
+      TestCase.assertEquals(LightFileStatus.NotChanged(file.relativePath()), gitFileStatus(file))
     }
   }
 
   fun `test worktree changes`() {
     for (file in repositoryFiles) modify(file)
     for (file in repositoryFiles) {
-      TestCase.assertEquals(GitFileStatus.StatusRecord(' ', 'M', file.relativePath()), gitFileStatus(file))
+      TestCase.assertEquals(LightFileStatus.StatusRecord(' ', 'M', file.relativePath()), gitFileStatus(file))
     }
   }
 
@@ -59,7 +59,7 @@ class GitIndexStatusTest : GitPlatformTest() {
       git("add ${file.path}")
     }
     for (file in repositoryFiles) {
-      TestCase.assertEquals(GitFileStatus.StatusRecord('M', ' ', file.relativePath()), gitFileStatus(file))
+      TestCase.assertEquals(LightFileStatus.StatusRecord('M', ' ', file.relativePath()), gitFileStatus(file))
     }
   }
 
@@ -70,7 +70,7 @@ class GitIndexStatusTest : GitPlatformTest() {
       modify(file)
     }
     for (file in repositoryFiles) {
-      TestCase.assertEquals(GitFileStatus.StatusRecord('M', 'M', file.relativePath()), gitFileStatus(file))
+      TestCase.assertEquals(LightFileStatus.StatusRecord('M', 'M', file.relativePath()), gitFileStatus(file))
     }
   }
 
@@ -79,7 +79,7 @@ class GitIndexStatusTest : GitPlatformTest() {
       Executor.rm(file.relativePath().system())
     }
     for (file in repositoryFiles) {
-      TestCase.assertEquals(GitFileStatus.StatusRecord(' ', 'D', file.relativePath()), gitFileStatus(file))
+      TestCase.assertEquals(LightFileStatus.StatusRecord(' ', 'D', file.relativePath()), gitFileStatus(file))
     }
   }
 
@@ -89,7 +89,7 @@ class GitIndexStatusTest : GitPlatformTest() {
       git("rm ${file.relativePath()}")
     }
     for (file in repositoryFiles) {
-      TestCase.assertEquals(GitFileStatus.StatusRecord('D', ' ', file.relativePath()), gitFileStatus(file))
+      TestCase.assertEquals(LightFileStatus.StatusRecord('D', ' ', file.relativePath()), gitFileStatus(file))
     }
   }
 

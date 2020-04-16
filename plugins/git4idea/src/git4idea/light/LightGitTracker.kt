@@ -20,7 +20,7 @@ import com.intellij.vcs.log.runInEdt
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
-import git4idea.index.GitFileStatus
+import git4idea.index.LightFileStatus
 import git4idea.index.getFileStatus
 import java.util.*
 
@@ -45,7 +45,7 @@ class LightGitTracker : Disposable {
   private var state: State = State.Blank
   val currentLocation: String?
     get() = state.location
-  val statuses: Map<VirtualFile, GitFileStatus>
+  val statuses: Map<VirtualFile, LightFileStatus>
     get() = state.statuses
 
   init {
@@ -64,15 +64,15 @@ class LightGitTracker : Disposable {
     }
   }
 
-  fun getFileStatus(file: VirtualFile): GitFileStatus {
-    return state.statuses[file] ?: GitFileStatus.Blank
+  fun getFileStatus(file: VirtualFile): LightFileStatus {
+    return state.statuses[file] ?: LightFileStatus.Blank
   }
 
   private fun updateCurrentState(updater: StateUpdater) {
     when (updater) {
       StateUpdater.Clear -> {
         val previousStatuses = state.statuses
-        val statusesChanged = previousStatuses.isNotEmpty() && previousStatuses.values.any { it != GitFileStatus.Blank }
+        val statusesChanged = previousStatuses.isNotEmpty() && previousStatuses.values.any { it != LightFileStatus.Blank }
         val changed = statusesChanged || !(state.location.isNullOrBlank())
 
         state = State.Blank
@@ -83,7 +83,7 @@ class LightGitTracker : Disposable {
       is StateUpdater.Update -> {
         val newState = updater.state
         val statusesMap = lightEditorManager.openFiles.associateWith {
-          newState.statuses[it] ?: state.statuses[it] ?: GitFileStatus.Blank
+          newState.statuses[it] ?: state.statuses[it] ?: LightFileStatus.Blank
         }
         val location = if (updater.updateLocation) newState.location else state.location
 
@@ -196,7 +196,7 @@ class LightGitTracker : Disposable {
       else previousResult?.state?.location
       val updateLocation = locationFile != null || (previousResult as? StateUpdater.Update)?.updateLocation ?: false
 
-      val statuses = mutableMapOf<VirtualFile, GitFileStatus>()
+      val statuses = mutableMapOf<VirtualFile, LightFileStatus>()
       previousResult?.state?.statuses?.let { statuses.putAll(it) }
       for (file in files) {
         try {
@@ -212,7 +212,7 @@ class LightGitTracker : Disposable {
     }
   }
 
-  private data class State(val location: String?, val statuses: Map<VirtualFile, GitFileStatus>) {
+  private data class State(val location: String?, val statuses: Map<VirtualFile, LightFileStatus>) {
     private constructor() : this(null, emptyMap())
 
     companion object {
