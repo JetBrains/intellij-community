@@ -105,8 +105,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
       final PsiElement element = matchResult.getMatch();
       if (holder.getFile() != element.getContainingFile()) return false;
-      final String name = ObjectUtils.notNull(configuration.getProblemDescriptor(), configuration.getName());
       final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
+      final Configuration mainConfiguration = getMainConfiguration(configuration);
+      final String name = ObjectUtils.notNull(mainConfiguration.getProblemDescriptor(), mainConfiguration.getName());
       final ProblemDescriptor descriptor =
         holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
@@ -214,6 +215,14 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         return SSRBundle.message("SSRInspection.family.name");
       }
     };
+  }
+
+  private Configuration getMainConfiguration(Configuration configuration) {
+    if (configuration.getOrder() == 0) {
+      return configuration;
+    }
+    final UUID uuid = configuration.getUuid();
+    return myConfigurations.stream().filter(c -> c.getOrder() == 0 && uuid.equals(c.getUuid())).findFirst().orElse(configuration);
   }
 
   public List<Configuration> getConfigurations() {
