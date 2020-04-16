@@ -231,6 +231,64 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertEquals("", compilerSettings.getState().greclipsePath);
   }
 
+  public void testGroovyEclipsePluginWhenOnlyCompilerDependency() {
+    createStdProjectFolders();
+    createProjectSubDirs("src/main/groovy",
+                         "src/test/groovy");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+                  "<build>\n" +
+                  "  <pluginManagement>\n" +
+                  "    <plugins>\n" +
+                  "      <plugin>\n" +
+                  "        <artifactId>maven-compiler-plugin</artifactId>\n" +
+                  "        <configuration>\n" +
+                  "          <compilerId>groovy-eclipse-compiler</compilerId>\n" +
+                  "          <source>1.7</source>\n" +
+                  "          <target>1.7</target>\n" +
+                  "          <showWarnings>false</showWarnings>\n" +
+                  "        </configuration>\n" +
+                  "        <dependencies>\n" +
+                  "          <dependency>\n" +
+                  "            <groupId>org.codehaus.groovy</groupId>\n" +
+                  "            <artifactId>groovy-eclipse-compiler</artifactId>\n" +
+                  "            <version>2.8.0-01</version>\n" +
+                  "          </dependency>\n" +
+                  "          <dependency>\n" +
+                  "            <groupId>org.codehaus.groovy</groupId>\n" +
+                  "            <artifactId>groovy-eclipse-batch</artifactId>\n" +
+                  "            <version>2.1.3-01</version>\n" +
+                  "          </dependency>\n" +
+                  "        </dependencies>\n" +
+                  "      </plugin>\n" +
+                  "      <plugin>\n" +
+                  "        <groupId>org.codehaus.groovy</groupId>\n" +
+                  "        <artifactId>groovy-eclipse-compiler</artifactId>\n" +
+                  "        <version>2.8.0-01</version>\n" +
+                  "        <extensions>true</extensions>\n" +
+                  "      </plugin>\n" +
+                  "    </plugins>\n" +
+                  "  </pluginManagement>\n" +
+                  "</build>\n");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/main/groovy",
+                  "src/main/java");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project",
+                      "src/test/groovy",
+                      "src/test/java");
+    assertTestResources("project", "src/test/resources");
+
+    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    assertEquals("", compilerSettings.getState().greclipsePath);
+  }
+
   public void testAddingCustomGroovySpecificSources() {
     createStdProjectFolders();
     createProjectSubDirs("src/main/groovy",
