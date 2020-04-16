@@ -1008,6 +1008,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
     return message;
   }
 
+  @NotNull
   abstract protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins();
 
   @NotNull

@@ -113,6 +113,7 @@ public class PluginManagerConfigurable
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
+    @NotNull
     public Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
       return getCustomRepositoryPlugins();
     }

@@ -54,7 +54,7 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final Action myIgnoreAction;
 
   public PluginUpdateDialog(@NotNull Collection<PluginDownloader> updatedPlugins,
-                            Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
+                            @NotNull Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
 
@@ -76,6 +76,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
 
       @Override
+      @NotNull
       protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
         return customRepositoryPlugins;
       }
