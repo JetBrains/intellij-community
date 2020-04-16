@@ -23,7 +23,10 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
@@ -968,10 +971,6 @@ public class FSRecords {
       w.lock();
       return action.compute();
     }
-    catch (ProcessCanceledException e) {
-      // now JarFileSystem list methods can be interrupted now
-      throw e;
-    }
     catch (Throwable e) {
       DbConnection.handleError(e);
       throw new RuntimeException(e);
@@ -984,10 +983,6 @@ public class FSRecords {
     try {
       w.lock();
       action.run();
-    }
-    catch (ProcessCanceledException e) {
-      // now JarFileSystem list methods can be interrupted now
-      throw e;
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
@@ -1007,10 +1002,10 @@ public class FSRecords {
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
 
-    return writeAndHandleErrors(() -> {
+    try {
+      w.lock();
       ListResult toSave;
-      // optimization: if the children were never changed, do not check for duplicates again
-      // because we assume they were
+      // optimization: if the children were never changed after list(), do not check for duplicates again
       if (result.childrenWereChangedSinceLastList()) {
         ListResult reloadedChildren = doLoadChildren(parentId);
         toSave = childrenConvertor.apply(reloadedChildren);
@@ -1021,7 +1016,19 @@ public class FSRecords {
 
       doSaveChildren(parentId, toSave);
       return toSave;
-    });
+    }
+    catch (ProcessCanceledException e) {
+      // JarFileSystem list methods can be interrupted now
+      throw e;
+    }
+    catch (Throwable e) {
+      DbConnection.handleError(e);
+      ExceptionUtil.rethrow(e);
+      return result;
+    }
+    finally {
+      w.unlock();
+    }
   }
 
   private static void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
