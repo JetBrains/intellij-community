@@ -125,8 +125,7 @@ object UpdateChecker {
    * An immediate check for plugin updates for use from a command line (read "Toolbox").
    */
   @JvmStatic
-  fun getPluginUpdates(): Collection<PluginDownloader>? =
-    checkPluginsUpdate(EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build).availableUpdates
+  fun getPluginUpdates(): Collection<PluginDownloader>? = checkPluginsUpdate(EmptyProgressIndicator()).availableUpdates
 
   private fun doUpdateAndShowResult(project: Project?,
                                     showSettingsLink: Boolean,
@@ -153,12 +152,11 @@ object UpdateChecker {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
 
     val buildNumber: BuildNumber? = result.newBuild?.apiVersion
-    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>? = if (buildNumber != null) HashSet() else null
 
     val checkPluginsUpdateResult: CheckPluginsUpdateResult
     val externalUpdates: Collection<ExternalUpdate>?
     try {
-      checkPluginsUpdateResult = checkPluginsUpdate(indicator, incompatiblePlugins, buildNumber)
+      checkPluginsUpdateResult = checkPluginsUpdate(indicator, buildNumber)
       externalUpdates = checkExternalUpdates(showDialog, updateSettings, indicator)
     }
     catch (e: IOException) {
@@ -172,8 +170,7 @@ object UpdateChecker {
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
     ApplicationManager.getApplication().invokeLater {
-      showUpdateResult(project, result, checkPluginsUpdateResult, incompatiblePlugins, externalUpdates, showSettingsLink, showDialog,
-                       showEmptyNotification)
+      showUpdateResult(project, result, checkPluginsUpdateResult, externalUpdates, showSettingsLink, showDialog, showEmptyNotification)
       callback?.setDone()
     }
   }
@@ -214,15 +211,20 @@ object UpdateChecker {
 
   private data class CheckPluginsUpdateResult(
     val availableUpdates: Collection<PluginDownloader>?,
-    val customRepositoryPlugins: Collection<IdeaPluginDescriptor>
+    val customRepositoryPlugins: Collection<IdeaPluginDescriptor>,
+    val incompatiblePlugins: Collection<IdeaPluginDescriptor>?
   )
 
-  private val EMPTY_CHECK_UPDATE_RESULT = CheckPluginsUpdateResult(null, emptyList())
+  private val EMPTY_CHECK_UPDATE_RESULT = CheckPluginsUpdateResult(null, emptyList(), null)
 
+  /**
+   * Checks for plugin updates for current build if `build` is not provided.
+   *
+   * Checks for plugin updates for provided `build` and calculates plugins that don't have updates and would be incompatible with provided build.
+   */
   private fun checkPluginsUpdate(
     indicator: ProgressIndicator?,
-    incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
-    buildNumber: BuildNumber?
+    newBuildNumber: BuildNumber? = null
   ): CheckPluginsUpdateResult {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return EMPTY_CHECK_UPDATE_RESULT
@@ -234,15 +236,15 @@ object UpdateChecker {
     for (host in RepositoryHelper.getPluginHosts()) {
       try {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-          validateCompatibleUpdatesForCurrentPlugins(updateable, toUpdate, buildNumber, state, incompatiblePlugins, indicator)
+          validateCompatibleUpdatesForCurrentPlugins(updateable, toUpdate, newBuildNumber, state, indicator)
         }
         else {
-          val list = RepositoryHelper.loadPlugins(host, buildNumber, indicator)
+          val list = RepositoryHelper.loadPlugins(host, newBuildNumber, indicator)
           for (descriptor in list) {
             val id = descriptor.pluginId
             if (updateable.containsKey(id)) {
               updateable.remove(id)
-              buildDownloaderAndPrepareToInstall(state, descriptor, buildNumber, toUpdate, incompatiblePlugins, indicator, host)
+              buildDownloaderAndPrepareToInstall(state, descriptor, newBuildNumber, toUpdate, indicator, host)
             }
             //collect latest plugins from custom repos
             val storedDescriptor = latestCustomPluginsAsMap[id]
@@ -258,20 +260,43 @@ object UpdateChecker {
       }
     }
 
-    if (incompatiblePlugins != null && buildNumber != null) {
+    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>? = getIncompatiblePlugins(newBuildNumber, updateable, toUpdate)
+
+    //TODO: check if code in this `if` duplicates `getIncompatiblePlugins`
+    if (incompatiblePlugins != null && newBuildNumber != null) {
       updateable.values.filterNotNull().filterTo(incompatiblePlugins) {
-        it.isEnabled && !PluginManagerCore.isCompatible(it, buildNumber)
+        it.isEnabled && !PluginManagerCore.isCompatible(it, newBuildNumber)
       }
     }
 
-    return CheckPluginsUpdateResult(if (toUpdate.isEmpty()) null else toUpdate.values, latestCustomPluginsAsMap.values)
+    return CheckPluginsUpdateResult(if (toUpdate.isEmpty()) null else toUpdate.values, latestCustomPluginsAsMap.values, incompatiblePlugins)
+  }
+
+  private fun getIncompatiblePlugins(
+    newBuildNumber: BuildNumber?,
+    updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
+    toUpdate: MutableMap<PluginId, PluginDownloader>
+  ): MutableCollection<IdeaPluginDescriptor>? {
+    if (newBuildNumber == null) return null
+    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor> =  HashSet()
+    for ((pluginId, installedPlugin) in updateable) {
+      if (!PluginManagerCore.isDisabled(pluginId)) {
+        // collect plugins that were not updated and would be incompatible with the new version
+        if (installedPlugin != null && installedPlugin.isEnabled &&
+            !toUpdate.containsKey(installedPlugin.pluginId) &&
+            !PluginManagerCore.isCompatible(installedPlugin, newBuildNumber)) {
+          incompatiblePlugins += installedPlugin
+        }
+      }
+    }
+    return incompatiblePlugins
   }
 
   @JvmStatic
   fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return
-    validateCompatibleUpdatesForCurrentPlugins(updateable, mutableMapOf(), null, state, null, null)
+    validateCompatibleUpdatesForCurrentPlugins(updateable, mutableMapOf(), null, state, null)
   }
 
   /**
@@ -283,7 +308,6 @@ object UpdateChecker {
     toUpdate: MutableMap<PluginId, PluginDownloader>,
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,
-    incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
     indicator: ProgressIndicator?
   ) {
     val marketplacePlugins = MarketplaceRequests.getMarketplacePlugins(indicator)
@@ -300,7 +324,7 @@ object UpdateChecker {
           if (e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) continue
           else throw e
         }
-        buildDownloaderAndPrepareToInstall(state, newDescriptor, buildNumber, toUpdate, incompatiblePlugins, indicator, null)
+        buildDownloaderAndPrepareToInstall(state, newDescriptor, buildNumber, toUpdate, indicator, null)
       }
     }
     toUpdate.keys.forEach { updateable.remove(it) }
@@ -311,13 +335,12 @@ object UpdateChecker {
     descriptor: IdeaPluginDescriptor,
     buildNumber: BuildNumber?,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
-    incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
     indicator: ProgressIndicator?,
     host: String?
   ) {
     val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
     state.onDescriptorDownload(descriptor)
-    checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator)
+    checkAndPrepareToInstall(downloader, state, toUpdate, indicator)
   }
 
   /**
@@ -386,6 +409,8 @@ object UpdateChecker {
     return result
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated("Use `checkAndPrepareToInstall` without `incompatiblePlugins` parameter", level = DeprecationLevel.ERROR)
   @Throws(IOException::class)
   @JvmStatic
   fun checkAndPrepareToInstall(
@@ -393,6 +418,27 @@ object UpdateChecker {
     state: InstalledPluginsState,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
     incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
+    indicator: ProgressIndicator?
+  ) {
+    checkAndPrepareToInstall(downloader, state, toUpdate, indicator)
+
+    val pluginId = downloader.id
+    if (PluginManagerCore.isDisabled(pluginId)) return
+    val installedPlugin = PluginManagerCore.getPlugin(pluginId)
+    // collect plugins that were not updated and would be incompatible with the new version
+    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
+        !toUpdate.containsKey(installedPlugin.pluginId) &&
+        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
+      incompatiblePlugins += installedPlugin
+    }
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
+  fun checkAndPrepareToInstall(
+    downloader: PluginDownloader,
+    state: InstalledPluginsState,
+    toUpdate: MutableMap<PluginId, PluginDownloader>,
     indicator: ProgressIndicator?
   ) {
     @Suppress("NAME_SHADOWING")
@@ -425,13 +471,6 @@ object UpdateChecker {
         toUpdate[pluginId] = downloader
       }
     }
-
-    // collect plugins that were not updated and would be incompatible with the new version
-    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
-        !toUpdate.containsKey(installedPlugin.pluginId) &&
-        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
-      incompatiblePlugins += installedPlugin
-    }
   }
 
   private fun showErrorMessage(showDialog: Boolean, message: String) {
@@ -444,7 +483,6 @@ object UpdateChecker {
   private fun showUpdateResult(project: Project?,
                                checkForUpdateResult: CheckForUpdateResult,
                                checkPluginsUpdateResult: CheckPluginsUpdateResult,
-                               incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
                                externalUpdates: Collection<ExternalUpdate>?,
                                showSettingsLink: Boolean,
                                showDialog: Boolean,
@@ -458,7 +496,7 @@ object UpdateChecker {
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
         UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, showSettingsLink, updatedPlugins,
-                         incompatiblePlugins).show()
+                         checkPluginsUpdateResult.incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }

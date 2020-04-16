@@ -35,7 +35,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     BuildNumber currentBuildNumber = BuildNumber.fromString("IU-142.100");
     for (IdeaPluginDescriptor descriptor : descriptors) {
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, currentBuildNumber);
-      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, new ArrayList<>(), null);
+      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, null);
     }
     assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
 
