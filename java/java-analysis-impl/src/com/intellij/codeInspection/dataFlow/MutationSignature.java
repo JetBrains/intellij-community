@@ -235,6 +235,16 @@ public class MutationSignature {
       if (clazz == null) return UNKNOWN;
       Set<PsiClass> visited = new HashSet<>();
       while (true) {
+        for (PsiField field : clazz.getFields()) {
+          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.hasInitializer()) {
+            return UNKNOWN;
+          }
+        }
+        for (PsiClassInitializer initializer : clazz.getInitializers()) {
+          if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+            return UNKNOWN;
+          }
+        }
         for (PsiMethod ctor : clazz.getConstructors()) {
           if(ctor.getParameterList().isEmpty()) {
             return fromMethod(ctor);

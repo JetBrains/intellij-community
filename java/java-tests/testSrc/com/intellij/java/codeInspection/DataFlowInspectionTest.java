@@ -670,4 +670,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testStringContains() { doTest(); }
   public void testSwitchLabelNull() { doTest(); }
   public void testMutationContractInFlush() { doTest(); }
+  public void testDefaultConstructor() { doTest(); }
 }
