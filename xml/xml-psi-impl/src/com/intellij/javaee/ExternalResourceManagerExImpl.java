@@ -55,8 +55,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private final Map<String, Map<String, String>> myResources = new THashMap<>();
   private final Set<String> myResourceLocations = new THashSet<>();
 
-  private final Set<String> myIgnoredResources = new TreeSet<>();
-  private final Set<String> myStandardIgnoredResources = new TreeSet<>();
+  private final Set<String> myIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
+  private final Set<String> myStandardIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
 
   private final ClearableLazyValue<Map<String, Map<String, Resource>>> myStandardResources = ClearableLazyValue.create(() -> computeStdResources());
 
