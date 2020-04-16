@@ -9,6 +9,7 @@ import com.intellij.codeInspection.InspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.configurationStore.JbXmlOutputter;
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,6 +173,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
   public void exportResultsSmart(@NotNull List<? super Path> inspectionsResults, @NotNull Path outputDir) {
     final List<Tools> globalToolsWithProblems = new ArrayList<>();
+    final List<Tools> toolsWithResultsToAggregate = new ArrayList<>();
     for (Map.Entry<String, Tools> entry : getTools().entrySet()) {
       final Tools sameTools = entry.getValue();
       boolean hasProblems = false;
@@ -178,11 +181,15 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       if (sameTools != null) {
         for (ScopeToolState toolDescr : sameTools.getTools()) {
           InspectionToolWrapper toolWrapper = toolDescr.getTool();
+          InspectionToolResultExporter presentation = getPresentation(toolWrapper);
+          if (presentation instanceof AggregateResultsExporter) {
+            toolsWithResultsToAggregate.add(sameTools);
+            break;
+          }
           if (toolWrapper instanceof LocalInspectionToolWrapper) {
             hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultFile(outputDir, toolWrapper.getShortName()));
           }
           else {
-            InspectionToolResultExporter presentation = getPresentation(toolWrapper);
             presentation.updateContent();
             if (presentation.hasReportedProblems()) {
               globalToolsWithProblems.add(sameTools);
@@ -206,6 +213,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       }
     }
 
+    exportResultsWithAggregation(inspectionsResults, toolsWithResultsToAggregate, myOutputDir);
+
     // export global inspections
     if (!globalToolsWithProblems.isEmpty()) {
       XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
@@ -213,6 +222,23 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                                                                                                       exportResults(inspectionsResults,
                                                                                                                     inspections, outputDir,
                                                                                                                     xmlOutputFactory));
+    }
+  }
+
+  private void exportResultsWithAggregation(@NotNull List<? super Path> inspectionsResults,
+                                            @NotNull List<? extends Tools> toolsWithResultsToAggregate,
+                                            @NotNull Path outputPath) {
+    for (Tools tools : toolsWithResultsToAggregate) {
+      String inspectionName = tools.getShortName();
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName));
+      inspectionsResults.add(InspectionsResultUtil.getInspectionResultFile(outputPath, inspectionName + InspectionsResultUtil.AGGREGATE));
+      try {
+        List<? extends InspectionToolWrapper<?, ?>> wrappers = ContainerUtil.map(tools.getTools(), ScopeToolState::getTool);
+        InspectionsResultUtil.writeInspectionResult(getProject(), inspectionName, wrappers, outputPath, this::getPresentation);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 

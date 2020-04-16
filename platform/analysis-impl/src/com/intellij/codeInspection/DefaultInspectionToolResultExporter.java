@@ -11,6 +11,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
@@ -396,7 +397,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
     checkFromSameFile(refElement, descriptors);
     if (filterSuppressed) {
-      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)
+          || this instanceof AggregateResultsExporter) {
         myProblemElements.put(refElement, descriptors);
       }
       else {

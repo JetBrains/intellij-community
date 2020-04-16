@@ -31,7 +31,7 @@ public class InspectionsResultUtil {
   @NonNls public static final String PROFILE = "profile";
   @NonNls public static final String INSPECTIONS_NODE = "inspections";
   private static final String ROOT = "root";
-  private static final String AGGREGATE = "_aggregate";
+  public static final String AGGREGATE = "_aggregate";
 
   public static void describeInspections(@NonNls Path outputPath, @Nullable String name, @NotNull InspectionProfile profile) throws IOException {
     final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
