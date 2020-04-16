@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -75,7 +76,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
   private static final @NotNull JBInsets DUMB_BALLOON_INSETS = JBInsets.create(5, 8);
-  private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
+  private final AtomicReference<State> myState;
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
   private volatile ModalityState myDumbStartModality;
@@ -125,6 +126,27 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           }
         }
       });
+    myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
+  }
+
+  void queueStartupActivitiesRequiredForSmartMode() {
+    LOG.assertTrue(myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
+
+    List<StartupActivity.RequiredForSmartMode> activities = StartupActivity
+      .REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
+      .getExtensionList();
+
+    if (activities.isEmpty()) {
+      myState.set(State.SMART);
+    } else {
+      for (StartupActivity.RequiredForSmartMode activity : activities) {
+        activity.runActivity(getProject());
+      }
+
+      if (isSynchronousTaskExecution()) {
+        myState.set(State.SMART);
+      }
+    }
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -294,8 +316,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       LOG.error("No indexing tasks should be created for default project: " + task);
     }
 
-    Application application = ApplicationManager.getApplication();
-    if ((application.isUnitTestMode() || application.isHeadlessEnvironment()) && !Boolean.parseBoolean(System.getProperty("idea.force.dumb.queue.tasks", "false"))) {
+    if (isSynchronousTaskExecution()) {
       runTaskSynchronously(task);
     }
     else {
@@ -337,7 +358,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void queueTaskOnEdt(@NotNull DumbModeTask task, @NotNull ModalityState modality, @NotNull Throwable trace) {
     if (!addTaskToQueue(task)) return;
 
-    if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
+    State state = myState.get();
+    if (state == State.SMART ||
+        state == State.WAITING_FOR_FINISH ||
+        state == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS) {
       enterDumbMode(modality, trace);
       new TrackedEdtActivity(this::startBackgroundProcess).invokeLaterIfProjectNotDisposed();
     }
@@ -869,7 +893,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
      * Set after background execution ({@link #RUNNING_DUMB_TASKS}) finishes, until the dumb mode can be exited
      * (in a write-safe context on EDT when project is initialized). If new tasks are queued at this state, it's switched to {@link #SCHEDULED_TASKS}.
      */
-    WAITING_FOR_FINISH
+    WAITING_FOR_FINISH,
+
+    /**
+     * Indicates that project has been just loaded and {@link DumbModeStartupTask}-s were not executed to ensure project smart mode.
+     */
+    WAITING_PROJECT_SMART_MODE_STARTUP_TASKS
   }
 
   private class TrackedEdtActivity implements Runnable {
@@ -911,5 +940,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     Condition<?> getActivityExpirationCondition() {
       return __ -> !myTrackedEdtActivities.contains(this);
     }
+  }
+
+  private static boolean isSynchronousTaskExecution() {
+    Application application = ApplicationManager.getApplication();
+    return (application.isUnitTestMode() || application.isHeadlessEnvironment()) && !Boolean.parseBoolean(System.getProperty("idea.force.dumb.queue.tasks", "false"));
   }
 }
