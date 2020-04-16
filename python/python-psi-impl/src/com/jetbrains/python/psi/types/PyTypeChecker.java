@@ -180,11 +180,15 @@ public class PyTypeChecker {
    * The method mutates {@code context.substitutions} map adding new entries into it
    */
   private static boolean match(@NotNull PyGenericType expected, @Nullable PyType actual, @NotNull MatchContext context) {
+    if (expected.isDefinition() && actual instanceof PyInstantiableType && !((PyInstantiableType<?>)actual).isDefinition()) {
+      return false;
+    }
+
     final PyType substitution = context.substitutions.get(expected);
     PyType bound = expected.getBound();
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
     if (expected.isDefinition()) {
-      final Function<PyType, PyType> toDefinition = t -> t instanceof PyInstantiableType ? ((PyInstantiableType)t).toClass() : t;
+      final Function<PyType, PyType> toDefinition = t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t;
       bound = PyUnionType.union(PyTypeUtil.toStream(bound).map(toDefinition).toList());
     }
 
@@ -208,9 +212,6 @@ public class PyTypeChecker {
     }
 
     if (actual != null) {
-      if (expected.isDefinition() && !(actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition())) {
-        return false;
-      }
       context.substitutions.put(expected, actual);
     }
     else if (bound != null) {
