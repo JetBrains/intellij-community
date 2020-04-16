@@ -26,7 +26,10 @@ import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
 import java.awt.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
 import java.net.InetAddress;
@@ -74,9 +77,9 @@ public final class SocketLock {
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
   private volatile CompletableFuture<BuiltInServer> myBuiltinServerFuture;
 
-  public SocketLock(@NotNull String configPath, @NotNull String systemPath) {
-    myConfigPath = canonicalPath(configPath);
-    mySystemPath = canonicalPath(systemPath);
+  public SocketLock(@NotNull Path configPath, @NotNull Path systemPath) {
+    myConfigPath = configPath;
+    mySystemPath = systemPath;
     if (myConfigPath.equals(mySystemPath)) {
       throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
     }
@@ -89,22 +92,6 @@ public final class SocketLock {
 
   public @NotNull Path getSystemPath() {
     return mySystemPath;
-  }
-
-  private static @NotNull Path canonicalPath(@NotNull String path) {
-    try {
-      // toRealPath doesn't properly restore actual name of file on case-insensitive fs (see LockSupportTest.testUseCanonicalPathLock)
-      return Paths.get(new File(path).getCanonicalPath());
-    }
-    catch (IOException ignore) {
-      Path file = Paths.get(path);
-      try {
-        return file.toAbsolutePath().normalize();
-      }
-      catch (IOError ignored) {
-        return file.normalize();
-      }
-    }
   }
 
   public void setCommandProcessor(@Nullable Function<List<String>, Future<CliResult>> processor) {

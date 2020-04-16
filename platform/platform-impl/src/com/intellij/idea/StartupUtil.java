@@ -31,7 +31,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
@@ -55,6 +54,7 @@ import org.jetbrains.io.BuiltInServer;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOError;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
@@ -74,6 +74,7 @@ import java.util.function.Function;
 import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
+@ApiStatus.Internal
 public final class StartupUtil {
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // See ApplicationImpl.USE_SEPARATE_WRITE_THREAD
@@ -186,7 +187,8 @@ public final class StartupUtil {
     }
 
     activity = StartUpMeasurer.startMainActivity("config path computing");
-    Path configPath = PathManager.getConfigDir();
+    Path configPath = canonicalPath(PathManager.getConfigPath());
+    Path systemPath = canonicalPath(PathManager.getSystemPath());
     activity = activity.endAndStart("config path existence check");
 
     // this check must be performed before system directories are locked
@@ -196,11 +198,11 @@ public final class StartupUtil {
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
-    if (!checkSystemDirs()) {
+    if (!checkSystemDirs(configPath, systemPath)) {
       System.exit(Main.DIR_CHECK_FAILED);
     }
     activity = activity.endAndStart("system dirs locking");
-    lockSystemDirs(args);
+    lockSystemDirs(configPath, systemPath, args);
     activity = activity.endAndStart("file logger configuration");
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
@@ -420,7 +422,7 @@ public final class StartupUtil {
       }
     }
 
-    if ("true".equals(System.getProperty("idea.64bit.check")) && !SystemInfo.is64Bit && PlatformUtils.isCidr()) {
+    if ("true".equals(System.getProperty("idea.64bit.check")) && !SystemInfoRt.is64Bit && PlatformUtils.isCidr()) {
       Main.showMessage("Unsupported JVM", "32-bit JVM is not supported. Please use a 64-bit version.", true);
       return false;
     }
@@ -440,18 +442,8 @@ public final class StartupUtil {
     }
   }
 
-  private static boolean checkSystemDirs() {
-    String configPath = PathManager.getConfigPath();
-    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
-      return false;
-    }
-
-    String systemPath = PathManager.getSystemPath();
-    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, true, false)) {
-      return false;
-    }
-
-    if (FileUtil.pathsEqual(configPath, systemPath)) {
+  private static boolean checkSystemDirs(@NotNull Path configPath, @NotNull Path systemPath) {
+    if (configPath.equals(systemPath)) {
       String message = "Config and system paths seem to be equal.\n\n" +
                        "If you have modified '" + PathManager.PROPERTY_CONFIG_PATH + "' or '" + PathManager.PROPERTY_SYSTEM_PATH + "' properties,\n" +
                        "please make sure they point to different directories, otherwise please re-install the IDE.";
@@ -459,20 +451,30 @@ public final class StartupUtil {
       return false;
     }
 
-    String logPath = PathManager.getLogPath(), tempPath = PathManager.getTempPath();
-    return checkDirectory(logPath, "Log", PathManager.PROPERTY_LOG_PATH, !FileUtil.isAncestor(systemPath, logPath, true), false, false) &&
-           checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !FileUtil.isAncestor(systemPath, tempPath, true), false, SystemInfo.isXWindow);
+    if (!checkDirectory(configPath, "Config", PathManager.PROPERTY_CONFIG_PATH, true, true, false)) {
+      return false;
+    }
+
+    if (!checkDirectory(systemPath, "System", PathManager.PROPERTY_SYSTEM_PATH, true, true, false)) {
+      return false;
+    }
+
+    Path logPath = Paths.get(PathManager.getLogPath()).normalize();
+    if (!checkDirectory(logPath, "Log", PathManager.PROPERTY_LOG_PATH, !logPath.startsWith(systemPath), false, false)) {
+      return false;
+    }
+
+    Path tempPath = Paths.get(PathManager.getTempPath()).normalize();
+    return checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !tempPath.startsWith(systemPath), false, SystemInfoRt.isUnix && !SystemInfoRt.isMac);
   }
 
-  private static boolean checkDirectory(String path, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
+  private static boolean checkDirectory(@NotNull Path directory, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
     String problem = null, reason = null;
     Path tempFile = null;
 
     try {
       problem = "cannot create the directory";
       reason = "path is incorrect";
-      Path directory = Paths.get(path);
-
       if (!Files.isDirectory(directory)) {
         problem = "cannot create the directory";
         reason = "parent directory is read-only or the user lacks necessary permissions";
@@ -508,27 +510,32 @@ public final class StartupUtil {
     }
     catch (Exception e) {
       String title = "Invalid " + kind + " Directory";
-      String advice = SystemInfo.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
+      String advice = SystemInfoRt.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
                       ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
                         "Please use Finder to move it to another location."
                       : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
                         "otherwise, please re-install the IDE.";
       String message = "The IDE " + problem + ".\nPossible reason: " + reason + ".\n\n" + advice +
-                       "\n\n-----\nLocation: " + path + "\n" + e.getClass().getName() + ": " + e.getMessage();
+                       "\n\n-----\nLocation: " + directory + "\n" + e.getClass().getName() + ": " + e.getMessage();
       Main.showMessage(title, message, true);
       return false;
     }
     finally {
       if (tempFile != null) {
-        try { Files.deleteIfExists(tempFile); }
-        catch (Exception ignored) { }
+        try {
+          Files.deleteIfExists(tempFile);
+        }
+        catch (Exception ignored) {
+        }
       }
     }
   }
 
-  private static synchronized void lockSystemDirs(String[] args) throws Exception {
-    if (ourSocketLock != null) throw new AssertionError("Already initialized");
-    ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
+  private static void lockSystemDirs(@NotNull Path configPath, @NotNull Path systemPath, @NotNull String[] args) throws Exception {
+    if (ourSocketLock != null) {
+      throw new AssertionError("Already initialized");
+    }
+    ourSocketLock = new SocketLock(configPath, systemPath);
 
     Map.Entry<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
     switch (status.getKey()) {
@@ -769,6 +776,22 @@ public final class StartupUtil {
     }
     catch (InterruptedException | InvocationTargetException e) {
       log.warn(e);
+    }
+  }
+
+  public static @NotNull Path canonicalPath(@NotNull String path) {
+    try {
+      // toRealPath doesn't properly restore actual name of file on case-insensitive fs (see LockSupportTest.testUseCanonicalPathLock)
+      return Paths.get(new File(path).getCanonicalPath());
+    }
+    catch (IOException ignore) {
+      Path file = Paths.get(path);
+      try {
+        return file.toAbsolutePath().normalize();
+      }
+      catch (IOError ignored) {
+        return file.normalize();
+      }
     }
   }
 }

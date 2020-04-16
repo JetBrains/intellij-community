@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -29,8 +29,8 @@ public class LockSupportTest {
     String path1 = tempDir.getRoot().getPath();
     String path2 = path1.toUpperCase(Locale.ENGLISH);
 
-    SocketLock lock1 = new SocketLock(path1 + "/c", path1 + "/s");
-    SocketLock lock2 = new SocketLock(path2 + "/c", path2 + "/s");
+    SocketLock lock1 = new SocketLock(StartupUtil.canonicalPath(path1 + "/c"), StartupUtil.canonicalPath(path1 + "/s"));
+    SocketLock lock2 = new SocketLock(StartupUtil.canonicalPath(path2 + "/c"), StartupUtil.canonicalPath(path2 + "/s"));
     try {
       assertThat(tryActivate(lock1)).isEqualTo(SocketLock.ActivationStatus.NO_INSTANCE);
       assertThat(tryActivate(lock2)).isEqualTo(SocketLock.ActivationStatus.ACTIVATED);
@@ -43,7 +43,7 @@ public class LockSupportTest {
 
   @Test(timeout = 30000)
   public void testLock() throws Exception {
-    SocketLock lock = new SocketLock(tempDir.getRoot().getPath() + "/c", tempDir.getRoot().getPath() + "/s");
+    SocketLock lock = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
     try {
       assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY).getKey());
     }
@@ -56,21 +56,21 @@ public class LockSupportTest {
   public void testTwoLocks() throws Exception {
     List<SocketLock> toClose = new ArrayList<>();
     try {
-      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, createLockAndTryActivate(toClose, tempDir.getRoot(), "c1", "s1"));
-      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, createLockAndTryActivate(toClose, tempDir.getRoot(), "c2", "s2"));
-      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, createLockAndTryActivate(toClose, tempDir.getRoot(), "c3", "s3"));
+      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, createLockAndTryActivate(toClose, tempDir.getRoot().toPath(), "c1", "s1"));
+      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, createLockAndTryActivate(toClose, tempDir.getRoot().toPath(), "c2", "s2"));
+      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, createLockAndTryActivate(toClose, tempDir.getRoot().toPath(), "c3", "s3"));
 
-      assertThat(createLockAndTryActivate(toClose, tempDir.getRoot(), "c1", "s1")).isEqualTo(SocketLock.ActivationStatus.ACTIVATED);
-      assertThat(createLockAndTryActivate(toClose, tempDir.getRoot(), "c2", "s2")).isEqualTo(SocketLock.ActivationStatus.ACTIVATED);
-      assertThat(createLockAndTryActivate(toClose, tempDir.getRoot(), "c3", "s3")).isEqualTo(SocketLock.ActivationStatus.ACTIVATED);
+      assertThat(createLockAndTryActivate(toClose, tempDir.getRoot().toPath(), "c1", "s1")).isEqualTo(SocketLock.ActivationStatus.ACTIVATED);
+      assertThat(createLockAndTryActivate(toClose, tempDir.getRoot().toPath(), "c2", "s2")).isEqualTo(SocketLock.ActivationStatus.ACTIVATED);
+      assertThat(createLockAndTryActivate(toClose, tempDir.getRoot().toPath(), "c3", "s3")).isEqualTo(SocketLock.ActivationStatus.ACTIVATED);
     }
     finally {
       toClose.forEach(SocketLock::dispose);
     }
   }
 
-  private static SocketLock.ActivationStatus createLockAndTryActivate(List<SocketLock> toClose, File dir, String cfg, String sys) throws Exception {
-    SocketLock lock = new SocketLock(dir.getPath() + '/' + cfg, dir.getPath() + '/' + sys);
+  private static SocketLock.ActivationStatus createLockAndTryActivate(List<SocketLock> toClose, @NotNull Path dir, String cfg, String sys) throws Exception {
+    SocketLock lock = new SocketLock(dir.resolve(cfg), dir.resolve(sys));
     toClose.add(lock);
     return tryActivate(lock);
   }
@@ -83,8 +83,8 @@ public class LockSupportTest {
 
   @Test(timeout = 30000)
   public void testDispose() throws Exception {
-    SocketLock lock1 = new SocketLock(tempDir.getRoot().getPath() + "/c", tempDir.getRoot().getPath() + "/s");
-    SocketLock lock2 = new SocketLock(tempDir.getRoot().getPath() + "/c", tempDir.getRoot().getPath() + "/s");
+    SocketLock lock1 = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
+    SocketLock lock2 = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
 
     assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, tryActivate(lock1));
     assertEquals(SocketLock.ActivationStatus.ACTIVATED, tryActivate(lock2));
@@ -96,7 +96,7 @@ public class LockSupportTest {
 
   @Test(timeout = 30000, expected = IllegalArgumentException.class)
   public void testPathCollision() {
-    String path = tempDir.getRoot().getPath() + "/d";
+    Path path = tempDir.getRoot().toPath().resolve("d");
     new SocketLock(path, path);
   }
 }
