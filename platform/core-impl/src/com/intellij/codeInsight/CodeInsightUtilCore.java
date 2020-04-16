@@ -253,15 +253,31 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
       return (T)copy;
     }
     TextRange range = element.getTextRange();
-    PsiElement newElement = copy.findElementAt(range.getStartOffset());
-    while (newElement != null) {
-      TextRange newRange = newElement.getTextRange();
-      if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
-        //noinspection unchecked
-        return (T)newElement;
+    if (range.getLength() == 0 && range.getStartOffset() > 0) {
+      PsiElement predecessor = copy.findElementAt(range.getStartOffset()-1);
+      while (predecessor != null) {
+        PsiElement newElement = predecessor.getNextSibling();
+        if (newElement != null) {
+          TextRange newRange = newElement.getTextRange();
+          if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
+            //noinspection unchecked
+            return (T)newElement;
+          }
+        }
+        if (predecessor.getTextRange().getEndOffset() > range.getEndOffset()) break;
+        predecessor = predecessor.getParent();
       }
-      if (newRange.getStartOffset() < range.getStartOffset() || newRange.getEndOffset() > range.getEndOffset()) break;
-      newElement = newElement.getParent();
+    } else {
+      PsiElement newElement = copy.findElementAt(range.getStartOffset());
+      while (newElement != null) {
+        TextRange newRange = newElement.getTextRange();
+        if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
+          //noinspection unchecked
+          return (T)newElement;
+        }
+        if (newRange.getStartOffset() < range.getStartOffset() || newRange.getEndOffset() > range.getEndOffset()) break;
+        newElement = newElement.getParent();
+      }
     }
     throw new IllegalStateException("Cannot find element in copy file");
   }
