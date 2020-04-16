@@ -5,12 +5,14 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -27,7 +29,10 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.function.Consumer;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.*;
 
 /**
  * A panel which provides a11y for the current line in a gutter.
@@ -110,6 +115,22 @@ class AccessibleGutterLine extends JPanel {
     IdeFocusManager.getGlobalInstance().requestFocus(getFocusTraversalPolicy().getComponentAfter(this, mySelectedElement), true);
   }
 
+  private void pressEnter(AnActionEvent e) {
+        int cX = IdeFocusManager.getGlobalInstance().getFocusOwner().getX();
+        List<GutterMark> row = myGutter.getGutterRenderers(myVisualLineNum);
+        myGutter.processIconsRow(myVisualLineNum, row, (x, y, renderer) -> {
+          Icon icon = myGutter.scaleIcon(renderer.getIcon());
+          int iconWidth = icon.getIconWidth();
+          if (x <= cX && cX <= x + iconWidth) {
+            GutterIconRenderer result = (GutterIconRenderer)renderer;
+            AnAction action = result.getClickAction();
+            if (action != null) {
+              action.actionPerformed(e);
+            }
+          } // end check coordinates
+        });
+      }
+
   private void moveLeft() {
     IdeFocusManager.getGlobalInstance().requestFocus(getFocusTraversalPolicy().getComponentBefore(this, mySelectedElement), true);
   }
@@ -153,7 +174,7 @@ class AccessibleGutterLine extends JPanel {
         TextAnnotationGutterProvider gutterProvider = myGutter.myTextAnnotationGutters.get(i);
         if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLogicalLineNum, editor); // [tav] todo: take first non-null?
         int annotationSize = myGutter.myTextAnnotationGutterSizes.get(i);
-        buf.append(ObjectUtils.notNull(gutterProvider.getLineText(myLogicalLineNum, editor), ""));
+        buf.append(notNull(gutterProvider.getLineText(myLogicalLineNum, editor), ""));
         width += annotationSize;
       }
       if (buf.length() > 0) {
@@ -237,7 +258,7 @@ class AccessibleGutterLine extends JPanel {
     }
 
     installActionHandler(CommonShortcuts.ESCAPE, () -> escape(true));
-    installActionHandler(CommonShortcuts.ENTER, () -> {}); // [tav] todo: it can do something useful, e.g. forcing Screen Reader to voice
+    installActionHandler(CommonShortcuts.ENTER, this::pressEnter); // [tav] todo: it can do something useful, e.g. forcing Screen Reader to voice
     installActionHandler(MyShortcuts.MOVE_RIGHT, this::moveRight);
     installActionHandler(MyShortcuts.MOVE_LEFT, this::moveLeft);
 
@@ -246,6 +267,10 @@ class AccessibleGutterLine extends JPanel {
 
   private void installActionHandler(ShortcutSet shortcut, Runnable action) {
     DumbAwareAction.create(e -> action.run()).registerCustomShortcutSet(shortcut, this);
+  }
+
+  private void installActionHandler(ShortcutSet shortcut, Consumer<AnActionEvent> action) {
+    DumbAwareAction.create(e -> action.accept(e)).registerCustomShortcutSet(shortcut, this);
   }
 
   @SuppressWarnings("SameParameterValue")
