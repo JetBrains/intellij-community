@@ -53,6 +53,11 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   @Override
+  protected String getReportPath() {
+    return mySource;
+  }
+
+  @Override
   public void write(DataOutputStream out) throws IOException {
     super.write(out);
     out.writeUTF(mySource);
