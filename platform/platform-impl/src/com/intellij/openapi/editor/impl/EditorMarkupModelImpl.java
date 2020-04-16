@@ -2199,29 +2199,22 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     }
 
-    private @NotNull JPanel createDetailsPanel() {
-      JPanel panel = new JPanel();
-      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-      panel.setOpaque(false);
-
+    private @NotNull JComponent createDetailsPanel() {
+      StringBuilder text = new StringBuilder();
       for (int i = 0; i < analyzerStatus.getExpandedStatus().size(); i++) {
         boolean last = i == analyzerStatus.getExpandedStatus().size() - 1;
         StatusItem item = analyzerStatus.getExpandedStatus().get(i);
 
-        StringBuilder text = new StringBuilder(item.getText()).append(" ").append(item.getType());
+        text.append(item.getText()).append(" ").append(item.getType());
         if (!last) {
           text.append(", ");
         }
         else if (analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE) {
           text.append(" ").append(EditorBundle.message("iw.found.so.far.suffix"));
         }
-
-        JLabel label = new JLabel(text.toString(), item.getIcon(), SwingConstants.LEFT);
-        label.setIconTextGap(JBUIScale.scale(1));
-        panel.add(label);
       }
 
-      return panel;
+      return new JLabel(text.toString());
     }
 
     private @NotNull JPanel createLowerPanel(@NotNull UIController controller) {
