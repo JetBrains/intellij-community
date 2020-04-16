@@ -46,7 +46,7 @@ public interface AnnotationPackageSupport {
     return new AnnotationPackageSupport[]{
       new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
       new Jsr305Support(manager), new CheckerFrameworkSupport(), new EclipseAnnotationSupport(),
-      new CodeAnalysisAnnotationSupport()
+      new CodeAnalysisAnnotationSupport(), new RxJavaAnnotationSupport()
     };
   }
 }
