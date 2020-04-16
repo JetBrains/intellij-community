@@ -2,7 +2,6 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.SampleEntitySource
-import com.intellij.workspace.api.pstorage.PEntityStorageBuilder.Companion.classifyByEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

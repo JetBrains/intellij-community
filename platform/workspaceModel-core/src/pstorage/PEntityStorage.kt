@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.google.common.collect.*
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.HashBiMap
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 import com.intellij.workspace.api.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -26,7 +29,8 @@ internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : Entit
 
 internal class PEntityStorage constructor(
   override val entitiesByType: EntitiesBarrel,
-  override val refs: RefsTable
+  override val refs: RefsTable,
+  override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
 ) : AbstractPEntityStorage() {
   override fun assertConsistency() {
     entitiesByType.assertConsistency()
@@ -38,7 +42,8 @@ internal class PEntityStorage constructor(
 internal class PEntityStorageBuilder(
   private val origStorage: PEntityStorage,
   override val entitiesByType: MutableEntitiesBarrel,
-  override val refs: MutableRefsTable
+  override val refs: MutableRefsTable,
+  override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
 ) : TypedEntityStorageBuilder, AbstractPEntityStorage() {
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
@@ -51,7 +56,7 @@ internal class PEntityStorageBuilder(
     modificationCount++
   }
 
-  private constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()), MutableEntitiesBarrel(), MutableRefsTable())
+  private constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create()), MutableEntitiesBarrel(), MutableRefsTable(), HashMultimap.create())
 
   private sealed class ChangeEntry {
     data class AddEntity<E : TypedEntity>(
@@ -105,6 +110,12 @@ internal class PEntityStorageBuilder(
     val children = refs.getChildrenRefsOfParentBy(pid, false)
     updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, unmodifiableEntityClass, children, parents)) }
 
+    if (pEntityData is PSoftLinkable) {
+      for (link in pEntityData.getLinks()) {
+        softLinks.put(link, pEntityData.createPid())
+      }
+    }
+
     return pEntityData.createEntity(this)
   }
 
@@ -119,6 +130,13 @@ internal class PEntityStorageBuilder(
     val replaceToPid = cloned.createPid()
     if (replaceToPid != entity.createPid()) {
       replaceMap[entity.createPid()] = replaceToPid
+    }
+
+    // Restore links to soft references
+    if (cloned is PSoftLinkable) {
+      for (link in cloned.getLinks()) {
+        softLinks.put(link, cloned.createPid())
+      }
     }
 
     // Restore children references of the entity
@@ -139,18 +157,26 @@ internal class PEntityStorageBuilder(
                                                       clazz: Class<T>,
                                                       updatedChildren: ChildrenConnectionsInfo<T>,
                                                       updatedParents: ParentConnectionsInfo<T>) {
+
+    val id = newEntity.createPid()
+    val existingEntity = entityDataById(id)
+    val beforePersistentId = if (existingEntity is TypedEntityWithPersistentId) existingEntity.persistentId() else null
+    val beforeSoftLinks = if (existingEntity is PSoftLinkable) existingEntity.getLinks() else null
+
     /// Replace entity data. id should not be changed
     entitiesByType.replaceById(newEntity, clazz)
-    val replaceToPid = newEntity.createPid()
+
+    // Restore soft references
+    updateSoftReferences(beforePersistentId, beforeSoftLinks, entityDataByIdOrDie(id))
 
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
-      refs.updateChildrenOfParent(connectionId, replaceToPid, children.toList())
+      refs.updateChildrenOfParent(connectionId, id, children.toList())
     }
 
     // Restore parent references of the entity
     for ((connection, parent) in updatedParents) {
-      refs.updateParentOfChild(connection, replaceToPid, parent)
+      refs.updateParentOfChild(connection, id, parent)
     }
   }
 
@@ -158,6 +184,9 @@ internal class PEntityStorageBuilder(
     // Get entity data that will be modified
     val copiedData = entitiesByType.getEntityDataForModification((e as PTypedEntity).id) as PEntityData<T>
     val modifiableEntity = copiedData.wrapAsModifiable(this) as M
+
+    val beforePersistentId = if (e is TypedEntityWithPersistentId) e.persistentId() else null
+    val beforeSoftLinks = if (copiedData is PSoftLinkable) copiedData.getLinks() else null
 
     // Execute modification code
     (modifiableEntity as PModifiableTypedEntity<*>).allowModifications {
@@ -170,7 +199,47 @@ internal class PEntityStorageBuilder(
     val children = this.refs.getChildrenRefsOfParentBy(pid, false)
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
 
-    return copiedData.createEntity(this)
+    val updatedEntity = copiedData.createEntity(this)
+
+    updateSoftReferences(beforePersistentId, beforeSoftLinks, copiedData)
+
+    return updatedEntity
+  }
+
+  @OptIn(ExperimentalStdlibApi::class)
+  private fun <T : TypedEntity> updateSoftReferences(beforePersistentId: PersistentEntityId<*>?,
+                                                     beforeSoftLinks: List<PersistentEntityId<*>>?,
+                                                     copiedData: PEntityData<T>) {
+    val updatedEntity = copiedData.createEntity(this)
+    val pid = (updatedEntity as PTypedEntity).id
+    if (beforePersistentId != null) {
+      val afterPersistentId = (updatedEntity as TypedEntityWithPersistentId).persistentId()
+      if (beforePersistentId != afterPersistentId) {
+        val updatedIds = mutableListOf(beforePersistentId to afterPersistentId)
+        while (updatedIds.isNotEmpty()) {
+          val (beforeId, afterId) = updatedIds.removeFirst()
+          softLinks[beforeId]?.forEach { id: PId<*> ->
+            val pEntityData = this.entitiesByType.getEntityDataForModification(id) as PEntityData<TypedEntity>
+            val updated = (pEntityData as PSoftLinkable).updateLink(beforeId, afterId, updatedIds)
+
+            if (updated) {
+              val softLinkedPid = pEntityData.createPid()
+              val softLinkedParents = this.refs.getParentRefsOfChild(softLinkedPid, false)
+              val softLinkedChildren = this.refs.getChildrenRefsOfParentBy(softLinkedPid, false)
+              updateChangeLog { it.add(ChangeEntry.ReplaceEntity(pEntityData, softLinkedChildren, softLinkedParents)) }
+            }
+          }
+        }
+      }
+    }
+
+    if (beforeSoftLinks != null) {
+      val afterSoftLinks = (copiedData as PSoftLinkable).getLinks()
+      if (beforeSoftLinks != afterSoftLinks) {
+        beforeSoftLinks.forEach { this.softLinks.remove(it, pid) }
+        afterSoftLinks.forEach { this.softLinks.put(it, pid) }
+      }
+    }
   }
 
   override fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T {
@@ -193,6 +262,12 @@ internal class PEntityStorageBuilder(
 
     for (id in accumulator) {
       entitiesByType.remove(id.arrayId, id.clazz.java)
+      val entityData = entityDataById(id)
+      if (entityData is PSoftLinkable) {
+        for (link in entityData.getLinks()) {
+          this.softLinks.remove(link, id)
+        }
+      }
     }
   }
 
@@ -355,6 +430,7 @@ internal class PEntityStorageBuilder(
             clonedEntity.id = leftNode.id
             this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz.java)
             // TODO: 15.04.2020 Children and parents?
+            // TODO: 16.04.2020 Soft references
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyMap(), emptyMap())) }
           }
           leftMatchedNodes.remove(leftNode.identificator(), leftNode)
@@ -508,7 +584,8 @@ internal class PEntityStorageBuilder(
   override fun toStorage(): PEntityStorage {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
-    return PEntityStorage(newEntities, newRefs)
+    val copiedLinks = HashMultimap.create(this.softLinks)
+    return PEntityStorage(newEntities, newRefs, copiedLinks)
   }
 
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
@@ -577,12 +654,14 @@ internal class PEntityStorageBuilder(
         is PEntityStorage -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
           val copiedRefs = MutableRefsTable.from(storage.refs)
-          PEntityStorageBuilder(storage, copiedBarrel, copiedRefs)
+          val copiedSoftLinks = HashMultimap.create(storage.softLinks)
+          PEntityStorageBuilder(storage, copiedBarrel, copiedRefs, copiedSoftLinks)
         }
         is PEntityStorageBuilder -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
-          PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs)
+          val copiedSoftLinks = HashMultimap.create(storage.softLinks)
+          PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs, copiedSoftLinks)
         }
       }
     }
@@ -594,6 +673,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
   internal abstract val entitiesByType: AbstractEntitiesBarrel
   internal abstract val refs: AbstractRefsTable
+  internal abstract val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
 
   abstract fun assertConsistency()
 

@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.EntitySource
-import com.intellij.workspace.api.ModifiableTypedEntity
-import com.intellij.workspace.api.ReferableTypedEntity
-import com.intellij.workspace.api.TypedEntity
+import com.intellij.workspace.api.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.*
 import kotlin.reflect.full.memberProperties
@@ -83,6 +80,13 @@ internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>)
   }
 
   override fun toString(): String = clazz.simpleName + "-:-"+ arrayId.toString()
+}
+
+interface PSoftLinkable {
+  fun getLinks(): List<PersistentEntityId<*>>
+  fun updateLink(oldLink: PersistentEntityId<*>,
+                 newLink: PersistentEntityId<*>,
+                 affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean
 }
 
 abstract class PEntityData<E : TypedEntity> {
