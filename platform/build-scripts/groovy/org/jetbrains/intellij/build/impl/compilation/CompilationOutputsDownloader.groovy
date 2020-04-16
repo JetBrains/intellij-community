@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import org.apache.http.HttpStatus
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.entity.ContentType
@@ -199,8 +200,10 @@ class GetClient {
     def request = new HttpGet(url)
     try {
       response = httpClient.execute(request)
-
       def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
+      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+        throw new DownloadException(url, response.statusLine.statusCode, responseString)
+      }
       return gson.fromJson(responseString, responseType)
     }
     catch (Exception ex) {
@@ -216,7 +219,9 @@ class GetClient {
     try {
       def request = new HttpGet(url)
       CloseableHttpResponse response = httpClient.execute(request)
-
+      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+        throw new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
+      }
       return response.entity.content
     }
     catch (Exception ex) {
@@ -226,6 +231,10 @@ class GetClient {
 
   @CompileStatic
   static class DownloadException extends RuntimeException {
+    DownloadException(String url, int status, String details) {
+      super("Error while executing GET '$url': $status, $details")
+    }
+
     DownloadException(String url, Throwable cause) {
       super("Error while executing GET '$url': $cause.message")
     }
