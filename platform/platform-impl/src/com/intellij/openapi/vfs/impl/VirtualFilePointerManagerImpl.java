@@ -278,7 +278,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   // convert \ -> /
-  // convert // -> /
+  // convert // -> / (except // at the beginning of a UNC path)
   // convert /. ->
   // trim trailing /
   @NotNull
