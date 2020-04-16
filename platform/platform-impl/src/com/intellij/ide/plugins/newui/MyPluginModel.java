@@ -964,25 +964,17 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean hasErrors(@NotNull IdeaPluginDescriptor plugin) {
-    PluginId pluginId = plugin.getPluginId();
-    if (PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(pluginId)) {
-      return true;
-    }
-    if (!isLoaded(pluginId)) {
-      InstalledPluginsState state = InstalledPluginsState.getInstance();
-      return !state.wasInstalled(pluginId) && !state.wasInstalledWithoutRestart(pluginId);
-    }
-    return !plugin.isEnabled() && !PluginManagerCore.isDisabled(pluginId);
+    return getErrorMessage(plugin, null) != null;
   }
 
   @Nullable
-  public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
+  public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
     String message = PluginManagerCore.getLoadingError(pluginDescriptor);
 
     PluginId disabledDependency = PluginManagerCore.getFirstDisabledDependency(pluginDescriptor);
     if (disabledDependency != null) {
       Set<PluginId> requiredPlugins = filterRequiredPlugins(getRequiredPlugins(pluginDescriptor.getPluginId()));
-      if (requiredPlugins != null && !requiredPlugins.isEmpty()) {
+      if (!ContainerUtil.isEmpty(requiredPlugins)) {
         boolean[] enable = {true};
         String deps = StringUtil.join(requiredPlugins, id -> {
           IdeaPluginDescriptor plugin = findPlugin(id);
@@ -994,7 +986,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
         int size = requiredPlugins.size();
         message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-        if (enable[0]) {
+        if (enable[0] && enableAction != null) {
           enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
         }
       }
