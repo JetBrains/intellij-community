@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Key;
@@ -104,9 +103,15 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     CompletableFuture<ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
-      () -> ApplicationManager.getApplication().isHeadlessEnvironment() ?
-            new EmptyProgressIndicator() :
-            new BackgroundableProcessIndicator(task), PlainEdtExecutor.INSTANCE);
+      () -> {
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          return new BackgroundableProcessIndicator(task);
+        }
+
+        return shouldRunTasksInParallelInHeadlessMode()
+               ? new ProgressIndicatorBase()
+               : new EmptyProgressIndicator();
+      }, PlainEdtExecutor.INSTANCE);
     return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }
 
