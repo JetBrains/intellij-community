@@ -109,18 +109,6 @@ internal class PEntityStorageBuilder(
   }
 
   // modificationCount is not incremented
-  // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
-  private fun <T : TypedEntity, E : TypedEntity> addEntityWithRefs(entity: PEntityData<T>,
-                                                                   clazz: Class<E>,
-                                                                   storage: AbstractPEntityStorage,
-                                                                   replaceMap: MutableMap<PId<*>, PId<*>>) {
-    clazz as Class<T>
-    entitiesByType.add(entity, clazz)
-
-    handleReferences(storage, entity, clazz, replaceMap)
-  }
-
-  // modificationCount is not incremented
   private fun <T : TypedEntity> cloneAndAddEntityWithRefs(entity: PEntityData<T>,
                                                           clazz: Class<T>,
                                                           updatedChildren: ChildrenConnectionsInfo<T>,
@@ -147,19 +135,6 @@ internal class PEntityStorageBuilder(
   }
 
   // modificationCount is not incremented
-  // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
-  private fun <T : TypedEntity, E : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
-                                                                       clazz: Class<E>,
-                                                                       storage: AbstractPEntityStorage,
-                                                                       replaceMap: MutableMap<PId<*>, PId<*>>) {
-    clazz as Class<T>
-
-    entitiesByType.replaceById(newEntity, clazz)
-
-    handleReferences(storage, newEntity, clazz, replaceMap)
-  }
-
-  // modificationCount is not incremented
   private fun <T : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
                                                       clazz: Class<T>,
                                                       updatedChildren: ChildrenConnectionsInfo<T>,
@@ -176,25 +151,6 @@ internal class PEntityStorageBuilder(
     // Restore parent references of the entity
     for ((connection, parent) in updatedParents) {
       refs.updateParentOfChild(connection, replaceToPid, parent)
-    }
-  }
-
-  private fun <T : TypedEntity> handleReferences(storage: AbstractPEntityStorage,
-                                                 newEntity: PEntityData<T>,
-                                                 clazz: Class<T>,
-                                                 replaceMap: MutableMap<PId<out TypedEntity>, PId<out TypedEntity>>) {
-    val entityPid = newEntity.createPid()
-    val replaceToPid = replaceMap.getOrDefault(entityPid, entityPid) as PId<T>
-    val childrenRefsByConnectionId = storage.refs.getChildrenRefsOfParentBy(entityPid, false)
-    for ((connectionId, children) in childrenRefsByConnectionId) {
-      val replaceToChildren = children.map { replaceMap.getOrDefault(it, it) }
-      refs.updateChildrenOfParent(connectionId, replaceToPid, replaceToChildren)
-    }
-
-    val parentRefs = storage.refs.getParentRefsOfChild(entityPid, false)
-    for ((connection, parent) in parentRefs) {
-      val realParent = replaceMap.getOrDefault(parent, parent) as PId<TypedEntity>
-      refs.updateParentOfChild(connection as ConnectionId<TypedEntity, T>, replaceToPid, realParent)
     }
   }
 
@@ -496,125 +452,6 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun recursiveAddEntity(id: PId<out TypedEntity>,
-    /*backReferrers: MultiMap<PId<out TypedEntity>, PId<out TypedEntity>>,*/
-                                 storage: AbstractPEntityStorage,
-                                 replaceMap: BiMap<PId<out TypedEntity>, PId<out TypedEntity>>,
-                                 sourceFilter: (EntitySource) -> Boolean) {
-    val parents = storage.refs.getParentRefsOfChild(id, false)
-    for ((conId, parentId) in parents) {
-      if (!replaceMap.containsValue(parentId)) {
-        if (sourceFilter(storage.entityDataByIdOrDie(parentId).entitySource)) {
-          recursiveAddEntity(parentId/*, backReferrers*/, storage, replaceMap, sourceFilter)
-        }
-        else {
-          replaceMap[parentId] = parentId
-        }
-      }
-    }
-
-    val data = storage.entityDataByIdOrDie(id)
-    val newData = data.clone()
-    replaceMap[newData.createPid()] = id
-    //copyEntityProperties(data, newData, replaceMap.inverse())
-    addEntityWithRefs(newData, id.clazz.java, storage, HashMap())
-    //addEntity(newData, null, handleReferrers = true)
-    //updateChangeLog { it.add(createAddEntity(newData, id.clazz.java)) }
-  }
-
-/*
-  private fun <E : TypedEntity, T : TypedEntity> createAddEntity(data: PEntityData<E>, clazz: Class<T>): ChangeEntry.AddEntity<E> {
-    // Handle children and parent references
-    return ChangeEntry.AddEntity(data, clazz as Class<E>, emptyMap(), emptyMap())
-  }
-*/
-
-  private fun deepEquals(data1: PEntityData<out TypedEntity>,
-                         data2: PEntityData<out TypedEntity>,
-                         replaceMap: Map<PId<*>, PId<*>>,
-                         storage1: AbstractPEntityStorage,
-                         storage2: AbstractPEntityStorage,
-    /*
-                             backReferrers1: MultiMap<Long, Long>,
-                             backReferrers2: MultiMap<Long, Long>,
-    */
-                         equalsCache: MutableMap<Pair<PId<out TypedEntity>, PId<out TypedEntity>>, Boolean>): Boolean {
-
-    val id1 = data1.createPid()
-    val id2 = data2.createPid()
-    val cachedResult = equalsCache[id1 to id2]
-    if (cachedResult != null) return cachedResult
-
-    if (replaceMap[id1] == id2) return true
-
-
-    // TODO: 03.04.2020 OneToMany children
-    val data1parents = storage1.refs.getParentRefsOfChild(id1, false).map { storage1.entityDataByIdOrDie(it.value) }
-    val data2parents = storage2.refs.getParentRefsOfChild(id2, false).map { storage2.entityDataByIdOrDie(it.value) }
-
-    val eq = classifyByEquals(data1parents, data2parents, this::shallowHashCode, this::shallowHashCode) { e1, e2 ->
-      deepEquals(e1, e2, replaceMap, storage1, storage2/*, backReferrers1, backReferrers2*/, equalsCache)
-    }
-
-    val result = eq.onlyIn1.isEmpty() && eq.onlyIn2.isEmpty()
-    equalsCache[id1 to id2] = result
-    return result
-  }
-
-
-  private fun foreachNotProcessedEntity(storage: AbstractPEntityStorage,
-                                        sourceFilter: (EntitySource) -> Boolean,
-                                        replaceMap: Map<PId<out TypedEntity>, PId<out TypedEntity>>,
-                                        otherProcessedSet: Set<PId<out TypedEntity>>,
-                                        block: (PEntityData<out TypedEntity>) -> Unit) {
-    for (entityFamily in storage.entitiesByType.all().values) {
-      entityFamily.all().filter { sourceFilter(it.entitySource) }.forEach {
-        val id = it.createPid()
-        if (!replaceMap.containsKey(id) && !otherProcessedSet.contains(id)) {
-          block(it)
-        }
-      }
-    }
-  }
-
-  private fun traverseNodes(storage: AbstractPEntityStorage, startNode: PId<out TypedEntity>, block: (PId<out TypedEntity>) -> Unit) {
-    val queue = Queues.newArrayDeque(listOf(startNode))
-    while (queue.isNotEmpty()) {
-      val id = queue.remove()
-      block(id)
-
-      // TODO: 03.04.2020 OneToOneChildren
-      queue.addAll(storage.refs.getChildrenRefsOfParentBy(id, false).flatMap { it.value })
-    }
-  }
-
-  private fun shallowHashCode(data: PEntityData<out TypedEntity>): Int = data.hashCode()
-
-  data class EqualityResult<T1, T2>(
-    val onlyIn1: List<T1>,
-    val onlyIn2: List<T2>,
-    val equal: List<Pair<T1, T2>>
-  )
-
-  private fun shallowEquals(oldData: PEntityData<out TypedEntity>,
-                            newData: PEntityData<out TypedEntity>,
-                            emptyBiMap: HashBiMap<PId<*>, PId<*>>?,
-                            newStorage: AbstractPEntityStorage): Boolean = oldData == newData
-
-
-  private fun groupByPersistentIdHash(storage: AbstractPEntityStorage): Multimap<Int, Pair<PEntityData<*>, Class<out TypedEntity>>> {
-    val res = HashMultimap.create<Int, Pair<PEntityData<*>, Class<out TypedEntity>>>()
-    for ((clazz, entityFamily) in storage.entitiesByType.all()) {
-      for (pEntityData in entityFamily.all()) {
-        if (!TypedEntityWithPersistentId::class.java.isAssignableFrom(clazz)) continue
-        val entity = pEntityData.createEntity(storage) as TypedEntityWithPersistentId
-
-        res.put(entity.persistentId().hashCode(), pEntityData to clazz)
-      }
-    }
-    return res
-  }
-
   sealed class EntityDataChange<T : PEntityData<out TypedEntity>> {
     data class Added<T : PEntityData<out TypedEntity>>(val entity: T) : EntityDataChange<T>()
     data class Removed<T : PEntityData<out TypedEntity>>(val entity: T) : EntityDataChange<T>()
@@ -750,55 +587,6 @@ internal class PEntityStorageBuilder(
       }
     }
 
-    internal fun <T1, T2> classifyByEquals(c1: Iterable<T1>,
-                                           c2: Iterable<T2>,
-                                           hashFunc1: (T1) -> Int,
-                                           hashFunc2: (T2) -> Int,
-                                           equalsFunc: (T1, T2) -> Boolean): EqualityResult<T1, T2> {
-      val hashes1 = c1.groupBy(hashFunc1)
-      val hashes2 = c2.groupBy(hashFunc2)
-
-      val onlyIn1 = mutableListOf<T1>()
-      for (key in hashes1.keys - hashes2.keys) {
-        onlyIn1.addAll(hashes1.getValue(key))
-      }
-
-      val onlyIn2 = mutableListOf<T2>()
-      for (key in hashes2.keys - hashes1.keys) {
-        onlyIn2.addAll(hashes2.getValue(key))
-      }
-
-      val equal = mutableListOf<Pair<T1, T2>>()
-      for (key in hashes1.keys.intersect(hashes2.keys)) {
-        val l1 = hashes1.getValue(key)
-        val l2 = hashes2.getValue(key)
-
-        if (l1.size == 1 && l2.size == 1 && equalsFunc(l1.single(), l2.single())) {
-          equal.add(l1.single() to l2.single())
-        }
-        else {
-          val ml1 = l1.toMutableList()
-          val ml2 = l2.toMutableList()
-
-          for (itemFrom1 in ml1) {
-            val index2 = ml2.indexOfFirst { equalsFunc(itemFrom1, it) }
-            if (index2 < 0) {
-              onlyIn1.add(itemFrom1)
-            }
-            else {
-              val itemFrom2 = ml2.removeAt(index2)
-              equal.add(itemFrom1 to itemFrom2)
-            }
-          }
-
-          for (itemFrom2 in ml2) {
-            onlyIn2.add(itemFrom2)
-          }
-        }
-      }
-
-      return EqualityResult(onlyIn1 = onlyIn1, onlyIn2 = onlyIn2, equal = equal)
-    }
   }
 }
 
