@@ -83,6 +83,14 @@ public final class SocketLock {
     myCommandProcessorRef = new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
   }
 
+  public @NotNull Path getConfigPath() {
+    return myConfigPath;
+  }
+
+  public @NotNull Path getSystemPath() {
+    return mySystemPath;
+  }
+
   private static @NotNull Path canonicalPath(@NotNull String path) {
     try {
       // toRealPath doesn't properly restore actual name of file on case-insensitive fs (see LockSupportTest.testUseCanonicalPathLock)

@@ -636,9 +636,17 @@ public final class StartupUtil {
       }
     }
 
-    log.info("Locale=" + Locale.getDefault() +
-             " JNU=" + System.getProperty("sun.jnu.encoding") +
-             " file.encoding=" + System.getProperty("file.encoding"));
+    // report canonical paths
+    SocketLock socketLock = ourSocketLock;
+    log.info(
+      "locale=" + Locale.getDefault() +
+      " jnu=" + System.getProperty("sun.jnu.encoding") +
+      " file.encoding=" + System.getProperty("file.encoding") +
+      "\n  " + PathManager.PROPERTY_CONFIG_PATH + "=" + socketLock.getConfigPath() +
+      "\n  " + PathManager.PROPERTY_SYSTEM_PATH + "=" + socketLock.getSystemPath() +
+      "\n  " + PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath() +
+      "\n  " + PathManager.PROPERTY_LOG_PATH + "=" + PathManager.getLogPath()
+    );
     activity.end();
   }
 
