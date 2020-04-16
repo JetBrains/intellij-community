@@ -77,7 +77,8 @@
 
     <streamProviderFactory implementation="com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStreamProviderFactory"/>
 
-    <moduleService serviceImplementation="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager"/>
+    <moduleService serviceInterface="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager"
+                   serviceImplementation="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
                         serviceImplementation="com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl" overrides="true"/>
