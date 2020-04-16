@@ -120,15 +120,9 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
     LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
     if (result == null) return null;
-    PsiElement start, end, psi;
-    try {
-      start = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getStartElement(), target);
-      end = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getEndElement(), target);
-      psi = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getPsiElement(), target);
-    }
-    catch (IllegalStateException e) {
-      return null;
-    }
+    PsiElement start = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getStartElement(), target);
+    PsiElement end = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getEndElement(), target);
+    PsiElement psi = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getPsiElement(), target);
     ProblemDescriptor descriptor = new ProblemDescriptor() {
       //@formatter:off
       @Override public PsiElement getPsiElement() { return psi;}
