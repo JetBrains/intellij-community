@@ -25,37 +25,23 @@ internal class PListVFUEntityData : PEntityData<PVFUEntity>() {
   lateinit var fileProperty: List<VirtualFileUrl>
 }
 
-internal class PVFUEntity(
-  val data: String
-) : PTypedEntity() {
-  val fileProperty: VirtualFileUrl by VirtualFileUrlProperty()
-}
-
-internal class PNullableVFUEntity(
-  val data: String
-) : PTypedEntity() {
-  val fileProperty: VirtualFileUrl? by NullableVirtualFileUrlProperty()
-}
-
-internal class PListVFUEntity(
-  val data: String
-) : PTypedEntity() {
-  val fileProperty: List<VirtualFileUrl> by VirtualFileUrlListProperty()
-}
+internal class PVFUEntity(val data: String, val fileProperty: VirtualFileUrl) : PTypedEntity()
+internal class PNullableVFUEntity(val data: String, val fileProperty: VirtualFileUrl?) : PTypedEntity()
+internal class PListVFUEntity(val data: String, val fileProperty: List<VirtualFileUrl>) : PTypedEntity()
 
 internal class ModifiablePVFUEntity : PModifiableTypedEntity<PVFUEntity>() {
   var data: String by EntityDataDelegation()
-  var fileProperty: VirtualFileUrl by MutableVirtualFileUrlProperty()
+  var fileProperty: VirtualFileUrl by VirtualFileUrlProperty()
 }
 
 internal class ModifiablePNullableVFUEntity : PModifiableTypedEntity<PNullableVFUEntity>() {
   var data: String by EntityDataDelegation()
-  var fileProperty: VirtualFileUrl? by MutableNullableVirtualFileUrlProperty()
+  var fileProperty: VirtualFileUrl? by VirtualFileUrlNullableProperty()
 }
 
 internal class ModifiablePListVFUEntity : PModifiableTypedEntity<PListVFUEntity>() {
   var data: String by EntityDataDelegation()
-  var fileProperty: List<VirtualFileUrl> by MutableVirtualFileUrlListProperty()
+  var fileProperty: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 }
 
 internal fun TypedEntityStorageBuilder.addPVFUEntity(data: String,

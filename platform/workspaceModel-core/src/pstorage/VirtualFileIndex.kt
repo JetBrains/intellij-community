@@ -4,9 +4,11 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.VirtualFileUrl
-import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
 
 private const val DELIMITER = ":"
 
@@ -49,79 +51,46 @@ open class VirtualFileIndex private constructor(
 
 
 //---------------------------------------------------------------------
-class VirtualFileUrlProperty<T : PTypedEntity> : ReadOnlyProperty<T, VirtualFileUrl> {
+class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl> {
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl {
-    val virtualFiles = thisRef.snapshot.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
-    if (virtualFiles == null) error("Property can't be nullable")
-    if (virtualFiles.size > 1) error("Property should have only one value")
-    return virtualFiles.first()
-  }
-}
-
-class MutableVirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl> {
-  override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl {
-    val virtualFiles = thisRef.diff.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
-    if (virtualFiles == null) error("Property can't be nullable")
-    if (virtualFiles.size > 1) error("Property should have only one value")
-    return virtualFiles.first()
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as VirtualFileUrl
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl) {
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    return thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, listOf(value))
+    ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
+    thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, listOf(value))
   }
 }
 
 //---------------------------------------------------------------------
-class NullableVirtualFileUrlProperty<T : PTypedEntity> : ReadOnlyProperty<T, VirtualFileUrl?> {
+class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl?> {
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl? {
-    val virtualFiles = thisRef.snapshot.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
-    if (virtualFiles == null) return null
-    if (virtualFiles.size > 1) error("Property should have only one value")
-    if (virtualFiles.isEmpty()) return null
-    return virtualFiles.first()
-  }
-}
-
-class MutableNullableVirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl?> {
-  override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl? {
-    val virtualFiles = thisRef.diff.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
-    if (virtualFiles == null) return null
-    if (virtualFiles.size > 1) error("Property should have only one value")
-    if (virtualFiles.isEmpty()) return null
-    return virtualFiles.first()
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as VirtualFileUrl?
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl?) {
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    return thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, value?.let{ listOf(value) })
+    ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
+    thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, value?.let{ listOf(value) })
   }
 }
 
 //---------------------------------------------------------------------
-class VirtualFileUrlListProperty<T : PTypedEntity> : ReadOnlyProperty<T, List<VirtualFileUrl>> {
+class VirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, List<VirtualFileUrl>> {
   override fun getValue(thisRef: T, property: KProperty<*>): List<VirtualFileUrl> {
-    val virtualFiles = thisRef.snapshot.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
-    if (virtualFiles == null) error("Property can't be nullable")
-    return virtualFiles.toList()
-  }
-}
-
-class MutableVirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, List<VirtualFileUrl>> {
-  override fun getValue(thisRef: T, property: KProperty<*>): List<VirtualFileUrl> {
-    val virtualFiles = thisRef.diff.virtualFileIndex.getVirtualFileForProperty(thisRef.id, property.name)
-    if (virtualFiles == null) error("Property can't be nullable")
-    return virtualFiles.toList()
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as List<VirtualFileUrl>
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: List<VirtualFileUrl>) {
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    return thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, value)
+    ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
+    thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, value)
   }
 }
