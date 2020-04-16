@@ -9,7 +9,7 @@ public class LightEditFeatureUsagesUtil {
   private final static String USAGE_GROUP_ID = "light.edit";
 
   private final static String OPEN_FILE_EVENT_ID    = "open.file";
-  private final static String OPEN_FILE_EVENT_PLACE = "place";
+  private final static String OPEN_FILE_EVENT_PLACE = "open_place";
 
   private final static String AUTOSAVE_MODE_EVENT_ID     = "autosave.mode";
   private final static String AUTOSAVE_MODE_ENABLED_FLAG = "enabled";
