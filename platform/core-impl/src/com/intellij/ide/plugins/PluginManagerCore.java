@@ -694,10 +694,14 @@ public final class PluginManagerCore {
       }
 
       // as warn in tests
-      getLogger().warn(message);
+      if (!errors.isEmpty()) {
+        getLogger().warn(message);
+      }
     }
     else {
-      getLogger().error(message);
+      if (!errors.isEmpty()) {
+        getLogger().error(message);
+      }
     }
   }
 
