@@ -481,9 +481,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newConcurrentSet() {
-    return Collections.newSetFromMap(newConcurrentMap());
+    return Collections.newSetFromMap(new ConcurrentHashMap<T, Boolean>());
   }
 
+  /**
+   * @deprecated Use {@link ConcurrentHashMap#ConcurrentHashMap()}
+   */
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> newConcurrentMap() {
     return new ConcurrentHashMap<>();

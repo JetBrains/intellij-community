@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
@@ -10,28 +10,23 @@ import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsSe
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class WhitelistStorage extends BaseWhitelistStorage {
   private static final Logger LOG = Logger.getInstance(WhitelistStorage.class);
 
-  protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
-  @NotNull
-  private final Semaphore mySemaphore;
-  @NotNull
-  private final String myRecorderId;
-  @Nullable
-  private String myVersion;
-  @NotNull
-  private final EventLogWhitelistPersistence myWhitelistPersistence;
-  @NotNull
-  private final EventLogWhitelistLoader myWhitelistLoader;
+  protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  private final @NotNull Semaphore mySemaphore;
+  private final @NotNull String myRecorderId;
+  private @Nullable String myVersion;
+  private final @NotNull EventLogWhitelistPersistence myWhitelistPersistence;
+  private final @NotNull EventLogWhitelistLoader myWhitelistLoader;
 
   WhitelistStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
@@ -52,14 +47,12 @@ public class WhitelistStorage extends BaseWhitelistStorage {
     myVersion = loadValidatorsFromLocalCache(recorderId);
   }
 
-  @Nullable
   @Override
-  public WhiteListGroupRules getGroupRules(@NotNull String groupId) {
+  public @Nullable WhiteListGroupRules getGroupRules(@NotNull String groupId) {
     return eventsValidators.get(groupId);
   }
 
-  @Nullable
-  private String loadValidatorsFromLocalCache(@NotNull String recorderId) {
+  private @Nullable String loadValidatorsFromLocalCache(@NotNull String recorderId) {
     String whiteListContent = myWhitelistPersistence.getCachedWhitelist();
     if (whiteListContent != null) {
       try {
@@ -74,8 +67,7 @@ public class WhitelistStorage extends BaseWhitelistStorage {
     return null;
   }
 
-  @Nullable
-  private String updateValidators(@NotNull String whiteListContent) throws EventLogWhitelistParseException {
+  private @Nullable String updateValidators(@NotNull String whiteListContent) throws EventLogWhitelistParseException {
     mySemaphore.down();
     try {
       FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);

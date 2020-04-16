@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +34,14 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextEx.class);
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties
     .getIntProperty("max.open.global.inspection.xml.files", 50);
-  private final ConcurrentMap<InspectionToolWrapper, InspectionToolResultExporter> myPresentationMap = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<InspectionToolWrapper, InspectionToolResultExporter> myPresentationMap = new ConcurrentHashMap<>();
   protected volatile Path myOutputDir;
   protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
@@ -55,11 +55,11 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     performInspectionsWithProgressAndExportResults(scope, runGlobalToolsOnly, true, outputPath, inspectionsResults);
   }
 
-  public void performInspectionsWithProgressAndExportResults(@NotNull final AnalysisScope scope,
+  public void performInspectionsWithProgressAndExportResults(final @NotNull AnalysisScope scope,
                                                              final boolean runGlobalToolsOnly,
                                                              final boolean isOfflineInspections,
                                                              @NotNull Path outputDir,
-                                                             @NotNull final List<? super Path> inspectionsResults) {
+                                                             final @NotNull List<? super Path> inspectionsResults) {
     cleanupTools();
     setCurrentScope(scope);
 
@@ -112,7 +112,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
       getRefManager().iterate(new RefVisitor() {
         @Override
-        public void visitElement(@NotNull final RefEntity refEntity) {
+        public void visitElement(final @NotNull RefEntity refEntity) {
           int i = 0;
           for (Tools tools : inspections) {
             for (ScopeToolState state : tools.getTools()) {
@@ -216,8 +216,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     }
   }
 
-  @NotNull
-  public InspectionToolResultExporter getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+  public @NotNull InspectionToolResultExporter getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolResultExporter presentation = myPresentationMap.get(toolWrapper);
     if (presentation == null) {
       presentation = createPresentation(toolWrapper);
@@ -227,8 +226,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     return presentation;
   }
 
-  @NotNull
-  protected InspectionToolResultExporter createPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+  protected @NotNull InspectionToolResultExporter createPresentation(@NotNull InspectionToolWrapper toolWrapper) {
     String presentationClass = StringUtil
       .notNullize(toolWrapper.myEP == null ? null : toolWrapper.myEP.presentation, DefaultInspectionToolResultExporter.class.getName());
 
@@ -263,8 +261,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     myGlobalReportedProblemFilter = reportedProblemFilter;
   }
 
-  @Nullable
-  public Path getOutputPath() {
+  public @Nullable Path getOutputPath() {
     return myOutputDir;
   }
 }

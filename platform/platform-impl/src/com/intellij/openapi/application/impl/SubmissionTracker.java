@@ -4,12 +4,12 @@ package com.intellij.openapi.application.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class SubmissionTracker {
@@ -26,7 +26,7 @@ class SubmissionTracker {
   private final AtomicInteger myCount = new AtomicInteger();
 
   /** Not-null if we're tracking submissions to provide diagnostics */
-  @Nullable private volatile Map<String, Integer> myTraces;
+  private volatile @Nullable Map<String, Integer> myTraces;
   private volatile boolean myStoppedTracing;
 
   @Nullable
@@ -37,7 +37,7 @@ class SubmissionTracker {
     Map<String, Integer> traces = myTraces;
     if (currentCount > 100) {
       if (traces == null) {
-        myTraces = ContainerUtil.newConcurrentMap();
+        myTraces = new ConcurrentHashMap<>();
       } else {
         Integer count = traces.get(callerTrace());
         if (count != null && count > 10) {

@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
@@ -47,8 +48,7 @@ public final class ConsoleViewUtil {
 
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
-  @NotNull
-  public static EditorEx setupConsoleEditor(Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
+  public static @NotNull EditorEx setupConsoleEditor(Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(document);
@@ -57,7 +57,7 @@ public final class ConsoleViewUtil {
     return editor;
   }
 
-  public static void setupConsoleEditor(@NotNull final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
+  public static void setupConsoleEditor(final @NotNull EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     ApplicationManager.getApplication().runReadAction(() -> {
 
       final EditorSettings editorSettings = editor.getSettings();
@@ -95,19 +95,16 @@ public final class ConsoleViewUtil {
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
   }
 
-  @NotNull
-  public static DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
+  public static @NotNull DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
     return new DelegateColorScheme(scheme) {
-      @NotNull
       @Override
-      public Color getDefaultBackground() {
+      public @NotNull Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
         return color == null ? super.getDefaultBackground() : color;
       }
 
-      @NotNull
       @Override
-      public FontPreferences getFontPreferences() {
+      public @NotNull FontPreferences getFontPreferences() {
         return getConsoleFontPreferences();
       }
 
@@ -126,9 +123,8 @@ public final class ConsoleViewUtil {
         return getConsoleLineSpacing();
       }
 
-      @NotNull
       @Override
-      public Font getFont(EditorFontType key) {
+      public @NotNull Font getFont(EditorFontType key) {
         return super.getFont(EditorFontType.getConsoleType(key));
       }
 
@@ -161,7 +157,7 @@ public final class ConsoleViewUtil {
       });
     }
 
-    static final Map<Key<?>, List<TextAttributesKey>> textAttributeKeys = ContainerUtil.newConcurrentMap();
+    static final Map<Key<?>, List<TextAttributesKey>> textAttributeKeys = new ConcurrentHashMap<>();
     static final Map<Key<?>, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
@@ -221,8 +217,7 @@ public final class ConsoleViewUtil {
     }
   }
 
-  @NotNull
-  public static ConsoleViewContentType getContentTypeForToken(@NotNull IElementType tokenType, @NotNull SyntaxHighlighter highlighter) {
+  public static @NotNull ConsoleViewContentType getContentTypeForToken(@NotNull IElementType tokenType, @NotNull SyntaxHighlighter highlighter) {
     TextAttributesKey[] keys = highlighter.getTokenHighlights(tokenType);
     if (keys.length == 0) {
       return ConsoleViewContentType.NORMAL_OUTPUT;
@@ -240,10 +235,9 @@ public final class ConsoleViewUtil {
     }
   }
 
-  @NotNull
-  public static List<Filter> computeConsoleFilters(@NotNull Project project,
-                                                   @Nullable ConsoleView consoleView,
-                                                   @NotNull GlobalSearchScope searchScope) {
+  public static @NotNull List<Filter> computeConsoleFilters(@NotNull Project project,
+                                                            @Nullable ConsoleView consoleView,
+                                                            @NotNull GlobalSearchScope searchScope) {
     List<Filter> result = new ArrayList<>();
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
       Filter[] filters;

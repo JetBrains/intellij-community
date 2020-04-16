@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
@@ -41,12 +41,13 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
-  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<>();
 
   public DataManagerImpl() {
     myDataConstantToRuleMap.put(PlatformDataKeys.COPY_PROVIDER.getName(), new CopyProviderRule());
@@ -58,8 +59,7 @@ public class DataManagerImpl extends DataManager {
     myDataConstantToRuleMap.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
-  @Nullable
-  private Object getData(@NotNull String dataId, final Component focusedComponent) {
+  private @Nullable Object getData(@NotNull String dataId, final Component focusedComponent) {
     GetDataRule rule = getDataRule(dataId);
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       for (Component c = focusedComponent; c != null; c = c.getParent()) {
@@ -72,16 +72,14 @@ public class DataManagerImpl extends DataManager {
     return null;
   }
 
-  @Nullable
-  public Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+  public @Nullable Object getDataFromProvider(final @NotNull DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
     return getDataFromProvider(provider, dataId, alreadyComputedIds, getDataRule(dataId));
   }
 
-  @Nullable
-  private Object getDataFromProvider(@NotNull DataProvider provider,
-                                     @NotNull String dataId,
-                                     @Nullable Set<String> alreadyComputedIds,
-                                     @Nullable GetDataRule dataRule) {
+  private @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
+                                               @NotNull String dataId,
+                                               @Nullable Set<String> alreadyComputedIds,
+                                               @Nullable GetDataRule dataRule) {
     ProgressManager.checkCanceled();
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
@@ -105,8 +103,7 @@ public class DataManagerImpl extends DataManager {
     }
   }
 
-  @Nullable
-  public static DataProvider getDataProviderEx(Object component) {
+  public static @Nullable DataProvider getDataProviderEx(Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;
@@ -121,8 +118,7 @@ public class DataManagerImpl extends DataManager {
     return dataProvider;
   }
 
-  @Nullable
-  public GetDataRule getDataRule(@NotNull String dataId) {
+  public @Nullable GetDataRule getDataRule(@NotNull String dataId) {
     GetDataRule rule = getRuleFromMap(dataId);
     if (rule != null) {
       return rule;
@@ -136,8 +132,7 @@ public class DataManagerImpl extends DataManager {
     return null;
   }
 
-  @Nullable
-  private GetDataRule getRuleFromMap(@NotNull String dataId) {
+  private @Nullable GetDataRule getRuleFromMap(@NotNull String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
       for (KeyedLazyInstanceEP<GetDataRule> ruleEP : GetDataRule.EP_NAME.getExtensions()) {
@@ -152,8 +147,7 @@ public class DataManagerImpl extends DataManager {
     return rule;
   }
 
-  @Nullable
-  private static Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {
+  private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {
     Object invalidData = DataValidator.findInvalidData(dataId, data, dataSource);
     if (invalidData != null) {
       return null;
@@ -165,15 +159,13 @@ public class DataManagerImpl extends DataManager {
     return data;
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext(Component component) {
+  public @NotNull DataContext getDataContext(Component component) {
     return new MyDataContext(component);
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext(@NotNull Component component, int x, int y) {
+  public @NotNull DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
       throw new IllegalArgumentException("wrong point: x=" + x + "; y=" + y);
     }
@@ -191,8 +183,7 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Override
-  @NotNull
-  public DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     Component component = null;
     if (Registry.is("actionSystem.getContextByRecentMouseEvent")) {
       component = SwingHelper.getComponentFromRecentMouseEvent();
@@ -200,17 +191,15 @@ public class DataManagerImpl extends DataManager {
     return getDataContext(component != null ? component : getFocusedComponent());
   }
 
-  @NotNull
   @Override
-  public Promise<DataContext> getDataContextFromFocusAsync() {
+  public @NotNull Promise<DataContext> getDataContextFromFocusAsync() {
     AsyncPromise<DataContext> result = new AsyncPromise<>();
     IdeFocusManager.getGlobalInstance()
                    .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.any());
     return result;
   }
 
-  @NotNull
-  public DataContext getDataContextTest(Component component) {
+  public @NotNull DataContext getDataContextTest(Component component) {
     DataContext dataContext = getDataContext(component);
 
     WindowManager windowManager = WindowManager.getInstance();
@@ -226,8 +215,7 @@ public class DataManagerImpl extends DataManager {
     return dataContext;
   }
 
-  @Nullable
-  private static Component getFocusedComponent() {
+  private static @Nullable Component getFocusedComponent() {
     WindowManager windowManager = WindowManager.getInstance();
     if (!(windowManager instanceof WindowManagerEx)) {
       return null;
@@ -283,13 +271,11 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Override
-  @Nullable
-  public <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey) {
+  public @Nullable <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey) {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
-  @Nullable
-  public static Editor validateEditor(Editor editor) {
+  public static @Nullable Editor validateEditor(Editor editor) {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner instanceof JComponent) {
       final JComponent jComponent = (JComponent)focusOwner;
@@ -362,8 +348,7 @@ public class DataManagerImpl extends DataManager {
       return answer;
     }
 
-    @Nullable
-    private Object doGetData(@NotNull String dataId) {
+    private @Nullable Object doGetData(@NotNull String dataId) {
       Component component = SoftReference.dereference(myRef);
       if (PlatformDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
         if (component == null) {
@@ -405,8 +390,7 @@ public class DataManagerImpl extends DataManager {
       getOrCreateMap().put(key, value);
     }
 
-    @NotNull
-    private Map<Key<?>, Object> getOrCreateMap() {
+    private @NotNull Map<Key<?>, Object> getOrCreateMap() {
       Map<Key<?>, Object> userData = myUserData;
       if (userData == null) {
         myUserData = userData = ContainerUtil.createWeakValueMap();

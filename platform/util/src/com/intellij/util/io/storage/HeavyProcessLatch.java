@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
 import com.intellij.UtilBundle;
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,13 +13,14 @@ import java.util.Deque;
 import java.util.EventListener;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance(HeavyProcessLatch.class);
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Map<String, Type> myHeavyProcesses = ContainerUtil.newConcurrentMap();
+  private final Map<String, Type> myHeavyProcesses = new ConcurrentHashMap<>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private final Deque<Runnable> toExecuteOutOfHeavyActivity = new ConcurrentLinkedDeque<>();
@@ -49,8 +49,7 @@ public final class HeavyProcessLatch {
     }
   }
 
-  @NotNull
-  public AccessToken processStarted(@NotNull String operationName) {
+  public @NotNull AccessToken processStarted(@NotNull String operationName) {
     return processStarted(operationName, Type.Process);
   }
 
@@ -87,14 +86,12 @@ public final class HeavyProcessLatch {
     return !myHeavyProcesses.isEmpty();
   }
 
-  @Nullable
-  public String getRunningOperationName() {
+  public @Nullable String getRunningOperationName() {
     Map.Entry<String, Type> runningOperation = getRunningOperation();
     return runningOperation != null ? runningOperation.getKey() : null;
   }
 
-  @Nullable
-  public Map.Entry<String, Type> getRunningOperation() {
+  public @Nullable Map.Entry<String, Type> getRunningOperation() {
     if (myHeavyProcesses.isEmpty()) {
       return null;
     }

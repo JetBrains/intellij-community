@@ -38,17 +38,17 @@ public class MessageBusImpl implements MessageBus {
    */
   private final int[] myOrder;
 
-  private final ConcurrentMap<Topic<?>, Object> myPublishers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic<?>, Object> myPublishers = new ConcurrentHashMap<>();
 
   /**
    * This bus's subscribers
    */
-  private final ConcurrentMap<Topic<?>, List<MessageBusConnectionImpl>> mySubscribers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic<?>, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<>();
 
   /**
    * Caches subscribers for this bus and its children or parent, depending on the topic's broadcast policy
    */
-  private final Map<Topic<?>, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
+  private final Map<Topic<?>, List<MessageBusConnectionImpl>> mySubscriberCache = new ConcurrentHashMap<>();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private volatile @NotNull Map<String, List<ListenerDescriptor>> myTopicClassToListenerClass = Collections.emptyMap();

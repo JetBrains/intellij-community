@@ -38,6 +38,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.PaintEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -54,9 +55,9 @@ final class ActionUpdater {
   private final boolean myToolbarAction;
   private final boolean myTransparentOnly;
 
-  private final Map<AnAction, Presentation> myUpdatedPresentations = ContainerUtil.newConcurrentMap();
-  private final Map<ActionGroup, List<AnAction>> myGroupChildren = ContainerUtil.newConcurrentMap();
-  private final Map<ActionGroup, Boolean> myCanBePerformedCache = ContainerUtil.newConcurrentMap();
+  private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
+  private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
+  private final Map<ActionGroup, Boolean> myCanBePerformedCache = new ConcurrentHashMap<>();
   private final UpdateStrategy myRealUpdateStrategy;
   private final UpdateStrategy myCheapStrategy;
   private final Utils.ActionGroupVisitor myVisitor;
@@ -425,8 +426,7 @@ final class ActionUpdater {
     }
   }
 
-  @Nullable
-  private Presentation update(AnAction action, UpdateStrategy strategy) {
+  private @Nullable Presentation update(AnAction action, UpdateStrategy strategy) {
     Presentation cached = myUpdatedPresentations.get(action);
     if (cached != null) {
       return cached;
