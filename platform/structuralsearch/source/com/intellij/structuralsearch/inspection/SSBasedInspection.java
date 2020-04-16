@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -88,14 +89,14 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     final Project project = holder.getManager().getProject();
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final List<Configuration> configurations;
-    final InspectionProfileImpl profile;
-    for (Configuration configuration : myConfigurations) {
-      configuration.initialize();
-    }
-    profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
-    configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
+    final InspectionProfileImpl profile =
+      (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+    final List<Configuration> configurations =
+      ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
     if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    for (Configuration configuration : configurations) {
+      register(configuration);
+    }
 
     final Map<Configuration, Matcher> compiledOptions =
       SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, project);
@@ -139,9 +140,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
                 if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
                   final String message = e.getMessage().replace(ScriptSupport.UUID, "");
                   UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
-                                               .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
-                                               .setImportant(true)
-                                               .notify(element.getProject());
+                    .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
+                    .setImportant(true)
+                    .notify(element.getProject());
                 }
               }
               matchedNodes.reset();
@@ -150,6 +151,31 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         }
       }
     };
+  }
+
+  public static void register(Configuration configuration) {
+    final String shortName = configuration.getUuid().toString();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key != null) {
+      if (!isMetaDataChanged(configuration, key)) return;
+      HighlightDisplayKey.unregister(shortName);
+    }
+    final String suppressId = configuration.getSuppressId();
+    final String name = configuration.getName();
+    if (suppressId == null) {
+      HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME);
+    }
+    else {
+      HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
+    }
+  }
+
+  private static boolean isMetaDataChanged(Configuration configuration, HighlightDisplayKey key) {
+    if (StringUtil.isEmpty(configuration.getSuppressId())) {
+      if (!SHORT_NAME.equals(key.getID())) return true;
+    }
+    else if (!configuration.getSuppressId().equals(key.getID())) return true;
+    return !configuration.getName().equals(HighlightDisplayKey.getDisplayNameByKey(key));
   }
 
   @Override

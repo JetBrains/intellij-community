@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.ide.DataManager;
@@ -73,11 +74,12 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getID() {
-    final String suppressId = myMainConfiguration.getSuppressId();
-    if (!StringUtil.isEmpty(suppressId)) {
-      return suppressId;
+    final HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
+    if (key != null) {
+      return key.getID(); // to avoid using a new suppress id before it is registered.
     }
-    return SSBasedInspection.SHORT_NAME;
+    final String suppressId = myMainConfiguration.getSuppressId();
+    return !StringUtil.isEmpty(suppressId) ? suppressId : SSBasedInspection.SHORT_NAME;
   }
 
   @Override

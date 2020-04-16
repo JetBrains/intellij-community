@@ -191,7 +191,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myDescriptionTextArea.setFont(scheme.getFont(EditorFontType.PLAIN));
       myDescriptionTextArea.setPreferredSize(new Dimension(375, 125));
       myDescriptionTextArea.setMinimumSize(new Dimension(200, 50));
-      mySuppressIdTextField = new JTextField(configuration.getNewSuppressId());
+      mySuppressIdTextField = new JTextField(configuration.getSuppressId());
       setTitle(SSRBundle.message("meta.data.dialog.title"));
       init();
     }
@@ -225,7 +225,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
           }
           else {
             for (Configuration configuration : configurations) {
-              if (suppressId.equals(configuration.getNewSuppressId()) && !myConfiguration.getUuid().equals(configuration.getUuid())) {
+              if (suppressId.equals(configuration.getSuppressId()) && !myConfiguration.getUuid().equals(configuration.getUuid())) {
                 result.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId),
                                               mySuppressIdTextField));
                 break;
