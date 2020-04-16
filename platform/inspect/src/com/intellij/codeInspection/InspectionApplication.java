@@ -29,7 +29,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -113,7 +112,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   public void execute() throws Exception {
-    ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, Exception>)() -> {
       final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
                                                             appInfo.getFullApplicationName() +
@@ -129,8 +127,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       finally {
         Disposer.dispose(disposable);
       }
-      return null;
-    });
   }
 
   private void printHelp() {
@@ -169,7 +165,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
     Disposer.register(parentDisposable, () -> closeProject(project));
 
-    ApplicationManager.getApplication().runWriteAction(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
+    ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
 
     PatchProjectUtil.patchProject(project);
 
@@ -551,9 +547,11 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   private static void closeProject(@NotNull Project project) {
-    if (!project.isDisposed()) {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
-    }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (!project.isDisposed()) {
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+      }
+    });
   }
 
   private @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
