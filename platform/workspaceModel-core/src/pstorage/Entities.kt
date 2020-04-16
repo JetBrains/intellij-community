@@ -146,7 +146,7 @@ abstract class PEntityData<E : TypedEntity> {
     return this::class.memberProperties
       .filter { it.name != PEntityData<*>::id.name }
       .map { it.getter.call(this).hashCode() }
-      .fold(31) { acc, i -> acc * i * 31 }
+      .fold(31) { acc, i -> acc * 17 + i }
   }
 
   private fun KType.isList(): Boolean = this.classifier == List::class
