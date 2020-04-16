@@ -158,11 +158,6 @@ class CompilationPartsUploader implements Closeable {
 
       response = myHttpClient.execute(request)
 
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        def responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
-        myMessages.error("PUT $url failed with $response.statusLine.statusCode: $responseString")
-      }
-
       EntityUtils.consume(response.getEntity())
       return response.getStatusLine().getStatusCode()
     }
