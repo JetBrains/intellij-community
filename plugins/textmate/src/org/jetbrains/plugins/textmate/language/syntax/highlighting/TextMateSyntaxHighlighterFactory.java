@@ -28,8 +28,7 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       final TextMateLanguageDescriptor languageDescriptor = textMateService.getLanguageDescriptorByFileName(virtualFile.getName());
       if (languageDescriptor != null) {
         LOG.debug("Textmate highlighting: " + virtualFile.getPath());
-        return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor.getScopeName(),
-                                                                     languageDescriptor.getRootSyntaxNode(),
+        return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor,
                                                                      Registry.get("textmate.line.highlighting.limit").asInteger()));
       }
     }
