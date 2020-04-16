@@ -1018,7 +1018,7 @@ public class FSRecords {
       return toSave;
     }
     catch (ProcessCanceledException e) {
-      // JarFileSystem list methods can be interrupted now
+      // NewVirtualFileSystem.list methods can be interrupted now
       throw e;
     }
     catch (Throwable e) {
