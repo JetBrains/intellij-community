@@ -1,14 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -357,7 +353,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     if (element == null) return null;
     // myPairs is used to copy from, so should be safe 
     return new AddAnnotationPsiFix(
-      myAnnotation, (PsiModifierListOwner)QuickFixWrapper.findSameElementInCopy(element, target),
+      myAnnotation, (PsiModifierListOwner)CodeInsightUtilCore.findSameElementInCopy(element, target),
       myPairs, myAnnotationsToRemove);
   }
 }

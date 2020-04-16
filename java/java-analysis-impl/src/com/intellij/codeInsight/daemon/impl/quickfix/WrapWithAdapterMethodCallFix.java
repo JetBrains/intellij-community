@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -241,7 +241,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
 
     @Override
     public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return new MyMethodArgumentFix(QuickFixWrapper.findSameElementInCopy(myArgList, target), myIndex, myToType,
+      return new MyMethodArgumentFix(CodeInsightUtilCore.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                      (Wrapper)myArgumentFixerActionFactory);
     }
   }
@@ -259,6 +259,6 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiExpression expression = (PsiExpression)getStartElement();
     if (expression == null) return null;
-    return new WrapWithAdapterMethodCallFix(myType, QuickFixWrapper.findSameElementInCopy(expression, target), myWrapper);
+    return new WrapWithAdapterMethodCallFix(myType, CodeInsightUtilCore.findSameElementInCopy(expression, target), myWrapper);
   }
 }

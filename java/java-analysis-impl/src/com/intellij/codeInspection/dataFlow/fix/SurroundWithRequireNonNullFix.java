@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow.fix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -64,6 +64,6 @@ public class SurroundWithRequireNonNullFix implements LocalQuickFix {
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiExpression expression = myQualifierPointer.getElement();
     if (expression == null) return null;
-    return new SurroundWithRequireNonNullFix(QuickFixWrapper.findSameElementInCopy(expression, target));
+    return new SurroundWithRequireNonNullFix(CodeInsightUtilCore.findSameElementInCopy(expression, target));
   }
 }

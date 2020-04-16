@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.FileModifier;
@@ -23,7 +24,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -68,7 +68,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new WrapObjectWithOptionalOfNullableFix(QuickFixWrapper.findSameElementInCopy(myArgList, target), myIndex, myToType,
+    return new WrapObjectWithOptionalOfNullableFix(CodeInsightUtilCore.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                                    myArgumentFixerActionFactory);
   }
 

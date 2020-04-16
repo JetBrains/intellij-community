@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -197,6 +196,6 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CreateLocalFromUsageFix(QuickFixWrapper.findSameElementInCopy(myReferenceExpression, target));
+    return new CreateLocalFromUsageFix(CodeInsightUtilCore.findSameElementInCopy(myReferenceExpression, target));
   }
 }

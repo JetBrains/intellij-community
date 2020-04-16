@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -144,6 +144,6 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CreateGetterOrSetterFix(myCreateGetter, myCreateSetter, QuickFixWrapper.findSameElementInCopy(myField, target));
+    return new CreateGetterOrSetterFix(myCreateGetter, myCreateSetter, CodeInsightUtilCore.findSameElementInCopy(myField, target));
   }
 }

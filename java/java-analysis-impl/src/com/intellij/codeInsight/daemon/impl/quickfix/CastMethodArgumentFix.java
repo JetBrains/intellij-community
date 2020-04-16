@@ -16,11 +16,11 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CastMethodArgumentFix(QuickFixWrapper.findSameElementInCopy(myArgList, target), myIndex, myToType,
+    return new CastMethodArgumentFix(CodeInsightUtilCore.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                      myArgumentFixerActionFactory);
   }
 
