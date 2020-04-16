@@ -14,7 +14,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.HttpRequests
-import org.jetbrains.annotations.Nullable
 import java.util.concurrent.TimeUnit
 
 object TipsOrderUtil {
@@ -99,7 +98,7 @@ object TipsOrderUtil {
     @JvmField
     var usedAlgorithm = "unknown"
 
-    @Nullable
+    @JvmField
     var version: String? = null
   }
 
