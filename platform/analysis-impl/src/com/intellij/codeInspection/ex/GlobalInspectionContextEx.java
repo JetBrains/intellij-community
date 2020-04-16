@@ -13,7 +13,6 @@ import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.configurationStore.JbXmlOutputter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,12 +74,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
         myOutputDir = null;
       }
     };
-    if (isOfflineInspections) {
-      ApplicationManager.getApplication().runReadAction(action);
-    }
-    else {
-      action.run();
-    }
+    action.run();
   }
 
   protected void exportResults(@NotNull List<? super Path> inspectionsResults,
