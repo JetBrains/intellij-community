@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
@@ -74,7 +75,21 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     set.add(newMetric("QuickListsCount", QuickListsManager.getInstance().getAllQuickLists().length));
 
     addScreenScale(set);
+    addNumberOfMonitors(set);
+    addScreenResolutions(set);
     return set;
+  }
+
+  private static void addScreenResolutions(Set<MetricEvent> set) {
+    Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices())
+      .map(x -> x.getDefaultConfiguration().getBounds())
+      .map(r -> r.width + "x" + r.height)
+      .forEach(x -> addValue(set, "Screen.Resolution", x));
+  }
+
+  private static void addNumberOfMonitors(Set<MetricEvent> set) {
+    int numberOfMonitors = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length;
+    addValue(set, "Number.Of.Monitors", String.valueOf(numberOfMonitors));
   }
 
   private static void addValue(Set<? super MetricEvent> set, String key, FeatureUsageData data) {
