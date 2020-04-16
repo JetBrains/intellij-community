@@ -166,6 +166,15 @@ object EventFields {
       fuData.addCurrentFile(value)
     }
   }
+
+  @JvmField
+  val Version = object : EventField<String?>() {
+    override val name: String = "version"
+
+    override fun addData(fuData: FeatureUsageData, value: String?) {
+      fuData.addVersionByString(value)
+    }
+  }
 }
 
 /**
