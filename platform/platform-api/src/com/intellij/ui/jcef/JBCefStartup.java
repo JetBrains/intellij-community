@@ -13,9 +13,12 @@ final class JBCefStartup {
   // os=mac
   JBCefStartup() {
     if (RegistryManager.getInstance().is("ide.browser.jcef.enabled") &&
-        RegistryManager.getInstance().is("ide.browser.jcef.preinit"))
-    {
-      STARTUP_CLIENT = JBCefApp.getInstance().createClient();
+        RegistryManager.getInstance().is("ide.browser.jcef.preinit")) {
+      try {
+        STARTUP_CLIENT = JBCefApp.getInstance().createClient();
+      }
+      catch (IllegalStateException ignore) {
+      }
     }
   }
 }
