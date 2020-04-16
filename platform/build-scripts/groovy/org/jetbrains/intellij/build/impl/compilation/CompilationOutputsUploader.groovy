@@ -183,7 +183,7 @@ class CompilationOutputsUploader {
 
   private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
     Map<String, List<String>> commitHistory = new HashMap<>()
-    if (uploader.isExist(COMMIT_HISTORY_FILE)) {
+    if (uploader.isExist(COMMIT_HISTORY_FILE, false)) {
       def content = uploader.getAsString(COMMIT_HISTORY_FILE)
       if (!content.isEmpty()) {
         Type type = new TypeToken<Map<String, List<String>>>() {}.getType()
