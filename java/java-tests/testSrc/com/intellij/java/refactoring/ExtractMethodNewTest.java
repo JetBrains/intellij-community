@@ -727,6 +727,14 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testDontExtractUnfoldableVariable() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract nullable variable if primitive type delcared outside");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
   public void testReturnStatementFolding() throws Exception {
     doTest();
   }
