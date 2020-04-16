@@ -40,7 +40,7 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber): DescriptorList
   context.use {
     for (file in paths!!) {
       val descriptor = PluginManagerCore.loadDescriptor(file, false, context) ?: continue
-      context.result.add(descriptor, context, false)
+      context.result.add(descriptor, false)
     }
   }
   context.result.finishLoading()

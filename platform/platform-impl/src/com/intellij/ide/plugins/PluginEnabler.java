@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PluginEnabler {
+public final class PluginEnabler {
   private static final Logger LOG = Logger.getInstance(PluginEnabler.class);
 
   public static boolean enablePlugins(Collection<IdeaPluginDescriptor> plugins, boolean enable) {
@@ -50,8 +50,8 @@ public class PluginEnabler {
       LOG.error(e);
     }
 
-    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) &&
-        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin))) {
+    if (ContainerUtil.all(pluginDescriptorsToDisable, DynamicPlugins::allowLoadUnloadWithoutRestart) &&
+        ContainerUtil.all(pluginDescriptorsToEnable, DynamicPlugins::allowLoadUnloadWithoutRestart)) {
       boolean needRestart = false;
       for (IdeaPluginDescriptorImpl descriptor : pluginDescriptorsToDisable) {
         if (!DynamicPlugins.unloadPluginWithProgress(parentComponent, descriptor, true)) {
@@ -82,12 +82,12 @@ public class PluginEnabler {
   }
 
   @Nullable
-  public static IdeaPluginDescriptorImpl tryLoadFullDescriptor(IdeaPluginDescriptorImpl descriptor) {
+  public static IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled());
   }
 
   @NotNull
-  public static IdeaPluginDescriptorImpl loadFullDescriptor(IdeaPluginDescriptorImpl descriptor) {
+  public static IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
     IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
     if (fullDescriptor == null) {

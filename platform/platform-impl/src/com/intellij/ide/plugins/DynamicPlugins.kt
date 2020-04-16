@@ -378,9 +378,6 @@ object DynamicPlugins {
           }
         }
         finally {
-          PluginManager.pluginDisposables.remove(pluginDescriptor)?.let {
-            Disposer.dispose(it)
-          }
           application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(pluginDescriptor, isUpdate)
         }
       }
@@ -458,14 +455,15 @@ object DynamicPlugins {
     // unregister plugin extension points
     processExtensionPoints(pluginDescriptor, openProjects) { points, area -> area.unregisterExtensionPoints(points) }
 
-    pluginDescriptor.appContainerDescriptor.services ?.let { application.unloadServices(it) }
+    val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
+    pluginDescriptor.appContainerDescriptor.services ?.let { application.unloadServices(it, pluginId) }
     (application.messageBus as MessageBusImpl).unsubscribePluginListeners(pluginDescriptor)
 
     for (project in openProjects) {
-      pluginDescriptor.projectContainerDescriptor.services?.let { (project as ProjectImpl).unloadServices(it) }
+      pluginDescriptor.projectContainerDescriptor.services?.let { (project as ProjectImpl).unloadServices(it, pluginId) }
       val moduleServices = pluginDescriptor.moduleContainerDescriptor.services ?: continue
       for (module in ModuleManager.getInstance(project).modules) {
-        (module as ComponentManagerImpl).unloadServices(moduleServices)
+        (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
       }
       (project.messageBus as MessageBusImpl).unsubscribePluginListeners(pluginDescriptor)
     }
@@ -555,30 +553,6 @@ object DynamicPlugins {
       return PluginManagerCore.findPluginByModuleDependency(pluginId) != null
     }
     return PluginManagerCore.getLoadedPlugins().any { it.pluginId == pluginId }
-  }
-
-  @JvmStatic
-  fun pluginDisposable(clazz: Class<*>): Disposable? {
-    val classLoader = clazz.classLoader
-    if (classLoader is PluginClassLoader) {
-      val pluginDescriptor = classLoader.pluginDescriptor
-      if (pluginDescriptor != null) {
-        return PluginManager.pluginDisposables[pluginDescriptor]
-      }
-    }
-    return null
-  }
-
-  @JvmStatic
-  fun pluginDisposable(clazz: Class<*>, defaultValue: Disposable): Disposable {
-    val pluginDisposable = pluginDisposable(clazz)
-    if (pluginDisposable != null) {
-      val result = Disposer.newDisposable()
-      Disposer.register(pluginDisposable, result)
-      Disposer.register(defaultValue, Disposable { Disposer.dispose(result) })
-      return result
-    }
-    return defaultValue
   }
 
   @JvmStatic

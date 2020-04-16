@@ -139,11 +139,9 @@ public class PluginManagerTest {
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
     IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
     assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
-    DescriptorListLoadingContext loadingContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
-
     PluginLoadingResult loadingResult = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
-    loadingResult.add(descriptorBundled, loadingContext, false);
-    loadingResult.add(descriptorInstalled, loadingContext, false);
+    loadingResult.add(descriptorBundled, false);
+    loadingResult.add(descriptorInstalled, false);
     assertPluginPreInstalled(loadingResult, descriptorInstalled.getPluginId());
   }
 
@@ -153,11 +151,10 @@ public class PluginManagerTest {
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
     IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
     assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
-    DescriptorListLoadingContext loadingContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
 
     PluginLoadingResult resultInReverseOrder = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
-    resultInReverseOrder.add(descriptorInstalled, loadingContext, false);
-    resultInReverseOrder.add(descriptorBundled, loadingContext, false);
+    resultInReverseOrder.add(descriptorInstalled, false);
+    resultInReverseOrder.add(descriptorBundled, false);
     assertPluginPreInstalled(resultInReverseOrder, descriptorInstalled.getPluginId());
   }
 
@@ -212,7 +209,7 @@ public class PluginManagerTest {
       Path pluginPath = Paths.get(Objects.requireNonNull(url));
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath, pluginPath, isBundled);
       descriptor.readExternal(element, context.pathResolver, context, descriptor);
-      parentContext.result.add(descriptor, parentContext, /* overrideUseIfCompatible = */ false);
+      parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
     }
     parentContext.close();
     parentContext.result.finishLoading();

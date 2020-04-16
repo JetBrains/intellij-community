@@ -53,11 +53,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   private void addExtensionPointListener(@NotNull ExtensionPoint<KeyedLazyInstance<T>> point) {
-    if (!myEpListenerAdded.compareAndSet(false, true)) {
-      return;
+    if (myEpListenerAdded.compareAndSet(false, true)) {
+      point.addExtensionPointListener(new MyExtensionPointListener(), false, null);
     }
-
-    point.addExtensionPointListener(new MyExtensionPointListener(), false, point.getPluginDescriptor().getPluginDisposable());
   }
 
   protected void invalidateCacheForExtension(String key) {
@@ -180,7 +178,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   protected @NotNull List<T> buildExtensions(@NotNull Set<String> keys) {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (myLock) {
-      List<T> result = buildExtensionsFromExplicitRegistration(null, key -> keys.contains(key));
+      List<T> result = buildExtensionsFromExplicitRegistration(null, keys::contains);
       result = buildExtensionsFromExtensionPoint(result, bean -> keys.contains(bean.getKey()), extensions);
       return ContainerUtil.notNullize(result);
     }
@@ -203,14 +201,17 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   @ApiStatus.Internal
-  public @Nullable ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
+  public final @Nullable ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
     return Extensions.getRootArea().getExtensionPointIfRegistered(myEpName);
   }
 
   public boolean hasAnyExtensions() {
     synchronized (myLock) {
-      if (!myExplicitExtensions.isEmpty()) return true;
-      final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+      if (!myExplicitExtensions.isEmpty()) {
+        return true;
+      }
+
+      ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
       return point != null && point.hasAnyExtensions();
     }
   }
@@ -233,7 +234,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  private class MyExtensionPointListener implements ExtensionPointAndAreaListener<KeyedLazyInstance<T>>, ExtensionPointPriorityListener {
+  private final class MyExtensionPointListener implements ExtensionPointAndAreaListener<KeyedLazyInstance<T>>, ExtensionPointPriorityListener {
     @Override
     public void extensionAdded(@NotNull KeyedLazyInstance<T> bean, @NotNull PluginDescriptor pluginDescriptor) {
       synchronized (myLock) {

@@ -31,9 +31,9 @@ public class ExtensionsImplTest {
   @Test
   public void testCreateAndAccess() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.getExtensionPoints().length;
+    int numEP = extensionsArea.getExtensionPoints().size();
     registerInterfaceExtension(extensionsArea);
-    assertEquals("Additional EP available", numEP + 1, extensionsArea.getExtensionPoints().length);
+    assertEquals("Additional EP available", numEP + 1, extensionsArea.getExtensionPoints().size());
     assertThat(extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1)).withFailMessage("EP by name available").isNotNull();
   }
 
@@ -52,7 +52,7 @@ public class ExtensionsImplTest {
   @Test
   public void testUnregisterEP() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.getExtensionPoints().length;
+    int numEP = extensionsArea.getExtensionPoints().size();
     registerInterfaceExtension(extensionsArea);
 
     final boolean[] removed = {true};
@@ -70,7 +70,7 @@ public class ExtensionsImplTest {
     }, false, null);
     point.registerExtension(123);
     extensionsArea.unregisterExtensionPoint(EXTENSION_POINT_NAME_1);
-    assertThat(extensionsArea.getExtensionPoints().length).withFailMessage("Extension point should be removed").isEqualTo(numEP);
+    assertThat(extensionsArea.getExtensionPoints().size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
     assertThat(removed[0]).withFailMessage("Extension point disposed").isTrue();
   }
 

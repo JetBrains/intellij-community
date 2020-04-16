@@ -731,7 +731,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
 
   @Internal
-  fun unloadServices(services: List<ServiceDescriptor>) {
+  fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
     val container = checkStateAndGetPicoContainer()
     val stateStore = stateStore
     for (service in services) {
@@ -741,6 +741,21 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         Disposer.dispose(instance)
       }
       stateStore.unloadComponent(instance)
+    }
+
+    if (lightServices != null) {
+      val iterator = lightServices.iterator()
+      while (iterator.hasNext()) {
+        val entry = iterator.next()
+        if ((entry.key.classLoader as? PluginClassLoader)?.pluginId == pluginId) {
+          val instance = entry.value
+          if (instance is Disposable) {
+            Disposer.dispose(instance)
+          }
+          stateStore.unloadComponent(instance)
+          iterator.remove()
+        }
+      }
     }
   }
 

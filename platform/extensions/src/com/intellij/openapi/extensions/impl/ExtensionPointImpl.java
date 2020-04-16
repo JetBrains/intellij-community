@@ -36,13 +36,15 @@ import java.util.stream.Stream;
 @SuppressWarnings("SynchronizeOnThis")
 @ApiStatus.Internal
 public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T>, Iterable<T> {
+  private static final ExtensionPointListener<?>[] EMPTY_ARRAY = new ExtensionPointListener<?>[0];
+
   static final Logger LOG = Logger.getInstance(ExtensionPointImpl.class);
 
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE; // guarded by this
 
   private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY =
-    n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
+    n -> n == 0 ? EMPTY_ARRAY : new ExtensionPointListener[n];
 
   private final String myName;
   private final String myClassName;
@@ -63,8 +65,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   private volatile boolean adaptersIsSorted = true;
 
   // guarded by this
-  @SuppressWarnings({"unchecked", "FieldAccessedSynchronizedAndUnsynchronized"})
-  private ExtensionPointListener<T> @NotNull [] myListeners = ExtensionPointListener.EMPTY_ARRAY;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized", "unchecked"})
+  private ExtensionPointListener<T> @NotNull [] myListeners = (ExtensionPointListener<T>[])EMPTY_ARRAY;
 
   @Nullable Class<T> myExtensionClass;
 
@@ -782,6 +784,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       notifyListeners(ExtensionEvent.REMOVED, adapters, myListeners);
     }
     clearCache();
+
+    // help GC
+    //noinspection unchecked
+    myListeners = (ExtensionPointListener<T>[])EMPTY_ARRAY;
     myExtensionClass = null;
   }
 
@@ -899,21 +905,11 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @TestOnly
   final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea oldArea) {
-    for (final ExtensionPointListener<T> listener : myListeners) {
+    for (ExtensionPointListener<T> listener : myListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
         ((ExtensionPointAndAreaListener<?>)listener).areaReplaced(oldArea);
       }
     }
-  }
-
-  @TestOnly
-  public final @Nullable PluginDescriptor getPluginDescriptor(@NotNull T extension) {
-    for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
-      if (processAdapter(adapter) == extension) {
-        return adapter.getPluginDescriptor();
-      }
-    }
-    return null;
   }
 
   public final @Nullable <V extends T> V findExtension(@NotNull Class<V> aClass, boolean isRequired, @NotNull ThreeState strictMatch) {

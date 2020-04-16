@@ -15,10 +15,9 @@ import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Modifier;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class ExtensionsAreaImpl implements ExtensionsArea {
@@ -129,7 +128,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   // note about extension point here the same as for resetExtensionPoints
   /**
-   * You must call {@link #resetExtensionPoints(PluginId)} before otherwise event ExtensionEvent.REMOVED will be not fired.
+   * You must call {@link #resetExtensionPoints} before otherwise event ExtensionEvent.REMOVED will be not fired.
    */
   public void unregisterExtensionPoints(@NotNull List<ExtensionPointImpl<?>> extensionPoints) {
     for (ExtensionPointImpl<?> point : extensionPoints) {
@@ -287,9 +286,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     return getExtensionPoint(extensionPointName.getName());
   }
 
+  @TestOnly
+  public void processExtensionPoints(@NotNull Consumer<ExtensionPointImpl<?>> consumer) {
+    myExtensionPoints.values().forEach(consumer);
+  }
+
   @Override
-  public ExtensionPointImpl<?> @NotNull [] getExtensionPoints() {
-    return myExtensionPoints.values().toArray(new ExtensionPointImpl[0]);
+  public @NotNull List<ExtensionPoint<?>> getExtensionPoints() {
+    return Collections.unmodifiableList(new ArrayList<>(myExtensionPoints.values()));
   }
 
   @ApiStatus.Internal

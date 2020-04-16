@@ -18,7 +18,7 @@ import kotlin.math.abs
 internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.ourPluginError = null
-  val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins)
+  val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), PluginManagerCore.getBuildNumber()))
   val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true,
                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
     PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
