@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
@@ -39,13 +38,13 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   private static boolean isUnsafeIndicator(ProgressIndicator indicator) {
-    return indicator instanceof ProgressWindow && ((ProgressWindow)indicator).getUserData(SAFE_PROGRESS_INDICATOR) == null;
+    return indicator instanceof ProgressIndicatorBase && ((ProgressIndicatorBase)indicator).getUserData(SAFE_PROGRESS_INDICATOR) == null;
   }
 
   /**
    * The passes progress won't count in {@link #hasUnsafeProgressIndicator()} and won't stop from application exiting.
    */
-  public void markProgressSafe(@NotNull ProgressWindow progress) {
+  public void markProgressSafe(@NotNull ProgressIndicatorBase progress) {
     progress.putUserData(SAFE_PROGRESS_INDICATOR, true);
   }
 

@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -713,7 +712,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void runBackgroundProcess(final @NotNull ProgressIndicator visibleIndicator) {
-    ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((ProgressWindow)visibleIndicator);
+    ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((ProgressIndicatorBase)visibleIndicator);
 
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
