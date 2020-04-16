@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -366,7 +367,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int parentId = getFileId(parent);
     Ref<ChildInfo> result = new Ref<>();
 
-    java.util.function.Function<ListResult, ListResult> convertor = children -> {
+    Function<ListResult, ListResult> convertor = children -> {
       ChildInfo child = findExistingChildInfo(childName, children.children, fs);
       if (child != null) {
         result.set(child);

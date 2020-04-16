@@ -64,11 +64,6 @@ public class ProgressIndicatorUtils {
     return scheduleWithWriteActionPriority(progressIndicator, PooledThreadExecutor.INSTANCE, readTask);
   }
 
-  @NotNull
-  public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull Executor executor, @NotNull ReadTask task) {
-    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(false, false), executor, task);
-  }
-
   /**
    * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
