@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -47,7 +48,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
         }
       }
 
-      if (sdk.getSdkType().equals(JavaSdk.getInstance()) && !DumbService.getInstance(project).isDumb()) {
+      if (sdk.getSdkType().equals(JavaSdk.getInstance()) && !SdkDownloadTracker.getInstance().isDownloading(sdk) && !DumbService.getInstance(project).isDumb()) {
         boolean isJdkBroken = JavaPsiFacade
                                 .getInstance(project)
                                 .findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope()) == null;
