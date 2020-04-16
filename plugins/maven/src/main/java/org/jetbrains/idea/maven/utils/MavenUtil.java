@@ -747,6 +747,33 @@ public class MavenUtil {
     }
   }
 
+  @Nullable
+  public static VirtualFile getRepositoryFile(@NotNull Project project,
+                                              @NotNull MavenId id,
+                                              @NotNull String extension,
+                                              @Nullable String classifier) {
+    if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
+      return null;
+    }
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository(), extension, classifier);
+    return LocalFileSystem.getInstance().findFileByIoFile(file);
+  }
+
+  private static File makeLocalRepositoryFile(MavenId id,
+                                              File localRepository,
+                                              @NotNull String extension,
+                                              @Nullable String classifier) {
+    String relPath = id.getGroupId().replace(".", "/");
+
+    relPath += "/" + id.getArtifactId();
+    relPath += "/" + id.getVersion();
+    relPath += "/" + id.getArtifactId() + "-" + id.getVersion();
+    relPath = classifier == null ? relPath + "." + extension : relPath + "-" + classifier + "." + extension;
+
+    return new File(localRepository, relPath);
+  }
+
   @NotNull
   public static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
     if (userSettingsFile != null) {
@@ -1245,7 +1272,7 @@ public class MavenUtil {
 
   public static Path toPath(@Nullable MavenProject mavenProject, String path) {
     if (!FileUtil.isAbsolute(path)) {
-      if(mavenProject == null) {
+      if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }
       path = new File(mavenProject.getDirectory(), path).getPath();
