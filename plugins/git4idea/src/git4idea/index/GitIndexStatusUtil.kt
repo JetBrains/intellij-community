@@ -9,17 +9,12 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
-import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
-import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.Nls
-import java.awt.Color
 
 const val NUL = "\u0000"
 private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
@@ -155,7 +150,7 @@ fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRecord> {
 }
 
 @Throws(VcsException::class)
-private fun getFileStatus(status: StatusCode): FileStatus? {
+internal fun getFileStatus(status: StatusCode): FileStatus? {
   return when (status) {
     ' ' -> null
     'M', 'R', 'C', 'T' -> FileStatus.MODIFIED
@@ -214,55 +209,3 @@ val LightFileStatus.repositoryPath: String?
     is LightFileStatus.NotChanged -> path
     is LightFileStatus.StatusRecord -> if (!isTracked() || index == 'A' || workTree == 'A') null else origPath ?: path
   }
-
-val LightFileStatus.color: Color?
-  get() = getFileStatus().color
-
-@Nls
-fun LightFileStatus.getPresentation(): String {
-  return when (this) {
-    LightFileStatus.Blank, is LightFileStatus.NotChanged -> ""
-    is LightFileStatus.StatusRecord -> getPresentation()
-  }
-}
-
-@Nls
-private fun LightFileStatus.StatusRecord.getPresentation(): String {
-  val fileName = PathUtil.getFileName(path)
-  if (index == '!' || workTree == '!' || index == '?' || workTree == '?') return "$fileName: ${getPresentation(index)}"
-  if (isConflicted()) {
-    val status = if (index == workTree) {
-      GitBundle.message("git.status.unmerged.both", getFileStatus(if (index == 'U') 'M' else index)!!.text.toLowerCase())
-    }
-    else {
-      val indexPresentation = if (index == 'U') ""
-      else GitBundle.message("git.status.unmerged.index", getPresentation(index).toLowerCase())
-      val workTreePresentation = if (workTree == 'U') ""
-      else GitBundle.message("git.status.unmerged.work.tree", getPresentation(workTree).toLowerCase())
-      when {
-        indexPresentation.isBlank() -> workTreePresentation
-        workTreePresentation.isBlank() -> indexPresentation
-        else -> "$indexPresentation, $workTreePresentation"
-      }
-    }
-    return "$fileName: ${getPresentation('U')} ($status)"
-  }
-  val indexPresentation = if (index == ' ') "" else GitBundle.message("git.status.index", getPresentation(index))
-  val workTreePresentation = if (workTree == ' ') "" else GitBundle.message("git.status.work.tree", getPresentation(workTree))
-  if (indexPresentation.isBlank()) return "$fileName: $workTreePresentation"
-  if (workTreePresentation.isBlank()) return "$fileName: $indexPresentation"
-  return "$fileName:${UIUtil.BR}$indexPresentation${UIUtil.BR}$workTreePresentation"
-}
-
-@Nls
-private fun getPresentation(status: StatusCode): String {
-  return when (status) {
-    ' ' -> GitBundle.message("git.status.not.changed")
-    'R' -> GitBundle.message("git.status.renamed")
-    'C' -> GitBundle.message("git.status.copied")
-    'T' -> GitBundle.message("git.status.type.changed")
-    'U' -> GitBundle.message("git.status.unmerged")
-    '?' -> GitBundle.message("git.status.untracked")
-    else -> getFileStatus(status)!!.text
-  }
-}
