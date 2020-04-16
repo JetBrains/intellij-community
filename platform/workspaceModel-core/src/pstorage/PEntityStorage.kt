@@ -125,12 +125,8 @@ internal class PEntityStorageBuilder(
     return pEntityData.createEntity(this)
   }
 
-  // modificationCount is not incremented
-  private fun <T : TypedEntity> cloneAndAddEntityWithRefs(entity: PEntityData<T>,
-                                                          clazz: Class<T>,
-                                                          updatedChildren: ChildrenConnectionsInfo<T>,
-                                                          updatedParents: ParentConnectionsInfo<T>,
-                                                          replaceMap: MutableMap<PId<*>, PId<*>>): PEntityData<T> {
+  private fun <T : TypedEntity> cloneEntity(entity: PEntityData<T>, clazz: Class<T>,
+                                            replaceMap: MutableMap<PId<*>, PId<*>>): Pair<PEntityData<T>, PId<T>> {
     // Add new entity to store (without references)
     val cloned = entitiesByType.cloneAndAdd(entity, clazz)
     val replaceToPid = cloned.createPid()
@@ -145,17 +141,21 @@ internal class PEntityStorageBuilder(
       }
     }
 
+    return cloned to replaceToPid
+  }
+
+  // modificationCount is not incremented
+  private fun <T : TypedEntity> updateEntityRefs(entityId: PId<T>, updatedChildren: ChildrenConnectionsInfo<T>,
+                                                 updatedParents: ParentConnectionsInfo<T>) {
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
-      refs.updateChildrenOfParent(connectionId, replaceToPid, children.toList())
+      refs.updateChildrenOfParent(connectionId, entityId, children.toList())
     }
 
     // Restore parent references of the entity
     for ((connection, parent) in updatedParents) {
-      refs.updateParentOfChild(connection, replaceToPid, parent)
+      refs.updateParentOfChild(connection, entityId, parent)
     }
-
-    return cloned
   }
 
   // modificationCount is not incremented
@@ -611,9 +611,10 @@ internal class PEntityStorageBuilder(
           val updatedChildren = change.children.replaceByMapChildren(replaceMap)
           val updatedParents = change.parents.replaceByMapParent(replaceMap)
 
-          val addedEntity = cloneAndAddEntityWithRefs(change.entityData, change.clazz, updatedChildren, updatedParents, replaceMap)
+          val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
+          updateEntityRefs(entity2id.second, updatedChildren, updatedParents)
           updateChangeLog {
-            it.add(ChangeEntry.AddEntity(addedEntity, change.clazz, updatedChildren, updatedParents))
+            it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
           }
         }
         is ChangeEntry.RemoveEntity -> {

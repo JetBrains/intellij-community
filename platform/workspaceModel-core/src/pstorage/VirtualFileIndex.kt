@@ -13,32 +13,32 @@ import kotlin.reflect.full.memberProperties
 private const val DELIMITER = ":"
 
 open class VirtualFileIndex private constructor(
-  protected val index: BidirectionalMultiMap<VirtualFileUrl, String>
+  protected val index: BidirectionalMultiMap<VirtualFileUrl, Int>
 ) {
-  constructor() : this(BidirectionalMultiMap<VirtualFileUrl, String>())
+  constructor() : this(BidirectionalMultiMap<VirtualFileUrl, Int>())
 
-  internal fun getVirtualFileForProperty(id: PId<TypedEntity>, propertyName: String): Set<VirtualFileUrl>? =
-    index.getKeys(getIdentifier(id, propertyName))
+  internal fun getVirtualFileForProperty(id: PId<TypedEntity>): Set<VirtualFileUrl>? =
+    index.getKeys(id.arrayId)
+
 
   internal fun getIdentifier(id: PId<TypedEntity>, propertyName: String) =
     "${id.arrayId}$DELIMITER$propertyName"
 
-  internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, String> {
-    val copy = BidirectionalMultiMap<VirtualFileUrl, String>()
+  internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, Int> {
+    val copy = BidirectionalMultiMap<VirtualFileUrl, Int>()
     index.keys.forEach { key -> index.getValues(key).forEach { value -> copy.put(key, value) } }
     return copy
   }
 
   class MutableVirtualFileIndex private constructor(
-    index: BidirectionalMultiMap<VirtualFileUrl, String>
+    index: BidirectionalMultiMap<VirtualFileUrl, Int>
   ) : VirtualFileIndex(index) {
-    constructor() : this(BidirectionalMultiMap<VirtualFileUrl, String>())
+    constructor() : this(BidirectionalMultiMap<VirtualFileUrl, Int>())
 
-    internal fun index(id: PId<TypedEntity>, propertyName: String, virtualFileUrls: List<VirtualFileUrl>?) {
-      val identifier = getIdentifier(id, propertyName)
-      index.removeValue(identifier)
+    internal fun index(id: PId<TypedEntity>, virtualFileUrls: List<VirtualFileUrl>?) {
+      index.removeValue(id.arrayId)
       if (virtualFileUrls == null) return
-      virtualFileUrls.forEach { index.put(it, identifier) }
+      virtualFileUrls.forEach { index.put(it, id.arrayId) }
     }
 
     fun toImmutable(): VirtualFileIndex = VirtualFileIndex(copyIndex())
@@ -61,7 +61,7 @@ class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : Rea
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, listOf(value))
+    thisRef.diff.virtualFileIndex.index(thisRef.id, listOf(value))
   }
 }
 
@@ -76,7 +76,7 @@ class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, value?.let{ listOf(value) })
+    thisRef.diff.virtualFileIndex.index(thisRef.id, value?.let{ listOf(value) })
   }
 }
 
@@ -91,6 +91,6 @@ class VirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> :
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, property.name, value)
+    thisRef.diff.virtualFileIndex.index(thisRef.id, value)
   }
 }
