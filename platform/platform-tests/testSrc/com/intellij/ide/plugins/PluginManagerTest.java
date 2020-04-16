@@ -179,11 +179,11 @@ public class PluginManagerTest {
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNotNull(PluginManagerCore.isIncompatible(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
+    assertNotNull(PluginManagerCore.getIncompatibleMessage(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
   }
 
   private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNull(PluginManagerCore.isIncompatible(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
+    assertNull(PluginManagerCore.getIncompatibleMessage(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
   }
 
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)

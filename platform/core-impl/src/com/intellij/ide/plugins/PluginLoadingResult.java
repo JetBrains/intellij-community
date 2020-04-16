@@ -167,7 +167,7 @@ final class PluginLoadingResult {
   }
 
   private boolean isCompatible(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return PluginManagerCore.isIncompatible(productBuildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
+    return PluginManagerCore.getIncompatibleMessage(productBuildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
   }
 
   @SuppressWarnings("DuplicatedCode")

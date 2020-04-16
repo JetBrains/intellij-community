@@ -1601,10 +1601,10 @@ public final class PluginManagerCore {
     if (buildNumber == null) {
       buildNumber = getBuildNumber();
     }
-    return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null;
+    return getIncompatibleMessage(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null;
   }
 
-  static @Nullable String isIncompatible(@NotNull BuildNumber buildNumber, @Nullable String sinceBuild, @Nullable String untilBuild) {
+  static @Nullable String getIncompatibleMessage(@NotNull BuildNumber buildNumber, @Nullable String sinceBuild, @Nullable String untilBuild) {
     try {
       String message = null;
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, null, null);
