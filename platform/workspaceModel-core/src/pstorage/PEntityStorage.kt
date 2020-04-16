@@ -158,6 +158,16 @@ internal class PEntityStorageBuilder(
     }
   }
 
+  private fun addToVirtualFileIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+    builder.virtualFileIndex.getVirtualFileForProperty(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
+  }
+
+  private fun updateVirtualFileIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+    builder.virtualFileIndex.getVirtualFileForProperty(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
+  }
+
+  private fun removeFromVirtualFileIndex(entityId: PId<out TypedEntity>) = virtualFileIndex.index(entityId)
+
   // modificationCount is not incremented
   private fun <T : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
                                                       clazz: Class<T>,
@@ -602,7 +612,8 @@ internal class PEntityStorageBuilder(
     // TODO: 08.04.2020 probably we should accept only diffs based on the same or empty snapshot
 
     val replaceMap = HashMap<PId<out TypedEntity>, PId<out TypedEntity>>()
-    val diffLog = (diff as PEntityStorageBuilder).changeLog
+    val builder = diff as PEntityStorageBuilder
+    val diffLog = builder.changeLog
     for (change in diffLog) {
       when (change) {
         is ChangeEntry.AddEntity<out TypedEntity> -> {
@@ -613,6 +624,7 @@ internal class PEntityStorageBuilder(
 
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
           updateEntityRefs(entity2id.second, updatedChildren, updatedParents)
+          addToVirtualFileIndex(change.entityData.createPid(), entity2id.second, builder)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
           }
@@ -620,6 +632,7 @@ internal class PEntityStorageBuilder(
         is ChangeEntry.RemoveEntity -> {
           val outdatedId = change.id
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
+          removeFromVirtualFileIndex(outdatedId)
           if (this.entityDataById(usedPid) != null) {
             removeEntity(usedPid)
             replaceMap.remove(outdatedId, usedPid)
@@ -637,6 +650,7 @@ internal class PEntityStorageBuilder(
           val newData = change.newData.clone()
           newData.id = usedPid.arrayId
 
+          updateVirtualFileIndex(outdatedId, newData.createPid(), builder)
           if (this.entityDataById(usedPid) != null) {
             replaceEntityWithRefs(newData, outdatedId.clazz.java, updatedChildren, updatedParents)
           }

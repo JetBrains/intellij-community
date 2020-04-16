@@ -10,19 +10,13 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
-private const val DELIMITER = ":"
-
 open class VirtualFileIndex private constructor(
   protected val index: BidirectionalMultiMap<VirtualFileUrl, Int>
 ) {
   constructor() : this(BidirectionalMultiMap<VirtualFileUrl, Int>())
 
-  internal fun getVirtualFileForProperty(id: PId<TypedEntity>): Set<VirtualFileUrl>? =
+  internal fun getVirtualFileForProperty(id: PId<out TypedEntity>): Set<VirtualFileUrl>? =
     index.getKeys(id.arrayId)
-
-
-  internal fun getIdentifier(id: PId<TypedEntity>, propertyName: String) =
-    "${id.arrayId}$DELIMITER$propertyName"
 
   internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, Int> {
     val copy = BidirectionalMultiMap<VirtualFileUrl, Int>()
@@ -35,7 +29,7 @@ open class VirtualFileIndex private constructor(
   ) : VirtualFileIndex(index) {
     constructor() : this(BidirectionalMultiMap<VirtualFileUrl, Int>())
 
-    internal fun index(id: PId<TypedEntity>, virtualFileUrls: List<VirtualFileUrl>?) {
+    internal fun index(id: PId<out TypedEntity>, virtualFileUrls: List<VirtualFileUrl>? = null) {
       index.removeValue(id.arrayId)
       if (virtualFileUrls == null) return
       virtualFileUrls.forEach { index.put(it, id.arrayId) }

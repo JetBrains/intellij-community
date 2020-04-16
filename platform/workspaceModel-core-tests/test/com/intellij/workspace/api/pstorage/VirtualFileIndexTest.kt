@@ -74,8 +74,6 @@ internal fun TypedEntityStorageBuilder.addPListVFUEntity(data: String,
   }
 }
 
-private const val PROPERTY_NAME = "fileProperty"
-
 class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
@@ -89,7 +87,7 @@ class VirtualFileIndexTest {
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPVFUEntity("hello", fileUrl, virtualFileManager)
     assertEquals(fileUrl, entity.fileProperty.url)
-    assertEquals(entity.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entity.id, PROPERTY_NAME)?.first())
+    assertEquals(entity.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entity.id)?.first())
   }
 
   @Test
@@ -97,7 +95,7 @@ class VirtualFileIndexTest {
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPNullableVFUEntity("hello", null, virtualFileManager)
     assertNull(entity.fileProperty)
-    assertTrue(builder.virtualFileIndex.getVirtualFileForProperty(entity.id, PROPERTY_NAME)?.isEmpty() ?: false)
+    assertTrue(builder.virtualFileIndex.getVirtualFileForProperty(entity.id)?.isEmpty() ?: false)
   }
 
   @Test
@@ -106,7 +104,7 @@ class VirtualFileIndexTest {
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPListVFUEntity("hello", fileUrlList, virtualFileManager)
     assertEquals(fileUrlList, entity.fileProperty.map { it.url }.sorted())
-    assertEquals(fileUrlList.size, builder.virtualFileIndex.getVirtualFileForProperty(entity.id, PROPERTY_NAME)?.size)
+    assertEquals(fileUrlList.size, builder.virtualFileIndex.getVirtualFileForProperty(entity.id)?.size)
   }
 
   @Test
@@ -116,18 +114,18 @@ class VirtualFileIndexTest {
     val builder = PEntityStorageBuilder.create()
     val entityA = builder.addPVFUEntity("bar", fileUrlA, virtualFileManager)
     assertEquals(fileUrlA, entityA.fileProperty.url)
-    assertEquals(entityA.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityA.id, PROPERTY_NAME)?.first())
+    assertEquals(entityA.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityA.id)?.first())
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
     val entityB = diff.addPVFUEntity("foo", fileUrlB, virtualFileManager)
     assertEquals(fileUrlB, entityB.fileProperty.url)
-    assertEquals(entityA.fileProperty, diff.virtualFileIndex.getVirtualFileForProperty(entityA.id, PROPERTY_NAME)?.first())
-    assertEquals(entityB.fileProperty, diff.virtualFileIndex.getVirtualFileForProperty(entityB.id, PROPERTY_NAME)?.first())
+    assertEquals(entityA.fileProperty, diff.virtualFileIndex.getVirtualFileForProperty(entityA.id)?.first())
+    assertEquals(entityB.fileProperty, diff.virtualFileIndex.getVirtualFileForProperty(entityB.id)?.first())
 
-    assertTrue(builder.virtualFileIndex.getVirtualFileForProperty(entityB.id, PROPERTY_NAME)?.isEmpty() ?: false)
+    assertTrue(builder.virtualFileIndex.getVirtualFileForProperty(entityB.id)?.isEmpty() ?: false)
     builder.addDiff(diff)
 
-    assertEquals(entityA.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityA.id, PROPERTY_NAME)?.first())
-    assertEquals(entityB.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityB.id, PROPERTY_NAME)?.first())
+    assertEquals(entityA.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityA.id)?.first())
+    assertEquals(entityB.fileProperty, builder.virtualFileIndex.getVirtualFileForProperty(entityB.id)?.first())
   }
 }
