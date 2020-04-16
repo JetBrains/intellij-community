@@ -171,8 +171,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
     trafficLightVisible = true;
 
-    AnAction nextErrorAction = findAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
-    AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
+    AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
+    AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
     DefaultActionGroup navigateGroup = new DefaultActionGroup(nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -371,13 +371,28 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private static AnAction findAction(@NotNull String id, @NotNull Icon icon) {
-    ActionManager am = ActionManager.getInstance();
-    AnAction action = am.getAction(id);
+  private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
+    return new DumbAwareAction(icon) {
+      final AnAction delegate = ActionManager.getInstance().getAction(id);
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
 
-    action.getTemplatePresentation().setIcon(icon);
-    action.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
-    return action;
+        if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
+          focusManager.requestFocus(myEditor.getContentComponent(), true).
+            doWhenDone(() -> {
+              AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(delegate,
+                                                                             e.getInputEvent(),
+                                                                             ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                                             myEditor.getDataContext());
+              delegate.actionPerformed(delegateEvent);
+            });
+        }
+        else {
+          delegate.actionPerformed(e);
+        }
+      }
+    };
   }
 
   private int offsetToLine(int offset, @NotNull Document document) {
