@@ -225,7 +225,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public boolean isDisposed() {
-    throw notImplemented();
+    return false;
   }
 
   @Nullable
