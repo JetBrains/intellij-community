@@ -75,6 +75,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,8 +140,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if ("__doc__".equals(referencedName)) {
       addDocReference(ret, qualifier, qualifierType);
     }
-
-    PyHasAttrHelper.INSTANCE.addHasAttrResolveResults(myElement, referencedName, qualifier, ret);
 
     return ret;
   }
@@ -242,14 +242,16 @@ public class PyQualifiedReference extends PyReferenceImpl {
     else {
       final PyClassType guessedType = guessClassTypeByName();
       if (guessedType != null) {
-        Collections.addAll(variants, getTypeCompletionVariants(myElement, guessedType));
+        Collections.addAll(variants, getTypeCompletionVariants(myElement, guessedType, ctx));
       }
       if (qualifier instanceof PyReferenceExpression) {
-        Collections.addAll(variants, collectSeenMembers(qualifier.getText()));
+        Collections.addAll(variants, collectSeenMembers(qualifier.getText(), ctx));
       }
     }
 
-    PyHasAttrHelper.INSTANCE.addHasAttrCompletionResults(element, qualifier, namesAlready, variants);
+    StreamEx.of(PyHasAttrHelper.INSTANCE.getNamesFromHasAttrs(element, qualifier))
+      .filter(it -> namesAlready.add(it))
+      .into(variants);
 
     return variants.toArray();
   }
@@ -290,7 +292,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return result;
   }
 
-  private Object[] collectSeenMembers(final String text) {
+  private Object[] collectSeenMembers(final String text, ProcessingContext context) {
     final Set<String> members = new HashSet<>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
@@ -318,10 +320,21 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     });
     List<LookupElement> results = new ArrayList<>(members.size());
+    final Set<String> namesAlready = visitedNames(context);
     for (String member : members) {
       results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
+      namesAlready.add(member);
     }
     return ArrayUtil.toObjectArray(results);
+  }
+
+  private static @NotNull Set<String> visitedNames(@NotNull ProcessingContext context) {
+    Set<String> names = context.get(PyType.CTX_NAMES);
+    if (names == null) {
+      names = new HashSet<>();
+      context.put(PyType.CTX_NAMES, names);
+    }
+    return names;
   }
 
   /**

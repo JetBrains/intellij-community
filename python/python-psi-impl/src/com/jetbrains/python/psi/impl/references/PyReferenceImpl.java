@@ -801,6 +801,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type) {
     ProcessingContext context = new ProcessingContext();
+    return getTypeCompletionVariants(pyExpression, type, context);
+  }
+
+  protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type, ProcessingContext context) {
     context.put(PyType.CTX_NAMES, new HashSet<>());
     return type.getCompletionVariants(pyExpression.getName(), pyExpression, context);
   }

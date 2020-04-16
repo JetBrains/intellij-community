@@ -137,6 +137,16 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-41676
+  public void testThereIsNoInspectionOnCallProtectedByHasattr() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("def test(obj):\n" +
+                         "    if hasattr(obj, \"anything\"):\n" +
+                         "        pkgs = obj.anything()")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
