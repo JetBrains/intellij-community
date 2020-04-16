@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
 import com.google.common.collect.Lists;
@@ -34,6 +34,7 @@ import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -233,7 +234,7 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
 
     if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
       RunContentDescriptor selectedContentDescriptor = toolWindow.getSelectedContentDescriptor();
-      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.newArrayList();
+      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : new ArrayList<>();
     }
 
     Collection<RunContentDescriptor> descriptors =

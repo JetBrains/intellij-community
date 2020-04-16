@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -1527,7 +1526,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   private List<PyClassLikeType> getAllPossibleMetaClassTypes(@NotNull TypeEvalContext context) {
-    final List<PyClassLikeType> results = Lists.newArrayList();
+    final List<PyClassLikeType> results = new ArrayList<>();
     final PyClassLikeType ownMeta = getMetaClassType(false, context);
     if (ownMeta != null) {
       results.add(ownMeta);

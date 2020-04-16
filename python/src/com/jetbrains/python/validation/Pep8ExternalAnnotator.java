@@ -207,7 +207,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
-    ArrayList<String> options = Lists.newArrayList();
+    ArrayList<String> options = new ArrayList<>();
 
     if (!collectedInfo.ignoredErrors.isEmpty()) {
       options.add("--ignore=" + DEFAULT_IGNORED_ERRORS + "," + StringUtil.join(collectedInfo.ignoredErrors, ","));

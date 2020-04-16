@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -26,6 +25,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -63,7 +63,7 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
       i += 1;
     }
     final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(for_targets);
-    final List<PsiNamedElement> results = Lists.newArrayList();
+    final List<PsiNamedElement> results = new ArrayList<>();
     for (PyExpression expression : expressions) {
       if (expression instanceof PsiNamedElement) {
         results.add((PsiNamedElement)expression);

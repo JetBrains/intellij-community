@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.*;
@@ -23,6 +22,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention.*;
@@ -84,7 +84,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
     PyParameter[] params = function.getParameterList().getParameters();
 
-    List<Pair<Integer, String>> templates = Lists.newArrayList();
+    List<Pair<Integer, String>> templates = new ArrayList<>();
 
     for (int i = 0; i < params.length; i++) {
       if (!params[i].isSelf()) {

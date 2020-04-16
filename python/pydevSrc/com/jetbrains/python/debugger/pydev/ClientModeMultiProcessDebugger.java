@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Collections2;
@@ -35,7 +35,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   /**
    * Guarded by {@link #myDebuggersObject}.
    */
-  private final List<RemoteDebugger> myDebuggers = Lists.newArrayList();
+  private final List<RemoteDebugger> myDebuggers = new ArrayList<>();
 
   private final ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
@@ -320,7 +320,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   private List<PyThreadInfo> collectAllThreads() {
-    List<PyThreadInfo> result = Lists.newArrayList();
+    List<PyThreadInfo> result = new ArrayList<>();
 
     //collect threads and add them to registry to faster access
     //we don't register mainDebugger as it is default if there is no mapping
@@ -346,7 +346,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
       }
     }
     if (!allConnected) {
-      List<RemoteDebugger> newList = Lists.newArrayList();
+      List<RemoteDebugger> newList = new ArrayList<>();
       for (RemoteDebugger d : debuggers) {
         if (d.isConnected()) {
           newList.add(d);

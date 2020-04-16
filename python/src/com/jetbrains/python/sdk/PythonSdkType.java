@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -59,8 +58,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -453,7 +452,7 @@ public final class PythonSdkType extends SdkType {
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
     final String binaryPath = sdk.getHomePath();
-    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.newArrayList());
+    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, new ArrayList<String>());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                activateVirtualEnv(sdk), MINUTE);
     if (!runResult.checkSuccess(LOG)) {

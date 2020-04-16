@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.CommonXmlStrings;
@@ -10,6 +9,7 @@ import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -70,7 +70,7 @@ class DocumentationBuilderKit {
   // make a first-order curried objects out of wrapInTag()
   static class TagWrapper implements Function<Iterable<String>, Iterable<String>> {
     private final String myTag;
-    private final List<Pair<String, String>> myAttributes = Lists.newArrayList();
+    private final List<Pair<String, String>> myAttributes = new ArrayList<>();
 
     TagWrapper(String tag) {
       myTag = tag;

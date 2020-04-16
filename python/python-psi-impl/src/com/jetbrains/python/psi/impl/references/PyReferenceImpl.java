@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -11,13 +10,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,62 +22,20 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.FutureFeature;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.Property;
-import com.jetbrains.python.psi.PsiReferenceEx;
-import com.jetbrains.python.psi.PyAssignmentExpression;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyComprehensionElement;
-import com.jetbrains.python.psi.PyComprehensionForComponent;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyGlobalStatement;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyImportedNameDefiner;
-import com.jetbrains.python.psi.PyListCompExpression;
-import com.jetbrains.python.psi.PyNonlocalStatement;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyTupleExpression;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.ResolveResultList;
-import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
-import com.jetbrains.python.psi.resolve.ImportedResolveResult;
-import com.jetbrains.python.psi.resolve.PyOverridingReferenceResolveProvider;
-import com.jetbrains.python.psi.resolve.PyReferenceResolveProvider;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Supplier;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -706,7 +657,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @Override
   public Object @NotNull [] getVariants() {
-    final List<LookupElement> ret = Lists.newArrayList();
+    final List<LookupElement> ret = new ArrayList<>();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
@@ -777,7 +728,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * Throws away fake elements used for completion internally.
    */
   protected List<LookupElement> getOriginalElements(@NotNull CompletionVariantsProcessor processor) {
-    final List<LookupElement> ret = Lists.newArrayList();
+    final List<LookupElement> ret = new ArrayList<>();
     for (LookupElement item : processor.getResultList()) {
       final PsiElement e = item.getPsiElement();
       if (e != null) {

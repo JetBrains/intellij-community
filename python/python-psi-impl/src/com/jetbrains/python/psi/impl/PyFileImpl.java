@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.icons.AllIcons;
@@ -62,7 +61,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private long myNameDefinerOOCBModCount = -1;
     private final long myModificationStamp;
     private final Map<String, List<PsiNamedElement>> myNamedElements = Maps.newHashMap();
-    private final List<PyImportedNameDefiner> myImportedNameDefiners = Lists.newArrayList();
+    private final List<PyImportedNameDefiner> myImportedNameDefiners = new ArrayList<>();
 
     private ExportedNameCache(long modificationStamp) {
       myModificationStamp = modificationStamp;
@@ -370,7 +369,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   public PsiElement findExportedName(final String name) {
     final List<RatedResolveResult> results = multiResolveName(name);
-    final List<PsiElement> elements = Lists.newArrayList();
+    final List<PsiElement> elements = new ArrayList<>();
     for (RatedResolveResult result : results) {
       final PsiElement element = result.getElement();
       final ImportedResolveResult importedResult = PyUtil.as(result, ImportedResolveResult.class);
