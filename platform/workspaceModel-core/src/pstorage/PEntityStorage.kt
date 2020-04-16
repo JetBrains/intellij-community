@@ -266,7 +266,10 @@ internal class PEntityStorageBuilder(
   }
 
   override fun removeEntity(e: TypedEntity) {
-    removeEntity((e as PTypedEntity).id)
+    e as PTypedEntity
+
+    removeEntity(e.id)
+    virtualFileIndex.index(e.id)
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
