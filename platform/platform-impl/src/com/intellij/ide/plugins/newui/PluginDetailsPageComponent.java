@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
@@ -52,7 +53,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private final boolean myMarketplace;
 
   @NotNull
-  private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.BigCentered("Loading");
+  private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
 
   private JBPanelWithEmptyText myEmptyPanel;
 
@@ -397,7 +398,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         if (node.getDescription() == null && node.getExternalPluginId() != null && node.getExternalUpdateId() != null) {
           syncLoading = false;
           startLoading();
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          ProcessIOExecutorService.INSTANCE.execute(() -> {
             PluginNode meta = MarketplaceRequests
               .loadPluginDescriptor(node.getPluginId().getIdString(), node.getExternalPluginId(), node.getExternalUpdateId());
             meta.setRating(node.getRating());

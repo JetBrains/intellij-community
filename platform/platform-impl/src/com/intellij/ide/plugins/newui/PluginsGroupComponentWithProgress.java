@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
@@ -14,7 +15,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
-  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered("Loading");
+  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
   private Runnable myVisibleRunnable;
 
   public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
