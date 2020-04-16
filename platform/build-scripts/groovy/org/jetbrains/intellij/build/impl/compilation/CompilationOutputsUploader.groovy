@@ -22,6 +22,7 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps
 
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
 class CompilationOutputsUploader {
@@ -35,6 +36,8 @@ class CompilationOutputsUploader {
   private final String tmpDir
   private final Map<String, String> remotePerCommitHash
   private final boolean updateCommitHistory
+
+  private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
 
   private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
   private final JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
@@ -94,6 +97,8 @@ class CompilationOutputsUploader {
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
       messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
+      messages.reportStatisticValue("Total outputs", String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size()))
+      messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
 
       // Publish metadata file
       def metadataFile = new File("$agentPersistentStorage/metadata.json")
@@ -156,8 +161,9 @@ class CompilationOutputsUploader {
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
-      if (!uploader.isExist(sourcePath)) {
+      if (!uploader.isExist(sourcePath, false)) {
         uploader.upload(sourcePath, zipFile)
+        uploadedOutputsCount.incrementAndGet()
         File zipCopy = new File(tmpDir, sourcePath)
         FileUtil.rename(zipFile, zipCopy)
       }
@@ -214,10 +220,12 @@ class CompilationOutputsUploader {
       super(serverUrl, messages)
     }
 
-    boolean isExist(@NotNull final String path) {
+    boolean isExist(@NotNull final String path, boolean logIfExists = true) {
       int code = doHead(path)
       if (code == 200) {
-        log("File '$path' already exist on server, nothing to upload")
+        if (logIfExists) {
+          log("File '$path' already exist on server, nothing to upload")
+        }
         return true
       }
       if (code != 404) {
@@ -246,6 +254,7 @@ class CompilationOutputsUploader {
     }
 
     boolean upload(@NotNull final String path, @NotNull final File file) {
+      log("Uploading '$path'.")
       return super.upload(path, file, false)
     }
   }
