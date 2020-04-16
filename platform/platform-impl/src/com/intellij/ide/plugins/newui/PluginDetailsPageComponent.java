@@ -394,7 +394,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
       if (descriptor instanceof PluginNode) {
         PluginNode node = (PluginNode)descriptor;
-        if (node.getDescription() == null && node.getExternalPluginId() != null) {
+        if (node.getDescription() == null && node.getExternalPluginId() != null && node.getExternalUpdateId() != null) {
           syncLoading = false;
           startLoading();
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
