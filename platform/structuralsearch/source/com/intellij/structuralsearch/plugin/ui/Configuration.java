@@ -11,6 +11,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -103,11 +104,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     return uuid == null ? (uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8))) : uuid;
   }
 
-  public void setUuidFromName() {
-    uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
-  }
-
-  public void setUuid(@NotNull UUID uuid) {
+  public void setUuid(@Nullable UUID uuid) {
     this.uuid = uuid;
   }
 

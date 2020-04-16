@@ -143,7 +143,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
     final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
     if (!dialog.showAndGet()) return false;
-    configuration.setUuidFromName();
+    configuration.setUuid(null);
     inspection.addConfiguration(configuration);
     addConfigurationToProfile(project, profile, configuration);
     profile.getProfileManager().fireProfileChanged(profile);
