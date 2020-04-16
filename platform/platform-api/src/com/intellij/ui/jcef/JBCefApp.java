@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,7 +43,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @ApiStatus.Experimental
 public abstract class JBCefApp {
-  private static JBCefApp INSTANCE;
+  private static final Logger LOG = Logger.getInstance(JBCefApp.class);
+
   @NotNull private final CefApp myCefApp;
 
   @NotNull private final Disposable myDisposable = new Disposable() {
@@ -108,21 +110,37 @@ public abstract class JBCefApp {
     if (!isEnabled()) {
       throw new IllegalStateException("JCEF is disabled");
     }
-    if (!ourInitialized.getAndSet(true)) {
+    if (Holder.instance == null) {
+      throw new IllegalStateException("JCEF is not available or failed to initialize");
+    }
+    return Holder.instance;
+  }
+
+  private static class Holder {
+    static final JBCefApp instance = initInstance();
+  }
+
+  @Nullable
+  private static JBCefApp initInstance() {
+    ourInitialized.set(true);
+    try {
       if (SystemInfo.isMac) {
-        INSTANCE = new JBCefAppMac();
+        return new JBCefAppMac();
       }
       else if (SystemInfo.isLinux) {
-        INSTANCE = new JBCefAppLinux();
+        return new JBCefAppLinux();
       }
       else if (SystemInfo.isWindows) {
-        INSTANCE = new JBCefAppWindows();
-      }
-      else {
-        throw new IllegalStateException("JCEF is initialized on unsupported platform");
+        return new JBCefAppWindows();
       }
     }
-    return INSTANCE;
+    catch (UnsatisfiedLinkError e) {
+      LOG.warn(e.toString());
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
+    }
+    return null;
   }
 
   /**
