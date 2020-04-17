@@ -115,7 +115,13 @@ public class PluginManagerConfigurable
     @Override
     @NotNull
     public Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
-      return getCustomRepositoryPlugins();
+      synchronized (myRepositoriesLock) {
+        if (myCustomRepositoryPluginsList != null) {
+          return myCustomRepositoryPluginsList;
+        }
+      }
+      LOG.error("PluginManagerConfigurable.myPluginModel.getCustomRepoPlugins() has been called before PluginManagerConfigurable#createMarketplaceTab()");
+      return ContainerUtil.emptyList();
     }
   };
 
@@ -1499,17 +1505,6 @@ public class PluginManagerConfigurable
       panel.initialSelection();
     }
     return pane;
-  }
-
-  @NotNull
-  private Collection<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
-    synchronized (myRepositoriesLock) {
-      if (myCustomRepositoryPluginsList != null) {
-        return myCustomRepositoryPluginsList;
-      }
-    }
-    loadCustomRepositoryPlugins();
-    return myCustomRepositoryPluginsList;
   }
 
   @NotNull
