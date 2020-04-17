@@ -4,6 +4,7 @@ package com.intellij.debugger.memory.agent.parsers
 import com.intellij.debugger.memory.agent.*
 import com.sun.jdi.*
 import java.util.*
+import kotlin.collections.ArrayList
 
 object BooleanParser : ResultParser<Boolean> {
   override fun parse(value: Value): Boolean {
@@ -58,26 +59,31 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array of arrays is expected")
 
     val result = ArrayList<List<MemoryAgentReferenceInfo>>()
-    for (linksInfo in value.values) {
+    for ((infoIndex, linksInfo) in value.values.withIndex()) {
       if (linksInfo !is ArrayReference) throw UnexpectedValueFormatException("Object references information should be represented by array")
 
       val indices = IntArrayParser.parse(linksInfo.getValue(0))
       val kinds = IntArrayParser.parse(linksInfo.getValue(1))
       val infos = linksInfo.getValue(2) as? ArrayReference ?:
                   throw UnexpectedValueFormatException("Object references information should be represented by array")
-      val referenceInfo = indices
-        .filter { it != -1 }
-        .distinct()
-        .withIndex()
-        .map {
-          createReferenceInfo(
-            objects[it.value],
-            MemoryAgentReferenceInfo.ReferenceKind.valueOf(kinds[it.index]),
-            infos.getValue(it.index)
-          )
+      val distinctIndices = mutableSetOf(infoIndex)
+      val referenceInfos =  mutableListOf<MemoryAgentReferenceInfo>()
+      for ((i, index) in indices.withIndex()) {
+        if (index == -1 || distinctIndices.contains(index)) {
+          continue
         }
 
-      result.add(referenceInfo)
+        distinctIndices.add(index)
+        referenceInfos.add(
+          createReferenceInfo(
+            objects[index],
+            MemoryAgentReferenceInfo.ReferenceKind.valueOf(kinds[i]),
+            infos.getValue(i)
+          )
+        )
+      }
+
+      result.add(referenceInfos)
     }
 
     return result
@@ -89,10 +95,10 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
     value: Value?): MemoryAgentReferenceInfo {
     return if (value == null) SimpleReferenceInfo(referrer, kind) else
       when (kind) {
-      MemoryAgentReferenceInfo.ReferenceKind.FIELD,
-      MemoryAgentReferenceInfo.ReferenceKind.STATIC_FIELD ->
-        ReferenceInfoWithIndex(referrer, kind, IntArrayParser.parse(value)[0])
-      else -> SimpleReferenceInfo(referrer, kind)
+        MemoryAgentReferenceInfo.ReferenceKind.FIELD,
+        MemoryAgentReferenceInfo.ReferenceKind.STATIC_FIELD ->
+          ReferenceInfoWithIndex(referrer, kind, IntArrayParser.parse(value)[0])
+        else -> SimpleReferenceInfo(referrer, kind)
     }
   }
 }
