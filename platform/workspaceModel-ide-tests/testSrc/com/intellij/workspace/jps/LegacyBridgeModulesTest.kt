@@ -67,7 +67,7 @@ class LegacyBridgeModulesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val module = moduleManager.modifiableModel.let {
-        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
         it.commit()
         m
       }
@@ -100,7 +100,7 @@ class LegacyBridgeModulesTest {
 
       val modulesModifiableModel = moduleManager.modifiableModel
       try {
-        val m = modulesModifiableModel.newModule(File(project.basePath, "xxx.iml").path, ModuleType.EMPTY.id, null) as LegacyBridgeModule
+        val m = modulesModifiableModel.newModule(File(project.basePath, "xxx.iml").path, ModuleType.EMPTY.id) as LegacyBridgeModule
         val rootModel = m.rootManager.modifiableModel
 
         val temp = temporaryDirectoryRule.newPath()
@@ -252,7 +252,7 @@ class LegacyBridgeModulesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val module = moduleManager.modifiableModel.let {
-        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
         it.commit()
         m
       }
@@ -279,7 +279,7 @@ class LegacyBridgeModulesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val module = moduleManager.modifiableModel.let {
-        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+        val m = it.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
         it.commit()
         m
       }
@@ -568,7 +568,7 @@ class LegacyBridgeModulesTest {
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
       moduleModel.commit()
       module
     }
@@ -597,7 +597,7 @@ class LegacyBridgeModulesTest {
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
       moduleModel.commit()
       module
     }

@@ -109,7 +109,7 @@ internal class LegacyBridgeModifiableModuleModel(
 
   // TODO Actually load module content
   override fun loadModule(filePath: String): Module =
-    newModule(filePath, "", null)
+    newModule(filePath, "")
 
   override fun disposeModule(module: Module) {
     module as LegacyBridgeModule
