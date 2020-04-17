@@ -25,7 +25,8 @@
 package org.jetbrains.lang.manifest.header;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -46,7 +47,7 @@ public class HeaderParserRepository {
     return ServiceManager.getService(HeaderParserRepository.class);
   }
 
-  private final NotNullLazyValue<Map<String, HeaderParser>> myParsers = new NotNullLazyValue<Map<String, HeaderParser>>() {
+  private final ClearableLazyValue<Map<String, HeaderParser>> myParsers = new ClearableLazyValue<Map<String, HeaderParser>>() {
     @NotNull
     @Override
     protected Map<String, HeaderParser> compute() {
@@ -57,6 +58,15 @@ public class HeaderParserRepository {
       return map;
     }
   };
+
+  public HeaderParserRepository() {
+    HeaderParserProvider.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
+      @Override
+      public void extensionListChanged() {
+        myParsers.drop();
+      }
+    }, null);
+  }
 
   @Nullable
   public HeaderParser getHeaderParser(@Nullable String headerName) {

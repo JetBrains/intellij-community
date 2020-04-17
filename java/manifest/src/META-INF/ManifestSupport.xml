@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider"/>
+    <extensionPoint qualifiedName="com.intellij.manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Manifest" implementationClass="org.jetbrains.lang.manifest.ManifestFileType" fieldName="INSTANCE" extensions="MF" language="Manifest"/>
