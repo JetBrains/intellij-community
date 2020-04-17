@@ -120,7 +120,7 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
                                                                          initializer: M.() -> Unit): T
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
-  fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T
+  override fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T
   override fun removeEntity(e: TypedEntity)
   fun <E : TypedEntity> createReference(e: E): EntityReference<E>
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage)
@@ -183,6 +183,7 @@ interface TypedEntityStorageDiffBuilder {
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> addEntity(clazz: Class<M>, source: EntitySource, initializer: M.() -> Unit): T
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
   fun removeEntity(e: TypedEntity)
+  fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T
 
   // Returns an association between an entity in diff and an entity in the current builder
   fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity>

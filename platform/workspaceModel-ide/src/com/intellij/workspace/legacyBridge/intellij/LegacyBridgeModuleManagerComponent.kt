@@ -16,10 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.*
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
@@ -486,6 +483,11 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     unloadedModules.keys.removeAll { it !in names }
     runWriteAction {
+      if (modulesToUnload.isNotEmpty()) {
+        // we need to save module configurations before unloading, otherwise their settings will be lost
+        saveComponentManager(project)
+      }
+
       ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(
         {
           for (moduleId in modulesToUnload) {
@@ -501,8 +503,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
               }
               val unloadedModuleDescription = UnloadedModuleDescriptionImpl(modulePath, description.dependencyModuleNames, contentRoots)
               unloadedModules[moduleId.name] = unloadedModuleDescription
-              // we need to save module configuration before unloading, otherwise its settings will be lost
-              saveComponentManager(module)
             }
 
             removeModuleAndFireEvent(moduleId)

@@ -11,6 +11,7 @@ package com.intellij.workspace.api
 
 interface ModuleEntity : TypedEntityWithPersistentId, ReferableTypedEntity {
   val name: String
+  val type: String?
   val dependencies: List<ModuleDependencyItem>
 
   @JvmDefault
@@ -40,7 +41,8 @@ interface JavaModuleSettingsEntity : TypedEntity {
 }
 
 interface ModuleCustomImlDataEntity : TypedEntity {
-  val rootManagerTagCustomData: String
+  val rootManagerTagCustomData: String?
+  val customModuleOptions: Map<String, String>
   val module: ModuleEntity
 }
 
@@ -203,6 +205,23 @@ interface SdkEntity : TypedEntity {
   val library: LibraryEntity
   val homeUrl: VirtualFileUrl
 }
+
+interface ExternalSystemModuleOptionsEntity : TypedEntity {
+  val module: ModuleEntity
+
+  val externalSystem: String?
+  val externalSystemModuleVersion: String?
+
+  val linkedProjectPath: String?
+  val linkedProjectId: String?
+  val rootProjectPath: String?
+
+  val externalSystemModuleGroup: String?
+  val externalSystemModuleType: String?
+}
+
+val ModuleEntity.externalSystemOptions: ExternalSystemModuleOptionsEntity?
+  get() = referrers(ExternalSystemModuleOptionsEntity::module).firstOrNull()
 
 interface FacetEntity : TypedEntityWithPersistentId, ReferableTypedEntity {
   val name: String

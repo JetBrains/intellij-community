@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.module.impl.AutomaticModuleUnloader
@@ -15,6 +17,7 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -125,7 +128,8 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     val baseDirUrl = storagePlace.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
-    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false)
+    val externalStoragePath = project.getExternalConfigurationDir()
+    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, externalStoragePath, false)
     this.serializers.set(serializers)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()
@@ -230,7 +234,7 @@ private class StorageJpsConfigurationReader(private val project: Project,
       return CachingJpsFileContentReader(baseDirUrl).loadComponent(fileUrl, componentName)
     }
     else {
-      val storage = getProjectStateStorage(filePath, project.stateStore)
+      val storage = getProjectStateStorage(filePath, project.stateStore, project) ?: return null
       val stateMap = storage.getStorageData()
       return if (storage is DirectoryBasedStorageBase) {
         val elementContent = stateMap.getElement(PathUtil.getFileName(filePath))
@@ -248,7 +252,15 @@ private class StorageJpsConfigurationReader(private val project: Project,
   }
 }
 
-internal fun getProjectStateStorage(filePath: String, store: IProjectStore): StateStorageBase<StateMap> {
+internal fun getProjectStateStorage(filePath: String,
+                                    store: IProjectStore,
+                                    project: Project): StateStorageBase<StateMap>? {
+  val storageSpec = getStorageSpec(filePath, project) ?: return null
+  @Suppress("UNCHECKED_CAST")
+  return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
+}
+
+private fun getStorageSpec(filePath: String, project: Project): Storage? {
   val collapsedPath: String
   val splitterClass: Class<out StateSplitterEx>
   if (FileUtil.extensionEquals(filePath, "ipr")) {
@@ -258,20 +270,32 @@ internal fun getProjectStateStorage(filePath: String, store: IProjectStore): Sta
   else {
     val fileName = PathUtil.getFileName(filePath)
     val parentPath = PathUtil.getParentPath(filePath)
-    if (PathUtil.getFileName(parentPath) == Project.DIRECTORY_STORE_FOLDER) {
+    val parentFileName = PathUtil.getFileName(parentPath)
+    if (parentFileName == Project.DIRECTORY_STORE_FOLDER) {
       collapsedPath = fileName
       splitterClass = StateSplitterEx::class.java
     }
     else {
       val grandParentPath = PathUtil.getParentPath(parentPath)
-      if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) error("$filePath is not under .idea directory")
-      collapsedPath = PathUtil.getFileName(parentPath)
+      collapsedPath = parentFileName
       splitterClass = FakeDirectoryBasedStateSplitter::class.java
+      if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) {
+        val providerFactory = StreamProviderFactory.EP_NAME.getExtensionList(project).firstOrNull() ?: return null
+        if (parentFileName == "project") {
+          if (fileName == "libraries.xml" || fileName == "artifacts.xml") {
+            val inProjectStorage = FileStorageAnnotation(FileUtil.getNameWithoutExtension(fileName), false, splitterClass)
+            val componentName = if (fileName == "libraries.xml") "libraryTable" else "ArtifactManager"
+            return providerFactory.getOrCreateStorageSpec(fileName, StateAnnotation(componentName, inProjectStorage))
+          }
+          if (fileName == "modules.xml") {
+            return providerFactory.getOrCreateStorageSpec(fileName)
+          }
+        }
+        error("$filePath is not under .idea directory and not under external system cache")
+      }
     }
   }
-  val storageSpec = FileStorageAnnotation(collapsedPath, false, splitterClass)
-  @Suppress("UNCHECKED_CAST")
-  return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
+  return FileStorageAnnotation(collapsedPath, false, splitterClass)
 }
 
 /**

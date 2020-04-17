@@ -5,13 +5,11 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.EntitySource
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.toVirtualFileUrl
+import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectStoragePlace
 import junit.framework.AssertionFailedError
@@ -44,10 +42,15 @@ internal fun copyAndLoadProject(originalProjectFile: File): LoadedProjectData {
   val originalBuilder = TypedEntityStorageBuilder.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val storagePlace = projectFile.asStoragePlace()
-  val serializers = JpsProjectEntitiesLoader.loadProject(storagePlace, originalBuilder) as JpsProjectSerializersImpl
+  val serializers = loadProject(storagePlace, originalBuilder) as JpsProjectSerializersImpl
   val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, storagePlace, originalProjectDir)
   serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage)
   return loadedProjectData
+}
+
+internal fun loadProject(storagePlace: JpsProjectStoragePlace, originalBuilder: TypedEntityStorageBuilder): JpsProjectSerializers {
+  val cacheDirUrl = storagePlace.baseDirectoryUrl.append("cache")
+  return JpsProjectEntitiesLoader.loadProject(storagePlace, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath())
 }
 
 internal fun JpsProjectSerializersImpl.saveAllEntities(storage: TypedEntityStorage, projectDir: File) {
@@ -57,28 +60,28 @@ internal fun JpsProjectSerializersImpl.saveAllEntities(storage: TypedEntityStora
 }
 
 internal fun JpsFileContentWriterImpl.writeFiles(baseProjectDir: File) {
-  filesToRemove.forEach {
-    FileUtil.delete(JpsPathUtil.urlToFile(it))
-  }
   urlToComponents.forEach { (url, newComponents) ->
     val components = HashMap(newComponents)
     val file = JpsPathUtil.urlToFile(url)
 
-    val replaceMacroMap = if (FileUtil.extensionEquals(file.absolutePath, "iml"))
+    val isModuleFile = FileUtil.extensionEquals(file.absolutePath, "iml")
+                       || file.parentFile.name == "modules" && file.parentFile.parentFile.name != ".idea"
+    val replaceMacroMap = if (isModuleFile)
       CachingJpsFileContentReader.LegacyBridgeModulePathMacroManager(PathMacros.getInstance(), JpsPathUtil.urlToOsPath(url)).replacePathMap
     else
       CachingJpsFileContentReader.LegacyBridgeProjectPathMacroManager(baseProjectDir.systemIndependentPath).replacePathMap
 
 
     val newRootElement = when {
-      file.extension == "iml" -> Element("module").setAttribute("type", "JAVA_MODULE")
+      isModuleFile -> Element("module")
       FileUtil.filesEqual(File(baseProjectDir, ".idea"), file.parentFile.parentFile) -> null
       else -> Element("project")
     }
 
-    val rootElement: Element
+    fun isEmptyComponentTag(componentTag: Element) = componentTag.contentSize == 0 && componentTag.attributes.all { it.name == "name" }
+
+    val rootElement: Element?
     if (newRootElement != null) {
-      newRootElement.setAttribute("version", "4")
       if (file.exists()) {
         val oldElement = JDOMUtil.load(file)
         oldElement.getChildren("component")
@@ -86,17 +89,38 @@ internal fun JpsFileContentWriterImpl.writeFiles(baseProjectDir: File) {
           .map { it.clone() }
           .associateByTo(components) { it.getAttributeValue("name") }
       }
-      components.entries.sortedBy { it.key }.forEach { (_, element) ->
-        newRootElement.addContent(element)
+      components.entries.sortedBy { it.key }.forEach { (name, element) ->
+        if (element != null && !isEmptyComponentTag(element)) {
+          if (name == "DeprecatedModuleOptionManager") {
+            element.getChildren("option").forEach {
+              newRootElement.setAttribute(it.getAttributeValue("key")!!, it.getAttributeValue("value")!!)
+            }
+          }
+          else {
+            newRootElement.addContent(element)
+          }
+        }
       }
-      rootElement = newRootElement
+      if (!JDOMUtil.isEmpty(newRootElement)) {
+        newRootElement.setAttribute("version", "4")
+        rootElement = newRootElement
+      }
+      else {
+        rootElement = null
+      }
     }
     else {
-      rootElement = components.values.single()
+      val singleComponent = components.values.single()
+      rootElement = if (singleComponent != null && !isEmptyComponentTag(singleComponent)) singleComponent else null
     }
-    replaceMacroMap.substitute(rootElement, true, true)
-    FileUtil.createParentDirs(file)
-    JDOMUtil.write(rootElement, file)
+    if (rootElement != null) {
+      replaceMacroMap.substitute(rootElement, true, true)
+      FileUtil.createParentDirs(file)
+      JDOMUtil.write(rootElement, file)
+    }
+    else {
+      FileUtil.delete(file)
+    }
   }
 }
 
@@ -133,12 +157,12 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
 
 internal fun createProjectSerializers(projectDir: File): JpsProjectSerializersImpl {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
-  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader, true) as JpsProjectSerializersImpl
+  val externalStoragePath = projectDir.toPath().resolve("cache")
+  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader, externalStoragePath, true) as JpsProjectSerializersImpl
 }
 
 fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {
   fun getNonNullActualFileUrl(source: EntitySource): String {
-    if (source !is JpsFileEntitySource) throw AssertionFailedError("unexpected type of entity source ${source.javaClass}")
     return getActualFileUrl(source) ?: throw AssertionFailedError("file name is not registered for $source")
   }
 
@@ -146,34 +170,36 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     assertEquals(url, directorySerializer.directoryUrl)
     val fileSerializers = serializerToDirectoryFactory.getKeysByValue(directorySerializer)!!
     val directoryFileUrls = JpsPathUtil.urlToFile(url).listFiles { file: File -> file.isFile }?.map { JpsPathUtil.pathToUrl(it.systemIndependentPath) } ?: emptyList()
-    assertEquals(directoryFileUrls.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.entitySource) }.sorted())
+    assertEquals(directoryFileUrls.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
   fileSerializerFactoriesByUrl.forEach { (url, fileSerializer) ->
     assertEquals(url, fileSerializer.fileUrl)
-    val fileSerializers = serializerToFileFactory.getKeysByValue(fileSerializer)!!
+    val fileSerializers = serializerToFileFactory.getKeysByValue(fileSerializer) ?: emptyList()
     val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl))
-    assertEquals(urlsFromFactory.map { it.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.entitySource) }.sorted())
+    assertEquals(urlsFromFactory.map { it.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
   fileSerializersByUrl.entrySet().forEach { (url, serializers) ->
     serializers.forEach {
-      assertEquals(url, getNonNullActualFileUrl(it.entitySource))
+      assertEquals(url, getNonNullActualFileUrl(it.internalEntitySource))
     }
   }
 
   serializerToFileFactory.keys.forEach {
-    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.entitySource)])
+    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.internalEntitySource)])
   }
 
   serializerToDirectoryFactory.keys.forEach {
-    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.entitySource)])
+    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.internalEntitySource)])
   }
+
+  fun <E : TypedEntity> isSerializerWithoutEntities(serializer: JpsFileEntitiesSerializer<E>) =
+    serializer is JpsFileEntityTypeSerializer<E> && storage.entities(serializer.mainEntityClass).none { serializer.entityFilter(it) }
 
   val allSources = storage.entitiesBySource { true }
   val urlsFromSources = allSources.keys.filterIsInstance<JpsFileEntitySource>().mapTo(HashSet()) { getNonNullActualFileUrl(it) }
-  urlsFromSources += fileSerializerFactoriesByUrl.keys
-  assertEquals(urlsFromSources.sorted(), (fileSerializersByUrl.keySet() + fileSerializerFactoriesByUrl.keys).sorted())
+  assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.entrySet().filterNot { it.value.all { isSerializerWithoutEntities(it)} }.map { it.key }.sorted())
 
   val fileIdFromEntities = allSources.keys.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).mapTo(HashSet()) { it.fileNameId }
   val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys().toSet()
@@ -187,16 +213,9 @@ internal fun File.asStoragePlace(): JpsProjectStoragePlace =
   else JpsProjectStoragePlace.DirectoryBased(toVirtualFileUrl())
 
 internal class JpsFileContentWriterImpl : JpsFileContentWriter {
-  val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element>>()
-  val filesToRemove = LinkedHashSet<String>()
+  val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
 
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
-    if (componentTag != null) {
-      urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
-    }
-    else if (PathUtil.getFileName(PathUtil.getParentPath(PathUtil.getParentPath(fileUrl))) == ".idea" || FileUtil.extensionEquals(fileUrl,
-                                                                                                                                  "iml")) {
-      filesToRemove.add(fileUrl)
-    }
+    urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
   }
 }

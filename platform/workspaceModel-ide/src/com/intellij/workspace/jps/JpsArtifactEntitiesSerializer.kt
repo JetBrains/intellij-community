@@ -44,7 +44,7 @@ internal interface ArtifactsOrderEntity : ModifiableTypedEntity<ArtifactsOrderEn
 }
 
 internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
-                                                  override val entitySource: EntitySource,
+                                                  override val internalEntitySource: JpsFileEntitySource,
                                                   private val preserveOrder: Boolean) : JpsFileEntitiesSerializer<ArtifactEntity> {
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
@@ -53,7 +53,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
-    val source = entitySource
+    val source = internalEntitySource
     val orderOfItems = ArrayList<String>()
     artifactListElement.getChildren("artifact").forEach {
       val state = XmlSerializer.deserialize(it, ArtifactState::class.java)

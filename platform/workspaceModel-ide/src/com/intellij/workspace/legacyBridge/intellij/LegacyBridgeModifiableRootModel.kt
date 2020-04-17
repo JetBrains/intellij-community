@@ -323,12 +323,14 @@ class LegacyBridgeModifiableRootModel(
           customImlDataEntity == null && !element.isEmpty() -> diff.addModuleCustomImlDataEntity(
             module = moduleEntity,
             rootManagerTagCustomData = elementAsString,
+            customModuleOptions = emptyMap(),
             source = moduleEntity.entitySource
           )
 
           customImlDataEntity == null && element.isEmpty() -> Unit
 
-          customImlDataEntity != null && element.isEmpty() -> diff.removeEntity(customImlDataEntity)
+          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isEmpty() && element.isEmpty() ->
+            diff.removeEntity(customImlDataEntity)
 
           customImlDataEntity != null && !element.isEmpty() -> diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java,
             customImlDataEntity) {

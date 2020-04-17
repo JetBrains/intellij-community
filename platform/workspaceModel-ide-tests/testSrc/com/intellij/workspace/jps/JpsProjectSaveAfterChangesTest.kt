@@ -59,7 +59,7 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, storagePlace ->
       val root = LibraryRoot(VirtualFileUrlManager.fromUrl("jar://${JpsPathUtil.urlToPath(storagePlace.baseDirectoryUrlString)}/lib/junit2.jar!/"),
                              LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
-      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(storagePlace)
+      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(storagePlace)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
     }
   }
@@ -70,6 +70,9 @@ class JpsProjectSaveAfterChangesTest {
       val source = JpsFileEntitySource.FileInDirectory(storagePlace.baseDirectoryUrl, storagePlace)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
       val module = builder.addModuleEntity("newModule", dependencies, source)
+      builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+        type = "JAVA_MODULE"
+      }
       builder.addContentRootEntity(storagePlace.baseDirectoryUrl.append("new"), emptyList(), emptyList(), module, source)
       val sourceRootEntity = builder.addSourceRootEntity(module, storagePlace.baseDirectoryUrl.append("new"), false, "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "", source)

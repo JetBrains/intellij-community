@@ -64,9 +64,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
       tableId = LibraryTableId.ProjectLibraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = externalSource?.toEntitySource() ?:
-               project.storagePlace?.let { JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(it) } ?:
-               NonPersistentEntitySource
+      source = JpsProjectEntitiesLoader.createEntitySourceForProjectLibrary(project, externalSource)
     )
 
     if (type != null) {

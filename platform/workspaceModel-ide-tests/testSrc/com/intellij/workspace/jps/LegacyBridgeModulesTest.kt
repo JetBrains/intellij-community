@@ -432,7 +432,7 @@ class LegacyBridgeModulesTest {
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(iprFile.asStoragePlace())
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(iprFile.asStoragePlace())
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {

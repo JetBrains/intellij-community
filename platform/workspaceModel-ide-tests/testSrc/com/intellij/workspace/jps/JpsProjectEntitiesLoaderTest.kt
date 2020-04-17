@@ -223,7 +223,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   private fun loadProject(projectFile: File): TypedEntityStorage {
     val storageBuilder = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder)
+    loadProject(projectFile.asStoragePlace(), storageBuilder)
     return storageBuilder.toStorage()
   }
 }

@@ -2,12 +2,15 @@ package com.intellij.workspace.api
 
 interface ModifiableModuleEntity : ModuleEntity, ModifiableTypedEntity<ModuleEntity> {
   override var name: String
+  override var type: String?
   override var dependencies: List<ModuleDependencyItem>
 }
 
-fun TypedEntityStorageDiffBuilder.addModuleEntity(name: String, dependencies: List<ModuleDependencyItem>, source: EntitySource) = addEntity(
+fun TypedEntityStorageDiffBuilder.addModuleEntity(name: String, dependencies: List<ModuleDependencyItem>, source: EntitySource,
+                                                  type : String? = null) = addEntity(
   ModifiableModuleEntity::class.java, source) {
   this.name = name
+  this.type = type
   this.dependencies = dependencies
 }
 
@@ -35,15 +38,18 @@ fun TypedEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompilerO
 }
 
 interface ModifiableModuleCustomImlDataEntity : ModuleCustomImlDataEntity, ModifiableTypedEntity<ModuleCustomImlDataEntity> {
-  override var rootManagerTagCustomData: String
+  override var rootManagerTagCustomData: String?
+  override var customModuleOptions: MutableMap<String, String>
   override var module: ModuleEntity
 }
 
-fun TypedEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTagCustomData: String,
+fun TypedEntityStorageDiffBuilder.addModuleCustomImlDataEntity(rootManagerTagCustomData: String?,
+                                                               customModuleOptions: Map<String, String>,
                                                                module: ModuleEntity,
                                                                source: EntitySource) = addEntity(
   ModifiableModuleCustomImlDataEntity::class.java, source) {
   this.rootManagerTagCustomData = rootManagerTagCustomData
+  this.customModuleOptions = HashMap(customModuleOptions)
   this.module = module
 }
 
@@ -179,6 +185,24 @@ fun TypedEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
   this.library = library
   this.homeUrl = homeUrl
 }
+
+interface ModifiableExternalSystemModuleOptionsEntity : ExternalSystemModuleOptionsEntity, ModifiableTypedEntity<ExternalSystemModuleOptionsEntity> {
+  override var module: ModuleEntity
+  override var externalSystem: String?
+  override var externalSystemModuleVersion: String?
+
+  override var linkedProjectPath: String?
+  override var linkedProjectId: String?
+  override var rootProjectPath: String?
+
+  override var externalSystemModuleGroup: String?
+  override var externalSystemModuleType: String?
+}
+
+fun TypedEntityStorageDiffBuilder.getOrCreateExternalSystemModuleOptions(module: ModuleEntity, source: EntitySource): ExternalSystemModuleOptionsEntity =
+  module.externalSystemOptions ?: addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, source) {
+    this.module = module
+  }
 
 interface ModifiableFacetEntity : FacetEntity, ModifiableTypedEntity<FacetEntity> {
   override var name: String

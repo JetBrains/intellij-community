@@ -71,9 +71,18 @@ sealed class JpsFileEntitySource : EntitySource {
   }
 }
 
+/**
+ * Represents entities imported from external project system.
+ */
 data class ExternalEntitySource(val displayName: String, val id: String) : EntitySource
 
-fun ProjectModelExternalSource.toEntitySource() = ExternalEntitySource(displayName, id)
+/**
+ * Represents entities imported from external project system and stored in JPS format. They may be stored either in a regular project
+ * configuration [internalFile] if [storedExternally] is `false` or in an external file under IDE caches directory if [storedExternally] is `true`.
+ */
+data class JpsImportedEntitySource(val internalFile: JpsFileEntitySource,
+                                   val externalSystemId: String,
+                                   val storedExternally: Boolean) : EntitySource
 
 /**
  * Represents entities which are added to the model automatically and shouldn't be persisted

@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -18,6 +19,7 @@ import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.storagePlace
+import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 
 internal class LegacyBridgeModifiableModuleModel(
@@ -76,27 +78,18 @@ internal class LegacyBridgeModifiableModuleModel(
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
 
-    // TODO get entity source from ProjectModelExternalSource instead
-    val entitySource = JpsFileEntitySource.FileInDirectory(VirtualFileUrlManager.fromPath(PathUtil.getParentPath(canonicalPath)), project.storagePlace!!)
+    val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, VirtualFileUrlManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,
       dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+      type = moduleTypeId,
       source = entitySource
     )
 
     val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
     moduleManager.addUncommittedModule(moduleInstance)
     myModulesToAdd[moduleName] = moduleInstance
-
-    moduleInstance.setModuleType(moduleTypeId)
-    // TODO Don't forget to store options in module entities
-    if (options != null) {
-      for ((key, value) in options) {
-        @Suppress("DEPRECATION")
-        moduleInstance.setOption(key, value)
-      }
-    }
 
     return moduleInstance
   }

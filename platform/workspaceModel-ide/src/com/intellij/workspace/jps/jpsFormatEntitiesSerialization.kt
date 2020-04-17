@@ -23,7 +23,7 @@ interface JpsFileContentWriter {
  * Represents a serializer for a configuration XML file in JPS format.
  */
 interface JpsFileEntitiesSerializer<E : TypedEntity> {
-  val entitySource: EntitySource
+  val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
   fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader)
@@ -64,12 +64,15 @@ interface JpsDirectoryEntitiesSerializerFactory<E : TypedEntity> {
 interface JpsFileSerializerFactory<E : TypedEntity> {
   val fileUrl: String
   val entityClass: Class<E>
-  
+  val additionalEntityClass: Class<out TypedEntity>
+  val entitySourceFilter: (EntitySource) -> Boolean
+    get() = { true }
+
   /** Returns serializers for individual configuration files referenced from [fileUrl] */
   fun loadFileList(reader: JpsFileContentReader): List<VirtualFileUrl>
-
-  fun createSerializer(source: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<E>
+  fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<E>
   fun saveEntitiesList(entities: Sequence<E>, writer: JpsFileContentWriter)
+  fun getMainEntity(additionalEntity: TypedEntity): E
   fun getFileName(entity: E): String
 
   fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter)
@@ -83,8 +86,11 @@ interface JpsProjectSerializers {
     fun createSerializers(entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
                           directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                           fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
-                          storagePlace: JpsProjectStoragePlace, reader: JpsFileContentReader): JpsProjectSerializers {
-      return JpsProjectSerializersImpl(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, storagePlace)
+                          storagePlace: JpsProjectStoragePlace,
+                          reader: JpsFileContentReader,
+                          externalStorageMapping: JpsExternalStorageMapping): JpsProjectSerializers {
+      return JpsProjectSerializersImpl(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, storagePlace,
+                                       externalStorageMapping)
     }
   }
 
