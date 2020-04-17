@@ -15,7 +15,7 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `test 1`() {
+  fun `check base insert case`() {
     virtualFileManager.add("/a/b/a.txt", 1)
     virtualFileManager.add("/a/b.txt", 2)
     virtualFileManager.add("/c", 3)
@@ -32,7 +32,7 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `test 2`() {
+  fun `check insert with duplicates`() {
     virtualFileManager.add("/a/b/a.txt", 1)
     virtualFileManager.add("/a/b/a.txt", 2)
     virtualFileManager.add("/a/b/a.txt", 3)
@@ -46,14 +46,14 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `test 3`() {
+  fun `check insert and remove same path`() {
     virtualFileManager.add("/a/b/a.txt", 1)
     virtualFileManager.remove("/a/b/a.txt", 1)
     Assert.assertEquals("", virtualFileManager.toString())
   }
 
   @Test
-  fun `test 4`() {
+  fun `check insert and remove other node`() {
     virtualFileManager.add("/a/b/a.txt", 1)
     virtualFileManager.add("/a/c/a.txt", 2)
     virtualFileManager.remove("/a/b/a.txt", 1)
@@ -66,7 +66,7 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `test 5`() {
+  fun `check remove file with another id`() {
     virtualFileManager.add("/", 1)
     virtualFileManager.add("/a", 2)
     virtualFileManager.remove("/a", 1)
@@ -77,7 +77,7 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `test 6`() {
+  fun `check filename update`() {
     virtualFileManager.add("/a/b/a.txt", 1)
     Assert.assertEquals("""
       # 
@@ -95,7 +95,7 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `test 7`() {
+  fun `check update to the existing path`() {
     virtualFileManager.add("/a/b/c.txt", 1)
     virtualFileManager.add("/a/c/d.txt", 2)
     Assert.assertEquals("""
@@ -116,7 +116,7 @@ class VirtualFileUrlManagerTest {
   }
 
   @Test
-  fun `test 8`() {
+  fun `check update file and sub folder`() {
     virtualFileManager.add("/a/b/c.txt", 1)
     Assert.assertEquals("""
       # 
@@ -124,17 +124,17 @@ class VirtualFileUrlManagerTest {
       #      '-  b
       #           '-  c.txt => [1]
       #""".trimMargin("#"), virtualFileManager.toString())
-    virtualFileManager.update("/a/b/k.txt", "/a/c/d.txt", 1)
+    virtualFileManager.update("/a/b/c.txt", "/a/b/k.txt", 1)
     Assert.assertEquals("""
       # 
       # '-  a
       #      '-  b
-      #           '-  c.txt => [1]
+      #           '-  k.txt => [1]
       #""".trimMargin("#"), virtualFileManager.toString())
   }
 
   @Test
-  fun `test 9`() {
+  fun `check update with file in root`() {
     virtualFileManager.add("/a/b/c.txt", 1)
     Assert.assertEquals("""
       # 

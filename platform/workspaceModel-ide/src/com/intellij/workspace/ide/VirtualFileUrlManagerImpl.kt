@@ -1,25 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.ide
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.api.VirtualFileUrlManager
-import java.util.stream.Collectors
 import kotlin.collections.set
 
-@Service
 class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
   private val idGenerator= IdGenerator()
   private val EMPTY_URL = VirtualFileUrl(0, this)
-  private var segmentId2RootNodeMapping = mutableMapOf<Int, FilePathNode>()
   private val fileNameStore = VirtualFileNameStore()
   private val id2NodeMapping = HashMap<Int, FilePathNode>()
+  private var segmentId2RootNodeMapping = mutableMapOf<Int, FilePathNode>()
 
   companion object {
-    fun getInstance(project: Project): VirtualFileUrlManager = ServiceManager.getService(project, VirtualFileUrlManagerImpl::class.java)
+    fun getInstance(project: Project): VirtualFileUrlManager = project.service<VirtualFileUrlManagerImpl>()
   }
 
   override fun fromUrl(url: String): VirtualFileUrl {
@@ -57,7 +54,6 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
     return builder.toString()
   }
 
-  //fun add(path: String, entity: PEntityData<out TypedEntity>) {
   internal fun add(path: String, entityId: Int): VirtualFileUrl {
     val segments = splitNames(path)
     var latestNode: FilePathNode? = findRootNode(segments.first())
@@ -115,7 +111,6 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
     return EMPTY_URL
   }
 
-  //fun remove(path: String, entity: PEntityData<out TypedEntity>) {
   internal fun remove(path: String, entityId: Int) {
     val node = findLatestFilePathNode(path)
     if (node == null || !node.values.remove(entityId)) {
@@ -145,7 +140,6 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
     } while (currentNode.values.isEmpty() && currentNode.children.isEmpty())
   }
 
-  //fun update(oldPath: String, newPath: String, entity: PEntityData<out TypedEntity>) {
   internal fun update(oldPath: String, newPath: String, entityId: Int) {
     val latestPathNode = findLatestFilePathNode(oldPath)
     if (latestPathNode == null || !latestPathNode.values.contains(entityId)) return

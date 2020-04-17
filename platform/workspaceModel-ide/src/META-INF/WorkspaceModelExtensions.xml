@@ -11,6 +11,7 @@
 
     <cachesInvalidator implementation="com.intellij.workspace.ide.WorkspaceModelCachesInvalidator"/>
 
+    <projectService serviceImplementation="com.intellij.workspace.ide.VirtualFileUrlManagerImpl" />
     <projectServiceContainerCustomizer implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent$MyProjectServiceContainerInitializedListener"/>
 
