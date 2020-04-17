@@ -50,7 +50,7 @@ public class ExceptionWorker {
   private String myMethod;
   private ParsedLine myInfo;
   private final ExceptionInfoCache myCache;
-  private Predicate<PsiElement> myLocationRefiner;
+  private ExceptionLineRefiner myLocationRefiner;
 
   public ExceptionWorker(@NotNull ExceptionInfoCache cache) {
     myProject = cache.getProject();
@@ -61,7 +61,7 @@ public class ExceptionWorker {
     return execute(line, textEndOffset, null);
   }
 
-  public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable Predicate<PsiElement> elementMatcher) {
+  public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable ExceptionLineRefiner elementMatcher) {
     myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null || myProject.isDisposed()) {
@@ -93,7 +93,7 @@ public class ExceptionWorker {
     int highlightEndOffset = textStartOffset + myInfo.fileLineRange.getEndOffset();
 
     List<VirtualFile> virtualFiles = new ArrayList<>(myClassResolveInfo.myClasses.keySet());
-    TextAttributes attributes = myClassResolveInfo.getLinkAttributes();
+    TextAttributes attributes = ExceptionInfoCache.ClassResolveInfo.getLinkAttributes(myClassResolveInfo.myInLibrary);
     ToIntFunction<PsiFile> columnFinder =
       elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
     HyperlinkInfo linkInfo =
@@ -112,7 +112,7 @@ public class ExceptionWorker {
     return result;
   }
 
-  public Predicate<PsiElement> getLocationRefiner() {
+  public ExceptionLineRefiner getLocationRefiner() {
     return myLocationRefiner;
   }
 
@@ -309,7 +309,7 @@ public class ExceptionWorker {
     } 
   }
   
-  private static class StackFrameMatcher implements Predicate<PsiElement> {
+  private static class StackFrameMatcher implements ExceptionLineRefiner {
     private final String myMethodName;
     private final String myClassName;
     private final boolean myHasDollarInName;
@@ -394,7 +394,7 @@ public class ExceptionWorker {
     }
   }
 
-  private static class FunctionCallMatcher implements Predicate<PsiElement> {
+  private static class FunctionCallMatcher implements ExceptionLineRefiner {
     @Override
     public boolean test(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return false;

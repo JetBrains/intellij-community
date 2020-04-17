@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +17,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ExceptionInfo {
+class ExceptionInfo {
   private static final Pattern AIOOBE_MESSAGE = Pattern.compile("(?:Index )?(\\d{1,9})(?: out of bounds for length \\d+)?");
   private static final Pattern CCE_MESSAGE = Pattern.compile("(?:class )?(\\S+) cannot be cast to (?:class )?(\\S+)(?: \\(.+\\))?");
   // See JEP 358 Helpful NullPointerExceptions for details
@@ -46,41 +45,35 @@ public class ExceptionInfo {
     myExceptionMessage = exceptionMessage;
   }
 
-  @NotNull ExceptionInfo withMessage(@Nullable String message) {
+  @NotNull ExceptionInfo adjust(@Nullable String message, int offset) {
     message = StringUtil.notNullize(message);
-    return message.equals(myExceptionMessage) ? this : new ExceptionInfo(myClassNameOffset, myExceptionClassName, message);
+    return new ExceptionInfo(myClassNameOffset + offset, myExceptionClassName, message);
   }
-
-  /**
-   * @param cache cache to use
-   * @param offset line start offset
-   * @return a hyperlink to exception class; null if class cannot be resolved
-   */
-  @Nullable Filter.Result makeClassLink(ExceptionInfoCache cache, int offset) {
-    ExceptionInfoCache.ClassResolveInfo info = cache.resolveClass(getExceptionClassName());
-    if (info.myClasses.isEmpty()) return null;
-    TextAttributes attributes = info.getLinkAttributes();
-    HyperlinkInfo hyperlink = HyperlinkInfoFactory.getInstance().createMultiplePsiElementHyperlinkInfo(info.myClasses);
-    int base = myClassNameOffset + offset;
-    return new Filter.Result(base, base + getExceptionClassName().length(), hyperlink, attributes, attributes);
-  }
-
 
   /**
    * @return a predicate that matches an element within the source line that is likely an exception source
    */
-  @NotNull Predicate<PsiElement> getPositionRefiner() {
-    Predicate<PsiElement> exceptionCreationFilter = e -> {
-      // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
-      if (!(e instanceof PsiKeyword) || !(e.textMatches(PsiKeyword.NEW))) return false;
-      PsiNewExpression newExpression = ObjectUtils.tryCast(e.getParent(), PsiNewExpression.class);
-      if (newExpression == null) return false;
-      PsiType type = newExpression.getType();
-      return type != null && type.equalsToText(getExceptionClassName());
+  @NotNull ExceptionLineRefiner getPositionRefiner() {
+    Predicate<PsiElement> specificFilter = getExceptionSpecificFilter();
+    return new ExceptionLineRefiner() {
+      @Override
+      public boolean test(PsiElement element) {
+        // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
+        if (element instanceof PsiKeyword && element.textMatches(PsiKeyword.NEW)) {
+          PsiNewExpression newExpression = ObjectUtils.tryCast(element.getParent(), PsiNewExpression.class);
+          if (newExpression != null) {
+            PsiType type = newExpression.getType();
+            if (type != null && type.equalsToText(getExceptionClassName())) return true;
+          }
+        }
+        return specificFilter != null && specificFilter.test(element);
+      }
+
+      @Override
+      public ExceptionInfo getExceptionInfo() {
+        return ExceptionInfo.this;
+      }
     };
-    Predicate<PsiElement> specificFilter = this.getExceptionSpecificFilter();
-    if (specificFilter == null) return exceptionCreationFilter;
-    return exceptionCreationFilter.or(specificFilter);
   }
 
   @Nullable
@@ -369,7 +362,7 @@ public class ExceptionInfo {
   }
 
   @Nullable
-  public static ExceptionInfo parseMessage(String line) {
+  public static ExceptionInfo parseMessage(String line, int textEndOffset) {
     int firstSpace = line.indexOf(' ');
     int colonPos = -1;
     ExceptionInfo info = null;
@@ -397,7 +390,7 @@ public class ExceptionInfo {
     }
     if (info == null) return null;
     String message = colonPos == -1 ? null : line.substring(colonPos + 1).trim();
-    return info.withMessage(message);
+    return info.adjust(message, textEndOffset - line.length());
   }
 
   private static int getLength(String line) {

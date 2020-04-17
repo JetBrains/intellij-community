@@ -16,15 +16,15 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Predicate;
+import java.util.Collections;
+import java.util.List;
 
 public class ExceptionFilter implements Filter, DumbAware {
-  private final ExceptionInfoCache myCache;
-  private Predicate<PsiElement> myNextLineRefiner;
+  final ExceptionInfoCache myCache;
+  private ExceptionLineRefiner myNextLineRefiner;
 
   public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
     myCache = new ExceptionInfoCache(scope);
@@ -35,12 +35,24 @@ public class ExceptionFilter implements Filter, DumbAware {
     ExceptionWorker worker = new ExceptionWorker(myCache);
     Result result = worker.execute(line, textEndOffset, myNextLineRefiner);
     if (result == null) {
-      ExceptionInfo exceptionInfo = ExceptionInfo.parseMessage(line);
-      if (exceptionInfo == null) return null;
-      myNextLineRefiner = exceptionInfo.getPositionRefiner();
-      return exceptionInfo.makeClassLink(myCache, textEndOffset - line.length());
+      ExceptionInfo exceptionInfo = ExceptionInfo.parseMessage(line, textEndOffset);
+      myNextLineRefiner = exceptionInfo == null ? null : exceptionInfo.getPositionRefiner();
+      return null;
     }
+    ExceptionInfo prevLineException = myNextLineRefiner == null ? null : myNextLineRefiner.getExceptionInfo();
     myNextLineRefiner = worker.getLocationRefiner();
+    if (prevLineException != null) {
+      List<ResultItem> exceptionResults = getExceptionClassNameItems(prevLineException);
+      if (!exceptionResults.isEmpty()) {
+        exceptionResults.add(result);
+        return new Result(exceptionResults);
+      }
+    }
     return result;
+  }
+
+  @NotNull
+  List<ResultItem> getExceptionClassNameItems(ExceptionInfo prevLineException) {
+    return Collections.emptyList();
   }
 }

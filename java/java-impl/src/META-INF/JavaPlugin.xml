@@ -270,6 +270,8 @@
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
+    
+    <extensionPoint qualifiedName="com.intellij.jvm.exceptionFilter" interface="com.intellij.execution.filters.JvmExceptionOccurrenceFilter"/>
 
   </extensionPoints>
 
@@ -714,6 +716,8 @@
     <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
 
     <consoleFilterProvider implementation="com.intellij.debugger.impl.attach.JavaDebuggerConsoleFilterProvider"/>
+    <jvm.exceptionFilter implementation="com.intellij.debugger.impl.attach.JavaDebuggerAddExceptionBreakpointFilter"/>
+    <jvm.exceptionFilter implementation="com.intellij.execution.filters.NavigateToExceptionClassFilter"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>

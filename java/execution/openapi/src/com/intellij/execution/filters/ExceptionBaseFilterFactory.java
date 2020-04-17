@@ -22,6 +22,6 @@ public class ExceptionBaseFilterFactory implements ExceptionFilterFactory {
   @NotNull
   @Override
   public Filter create(@NotNull GlobalSearchScope searchScope) {
-    return new ExceptionFilter(searchScope);
+    return new AdvancedExceptionFilter(searchScope);
   }
 }

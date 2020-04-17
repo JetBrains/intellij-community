@@ -22,8 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.function.ToIntFunction;
 
 public abstract class HyperlinkInfoFactory {
@@ -51,11 +51,11 @@ public abstract class HyperlinkInfoFactory {
                                                                  ToIntFunction<? super PsiFile> columnFinder);
 
   /**
-   * Creates a hyperlink that points to several files with ability to navigate to specific element within the file
+   * Creates a hyperlink that points to elements with ability to navigate to specific element within the file
    * 
-   * @param fileToElement map from files to elements
+   * @param elements elements list
    * @return newly create HyperlinkInfo that navigates to given psi elements
    */
   @NotNull
-  public abstract HyperlinkInfo createMultiplePsiElementHyperlinkInfo(@NotNull Map<? extends VirtualFile, ? extends PsiElement> fileToElement);
+  public abstract HyperlinkInfo createMultiplePsiElementHyperlinkInfo(@NotNull Collection<? extends PsiElement> elements);
 }

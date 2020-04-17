@@ -82,9 +82,9 @@ public class ExceptionInfoCache {
       myInLibrary = library;
     }
 
-    TextAttributes getLinkAttributes() {
+    static TextAttributes getLinkAttributes(boolean inLibrary) {
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
-      if (myInLibrary) {
+      if (inLibrary) {
         Color libTextColor = UIUtil.getInactiveTextColor();
         attributes = attributes.clone();
         attributes.setForegroundColor(libTextColor);
