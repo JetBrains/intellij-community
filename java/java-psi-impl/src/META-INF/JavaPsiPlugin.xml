@@ -32,7 +32,7 @@
     <extensionPoint qualifiedName="com.intellij.customJavadocTagProvider" interface="com.intellij.psi.javadoc.CustomJavadocTagProvider"/>
     <extensionPoint qualifiedName="com.intellij.javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
     <extensionPoint qualifiedName="com.intellij.importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
-    <extensionPoint qualifiedName="com.intellij.javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
+    <extensionPoint qualifiedName="com.intellij.javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
