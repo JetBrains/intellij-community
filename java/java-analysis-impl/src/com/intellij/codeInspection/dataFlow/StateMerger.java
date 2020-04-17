@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -22,8 +22,8 @@ import java.util.*;
  */
 class StateMerger {
   private static final int COMPLEXITY_LIMIT = 250000;
-  private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
-  private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
+  private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = new IdentityHashMap<>();
+  private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = new IdentityHashMap<>();
 
   @Nullable
   List<DfaMemoryStateImpl> mergeByFacts(@NotNull List<DfaMemoryStateImpl> states) {
@@ -190,7 +190,7 @@ class StateMerger {
   }
 
   private @NotNull DfaMemoryStateImpl copyWithoutVar(@NotNull DfaMemoryStateImpl state, @NotNull DfaVariableValue var) {
-    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.computeIfAbsent(state, k -> ContainerUtil.newIdentityHashMap());
+    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.computeIfAbsent(state, k -> new IdentityHashMap<>());
     DfaMemoryStateImpl copy = map.get(var);
     if (copy == null) {
       copy = state.createCopy();
@@ -395,7 +395,7 @@ class StateMerger {
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
       DfType dfType = state.getDfType(myVar);
-      if (dfType instanceof DfConstantType || 
+      if (dfType instanceof DfConstantType ||
           dfType instanceof DfAntiConstantType && ((DfAntiConstantType<?>)dfType).getNotValues().size() == 1) {
         state.flushVariable(myVar);
         if (myArg.getDfType() == DfTypes.NULL) {

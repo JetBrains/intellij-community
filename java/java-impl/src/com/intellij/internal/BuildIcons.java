@@ -8,13 +8,14 @@ package com.intellij.internal;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -50,8 +51,8 @@ public class BuildIcons {
     System.out.println("Total icons: " + total);
   }
 
-  private static final Set<String> IMAGE_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY,
-                                                                                "png", "gif", "jpg", "jpeg");
+  private static final Set<String> IMAGE_EXTENSIONS =
+    new THashSet<>(Arrays.asList("png", "gif", "jpg", "jpeg"), FileUtil.PATH_HASHING_STRATEGY);
 
   private static void walk(File root, MultiMap<Couple<Integer>, String> dimToPath, File file) throws IOException {
     if (file.isDirectory()) {

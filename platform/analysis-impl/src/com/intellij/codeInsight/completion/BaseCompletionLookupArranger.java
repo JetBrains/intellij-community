@@ -77,7 +77,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @Override
   public synchronized Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
                                                                             boolean hideSingleValued) {
-    Map<LookupElement, List<Pair<String, Object>>> map = ContainerUtil.newIdentityHashMap();
+    Map<LookupElement, List<Pair<String, Object>>> map = new IdentityHashMap<>();
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(items);
     int sorterNumber = 0;
     for (CompletionSorterImpl sorter : inputBySorter.keySet()) {

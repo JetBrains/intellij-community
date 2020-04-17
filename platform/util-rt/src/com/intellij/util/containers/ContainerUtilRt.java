@@ -16,7 +16,7 @@ import java.util.*;
  * Stripped-down version of {@link com.intellij.util.containers.ContainerUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
-public class ContainerUtilRt {
+public final class ContainerUtilRt {
   /**
    * @deprecated Use {@link HashMap#HashMap(int)}
    */
@@ -169,7 +169,7 @@ public class ContainerUtilRt {
    * A variant of {@link Collections#emptyList()},
    * except that {@link #toArray()} here does not create garbage {@code new Object[0]} constantly.
    */
-  private static class EmptyList<T> extends AbstractList<T> implements RandomAccess, Serializable {
+  private static final class EmptyList<T> extends AbstractList<T> implements RandomAccess, Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final EmptyList<?> INSTANCE = new EmptyList<Object>();
@@ -207,12 +207,14 @@ public class ContainerUtilRt {
     @NotNull
     @Override
     public Iterator<T> iterator() {
+      //noinspection deprecation
       return EmptyIterator.getInstance();
     }
 
     @NotNull
     @Override
     public ListIterator<T> listIterator() {
+      //noinspection deprecation
       return EmptyListIterator.getInstance();
     }
 

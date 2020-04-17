@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.bindings
 
 import com.intellij.psi.PsiElement
@@ -10,7 +8,6 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
@@ -22,14 +19,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.processStatements
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessDynamicProperties
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 private fun GroovyFile.getBindings(): ConcurrentMap<String, GrVariable> {
   return CachedValuesManager.getCachedValue(this) {
-    Result.create(
-      ContainerUtil.newConcurrentMap<String, GrVariable>(),
-      PsiModificationTracker.MODIFICATION_COUNT
-    )
+    Result.create(ConcurrentHashMap<String, GrVariable>(), PsiModificationTracker.MODIFICATION_COUNT)
   }
 }
 
@@ -57,8 +52,7 @@ internal fun GroovyFile.processBindings(processor: PsiScopeProcessor,
     val name = referenceName ?: return true
     if (hintName != null && name != hintName) return true
 
-    val resolved = if (place === this) null else resolve()
-    val binding = when (resolved) {
+    val binding = when (val resolved = if (place === this) null else resolve()) {
       null -> getBinding(name)
       is GrBindingVariable -> resolved
       else -> return true
@@ -66,10 +60,10 @@ internal fun GroovyFile.processBindings(processor: PsiScopeProcessor,
     return processor.execute(binding, state)
   }
 
-  return processStatements(lastParent?.nextSibling) {
-    when (it) {
-      is GrAssignmentExpression -> it.lValue.processLValue()
-      is GrTupleAssignmentExpression -> it.lValue.expressions.all { it.processLValue() }
+  return processStatements(lastParent?.nextSibling) { statement ->
+    when (statement) {
+      is GrAssignmentExpression -> statement.lValue.processLValue()
+      is GrTupleAssignmentExpression -> statement.lValue.expressions.all { it.processLValue() }
       else -> true
     }
   }

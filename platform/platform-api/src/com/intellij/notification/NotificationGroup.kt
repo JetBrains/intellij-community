@@ -7,13 +7,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts.*
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 private val LOG = logger<NotificationGroup>()
-private val registeredGroups: MutableMap<String, NotificationGroup> = ContainerUtil.newConcurrentMap()
-private val registeredTitles: MutableMap<String, String> = ContainerUtil.newConcurrentMap()
+private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
+private val registeredTitles: MutableMap<String, String> = ConcurrentHashMap()
 
 /**
  * Groups notifications and allows controlling display options in Settings.
@@ -32,8 +32,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
               @NonNls toolWindowId: String? = null,
-              icon: Icon? = null) : this(displayId, displayType, isLogByDefault, toolWindowId, icon, null) {
-  }
+              icon: Icon? = null) : this(displayId, displayType, isLogByDefault, toolWindowId, icon, null)
 
   var parentId: String? = null
     private set

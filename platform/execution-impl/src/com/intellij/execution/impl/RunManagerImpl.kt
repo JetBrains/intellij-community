@@ -46,6 +46,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -192,7 +193,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
     override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
-      val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
+      val result = ConcurrentHashMap<String, BeforeRunTaskProvider<*>>()
       for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensionList(project)) {
         result.put(provider.id.toString(), provider)
       }

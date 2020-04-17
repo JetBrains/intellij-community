@@ -19,7 +19,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.IntFunction;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class ContainerUtil extends ContainerUtilRt {
+@ApiStatus.NonExtendable
+// cannot be final because of https://plugins.jetbrains.com/plugin/7831-illuminated-cloud
+public class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
   @SafeVarargs
@@ -136,15 +138,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashMap<>(strategy);
   }
 
-  /**
-   * @deprecated Use {@link EnumMap#EnumMap(Class)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K extends Enum<K>, V> EnumMap<K, V> newEnumMap(@NotNull Class<K> keyType) {
-    return new EnumMap<>(keyType);
-  }
-
   @Contract(pure = true)
   public static @NotNull <T> TObjectHashingStrategy<T> canonicalStrategy() {
     //noinspection unchecked
@@ -157,7 +150,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return TObjectHashingStrategy.IDENTITY;
   }
 
-  @Contract(pure = true)
+  /**
+   * @deprecated Use {@link IdentityHashMap#IdentityHashMap()}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static @NotNull <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
     return new IdentityHashMap<>();
   }
@@ -378,7 +375,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
-    return copy(new LinkedHashSet<>(), elements);
+    return ContainerUtilRt.copy(new LinkedHashSet<>(), elements);
   }
 
   /**
@@ -422,6 +419,9 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashSet<>(Arrays.asList(elements));
   }
 
+  /**
+   * @deprecated Use {@link THashSet#THashSet(Collection, TObjectHashingStrategy)}
+   */
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, T @NotNull ... elements) {
@@ -2913,7 +2913,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return sb.toString();
   }
 
-  public static class KeyOrderedMultiMap<K extends Comparable<? super K>, V> extends MultiMap<K, V> {
+  public static final class KeyOrderedMultiMap<K extends Comparable<? super K>, V> extends MultiMap<K, V> {
     public KeyOrderedMultiMap() {
     }
 

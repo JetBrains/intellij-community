@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,8 @@ import javax.swing.*;
 import java.util.*;
 
 public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponentDescriptor {
-  private static final Set<String> NATIVE_LIBRARY_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY, "dll", "so", "dylib");
+  private static final Set<String> NATIVE_LIBRARY_EXTENSIONS =
+    new THashSet<>(Arrays.asList("dll", "so", "dylib"), FileUtil.PATH_HASHING_STRATEGY);
 
   public static final Condition<VirtualFile> LIBRARY_ROOT_CONDITION = file -> FileElement.isArchive(file) || isNativeLibrary(file);
 

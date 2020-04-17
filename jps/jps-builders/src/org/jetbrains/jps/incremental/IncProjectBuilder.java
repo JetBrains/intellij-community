@@ -749,7 +749,7 @@ public final class IncProjectBuilder {
           okToDelete = false;
         }
         else {
-          final Set<File> _outRoot = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY, outputRoot);
+          final Set<File> _outRoot = new THashSet<>(Arrays.asList(outputRoot), FileUtil.FILE_HASHING_STRATEGY);
           for (File srcRoot : allSourceRoots) {
             if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
               okToDelete = false;
