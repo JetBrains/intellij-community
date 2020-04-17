@@ -379,6 +379,24 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     int getEditorTextOffset() {
       return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
     }
+
+    @Override
+    public Dimension getPreferredSize() {
+      int gap = JBUI.scale(10);
+      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myEditor.getComponent());
+      Rectangle maxSize = new Rectangle(screenRectangle.width - gap, screenRectangle.height - gap);
+
+      Dimension size = super.getPreferredSize();
+      if (size.width > maxSize.width) {
+        size.width = maxSize.width;
+        // Space for horizontal scrollbar
+        size.height += JBUI.scale(20);
+      }
+      if (size.height > maxSize.height) {
+        size.height = maxSize.height;
+      }
+      return size;
+    }
   }
 
 
