@@ -275,13 +275,15 @@
     <extensionPoint name="cachesInvalidator" interface="com.intellij.ide.caches.CachesInvalidator" dynamic="true"/>
 
     <extensionPoint name="diff.DiffTool" interface="com.intellij.diff.DiffTool" dynamic="true"/>
-    <extensionPoint name="diff.merge.MergeTool" interface="com.intellij.diff.merge.MergeTool"/>
+    <extensionPoint name="diff.merge.MergeTool" interface="com.intellij.diff.merge.MergeTool" dynamic="true"/>
     <extensionPoint name="diff.DiffExtension" interface="com.intellij.diff.DiffExtension" dynamic="true"/>
-    <extensionPoint name="diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider"/>
-    <extensionPoint name="diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor"/>
+    <extensionPoint name="diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider" dynamic="true"/>
+    <extensionPoint name="diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
-    <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider" interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
+    <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="jbProtocolCommand" interface="com.intellij.openapi.application.JBProtocolCommand"/>
 

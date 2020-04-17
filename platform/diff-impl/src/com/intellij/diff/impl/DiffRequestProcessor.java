@@ -8,6 +8,7 @@ import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
+import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.tools.external.ExternalDiffTool;
@@ -125,6 +126,8 @@ public abstract class DiffRequestProcessor implements Disposable {
       updateAvailableDiffTools();
       updateRequest(true);
     }, this);
+    DiffToolSubstitutor.EP_NAME.addExtensionPointListener(() -> updateRequest(true), this);
+    DiffIgnoredRangeProvider.EP_NAME.addExtensionPointListener(() -> updateRequest(true), this);
 
     myToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
