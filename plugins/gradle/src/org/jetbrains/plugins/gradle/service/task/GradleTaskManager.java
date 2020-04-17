@@ -114,10 +114,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
             launcher.run();
 
           } else {
-            TestLauncher launcher = myHelper.getTestLauncher(id, connection, effectiveSettings, listener);
+            TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, effectiveSettings, listener);
             launcher.withCancellationToken(cancellationTokenSource.token());
-
-            launcher.withJvmTestClasses(findTestPatterns(effectiveSettings.getArguments()));
             launcher.run();
           }
 
@@ -138,17 +136,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
     }
     myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
-  }
-
-  private String findTestPatterns(List<String> arguments) {
-    Iterator<String> iter = arguments.iterator();
-    while (iter.hasNext()) {
-      String next = iter.next();
-      if ("--tests".equals(next)) {
-        return iter.next();
-      }
-    }
-    return "*";
   }
 
   protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
