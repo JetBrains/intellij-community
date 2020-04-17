@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.SystemProperties
 
 /**
  * @author yole
@@ -19,7 +20,7 @@ private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugin
 
 class DynamicPluginVfsListener : AsyncFileListener {
   init {
-    if (System.getProperty(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) != null) {
+    if (SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
       val pluginsPath = PathManager.getPluginsPath()
       LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)
       val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(pluginsPath)
@@ -31,7 +32,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
   }
 
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (System.getProperty(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) == null) return null
+    if (SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return null
 
     val pluginsToReload = hashSetOf<IdeaPluginDescriptorImpl>()
     for (event in events) {
@@ -78,7 +79,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
 
 class DynamicPluginsFrameStateListener : FrameStateListener {
   override fun onFrameActivated() {
-    if (System.getProperty(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) == null) return
+    if (!SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return
 
     val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())
     pluginsRoot?.refresh(true, true)
