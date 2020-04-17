@@ -126,6 +126,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Project project = e.getData(CommonDataKeys.PROJECT);
       assert project != null;
       final Configuration configuration = dialog.getConfiguration();
+      configuration.setOrder(0); // reset
       if (!createNewInspection(configuration, project, profile)) {
         return;
       }
