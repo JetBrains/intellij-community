@@ -21,18 +21,23 @@
     <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlarger"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameFxIdFieldProcessor" order="first"/>
 
-    <localInspection language="XML" shortName="JavaFxDefaultTag" displayName="Unnecessary default tag" groupName="JavaFX"
-                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"/>
-    <localInspection language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection" displayName="Unresolved fx:id attribute reference" 
-                     enabledByDefault="true" level="WARNING" groupName="JavaFX"/>
+    <localInspection language="XML" shortName="JavaFxDefaultTag" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"
+                     key="inspection.java.fx.default.tag.display.name"/>
+    <localInspection language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection"
+                     enabledByDefault="true" level="WARNING" groupName="JavaFX"
+                     key="inspection.java.fx.unresolved.fx.id.reference.display.name"/>
     <localInspection language="XML" shortName="JavaFxUnusedImports" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection"
-                         enabledByDefault="true" level="WARNING" displayName="JavaFX unused imports" groupName="JavaFX"/>
+                     enabledByDefault="true" level="WARNING" groupName="JavaFX" key="inspection.java.fx.unused.imports.display.name"/>
     <localInspection language="XML" shortName="JavaFxRedundantPropertyValue" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundantPropertyValueInspection"
-                         enabledByDefault="true" level="WARNING" displayName="JavaFX redundant property values" groupName="JavaFX"/>
-    <localInspection language="XML" shortName="JavaFxColorRgb" displayName="Color component is out of range" groupName="JavaFX"
-                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection"/>
-    <localInspection language="XML" shortName="JavaFxEventHandler" displayName="Event handler method signature problems" groupName="JavaFX"
-                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"/>
+                     enabledByDefault="true" level="WARNING" groupName="JavaFX"
+                     key="inspection.java.fx.redundant.property.value.display.name"/>
+    <localInspection language="XML" shortName="JavaFxColorRgb" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection"
+                     key="inspection.java.fx.color.rgb.display.name"/>
+    <localInspection language="XML" shortName="JavaFxEventHandler" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"
+                     key="inspection.java.fx.event.handler.display.name"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
     <applicationConfigurable groupId="language"
@@ -81,7 +86,7 @@
   </extensions>
 
   <actions>
-    <action class="org.jetbrains.plugins.javaFX.actions.OpenInSceneBuilderAction" id="OpenInSceneBuilder" text="Open In SceneBuilder">
+    <action class="org.jetbrains.plugins.javaFX.actions.OpenInSceneBuilderAction" id="OpenInSceneBuilder">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
@@ -90,4 +95,5 @@
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
   </actions>
+  <resource-bundle>messages.JavaFXBundle</resource-bundle>
 </idea-plugin>
