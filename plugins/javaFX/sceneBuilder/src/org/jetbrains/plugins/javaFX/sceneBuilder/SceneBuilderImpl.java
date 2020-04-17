@@ -32,10 +32,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
-import com.oracle.javafx.scenebuilder.kit.editor.panel.content.ContentPanelController;
-import com.oracle.javafx.scenebuilder.kit.editor.panel.hierarchy.treeview.HierarchyTreeViewController;
-import com.oracle.javafx.scenebuilder.kit.editor.panel.inspector.InspectorPanelController;
-import com.oracle.javafx.scenebuilder.kit.editor.panel.library.LibraryPanelController;
 import com.oracle.javafx.scenebuilder.kit.editor.selection.AbstractSelectionGroup;
 import com.oracle.javafx.scenebuilder.kit.editor.selection.ObjectSelectionGroup;
 import com.oracle.javafx.scenebuilder.kit.fxom.*;
@@ -45,14 +41,6 @@ import com.oracle.javafx.scenebuilder.kit.library.LibraryItem;
 import com.oracle.javafx.scenebuilder.kit.metadata.util.PropertyName;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.embed.swing.JFXPanel;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Orientation;
-import javafx.scene.Scene;
-import javafx.scene.SceneAntialiasing;
-import javafx.scene.control.SplitPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,19 +58,20 @@ import java.util.function.Predicate;
 /// Warning!
 /// It is loaded by SceneBuilderUtil to be compatible with 8 and 11 java
 public class SceneBuilderImpl implements SceneBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.AbstractSceneBuilder");
+  private static final Logger LOG = Logger.getInstance(SceneBuilderImpl.class);
   private static final PropertyName ourChildrenPropertyName = new PropertyName("children");
 
   private final URL myFileURL;
   private final Project myProject;
   private final EditorCallback myEditorCallback;
-  private final JFXPanel myPanel = new JFXPanel();
+  private final JComponent myPanel = JavaFXPlatformHelper.createJFXPanel();
+
   protected EditorController myEditorController;
   private URLClassLoader myClassLoader;
   private volatile Collection<CustomComponent> myCustomComponents;
   private volatile boolean mySkipChanges;
-  private ChangeListener<Number> myListener;
-  private ChangeListener<Number> mySelectionListener;
+  private Object myListener;
+  private Object mySelectionListener;
   private List<List<SelectionNode>> mySelectionState;
   @NotNull protected final ClassLoader myParentClassLoader;
 
@@ -92,14 +81,14 @@ public class SceneBuilderImpl implements SceneBuilder {
     myEditorCallback = editorCallback;
     myParentClassLoader = loader;
 
-    Platform.setImplicitExit(false);
+    JavaFXPlatformHelper.disableImplicitExit();
 
     final DumbService dumbService = DumbService.getInstance(myProject);
     if (dumbService.isDumb()) {
-      dumbService.smartInvokeLater(() -> Platform.runLater(this::create));
+      dumbService.smartInvokeLater(() -> JavaFXPlatformHelper.javafxInvokeLater(this::create));
     }
     else {
-      Platform.runLater(this::create);
+      JavaFXPlatformHelper.javafxInvokeLater(this::create);
     }
   }
 
@@ -111,34 +100,28 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     myEditorController = new EditorController();
     updateCustomLibrary();
-    HierarchyTreeViewController componentTree = new HierarchyTreeViewController(myEditorController);
-    ContentPanelController canvas = new ContentPanelController(myEditorController);
-    InspectorPanelController propertyTable = new InspectorPanelController(myEditorController);
-    LibraryPanelController palette = new LibraryPanelController(myEditorController);
-
-    SplitPane leftPane = new SplitPane();
-    leftPane.setOrientation(Orientation.VERTICAL);
-    leftPane.getItems().addAll(palette.getPanelRoot(), componentTree.getPanelRoot());
-    leftPane.setDividerPositions(0.5, 0.5);
-
-    SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
-    SplitPane.setResizableWithParent(propertyTable.getPanelRoot(), Boolean.FALSE);
-
-    SplitPane mainPane = new SplitPane();
-
-    mainPane.getItems().addAll(leftPane, canvas.getPanelRoot(), propertyTable.getPanelRoot());
-    mainPane.setDividerPositions(0.11036789297658862, 0.8963210702341137);
-
-    myPanel.setScene(new Scene(mainPane, myPanel.getWidth(), myPanel.getHeight(), true, SceneAntialiasing.BALANCED));
+    JavaFXPlatformHelper.setupJFXPanel(myPanel, myEditorController);
 
     loadFile();
-    startChangeListener();
+
+    myListener = JavaFXPlatformHelper.createChangeListener(() -> {
+      if (!mySkipChanges) {
+        myEditorCallback.saveChanges(myEditorController.getFxmlText());
+      }
+    });
+    mySelectionListener = JavaFXPlatformHelper.createChangeListener(() -> {
+      if (!mySkipChanges) {
+        mySelectionState = getSelectionState();
+      }
+    });
+
+    JavaFXPlatformHelper.addListeners(myEditorController, myListener, mySelectionListener);
   }
 
   private void updateCustomLibrary() {
     final URLClassLoader oldClassLoader = myClassLoader;
     myClassLoader = createProjectContentClassLoader(myProject, myParentClassLoader);
-    FXMLLoader.setDefaultClassLoader(myClassLoader);
+    JavaFXPlatformHelper.setDefaultClassLoader(myClassLoader);
 
     if (oldClassLoader != null) {
       try {
@@ -250,22 +233,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     return myPanel;
   }
 
-  private void startChangeListener() {
-    myListener = (observable, oldValue, newValue) -> {
-      if (!mySkipChanges) {
-        myEditorCallback.saveChanges(myEditorController.getFxmlText());
-      }
-    };
-    mySelectionListener = (observable, oldValue, newValue) -> {
-      if (!mySkipChanges) {
-        mySelectionState = getSelectionState();
-      }
-    };
-
-    myEditorController.getJobManager().revisionProperty().addListener(myListener);
-    myEditorController.getSelection().revisionProperty().addListener(mySelectionListener);
-  }
-
   @Override
   public boolean reload() {
     if (myCustomComponents == null) return false;
@@ -274,7 +241,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       .runReadActionInSmartMode(this::collectCustomComponents);
     if (!new THashSet<>(myCustomComponents).equals(new THashSet<>(customComponents))) return false;
 
-    Platform.runLater(() -> {
+    JavaFXPlatformHelper.javafxInvokeLater(() -> {
       if (myEditorController != null) {
         loadFile();
       }
@@ -284,22 +251,15 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   @Override
   public void close() {
-    Platform.runLater(this::closeImpl);
+    JavaFXPlatformHelper.javafxInvokeLater(this::closeImpl);
   }
 
   private void closeImpl() {
-    if (myEditorController != null) {
-      if (mySelectionListener != null) {
-        myEditorController.getSelection().revisionProperty().removeListener(mySelectionListener);
-      }
-      if (myListener != null) {
-        myEditorController.getJobManager().revisionProperty().removeListener(myListener);
-      }
-      myEditorController = null;
-    }
+    JavaFXPlatformHelper.removeListeners(myEditorController, myListener, mySelectionListener);
+    myEditorController = null;
     try {
       if (myClassLoader != null) {
-        FXMLLoader.setDefaultClassLoader(myParentClassLoader);
+        JavaFXPlatformHelper.setDefaultClassLoader(myParentClassLoader);
         myClassLoader.close();
         myClassLoader = null;
       }
