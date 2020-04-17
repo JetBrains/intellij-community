@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
@@ -140,7 +140,7 @@ public class GroovyBlockGenerator {
         elementType == GroovyTokenTypes.mREGEX_LITERAL ||
         elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       boolean isPlainGString = myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString();
-      final FormattingContext context = isPlainGString ? myContext.createContext(true) : myContext;
+      final FormattingContext context = isPlainGString ? myContext.createContext(true, true) : myContext.createContext(false, true);
 
       final ArrayList<Block> subBlocks = new ArrayList<>();
       ASTNode[] children = getGroovyChildren(myNode);
@@ -254,8 +254,8 @@ public class GroovyBlockGenerator {
       {
         Indent indent = getNormalIndent();
         ASTNode parameterListNode = closableBlock.getParameterList().getNode();
-        boolean forbidWrapping = shouldHandleAsSimpleClosure(closableBlock, settings);
-        FormattingContext closureContext = myContext.createContext(forbidWrapping);
+        boolean simpleClosure = shouldHandleAsSimpleClosure(closableBlock, settings);
+        FormattingContext closureContext = myContext.createContext(simpleClosure, simpleClosure);
         ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), closureContext);
         blocks.add(bodyBlock);
       }
@@ -272,8 +272,8 @@ public class GroovyBlockGenerator {
     if (blockPsi instanceof GrClosableBlock) {
       FormattingContext oldContext = myContext;
       try {
-        boolean forbidWrapping = shouldHandleAsSimpleClosure((GrClosableBlock)blockPsi, settings);
-        myContext = myContext.createContext(forbidWrapping);
+        boolean simpleClosure = shouldHandleAsSimpleClosure((GrClosableBlock)blockPsi, settings);
+        myContext = myContext.createContext(simpleClosure, simpleClosure);
         return generateCodeSubBlocks(visibleChildren(myNode));
       } finally {
         myContext = oldContext;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
@@ -869,6 +869,80 @@ print abc ? cde
   void testExtraLines() { doTest() }
 
   void testNoLineFeedsInGString() { doTest() }
+
+  void testNoLineFeedsInGString2() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    checkFormatting('''\
+println "--> ${value}"
+''', '''\
+println "--> ${value}"
+''')
+  }
+
+  void testNoLineFeedsInGString3() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    groovyCustomSettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES = true
+    checkFormatting('''\
+println "--> ${value}"
+''', '''\
+println "--> ${ value }"
+''')
+  }
+
+  void testNoLineFeedsInGString4() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    checkFormatting('''\
+println "--> ${{value}}"
+''', '''\
+println "--> ${{ value }}"
+''')
+  }
+
+  void testNoLineFeedsInGString5() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    groovyCustomSettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES = true
+    checkFormatting('''\
+println "--> ${{value}}"
+''', '''\
+println "--> ${ { value } }"
+''')
+  }
+
+  void testNoLineFeedsInGString6() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    checkFormatting('''\
+println "--> ${{it -> value}}"
+''', '''\
+println "--> ${{ it -> value }}"
+''')
+  }
+
+  void testNoLineFeedsInGStringMultiLine() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    checkFormatting('''\
+println """--> ${value}"""
+''', '''\
+println """--> ${value}"""
+''')
+  }
+
+  void testNoLineFeedsInGStringMultiLine2() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    checkFormatting('''\
+println """--> ${{value}}"""
+''', '''\
+println """--> ${{ value }}"""
+''')
+  }
+
+  void testNoLineFeedsInGStringUseFlyingGeeseBraces() {
+    groovyCustomSettings.USE_FLYING_GEESE_BRACES = true
+    checkFormatting('''\
+println "--> ${{value}}"
+''', '''\
+println "--> ${{ value }}"
+''')
+  }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
