@@ -20,7 +20,8 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.errorOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTextArea
@@ -79,13 +80,12 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
   override fun doOKAction() {
     val emptyProgressIndicator = EmptyProgressIndicator(ModalityState.stateForComponent(githubLoginPanel))
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
-    githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator).handleOnEdt { loginToken, throwable ->
-      if (throwable != null && !GithubAsyncUtil.isCancellation(throwable)) startTrackingValidation()
-      else {
-        login = loginToken.first
-        token = loginToken.second
-        close(OK_EXIT_CODE, true)
-      }
+    githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator).successOnEdt { (login, token) ->
+      this.login = login
+      this.token = token
+      close(OK_EXIT_CODE, true)
+    }.errorOnEdt {
+      if (!GithubAsyncUtil.isCancellation(it)) startTrackingValidation()
     }
   }
 

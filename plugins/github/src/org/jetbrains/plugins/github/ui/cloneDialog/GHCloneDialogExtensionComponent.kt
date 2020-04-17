@@ -416,13 +416,15 @@ internal class GHCloneDialogExtensionComponent(
               }
               errorPanel.repaint()
             }
-            val login = loginToken.first
-            val token = loginToken.second
-            if (account != null) {
-              authenticationManager.updateAccountToken(account, token)
-            }
-            else {
-              authenticationManager.registerAccount(login, getServer().host, token)
+            else if (loginToken != null) {
+              val login = loginToken.first
+              val token = loginToken.second
+              if (account != null) {
+                authenticationManager.updateAccountToken(account, token)
+              }
+              else {
+                authenticationManager.registerAccount(login, getServer().host, token)
+              }
             }
           }
       })

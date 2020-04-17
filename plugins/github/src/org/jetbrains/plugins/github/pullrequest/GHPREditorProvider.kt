@@ -82,7 +82,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     fun handleDetails() {
       dataProvider.detailsRequest.handleOnEdt(disposable) { pr, _ ->
-        detailsModel.value = pr
+        if (pr != null) detailsModel.value = pr
       }
     }
     dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {

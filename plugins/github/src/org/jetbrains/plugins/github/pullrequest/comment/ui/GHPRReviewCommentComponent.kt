@@ -122,9 +122,7 @@ object GHPRReviewCommentComponent {
       val text = StringUtil.repeatSymbol('\n', linesCount - 1)
 
       val model = GHPRSubmittableTextField.Model { newText ->
-        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
-          //comment.update(it)
-        }.handleOnEdt { _, _ ->
+        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).handleOnEdt { _, _ ->
           editorWrapper.setContent(null)
           editorWrapper.revalidate()
         }

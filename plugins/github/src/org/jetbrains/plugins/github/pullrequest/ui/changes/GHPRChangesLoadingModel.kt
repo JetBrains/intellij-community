@@ -54,7 +54,7 @@ class GHPRChangesLoadingModel(val commitsModel: GHPRCommitsModel,
       error = null
 
       updateFuture = dataProvider.changesProviderRequest.handleOnEdt { changesProvider, error ->
-        if (error == null) {
+        if (changesProvider != null) {
           commitsModel.commitsWithChanges = changesProvider.changesByCommits
           cumulativeChangesModel.changes = changesProvider.changes
           diffHelper.setUp(dataProvider, changesProvider)

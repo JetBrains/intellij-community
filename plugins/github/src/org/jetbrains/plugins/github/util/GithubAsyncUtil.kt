@@ -101,38 +101,41 @@ fun <T> ProgressManager.submitBackgroundTask(project: Project?,
   return future
 }
 
-fun <T> CompletableFuture<T>.handleOnEdt(parentDisposable: Disposable, handler: (T, Throwable?) -> Unit): CompletableFuture<Unit> {
+fun <T> CompletableFuture<T>.handleOnEdt(parentDisposable: Disposable, handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> {
   val handlerReference = AtomicReference(handler)
   Disposer.register(parentDisposable, Disposable {
     handlerReference.set(null)
   })
 
-  return handleAsync(BiFunction<T, Throwable?, Unit> { result: T, error: Throwable? ->
+  return handleAsync(BiFunction<T?, Throwable?, Unit> { result: T?, error: Throwable? ->
     handlerReference.get()?.invoke(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 }
 
-fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T, Throwable?) -> R): CompletableFuture<R> =
-  handleAsync(BiFunction<T, Throwable?, R> { result: T, error: Throwable? ->
+fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> R): CompletableFuture<R> =
+  handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
     handler(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 
 fun <T, R> CompletableFuture<T>.successAsync(executor: Executor, handler: (T) -> R): CompletableFuture<R> =
-  handleAsync(BiFunction<T, Throwable?, R> { result: T, error: Throwable? ->
-    if (error != null) throw extractError(error) else handler(result)
+  handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
+    @Suppress("UNCHECKED_CAST")
+    if (error != null) throw extractError(error) else handler(result as T)
   }, executor)
 
 fun <T, R> CompletableFuture<T>.successOnEdt(handler: (T) -> R): CompletableFuture<R> =
   successAsync(EDT_EXECUTOR, handler)
 
-fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> T): CompletableFuture<T> =
-  handleAsync(BiFunction<T, Throwable?, T> { result: T, error: Throwable? ->
+fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> Unit): CompletableFuture<T> =
+  handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
     if (error != null) {
       val actualError = extractError(error)
       if (isCancellation(actualError)) throw ProcessCanceledException()
       handler(actualError)
+      throw actualError
     }
-    result
+    @Suppress("UNCHECKED_CAST")
+    result as T
   }, EDT_EXECUTOR)
 
 val EDT_EXECUTOR = Executor { runnable -> runInEdt { runnable.run() } }

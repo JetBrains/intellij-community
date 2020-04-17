@@ -15,7 +15,9 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProviderUtil.futureOfMutableOnEDT
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
 class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService, private val pullRequestId: GHPRIdentifier)
@@ -92,15 +94,12 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService, p
                           diffLine: Int): CompletableFuture<out GHPullRequestReviewComment> {
     val future = reviewService.addComment(progressIndicator, pullRequestId, reviewId, body, commitSha, fileName,
                                           diffLine)
-    pendingReviewRequestValue.overrideProcess(future.handleOnEdt { result, error ->
-      if (error != null) {
-        ApplicationManager.getApplication().invokeLater {
-          pendingReviewRequestValue.drop()
-        }
-        throw ProcessCanceledException()
+    pendingReviewRequestValue.overrideProcess(future.errorOnEdt {
+      ApplicationManager.getApplication().invokeLater {
+        pendingReviewRequestValue.drop()
       }
-      result.pullRequestReview
-    })
+      throw ProcessCanceledException()
+    }.successOnEdt { it.pullRequestReview })
     return future
   }
 
@@ -114,7 +113,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService, p
     val future = reviewService.deleteComment(progressIndicator, pullRequestId, commentId)
 
     pendingReviewRequestValue.overrideProcess(future.handleOnEdt { result, error ->
-      if (error != null || (result.state != GHPullRequestReviewState.PENDING || result.comments.totalCount != 0)) {
+      if (error != null || (result?.state != GHPullRequestReviewState.PENDING || result.comments.totalCount != 0)) {
         ApplicationManager.getApplication().invokeLater {
           pendingReviewRequestValue.drop()
         }
