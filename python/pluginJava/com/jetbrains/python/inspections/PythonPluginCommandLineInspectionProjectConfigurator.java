@@ -84,7 +84,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
 
           Module m = ModuleUtilCore.findModuleForFile(f, project);
           if (m != null && FacetManager.getInstance(m).getFacetByType(facetType.getId()) == null) {
-            ApplicationManager.getApplication().runWriteAction(() -> {
+            ApplicationManager.getApplication().invokeAndWait(() -> {
               FacetManager.getInstance(m).addFacet(facetType, facetType.getPresentableName(), null);
             });
           }
