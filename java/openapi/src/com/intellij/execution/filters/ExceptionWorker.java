@@ -98,7 +98,7 @@ public class ExceptionWorker {
       elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
     HyperlinkInfo linkInfo =
       HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, myInfo.lineNumber - 1, myProject, columnFinder);
-    Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes, attributes);
     if (myMethod.startsWith("access$")) {
       myLocationRefiner = elementMatcher;
     }

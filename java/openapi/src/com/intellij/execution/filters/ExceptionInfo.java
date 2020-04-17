@@ -62,7 +62,7 @@ public class ExceptionInfo {
     TextAttributes attributes = info.getLinkAttributes();
     HyperlinkInfo hyperlink = HyperlinkInfoFactory.getInstance().createMultiplePsiElementHyperlinkInfo(info.myClasses);
     int base = myClassNameOffset + offset;
-    return new Filter.Result(base, base + getExceptionClassName().length(), hyperlink, attributes);
+    return new Filter.Result(base, base + getExceptionClassName().length(), hyperlink, attributes, attributes);
   }
 
 
