@@ -23,7 +23,7 @@ class ImlSerializationTest {
 
   private fun serializationRoundTrip(projectFile: File) {
     val storageBuilder = TypedEntityStorageBuilder.create()
-    loadProject(projectFile.asStoragePlace(), storageBuilder)
+    loadProject(projectFile.asConfigLocation(), storageBuilder)
     val storage = storageBuilder.toStorage()
     val byteArray = verifySerializationRoundTrip(storage)
     println("Serialized size: ${byteArray.size}")

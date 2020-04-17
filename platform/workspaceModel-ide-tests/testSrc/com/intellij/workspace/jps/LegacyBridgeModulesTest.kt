@@ -27,7 +27,7 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
-import com.intellij.workspace.ide.storagePlace
+import com.intellij.workspace.ide.configLocation
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.virtualFileUrl
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -232,7 +232,7 @@ class LegacyBridgeModulesTest {
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
-        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, project.storagePlace!!))
+        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, project.configLocation!!))
       }
 
       assertNotNull(moduleManager.findModuleByName("name"))
@@ -240,7 +240,7 @@ class LegacyBridgeModulesTest {
       projectModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.removeEntity(moduleEntity)
-        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, project.storagePlace!!))
+        it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, project.configLocation!!))
       }
 
       assertEquals(1, moduleManager.modules.size)
@@ -309,11 +309,11 @@ class LegacyBridgeModulesTest {
       val moduleDirUrl = File(project.basePath).toVirtualFileUrl()
       val projectModel = WorkspaceModel.getInstance(project)
 
-      val projectPlace = project.storagePlace!!
+      val projectLocation = project.configLocation!!
 
       projectModel.updateProjectModel {
-        val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectPlace))
-        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(), false, "", JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectPlace))
+        val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+        it.addSourceRootEntity(moduleEntity, dir.toVirtualFileUrl(), false, "", JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
       }
 
       val module = moduleManager.findModuleByName("name")
@@ -385,8 +385,8 @@ class LegacyBridgeModulesTest {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
     val iprFile = File(tempDir, "testProject.ipr")
-    val storagePlace = iprFile.asStoragePlace()
-    val source = JpsFileEntitySource.FileInDirectory(storagePlace.baseDirectoryUrl, storagePlace)
+    val configLocation = iprFile.asConfigLocation()
+    val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
@@ -432,7 +432,7 @@ class LegacyBridgeModulesTest {
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(iprFile.asStoragePlace())
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(iprFile.asConfigLocation())
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {

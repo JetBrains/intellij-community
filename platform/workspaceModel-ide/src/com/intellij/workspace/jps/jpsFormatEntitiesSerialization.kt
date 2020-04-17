@@ -3,7 +3,7 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsProjectStoragePlace
+import com.intellij.workspace.ide.JpsProjectConfigLocation
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 
@@ -86,10 +86,10 @@ interface JpsProjectSerializers {
     fun createSerializers(entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
                           directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                           fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
-                          storagePlace: JpsProjectStoragePlace,
+                          configLocation: JpsProjectConfigLocation,
                           reader: JpsFileContentReader,
                           externalStorageMapping: JpsExternalStorageMapping): JpsProjectSerializers {
-      return JpsProjectSerializersImpl(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, storagePlace,
+      return JpsProjectSerializersImpl(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, configLocation,
                                        externalStorageMapping)
     }
   }

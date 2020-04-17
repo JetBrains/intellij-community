@@ -5,7 +5,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsProjectStoragePlace
+import com.intellij.workspace.ide.JpsProjectConfigLocation
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
@@ -44,10 +44,10 @@ class ImlReplaceBySourceTest {
       </module>
     """.trimIndent())
 
-    val storagePlace = JpsProjectStoragePlace.DirectoryBased(temp.root.toVirtualFileUrl())
+    val configLocation = JpsProjectConfigLocation.DirectoryBased(temp.root.toVirtualFileUrl())
 
     val builder = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(moduleFile, storagePlace, builder)
+    JpsProjectEntitiesLoader.loadModule(moduleFile, configLocation, builder)
 
     moduleFile.writeText("""
       <module type="JAVA_MODULE" version="4">
@@ -66,7 +66,7 @@ class ImlReplaceBySourceTest {
 
     val replaceWith = TypedEntityStorageBuilder.create()
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
-    JpsProjectEntitiesLoader.loadModule(moduleFile, source, storagePlace, replaceWith)
+    JpsProjectEntitiesLoader.loadModule(moduleFile, source, configLocation, replaceWith)
 
     val before = builder.toStorage()
 
@@ -86,10 +86,10 @@ class ImlReplaceBySourceTest {
 
   private fun replaceBySourceFullReplace(projectFile: File) {
     val storageBuilder1 = TypedEntityStorageBuilder.create()
-    val data = loadProject(projectFile.asStoragePlace(), storageBuilder1)
+    val data = loadProject(projectFile.asConfigLocation(), storageBuilder1)
 
     val storageBuilder2 = TypedEntityStorageBuilder.create()
-    val reader = CachingJpsFileContentReader(projectFile.asStoragePlace().baseDirectoryUrlString)
+    val reader = CachingJpsFileContentReader(projectFile.asConfigLocation().baseDirectoryUrlString)
     data.loadAll(reader, storageBuilder2)
 
     //println(storageBuilder1.toGraphViz())

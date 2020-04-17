@@ -15,7 +15,7 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
-import com.intellij.workspace.ide.JpsProjectStoragePlace
+import com.intellij.workspace.ide.JpsProjectConfigLocation
 import gnu.trove.TIntObjectHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -28,7 +28,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                 fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
                                 reader: JpsFileContentReader,
                                 private val entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
-                                private val storagePlace: JpsProjectStoragePlace,
+                                private val configLocation: JpsProjectConfigLocation,
                                 private val externalStorageMapping: JpsExternalStorageMapping) : JpsProjectSerializers {
   internal val serializerToFileFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsFileSerializerFactory<*>>()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
@@ -57,7 +57,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   internal val fileSerializerFactoriesByUrl = fileSerializerFactories.associateBy { it.fileUrl }
 
   private fun createFileInDirectorySource(directoryUrl: VirtualFileUrl, fileName: String): JpsFileEntitySource.FileInDirectory {
-    val source = JpsFileEntitySource.FileInDirectory(directoryUrl, storagePlace)
+    val source = JpsFileEntitySource.FileInDirectory(directoryUrl, configLocation)
     fileIdToFileName.put(source.fileNameId, fileName)
     return source
   }

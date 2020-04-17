@@ -47,7 +47,7 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
 
   override fun createEntitySource(libraryTag: Element): EntitySource {
     val externalSystemId = libraryTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
-    val internalEntitySource = JpsFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectPlace)
+    val internalEntitySource = JpsFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectLocation)
     if (externalSystemId == null) return internalEntitySource
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }

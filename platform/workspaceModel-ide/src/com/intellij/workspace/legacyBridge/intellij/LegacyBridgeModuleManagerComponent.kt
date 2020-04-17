@@ -408,7 +408,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     val moduleFile = File(filePath)
 
     WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-      JpsProjectEntitiesLoader.loadModule(moduleFile, project.storagePlace!!, builder)
+      JpsProjectEntitiesLoader.loadModule(moduleFile, project.configLocation!!, builder)
     }
 
     return findModuleByName(moduleName)

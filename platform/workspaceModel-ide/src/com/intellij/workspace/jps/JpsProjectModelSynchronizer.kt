@@ -9,7 +9,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.module.impl.AutomaticModuleUnloader
@@ -54,7 +53,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       project.messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
           if (project === this@JpsProjectModelSynchronizer.project) {
-            loadInitialProject(project.storagePlace!!)
+            loadInitialProject(project.configLocation!!)
           }
         }
       })
@@ -124,12 +123,12 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     })
   }
 
-  internal fun loadInitialProject(storagePlace: JpsProjectStoragePlace) {
+  internal fun loadInitialProject(configLocation: JpsProjectConfigLocation) {
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
-    val baseDirUrl = storagePlace.baseDirectoryUrlString
+    val baseDirUrl = configLocation.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
     val externalStoragePath = project.getExternalConfigurationDir()
-    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, externalStoragePath, false)
+    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false)
     this.serializers.set(serializers)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()

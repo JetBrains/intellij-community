@@ -8,17 +8,14 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.storagePlace
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 
