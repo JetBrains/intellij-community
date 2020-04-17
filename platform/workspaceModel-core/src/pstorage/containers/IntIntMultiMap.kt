@@ -396,7 +396,7 @@ internal sealed class AbstractIntIntMultiMap {
 
     protected abstract fun getIterator(): IntIterator
 
-    fun forEach(action: (Int) -> Unit) {
+    inline fun forEach(action: (Int) -> Unit) {
       val iterator = getIterator()
       while (iterator.hasNext()) action(iterator.nextInt())
     }
