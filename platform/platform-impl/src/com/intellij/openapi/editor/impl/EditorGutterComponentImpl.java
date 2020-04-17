@@ -209,9 +209,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void installDnD() {
     DnDSupport.createBuilder(this)
       .setBeanProvider(info -> {
-        final GutterMark renderer = getGutterRenderer(info.getPoint());
-        if (renderer instanceof GutterIconRenderer &&
-            ((GutterIconRenderer)renderer).getDraggableObject() != null &&
+        final GutterIconRenderer renderer = getGutterRenderer(info.getPoint());
+        if (renderer != null &&
+            renderer.getDraggableObject() != null &&
             (info.isCopy() || info.isMove())) {
           myDnDInProgress = true;
           return new DnDDragStartBean(renderer);
