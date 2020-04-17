@@ -205,7 +205,7 @@ fi
 # ---------------------------------------------------------------------
 IFS="$(printf '\n\t')"
 # shellcheck disable=SC2086
-"$JAVA_BIN" \
+exec "$JAVA_BIN" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___product_uc___%p.log" \
