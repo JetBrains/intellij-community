@@ -201,7 +201,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     String textToDisplay = colorizeSeparators(dressedText);
-    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true).setEagerWrap(true),
+    JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true),
                                                         hintHint, layeredPane, limitWidthToScreen);
     editorPane.putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
     hintHint.setContentActive(isContentAction(dressedText));
