@@ -183,8 +183,11 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
           InspectionToolWrapper toolWrapper = toolDescr.getTool();
           InspectionToolResultExporter presentation = getPresentation(toolWrapper);
           if (presentation instanceof AggregateResultsExporter) {
-            toolsWithResultsToAggregate.add(sameTools);
-            break;
+            presentation.updateContent();
+            if (presentation.hasReportedProblems()) {
+              toolsWithResultsToAggregate.add(sameTools);
+              break;
+            }
           }
           if (toolWrapper instanceof LocalInspectionToolWrapper) {
             hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultFile(outputDir, toolWrapper.getShortName()));
