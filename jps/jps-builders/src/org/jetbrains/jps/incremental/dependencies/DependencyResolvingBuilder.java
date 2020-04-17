@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -37,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -55,15 +55,13 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     super(BuilderCategory.INITIAL);
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return NAME;
   }
 
@@ -96,8 +94,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return ExitCode.OK;
   }
 
-  @NotNull
-  static ExitCode reportError(CompileContext context, String placePresentableName, Exception error) {
+  static @NotNull ExitCode reportError(CompileContext context, String placePresentableName, Exception error) {
     final StringBuilder builder = new StringBuilder().append("Error resolving dependencies for ").append(placePresentableName);
     Throwable th = error;
     final Set<Throwable> processed = new HashSet<>();
@@ -214,11 +211,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
 
     static void init(CompileContext context) {
-      context.putUserData(CONTEXT_KEY, ContainerUtil.newConcurrentMap());
+      context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard>());
     }
 
-    @NotNull
-    static ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
+    static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
       final ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard> map = context.getUserData(CONTEXT_KEY);
       assert map != null;
       final ResourceGuard g = new ResourceGuard();
@@ -227,8 +223,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
   }
 
-  @NotNull
-  private static Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> getRepositoryLibraries(Collection<? extends JpsModule> modules) {
+  private static @NotNull Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> getRepositoryLibraries(Collection<? extends JpsModule> modules) {
     final Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> result = new SmartHashSet<>();
     for (JpsModule module : modules) {
       for (JpsDependencyElement dep : module.getDependenciesList().getDependencies()) {
@@ -270,8 +265,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return manager;
   }
 
-  @NotNull
-  private static File getLocalRepoDir(CompileContext context) {
+  private static @NotNull File getLocalRepoDir(CompileContext context) {
     final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(context.getProjectDescriptor().getModel().getGlobal());
     final String localRepoPath = pvConfig != null? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
     if (localRepoPath != null) {

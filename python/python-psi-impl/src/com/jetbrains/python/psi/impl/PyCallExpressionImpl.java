@@ -58,6 +58,6 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return PyCallExpressionHelper.getCallType(this, context);
+    return PyCallExpressionHelper.getCallType(this, context, key);
   }
 }

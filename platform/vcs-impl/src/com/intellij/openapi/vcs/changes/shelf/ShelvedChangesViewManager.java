@@ -154,7 +154,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
         myContent.setCloseable(false);
         myContent.setDisposer(myPanel);
-        addContent(myContent);
         DnDSupport.createBuilder(myPanel.myTree)
           .setImageProvider(myPanel::createDraggedImage)
           .setBeanProvider(myPanel::createDragStartBean)
@@ -162,6 +161,7 @@ public class ShelvedChangesViewManager implements Disposable {
           .setDropHandler(dnDTarget)
           .setDisposableParent(myContent)
           .install();
+        addContent(myContent);
       }
       updateTreeIfShown(tree -> {
         tree.rebuildTree();
@@ -490,6 +490,14 @@ public class ShelvedChangesViewManager implements Disposable {
   @NotNull
   public static List<ShelvedBinaryFile> getBinaryShelveChanges(@NotNull final DataContext dataContext) {
     return notNullize(dataContext.getData(SHELVED_BINARY_FILE_KEY));
+  }
+
+  @NotNull
+  public static List<String> getSelectedShelvedChangeNames(@NotNull final DataContext dataContext) {
+    ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
+    if (shelvedChangeTree == null) return emptyList();
+    return StreamEx.of(VcsTreeModelData.selected(shelvedChangeTree).userObjectsStream(ShelvedWrapper.class))
+      .map(ShelvedWrapper::getRequestName).toList();
   }
 
   private static class MyShelveDeleteProvider implements DeleteProvider {

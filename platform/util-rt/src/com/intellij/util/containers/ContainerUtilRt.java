@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtilRt;
@@ -26,7 +26,6 @@ public class ContainerUtilRt {
   public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
     return new HashMap<K, V>(initialCapacity);
   }
-
 
   /**
    * @deprecated Use {@link HashMap#HashMap()}
@@ -275,15 +274,5 @@ public class ContainerUtilRt {
       list.add(mapper.fun(t));
     }
     return list;
-  }
-
-  // do not use MultiMap (trove lib / SmartList) - only JDK classes should be used to reduce class loading
-  public static <K, V> void putValue(@Nullable K key, @NotNull V value, @NotNull Map<K, List<V>> map) {
-    List<V> list = map.get(key);
-    if (list == null) {
-      list = new ArrayList<V>();
-      map.put(key, list);
-    }
-    list.add(value);
   }
 }

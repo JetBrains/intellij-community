@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -142,9 +142,19 @@ class NotificationGroup(@param:NonNls val displayId: String,
     title: @NotificationTitle String,
     content: @NotificationContent String,
     type: NotificationType = NotificationType.INFORMATION,
+    listener: NotificationListener? = null,
+    notificationDisplayId: String? = null
+  ): Notification {
+    return Notification(displayId, notificationDisplayId, title, content, type, listener)
+  }
+
+  fun createNotification(
+    title: @NotificationTitle String,
+    content: @NotificationContent String,
+    type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null
   ): Notification {
-    return Notification(displayId, title, content, type, listener)
+    return createNotification(title, content, type, listener, null)
   }
 
   @JvmOverloads

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -30,7 +30,7 @@ import java.util.List;
 import static org.junit.Assert.assertTrue;
 
 @TestOnly
-public class IdeaTestUtil extends PlatformTestUtil {
+public final class IdeaTestUtil {
   private static final String MOCK_JDK_DIR_NAME_PREFIX = "mockJDK-";
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -38,7 +38,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     System.out.println(Timings.getStatistics());
   }
 
-  public static void withLevel(@NotNull final Module module, @NotNull LanguageLevel level, @NotNull final Runnable r) {
+  public static void withLevel(final @NotNull Module module, @NotNull LanguageLevel level, final @NotNull Runnable r) {
     final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(module.getProject());
 
     final LanguageLevel projectLevel = projectExt.getLanguageLevel();
@@ -66,8 +66,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
   }
 
-  @NotNull
-  public static Sdk getMockJdk(@NotNull JavaVersion version) {
+  public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
     int mockJdk = version.feature >= 11 ? 11 :
                   version.feature >= 9 ? 9 :
                   version.feature >= 7 ? version.feature :
@@ -77,8 +76,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return createMockJdk("java " + version, path);
   }
 
-  @NotNull
-  private static Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+  private static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
@@ -87,48 +85,39 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return ((JavaSdkImpl)javaSdk).createMockJdk(name, path, false);
   }
 
-  @NotNull
-  public static Sdk getMockJdk14() {
+  public static @NotNull Sdk getMockJdk14() {
     return getMockJdk(JavaVersion.compose(4));
   }
 
-  @NotNull
-  public static Sdk getMockJdk17() {
+  public static @NotNull Sdk getMockJdk17() {
     return getMockJdk(JavaVersion.compose(7));
   }
 
-  @NotNull
-  public static Sdk getMockJdk17(@NotNull String name) {
+  public static @NotNull Sdk getMockJdk17(@NotNull String name) {
     return createMockJdk(name, getMockJdk17Path().getPath());
   }
 
-  @NotNull
-  public static Sdk getMockJdk18() {
+  public static @NotNull Sdk getMockJdk18() {
     return getMockJdk(JavaVersion.compose(8));
   }
 
-  @NotNull
-  public static Sdk getMockJdk9() {
+  public static @NotNull Sdk getMockJdk9() {
     return getMockJdk(JavaVersion.compose(9));
   }
 
-  @NotNull
-  public static File getMockJdk14Path() {
+  public static @NotNull File getMockJdk14Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.4");
   }
 
-  @NotNull
-  public static File getMockJdk17Path() {
+  public static @NotNull File getMockJdk17Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.7");
   }
 
-  @NotNull
-  public static File getMockJdk18Path() {
+  public static @NotNull File getMockJdk18Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.8");
   }
 
-  @NotNull
-  public static File getMockJdk9Path() {
+  public static @NotNull File getMockJdk9Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.9");
   }
 
@@ -140,8 +129,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return null;
   }
 
-  @NotNull
-  private static File getPathForJdkNamed(@NotNull String name) {
+  private static @NotNull File getPathForJdkNamed(@NotNull String name) {
     return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
@@ -159,11 +147,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
   /**
    * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
    */
-  @NotNull
-  @Contract(pure=true)
+  @Contract(pure = true)
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static Sdk addWebJarsTo(@NotNull Sdk jdk) {
+  public static @NotNull Sdk addWebJarsTo(@NotNull Sdk jdk) {
     try {
       jdk = (Sdk)jdk.clone();
     }
@@ -178,7 +165,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   public static void addWebJarsToModule(@NotNull Module module) {
-    ModuleRootModificationUtil.updateModel(module, model -> addWebJarsToModule(model));
+    ModuleRootModificationUtil.updateModel(module, IdeaTestUtil::addWebJarsToModule);
   }
 
   public static void removeWebJarsFromModule(@NotNull Module module) {
@@ -210,8 +197,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     WriteAction.runAndWait(libraryModel::commit);
   }
 
-  @NotNull
-  private static VirtualFile findJar(@NotNull String name) {
+  private static @NotNull VirtualFile findJar(@NotNull String name) {
     String path = PathManager.getHomePath() + '/' + name;
     VirtualFile file = VfsTestUtil.findFileByCaseSensitivePath(path);
     VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
@@ -231,8 +217,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     Disposer.register(parentDisposable, () -> ((SdkModificator)sdk).setVersionString(oldVersionString));
   }
 
-  @NotNull
-  public static String requireRealJdkHome() {
+  public static @NotNull String requireRealJdkHome() {
     String javaHome = SystemProperties.getJavaHome();
     List<String> paths =
       ContainerUtil.packNullables(javaHome, new File(javaHome).getParent(), System.getenv("JDK_16_x64"), System.getenv("JDK_16"));
@@ -246,8 +231,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return null;
   }
 
-  @NotNull
-  public static File findSourceFile(@NotNull String basePath) {
+  public static @NotNull File findSourceFile(@NotNull String basePath) {
     File testFile = new File(basePath + ".java");
     if (!testFile.exists()) testFile = new File(basePath + ".groovy");
     if (!testFile.exists()) throw new IllegalArgumentException("No test source for " + basePath);

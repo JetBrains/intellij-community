@@ -66,7 +66,7 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
     withGradleProperties(externalProjectPath, java = unsupportedSdk) {
-      assertGradleJvmSuggestion(expected = unsupportedSdk, expectsSdkRegistration = true)
+      assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
   }
 
@@ -141,6 +141,30 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
       assertGradleProperties(java = null)
       withGradleProperties(externalProjectPath, java = latestSdk) {
         assertGradleProperties(java = latestSdk)
+      }
+    }
+  }
+
+  @Test
+  fun `test gradle properties resolution (Idea gradle user home properties)`() {
+    withServiceGradleUserHome {
+      withGradleProperties(gradleUserHome, java = earliestSdk) {
+        assertGradleProperties(java = earliestSdk)
+        withGradleProperties(externalProjectPath, java = latestSdk) {
+          assertGradleProperties(java = earliestSdk)
+        }
+      }
+      withGradleProperties(gradleUserHome, java = latestSdk) {
+        assertGradleProperties(java = latestSdk)
+        withGradleProperties(externalProjectPath, java = null) {
+          assertGradleProperties(java = latestSdk)
+        }
+      }
+      withGradleProperties(gradleUserHome, java = null) {
+        assertGradleProperties(java = null)
+        withGradleProperties(externalProjectPath, java = latestSdk) {
+          assertGradleProperties(java = latestSdk)
+        }
       }
     }
   }

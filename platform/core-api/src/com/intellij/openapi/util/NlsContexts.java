@@ -24,12 +24,6 @@ public class NlsContexts {
   public @interface DialogMessage {
   }
 
-  @NlsContext(prefix = "input.dialog.initial.value")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface InputDialogInitialValue {
-  }
-
   /**
    * Popups
    */
@@ -81,39 +75,29 @@ public class NlsContexts {
   @NlsContext(prefix = "configurable.name")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public @interface Configurable {
+  public @interface ConfigurableName {
   }
 
-  @NlsContext(prefix = "validation.info")
+  @NlsContext(prefix = "parsing.error")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ValidationInfo {
+  public static @interface ParsingError {
   }
 
-  @NlsContext(prefix = "configuration.error.message")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ConfigurationErrorMessage {
-  }
-
-  @NlsContext(prefix = "configuration.error.title")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ConfigurationErrorTitle {
-  }
-
-  @NlsContext(prefix = "parser.error")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public static @interface ParserError {
-  }
-
+  /**
+   * Use it for annotating OS provided notification title, such as "project built" or "tests running finished".
+   * See also #SystemNotificationText.
+   */
   @NlsContext(prefix = "system.notification.title")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
   public static @interface SystemNotificationTitle {
   }
 
+  /**
+   * Use it for annotating OS provided notification content.
+   * See also #SystemNotificationTitle.
+   */
   @NlsContext(prefix = "system.notification.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
@@ -147,10 +131,10 @@ public class NlsContexts {
   public @interface Checkbox {
   }
 
-  @NlsContext(prefix = "titled.border")
+  @NlsContext(prefix = "border.title")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public @interface TitledBorder {
+  public @interface BorderTitle {
   }
 
   @NlsContext(prefix = "tooltip")
@@ -174,7 +158,7 @@ public class NlsContexts {
   @NlsContext(prefix = "text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface Text {
+  public @interface DetailedDescription {
   }
 
   @NlsContext(prefix = "list.item")

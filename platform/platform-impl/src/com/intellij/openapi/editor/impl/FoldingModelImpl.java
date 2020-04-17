@@ -234,18 +234,22 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
-    VisualPosition visualPosition = myEditor.xyToVisualPosition(p);
-    int visualLineStartY = myEditor.visualLineToY(visualPosition.line);
+    return getFoldingPlaceholderAt(new EditorLocation(myEditor, p));
+  }
+
+  FoldRegion getFoldingPlaceholderAt(@NotNull EditorLocation location) {
+    int visualLineStartY = location.getVisualLineBaseY();
+    Point p = location.getPoint();
     if (p.y < visualLineStartY || p.y >= visualLineStartY + myEditor.getLineHeight()) {
       // block inlay area
       return null;
     }
-    LogicalPosition pos = myEditor.visualToLogicalPosition(visualPosition);
+    LogicalPosition pos = location.getLogicalPosition();
     int line = pos.line;
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
 
-    int offset = myEditor.logicalPositionToOffset(pos);
+    int offset = location.getOffset();
 
     return myFoldTree.fetchOutermost(offset);
   }

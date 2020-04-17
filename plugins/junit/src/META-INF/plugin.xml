@@ -66,10 +66,6 @@
     <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
     <stacktrace.fold substring="at junit.framework.TestCase.run"/>
     <stacktrace.fold substring="at junit.framework.TestResult"/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.AssertionUtils.fail("/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.failNotEqual("/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.assertEquals("/>
-    <stacktrace.fold substring="at org.junit.jupiter.api.Assertions.assertEquals("/>
     <stacktrace.fold substring="at org.junit.platform."/>
     <stacktrace.fold substring="at org.junit.jupiter."/>
     <stacktrace.fold substring="at org.junit.vintage."/>

@@ -544,6 +544,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showLicensePanel() {
+    if (myPlugin.isBundled()) {
+      return;
+    }
     String productCode = myPlugin.getProductCode();
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
@@ -653,13 +656,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateErrors() {
-    boolean errors = myPluginModel.hasErrors(myPlugin);
-    if (errors) {
-      Ref<String> enableAction = new Ref<>();
-      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+    Ref<String> enableAction = new Ref<>();
+    String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+    if (message != null) {
       ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors());
     }
-    myErrorComponent.setVisible(errors);
+    myErrorComponent.setVisible(message != null);
   }
 
   private void handleErrors() {

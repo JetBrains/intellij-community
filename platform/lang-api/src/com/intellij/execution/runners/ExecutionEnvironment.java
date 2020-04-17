@@ -35,7 +35,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @NotNull private ExecutionTarget myTarget;
   private TargetEnvironmentFactory myTargetEnvironmentFactory;
-  private TargetEnvironment myPrepareRemoteEnvironment;
+  private volatile TargetEnvironment myPrepareRemoteEnvironment;
 
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
@@ -96,7 +96,6 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     this.callback = callback;
   }
 
-  @ApiStatus.Experimental
   public @NotNull TargetEnvironmentFactory getTargetEnvironmentFactory() {
     if (myTargetEnvironmentFactory != null) {
       return myTargetEnvironmentFactory;
@@ -120,16 +119,26 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   @ApiStatus.Experimental
-  public @NotNull TargetEnvironment getPreparedTargetEnvironment(@NotNull ProgressIndicator progressIndicator) {
+  public @NotNull TargetEnvironment getPreparedTargetEnvironment(@NotNull RunProfileState runProfileState, @NotNull ProgressIndicator progressIndicator)
+    throws ExecutionException {
     if (myPrepareRemoteEnvironment != null) {
       return myPrepareRemoteEnvironment;
     }
-
-    TargetEnvironmentFactory factory = getTargetEnvironmentFactory();
-    TargetEnvironmentRequest environmentRequest = factory.createRequest();
-    return myPrepareRemoteEnvironment = factory.prepareRemoteEnvironment(environmentRequest, progressIndicator);
+    return prepareTargetEnvironment(runProfileState, progressIndicator);
   }
-  
+
+  @ApiStatus.Experimental
+  public @NotNull TargetEnvironment prepareTargetEnvironment(@NotNull RunProfileState runProfileState, @NotNull ProgressIndicator progressIndicator)
+    throws ExecutionException {
+    TargetEnvironmentFactory factory = getTargetEnvironmentFactory();
+    TargetEnvironmentRequest request = factory.createRequest();
+    if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
+      ((TargetEnvironmentAwareRunProfileState)runProfileState)
+        .prepareTargetEnvironmentRequest(request, factory.getTargetConfiguration(), progressIndicator);
+    }
+    return myPrepareRemoteEnvironment = factory.prepareRemoteEnvironment(request, progressIndicator);
+  }
+
   @ApiStatus.Internal
   public void setCallback(@Nullable ProgramRunner.Callback callback) {
     this.callback = callback;

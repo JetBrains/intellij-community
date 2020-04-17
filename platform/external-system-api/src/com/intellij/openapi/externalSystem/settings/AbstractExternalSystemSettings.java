@@ -236,6 +236,7 @@ public abstract class AbstractExternalSystemSettings<
         @Override
         public void onProjectsLinked(@NotNull Collection<PS> settings) {
           ApplicationManager.getApplication().invokeLater(() -> {
+            if (getProject().isDisposed()) return;
             AbstractExternalSystemSettings.this.onProjectsLinked(settings);
             AbstractExternalSystemSettings.this.onProjectsLoaded(settings);
           });
@@ -244,6 +245,7 @@ public abstract class AbstractExternalSystemSettings<
         @Override
         public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
           ApplicationManager.getApplication().invokeLater(() -> {
+            if (getProject().isDisposed()) return;
             AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
           });
         }

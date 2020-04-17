@@ -229,3 +229,17 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     return false;
   }
 }
+class JavaPreviewIntentionPolicy extends JavaIntentionPolicy {
+  @Override
+  protected boolean shouldCheckPreview(@NotNull IntentionAction action) {
+    String familyName = action.getFamilyName();
+    boolean skip = 
+      // Actions like 'Create method from usage' heavily rely on templates
+      // so it's not easy to support them
+      familyName.matches("(?i)Create \\w+ from usage") ||
+      familyName.equals("Create Constructor") ||
+      // Does not change file content
+      familyName.equals("Rename File");
+    return !skip;
+  }
+}

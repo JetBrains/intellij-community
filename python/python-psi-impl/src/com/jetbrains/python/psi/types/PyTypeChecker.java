@@ -11,6 +11,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -96,13 +97,6 @@ public class PyTypeChecker {
       }
     }
 
-    if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType) {
-      Optional<Boolean> match = match((PyInstantiableType)expected, (PyInstantiableType)actual, context);
-      if (match.isPresent()) {
-        return match;
-      }
-    }
-
     if (expected instanceof PyGenericType) {
       return Optional.of(match((PyGenericType)expected, actual, context));
     }
@@ -180,25 +174,6 @@ public class PyTypeChecker {
     return Optional.empty();
   }
 
-  @NotNull
-  private static Optional<Boolean> match(@NotNull PyInstantiableType expected, @NotNull PyInstantiableType actual,
-                                         @NotNull MatchContext context) {
-    if (expected instanceof PyGenericType && typeVarAcceptsBothClassAndInstanceTypes((PyGenericType)expected)) {
-      return Optional.empty();
-    }
-
-    if (expected.isDefinition() ^ actual.isDefinition()) {
-      if (actual.isDefinition() &&
-          actual instanceof PyClassLikeType &&
-          matchClassObjectAndMetaclass(expected, (PyClassLikeType)actual, context)) {
-        return Optional.of(true);
-      }
-      return Optional.of(false);
-    }
-
-    return Optional.empty();
-  }
-
   /**
    * Match {@code actual} versus {@code PyGenericType expected}.
    *
@@ -233,6 +208,9 @@ public class PyTypeChecker {
     }
 
     if (actual != null) {
+      if (expected.isDefinition() && !(actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition())) {
+        return false;
+      }
       context.substitutions.put(expected, actual);
     }
     else if (bound != null) {
@@ -272,6 +250,14 @@ public class PyTypeChecker {
   private static Optional<Boolean> match(@NotNull PyClassType expected, @NotNull PyClassType actual, @NotNull MatchContext context) {
     if (expected.equals(actual)) {
       return Optional.of(true);
+    }
+
+    if (expected.isDefinition() ^ actual.isDefinition()) {
+      if (!expected.isDefinition() && actual.isDefinition()) {
+        final PyClassLikeType metaClass = actual.getMetaClassType(context.context, true);
+        return Optional.of(metaClass != null && match((PyType)expected, metaClass.toInstance(), context).orElse(true));
+      }
+      return Optional.of(false);
     }
 
     if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
@@ -450,6 +436,12 @@ public class PyTypeChecker {
   private static Optional<Boolean> match(@NotNull PyCallableType expected,
                                          @NotNull PyCallableType actual,
                                          @NotNull MatchContext matchContext) {
+    if (expected instanceof PyClassLikeType) {
+      return PyTypingTypeProvider.CALLABLE.equals(((PyClassLikeType)expected).getClassQName())
+             ? Optional.of(actual.isCallable())
+             : Optional.empty();
+    }
+
     if (expected.isCallable() && actual.isCallable()) {
       final TypeEvalContext context = matchContext.context;
       final List<PyCallableParameter> expectedParameters = expected.getParameters(context);
@@ -479,21 +471,6 @@ public class PyTypeChecker {
       return Optional.of(true);
     }
     return Optional.empty();
-  }
-
-  private static boolean matchClassObjectAndMetaclass(@NotNull PyType expected,
-                                                      @NotNull PyClassLikeType actual,
-                                                      @NotNull MatchContext context) {
-
-    if (!actual.isDefinition()) {
-      return false;
-    }
-    final PyClassLikeType metaClass = actual.getMetaClassType(context.context, true);
-    return metaClass != null && match(expected, metaClass, context).orElse(true);
-  }
-
-  private static boolean typeVarAcceptsBothClassAndInstanceTypes(@NotNull PyGenericType typeVar) {
-    return !typeVar.isDefinition() && typeVar.getBound() == null;
   }
 
   private static boolean consistsOfSameElementNumberTuples(@NotNull PyUnionType unionType, int elementCount) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.UtilBundle;
 import com.intellij.analysis.problemsView.inspection.ProblemsViewToolWindowFactory;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -164,6 +165,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     // Used in Rider
     public String reasonWhySuspended;
 
+    private HeavyProcessLatch.Type heavyProcessType;
+
     public DaemonCodeAnalyzerStatus() {
     }
 
@@ -231,7 +234,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
-      status.reasonWhySuspended = StringUtil.defaultIfEmpty(HeavyProcessLatch.INSTANCE.getRunningOperationName(), "Heavy operation is running");
+      Map.Entry<String, HeavyProcessLatch.Type> processEntry = HeavyProcessLatch.INSTANCE.getRunningOperation();
+      if (processEntry != null) {
+        status.reasonWhySuspended = processEntry.getKey();
+        status.heavyProcessType = processEntry.getValue();
+      }
+      else {
+        status.reasonWhySuspended = "Heavy operation is running";
+        status.heavyProcessType = HeavyProcessLatch.Type.Process;
+      }
       status.errorAnalyzingFinished = true;
       return status;
     }
@@ -261,7 +272,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   @Override
-  public void paint(Component c, Graphics g, Rectangle r) {
+  public void paint(@NotNull Component c, Graphics g, @NotNull Rectangle r) {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
     Icon icon = getIcon(status);
     icon.paintIcon(c, g, r.x, r.y);
@@ -326,7 +337,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         statusExtraLine = "Complete results will be available after indexing";
       }
       else {
-        statusLabel = DaemonBundle.message("analysis.completed");
+        statusLabel = "";
       }
       progressBarsCompleted = Boolean.TRUE;
     }
@@ -385,26 +396,21 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       List<StatusItem> statusItems = new ArrayList<>();
       Icon mainIcon = null;
 
-      String title;
-      StringBuilder detailsBuilder = new StringBuilder();
-
+      String title = "";
+      String details = "";
+      boolean isDumb = DumbService.isDumb(myProject);
       if (status.errorAnalyzingFinished) {
-        boolean isDumb = DumbService.isDumb(myProject);
         if (isDumb) {
           title = DaemonBundle.message("shallow.analysis.completed");
-          detailsBuilder.append("Complete results will be available after indexing");
-        }
-        else {
-          title = DaemonBundle.message("analysis.completed");
+          details = DaemonBundle.message("shallow.analysis.completed.details");
         }
       }
       else {
         title = DaemonBundle.message("performing.code.analysis");
       }
 
-      int currentSeverityErrors = 0;
       int[] errorCount = status.errorCount;
-      for (int i = errorCount.length-1; i >= 0; i--) {
+      for (int i = errorCount.length - 1; i >= 0; i--) {
         int count = errorCount[i];
         if (count > 0) {
           HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
@@ -412,14 +418,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           if (count > 1) {
             name = StringUtil.pluralize(name);
           }
-          if (currentSeverityErrors > 0) {
-            detailsBuilder.append(", ");
-          }
-          detailsBuilder.append(count).append(" ").append(name);
-          currentSeverityErrors += count;
 
           Icon icon = mySeverityRegistrar.getRendererIconByIndex(i);
-          statusItems.add(new StatusItem(Integer.toString(status.errorCount[i]), icon));
+          statusItems.add(new StatusItem(Integer.toString(count), icon, name));
 
           if (mainIcon == null) {
             mainIcon = icon;
@@ -428,41 +429,45 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       }
 
       if (statusItems.size() > 0) {
-        if (!status.errorAnalyzingFinished) {
-          detailsBuilder.append(" found so far");
-        }
-
         if (mainIcon == null) {
           mainIcon = AllIcons.General.InspectionsOK;
         }
-        AnalyzerStatus result = new AnalyzerStatus(mainIcon, title, detailsBuilder.toString(), this::createUIController).
+        AnalyzerStatus result = new AnalyzerStatus(mainIcon, title, "", this::createUIController).
           withNavigation().
           withExpandedStatus(statusItems);
 
         //noinspection ConstantConditions
         return status.errorAnalyzingFinished ? result :
-               result.withPasses(ContainerUtil.map(status.passes, p -> new PassWrapper(p.getPresentableName(), p.getProgress(), p.isFinished())));
+               result.withAnalyzingType(AnalyzingType.PARTIAL).
+               withPasses(ContainerUtil.map(status.passes, p -> new PassWrapper(p.getPresentableName(), p.getProgress(), p.isFinished())));
       }
       if (StringUtil.isNotEmpty(status.reasonWhyDisabled)) {
         return new AnalyzerStatus(AllIcons.General.InspectionsTrafficOff,
                                   DaemonBundle.message("no.analysis.performed"),
                                   status.reasonWhyDisabled, this::createUIController).
-          withStandardStatus(StandardStatus.OFF);
+          withExpandedStatus(new StatusItem(DaemonBundle.message("iw.status.off")));
       }
       if (StringUtil.isNotEmpty(status.reasonWhySuspended)) {
         return new AnalyzerStatus(AllIcons.General.InspectionsPause,
                                   DaemonBundle.message("analysis.suspended"),
                                   status.reasonWhySuspended, this::createUIController).
-          withStandardStatus(StandardStatus.INDEXING);
+          withExpandedStatus(new StatusItem(status.heavyProcessType != null ?
+                                            status.heavyProcessType.toString() :
+                                            DaemonBundle.message("iw.status.paused")));
       }
       if (status.errorAnalyzingFinished) {
-        return new AnalyzerStatus(AllIcons.General.InspectionsOK, DaemonBundle.message("no.errors.or.warnings.found"),
-                                  detailsBuilder.toString(), this::createUIController);
+        return isDumb ?
+          new AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, this::createUIController).
+            withExpandedStatus(new StatusItem(UtilBundle.message("heavyProcess.type.index"))) :
+          new AnalyzerStatus(AllIcons.General.InspectionsOK, DaemonBundle.message("no.errors.or.warnings.found"),
+                                  details, this::createUIController);
       }
 
       //noinspection ConstantConditions
-      return new AnalyzerStatus(AllIcons.General.InspectionsEye, title, detailsBuilder.toString(), this::createUIController).
-        withStandardStatus(StandardStatus.ANALYZING).
+      return new AnalyzerStatus(AllIcons.General.InspectionsEye, title,
+                                details, this::createUIController).
+        withExpandedStatus(new StatusItem(DaemonBundle.message("iw.status.analyzing"))).
+        withAnalyzingType(AnalyzingType.EMPTY).
         withPasses(ContainerUtil.map(status.passes, p -> new PassWrapper(p.getPresentableName(), p.getProgress(), p.isFinished())));
     }
   }
@@ -670,6 +675,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     catch (ConfigurationException ignored) {}
   }
 
+  @NotNull
   private static InspectionsLevel getHighlightLevel(boolean highlight, boolean inspect) {
     if (!highlight && !inspect) return InspectionsLevel.NONE;
     else if (highlight && !inspect) return InspectionsLevel.ERRORS;

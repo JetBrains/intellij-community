@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  * @author yole
  */
 @ApiStatus.Internal
-public interface CompletionProcessEx extends CompletionProcess {
+public interface CompletionProcessEx extends CompletionProcessBase {
   @NotNull
   Project getProject();
 
@@ -43,7 +43,6 @@ public interface CompletionProcessEx extends CompletionProcess {
 
   void itemSelected(LookupElement item, char aChar);
 
-  void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition);
 
   void addAdvertisement(@NotNull @Nls String message, @Nullable Icon icon);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusOwner;
@@ -20,8 +19,10 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager, MessageBusOwner {
   private final MessageBus myMessageBus = new MessageBusFactoryImpl().createMessageBus(this);
@@ -29,18 +30,19 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final ExtensionsAreaImpl myExtensionArea;
 
   private final Map<Class<?>, Object> myComponents = new THashMap<>();
-  private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
+  private final Set<Object> myDisposableComponents = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private boolean myDisposed;
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
-    myPicoContainer = new DefaultPicoContainer(parent) {
+    myPicoContainer = new DefaultPicoContainer((DefaultPicoContainer)parent) {
       @Override
       @Nullable
-      public Object getComponentInstance(final Object componentKey) {
+      public Object getComponentInstance(@NotNull Object componentKey) {
         if (myDisposed) {
           throw new IllegalStateException("Cannot get " + componentKey + " from already disposed " + this);
         }
-        final Object o = super.getComponentInstance(componentKey);
+
+        Object o = super.getComponentInstance(componentKey);
         registerComponentInDisposer(o);
         return o;
       }
@@ -105,7 +107,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   @NotNull
-  public MutablePicoContainer getPicoContainer() {
+  public final MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
   }
 

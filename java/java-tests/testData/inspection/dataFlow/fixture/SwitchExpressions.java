@@ -1,6 +1,13 @@
 import java.util.function.*;
 
 public class SwitchExpressionsJava12 {
+  void multiLabel(int[] arr) {
+    int z = switch (arr.length % 5) {
+      case 0, 4, 3, 2, 1 -> 0;
+      default -> throw new IllegalStateException("Unexpected value");
+    };
+  }
+  
   static void fooBar(int k) {
     String s = switch (k) {
       case 1, 2 -> "foo";

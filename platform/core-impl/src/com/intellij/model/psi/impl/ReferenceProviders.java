@@ -21,13 +21,11 @@ import static org.jetbrains.annotations.ApiStatus.Internal;
 @Internal
 @Service
 public final class ReferenceProviders {
-
   private static final ExtensionPointName<PsiSymbolReferenceProviderBean> EP_NAME = new ExtensionPointName<>(
     "com.intellij.psi.symbolReferenceProvider"
   );
 
   private final Map<Language, LanguageReferenceProviders> myByHostLanguage = new ConcurrentHashMap<>();
-  private final Map<Class<? extends Symbol>, List<PsiSymbolReferenceProviderBean>> myByTargetClass = new ConcurrentHashMap<>();
 
   public ReferenceProviders() {
     EP_NAME.addExtensionPointListener(this::clearCaches, ApplicationManager.getApplication());
@@ -35,11 +33,9 @@ public final class ReferenceProviders {
 
   public void clearCaches() {
     myByHostLanguage.clear();
-    myByTargetClass.clear();
   }
 
-  @NotNull
-  public static ReferenceProviders getInstance() {
+  public static @NotNull ReferenceProviders getInstance() {
     return ServiceManager.getService(ReferenceProviders.class);
   }
 
@@ -51,13 +47,11 @@ public final class ReferenceProviders {
     return myByHostLanguage.computeIfAbsent(language, ReferenceProviders::createLanguageProviders);
   }
 
-  @NotNull
-  private static LanguageReferenceProviders createLanguageProviders(@NotNull Language language) {
+  private static @NotNull LanguageReferenceProviders createLanguageProviders(@NotNull Language language) {
     return new LanguageReferenceProviders(byLanguageInner(language));
   }
 
-  @NotNull
-  private static List<PsiSymbolReferenceProviderBean> byLanguageInner(@NotNull Language language) {
+  private static @NotNull List<PsiSymbolReferenceProviderBean> byLanguageInner(@NotNull Language language) {
     List<PsiSymbolReferenceProviderBean> result = new ArrayList<>();
     for (PsiSymbolReferenceProviderBean bean : EP_NAME.getExtensionList()) {
       Language hostLanguage = bean.getHostLanguage();
@@ -73,19 +67,7 @@ public final class ReferenceProviders {
   /**
    * Given class of target returns list of providers that could provide references to this target.
    */
-  @NotNull
-  public List<PsiSymbolReferenceProviderBean> byTargetClass(@NotNull Class<? extends Symbol> targetClass) {
-    return myByTargetClass.computeIfAbsent(targetClass, ReferenceProviders::byTargetClassInner);
-  }
-
-  @NotNull
-  private static List<PsiSymbolReferenceProviderBean> byTargetClassInner(@NotNull Class<? extends Symbol> targetClass) {
-    List<PsiSymbolReferenceProviderBean> result = new ArrayList<>();
-    for (PsiSymbolReferenceProviderBean bean : EP_NAME.getExtensionList()) {
-      if (bean.getResolveTargetClass().isAssignableFrom(targetClass)) {
-        result.add(bean);
-      }
-    }
-    return result;
+  public @NotNull static List<PsiSymbolReferenceProviderBean> byTargetClass(@NotNull Class<? extends Symbol> targetClass) {
+    return EP_NAME.getByGroupingKey(targetClass, bean -> bean.getResolveTargetClass().isAssignableFrom(targetClass) ? targetClass : null);
   }
 }

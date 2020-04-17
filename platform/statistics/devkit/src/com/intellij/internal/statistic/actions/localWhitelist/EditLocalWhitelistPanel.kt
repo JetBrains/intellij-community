@@ -21,9 +21,9 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class EditLocalWhitelistPanel(project: Project,
+class EditLocalWhitelistPanel(private val project: Project,
                               localWhitelistGroups: List<LocalWhitelistGroup>,
-                              private val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups) : JPanel(), Disposable {
+                              productionGroups: FUStatisticsWhiteListGroupsService.WLGroups) : JPanel(), Disposable {
   private val groupsModel = CollectionListModel(localWhitelistGroups)
   private val groupsList: JBList<LocalWhitelistGroup> = JBList(groupsModel)
   private var groupConfiguration: LocalWhitelistGroupConfiguration
@@ -95,7 +95,7 @@ class EditLocalWhitelistPanel(project: Project,
 
   fun validateGroups(): List<ValidationInfo> {
     for (whitelistGroup in groupsModel.items) {
-      val validationInfo = LocalWhitelistGroupConfiguration.validateWhitelistGroup(whitelistGroup, productionGroups.rules,
+      val validationInfo = LocalWhitelistGroupConfiguration.validateWhitelistGroup(project, whitelistGroup,
                                                                                    groupConfiguration.groupIdTextField)
       if (validationInfo.isNotEmpty()) {
         groupsList.selectedIndex = groupsModel.getElementIndex(whitelistGroup)

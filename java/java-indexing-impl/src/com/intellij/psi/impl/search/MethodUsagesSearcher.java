@@ -14,16 +14,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull final MethodReferencesSearch.SearchParameters p, @NotNull final Processor<? super PsiReference> consumer) {
-    final PsiMethod method = p.getMethod();
-    final boolean[] isConstructor = new boolean[1];
-    final PsiManager[] psiManager = new PsiManager[1];
-    final String[] methodName = new String[1];
-    final boolean[] isValueAnnotation = new boolean[1];
-    final boolean[] needStrictSignatureSearch = new boolean[1];
-    final boolean strictSignatureSearch = p.isStrictSignatureSearch();
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
+    PsiMethod method = p.getMethod();
+    boolean[] isConstructor = new boolean[1];
+    PsiManager[] psiManager = new PsiManager[1];
+    String[] methodName = new String[1];
+    boolean[] isValueAnnotation = new boolean[1];
+    boolean[] needStrictSignatureSearch = new boolean[1];
+    boolean strictSignatureSearch = p.isStrictSignatureSearch();
 
-    final PsiClass aClass = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(() -> {
+    PsiClass aClass = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(() -> {
       PsiClass aClass1 = method.getContainingClass();
       if (aClass1 == null) return null;
       isConstructor[0] = method.isConstructor();
@@ -41,9 +41,9 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     });
     if (aClass == null) return;
 
-    final SearchRequestCollector collector = p.getOptimizer();
+    SearchRequestCollector collector = p.getOptimizer();
 
-    final SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(p::getEffectiveSearchScope);
+    SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(p::getEffectiveSearchScope);
     if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
       return;
     }
@@ -68,7 +68,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     }
 
     DumbService.getInstance(p.getProject()).runReadActionInSmartMode(()-> {
-      final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
+      PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
 
       short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
       for (PsiMethod m : methods) {
@@ -88,7 +88,8 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     });
   }
 
-  protected MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod[] methods, PsiClass aClass, boolean strictSignatureSearch) {
+  @NotNull
+  protected MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod @NotNull [] methods, @NotNull PsiClass aClass, boolean strictSignatureSearch) {
     return new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods);
   }
 }

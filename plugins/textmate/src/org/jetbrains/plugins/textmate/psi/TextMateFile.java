@@ -4,8 +4,8 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.language.TextMateFileType;
-import org.jetbrains.plugins.textmate.language.TextMateLanguage;
+import org.jetbrains.plugins.textmate.TextMateFileType;
+import org.jetbrains.plugins.textmate.TextMateLanguage;
 
 public class TextMateFile extends PsiFileBase {
   public TextMateFile(FileViewProvider provider) {

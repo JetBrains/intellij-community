@@ -404,6 +404,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.sortTabsAlphabetically = value
     }
 
+  var openTabsAtTheEnd: Boolean
+    get() = state.openTabsAtTheEnd
+    set(value) {
+      state.openTabsAtTheEnd = value
+    }
+
   var showInplaceComments: Boolean
     get() = state.showInplaceComments
     set(value) {

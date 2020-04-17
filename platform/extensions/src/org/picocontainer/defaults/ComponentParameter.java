@@ -1,12 +1,9 @@
-/*****************************************************************************
- * Copyright (C) PicoContainer Organization. All rights reserved.            *
- * ------------------------------------------------------------------------- *
- * The software in this package is published under the terms of the BSD      *
- * style license a copy of which has been included with this distribution in *
- * the LICENSE.txt file.                                                     *
- *                                                                           *
- * Original code by                                                          *
- *****************************************************************************/
+/*
+  Copyright (C) PicoContainer Organization. All rights reserved.
+  The software in this package is published under the terms of the BSD
+  style license a copy of which has been included with this distribution in
+  the LICENSE.txt file.
+*/
 package org.picocontainer.defaults;
 
 import org.picocontainer.ComponentAdapter;
@@ -17,31 +14,8 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 
-
-/**
- * A ComponentParameter should be used to pass in a particular component as argument to a
- * different component's constructor. This is particularly useful in cases where several
- * components of the same type have been registered, but with a different key. Passing a
- * ComponentParameter as a parameter when registering a component will give PicoContainer a hint
- * about what other component to use in the constructor. Collecting parameter types are
- * supported for {@link java.lang.reflect.Array},{@link java.util.Collection}and
- * {@link java.util.Map}.
- *
- * @author Jon Tirs&eacute;n
- * @author Aslak Helles&oslash;y
- * @author J&ouml;rg Schaible
- * @author Thomas Heller
- * @version $Revision: 2285 $
- */
 public final class ComponentParameter implements Parameter {
-  /**
-   * <code>DEFAULT</code> is an instance of ComponentParameter using the default constructor.
-   */
   public static final ComponentParameter DEFAULT = new ComponentParameter();
-  /**
-   * Use <code>ARRAY</code> as {@link Parameter}for an Array that must have elements.
-   */
-  public static final ComponentParameter ARRAY = new ComponentParameter(false);
 
   private final Parameter collectionParameter;
   private final Object componentKey;
@@ -55,22 +29,8 @@ public final class ComponentParameter implements Parameter {
     this(componentKey, null);
   }
 
-  /**
-   * Expect any scalar paramter of the appropriate type or an {@link java.lang.reflect.Array}.
-   */
   public ComponentParameter() {
-    this(false);
-  }
-
-  /**
-   * Expect any scalar paramter of the appropriate type or an {@link java.lang.reflect.Array}.
-   * Resolve the parameter even if no compoennt is of the array's component type.
-   *
-   * @param emptyCollection <code>true</code> allows an Array to be empty
-   * @since 1.1
-   */
-  public ComponentParameter(boolean emptyCollection) {
-    this(null, emptyCollection ? CollectionComponentParameter.ARRAY_ALLOW_EMPTY : CollectionComponentParameter.ARRAY);
+    this(null, CollectionComponentParameter.ARRAY);
   }
 
   /**
@@ -154,28 +114,23 @@ public final class ComponentParameter implements Parameter {
       return null;
     }
 
-    if (!expectedType.isAssignableFrom(result.getComponentImplementation())) {
-      // check for primitive value
-      if (expectedType.isPrimitive()) {
-        try {
-          final Field field = result.getComponentImplementation().getField("TYPE");
-          final Class type = (Class)field.get(result.getComponentInstance(null));
-          if (expectedType.isAssignableFrom(type)) {
-            return result;
-          }
-        }
-        catch (NoSuchFieldException ignored) {
-        }
-        catch (IllegalArgumentException ignored) {
-        }
-        catch (IllegalAccessException ignored) {
-        }
-        catch (ClassCastException ignored) {
+    if (expectedType.isAssignableFrom(result.getComponentImplementation())) {
+      return result;
+    }
+
+    // check for primitive value
+    if (expectedType.isPrimitive()) {
+      try {
+        final Field field = result.getComponentImplementation().getField("TYPE");
+        final Class type = (Class)field.get(result.getComponentInstance(null));
+        if (expectedType.isAssignableFrom(type)) {
+          return result;
         }
       }
-      return null;
+      catch (NoSuchFieldException | ClassCastException | IllegalAccessException | IllegalArgumentException ignored) {
+      }
     }
-    return result;
+    return null;
   }
 
   private ComponentAdapter getTargetAdapter(PicoContainer container, Class expectedType, ComponentAdapter excludeAdapter) {

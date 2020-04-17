@@ -44,7 +44,7 @@ public class BreakpointsDialogFactory {
       return true;
     }
     if (myDialogShowing != null) {
-      myDialogShowing.selectBreakpoint(breakpoint);
+      myDialogShowing.selectBreakpoint(breakpoint, true);
       myDialogShowing.toFront();
       return true;
     }
@@ -53,6 +53,7 @@ public class BreakpointsDialogFactory {
 
   public void showDialog(@Nullable Object initialBreakpoint) {
     if (myDialogShowing != null && myDialogShowing.getWindow().isDisplayable()) { // workaround for IDEA-197804
+      myDialogShowing.selectBreakpoint(initialBreakpoint, true);
       myDialogShowing.toFront();
       return;
     }

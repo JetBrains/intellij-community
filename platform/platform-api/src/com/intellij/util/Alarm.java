@@ -18,6 +18,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -114,6 +115,9 @@ public class Alarm implements Disposable {
 
   public Alarm(@NotNull ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
     myThreadToUse = threadToUse;
+    if (threadToUse == ThreadToUse.OWN_THREAD || threadToUse == ThreadToUse.SHARED_THREAD) {
+      DeprecatedMethodException.report("Please use POOLED_THREAD instead");
+    }
 
     myExecutorService = threadToUse == ThreadToUse.SWING_THREAD ?
                         // pass straight to EDT
@@ -126,13 +130,7 @@ public class Alarm implements Disposable {
 
     if (parentDisposable == null) {
       if (threadToUse != ThreadToUse.SWING_THREAD) {
-        boolean crash = threadToUse == ThreadToUse.POOLED_THREAD || ApplicationManager.getApplication().isUnitTestMode();
-        IllegalArgumentException t = new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm");
-        if (crash) {
-          throw t;
-        }
-        // do not crash yet in case of deprecated SHARED_THREAD
-        LOG.warn(t);
+        LOG.error(new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm"));
       }
     }
     else {
@@ -330,6 +328,7 @@ public class Alarm implements Disposable {
     private final ModalityState myModalityState;
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelayMillis;
+    private final ClientId myClientId;
 
     @Async.Schedule
     private Request(final @NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
@@ -338,6 +337,7 @@ public class Alarm implements Disposable {
 
         myModalityState = modalityState;
         myDelayMillis = delayMillis;
+        myClientId = ClientId.getCurrent();
       }
     }
 
@@ -363,7 +363,7 @@ public class Alarm implements Disposable {
     private void runSafely(@Nullable Runnable task) {
       try {
         if (!myDisposed && task != null) {
-          QueueProcessor.runSafely(task);
+          ClientId.withClientId(myClientId, () -> QueueProcessor.runSafely(task));
         }
       }
       finally {

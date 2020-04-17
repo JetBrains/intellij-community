@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
@@ -11,6 +12,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.containers.SLRUMap
 
+@Service
 class FileStateCache : Disposable {
 
   private val cache: SLRUMap<SmartPsiElementPointer<PsiFile>, PrivateFileState> = SLRUMap(100, 50)
@@ -20,15 +22,19 @@ class FileStateCache : Disposable {
   }
 
   init {
-    LowMemoryWatcher.register(Runnable { cache.clear() }, this)
+    LowMemoryWatcher.register(Runnable { synchronized(cache) { cache.clear() } }, this)
   }
 
   internal fun getState(psiFile: PsiFile): FileState? {
-    return cache.get(SmartPointerManager.createPointer(psiFile))?.toFileState()
+    return synchronized(cache) { cache.get(SmartPointerManager.createPointer(psiFile))?.toFileState() }
   }
 
   internal fun setState(psiFile: PsiFile, snapshot: Snapshot, changes: Map<PsiMember, ScopedMember?>) {
-    return cache.put(SmartPointerManager.createPointer(psiFile), PrivateFileState.create(snapshot, changes))
+    synchronized(cache) { cache.put(SmartPointerManager.createPointer(psiFile), PrivateFileState.create(snapshot, changes)) }
+  }
+
+  internal fun removeState(psiFile: PsiFile) {
+    synchronized(cache) { cache.remove(SmartPointerManager.createPointer(psiFile)) }
   }
 
   private data class PrivateFileState(

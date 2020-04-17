@@ -43,7 +43,7 @@ public class MergeChangeCollector {
   }
 
   /**
-   * @deprecated use constructor with GitRepository to avoid deleting repository mapping problem
+   * @deprecated use constructor with GitRepository
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")

@@ -6,14 +6,12 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
-import com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.CaretStopBoundary
 import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed
@@ -82,22 +80,23 @@ private val cdShowWhitespacesInLSTGutterCheckBox                       get() = C
 
 // @formatter:on
 
-internal val optionDescriptors: List<OptionDescription> = listOf(
-  myCbHonorCamelHumpsWhenSelectingByClicking,
-  enableWheelFontChange,
-  enableDnD,
-  virtualSpace,
-  caretInsideTabs,
-  virtualPageAtBottom,
-  highlightBraces,
-  highlightScope,
-  highlightIdentifierUnderCaret,
-  showNotificationAfterReformatCodeCheckBox,
-  myShowNotificationAfterOptimizeImportsCheckBox,
-  renameLocalVariablesInplace,
-  preselectCheckBox,
-  showInlineDialogForCheckBox
-).map(CheckboxDescriptor::asOptionDescriptor)
+internal val optionDescriptors: List<OptionDescription>
+  get() = listOf(
+    myCbHonorCamelHumpsWhenSelectingByClicking,
+    enableWheelFontChange,
+    enableDnD,
+    virtualSpace,
+    caretInsideTabs,
+    virtualPageAtBottom,
+    highlightBraces,
+    highlightScope,
+    highlightIdentifierUnderCaret,
+    showNotificationAfterReformatCodeCheckBox,
+    myShowNotificationAfterOptimizeImportsCheckBox,
+    renameLocalVariablesInplace,
+    preselectCheckBox,
+    showInlineDialogForCheckBox
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 
 class EditorOptionsPanel : BoundConfigurable(message("title.editor"), ID) {
@@ -375,11 +374,7 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         }
       }
       titledRow(message("group.quick.documentation")) {
-        row {
-          checkBox(cdShowQuickDocOnMouseMove).apply {
-            onApply { service<QuickDocOnMouseOverManager>().setEnabled(component.isSelected) }
-          }
-        }
+        row { checkBox(cdShowQuickDocOnMouseMove) }
       }
       titledRow(message("group.editor.tooltips")) {
         row {

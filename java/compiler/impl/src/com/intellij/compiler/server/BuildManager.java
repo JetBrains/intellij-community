@@ -82,6 +82,7 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import javax.tools.*;
@@ -222,10 +223,16 @@ public final class BuildManager implements Disposable {
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
 
-    final String fallbackSdkHome = getFallbackSdkHome();
-    if (fallbackSdkHome != null) {
+    String fallbackSdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null);
+    String fallbackSdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null);
+    if (fallbackSdkHome == null || fallbackSdkVersion == null) {
+      // default to the IDE's runtime
+      fallbackSdkHome = getFallbackSdkHome();
+      fallbackSdkVersion = SystemInfo.JAVA_VERSION;
+    }
+    if (fallbackSdkHome != null && fallbackSdkVersion != null) {
       myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + fallbackSdkHome);
-      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemInfo.JAVA_VERSION);
+      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + fallbackSdkVersion);
     }
 
     MessageBusConnection connection = application.getMessageBus().connect(this);
@@ -1086,11 +1093,6 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-Xmx" + heapSize + "m");
     }
 
-    if (SystemInfo.isMac && sdkVersion != null && JavaSdkVersion.JDK_1_6.equals(sdkVersion) && Registry.is("compiler.process.32bit.vm.on.mac")) {
-      // unfortunately -d32 is supported on jdk 1.6 only
-      cmdLine.addParameter("-d32");
-    }
-
     cmdLine.addParameter("-Djava.awt.headless=true");
     if (sdkVersion != null && sdkVersion.ordinal() < JavaSdkVersion.JDK_1_9.ordinal()) {
       //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
@@ -1163,7 +1165,7 @@ public final class BuildManager implements Disposable {
     if (isGeneratePortableCachesEnabled()) {
       //cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
       //cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
-      cmdLine.addParameter("-Dorg.jetbrains.jps.portable.caches=true");
+      cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");
     }
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language

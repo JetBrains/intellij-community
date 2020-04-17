@@ -1,5 +1,7 @@
 package com.intellij.workspace.api
 
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -91,6 +93,7 @@ abstract class EntityReference<out E : TypedEntity> {
  */
 abstract class PersistentEntityId<out E : TypedEntityWithPersistentId> {
   abstract val parentId: PersistentEntityId<*>?
+
   /** Text which can be shown in an error message if id cannot be resolved */
   abstract val presentableName: String
 
@@ -117,7 +120,7 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
                                                                          initializer: M.() -> Unit): T
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
-  fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T
+  override fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T
   override fun removeEntity(e: TypedEntity)
   fun <E : TypedEntity> createReference(e: E): EntityReference<E>
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage)
@@ -129,13 +132,40 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
   fun collectChanges(original: TypedEntityStorage): Map<Class<*>, List<EntityChange<*>>>
 
   // Reset all collected changes. TODO ugly!
+  // This method doesn't reset builder to it initial state, but just resets a changelog,
+  //   so next call to collectChanges will return empty list
   fun resetChanges()
 
   fun toStorage(): TypedEntityStorage
 
   companion object {
-    fun create(): TypedEntityStorageBuilder = TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+
+    private const val NEW_STORE_REGISTRY_KEY = "ide.new.project.model.newstorage"
+    private val newStoreEnabled = Registry.`is`(NEW_STORE_REGISTRY_KEY, false)
+
+    fun create(): TypedEntityStorageBuilder {
+      return if (newStoreEnabled) {
+        PEntityStorageBuilder.create()
+      }
+      else {
+        TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+      }
+    }
+
+    fun createProxy(): TypedEntityStorageBuilder {
+      return TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+    }
+
     fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder {
+      return if (newStoreEnabled) {
+        PEntityStorageBuilder.from(storage)
+      }
+      else {
+        TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
+      }
+    }
+
+    fun fromProxy(storage: TypedEntityStorage): TypedEntityStorageBuilder {
       return TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
     }
   }
@@ -153,8 +183,10 @@ interface TypedEntityStorageDiffBuilder {
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> addEntity(clazz: Class<M>, source: EntitySource, initializer: M.() -> Unit): T
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
   fun removeEntity(e: TypedEntity)
+  fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T
 
-  fun addDiff(diff: TypedEntityStorageDiffBuilder)
+  // Returns an association between an entity in diff and an entity in the current builder
+  fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity>
 
   val modificationCount: Long
 

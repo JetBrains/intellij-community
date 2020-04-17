@@ -70,8 +70,6 @@ public class PluginGroups {
     worker.execute();
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
-    initGroups(myTree, myFeaturedPlugins);
-
     Map<String, Pair<Icon, List<String>>> treeMap = new LinkedHashMap<>();
     initGroups(treeMap, myFeaturedPlugins);
     for (Entry<String, Pair<Icon, List<String>>> entry : treeMap.entrySet()) {
@@ -114,9 +112,11 @@ public class PluginGroups {
   /**
    * @deprecated use {@link #initGroups(List, Map)} instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
+    initGroups(myTree, myFeaturedPlugins);
   }
 
   protected void initGroups(@NotNull List<Group> groups, @NotNull Map<String, String> featuredPlugins) {

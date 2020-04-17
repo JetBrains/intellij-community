@@ -97,7 +97,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       }
       String staticPropertyValue = staticProperties.getProperty(name);
       if (staticPropertyValue != null) {
-        return staticPropertyValue;
+        return MavenPropertyResolver.resolve(staticPropertyValue, domModel);
       }
       if (name.equals(jaCoCoConfigProperty)) {
         return "";
@@ -228,7 +228,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     StringBuffer sb = new StringBuffer();
     while (matcher.find()) {
       String replacement = runtimeProperties.apply(matcher.group(1));
-      matcher.appendReplacement(sb, replacement == null ? matcher.group() : replacement);
+      matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement == null ? matcher.group() : replacement));
     }
     matcher.appendTail(sb);
     return sb.toString();

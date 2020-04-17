@@ -1039,7 +1039,7 @@ public class ExpressionUtils {
     return expression;
   }
 
-  @Contract(value = "null -> null")
+  @Contract("null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -1171,6 +1171,12 @@ public class ExpressionUtils {
         return true;
       }
     }
+    if (to instanceof PsiBinaryExpression && from instanceof PsiBinaryExpression) {
+      final BinaryOpExtractor extractor = new BinaryOpExtractor((PsiBinaryExpression)from, (PsiBinaryExpression)to);
+      final BinaryOpExtractor.Result result = extractor.extract();
+      from = result.myFrom;
+      to = result.myTo;
+    }
     Integer fromConstant = tryCast(computeConstantExpression(from), Integer.class);
     if (fromConstant == null) return false;
     Integer toConstant = tryCast(computeConstantExpression(to), Integer.class);
@@ -1178,6 +1184,56 @@ public class ExpressionUtils {
     Integer diffConstant = tryCast(computeConstantExpression(diff), Integer.class);
     if (diffConstant == null) return false;
     return diffConstant == toConstant - fromConstant;
+  }
+
+  private static final class BinaryOpExtractor {
+    @NotNull static final EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
+    @NotNull private final PsiBinaryExpression myFrom;
+    @NotNull private final PsiBinaryExpression myTo;
+
+    private BinaryOpExtractor(@NotNull final PsiBinaryExpression from,
+                              @NotNull final PsiBinaryExpression to) {
+      myFrom = from;
+      myTo = to;
+    }
+
+    @NotNull
+    private Result extract() {
+      final IElementType opTo = myTo.getOperationTokenType();
+      final IElementType opFrom = myFrom.getOperationTokenType();
+
+      if (opTo == JavaTokenType.PLUS && opFrom == JavaTokenType.PLUS) {
+        @NotNull final PsiExpression toLeft = myTo.getLOperand();
+        @NotNull final PsiExpression toRight = myTo.getROperand() != null ? myTo.getROperand() : myTo;
+
+        @NotNull final PsiExpression fromLeft = myFrom.getLOperand();
+        @NotNull final PsiExpression fromRight = myFrom.getROperand() != null ? myFrom.getROperand() : myFrom;
+
+        if (eq.expressionsAreEquivalent(fromLeft, toLeft)) {
+          return new Result(fromRight, toRight);
+        }
+        else if (eq.expressionsAreEquivalent(fromLeft, toRight)) {
+          return new Result(fromRight, toLeft);
+        }
+        else if (eq.expressionsAreEquivalent(fromRight, toLeft)) {
+          return new Result(fromLeft, toRight);
+        }
+        else if (eq.expressionsAreEquivalent(fromRight, toRight)) {
+          return new Result(fromLeft, toLeft);
+        }
+      }
+      return new Result(myFrom, myTo);
+    }
+
+    private static final class Result {
+      @NotNull private final PsiExpression myFrom;
+      @NotNull private final PsiExpression myTo;
+
+      private Result(@NotNull final PsiExpression from, @NotNull final PsiExpression to) {
+        myFrom = from;
+        myTo = to;
+      }
+    }
   }
 
   /**

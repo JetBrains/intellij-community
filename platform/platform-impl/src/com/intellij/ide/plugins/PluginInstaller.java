@@ -224,9 +224,19 @@ public final class PluginInstaller {
         return false;
       }
 
-      if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
-        String message = "Plugin '" + pluginDescriptor.getName() + "' is incompatible with this installation";
-        MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
+      String incompatibleMessage = PluginManagerCore.getIncompatibleMessage(PluginManagerCore.getBuildNumber(),
+                                                                            pluginDescriptor.getSinceBuild(),
+                                                                            pluginDescriptor.getUntilBuild());
+      if (incompatibleMessage != null || PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
+        StringBuilder builder = new StringBuilder().append("Plugin '").append(pluginDescriptor.getName()).append("'");
+        if (pluginDescriptor.getVersion() != null) {
+          builder.append(" version ").append(pluginDescriptor.getVersion());
+        }
+        builder.append(" is incompatible with this installation");
+        if (incompatibleMessage != null) {
+          builder.append(": ").append(incompatibleMessage);
+        }
+        MessagesEx.showErrorDialog(parent, builder.toString(), CommonBundle.getErrorTitle());
         return false;
       }
 

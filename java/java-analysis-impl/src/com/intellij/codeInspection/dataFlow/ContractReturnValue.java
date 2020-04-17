@@ -411,7 +411,7 @@ public abstract class ContractReturnValue {
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       DfType dfType = callState.myMemoryState.getDfType(defaultValue);
       dfType = dfType.meet(DfTypes.NOT_NULL_OBJECT);
-      if (callState.myCallArguments.myPure) {
+      if (callState.myCallArguments.myMutation.isPure()) {
         boolean unmodifiableView = Mutability.fromDfType(dfType) == Mutability.UNMODIFIABLE_VIEW;
         // Unmodifiable view methods like Collections.unmodifiableList create new object, but their special field "size" is
         // actually a delegate, so we cannot trust it if the original value is not local

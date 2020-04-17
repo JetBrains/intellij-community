@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,8 +24,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     myPluginDescriptor = pluginDescriptor;
   }
 
-  @Nullable
-  public PluginId getPluginId() {
+  public @Nullable PluginId getPluginId() {
     return myPluginDescriptor == null ? null : myPluginDescriptor.getPluginId();
   }
 
@@ -37,41 +36,36 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  @NotNull
-  public final <T> Class<T> findClass(@NotNull String className) throws ClassNotFoundException {
+  public final @NotNull <T> Class<T> findClass(@NotNull String className) throws ClassNotFoundException {
     return findClass(className, myPluginDescriptor);
   }
 
-  @NotNull
-  public final <T> Class<T> findExtensionClass(@NotNull String className) {
+  public final @NotNull <T> Class<T> findExtensionClass(@NotNull String className) {
     try {
       return findClass(className, myPluginDescriptor);
     }
-    catch (Exception e) {
-      throw new ExtensionInstantiationException(e, myPluginDescriptor);
+    catch (Throwable t) {
+      throw new ExtensionInstantiationException(t, myPluginDescriptor);
     }
   }
 
-  @NotNull
-  public static <T> Class<T> findClass(@NotNull String className, @Nullable PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+  public static @NotNull <T> Class<T> findClass(@NotNull String className, @Nullable PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     ClassLoader classLoader = pluginDescriptor == null ? AbstractExtensionPointBean.class.getClassLoader() : pluginDescriptor.getPluginClassLoader();
     //noinspection unchecked
     return (Class<T>)Class.forName(className, true, classLoader);
   }
 
-  @Nullable
-  public final <T> Class<T> findClassNoExceptions(String className) {
+  public final @Nullable <T> Class<T> findClassNoExceptions(String className) {
     try {
       return findClass(className);
     }
-    catch (Exception e) {
-      LOG.error(new ExtensionInstantiationException(e, myPluginDescriptor));
+    catch (Throwable t) {
+      LOG.error(new ExtensionInstantiationException(t, myPluginDescriptor));
       return null;
     }
   }
 
-  @NotNull
-  public ClassLoader getLoaderForClass() {
+  public @NotNull ClassLoader getLoaderForClass() {
     return myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
   }
 
@@ -82,24 +76,20 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
    * it to unchecked exception in your code.
    */
   @Deprecated
-  @NotNull
-  public final <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
+  public final @NotNull <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
     return instantiate(findClass(className), container);
   }
 
-  @NotNull
-  public final <T> T instantiateClass(@NotNull String className, @NotNull PicoContainer container) {
+  public final @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PicoContainer container) {
     return instantiate(findExtensionClass(className), container);
   }
 
-  @NotNull
-  public static <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container) {
+  public static @NotNull <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container) {
     return instantiate(aClass, container, true);
   }
 
-  @NotNull
-  public static <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container, boolean allowNonPublicClasses) {
-    ComponentAdapter adapter = new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses);
+  public static @NotNull <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container, @SuppressWarnings("unused") boolean allowNonPublicClasses) {
+    ComponentAdapter adapter = new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass);
     @SuppressWarnings("unchecked") T t = (T)adapter.getComponentInstance(container);
     return t;
   }

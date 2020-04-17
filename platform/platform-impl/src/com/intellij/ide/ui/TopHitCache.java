@@ -5,22 +5,22 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class TopHitCache implements Disposable {
-  protected final ConcurrentMap<Class<?>, Collection<OptionDescription>> map = ContainerUtil.newConcurrentMap();
+  protected final ConcurrentMap<Class<?>, Collection<OptionDescription>> map = new ConcurrentHashMap<>();
 
   public static TopHitCache getInstance() {
-    return ServiceManager.getService(TopHitCache.class);
+    return ApplicationManager.getApplication().getService(TopHitCache.class);
   }
 
   @Override

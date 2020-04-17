@@ -1,23 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Registers {@link DomFileDescription}.
+ */
 public class DomFileMetaData extends AbstractExtensionPointBean {
   static final ExtensionPointName<DomFileMetaData> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileMetaData");
 
   /**
-   * A {@link DomFileDescription} inheritor
+   * A {@link DomFileDescription} inheritor.
    */
   @Attribute("implementation")
+  @RequiredElement
   public String implementation;
 
   /**
@@ -66,12 +71,12 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
         if (StringUtil.isEmpty(rootTagName)) {
           if (!instance.acceptsOtherRootTagNames()) {
             throw new PluginException(
-              implementation + " should either specify a root tag name in XML, or return true from 'acceptsOtherRootTagNames'",
+              implementation + " should either specify 'rootTagName' in XML, or return true from 'acceptsOtherRootTagNames'",
               getPluginId());
           }
         }
         else if (!rootTagName.equals(instance.getRootTagName())) {
-          throw new PluginException(implementation + " XML declaration should have " + instance.getRootTagName() + " root tag name",
+          throw new PluginException(implementation + " XML declaration should have '" + instance.getRootTagName() + "' for 'rootTagName'",
                                     getPluginId());
         }
         DomApplicationComponent.getInstance().initDescription(instance);
@@ -90,5 +95,4 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
   public boolean hasStubs() {
     return stubVersion != null;
   }
-
 }

@@ -69,6 +69,7 @@
           <component id="fd8ff" class="com.intellij.ui.components.JBLabel">
             <constraints/>
             <properties>
+              <labelFor value="7c462"/>
               <text resource-bundle="messages/VcsBundle" key="create.changelist.on.failed.commit"/>
             </properties>
           </component>

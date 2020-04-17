@@ -22,14 +22,14 @@ class LocalTargetEnvironmentTest {
       "Option with \"Quotes\" and Spaces"
     )
 
-    val targetedCommandLineBuilder = TargetedCommandLineBuilder().apply {
+    val request = LocalTargetEnvironmentRequest()
+    val targetedCommandLineBuilder = TargetedCommandLineBuilder(request).apply {
       setExePath(exePath)
       parameters.forEach { parameter ->
         addParameter(parameter)
       }
     }
 
-    val request = LocalTargetEnvironmentRequest()
     val localTargetEnvironment = LocalTargetEnvironment(request)
     val generalCommandLine = localTargetEnvironment.createGeneralCommandLine(targetedCommandLineBuilder.build())
     println(generalCommandLine.commandLineString)
@@ -59,14 +59,14 @@ class LocalTargetEnvironmentTest {
       "Option With \"Quotes\" and Spaces"
     )
 
-    val targetedCommandLineBuilder = TargetedCommandLineBuilder().apply {
+    val request = LocalTargetEnvironmentRequest()
+    val targetedCommandLineBuilder = TargetedCommandLineBuilder(request).apply {
       setExePath(exePath)
       parameters.forEach { parameter ->
         addParameter(parameter)
       }
     }
 
-    val request = LocalTargetEnvironmentRequest()
     val localTargetEnvironment = LocalTargetEnvironment(request)
     val generalCommandLine = localTargetEnvironment.createGeneralCommandLine(targetedCommandLineBuilder.build())
     println(generalCommandLine.commandLineString)

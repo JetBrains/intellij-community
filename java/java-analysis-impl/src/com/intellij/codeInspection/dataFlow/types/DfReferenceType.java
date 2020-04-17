@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,5 +98,27 @@ public interface DfReferenceType extends DfType {
    */
   static boolean isLocal(DfType type) {
     return type instanceof DfReferenceType && ((DfReferenceType)type).isLocal();
+  }
+
+  /**
+   * @param type type to drop
+   * @return this type dropping any relation to the supplied type
+   */
+  @NotNull
+  default DfType withoutType(@NotNull TypeConstraint type) {
+    TypeConstraint constraint = getConstraint();
+    if (constraint.equals(type)) {
+      return dropTypeConstraint();
+    }
+    if (type instanceof TypeConstraint.Exact) {
+      TypeConstraint.Exact exact = (TypeConstraint.Exact)type;
+      TypeConstraint result = TypeConstraints.TOP;
+      result = constraint.instanceOfTypes().without(exact).map(TypeConstraint.Exact::instanceOf)
+        .foldLeft(result, TypeConstraint::meet);
+      result = constraint.notInstanceOfTypes().without(exact).map(TypeConstraint.Exact::notInstanceOf)
+        .foldLeft(result, TypeConstraint::meet);
+      return dropTypeConstraint().meet(result.asDfType());
+    }
+    return this;
   }
 }

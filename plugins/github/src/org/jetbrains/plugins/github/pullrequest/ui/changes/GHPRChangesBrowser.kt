@@ -1,119 +1,107 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
-import com.intellij.diff.util.DiffUserDataKeys
-import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.ide.actions.NonEmptyActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.diff.impl.GenericDataProvider
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.ui.IdeBorderFactory
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
-import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.util.ui.tree.TreeUtil
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
-import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
-import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
-import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
-import org.jetbrains.plugins.github.util.GHToolbarLabelAction
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
-import javax.swing.border.Border
-import javax.swing.tree.DefaultTreeModel
+import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-internal open class GHPRChangesBrowser(private val model: GHPRChangesModel,
-                                       private val diffHelper: GHPRChangesDiffHelper,
-                                       private val project: Project)
-  : ChangesBrowserBase(project, false, false),
-    ComponentWithEmptyText {
+object GHPRChangesBrowser {
 
-  init {
-    init()
-    model.addStateChangesListener {
-      myViewer.rebuildTree()
+  fun create(project: Project,
+             changesModel: GHPRChangesModel,
+             diffHelper: GHPRChangesDiffHelper,
+             panelEmptyText: String,
+             disposable: Disposable): JComponent {
+
+    val actionManager = ActionManager.getInstance()
+
+    val diffAction = GHPRShowDiffAction().apply {
+      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
     }
-    myViewer.rebuildTree()
+    val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
+
+    val changesTreePanel = GHPRChangesTree.createLazyTreePanel(changesModel) {
+      createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
+        emptyText.text = panelEmptyText
+      }
+    }.apply {
+      emptyText.text = panelEmptyText
+    }
+
+    val toolbar = createToolbar(actionManager, diffAction, changesTreePanel)
+    val scrollPane = ScrollPaneFactory.createScrollPane(changesTreePanel, SideBorder.TOP)
+
+    return BorderLayoutPanel().andTransparent()
+      .addToTop(toolbar)
+      .addToCenter(scrollPane)
   }
 
-  override fun canShowDiff(): Boolean {
-    val selection = VcsTreeModelData.getListSelectionOrAll(myViewer)
-    return selection.list.any { it is Change && ChangeDiffRequestProducer.canCreate(project, it) }
+  private fun createToolbar(actionManager: ActionManager, diffAction: GHPRShowDiffAction, target: JComponent)
+    : TreeActionsToolbarPanel {
+
+    val reviewSubmitAction = GHPRReviewSubmitAction()
+    val changesToolbarActionGroup = DefaultActionGroup(diffAction, reviewSubmitAction, Separator(),
+                                                       actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
+    val changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true)
+    val treeActionsGroup = DefaultActionGroup(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL),
+                                              actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL))
+    return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
   }
 
-  override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
-    return if (userObject is Change) {
-      val dataKeys: MutableMap<Key<out Any>, Any?> = mutableMapOf()
+  fun create(project: Project,
+             loadingModel: GHLoadingModel,
+             changesModel: GHPRChangesModel,
+             diffHelper: GHPRChangesDiffHelper,
+             panelEmptyText: String = "",
+             disposable: Disposable): JComponent {
 
-      val diffComputer = diffHelper.getDiffComputer(userObject)
-      if (diffComputer != null) {
-        dataKeys[DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER] = diffComputer
+    val actionManager = ActionManager.getInstance()
+
+    val diffAction = GHPRShowDiffAction().apply {
+      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
+    }
+    val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
+
+    val loadingPanel = GHLoadingPanel.create(loadingModel, {
+      createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
+        ScrollPaneFactory.createScrollPane(this, SideBorder.TOP)
+      }
+    }, disposable, panelEmptyText, "Can't load changes")
+
+    val toolbar = createToolbar(actionManager, diffAction, loadingPanel)
+
+    return BorderLayoutPanel().andTransparent()
+      .addToTop(toolbar)
+      .addToCenter(loadingPanel)
+  }
+
+  private fun createTree(project: Project, changesModel: GHPRChangesModel,
+                         diffAction: GHPRShowDiffAction, diffHelper: GHPRChangesDiffHelper, reloadAction: AnAction,
+                         parentPanel: JPanel,
+                         disposable: Disposable) =
+    GHPRChangesTree.create(project, changesModel).also {
+      DataManager.registerDataProvider(parentPanel) { dataId ->
+        when {
+          GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
+          else -> it.getData(dataId)
+        }
       }
 
-      val reviewSupport = diffHelper.getReviewSupport(userObject)
-      if (reviewSupport != null) {
-        dataKeys[GHPRDiffReviewSupport.KEY] = reviewSupport
-        val currentDataContext =
-          GHPRActionKeys.ACTION_DATA_CONTEXT.getData(DataManager.getInstance().getDataContext(this))
-
-        dataKeys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
-          putData(GHPRActionKeys.ACTION_DATA_CONTEXT, currentDataContext)
-          putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
-        }
-        val viewOptionsGroup = NonEmptyActionGroup().apply {
-          isPopup = true
-          templatePresentation.text = "View Options"
-          templatePresentation.icon = AllIcons.Actions.Show
-          add(GHPRDiffReviewThreadsToggleAction())
-          add(GHPRDiffReviewResolvedThreadsToggleAction())
-        }
-
-        dataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(GHToolbarLabelAction("Review:"),
-                                                            viewOptionsGroup,
-                                                            GHPRDiffReviewThreadsReloadAction(),
-                                                            GHPRReviewSubmitAction())
-      }
-      ChangeDiffRequestProducer.create(myProject, userObject, dataKeys)
+      diffAction.registerCustomShortcutSet(CompositeShortcutSet(diffAction.shortcutSet, CommonShortcuts.DOUBLE_CLICK_1), it)
+      reloadAction.registerCustomShortcutSet(it, disposable)
+      it.installPopupHandler(DefaultActionGroup(diffAction, reloadAction))
     }
-    else null
-  }
-
-  override fun createToolbarActions(): List<AnAction> {
-    return super.createToolbarActions() + GHPRReviewSubmitAction()
-  }
-
-  override fun createPopupMenuActions(): List<AnAction> {
-    val refreshAction = ActionManager.getInstance().getAction("Github.PullRequest.Changes.Reload")
-    return super.createPopupMenuActions() + refreshAction
-  }
-
-  override fun getEmptyText() = myViewer.emptyText
-
-  override fun createTreeList(project: Project, showCheckboxes: Boolean, highlightProblems: Boolean): ChangesBrowserTreeList {
-    return super.createTreeList(project, showCheckboxes, highlightProblems).also {
-      it.addFocusListener(object : FocusListener {
-        override fun focusGained(e: FocusEvent?) {
-          if (it.isSelectionEmpty && !it.isEmpty) TreeUtil.selectFirstNode(it)
-        }
-
-        override fun focusLost(e: FocusEvent?) {}
-      })
-    }
-  }
-
-  override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
-
-  override fun buildTreeModel(): DefaultTreeModel {
-    return model.buildChangesTree(grouping)
-  }
 }

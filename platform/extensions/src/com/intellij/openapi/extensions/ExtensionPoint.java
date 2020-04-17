@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-public interface ExtensionPoint<T> {
+public interface ExtensionPoint<@NotNull T> {
   @NotNull
   String getName();
 
@@ -58,9 +58,8 @@ public interface ExtensionPoint<T> {
   /**
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
-  @Nullable
   @Deprecated
-  default T getExtension() {
+  default @Nullable T getExtension() {
     // method is deprecated and not used, ignore not efficient implementation
     return ContainerUtil.getFirstItem(getExtensionList());
   }
@@ -104,16 +103,6 @@ public interface ExtensionPoint<T> {
   boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
   /**
-   * Unregisters extensions for which the specified predicate returns false and collects the callables for listener invocation into the given list
-   * so that listeners can be called later.
-   */
-  boolean unregisterExtensions(
-    @NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
-    boolean stopAfterFirstMatch,
-    List<Runnable> listenerCallbacks
-  );
-
-  /**
    * @deprecated use {@link #addExtensionPointListener(ExtensionPointListener, boolean, Disposable)}
    */
   @Deprecated
@@ -124,8 +113,6 @@ public interface ExtensionPoint<T> {
   void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
-
-  void reset();
 
   @NotNull
   String getClassName();

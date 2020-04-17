@@ -93,7 +93,7 @@ class BuildMessagesImpl implements BuildMessages {
     def writer = new StringWriter()
     new PrintWriter(writer).withCloseable { cause?.printStackTrace(it) }
     processMessage(new LogMessage(LogMessage.Kind.ERROR, "$message\n$writer"))
-    throw new BuildException(message)
+    throw new BuildException(message, cause)
   }
 
   @Override

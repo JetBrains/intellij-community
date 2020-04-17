@@ -9,6 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
+    <orderEntry type="library" exported="" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />

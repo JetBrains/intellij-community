@@ -4,6 +4,7 @@ package git4idea.update;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
@@ -31,6 +33,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
+import git4idea.pull.GitPullDialog;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
@@ -66,6 +69,7 @@ public class GitUpdateProcess {
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
   private final UpdatedFiles myUpdatedFiles;
+  private final Map<GitRepository, GitBranchPair> myUpdateConfig;
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final GitMerger myMerger;
 
@@ -76,6 +80,7 @@ public class GitUpdateProcess {
                           @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
+                          @Nullable Map<GitRepository, GitBranchPair> updateConfig,
                           boolean checkRebaseOverMergeProblem,
                           boolean checkForTrackedBranchExistence) {
     myProject = project;
@@ -85,6 +90,7 @@ public class GitUpdateProcess {
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myUpdatedFiles = updatedFiles;
+    myUpdateConfig = updateConfig;
 
     myRepositories = GitUtil.getRepositoryManager(project).sortByDependency(repositories);
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
@@ -127,7 +133,7 @@ public class GitUpdateProcess {
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
       return GitUpdateResult.NOT_READY;
     }
-    Map<GitRepository, GitBranchPair> trackedBranches = checkTrackedBranchesConfiguration();
+    Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (ContainerUtil.isEmpty(trackedBranches)) {
       return GitUpdateResult.NOT_READY;
     }
@@ -146,7 +152,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {
-    Map<GitRepository, GitBranchPair> trackedBranches = checkTrackedBranchesConfiguration();
+    Map<GitRepository, GitBranchPair> trackedBranches = myUpdateConfig != null ? myUpdateConfig : checkTrackedBranchesConfiguration();
     if (trackedBranches == null) {
       return GitUpdateResult.NOT_READY;
     }
@@ -308,7 +314,7 @@ public class GitUpdateProcess {
   }
 
   @NotNull
-  Map<GitRepository, String> getSkippedRoots() {
+  public Map<GitRepository, String> getSkippedRoots() {
     return mySkippedRoots;
   }
 
@@ -397,8 +403,29 @@ public class GitUpdateProcess {
     return trackedBranches;
   }
 
-  private static void notifyNoTrackedBranchError(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
-    notifyImportantError(repository.getProject(), "Can't Update", getNoTrackedBranchError(repository, currentBranch.getName()));
+  private void notifyNoTrackedBranchError(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
+    VcsNotifier.getInstance(repository.getProject())
+      .notifyError(
+        GitBundle.message("update.notification.update.error"),
+        getNoTrackedBranchError(repository, currentBranch.getName()),
+        NotificationAction.createSimple(
+          GitBundle.message("update.notification.choose.upstream.branch"),
+          () -> {
+            showUpdateDialog(repository);
+          })
+      );
+  }
+
+  private void showUpdateDialog(@NotNull GitRepository repository) {
+    GitPullDialog updateDialog = new GitPullDialog(repository.getProject());
+    if (updateDialog.showAndGet()) {
+      new GitUpdateExecutionProcess(repository.getProject(),
+                                    myRepositories,
+                                    updateDialog.getUpdateConfig(),
+                                    updateDialog.getUpdateMethod(),
+                                    updateDialog.shouldSetAsUpstream())
+        .execute();
+    }
   }
 
   private static void notifyDetachedHeadError(@NotNull GitRepository repository) {

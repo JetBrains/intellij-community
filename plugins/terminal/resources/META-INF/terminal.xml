@@ -7,6 +7,7 @@
                 secondary="false"
                 canCloseContents="true"/>
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
     <projectConfigurable groupId="tools" groupWeight="130"
                          bundle="messages.IdeBundle"

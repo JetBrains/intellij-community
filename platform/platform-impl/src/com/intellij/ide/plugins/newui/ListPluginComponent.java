@@ -276,7 +276,7 @@ public class ListPluginComponent extends JPanel {
   private void createLicensePanel() {
     String productCode = myPlugin.getProductCode();
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (myMarketplace || productCode == null || instance == null) {
+    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled()) {
       return;
     }
 
@@ -422,7 +422,9 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateErrors() {
-    boolean errors = myPluginModel.hasErrors(myPlugin);
+    Ref<String> enableAction = new Ref<>();
+    String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+    boolean errors = message != null;
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
     if (myAlignButton != null) {
@@ -437,8 +439,6 @@ public class ListPluginComponent extends JPanel {
         myLayout.addLineComponent(myErrorPanel);
       }
 
-      Ref<String> enableAction = new Ref<>();
-      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
       myErrorComponent = ErrorComponent.show(myErrorPanel, BorderLayout.CENTER, myErrorComponent, message, enableAction.get(),
                                              enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
       myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));

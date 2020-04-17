@@ -50,7 +50,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     text.append(".toString();<caret>}");
     configureByText(StdFileTypes.JAVA, text.toString());
 
-    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 60_000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 95_000, () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
       type("k");
@@ -68,7 +68,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
                   "}";
     configureByText(StdFileTypes.JAVA, text);
 
-    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 8_000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 11_000, () -> {
       assertEmpty(highlightErrors());
 
       type("k");

@@ -355,6 +355,13 @@ public class PsiLiteralUtil {
     return -1;
   }
 
+  /**
+   * Returns the lines of text inside the quotes of a text block. No further processing is performed.
+   * Any escaped characters will remain escaped. Indent is not stripped.
+   *
+   * @param expression  a text block expression
+   * @return the lines of the expression, or null if the expression is not a text block.
+   */
   public static String @Nullable [] getTextBlockLines(PsiLiteralExpression expression) {
     if (!expression.isTextBlock()) return null;
     String rawText = expression.getText();
@@ -368,6 +375,14 @@ public class PsiLiteralUtil {
     return rawText.substring(start, rawText.length() - 3).split("\n", -1);
   }
 
+  /**
+   * Determines how many whitespaces would be excluded at the beginning of each line of text block content.
+   * See JEP 368 for more details.
+   *
+   * @see #getTextBlockIndent(String[], boolean, boolean)
+   * @param expression a text block literal expression
+   * @return the indent of the text block counted in characters, where a tab is also counted as 1.
+   */
   public static int getTextBlockIndent(PsiLiteralExpression expression) {
     String[] lines = getTextBlockLines(expression);
     if (lines == null) return -1;
@@ -375,21 +390,18 @@ public class PsiLiteralUtil {
   }
 
   /**
-   * Determines how many whitespaces would be excluded at the beginning of each line of text block content.
-   * See JEP 368 for more details.
-   *
-   * @param lines text block content
+   * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines) {
     return getTextBlockIndent(lines, false, false);
   }
 
   /**
-   * @see #getTextBlockIndent(String[])
+   * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length; i++) {
+    for (int i = 0; i < lines.length && prefix != 0; i++) {
       String line = lines[i];
       int indent = 0;
       while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
@@ -401,8 +413,15 @@ public class PsiLiteralUtil {
     return prefix;
   }
 
+  /**
+   * Returns the text inside the quotes of a regular string literal. No further processing is performed.
+   * Any escaped characters will remain escaped.
+   *
+   * @param expression  regular string literal.
+   * @return the text inside the quotes, or null if the expression is not a string literal.
+   */
   @Nullable
-  public static String getInnerText(PsiLiteralExpression expression) {
+  public static String getStringLiteralContent(PsiLiteralExpression expression) {
     String text = expression.getText();
     int textLength = text.length();
     if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {
@@ -414,6 +433,13 @@ public class PsiLiteralUtil {
     return null;
   }
 
+  /**
+   * Return the text of the specified text block without indent and trailing whitespace.
+   * Any escaped character will remain escaped.
+   *
+   * @param expression  a text block expression
+   * @return the text of the text block, or null if the expression is not a text block.
+   */
   @Nullable
   public static String getTextBlockText(PsiLiteralExpression expression) {
     String[] lines = getTextBlockLines(expression);
@@ -425,7 +451,7 @@ public class PsiLiteralUtil {
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       if (line.length() > 0) {
-        sb.append(trimTrailingSpaces(line.substring(prefix)));
+        sb.append(trimTrailingWhitespace(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
         sb.append('\n');
@@ -435,9 +461,9 @@ public class PsiLiteralUtil {
   }
 
   @NotNull
-  private static String trimTrailingSpaces(@NotNull String line) {
+  private static String trimTrailingWhitespace(@NotNull String line) {
     int index = line.length() - 1;
-    while (index >= 0 && line.charAt(index) == ' ') index--;
+    while (index >= 0 && Character.isWhitespace(line.charAt(index))) index--;
     if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
     return line.substring(0, index + 1);
   }
@@ -569,7 +595,7 @@ public class PsiLiteralUtil {
     private static int findLineSuffixLength(@NotNull String line, boolean isLastLine) {
       if (isLastLine) return 0;
       int lastIdx = line.length() - 1;
-      for (int i = lastIdx; i >= 0; i--) if (line.charAt(i) != ' ') return lastIdx - i;
+      for (int i = lastIdx; i >= 0; i--) if (!Character.isWhitespace(line.charAt(i))) return lastIdx - i;
       return 0;
     }
 

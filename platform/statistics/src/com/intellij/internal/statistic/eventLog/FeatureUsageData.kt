@@ -201,13 +201,12 @@ class FeatureUsageData {
     return this
   }
 
-  @FeatureUsageDataBuilder(additionalDataFields = ["value::0"])
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
     data[key] = value?.let { EventLogConfiguration.anonymize(value) } ?: "undefined"
     return this
   }
 
-  @FeatureUsageDataBuilder(additionalDataFields = ["value"])
+  @FeatureUsageDataBuilder(additionalDataFields = ["value::0"])
   fun addValue(value: Any): FeatureUsageData {
     if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
       return addDataInternal("value", value)

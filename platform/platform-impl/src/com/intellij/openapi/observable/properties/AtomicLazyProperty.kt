@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Disposer
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 
-open class AtomicLazyProperty<T>(private val initial: () -> T) : ObservableClearableProperty<T> {
+open class AtomicLazyProperty<T>(private val initial: () -> T) : AtomicProperty<T> {
 
   private val value = AtomicReference<Any?>(UNINITIALIZED_VALUE)
 
@@ -14,13 +14,24 @@ open class AtomicLazyProperty<T>(private val initial: () -> T) : ObservableClear
   private val resetListeners = CopyOnWriteArrayList<() -> Unit>()
 
   override fun get(): T {
-    @Suppress("UNCHECKED_CAST")
-    return value.updateAndGet { if (it === UNINITIALIZED_VALUE) initial() else it } as T
+    return update { it }
   }
 
   override fun set(value: T) {
     this.value.set(value)
     changeListeners.forEach { it(value) }
+  }
+
+  override fun updateAndGet(update: (T) -> T): T {
+    val newValue = update(update)
+    changeListeners.forEach { it(newValue) }
+    return newValue
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun update(update: (T) -> T): T {
+    val resolve = { it: Any? -> if (it === UNINITIALIZED_VALUE) initial() else it as T }
+    return value.updateAndGet { update(resolve(it)) } as T
   }
 
   override fun reset() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -24,18 +24,19 @@ private val mySyncTagEditing                                            get() = 
 private val mySelectWholeCssIdentifierOnDoubleClick                     get() = CheckboxDescriptor(XmlBundle.message("smart.keys.select.whole.css.identifiers.on.double.click"), PropertyBinding(model::isSelectWholeCssIdentifierOnDoubleClick, model::setSelectWholeCssIdentifierOnDoubleClick))
 // @formatter:on
 
-private val webEditorOptionDescriptors = listOf(
-  myAutomaticallyInsertClosingTagCheckBox,
-  myAutomaticallyInsertRequiredAttributesCheckBox,
-  myAutomaticallyInsertRequiredSubTagsCheckBox,
-  myAutomaticallyStartAttributeAfterCheckBox,
-  myAddQuotasForAttributeValue,
-  myAutoCloseTagCheckBox,
-  mySyncTagEditing,
-  mySelectWholeCssIdentifierOnDoubleClick
-).map(CheckboxDescriptor::asOptionDescriptor)
+private val webEditorOptionDescriptors
+  get() = listOf(
+    myAutomaticallyInsertClosingTagCheckBox,
+    myAutomaticallyInsertRequiredAttributesCheckBox,
+    myAutomaticallyInsertRequiredSubTagsCheckBox,
+    myAutomaticallyStartAttributeAfterCheckBox,
+    myAddQuotasForAttributeValue,
+    myAutoCloseTagCheckBox,
+    mySyncTagEditing,
+    mySelectWholeCssIdentifierOnDoubleClick
+  ).map(CheckboxDescriptor::asOptionDescriptor)
 
-internal class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
+internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
   override fun createPanel(): DialogPanel {
     return panel {
       titledRow(XmlBundle.message("xml.editor.options.misc.title")) {

@@ -21,13 +21,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public final class GitUserRegistry implements Disposable, VcsListener {
   private static final Logger LOG = Logger.getInstance(GitUserRegistry.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final Map<VirtualFile, VcsUser> myUserMap = ContainerUtil.newConcurrentMap();
+  private final @NotNull Project myProject;
+  private final @NotNull Map<VirtualFile, VcsUser> myUserMap = new ConcurrentHashMap<>();
 
   public GitUserRegistry(@NotNull Project project) {
     myProject = project;
@@ -42,13 +43,11 @@ public final class GitUserRegistry implements Disposable, VcsListener {
     directoryMappingChanged();
   }
 
-  @Nullable
-  public VcsUser getUser(@NotNull VirtualFile root) {
+  public @Nullable VcsUser getUser(@NotNull VirtualFile root) {
     return myUserMap.get(root);
   }
 
-  @Nullable
-  public VcsUser getOrReadUser(@NotNull VirtualFile root) {
+  public @Nullable VcsUser getOrReadUser(@NotNull VirtualFile root) {
     VcsUser user = myUserMap.get(root);
     if (user == null) {
       try {
@@ -64,8 +63,7 @@ public final class GitUserRegistry implements Disposable, VcsListener {
     return user;
   }
 
-  @Nullable
-  private static VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  private static @Nullable VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     String userName = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
     String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL));
     return userName == null ? null : project.getService(VcsLogObjectsFactory.class).createUser(userName, userEmail);

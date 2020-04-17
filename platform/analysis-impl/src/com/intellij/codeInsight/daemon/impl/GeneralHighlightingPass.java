@@ -331,7 +331,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       ProgressManager.checkCanceled();
 
       PsiElement parent = element.getParent();
-      if (element != getFile() && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
+      if (element != getFile() && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)
+          && parent != null) {
         skipParentsSet.add(parent);
         continue;
       }
@@ -377,7 +378,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         result.add(info);
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
-          if (!forceHighlightParents) {
+          if (!forceHighlightParents && parent != null) {
             skipParentsSet.add(parent);
           }
           myErrorFound = true;

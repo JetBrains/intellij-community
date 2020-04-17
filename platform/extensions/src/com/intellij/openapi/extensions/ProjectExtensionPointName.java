@@ -18,28 +18,23 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
     super(name);
   }
 
-  @NotNull
-  public ExtensionPoint<T> getPoint(@NotNull AreaInstance areaInstance) {
+  public @NotNull ExtensionPoint<T> getPoint(@NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
   }
 
-  @NotNull
-  public List<T> getExtensions(@NotNull AreaInstance areaInstance) {
+  public @NotNull List<T> getExtensions(@NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance).getExtensionList();
   }
 
-  @NotNull
-  public Stream<T> extensions(@NotNull AreaInstance areaInstance) {
+  public @NotNull Stream<T> extensions(@NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance).extensions();
   }
 
-  @Nullable
-  public <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
+  public @Nullable <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance).findExtension(instanceOf, false, ThreeState.UNSURE);
   }
 
-  @NotNull
-  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
+  public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
     //noinspection ConstantConditions
     return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
   }
@@ -48,13 +43,11 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
     return getPointImpl(areaInstance).hasAnyExtensions();
   }
 
-  @Nullable
-  public T findFirstSafe(@NotNull AreaInstance areaInstance, @NotNull Predicate<? super T> predicate) {
+  public @Nullable T findFirstSafe(@NotNull AreaInstance areaInstance, @NotNull Predicate<? super T> predicate) {
     return ExtensionProcessingHelper.findFirstSafe(predicate, getPointImpl(areaInstance));
   }
 
-  @Nullable
-  public <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
+  public @Nullable <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
     return ExtensionProcessingHelper.computeSafeIfAny(processor, getPointImpl(areaInstance));
   }
 

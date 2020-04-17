@@ -101,12 +101,7 @@ public final class ConfigurableExtensionPointUtil {
           LOG.warn("Can't find parent for " + parentId + " (" + wrapper + ")");
           continue;
         }
-        List<String> children = tree.get(parentId);
-        if (children == null) {
-          children = new ArrayList<>(5);
-          tree.put(parentId, children);
-        }
-        children.add(id);
+        tree.computeIfAbsent(parentId, k -> new ArrayList<>(5)).add(id);
       }
     }
     return tree;
@@ -469,7 +464,7 @@ public final class ConfigurableExtensionPointUtil {
   private static Configurable createConfigurableForProvider(@NotNull List<? extends ConfigurableEP<Configurable>> extensions, Class<? extends ConfigurableProvider> providerClass) {
     for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.providerClass != null) {
-        final Class<Object> aClass = extension.findClassNoExceptions(extension.providerClass);
+        Class<?> aClass = extension.findClassOrNull(extension.providerClass);
         if (aClass != null && providerClass.isAssignableFrom(aClass)) {
           return extension.createConfigurable();
         }

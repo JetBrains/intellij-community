@@ -1,4 +1,4 @@
-/*****************************************************************************
+/*
  * Copyright (C) PicoContainer Organization. All rights reserved.            *
  * ------------------------------------------------------------------------- *
  * The software in this package is published under the terms of the BSD      *
@@ -6,8 +6,10 @@
  * the LICENSE.txt file.                                                     *
  *                                                                           *
  * Original code by                                                          *
- *****************************************************************************/
+*/
 package org.picocontainer;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -27,7 +29,7 @@ public interface PicoContainer {
    * @return an instantiated component, or <code>null</code> if no component has been registered for the specified
    * key.
    */
-  Object getComponentInstance(Object componentKey);
+  Object getComponentInstance(@NotNull Object componentKey);
 
   /**
    * Find a component instance matching the specified type.
@@ -37,7 +39,7 @@ public interface PicoContainer {
    * with a matching type
    * @throws PicoException if the instantiation of the component fails
    */
-  Object getComponentInstanceOfType(Class componentType);
+  Object getComponentInstanceOfType(@NotNull Class<?> componentType);
 
   /**
    * Retrieve the parent container of this container.
@@ -64,7 +66,7 @@ public interface PicoContainer {
    * @return the component adapter associated with this class, or <code>null</code> if no component has been
    * registered for the specified key.
    */
-  ComponentAdapter getComponentAdapterOfType(Class componentType);
+  ComponentAdapter getComponentAdapterOfType(@NotNull Class<?> componentType);
 
   /**
    * Retrieve all the component adapters inside this container. The component adapters from the parent container are
@@ -85,5 +87,5 @@ public interface PicoContainer {
    * @return a collection containing all the {@link ComponentAdapter}s inside this container that are associated with
    * the specified type. Changes to this collection will not be reflected in the container itself.
    */
-  List<ComponentAdapter> getComponentAdaptersOfType(Class componentType);
+  List<ComponentAdapter> getComponentAdaptersOfType(@NotNull Class<?> componentType);
 }

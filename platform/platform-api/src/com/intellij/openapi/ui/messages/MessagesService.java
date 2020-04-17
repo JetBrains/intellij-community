@@ -39,7 +39,7 @@ public interface MessagesService {
   int showMoreInfoMessageDialog(Project project,
                                 @DialogMessage String message,
                                 @DialogTitle String title,
-                                @Text String moreInfo,
+                                @DetailedDescription String moreInfo,
                                 String[] options,
                                 int defaultOptionIndex,
                                 int focusedOptionIndex,
@@ -72,15 +72,15 @@ public interface MessagesService {
                          @DialogMessage String message,
                          @DialogTitle String title,
                          @Nullable Icon icon,
-                         @Nullable @InputDialogInitialValue String initialValue,
+                         @Nullable String initialValue,
                          @Nullable InputValidator validator,
                          @Nullable TextRange selection,
-                         @Nullable @Text String comment);
+                         @Nullable @DetailedDescription String comment);
 
   String showMultilineInputDialog(Project project,
                                   @DialogMessage String message,
                                   @DialogTitle String title,
-                                  @InputDialogInitialValue String initialValue,
+                                  String initialValue,
                                   Icon icon,
                                   @Nullable InputValidator validator);
 
@@ -90,14 +90,14 @@ public interface MessagesService {
                                                     boolean checked,
                                                     boolean checkboxEnabled,
                                                     Icon icon,
-                                                    @InputDialogInitialValue String initialValue,
+                                                    String initialValue,
                                                     InputValidator validator);
 
   String showEditableChooseDialog(@DialogMessage String message,
                                   @DialogTitle String title,
                                   Icon icon,
                                   String[] values,
-                                  @InputDialogInitialValue String initialValue,
+                                  String initialValue,
                                   InputValidator validator);
 
   int showChooseDialog(@Nullable Project project,
@@ -105,7 +105,7 @@ public interface MessagesService {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        String[] values,
-                       @InputDialogInitialValue String initialValue,
+                       String initialValue,
                        @Nullable Icon icon);
 
   void showTextAreaDialog(JTextField textField,

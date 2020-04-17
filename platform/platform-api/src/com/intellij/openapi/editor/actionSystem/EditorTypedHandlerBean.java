@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 /**
  * @author yole
  */
-public class EditorTypedHandlerBean extends AbstractExtensionPointBean {
+public final class EditorTypedHandlerBean extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance(EditorActionHandlerBean.class);
 
   public static final ExtensionPointName<EditorTypedHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.editorTypedHandler");
@@ -26,7 +26,7 @@ public class EditorTypedHandlerBean extends AbstractExtensionPointBean {
   public TypedActionHandler getHandler(TypedActionHandler originalHandler) {
     if (myHandler == null) {
       try {
-        DefaultPicoContainer container = new DefaultPicoContainer(ApplicationManager.getApplication().getPicoContainer());
+        DefaultPicoContainer container = new DefaultPicoContainer((DefaultPicoContainer)ApplicationManager.getApplication().getPicoContainer());
         container.registerComponentInstance(originalHandler);
         myHandler = instantiateClass(implementationClass, container);
       }

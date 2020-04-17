@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -32,7 +32,7 @@ public class IndexedHashesSupport {
 
   private static final Logger LOG = Logger.getInstance(IndexedHashesSupport.class);
 
-  private static final MessageDigest CONTENT_HASH_WITH_FILE_TYPE_DIGEST = DigestUtil.sha1();
+  private static final MessageDigest TEXT_CONTENT_HASH_DIGEST = DigestUtil.sha1();
 
   private static volatile ContentHashEnumerator ourTextContentHashes;
 
@@ -86,10 +86,30 @@ public class IndexedHashesSupport {
     return hash;
   }
 
+  /**
+   * Calculates hash for this virtual file. Does not load full file content into memory.
+   *
+   * Result is the same as if invoking:
+   * 1) fc = FileContentImpl(virtualFile)
+   * 2) getOrInitIndexedHash(fc, fromDocument = false)
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static byte @NotNull [] calculateHashForPhysicalVirtualFileNotCached(@NotNull VirtualFile virtualFile) {
+    boolean binary = virtualFile.getFileType().isBinary();
+
+    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(virtualFile);
+    if (contentHash == null) {
+      contentHash = DigestUtil.calculateContentHash(TEXT_CONTENT_HASH_DIGEST, virtualFile);
+    }
+
+    return mergeIndexedHash(contentHash, binary ? null : virtualFile.getCharset());
+  }
+
   private static byte @NotNull [] calculateIndexedHashForFileContent(@NotNull FileContentImpl content, boolean binary) {
     byte[] contentHash = null;
     if (content.isPhysicalContent()) {
-      contentHash = ((PersistentFSImpl)PersistentFS.getInstance()).getContentHashIfStored(content.getFile());
+      contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
     }
 
     if (contentHash == null) {
@@ -101,7 +121,7 @@ public class IndexedHashesSupport {
   }
 
   private static byte[] calculateContentHash(@NotNull FileContent content) {
-    return DigestUtil.calculateContentHash(CONTENT_HASH_WITH_FILE_TYPE_DIGEST, content.getContent());
+    return DigestUtil.calculateContentHash(TEXT_CONTENT_HASH_DIGEST, content.getContent());
   }
 
   private static byte @Nullable [] calculateIndexedHashForDocument(@NotNull FileContentImpl content) {
@@ -114,7 +134,7 @@ public class IndexedHashesSupport {
 
         if (file != null) {
           Charset charset = content.getCharset();
-          return mergeIndexedHash(DigestUtil.calculateContentHash(CONTENT_HASH_WITH_FILE_TYPE_DIGEST, file.getText().getBytes(charset)), charset);
+          return mergeIndexedHash(DigestUtil.calculateContentHash(TEXT_CONTENT_HASH_DIGEST, file.getText().getBytes(charset)), charset);
         }
       }
     }
@@ -126,6 +146,6 @@ public class IndexedHashesSupport {
     byte[] charsetBytes = charsetOrNullForBinary != null
                           ? charsetOrNullForBinary.name().getBytes(StandardCharsets.UTF_8)
                           : ArrayUtilRt.EMPTY_BYTE_ARRAY;
-    return DigestUtil.calculateMergedHash(CONTENT_HASH_WITH_FILE_TYPE_DIGEST, new byte[][]{binaryContentHash, charsetBytes});
+    return DigestUtil.calculateMergedHash(TEXT_CONTENT_HASH_DIGEST, new byte[][]{binaryContentHash, charsetBytes});
   }
 }

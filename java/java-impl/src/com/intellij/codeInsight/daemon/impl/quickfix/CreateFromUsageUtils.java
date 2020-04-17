@@ -207,7 +207,7 @@ public class CreateFromUsageUtils {
         PsiFile containingFile = body.getContainingFile();
         final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
         PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
-        manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
+        manager.doPostponedOperationsAndUnblockDocument(newEditor.getDocument());
         EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
         EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
       }

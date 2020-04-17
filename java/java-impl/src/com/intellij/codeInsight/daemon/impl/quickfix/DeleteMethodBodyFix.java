@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -26,11 +28,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class DeleteMethodBodyFix implements IntentionAction {
+public final class DeleteMethodBodyFix implements IntentionAction {
   private final PsiMethod myMethod;
 
   public DeleteMethodBodyFix(@NotNull PsiMethod method) {
@@ -70,5 +73,10 @@ public class DeleteMethodBodyFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new DeleteMethodBodyFix(CodeInsightUtilCore.findSameElementInCopy(myMethod, target));
   }
 }

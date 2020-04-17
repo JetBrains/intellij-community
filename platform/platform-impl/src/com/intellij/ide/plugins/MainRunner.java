@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.WindowsCommandLineListener;
 import com.intellij.ide.WindowsCommandLineProcessor;
+import com.intellij.idea.CommandLineArgs;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ public final class MainRunner  {
     startupStart = StartUpMeasurer.startMainActivity("app initialization preparation");
 
     Main.setFlags(args);
+    CommandLineArgs.parse(args);
 
     ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
       @Override

@@ -152,7 +152,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
   private fun updateWithRebase() = updateProcess().update(REBASE)
 
-  private fun updateProcess() = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false, true)
+  private fun updateProcess() = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), null, false, true)
 
   private fun File.commitAndPush() {
     cd(this)

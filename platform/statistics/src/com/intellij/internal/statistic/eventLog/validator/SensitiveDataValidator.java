@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -13,12 +13,12 @@ import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesSto
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointChangeListener;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.internal.statistic.eventLog.EventLogSystemEvents.*;
@@ -101,9 +101,8 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  * </ul>
  */
 public class SensitiveDataValidator {
-  private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = ContainerUtil.newConcurrentMap();
-  @NotNull
-  protected final WhitelistGroupRulesStorage myWhiteListStorage;
+  private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = new ConcurrentHashMap<>();
+  protected final @NotNull WhitelistGroupRulesStorage myWhiteListStorage;
 
   static {
     CustomWhiteListRule.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
@@ -114,8 +113,7 @@ public class SensitiveDataValidator {
     }, ApplicationManager.getApplication());
   }
 
-  @NotNull
-  public static SensitiveDataValidator getInstance(@NotNull String recorderId) {
+  public static @NotNull SensitiveDataValidator getInstance(@NotNull String recorderId) {
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
@@ -127,8 +125,7 @@ public class SensitiveDataValidator {
     );
   }
 
-  @Nullable
-  public static SensitiveDataValidator getIfInitialized(@NotNull String recorderId) {
+  public static @Nullable SensitiveDataValidator getIfInitialized(@NotNull String recorderId) {
     return ourInstances.get(recorderId);
   }
 
@@ -156,7 +153,7 @@ public class SensitiveDataValidator {
     }
 
     Map<String, Object> validatedData =
-      ContainerUtil.newConcurrentMap(); // TODO: don't create validatedData map if all keys are accepted (just return context.eventData)
+      new ConcurrentHashMap<>(); // TODO: don't create validatedData map if all keys are accepted (just return context.eventData)
     for (Map.Entry<String, Object> entry : context.eventData.entrySet()) {
       String key = entry.getKey();
       Object entryValue = entry.getValue();

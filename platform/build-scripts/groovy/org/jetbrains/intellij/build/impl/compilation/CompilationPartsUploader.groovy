@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
+import org.apache.http.HttpStatus
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
@@ -66,11 +67,11 @@ class CompilationPartsUploader implements Closeable {
     }
     if (sendHead) {
       int code = doHead(path)
-      if (code == 200) {
+      if (code == HttpStatus.SC_OK) {
         log("File '$path' already exist on server, nothing to upload")
         return false
       }
-      if (code != 404) {
+      if (code != HttpStatus.SC_NOT_FOUND) {
         error("HEAD $path responded with unexpected $code")
       }
     }
@@ -107,9 +108,8 @@ class CompilationPartsUploader implements Closeable {
 
       response = myHttpClient.execute(request)
 
-      debug("POST code: ${response.getStatusLine().getStatusCode()}")
-
       responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
+
       def parsedResponse = new Gson().fromJson(responseString, CheckFilesResponse.class)
       return parsedResponse
     }

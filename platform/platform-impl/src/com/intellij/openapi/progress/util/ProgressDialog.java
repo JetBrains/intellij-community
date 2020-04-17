@@ -19,6 +19,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
@@ -77,9 +78,8 @@ final class ProgressDialog implements Disposable {
   private JPanel myInnerPanel;
   DialogWrapper myPopup;
   private final Window myParentWindow;
-
-  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(), this);
-  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(), this);
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any());
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any());
 
   ProgressDialog(@NotNull ProgressWindow progressWindow,
                  boolean shouldShowBackground,
@@ -142,6 +142,8 @@ final class ProgressDialog implements Disposable {
     UIUtil.dispose(myTitlePanel);
     UIUtil.dispose(myBackgroundButton);
     UIUtil.dispose(myCancelButton);
+    myEnableCancelAlarm.cancelAllRequests();
+    myDisableCancelAlarm.cancelAllRequests();
   }
 
   @NotNull
@@ -171,9 +173,9 @@ final class ProgressDialog implements Disposable {
   }
 
   void enableCancelButtonIfNeeded(boolean enable) {
-    if (!myProgressWindow.myShouldShowCancel || myDisableCancelAlarm.isDisposed()) return;
-
-    (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
+    if (myProgressWindow.myShouldShowCancel && !myUpdateAlarm.isDisposed()) {
+      (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
+    }
   }
 
   private void createCenterPanel() {

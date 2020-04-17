@@ -21,7 +21,6 @@ import java.util.List;
  * Provides access to components. Serves as a base interface for {@link com.intellij.openapi.application.Application}
  * and {@link com.intellij.openapi.project.Project}.
  *
- * @see ProjectComponent
  * @see com.intellij.openapi.application.Application
  * @see com.intellij.openapi.project.Project
  */
@@ -30,8 +29,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
   @Deprecated
-  @Nullable
-  default BaseComponent getComponent(@NotNull String name) {
+  default @Nullable BaseComponent getComponent(@NotNull String name) {
     return null;
   }
 
@@ -132,27 +130,25 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
     return (T)getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
-  @Nullable
-  default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+  default @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getService(serviceClass);
   }
 
-  @NotNull
   @Override
-  default ExtensionsArea getExtensionArea() {
+  default @NotNull ExtensionsArea getExtensionArea() {
     // default impl to keep backward compatibility
     throw new AbstractMethodError();
   }
 
   @ApiStatus.Internal
-  default <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
+  default <T> T instantiateClass(@NotNull Class<T> aClass, @SuppressWarnings("unused") @Nullable PluginId pluginId) {
     return ReflectionUtil.newInstance(aClass, false);
   }
 
+  @SuppressWarnings({"deprecation", "unchecked"})
   @ApiStatus.Internal
-  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId) {
-    //noinspection unchecked
-    return (T)new CachingConstructorInjectionComponentAdapter(key, aClass, null, true).getComponentInstance(getPicoContainer());
+  default <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @SuppressWarnings("unused") @NotNull PluginId pluginId) {
+    return (T)new CachingConstructorInjectionComponentAdapter(key, aClass).getComponentInstance(getPicoContainer());
   }
 
   @ApiStatus.Internal
@@ -161,22 +157,19 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  @NotNull
-  default RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+  default @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
     ExceptionUtilRt.rethrowUnchecked(error);
     return new RuntimeException(error);
   }
 
   @ApiStatus.Internal
-  @NotNull
-  default RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
+  default @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
     return new RuntimeException(message);
   }
 
   // todo make pluginDescriptor as not-null
-  @NotNull
   @ApiStatus.Internal
-  default <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
+  default @NotNull <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
     try {
       //noinspection unchecked
       return (T)ReflectionUtil.newInstance(Class.forName(name));
@@ -189,18 +182,16 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * @deprecated Do not use.
    */
-  @NotNull
   @ApiStatus.Internal
   @Deprecated
-  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
+  default @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass) {
     return getComponentInstancesOfType(baseClass, false);
   }
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
-  @NotNull
   @Deprecated
   @ApiStatus.Internal
-  default <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
+  default @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     throw new UnsupportedOperationException();
   }
 }

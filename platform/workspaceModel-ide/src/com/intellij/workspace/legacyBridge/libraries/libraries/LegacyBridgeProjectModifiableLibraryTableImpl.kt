@@ -9,9 +9,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.IdeUiEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.toEntitySource
+import com.intellij.workspace.ide.*
+import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 
 internal class LegacyBridgeProjectModifiableLibraryTableImpl(
@@ -65,7 +64,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
       tableId = LibraryTableId.ProjectLibraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = if (externalSource != null) externalSource.toEntitySource() else IdeUiEntitySource
+      source = JpsProjectEntitiesLoader.createEntitySourceForProjectLibrary(project, externalSource)
     )
 
     if (type != null) {

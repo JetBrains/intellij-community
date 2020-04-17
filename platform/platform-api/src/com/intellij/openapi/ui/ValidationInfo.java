@@ -18,7 +18,7 @@ import javax.swing.*;
  */
 public final class ValidationInfo {
   @Nls
-  @NlsContexts.ValidationInfo
+  @NlsContexts.DialogMessage
   @NotNull
   public final String message;
 
@@ -35,7 +35,7 @@ public final class ValidationInfo {
    * @param message   the error message to display.
    * @param component the component containing the invalid data.
    */
-  public ValidationInfo(@NlsContexts.ValidationInfo @NotNull String message, @Nullable JComponent component) {
+  public ValidationInfo(@NlsContexts.DialogMessage @NotNull String message, @Nullable JComponent component) {
     this.message = message;
     this.component = component;
   }
@@ -45,7 +45,7 @@ public final class ValidationInfo {
    *
    * @param message the error message to display.
    */
-  public ValidationInfo(@NlsContexts.ValidationInfo @NotNull String message) {
+  public ValidationInfo(@NlsContexts.DialogMessage @NotNull String message) {
     this(message, null);
   }
 

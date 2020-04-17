@@ -26,6 +26,14 @@ public class DuplicateCharacterInClassInspectionTest extends RegExpInspectionTes
   public void testSpace() {
     quickfixAllTest("[ <warning descr=\"Duplicate character ' ' inside character class\"><caret> </warning><warning descr=\"Duplicate character ' ' inside character class\"> </warning>]", "[ ]");
   }
+  
+  public void testNegatedClass() {
+    highlightTest("[^a<warning descr=\"Duplicate character 'a' inside character class\">a</warning>]");
+  }
+
+  public void testNestedClass() {
+    highlightTest("[<[^<>]*>]*<[^<>]*");
+  }
 
   @Override
   protected @NotNull LocalInspectionTool getInspection() {

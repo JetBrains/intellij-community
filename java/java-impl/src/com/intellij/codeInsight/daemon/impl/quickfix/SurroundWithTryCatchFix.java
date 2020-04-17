@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -16,6 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(SurroundWithTryCatchFix.class);
@@ -46,13 +49,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myElement != null && myElement.isValid()) {
-      PsiElement parentStatement = RefactoringUtil.getParentStatement(myElement, false);
-      return !(parentStatement instanceof PsiDeclarationStatement &&
-               ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass);
-    }
-
-    return false;
+    return myElement != null && myElement.isValid();
   }
 
   @Override
@@ -92,5 +89,10 @@ public class SurroundWithTryCatchFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new SurroundWithTryCatchFix(CodeInsightUtilCore.findSameElementInCopy(myElement, target));
   }
 }

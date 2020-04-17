@@ -52,10 +52,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.psi.RefResolveService</interface-class>
-      <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
     </component>
 
@@ -274,6 +270,8 @@
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
+    
+    <extensionPoint qualifiedName="com.intellij.jvm.exceptionFilter" interface="com.intellij.execution.filters.JvmExceptionOccurrenceFilter"/>
 
   </extensionPoints>
 
@@ -286,6 +284,9 @@
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactManager" serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactManagerImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerConfiguration" serviceImplementation="com.intellij.compiler.CompilerConfigurationImpl" preload="await"/>
     <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
+
+    <config.inlaySettingsProvider implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemInlaySettingsProvider"/>
+
     <javaCompilerConfigurationProxy implementation="com.intellij.compiler.JavaCompilerConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration"/>
     <buildProcess.parametersProvider implementation="com.intellij.compiler.server.impl.CustomBuildProcessPluginsClasspathProvider"/>
@@ -609,6 +610,7 @@
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
     <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
+    <stacktrace.fold.line.modifier implementation="com.intellij.execution.JavaModuleNameStacktraceModifier"/>
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.awt.Container.dispatchEventImpl("/>
@@ -713,6 +715,10 @@
 
     <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
     <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
+
+    <consoleFilterProvider implementation="com.intellij.debugger.impl.attach.JavaDebuggerConsoleFilterProvider"/>
+    <jvm.exceptionFilter implementation="com.intellij.debugger.impl.attach.JavaDebuggerAddExceptionBreakpointFilter"/>
+    <jvm.exceptionFilter implementation="com.intellij.execution.filters.NavigateToExceptionClassFilter"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>
@@ -825,7 +831,6 @@
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoJavaTreeHelper"
                     overrides="true"/>
-    <projectService serviceImplementation="com.intellij.codeInsight.daemon.problems.FileStateCache"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
@@ -927,7 +932,6 @@
     <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.JavaMethodNavigationOffsetProvider"/>
     <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>
-    <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
     <defaultLiveTemplates file="liveTemplates/Java"/>
@@ -1708,6 +1712,16 @@
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="InsertLiteralUnderscores"
+                     key="inspection.insert.literal.underscores.display.name" bundle="messages.JavaBundle"
+                     groupKey="group.names.numeric.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.numeric.InsertLiteralUnderscoresInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="RemoveLiteralUnderscores"
+                     key="inspection.remove.literal.underscores.display.name" bundle="messages.JavaBundle"
+                     groupKey="group.names.numeric.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
@@ -1739,14 +1753,6 @@
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
       <category>Java/Strings</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.InsertLiteralUnderscoresAction</className>
-      <category>Java/Numbers</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.RemoveLiteralUnderscoresAction</className>
-      <category>Java/Numbers</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
@@ -2017,6 +2023,7 @@
     <commandLineInspectionProjectConfigurator implementation="com.intellij.codeInspection.JavaCommandLineInspectionProjectConfigurator"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
+    <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -17,9 +18,9 @@ public interface LightEditorManager {
 
   LightEditorInfo saveAs(@NotNull LightEditorInfo info, @NotNull VirtualFile targetFile);
 
-  LightEditorInfo createEditor();
+  @NotNull LightEditorInfo createEditor();
 
-  LightEditorInfo createEditor(@NotNull VirtualFile file);
+  @Nullable LightEditorInfo createEditor(@NotNull VirtualFile file);
 
   void closeEditor(@NotNull LightEditorInfo editorInfo);
 

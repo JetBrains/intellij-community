@@ -437,7 +437,7 @@ public class GitPushOperation {
                                    @NotNull UpdateMethod updateMethod,
                                    boolean checkForRebaseOverMergeProblem) {
     GitUpdateProcess updateProcess = new GitUpdateProcess(myProject, myProgressIndicator,
-                                                          new HashSet<>(rootsToUpdate), UpdatedFiles.create(),
+                                                          new HashSet<>(rootsToUpdate), UpdatedFiles.create(), null,
                                                           checkForRebaseOverMergeProblem, false);
     GitUpdateResult updateResult = updateProcess.update(updateMethod);
     Map<GitRepository, HashRange> ranges = updateProcess.getUpdatedRanges();

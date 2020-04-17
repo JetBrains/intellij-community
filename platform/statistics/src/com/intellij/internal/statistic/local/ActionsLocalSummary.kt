@@ -15,9 +15,11 @@ import com.intellij.util.xmlb.annotations.XMap
   Storage("actionSummary.xml", roamingType = RoamingType.DISABLED),
   Storage("actions_summary.xml", deprecated = true)
 ])
-private class ActionsLocalSummary : SimplePersistentStateComponent<ActionsLocalSummaryState>(ActionsLocalSummaryState())
+class ActionsLocalSummary : SimplePersistentStateComponent<ActionsLocalSummaryState>(ActionsLocalSummaryState()) {
+  fun getActionsStats(): Map<String, ActionSummary> = state.data.toMap()
+}
 
-private class ActionSummary {
+class ActionSummary {
   @Attribute
   @JvmField
   var times = 0
@@ -27,9 +29,9 @@ private class ActionSummary {
   var last = System.currentTimeMillis()
 }
 
-private class ActionsLocalSummaryState : BaseState() {
+class ActionsLocalSummaryState : BaseState() {
   @get:XMap
-  val data by map<String, ActionSummary>()
+  internal val data by map<String, ActionSummary>()
 
   internal fun updateActionsSummary(actionId: String) {
     val summary = data.getOrPut(actionId) { ActionSummary() }
@@ -40,7 +42,8 @@ private class ActionsLocalSummaryState : BaseState() {
 }
 
 private class ActionsLocalSummaryListener : AnActionListener {
-  private val service = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java) ?: throw ExtensionNotApplicableException.INSTANCE
+  private val service = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
+                        ?: throw ExtensionNotApplicableException.INSTANCE
 
   override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
     service.state.updateActionsSummary(event.actionManager.getId(action) ?: action.javaClass.name)

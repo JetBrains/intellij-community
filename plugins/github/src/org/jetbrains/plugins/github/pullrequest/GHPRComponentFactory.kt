@@ -1,47 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.codeInsight.AutoPopupController
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.RefreshAction
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.ui.FontUtil
-import com.intellij.ui.*
-import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.SingleHeightTabs
-import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.log.VcsUser
-import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsUserImpl
-import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
-import com.intellij.vcs.log.ui.details.commit.getCommitDetailsBackground
-import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.api.data.GHGitActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -52,22 +33,12 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
-import java.awt.BorderLayout
-import java.awt.Point
-import java.awt.Rectangle
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
 import java.util.function.Consumer
 import javax.swing.JComponent
-import javax.swing.ListSelectionModel
-import javax.swing.ScrollPaneConstants
 
 @Service
 internal class GHPRComponentFactory(private val project: Project) {
@@ -77,7 +48,6 @@ internal class GHPRComponentFactory(private val project: Project) {
   private val avatarLoader = CachingGithubUserAvatarLoader.getInstance()
   private val imageResizer = GithubImageResizer.getInstance()
 
-  private val autoPopupController = AutoPopupController.getInstance(project)
   private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
   @CalledInAwt
@@ -100,34 +70,17 @@ internal class GHPRComponentFactory(private val project: Project) {
     val uiDisposable = Disposer.newDisposable()
     Disposer.register(parentDisposable, uiDisposable)
 
-    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable)
-    val contentContainer = JBPanelWithEmptyText(null).apply {
-      background = UIUtil.getListBackground()
+    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable).apply {
+      future = contextValue.value
     }
-    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        val dataContext = loadingModel.result
-        if (dataContext != null) {
-          val content = createContent(dataContext, uiDisposable)
 
-          with(contentContainer) {
-            layout = BorderLayout()
-            add(content, BorderLayout.CENTER)
-            validate()
-            repaint()
-          }
-        }
-      }
-    })
-    loadingModel.future = contextValue.value
-
-    return GHLoadingPanel(loadingModel, contentContainer, uiDisposable,
-                          GHLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from GitHub")).apply {
-      errorHandler = GHLoadingErrorHandlerImpl(project, account) {
-        contextValue.drop()
-        loadingModel.future = contextValue.value
-      }
-    }
+    return GHLoadingPanel.create(loadingModel,
+                                 { createContent(loadingModel.result!!, uiDisposable) }, uiDisposable,
+                                 errorPrefix = "Can't load data from GitHub",
+                                 errorHandler = GHLoadingErrorHandlerImpl(project, account) {
+                                   contextValue.drop()
+                                   loadingModel.future = contextValue.value
+                                 })
   }
 
   private fun createContent(dataContext: GHPRDataContext, disposable: Disposable): JComponent {
@@ -143,7 +96,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     private val avatarIconsProviderFactory =
       CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
 
-    private val listComponent = createListComponent(dataContext, avatarIconsProviderFactory, parentDisposable)
+    private val listComponent = GHPRListComponent.create(project, dataContext, avatarIconsProviderFactory, parentDisposable)
 
     private var currentDisposable: Disposable? = null
 
@@ -247,32 +200,24 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val detailsModel = createValueModel(detailsLoadingModel)
 
-    val detailsPanel = createDetailsPanel(dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
-    val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
-                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
-                                                                                   "Can't load details")).apply {
-      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadDetails() }
-    }.also {
+    val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
+      GHPRDetailsComponent.create(project, dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
+    },
+                                                    disposable,
+                                                    "Select pull request to view details",
+                                                    "Can't load details",
+                                                    GHLoadingErrorHandlerImpl(project, dataContext.account) {
+                                                      dataProvider.reloadDetails()
+                                                    }).also {
       (actionManager.getAction("Github.PullRequest.Details.Reload") as RefreshAction).registerCustomShortcutSet(it, disposable)
     }
 
-    val changesBrowser = object : GHPRChangesBrowser(changesLoadingModel.cumulativeChangesModel, changesLoadingModel.diffHelper, project) {
-      override fun createCenterPanel(): JComponent {
-        val centerPanel = super.createCenterPanel()
-        val panel = object : NonOpaquePanel(centerPanel), ComponentWithEmptyText {
-          override fun getEmptyText() = viewer.emptyText
-        }
-        return GHLoadingPanel(changesLoadingModel, panel, disposable,
-                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
-                                                                    "Can't load changes",
-                                                                    "Pull request does not contain any changes")).apply {
-          errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadChanges() }
-        }
-      }
-    }.also {
-      actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
-    }
-
+    val changesBrowser = GHPRChangesBrowser.create(project,
+                                                   changesLoadingModel,
+                                                   changesLoadingModel.cumulativeChangesModel,
+                                                   changesLoadingModel.diffHelper,
+                                                   "Select pull request to view changes",
+                                                   disposable)
 
     return OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.33f).apply {
       isOpaque = true
@@ -281,7 +226,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       firstComponent = detailsLoadingPanel
       secondComponent = changesBrowser
     }.also {
-      changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
         else when {
@@ -300,72 +244,23 @@ internal class GHPRComponentFactory(private val project: Project) {
                                      changesLoadingModel: GHPRChangesLoadingModel,
                                      disposable: Disposable): JComponent {
 
-    val commitsModel = changesLoadingModel.commitsModel
-    val commitsListModel = CollectionListModel(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
-
-    val commitsList = JBList(commitsListModel).apply {
-      selectionMode = ListSelectionModel.SINGLE_SELECTION
-      val renderer = GHPRCommitsListCellRenderer()
-      cellRenderer = renderer
-      UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer.panel))
-    }.also {
-      ScrollingUtil.installActions(it)
-      GithubUIUtil.Lists.installSelectionOnFocus(it)
-      GithubUIUtil.Lists.installSelectionOnRightClick(it)
-      PopupHandler.installSelectionListPopup(it,
-                                             DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
-                                             ActionPlaces.UNKNOWN, actionManager)
-      ListSpeedSearch(it) { commit -> commit.messageHeadlineHTML }
-    }
-
-    commitsModel.addStateChangesListener {
-      val selectedCommit = commitsList.selectedValue
-      commitsListModel.replaceAll(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
-      commitsList.setSelectedValue(selectedCommit, true)
-    }
-
-    val commitDetailsModel = SingleValueModel<GHCommit?>(null)
-    val commitDetailsComponent = createCommitDetailsComponent(commitDetailsModel)
-
     val changesModel = GHPRChangesModelImpl(project)
-    val changesBrowser = GHPRChangesBrowser(changesModel, changesLoadingModel.diffHelper, project).apply {
-      emptyText.text = "Select commit to view changes"
-    }
 
-    commitsList.addListSelectionListener { e ->
-      if (e.valueIsAdjusting) return@addListSelectionListener
-      changesModel.changes = commitsList.selectedValue?.let { commitsModel.commitsWithChanges?.get(it) }
-    }
+    val commitsLoadingPanel = GHLoadingPanel.create(changesLoadingModel, {
+      GHPRCommitsBrowserComponent.create(changesLoadingModel.commitsModel, changesModel)
+    },
+                                                    disposable,
+                                                    "Select pull request to view commits",
+                                                    "Can't load commits",
+                                                    GHLoadingErrorHandlerImpl(project, dataContext.account) {
+                                                      actionDataContext.pullRequestDataProvider.reloadChanges()
+                                                    })
 
-    val commitsScrollPane = ScrollPaneFactory.createScrollPane(commitsList, true).apply {
-      isOpaque = false
-      viewport.isOpaque = false
-      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-    }
-
-    val commitsBrowser = object : OnePixelSplitter(true, "Github.PullRequest.Commits.Browser", 0.7f), ComponentWithEmptyText {
-      override fun getEmptyText() = commitsList.emptyText
-    }.apply {
-      firstComponent = commitsScrollPane
-      secondComponent = commitDetailsComponent
-    }
-
-    commitsList.addListSelectionListener { e ->
-      if (e.valueIsAdjusting) return@addListSelectionListener
-
-      val index = commitsList.selectedIndex
-      commitDetailsModel.value = if (index != -1) commitsListModel.getElementAt(index) else null
-      commitsBrowser.validate()
-      commitsBrowser.repaint()
-      if (index != -1) ScrollingUtil.ensureRangeIsVisible(commitsList, index, index)
-    }
-
-    val commitsLoadingPanel = GHLoadingPanel(changesLoadingModel, commitsBrowser, disposable,
-                                             GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view commits",
-                                                                                   "Can't load commits",
-                                                                                   "Pull request does not contain any commits")).apply {
-      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { actionDataContext.pullRequestDataProvider.reloadChanges() }
-    }
+    val changesBrowser = GHPRChangesBrowser.create(project,
+                                                   changesModel,
+                                                   changesLoadingModel.diffHelper,
+                                                   "Select commit to view changes",
+                                                   disposable)
 
     return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {
       isOpaque = true
@@ -375,7 +270,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       secondComponent = changesBrowser
     }.also {
       actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
-      changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
         else when {
@@ -384,215 +278,6 @@ internal class GHPRComponentFactory(private val project: Project) {
         }
       }
     }
-  }
-
-  private fun createCommitDetailsComponent(model: SingleValueModel<GHCommit?>): JComponent {
-    val messagePane = HtmlEditorPane().apply {
-      font = FontUtil.getCommitMessageFont()
-    }
-    //TODO: show avatar
-    val hashAndAuthorPane = HtmlEditorPane().apply {
-      font = FontUtil.getCommitMetadataFont()
-    }
-
-    val commitDetailsPanel = ScrollablePanel(VerticalLayout(CommitDetailsPanel.INTERNAL_BORDER)).apply {
-      border = JBUI.Borders.empty(CommitDetailsPanel.EXTERNAL_BORDER, CommitDetailsPanel.SIDE_BORDER)
-      background = getCommitDetailsBackground()
-
-      add(messagePane, VerticalLayout.FILL_HORIZONTAL)
-      add(hashAndAuthorPane, VerticalLayout.FILL_HORIZONTAL)
-    }
-    val commitDetailsScrollPane = ScrollPaneFactory.createScrollPane(commitDetailsPanel, true).apply {
-      isVisible = false
-      isOpaque = false
-      viewport.isOpaque = false
-      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-    }
-
-    model.addAndInvokeValueChangedListener {
-      val commit = model.value
-
-      if (commit == null) {
-        messagePane.setBody("")
-        hashAndAuthorPane.setBody("")
-        commitDetailsScrollPane.isVisible = false
-      }
-      else {
-        val subject = "<b>${commit.messageHeadlineHTML}</b>"
-        val body = commit.messageBodyHTML
-        val fullMessage = if (body.isNotEmpty()) "$subject<br><br>$body" else subject
-
-        messagePane.setBody(fullMessage)
-        hashAndAuthorPane.setBody(getHashAndAuthorText(commit.oid, commit.author, commit.committer))
-        commitDetailsScrollPane.isVisible = true
-        commitDetailsPanel.scrollRectToVisible(Rectangle(0, 0, 0, 0))
-        invokeLater {
-          // JDK bug - need to force height recalculation
-          messagePane.setSize(messagePane.width, Int.MAX_VALUE)
-          hashAndAuthorPane.setSize(hashAndAuthorPane.width, Int.MAX_VALUE)
-        }
-      }
-    }
-
-    return commitDetailsScrollPane
-  }
-
-  private fun getHashAndAuthorText(hash: String, author: GHGitActor?, committer: GHGitActor?): String {
-    val authorUser = createUser(author)
-    val authorTime = author?.date?.time ?: 0L
-    val committerUser = createUser(committer)
-    val committerTime = committer?.date?.time ?: 0L
-
-    return CommitPresentationUtil.formatCommitHashAndAuthor(HashImpl.build(hash), authorUser, authorTime, committerUser, committerTime)
-  }
-
-  private fun createListComponent(dataContext: GHPRDataContext,
-                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                  disposable: Disposable): JComponent {
-    val list = object : JBList<GHPullRequestShort>(dataContext.listModel) {
-
-      override fun getToolTipText(event: MouseEvent): String? {
-        val childComponent = ListUtil.getDeepestRendererChildComponentAt(this, event.point)
-        if (childComponent !is JComponent) return null
-        return childComponent.toolTipText
-      }
-    }.apply {
-      setExpandableItemsEnabled(false)
-      emptyText.clear()
-      selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
-    }.also {
-      ScrollingUtil.installActions(it)
-      ListUtil.installAutoSelectOnMouseMove(it)
-      GithubUIUtil.Lists.installSelectionOnFocus(it)
-      GithubUIUtil.Lists.installSelectionOnRightClick(it)
-      DataManager.registerDataProvider(it) { dataId ->
-        if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
-      }
-      PopupHandler.installSelectionListPopup(it,
-                                             actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup,
-                                             ActionPlaces.UNKNOWN, actionManager)
-      val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
-      EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
-      ListSpeedSearch(it) { item -> item.title }
-    }
-
-    val openButtonViewModel = GHPROpenButtonViewModel()
-    installOpenButtonListeners(list, openButtonViewModel)
-
-    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-    val renderer = GHPRListCellRenderer(avatarIconsProvider, openButtonViewModel)
-    list.cellRenderer = renderer
-    UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
-
-    val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
-      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
-    }
-
-    val listReloadAction = actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction
-    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).apply {
-      errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
-        dataContext.listLoader.reset()
-      }
-      scrollPane.verticalScrollBar.apply {
-        isOpaque = true
-        UIUtil.putClientProperty(this, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
-      }
-    }.also {
-      listReloadAction.registerCustomShortcutSet(it, disposable)
-
-      DataManager.registerDataProvider(it) { dataId ->
-        if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) {
-          if (list.isSelectionEmpty) null else list.selectedValue
-        }
-        else null
-      }
-    }
-
-    Disposer.register(disposable, Disposable {
-      Disposer.dispose(search)
-      Disposer.dispose(loaderPanel)
-    })
-
-    return loaderPanel
-  }
-
-  private fun installOpenButtonListeners(list: JBList<GHPullRequestShort>,
-                                         openButtonViewModel: GHPROpenButtonViewModel) {
-
-    list.addMouseMotionListener(object : MouseMotionAdapter() {
-      override fun mouseMoved(e: MouseEvent) {
-        val point = e.point
-        var index = list.locationToIndex(point)
-        val cellBounds = list.getCellBounds(index, index)
-        if (cellBounds == null || !cellBounds.contains(point)) index = -1
-
-        openButtonViewModel.hoveredRowIndex = index
-        openButtonViewModel.isButtonHovered = if (index == -1) false else isInsideButton(cellBounds, point)
-        list.repaint()
-      }
-    })
-
-    object : ClickListener() {
-      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        val point = event.point
-        val index = list.locationToIndex(point)
-        val cellBounds = list.getCellBounds(index, index)
-        if (cellBounds == null || !cellBounds.contains(point)) return false
-
-        if (isInsideButton(cellBounds, point)) {
-          val action = actionManager.getAction("Github.PullRequest.Show")
-          ActionUtil.invokeAction(action, list, ActionPlaces.UNKNOWN, event, null)
-          return true
-        }
-        return false
-      }
-    }.installOn(list)
-  }
-
-  private fun isInsideButton(cellBounds: Rectangle, point: Point): Boolean {
-    val iconSize = EmptyIcon.ICON_16.iconWidth
-    val rendererRelativeX = point.x - cellBounds.x
-    return (cellBounds.width - rendererRelativeX) <= iconSize
-  }
-
-  private fun createDetailsPanel(dataContext: GHPRDataContext,
-                                 detailsModel: SingleValueModel<GHPullRequest?>,
-                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JBPanelWithEmptyText {
-
-    val metaPanel = GHPRMetadataPanel(project, detailsModel,
-                                      dataContext.securityService,
-                                      dataContext.metadataService,
-                                      avatarIconsProviderFactory).apply {
-      border = JBUI.Borders.empty(8)
-    }
-
-    val scrollablePanel = ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
-      isOpaque = false
-      add(metaPanel)
-    }
-    val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
-      viewport.isOpaque = false
-      isOpaque = false
-    }.also {
-      val actionGroup = actionManager.getAction("Github.PullRequest.Details.Popup") as ActionGroup
-      PopupHandler.installPopupHandler(it, actionGroup, ActionPlaces.UNKNOWN, actionManager)
-    }
-
-    scrollPane.isVisible = detailsModel.value != null
-
-    detailsModel.addValueChangedListener {
-      scrollPane.isVisible = detailsModel.value != null
-    }
-
-    val panel = JBPanelWithEmptyText(BorderLayout()).apply {
-      isOpaque = false
-
-      add(scrollPane, BorderLayout.CENTER)
-    }
-    detailsModel.addValueChangedListener {
-      panel.validate()
-    }
-    return panel
   }
 
   private fun createChangesLoadingModel(commitsModel: GHPRCommitsModel,
@@ -633,18 +318,5 @@ internal class GHPRComponentFactory(private val project: Project) {
       }
     })
     return model
-  }
-
-  companion object {
-    private val unknownUser = VcsUserImpl("unknown user", "")
-
-    private fun createUser(actor: GHGitActor?): VcsUser {
-      val name = actor?.name
-      val email = actor?.email
-      return if (name != null && email != null) {
-        VcsUserImpl(name, email)
-      }
-      else unknownUser
-    }
   }
 }

@@ -41,7 +41,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 
   val publicStatMetrics = ObjectIntHashMap<String>()
 
-  fun write(timeOffset: Long, items: List<ActivityImpl>, services: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
+  fun write(timeOffset: Long, items: List<ActivityImpl>, serviceActivities: Map<String, MutableList<ActivityImpl>>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
@@ -71,8 +71,9 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writer.array("traceEvents") {
           val traceEventFormatWriter = TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager)
           traceEventFormatWriter.writeInstantEvents(writer)
-          traceEventFormatWriter.writeServiceEvents(writer, services, pluginCostMap)
         }
+
+        writeServiceEvents(writer, serviceActivities, timeOffset)
 
         var totalDuration = 0L
         writer.array("items") {
@@ -110,6 +111,15 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
     }
   }
 
+  private fun writeServiceEvents(writer: JsonGenerator, serviceActivities: Map<String, MutableList<ActivityImpl>>, startTime: Long) {
+    val comparator = Comparator(::compareTime)
+    for (name in serviceActivities.keys.sorted()) {
+      val list = serviceActivities.getValue(name).sortedWith(comparator)
+      val ownDurations = computeOwnTime(list, threadNameManager)
+      writeActivities(list, startTime, writer, name, ownDurations, 0, TimeUnit.MICROSECONDS)
+    }
+  }
+
   fun toByteBuffer(): ByteBuffer {
     return stringWriter.toByteBuffer(logPrefix.length)
   }
@@ -126,15 +136,16 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
       StartUpPerformanceReporter.sortItems(list)
 
       val measureThreshold = if (name == ActivityCategory.APP_INIT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
-      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ObjectLongHashMap(), measureThreshold = measureThreshold)
+      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ObjectLongHashMap(), measureThreshold = measureThreshold, timeUnit = TimeUnit.MILLISECONDS)
     }
   }
 
   private fun writeActivities(activities: List<ActivityImpl>,
-                              offset: Long, writer: JsonGenerator,
+                              startTime: Long, writer: JsonGenerator,
                               fieldName: String,
                               ownDurations: ObjectLongHashMap<ActivityImpl>,
-                              measureThreshold: Long = StartUpMeasurer.MEASURE_THRESHOLD) {
+                              measureThreshold: Long,
+                              timeUnit: TimeUnit) {
     if (activities.isEmpty()) {
       return
     }
@@ -142,34 +153,42 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
     writer.array(fieldName) {
       var skippedDuration = 0L
       for (item in activities) {
-        val computedOwnDuration = ownDurations.get(item)
-        val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
-
+        val ownDuration = ownDurations.get(item)
+        val ownOrTotalDuration = if (ownDuration == -1L) item.end - item.start else ownDuration
         item.pluginId?.let {
-          StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", duration, pluginCostMap)
+          StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", ownOrTotalDuration, pluginCostMap)
         }
 
-        if (fieldName == "prepareAppInitActivities" && item.name == "splash initialization") {
-          publicStatMetrics.put("splash", TimeUnit.NANOSECONDS.toMillis(duration).toInt())
+        val name = item.name
+        if (fieldName == "prepareAppInitActivities" && name == "splash initialization") {
+          publicStatMetrics.put("splash", TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt())
         }
 
-        if (duration <= measureThreshold) {
-          skippedDuration += duration
+        if (ownOrTotalDuration <= measureThreshold) {
+          skippedDuration += ownOrTotalDuration
           continue
         }
 
         writer.obj {
-          writer.writeStringField("name", item.name)
-          writeItemTimeInfo(item, duration, offset, writer)
+          writer.writeStringField("n", compactName(name))
+          writer.writeNumberField("s", timeUnit.convert(item.start - startTime, TimeUnit.NANOSECONDS))
+          writer.writeNumberField("d", timeUnit.convert(item.end - item.start, TimeUnit.NANOSECONDS))
+          if (ownDuration != -1L) {
+            writer.writeNumberField("od", timeUnit.convert(ownDuration, TimeUnit.NANOSECONDS))
+          }
+          // Do not write end to reduce size of report. `end` can be computed using `start + duration`
+          writer.writeStringField("t", threadNameManager.getThreadName(item))
+          if (item.pluginId != null) {
+            writer.writeStringField("p", item.pluginId)
+          }
         }
       }
 
       if (skippedDuration > 0) {
         writer.obj {
-          writer.writeStringField("name", "Other")
-          writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(skippedDuration))
-          writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(activities.last().start - offset))
-          writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(activities.last().end - offset))
+          writer.writeStringField("n", "Other")
+          writer.writeNumberField("d", timeUnit.convert(skippedDuration, TimeUnit.NANOSECONDS))
+          writer.writeNumberField("s", timeUnit.convert(activities.last().start - startTime, TimeUnit.NANOSECONDS))
         }
       }
     }
@@ -181,7 +200,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
     writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(item.end - offset))
     writer.writeStringField("thread", threadNameManager.getThreadName(item))
     if (item.pluginId != null) {
-      writer.writeStringField("plugin", item.pluginId)
+      writer.writeStringField("p", item.pluginId)
     }
   }
 }
@@ -213,4 +232,15 @@ private fun safeHashValue(value: String): String {
   val result = ByteArray(20)
   generator.generateBytes(value.toByteArray(), result, 0, result.size)
   return Base64.getEncoder().withoutPadding().encodeToString(result)
+}
+
+private val packageNameReplacements = listOf("com.intellij." to "c.i.", "org.jetbrains." to "o.j.")
+
+private fun compactName(name: String): String {
+  for (replacement in packageNameReplacements) {
+    if (name.startsWith(replacement.first)) {
+      return "${replacement.second}${name.substring(replacement.first.length)}"
+    }
+  }
+  return name
 }

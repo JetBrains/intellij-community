@@ -19,6 +19,7 @@ import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,9 +147,11 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return content;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public FileType getFileTypeWithoutSubstitution() {
-    return myFileType;
+    FileType fileType = getFileType();
+    return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
   }
 
   @NotNull
@@ -192,8 +195,9 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   @NotNull
   @Override
   public CharSequence getContentAsText() {
-    if (myFileType.isBinary()) {
-      throw new IllegalDataException("Cannot obtain text for binary file type : " + myFileType.getDescription());
+    FileType unsubstitutedFileType = getFileTypeWithoutSubstitution();
+    if (unsubstitutedFileType.isBinary()) {
+      throw new IllegalDataException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
     }
     final CharSequence content = getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
     if (content != null) {

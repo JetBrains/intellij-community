@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -317,10 +318,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     });
   }
 
+  public static boolean shouldRunTasksInParallelInHeadlessMode() {
+    return SystemProperties.getBooleanProperty("intellij.progress.task.ignoreHeadless", false);
+  }
+
   // from any: bg or current if can't
   @Override
   public void run(@NotNull final Task task) {
-    if (task.isHeadless()) {
+    if (task.isHeadless() && !shouldRunTasksInParallelInHeadlessMode()) {
       if (SwingUtilities.isEventDispatchThread()) {
         runProcessWithProgressSynchronously(task, null);
       }

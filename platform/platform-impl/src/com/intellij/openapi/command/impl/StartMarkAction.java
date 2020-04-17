@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -96,7 +97,7 @@ public class StartMarkAction extends BasicUndoableAction {
     public AlreadyStartedException(String commandName,
                                    Document document,
                                    DocumentReference[] documentRefs) {
-      super("Unable to start inplace refactoring:\n"+ commandName + " is not finished yet.");
+      super("Unable to start inplace refactoring:\n" + IdeBundle.message("dialog.message.command.not.finished.yet", commandName));
       myAffectedDocuments = documentRefs;
       myDocument = document;
     }

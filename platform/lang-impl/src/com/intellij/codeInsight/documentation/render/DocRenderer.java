@@ -9,19 +9,22 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentBase;
@@ -32,10 +35,10 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,7 +61,10 @@ class DocRenderer implements EditorCustomElementRenderer {
   private static final int MAX_WIDTH = 680;
   private static final int LEFT_INSET = 14;
   private static final int RIGHT_INSET = 12;
-  private static final int TOP_BOTTOM_INSETS = 4;
+  private static final int TOP_BOTTOM_INSETS = 2;
+  private static final int TOP_BOTTOM_MARGINS = 4;
+  private static final int LINE_WIDTH = 2;
+  private static final int ARC_RADIUS = 5;
 
   private static StyleSheet ourCachedStyleSheet;
   private static String ourCachedStyleSheetLinkColor = "non-existing";
@@ -91,7 +97,8 @@ class DocRenderer implements EditorCustomElementRenderer {
     Editor editor = inlay.getEditor();
     int width = Math.max(0, calcInlayWidth(editor) - calcInlayStartX() + editor.getInsets().left - scale(LEFT_INSET) - scale(RIGHT_INSET));
     JComponent component = getRendererComponent(inlay, width, -1);
-    return component.getPreferredSize().height + scale(TOP_BOTTOM_INSETS) * 2 + scale(getTopMargin()) + scale(getBottomMargin());
+    return Math.max(editor.getLineHeight(),
+                    component.getPreferredSize().height + scale(TOP_BOTTOM_INSETS) * 2 + scale(TOP_BOTTOM_MARGINS) * 2);
   }
 
   @Override
@@ -99,22 +106,32 @@ class DocRenderer implements EditorCustomElementRenderer {
     int startX = calcInlayStartX();
     int endX = targetRegion.x + targetRegion.width;
     if (startX >= endX) return;
-    int topMargin = scale(getTopMargin());
-    int bottomMargin = scale(getBottomMargin());
-    int filledHeight = targetRegion.height - topMargin - bottomMargin;
+    int margin = scale(TOP_BOTTOM_MARGINS);
+    int filledHeight = targetRegion.height - margin * 2;
     if (filledHeight <= 0) return;
-    int filledStartY = targetRegion.y + topMargin;
+    int filledStartY = targetRegion.y + margin;
 
     EditorEx editor = (EditorEx)inlay.getEditor();
     Color defaultBgColor = editor.getBackgroundColor();
     Color currentBgColor = textAttributes.getBackgroundColor();
     Color bgColor = currentBgColor == null ? defaultBgColor
-                                           : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(),
-                                                           Registry.doubleValue("editor.render.doc.comments.bg.transparency"));
-    g.setColor(bgColor);
-    g.fillRect(startX, filledStartY, endX - startX, filledHeight);
+                                           : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(), .5);
+    if (currentBgColor != null) {
+      g.setColor(bgColor);
+      int arcDiameter = ARC_RADIUS * 2;
+      if (endX - startX >= arcDiameter) {
+        g.fillRect(startX, filledStartY, endX - startX - ARC_RADIUS, filledHeight);
+        Object savedHint = ((Graphics2D)g).getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.fillRoundRect(endX - arcDiameter, filledStartY, arcDiameter, filledHeight, arcDiameter, arcDiameter);
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+      }
+      else {
+        g.fillRect(startX, filledStartY, endX - startX, filledHeight);
+      }
+    }
     g.setColor(editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
-    g.fillRect(startX, filledStartY, scale(getLineWidth()), filledHeight);
+    g.fillRect(startX, filledStartY, scale(LINE_WIDTH), filledHeight);
 
     int topBottomInset = scale(TOP_BOTTOM_INSETS);
     int componentWidth = endX - startX - scale(LEFT_INSET) - scale(RIGHT_INSET);
@@ -123,36 +140,23 @@ class DocRenderer implements EditorCustomElementRenderer {
       JComponent component = getRendererComponent(inlay, componentWidth, componentHeight);
       component.setBackground(bgColor);
       Graphics dg = g.create(startX + scale(LEFT_INSET), filledStartY + topBottomInset, componentWidth, componentHeight);
-      GraphicsUtil.setupAntialiasing(dg);
+      UISettings.setupAntialiasing(dg);
       component.paint(dg);
       dg.dispose();
     }
   }
 
-  private static int getLineWidth() {
-    return Registry.intValue("editor.render.doc.comments.line.width", 2);
-  }
-
   @Override
   public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
-    return DocRenderDummyLineMarkerProvider.isGutterIconEnabled() ? myItem.new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit) : null;
+    DocRenderItem.MyGutterIconRenderer highlighterIconRenderer =
+      (DocRenderItem.MyGutterIconRenderer)myItem.highlighter.getGutterIconRenderer();
+    return highlighterIconRenderer == null ? null : myItem.new MyGutterIconRenderer(AllIcons.Gutter.JavadocEdit,
+                                                                                    highlighterIconRenderer.isIconVisible());
   }
 
   @Override
   public ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-    return new DefaultActionGroup(getToggleAction(), new DocRenderItem.ChangeFontSize());
-  }
-
-  private AnAction getToggleAction() {
-    return Objects.requireNonNull(myItem.highlighter.getGutterIconRenderer()).getClickAction();
-  }
-
-  private static int getTopMargin() {
-    return Registry.intValue("editor.render.doc.comments.top.margin");
-  }
-
-  private static int getBottomMargin() {
-    return Registry.intValue("editor.render.doc.comments.bottom.margin");
+    return new DefaultActionGroup(myItem.createToggleAction(), new DocRenderItem.ChangeFontSize());
   }
 
   private static int scale(int value) {
@@ -170,14 +174,16 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private int calcInlayStartX() {
+    RangeHighlighter highlighter = myItem.highlighter;
+    if (!highlighter.isValid()) return 0;
     Document document = myItem.editor.getDocument();
-    int lineStartOffset = document.getLineStartOffset(document.getLineNumber(myItem.highlighter.getEndOffset()) + 1);
-    int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t");
+    int lineStartOffset = document.getLineStartOffset(document.getLineNumber(highlighter.getEndOffset()) + 1);
+    int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
     return myItem.editor.offsetToXY(contentStartOffset, false, true).x;
   }
 
   Point getEditorPaneLocationWithinInlay() {
-    return new Point(calcInlayStartX() + scale(LEFT_INSET), scale(getTopMargin()) + scale(TOP_BOTTOM_INSETS));
+    return new Point(calcInlayStartX() + scale(LEFT_INSET), scale(TOP_BOTTOM_MARGINS) + scale(TOP_BOTTOM_INSETS));
   }
 
   private JComponent getRendererComponent(Inlay inlay, int width, int height) {
@@ -201,6 +207,7 @@ class DocRenderer implements EditorCustomElementRenderer {
       fontAttributes.put(TextAttribute.KERNING, 0);
       myPane.setFont(myPane.getFont().deriveFont(fontAttributes));
       myPane.setForeground(getTextColor(editor.getColorsScheme()));
+      UIUtil.enableEagerSoftWrapping(myPane);
       String textToRender = myItem.textToRender;
       if (textToRender == null) {
         textToRender = CodeInsightBundle.message("doc.render.loading.text");
@@ -369,7 +376,12 @@ class DocRenderer implements EditorCustomElementRenderer {
         "ul { padding: 0 16px 0 0; }" +
         "li { padding: 1px 0 2px 0; }" +
         "table p { padding-bottom: 0}" +
-        "th { text-align: left; }"
+        "th { text-align: left; }" +
+        "td {padding: 2px 0 2px 0}" +
+        "td p {padding-top: 0}" +
+        ".sections {border-spacing: 0}" +
+        ".section {padding-right: 4px; white-space: nowrap}" +
+        ".content {padding: 2px 0 2px 0}"
       );
       ourCachedStyleSheetLinkColor = linkColorHex;
       ourCachedStyleSheetMonoFont = editorFontName;

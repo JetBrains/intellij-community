@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -24,7 +23,6 @@ public final class ComponentUtil {
   }
 
   public static boolean isDisableAutoRequestFocus() {
-    if (StartUpMeasurer.sinceStart() < Registry.doubleValue("suppress.focus.stealing.delay")) return false;
     return Registry.is("suppress.focus.stealing.disable.auto.request.focus", true)
            && !(SystemInfo.isXfce || SystemInfo.isI3);
   }

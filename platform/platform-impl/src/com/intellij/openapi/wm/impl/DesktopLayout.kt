@@ -14,7 +14,7 @@ import java.util.*
 
 class DesktopLayout {
   companion object {
-    const val TAG = "layout"
+    internal const val TAG = "layout"
   }
 
   /**
@@ -109,6 +109,7 @@ class DesktopLayout {
       if (info.order == -1) {
         info.order = getMaxOrder(list, info.anchor) + 1
       }
+
       idToInfo.put(id, info)
       list.add(info)
     }
@@ -117,6 +118,10 @@ class DesktopLayout {
     normalizeOrder(getAllInfos(list, ToolWindowAnchor.LEFT))
     normalizeOrder(getAllInfos(list, ToolWindowAnchor.BOTTOM))
     normalizeOrder(getAllInfos(list, ToolWindowAnchor.RIGHT))
+
+    for (info in list) {
+      info.resetModificationCount()
+    }
   }
 
   val stateModificationCount: Long
@@ -137,13 +142,10 @@ class DesktopLayout {
       return null
     }
 
-    val list = idToInfo.values.toMutableList()
-    list.sortedWith(windowInfoComparator)
     val state = Element(tagName)
-    for (info in list) {
-      val element = serialize(info)
-      if (element != null) {
-        state.addContent(element)
+    for (info in idToInfo.values.sortedWith(windowInfoComparator)) {
+      serialize(info)?.let {
+        state.addContent(it)
       }
     }
     return state
@@ -173,7 +175,7 @@ internal val windowInfoComparator: Comparator<WindowInfo> = Comparator { o1, o2 
  */
 private fun normalizeOrder(infos: List<WindowInfoImpl>) {
   for (i in infos.indices) {
-    infos[i].order = i
+    infos.get(i).order = i
   }
 }
 
@@ -196,7 +198,7 @@ private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnch
  * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
  * Returned infos are sorted by order.
  */
-internal fun getAllInfos(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): List<WindowInfoImpl> {
+private fun getAllInfos(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): List<WindowInfoImpl> {
   val result = mutableListOf<WindowInfoImpl>()
   for (info in list) {
     if (anchor == info.anchor) {

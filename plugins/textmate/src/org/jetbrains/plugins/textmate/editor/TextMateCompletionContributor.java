@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.language.TextMateLanguage;
+import org.jetbrains.plugins.textmate.TextMateLanguage;
 
 import java.util.Collections;
 

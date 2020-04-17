@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.ImageUtil;
-import com.sun.javafx.application.PlatformImpl;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -218,14 +217,18 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-      // JCEF/JBR11 is not compliant with JFX
+      // JCEF/JBR11 is not compliant with JavaFX
+      //noinspection deprecation
       if (!JBCefApp.isEnabled()) {
-        // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
+        // NOTE: Linux implementation of JavaFX starts native main loop with GtkApplication._runLoop()
         try {
-          PlatformImpl.startup(() -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+          Class<?> platformImpl = Class.forName("com.sun.javafx.application.PlatformImpl");
+          Method startup = platformImpl.getMethod("startup", Runnable.class);
+          Runnable r = () -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
+          startup.invoke(null, r);
         }
         catch (Throwable e) {
-          LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
+          LOG.info("can't start main loop via JavaFX (will run it manually): " + e.getMessage());
           final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
                                              "GlobalMenuLinux loop");
           glibMain.start();
@@ -800,7 +803,8 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ||
         Registry.is("linux.native.menu.force.disable") ||
         (LoadingState.COMPONENTS_REGISTERED.isOccurred() && !Experiments.getInstance().isFeatureEnabled("linux.native.menu")) ||
-        !JnaLoader.isLoaded()) {
+        !JnaLoader.isLoaded() ||
+        isUnderVMWithSwiftPluginInstalled()) {
       return null;
     }
 
@@ -817,6 +821,22 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
 
     return null;
+  }
+
+  private static boolean isUnderVMWithSwiftPluginInstalled() {
+    // Workaround OC-18001 OC-18634 CLion crashes after opening Swift project on Linux
+    if (PluginManagerCore.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
+      try {
+        String stdout = StringUtil.toLowerCase(
+          ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout());
+        return stdout.contains("vmware") || stdout.contains("virtualbox");
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    return false;
   }
 
   private static class MenuItemInternal {

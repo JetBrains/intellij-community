@@ -90,10 +90,10 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
                      updateAction: (LoadedProjectData) -> JpsConfigurationFilesChange): ReloadedProjectData {
     val projectData = copyAndLoadProject(originalProjectFile)
     val change = updateAction(projectData)
-    val (changedEntities, builder) = projectData.serializationData.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.projectDirUrl))
+    val (changedEntities, builder) = projectData.serializers.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.projectDirUrl))
     val originalBuilder = TypedEntityStorageBuilder.from(projectData.storage)
     originalBuilder.replaceBySource({it in changedEntities}, builder)
-    projectData.serializationData.checkConsistency(projectData.projectDirUrl, originalBuilder)
+    projectData.serializers.checkConsistency(projectData.projectDirUrl, originalBuilder)
     return ReloadedProjectData(originalBuilder, projectData.projectDirUrl)
   }
 

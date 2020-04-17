@@ -2,9 +2,11 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.guess.GuessManager;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -154,5 +156,11 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       }
       registrar.register(fixRange, new AddTypeCastFix(conjunct, qualifier, "add.qualifier.typecast.text"), null);
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpression expression = (PsiExpression)getStartElement();
+    return expression == null ? null : new AddTypeCastFix(myType, CodeInsightUtilCore.findSameElementInCopy(expression, target));
   }
 }

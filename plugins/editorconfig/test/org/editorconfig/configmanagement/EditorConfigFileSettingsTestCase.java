@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -22,11 +23,13 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
     super.setUp();
     CodeStyle.dropTemporarySettings(getProject());
     myOriginalSettings = CodeStyle.getSettings(getProject()).clone();
+    EditorConfigCodeStyleSettingsModifier.setEnabledInTests(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
+      EditorConfigCodeStyleSettingsModifier.setEnabledInTests(false);
       CodeStyle.getSettings(getProject()).copyFrom(myOriginalSettings);
     }
     catch (Throwable e) {

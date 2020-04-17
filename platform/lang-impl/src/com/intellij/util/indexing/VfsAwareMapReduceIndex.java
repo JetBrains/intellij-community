@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.*;
 import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
+import com.intellij.util.indexing.memory.InMemoryForwardIndex;
 import com.intellij.util.indexing.snapshot.*;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.THashSet;
@@ -87,8 +88,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                 @Nullable SnapshotInputMappings<Key, Value> snapshotInputMappings,
                                 @Nullable ReadWriteLock lock) {
     super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
-    if (storage instanceof MemoryIndexStorage && snapshotInputMappings != null) {
-      VfsAwareIndexStorage<Key, Value> backendStorage = ((MemoryIndexStorage<Key, Value>)storage).getBackendStorage();
+    if (storage instanceof TransientChangesIndexStorage && snapshotInputMappings != null) {
+      VfsAwareIndexStorage<Key, Value> backendStorage = ((TransientChangesIndexStorage<Key, Value>)storage).getBackendStorage();
       if (backendStorage instanceof SnapshotSingleValueIndexStorage) {
         LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex);
         ((SnapshotSingleValueIndexStorage<Key, Value>)backendStorage).init(snapshotInputMappings, ((IntForwardIndex)forwardIndexMap));
@@ -117,13 +118,14 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   }
 
   public static boolean isCompositeIndexer(@NotNull DataIndexer<?, ?, ?> indexer) {
-    return indexer instanceof CompositeDataIndexer && InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED;
+    return indexer instanceof CompositeDataIndexer && !FileBasedIndex.USE_IN_MEMORY_INDEX;
   }
 
   static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
     return indexExtension instanceof FileBasedIndexExtension &&
            ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
-           FileBasedIndex.ourSnapshotMappingsEnabled;
+           FileBasedIndex.ourSnapshotMappingsEnabled &&
+           !FileBasedIndex.USE_IN_MEMORY_INDEX;
   }
 
   @NotNull
@@ -209,22 +211,23 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   }
 
   @Override
-  public boolean isIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    if (!IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId)) {
-      return false;
+  public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
+    FileIndexingState baseState = IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+    if (baseState != FileIndexingState.UP_TO_DATE) {
+      return baseState;
     }
-    if (mySubIndexerRetriever == null) return true;
+    if (mySubIndexerRetriever == null) return FileIndexingState.UP_TO_DATE;
     if (!(file instanceof FileContent)) {
       if (((CompositeDataIndexer)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
-        return isIndexConfigurationUpToDate(fileId, file);
+        return isIndexConfigurationUpToDate(fileId, file) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
       }
     }
     try {
-      return mySubIndexerRetriever.isIndexed(fileId, file);
+      return mySubIndexerRetriever.isIndexed(fileId, file) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
     }
     catch (IOException e) {
       LOG.error(e);
-      return false;
+      return FileIndexingState.OUT_DATED;
     }
   }
 
@@ -262,7 +265,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   @Override
   public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
-    MemoryIndexStorage<Key, Value> memoryIndexStorage = (MemoryIndexStorage<Key, Value>)getStorage();
+    TransientChangesIndexStorage<Key, Value> memoryIndexStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
     boolean modified = false;
     for (Key key : keys) {
       if (memoryIndexStorage.clearMemoryMapForId(key, inputId) && !modified) {
@@ -277,12 +280,12 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   @Override
   public void setBufferingEnabled(boolean enabled) {
-    ((MemoryIndexStorage<Key, Value>)getStorage()).setBufferingEnabled(enabled);
+    ((TransientChangesIndexStorage<Key, Value>)getStorage()).setBufferingEnabled(enabled);
   }
 
   @Override
   public void cleanupMemoryStorage() {
-    MemoryIndexStorage<Key, Value> memStorage = (MemoryIndexStorage<Key, Value>)getStorage();
+    TransientChangesIndexStorage<Key, Value> memStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
     ConcurrencyUtil.withLock(getWriteLock(), () -> {
       if (memStorage.clearMemoryMap()) {
         myModificationStamp.incrementAndGet();
@@ -294,7 +297,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   @TestOnly
   @Override
   public void cleanupForNextTest() {
-    MemoryIndexStorage<Key, Value> memStorage = (MemoryIndexStorage<Key, Value>)getStorage();
+    TransientChangesIndexStorage<Key, Value> memStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
     ConcurrencyUtil.withLock(getReadLock(), () -> memStorage.clearCaches());
   }
 
@@ -410,14 +413,17 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   @Nullable
   private static <Key, Value> ForwardIndexAccessor<Key, Value> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
     if (!shouldCreateForwardIndex(indexExtension)) return null;
-    if (indexExtension instanceof SingleEntryFileBasedIndexExtension) return new SingleEntryIndexForwardIndexAccessor(indexExtension);
-    return new MapForwardIndexAccessor<>(new InputMapExternalizer<>(indexExtension));
+    if (!(indexExtension instanceof SingleEntryFileBasedIndexExtension) || FileBasedIndex.USE_IN_MEMORY_INDEX) {
+      return new MapForwardIndexAccessor<>(new InputMapExternalizer<>(indexExtension));
+    }
+    return new SingleEntryIndexForwardIndexAccessor(indexExtension);
   }
 
   @Nullable
   private static ForwardIndex getForwardIndexMap(@NotNull IndexExtension<?, ?, ?> indexExtension)
     throws IOException {
     if (!shouldCreateForwardIndex(indexExtension)) return null;
+    if (FileBasedIndex.USE_IN_MEMORY_INDEX) return new InMemoryForwardIndex();
     if (indexExtension instanceof SingleEntryFileBasedIndexExtension<?>) return new EmptyForwardIndex(); // indexStorage and forwardIndex are same here
     File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)indexExtension.getName());
     return new PersistentMapBasedForwardIndex(indexStorageFile.toPath(), false, false);
@@ -429,8 +435,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   private void installMemoryModeListener() {
     IndexStorage<Key, Value> storage = getStorage();
-    if (storage instanceof MemoryIndexStorage) {
-      ((MemoryIndexStorage<Key, Value>)storage).addBufferingStateListener(new MemoryIndexStorage.BufferingStateListener() {
+    if (storage instanceof TransientChangesIndexStorage) {
+      ((TransientChangesIndexStorage<Key, Value>)storage).addBufferingStateListener(new TransientChangesIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(boolean newState) {
           myInMemoryMode.set(newState);

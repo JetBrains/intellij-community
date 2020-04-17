@@ -26,14 +26,15 @@ private val myChkAutoSaveIfInactive               get() = CheckboxDescriptor(Ide
 private val myChkUseSafeWrite                     get() = CheckboxDescriptor("Use \"safe write\" (save changes to a temporary file first)", PropertyBinding(model::isUseSafeWrite, model::setUseSafeWrite))
 // @formatter:on
 
-internal val allOptionDescriptors = listOf(
-  myChkReopenLastProject,
-  myConfirmExit,
-  myChkSyncOnFrameActivation,
-  myChkSaveOnFrameDeactivation,
-  myChkAutoSaveIfInactive,
-  myChkUseSafeWrite
-).map { it.asOptionDescriptor() }
+internal val allOptionDescriptors
+  get() = listOf(
+    myChkReopenLastProject,
+    myConfirmExit,
+    myChkSyncOnFrameActivation,
+    myChkSaveOnFrameDeactivation,
+    myChkAutoSaveIfInactive,
+    myChkUseSafeWrite
+  ).map { it.asUiOptionDescriptor() }
 
 /**
  * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:

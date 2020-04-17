@@ -125,7 +125,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (textOffset == value.getTextRange().getEndOffset()) return;
     PsiDocTagValue valueElement = tag.getValueElement();
     if (valueElement == null) return;
-    CharSequence paramName = value.getContainingFile().getViewProvider().getContents().subSequence(textOffset, value.getTextRange().getEndOffset());
+    String paramName = value.getContainingFile().getViewProvider()
+      .getContents().subSequence(textOffset, value.getTextRange().getEndOffset()).toString();
 
     String message = getResolveErrorMessage(reference, element, context, paramName);
     if (message == null) {
@@ -345,9 +346,9 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
   private static class RemoveTagFix implements LocalQuickFix {
     private final String myTagName;
-    private final CharSequence myParamName;
+    private final String myParamName;
 
-    RemoveTagFix(String tagName, CharSequence paramName) {
+    RemoveTagFix(String tagName, String paramName) {
       myTagName = tagName;
       myParamName = paramName;
     }

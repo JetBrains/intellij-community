@@ -691,8 +691,40 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testDontExtractFieldWithConstructor() throws Exception {
+    doChainedConstructorTest(false);
+  }
+
   public void testExtractSingleLabelFromSwitch() throws Exception {
     doTest();
+  }
+
+  public void testExtractVariableAndReturn() throws Exception {
+    doTest();
+  }
+
+  public void testExtractVariableAndReturn1() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract different returns");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testExtractVariableAndReturn2() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract internal references");
+    } catch (PrepareFailedException e) {
+    }
+  }
+
+  public void testExtractVariableAndReturn3() throws Exception {
+    try {
+      doTest();
+      fail("Should not extract semantically different references");
+    } catch (PrepareFailedException e) {
+    }
   }
 
   public void testReturnStatementFolding() throws Exception {
@@ -1176,7 +1208,23 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
-  public void testTypeUseAnnotationsOnParameter() throws Exception {
+  public void testSkipCustomAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNullabilityIsTypeAnnotation() throws Exception {
+    doTest();
+  }
+
+  public void testKeepDeclarationWithAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testFilterAnnotations() throws Exception {
+    doTest();
+  }
+
+  public void testNullabilityAnnotationOverridden() throws Exception {
     doTest();
   }
 

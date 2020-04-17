@@ -2,19 +2,26 @@
 package com.intellij.workspace.api.pstorage.containers
 
 internal class IntIntBiMultiMap(
-  private var key2Values: IntIntMultiMap.BySet,
-  private var value2Keys: IntIntMultiMap.BySet
-) {
+  override val key2Values: IntIntMultiMap.BySet,
+  override val value2Keys: IntIntMultiMap.BySet
+) : AbstractIntIntBiMultiMap() {
+  override fun copy(): IntIntBiMultiMap {
+    val newKey2Values = key2Values.copy()
+    val newValue2Keys = value2Keys.copy()
+    return IntIntBiMultiMap(newKey2Values, newValue2Keys)
+  }
+}
 
-  constructor() : this(IntIntMultiMap.BySet(), IntIntMultiMap.BySet())
+internal class MutableIntIntBiMultiMap(
+  override val key2Values: MutableIntIntMultiMap.BySet,
+  override val value2Keys: MutableIntIntMultiMap.BySet
+) : AbstractIntIntBiMultiMap() {
 
-  fun getValues(key: Int): IntIntMultiMap.IntSequence = key2Values[key]
+  constructor() : this(MutableIntIntMultiMap.BySet(), MutableIntIntMultiMap.BySet())
 
-  fun getKeys(value: Int): IntIntMultiMap.IntSequence = value2Keys[value]
-
-  fun put(key: Int, value: Int) {
-    value2Keys.put(value, key)
-    key2Values.put(key, value)
+  fun putAll(keys: IntArray, values: IntArray) {
+    keys.forEach { key -> key2Values.putAll(key, values) }
+    values.forEach { value -> value2Keys.putAll(value, keys) }
   }
 
   fun removeKey(key: Int) {
@@ -36,16 +43,28 @@ internal class IntIntBiMultiMap(
     value2Keys.remove(value, key)
   }
 
-  fun isEmpty(): Boolean = key2Values.isEmpty() && value2Keys.isEmpty()
 
   fun clear() {
     key2Values.clear()
     value2Keys.clear()
   }
 
-  fun copy(): IntIntBiMultiMap {
+  override fun copy(): MutableIntIntBiMultiMap {
     val newKey2Values = key2Values.copy()
     val newValue2Keys = value2Keys.copy()
-    return IntIntBiMultiMap(newKey2Values, newValue2Keys)
+    return MutableIntIntBiMultiMap(newKey2Values, newValue2Keys)
   }
+}
+
+internal sealed class AbstractIntIntBiMultiMap {
+  protected abstract val key2Values: AbstractIntIntMultiMap
+  protected abstract val value2Keys: AbstractIntIntMultiMap
+
+  fun getValues(key: Int): AbstractIntIntMultiMap.IntSequence = key2Values[key]
+
+  fun getKeys(value: Int): AbstractIntIntMultiMap.IntSequence = value2Keys[value]
+
+  fun isEmpty(): Boolean = key2Values.isEmpty() && value2Keys.isEmpty()
+
+  abstract fun copy(): AbstractIntIntBiMultiMap
 }

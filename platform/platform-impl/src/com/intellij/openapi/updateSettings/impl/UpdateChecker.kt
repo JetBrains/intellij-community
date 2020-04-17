@@ -222,6 +222,10 @@ object UpdateChecker {
    *
    * Checks for plugin updates for provided `build` and calculates plugins that don't have updates and would be incompatible with provided build.
    */
+  /**
+   * If [buildNumber] is null, returns new versions of plugins compatible with the current IDE version. If not null, returns
+   * new versions of plugins compatible with the specified build.
+   */
   private fun checkPluginsUpdate(
     indicator: ProgressIndicator?,
     newBuildNumber: BuildNumber? = null
@@ -310,8 +314,8 @@ object UpdateChecker {
     state: InstalledPluginsState,
     indicator: ProgressIndicator?
   ) {
-    val marketplacePlugins = MarketplaceRequests.getMarketplacePlugins(indicator)
-    val idsToUpdate = updateable.map { it.key.idString }.filter { it in marketplacePlugins }
+    val marketplacePluginIds = MarketplaceRequests.getMarketplacePlugins(indicator)
+    val idsToUpdate = updateable.map { it.key.idString }.filter { it in marketplacePluginIds }
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue

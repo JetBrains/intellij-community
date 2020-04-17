@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
@@ -108,7 +107,7 @@ public final class EditorWindow {
   }
 
   public void closeAllExcept(final VirtualFile selectedFile) {
-    getManager().runBulkTabChange(myOwner, splitters -> {
+    FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
       for (VirtualFile file : getFiles()) {
         if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
           closeFile(file);
@@ -159,7 +158,7 @@ public final class EditorWindow {
 
   public void closeFile(final @NotNull VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
-    editorManager.runBulkTabChange(myOwner, splitters -> {
+    FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
       final List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
       if (editors.isEmpty()) return;
       try {
@@ -457,7 +456,7 @@ public final class EditorWindow {
   }
 
   /**
-   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
+   * @param ignorePopup if {@code false} and context menu is shown currently for some tab,
    *                    editor for which menu is invoked will be returned
    */
   public @Nullable EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
@@ -517,7 +516,7 @@ public final class EditorWindow {
         if (initialIndex != null) {
           indexToInsert = initialIndex;
         }
-        else if (RegistryManager.getInstance().is("ide.editor.tabs.open.at.the.end")) {
+        else if (UISettings.getInstance().getOpenTabsAtTheEnd()) {
           indexToInsert = myTabbedPane.getTabCount();
         }
         else {

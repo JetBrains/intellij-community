@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -12,11 +12,11 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -64,7 +64,7 @@ public class OrderRootsCache {
     CacheKey key = new CacheKey(rootType, flags);
     VirtualFilePointerContainer cached = map == null ? null : map.get(key);
     if (cached == null) {
-      map = ConcurrencyUtil.cacheOrGet(myRoots, ContainerUtil.newConcurrentMap());
+      map = ConcurrencyUtil.cacheOrGet(myRoots, new ConcurrentHashMap<CacheKey, VirtualFilePointerContainer>());
       cached = map.computeIfAbsent(key, __ -> createContainer(rootUrlsComputer.get()));
     }
     return cached == EMPTY ? null : cached;

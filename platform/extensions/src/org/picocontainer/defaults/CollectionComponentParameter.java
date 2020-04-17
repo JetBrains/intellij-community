@@ -1,19 +1,16 @@
-/*****************************************************************************
+/*
  * Copyright (C) PicoContainer Organization. All rights reserved.            *
  * ------------------------------------------------------------------------- *
  * The software in this package is published under the terms of the BSD      *
  * style license a copy of which has been included with this distribution in *
  * the LICENSE.txt file.                                                     *
- *                                                                           *
- * Original code by                                                          *
- *****************************************************************************/
+*/
 package org.picocontainer.defaults;
 
 import org.picocontainer.*;
 
 import java.lang.reflect.Array;
 import java.util.*;
-
 
 /**
  * A CollectionComponentParameter should be used to support inject an {@link Array}, a
@@ -30,11 +27,6 @@ public final class CollectionComponentParameter implements Parameter {
    * Use <code>ARRAY</code> as {@link Parameter}for an Array that must have elements.
    */
   public static final CollectionComponentParameter ARRAY = new CollectionComponentParameter();
-  /**
-   * Use <code>ARRAY_ALLOW_EMPTY</code> as {@link Parameter}for an Array that may have no
-   * elements.
-   */
-  public static final CollectionComponentParameter ARRAY_ALLOW_EMPTY = new CollectionComponentParameter(true);
 
   private final boolean emptyCollection;
   private final Class<?> componentKeyType;
@@ -267,12 +259,7 @@ public final class CollectionComponentParameter implements Parameter {
       }
       return result;
     }
-    catch (InstantiationException e) {
-      ///CLOVER:OFF
-      throw new PicoInitializationException(e);
-      ///CLOVER:ON
-    }
-    catch (IllegalAccessException e) {
+    catch (InstantiationException | IllegalAccessException e) {
       ///CLOVER:OFF
       throw new PicoInitializationException(e);
       ///CLOVER:ON
@@ -300,10 +287,7 @@ public final class CollectionComponentParameter implements Parameter {
       }
       return result;
     }
-    catch (InstantiationException e) {
-      throw new PicoInitializationException(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (InstantiationException | IllegalAccessException e) {
       throw new PicoInitializationException(e);
     }
   }

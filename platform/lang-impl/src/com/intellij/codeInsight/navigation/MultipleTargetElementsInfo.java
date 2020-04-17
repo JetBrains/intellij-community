@@ -5,21 +5,23 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-class MultipleTargetElementsInfo extends BaseCtrlMouseInfo {
+@ApiStatus.Internal
+public class MultipleTargetElementsInfo extends BaseCtrlMouseInfo {
 
-  MultipleTargetElementsInfo(@NotNull PsiElement elementAtPointer) {
+  public MultipleTargetElementsInfo(@NotNull PsiElement elementAtPointer) {
     super(elementAtPointer);
   }
 
-  MultipleTargetElementsInfo(@NotNull PsiElement elementAtPointer, @NotNull PsiReference reference) {
-    super(elementAtPointer, ReferenceRange.getAbsoluteRanges(reference));
+  public MultipleTargetElementsInfo(@NotNull PsiReference reference) {
+    super(ReferenceRange.getAbsoluteRanges(reference));
   }
 
   @Override
   public @NotNull CtrlMouseDocInfo getDocInfo() {
-    return new CtrlMouseDocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null);
+    return new CtrlMouseDocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null, null);
   }
 
   @Override

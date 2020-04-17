@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 export type Metrics = { [key: string]: number; }
 
 export interface InfoResponse {
@@ -58,7 +58,6 @@ export interface DataRequest {
   product: string
   project: string
   machine: Array<string>
-  infoResponse: InfoResponse
 }
 
 const rison: { encode: (o: any) => string } = require("rison-node")
@@ -67,17 +66,16 @@ export function encodeQuery(query: DataQuery): string {
   return rison.encode(query)
 }
 
-export function expandMachineAsFilterValue(request: DataRequest): string | Array<string> {
-  if (request.machine.length > 1) {
-    return request.machine
+export function expandMachineAsFilterValue(product: string, machine: Array<string>, infoResponse: InfoResponse): Array<string> {
+  if (machine.length > 1) {
+    return machine
   }
 
-  const groupName = request.machine[0]
-  const infoResponse = request.infoResponse
-  for (const machineGroup of infoResponse.productToMachine[request.product]) {
+  const groupName = machine[0]
+  for (const machineGroup of infoResponse.productToMachine[product]) {
     if (machineGroup.name === groupName) {
       return machineGroup.children.map(it => it.name)
     }
   }
-  return groupName
+  return [groupName]
 }

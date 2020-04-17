@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -6,10 +6,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,21 +33,20 @@ public class ToggleFloatingModeAction extends ToggleAction implements DumbAware 
   }
 
   @Override
-  public void setSelected(@NotNull AnActionEvent event, boolean flag){
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     Project project = event.getProject();
     if (project == null) {
       return;
     }
-    String id=ToolWindowManager.getInstance(project).getActiveToolWindowId();
-    if(id==null){
+    String id = ToolWindowManager.getInstance(project).getActiveToolWindowId();
+    if (id == null) {
       return;
     }
-    ToolWindowManagerEx mgr=ToolWindowManagerEx.getInstanceEx(project);
-    ToolWindowEx toolWindow=(ToolWindowEx)mgr.getToolWindow(id);
-    ToolWindowType type=toolWindow.getType();
-    if(ToolWindowType.FLOATING==type){
-      toolWindow.setType(toolWindow.getInternalType(), null);
-    }else{
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(id);
+    if (ToolWindowType.FLOATING == toolWindow.getType()) {
+      toolWindow.setType(((ToolWindowEx)toolWindow).getInternalType(), null);
+    }
+    else {
       toolWindow.setType(ToolWindowType.FLOATING, null);
     }
   }

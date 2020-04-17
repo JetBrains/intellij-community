@@ -43,7 +43,7 @@ public class CertificateWarningDialog extends DialogWrapper {
 
   public CertificateWarningDialog(@NotNull X509Certificate certificate,
                                   @NotNull @NlsContexts.DialogTitle String title,
-                                  @NotNull @NlsContexts.Text String message) {
+                                  @NotNull @NlsContexts.DetailedDescription String message) {
     super((Project)null, false);
 
     myRootPanel.setPreferredSize(new JBDimension(550, 650));

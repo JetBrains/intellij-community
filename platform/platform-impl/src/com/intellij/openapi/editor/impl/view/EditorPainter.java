@@ -102,6 +102,10 @@ public class EditorPainter implements TextDrawingCallback {
            (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
   }
 
+  public static int getIndentGuideShift(@NotNull Editor editor) {
+    return - Session.getTabGap(Session.getWhiteSpaceScale(editor)) / 2;
+  }
+
   private static class Session {
     private final EditorView myView;
     private final EditorImpl myEditor;
@@ -299,7 +303,7 @@ public class EditorPainter implements TextDrawingCallback {
                                                 : null;
       final LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(myEditor.getSettings());
       boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
-      float whiteSpaceScale = ((float)myEditor.getColorsScheme().getEditorFontSize()) / FontPreferences.DEFAULT_FONT_SIZE;
+      float whiteSpaceScale = getWhiteSpaceScale(myEditor);
       final BasicStroke whiteSpaceStroke = new BasicStroke(calcFeatureSize(1, whiteSpaceScale));
 
       PeekableIterator<Caret> caretIterator = null;
@@ -776,7 +780,7 @@ public class EditorPainter implements TextDrawingCallback {
             }
             else {
               int yMid = yToUse - myView.getCharHeight() / 2;
-              int tabEndX = Math.max(startX + 1, endX - calcFeatureSize(5, scale));
+              int tabEndX = Math.max(startX + 1, endX - getTabGap(scale));
               myTextDrawingTasks.add(g -> {
                 g.setColor(color);
                 LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
@@ -801,6 +805,14 @@ public class EditorPainter implements TextDrawingCallback {
           g.setStroke(defaultStroke);
         });
       }
+    }
+
+    private static int getTabGap(float scale) {
+      return calcFeatureSize(5, scale);
+    }
+
+    private static float getWhiteSpaceScale(@NotNull Editor editor) {
+      return ((float)editor.getColorsScheme().getEditorFontSize()) / FontPreferences.DEFAULT_FONT_SIZE;
     }
 
     private void collectExtensions(int visualLine, int offset) {

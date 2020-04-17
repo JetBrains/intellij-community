@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
@@ -647,6 +647,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myEditor.getScrollingModel().accumulateViewportChanges();
     }
     final Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
+    final Collection<Pair<String, ConsoleViewContentType>> contents = new ArrayList<>();
     try {
       // the text can contain one "\r" at the start meaning we should delete the last line
       boolean startsWithCR = deferredTokens.get(0) == TokenBuffer.CR_TOKEN;
@@ -676,6 +677,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       for (int i = refinedTokens.size() - 1; i >= 0; i--) {
         TokenBuffer.TokenInfo token = refinedTokens.get(i);
         contentTypes.add(token.contentType);
+        contents.add(new Pair<>(token.getText(), token.contentType));
         tokenLength += token.length();
         TokenBuffer.TokenInfo prevToken = i == 0 ? null : refinedTokens.get(i - 1);
         if (prevToken != null && token.contentType == prevToken.contentType && token.getHyperlinkInfo() == prevToken.getHyperlinkInfo()) {
@@ -703,6 +705,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (!contentTypes.isEmpty()) {
       for (ChangeListener each : myListeners) {
         each.contentAdded(contentTypes);
+      }
+    }
+    if (!contents.isEmpty()) {
+      for (ChangeListener each : myListeners) {
+        for (Pair<String, ConsoleViewContentType> pair: contents) {
+          each.textAdded(pair.first, pair.second);
+        }
       }
     }
     myPsiDisposedCheck.performCheck();
@@ -821,6 +830,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     model.removeAllHighlighters(); // remove all empty highlighters leftovers if any
+    myEditor.getInlayModel().getInlineElementsInRange(0, 0).forEach(Disposer::dispose); // remove inlays if any
   }
 
   private boolean isStickingToEnd() {
@@ -856,8 +866,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return null;
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final LogicalPosition pos = myEditor.getCaretModel().getLogicalPosition();
-      final HyperlinkInfo info = myHyperlinks.getHyperlinkInfoByLineAndCol(pos.line, pos.column);
+      int offset = myEditor.getCaretModel().getOffset();
+      HyperlinkInfo info = myHyperlinks.getHyperlinkAt(offset);
       final OpenFileDescriptor openFileDescriptor = info instanceof FileHyperlinkInfo ? ((FileHyperlinkInfo)info).getDescriptor() : null;
       if (openFileDescriptor == null || !openFileDescriptor.getFile().isValid()) {
         return null;
@@ -904,7 +914,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       editor.installPopupHandler(new ContextMenuPopupHandler() {
         @Override
         public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
-          return getPopupGroup(event.getMouseEvent());
+          return getPopupGroup(event);
         }
       });
 
@@ -952,12 +962,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     action.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), editor.getContentComponent());
   }
 
-  private ActionGroup getPopupGroup(@NotNull MouseEvent mouseEvent) {
+  private ActionGroup getPopupGroup(@NotNull EditorMouseEvent event) {
     final ActionManager actionManager = ActionManager.getInstance();
-    final HyperlinkInfo info = myHyperlinks != null ? myHyperlinks.getHyperlinkInfoByPoint(mouseEvent.getPoint()) : null;
+    final HyperlinkInfo info = myHyperlinks != null ? myHyperlinks.getHyperlinkInfoByEvent(event) : null;
     ActionGroup group = null;
     if (info instanceof HyperlinkWithPopupMenuInfo) {
-      group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(mouseEvent);
+      group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event.getMouseEvent());
     }
     if (group == null) {
       group = (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU);

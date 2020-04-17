@@ -2,7 +2,8 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -26,7 +27,9 @@ import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
-private val isCommitToolWindowRegistryValue get() = Registry.get("vcs.commit.tool.window")
+private val isCommitToolWindowRegistryValue
+  get() = Registry.get("vcs.commit.tool.window")
+
 private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
 
 internal val Project.isCommitToolWindow: Boolean
@@ -37,26 +40,26 @@ internal fun ContentManager.selectFirstContent() {
   if (firstContent != null) setSelectedContent(firstContent)
 }
 
-class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
-  private val LOG: Logger = Logger.getInstance(ChangesViewContentManager::class.java)
+private val LOG = logger<ChangesViewContentManager>()
 
+class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val addedContents = mutableListOf<Content>()
 
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
 
-  private fun getToolWindowIdFor(contentName: String): String =
-    if (isCommitToolWindow && COMMIT_TOOL_WINDOW_CONTENT_FILTER(contentName)) COMMIT_TOOLWINDOW_ID
-    else TOOLWINDOW_ID
+  private fun getToolWindowIdFor(contentName: String): String {
+    return if (isCommitToolWindow && COMMIT_TOOL_WINDOW_CONTENT_FILTER(contentName)) COMMIT_TOOLWINDOW_ID else TOOLWINDOW_ID
+  }
 
-  private fun Content.resolveToolWindowId(): String = getToolWindowIdFor(tabName)
+  private fun Content.resolveToolWindowId() = getToolWindowIdFor(tabName)
 
   private fun Content.resolveToolWindow(): ToolWindow? {
     val toolWindowId = resolveToolWindowId()
     return toolWindows.find { it.id == toolWindowId }
   }
 
-  private fun Content.resolveContentManager(): ContentManager? = resolveToolWindow()?.contentManager
+  private fun Content.resolveContentManager() = resolveToolWindow()?.contentManager
 
   var isCommitToolWindow: Boolean
     by observable(isCommitToolWindowRegistryValue.asBoolean() && isNonModalInSettings()) { _, oldValue, newValue ->
@@ -201,17 +204,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   companion object {
-    @JvmField
-    val TOOLWINDOW_ID: String = ToolWindowId.VCS
-    internal const val COMMIT_TOOLWINDOW_ID: String = "Commit"
+    const val TOOLWINDOW_ID = ToolWindowId.VCS
+    internal const val COMMIT_TOOLWINDOW_ID = "Commit"
 
     @JvmField
     val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
 
     @JvmStatic
-    fun getInstance(project: Project): ChangesViewContentI {
-      return project.getService(ChangesViewContentI::class.java)
-    }
+    fun getInstance(project: Project) = project.service<ChangesViewContentI>()
 
     internal fun getInstanceImpl(project: Project): ChangesViewContentManager? =
       getInstance(project) as? ChangesViewContentManager
@@ -241,19 +241,20 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
     @NonNls
     const val BRANCHES = "Branches"
+  }
+}
 
-    private fun getContentWeight(content: Content): Int {
-      val userData = content.getUserData(ORDER_WEIGHT_KEY)
-      if (userData != null) return userData
 
-      val tabName = content.tabName
-      for (value in TabOrderWeight.values()) {
-        if (value.tabName != null && value.tabName == tabName) {
-          return value.weight
-        }
-      }
+private fun getContentWeight(content: Content): Int {
+  val userData = content.getUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY)
+  if (userData != null) return userData
 
-      return TabOrderWeight.OTHER.weight
+  val tabName = content.tabName
+  for (value in ChangesViewContentManager.TabOrderWeight.values()) {
+    if (value.tabName != null && value.tabName == tabName) {
+      return value.weight
     }
   }
+
+  return ChangesViewContentManager.TabOrderWeight.OTHER.weight
 }

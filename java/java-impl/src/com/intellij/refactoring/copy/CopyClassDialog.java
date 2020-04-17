@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.copy;
 
+import com.intellij.CommonBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -69,6 +70,7 @@ class CopyClassDialog extends RefactoringDialog implements DumbAware {
                             }, myTfPackage.getChildComponent());
     myNameField.setText(UsageViewUtil.getShortName(aClass));
     myNameField.selectAll();
+    getRefactorAction().putValue(Action.NAME, CommonBundle.getOkButtonText());
   }
 
   @Override

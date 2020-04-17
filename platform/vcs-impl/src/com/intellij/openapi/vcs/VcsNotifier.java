@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,6 +194,11 @@ public class VcsNotifier {
   }
 
   @NotNull
+  public Notification notifyImportantWarning(@Nls @NotNull String title, @Nls @NotNull String message, NotificationAction... actions) {
+    return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, actions);
+  }
+
+  @NotNull
   public Notification notifyImportantWarning(
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
@@ -234,7 +240,18 @@ public class VcsNotifier {
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
     NotificationAction... actions
   ) {
-    return notify(sticky ? IMPORTANT_ERROR_NOTIFICATION : STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
+    return notifyMinorInfo(sticky, null, title, message, actions);
+  }
+
+  @NotNull
+  public Notification notifyMinorInfo(
+    boolean sticky,
+    @NonNls @Nullable String notificationDisplayId,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    NotificationAction... actions
+  ) {
+    return notify(sticky ? IMPORTANT_ERROR_NOTIFICATION : STANDARD_NOTIFICATION, notificationDisplayId, title, message, NotificationType.INFORMATION, actions);
   }
 
   public Notification logInfo(
@@ -262,7 +279,8 @@ public class VcsNotifier {
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
     @NotNull NotificationType type,
-    @Nullable NotificationListener listener
+    @Nullable NotificationListener listener,
+    @Nullable String notificationDisplayId
   ) {
     // title can be empty; message can't be neither null, nor empty
     if (StringUtil.isEmptyOrSpaces(message)) {
@@ -270,7 +288,7 @@ public class VcsNotifier {
       title = "";
     }
     // if both title and message were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
-    return notificationGroup.createNotification(title, message, type, listener);
+    return notificationGroup.createNotification(title, message, type, listener, notificationDisplayId);
   }
 
   @NotNull
@@ -281,7 +299,7 @@ public class VcsNotifier {
     @NotNull NotificationType type,
     @Nullable NotificationListener listener
   ) {
-    Notification notification = createNotification(notificationGroup, title, message, type, listener);
+    Notification notification = createNotification(notificationGroup, title, message, type, listener, null);
     return notify(notification);
   }
 
@@ -293,7 +311,19 @@ public class VcsNotifier {
     @NotNull NotificationType type,
     NotificationAction... actions
   ) {
-    Notification notification = createNotification(notificationGroup, title, message, type, null);
+    return notify(notificationGroup, null, title, message, type, actions);
+  }
+
+  @NotNull
+  private Notification notify(
+    @NotNull NotificationGroup notificationGroup,
+    @NonNls @Nullable String notificationDisplayId,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
+    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotNull NotificationType type,
+    NotificationAction... actions
+  ) {
+    Notification notification = createNotification(notificationGroup, title, message, type, null, notificationDisplayId);
     for (NotificationAction action : actions) {
       notification.addAction(action);
     }

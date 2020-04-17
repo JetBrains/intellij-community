@@ -86,10 +86,10 @@ class ImlReplaceBySourceTest {
 
   private fun replaceBySourceFullReplace(projectFile: File) {
     val storageBuilder1 = TypedEntityStorageBuilder.create()
-    val data = JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder1)
+    val data = loadProject(projectFile.asStoragePlace(), storageBuilder1)
 
     val storageBuilder2 = TypedEntityStorageBuilder.create()
-    val reader = CachingJpsFileContentReader(projectFile.asStoragePlace().baseDirectoryUrl)
+    val reader = CachingJpsFileContentReader(projectFile.asStoragePlace().baseDirectoryUrlString)
     data.loadAll(reader, storageBuilder2)
 
     //println(storageBuilder1.toGraphViz())
@@ -101,7 +101,7 @@ class ImlReplaceBySourceTest {
     storageBuilder1.checkConsistency()
 
     val changes = storageBuilder1.collectChanges(before)
-    Assert.assertTrue(changes.isEmpty())
+    Assert.assertTrue(changes.toString(), changes.isEmpty())
   }
 
   @Rule

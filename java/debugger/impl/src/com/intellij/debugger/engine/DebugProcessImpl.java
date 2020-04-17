@@ -561,6 +561,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
     }
+    if (Registry.is("debugger.jb.jdi") || SystemInfo.isJavaVersionAtLeast(13)) {
+      setConnectorArgument("localAddress", "*");
+    }
     setConnectorArgument("timeout", "0"); // wait forever
     try {
       String listeningAddress = connector.startListening(myArguments);

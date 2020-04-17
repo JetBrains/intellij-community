@@ -9,66 +9,29 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.dnd.DnDActionInfo;
-import com.intellij.ide.dnd.DnDDragStartBean;
-import com.intellij.ide.dnd.DnDImage;
-import com.intellij.ide.dnd.DnDNativeTarget;
-import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.EditorGutterAction;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.GutterMarkPreprocessor;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.LineNumberConverter;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.MarkupIterator;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
-import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
-import com.intellij.openapi.editor.markup.GutterDraggableObject;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
-import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -105,63 +68,31 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Window;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
-import javax.swing.plaf.ComponentUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.event.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Gutter content (left to right):
@@ -205,6 +136,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private ClickInfo myLastActionableClick;
+  @NotNull
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
@@ -233,6 +165,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myRightFreePaintersAreaShown;
   boolean myForceLeftFreePaintersAreaShown;
   boolean myForceRightFreePaintersAreaShown;
+  private short myForcedLeftFreePaintersAreaWidth = -1;
+  private short myForcedRightFreePaintersAreaWidth = -1;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
   @Nullable private AccessibleGutterLine myAccessibleGutterLine;
@@ -1082,7 +1016,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
         int iconWidth = icon.getIconWidth();
         int x = getIconAreaOffset() + myIconsAreaWidth - iconWidth;
-        y += getTextAlignmentShift(icon);
+        y += getTextAlignmentShiftForInlayIcon(icon, inlay);
         AffineTransform old = setMirrorTransformIfNeeded(g, x, iconWidth);
         icon.paintIcon(this, g, x, y);
         if (old != null) g.setTransform(old);
@@ -1104,7 +1038,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     });
   }
 
-  private void paintLineMarkerRenderer(RangeHighlighter highlighter, Graphics g) {
+  private void paintLineMarkerRenderer(@NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
     LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
     if (lineMarkerRenderer != null) {
       Rectangle rectangle = getLineRendererRectangle(highlighter);
@@ -1239,6 +1173,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
     }
+  }
+
+  private int getTextAlignmentShiftForInlayIcon(Icon icon, Inlay inlay) {
+    return Math.min(getTextAlignmentShift(icon), inlay.getHeightInPixels() - icon.getIconHeight());
   }
 
   private int getTextAlignmentShift(Icon icon) {
@@ -1653,11 +1591,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private int getLeftFreePaintersAreaWidth() {
-    return myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH.get() : 0;
+    return myLeftFreePaintersAreaShown ? myForcedLeftFreePaintersAreaWidth < 0 ? FREE_PAINTERS_LEFT_AREA_WIDTH.get()
+                                                                               : myForcedLeftFreePaintersAreaWidth
+                                       : 0;
   }
 
   private int getRightFreePaintersAreaWidth() {
-    return myRightFreePaintersAreaShown ? FREE_PAINTERS_RIGHT_AREA_WIDTH.get() : 0;
+    return myRightFreePaintersAreaShown ? myForcedRightFreePaintersAreaWidth < 0 ? FREE_PAINTERS_RIGHT_AREA_WIDTH.get()
+                                                                                 : myForcedRightFreePaintersAreaWidth
+                                        : 0;
   }
 
   @Override
@@ -2122,6 +2064,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
+  public void setLeftFreePaintersAreaWidth(int widthInPixels) {
+    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    myForcedLeftFreePaintersAreaWidth = (short)widthInPixels;
+  }
+
+  @Override
+  public void setRightFreePaintersAreaWidth(int widthInPixels) {
+    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    myForcedRightFreePaintersAreaWidth = (short)widthInPixels;
+  }
+
+  @Override
   public void setInitialIconAreaWidth(int width) {
     myStartIconAreaWidth = width;
   }
@@ -2215,7 +2169,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   @Nullable
-  public GutterMark getGutterRenderer(final Point p) {
+  public GutterIconRenderer getGutterRenderer(final Point p) {
     PointInfo info = getPointInfo(p);
     return info == null ? null : info.renderer;
   }
@@ -2284,7 +2238,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int iconWidth = icon.getIconWidth();
     int rightX = getIconAreaOffset() + getIconsAreaWidth();
     if (x < rightX - iconWidth || x > rightX) return null;
-    PointInfo pointInfo = new PointInfo(renderer, new Point(rightX - iconWidth / 2, inlayY + getTextAlignmentShift(icon) + iconHeight / 2));
+    PointInfo pointInfo = new PointInfo(renderer, new Point(rightX - iconWidth / 2,
+                                                            inlayY + getTextAlignmentShiftForInlayIcon(icon, inlay) + iconHeight / 2));
     pointInfo.renderersInLine = 1;
     return pointInfo;
   }

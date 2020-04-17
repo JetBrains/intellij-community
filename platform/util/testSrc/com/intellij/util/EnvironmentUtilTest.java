@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
@@ -57,7 +57,7 @@ public class EnvironmentUtilTest {
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "set FOO_TEST_1=123\r\nset FOO_TEST_2=%1");
 
-    Map<String, String> result = new EnvironmentUtil.ShellEnvReader().readBatEnv(file, Arrays.asList("arg_value"));
+    Map<String, String> result = new EnvironmentUtil.ShellEnvReader().readBatEnv(file.toPath(), Collections.singletonList("arg_value"));
     assertEquals("123", result.get("FOO_TEST_1"));
     assertEquals("arg_value", result.get("FOO_TEST_2"));
   }
@@ -70,7 +70,7 @@ public class EnvironmentUtilTest {
     FileUtil.writeToFile(file, "echo some error\r\nexit /B 1");
 
     try {
-      new EnvironmentUtil.ShellEnvReader().readBatEnv(file, Arrays.asList());
+      new EnvironmentUtil.ShellEnvReader().readBatEnv(file.toPath(), Collections.emptyList());
       fail("error should be reported");
     }
     catch (Exception e) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +26,9 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public abstract void initToolWindow(@NotNull ToolWindowEP bean);
 
   @ApiStatus.Internal
-  public abstract void init(ProjectFrameHelper frameHelper);
+  public abstract ToolWindowsPane init(ProjectFrameHelper frameHelper);
 
-  @NotNull
-  public static ToolWindowManagerEx getInstanceEx(@NotNull Project project) {
+  public static @NotNull ToolWindowManagerEx getInstanceEx(@NotNull Project project) {
     return (ToolWindowManagerEx)getInstance(project);
   }
 
@@ -54,27 +54,18 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   }
 
   /**
-   * @return {@code ID} of tool window that was activated last time.
-   */
-  @Nullable
-  public abstract String getLastActiveToolWindowId();
-
-  /**
    * @return {@code ID} of tool window which was last activated among tool windows satisfying the current condition
    */
-  @Nullable
-  public abstract String getLastActiveToolWindowId(@Nullable Condition<? super JComponent> condition);
+  public abstract @Nullable String getLastActiveToolWindowId(@Nullable Condition<? super JComponent> condition);
 
   /**
    * @return layout of tool windows.
    */
-  @NotNull
-  public abstract DesktopLayout getLayout();
+  public abstract @NotNull DesktopLayout getLayout();
 
   public abstract void setLayoutToRestoreLater(@Nullable DesktopLayout layout);
 
-  @Nullable
-  public abstract DesktopLayout getLayoutToRestoreLater();
+  public abstract @Nullable DesktopLayout getLayoutToRestoreLater();
 
   /**
    * Copied {@code layout} into internal layout and rearranges tool windows.
@@ -85,13 +76,5 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
 
   public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
-  @NotNull
-  public abstract List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
-
-  /*
-   * Returns visual representation of tool window location
-   * @see AllIcons.Actions#MoveToBottomLeft ... com.intellij.icons.AllIcons.Actions#MoveToWindow icon set
-   */
-  @NotNull
-  public abstract Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon);
+  public abstract @NotNull List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
 }

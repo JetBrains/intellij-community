@@ -71,7 +71,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     }
   }
 
-  private PsiElement findFirstNonEmptyChild(final XmlTag parentTag) {
+  protected PsiElement findFirstNonEmptyChild(final XmlTag parentTag) {
     PsiElement result = parentTag.getFirstChild();
     while (result != null && result.getTextLength() == 0) {
       result = result.getNextSibling();

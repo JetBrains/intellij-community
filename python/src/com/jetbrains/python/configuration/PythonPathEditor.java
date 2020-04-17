@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -95,7 +96,7 @@ public class PythonPathEditor extends SdkPathEditor {
 
   @Override
   protected void doRemoveItems(int[] indices, JList<VirtualFile> list) {
-    List<Pair<VirtualFile, Integer>> removed = Lists.newArrayList();
+    List<Pair<VirtualFile, Integer>> removed = new ArrayList<>();
     for (int i : indices) {
       removed.add(Pair.create(getListModel().get(i), i));
     }
@@ -129,7 +130,7 @@ public class PythonPathEditor extends SdkPathEditor {
     private Set<VirtualFile> myAdded = Sets.newHashSet();
     private Set<VirtualFile> myExcluded = Sets.newHashSet();
     private final Set<VirtualFile> myFoundFiles = Sets.newHashSet();
-    private final List<VirtualFile> myFilteredOut = Lists.newArrayList();
+    private final List<VirtualFile> myFilteredOut = new ArrayList<>();
     private final DefaultListModel<VirtualFile> myListModel;
     private final OrderRootType myOrderRootType;
     private final Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
@@ -167,7 +168,7 @@ public class PythonPathEditor extends SdkPathEditor {
     }
 
     public int[] remove(List<Pair<VirtualFile, Integer>> files) {
-      List<Integer> toRemove = Lists.newArrayList();
+      List<Integer> toRemove = new ArrayList<>();
       for (Pair<VirtualFile, Integer> e : files) {
         if (myAdded.contains(e.first)) {
           toRemove.add(e.second);
@@ -256,7 +257,7 @@ public class PythonPathEditor extends SdkPathEditor {
     }
 
     private static List<VirtualFile> filterOutStubs(List<VirtualFile> list, List<VirtualFile> filteredOut) {
-      List<VirtualFile> result = Lists.newArrayList();
+      List<VirtualFile> result = new ArrayList<>();
       filteredOut.clear();
       for (VirtualFile file : list) {
         if (!isStubPath(file)) {

@@ -17,13 +17,18 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.Collections;
+import java.util.List;
 
 public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   private final ImaginaryCaretModel myCaretModel;
   private final ImaginarySelectionModel mySelectionModel;
+  private final Project myProject;
   @NotNull private final Document myDocument;
+  private final ImaginarySoftWrapModel mySoftWrapModel = new ImaginarySoftWrapModel();
 
-  public ImaginaryEditor(@NotNull Document document) {
+  public ImaginaryEditor(@NotNull Project project, @NotNull Document document) {
+    myProject = project;
     myDocument = document;
     myCaretModel = new ImaginaryCaretModel(this);
     mySelectionModel = new ImaginarySelectionModel(this);
@@ -94,13 +99,13 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public ScrollingModel getScrollingModel() {
-    throw notImplemented();
+    return new ImaginaryScrollingModel(this);
   }
 
   @NotNull
   @Override
   public SoftWrapModel getSoftWrapModel() {
-    throw notImplemented();
+    return mySoftWrapModel;
   }
 
   @NotNull
@@ -128,13 +133,17 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    throw notImplemented();
+    Document document = getDocument();
+    int lineStart = document.getLineStartOffset(pos.line);
+    int lineEnd = document.getLineEndOffset(pos.line);
+    return Math.min(lineEnd, lineStart + pos.column);
   }
 
   @NotNull
   @Override
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
-    throw notImplemented();
+    // No folding support: logicalPos is always the same as visual pos
+    return new VisualPosition(logicalPos.line, logicalPos.column);
   }
 
   @NotNull
@@ -152,25 +161,28 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    throw notImplemented();
+    return new LogicalPosition(visiblePos.line, visiblePos.column);
   }
 
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    throw notImplemented();
+    Document document = getDocument();
+    int line = document.getLineNumber(offset);
+    int col = document.getLineStartOffset(line);
+    return new LogicalPosition(line, col);
   }
 
   @NotNull
   @Override
   public VisualPosition offsetToVisualPosition(int offset) {
-    throw notImplemented();
+    return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
   @NotNull
   @Override
   public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    throw notImplemented();
+    return offsetToVisualPosition(offset);
   }
 
   @NotNull
@@ -213,23 +225,23 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public boolean isDisposed() {
-    throw notImplemented();
+    return false;
   }
 
   @Nullable
   @Override
   public Project getProject() {
-    throw notImplemented();
+    return myProject;
   }
 
   @Override
   public boolean isInsertMode() {
-    throw notImplemented();
+    return false;
   }
 
   @Override
   public boolean isColumnMode() {
-    throw notImplemented();
+    return false;
   }
 
   @Override
@@ -283,4 +295,51 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
+  // No soft-wraps at all
+  private static class ImaginarySoftWrapModel implements SoftWrapModel {
+    @Override
+    public boolean isSoftWrappingEnabled() {
+      return false;
+    }
+
+    @Override
+    public @Nullable SoftWrap getSoftWrap(int offset) {
+      return null;
+    }
+
+    @Override
+    public @NotNull List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public @NotNull List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isVisible(SoftWrap softWrap) {
+      return false;
+    }
+
+    @Override
+    public void beforeDocumentChangeAtCaret() {
+
+    }
+
+    @Override
+    public boolean isInsideSoftWrap(@NotNull VisualPosition position) {
+      return false;
+    }
+
+    @Override
+    public boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual) {
+      return false;
+    }
+
+    @Override
+    public void release() {
+
+    }
+  }
 }

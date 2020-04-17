@@ -246,10 +246,12 @@
       <separator/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
+      <reference ref="Vcs.Log.ShowOnlyAffectedChanges"/>
       <reference ref="Vcs.Log.ShowDiffPreview"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
+      <reference ref="Vcs.Log.ResumeIndexing"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>

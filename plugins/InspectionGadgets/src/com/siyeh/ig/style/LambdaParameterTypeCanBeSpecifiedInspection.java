@@ -42,7 +42,7 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
 
   @Override
   protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-    return new InferLambdaParameterTypeFix(infos);
+    return new InferLambdaParameterTypeFix((String)infos[0]);
   }
 
 
@@ -77,16 +77,16 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
   }
 
   private static class InferLambdaParameterTypeFix extends InspectionGadgetsFix {
-    private final Object[] myInfos;
+    private final String mySignatureText;
 
-    InferLambdaParameterTypeFix(Object... infos) {
-      myInfos = infos;
+    InferLambdaParameterTypeFix(String signatureText) {
+      mySignatureText = signatureText;
     }
 
     @Nls
     @Override
     public @NotNull String getName() {
-      return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", myInfos);
+      return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", mySignatureText);
     }
 
     @Nls

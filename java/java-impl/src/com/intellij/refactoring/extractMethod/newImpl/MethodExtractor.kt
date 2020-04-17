@@ -17,6 +17,7 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWithCodeBlock
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
@@ -33,6 +34,8 @@ class MethodExtractor {
 
   fun doExtract(editor: Editor, refactoringName: String, helpId: String): Boolean {
     val statements = ExtractSelector().suggestElementsToExtract(editor)
+    val file = statements.first().containingFile
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return false
     try {
       val extractOptions = findExtractOptions(statements) ?: return false
       selectTargetClass(extractOptions) { targetOptions ->
@@ -122,37 +125,36 @@ class MethodExtractor {
     return true
   }
 
-  fun extractMethod(dependencies: ExtractOptions): PsiMethod {
+  fun extractMethod(extractOptions: ExtractOptions): PsiMethod {
+    val dependencies = withFilteredAnnotations(extractOptions)
     val factory = PsiElementFactory.getInstance(dependencies.project)
     val styleManager = CodeStyleManager.getInstance(dependencies.project)
-    val flowOutput = dependencies.flowOutput
-    val newFlowOutput = when {
-      dependencies.dataOutput is ExpressionOutput && flowOutput is ConditionalFlow ->
-        flowOutput.copy(statements = flowOutput.statements.filterNot { it is PsiReturnStatement })
-      else -> flowOutput
+    var flowOutput = dependencies.flowOutput
+    if (dependencies.dataOutput is ExpressionOutput && flowOutput is ConditionalFlow) {
+      flowOutput = flowOutput.copy(statements = flowOutput.statements.filterNot { it is PsiReturnStatement })
     }
-    val codeBlock = with(dependencies) {
-      BodyBuilder(factory).build(
-        elements = elements,
-        flowOutput = newFlowOutput,
-        dataOutput = dataOutput,
-        inputParameters = inputParameters,
-        missedDeclarations = requiredVariablesInside,
-        disabledParameters = disabledParameters
+    val codeBlock = BodyBuilder(factory)
+      .build(
+        dependencies.elements,
+        flowOutput,
+        dependencies.dataOutput,
+        dependencies.inputParameters,
+        dependencies.disabledParameters,
+        dependencies.requiredVariablesInside
       )
-    }
     val method = SignatureBuilder(dependencies.project)
       .build(
-        context = dependencies.anchor.context,
-        scope = dependencies.elements,
-        isStatic = dependencies.isStatic,
-        visibility = dependencies.visibility,
-        typeParameters = dependencies.typeParameters,
-        returnType = dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
-        methodName = dependencies.methodName,
-        inputParameters = dependencies.inputParameters,
-        thrownExceptions = dependencies.thrownExceptions,
-        anchor = dependencies.anchor
+        dependencies.anchor.context,
+        dependencies.elements,
+        dependencies.isStatic,
+        dependencies.visibility,
+        dependencies.typeParameters,
+        dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
+        dependencies.methodName,
+        dependencies.inputParameters,
+        dependencies.dataOutput.annotations,
+        dependencies.thrownExceptions,
+        dependencies.anchor
       )
     method.body?.replace(codeBlock)
 
@@ -160,9 +162,10 @@ class MethodExtractor {
 
     val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first().context)
     val expressionElement = (dependencies.elements.singleOrNull() as? PsiExpression)
-    val callElements = when (expressionElement) {
-      null -> callBuilder.buildCall(methodCall, dependencies.flowOutput, dependencies.dataOutput, dependencies.exposedLocalVariables)
-      else -> callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
+    val callElements = if (expressionElement != null) {
+      callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
+    } else {
+      callBuilder.buildCall(methodCall, dependencies.flowOutput, dependencies.dataOutput, dependencies.exposedLocalVariables)
     }
     val formattedCallElements = callElements.map { styleManager.reformat(it) }
 
@@ -187,9 +190,10 @@ class MethodExtractor {
       return
     }
 
-    val normalizedTarget = when {
-      target.size > 1 && source.first().parent !is PsiCodeBlock -> wrapWithCodeBlock(target)
-      else -> target
+    val normalizedTarget = if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
+      wrapWithCodeBlock(target)
+    } else {
+      target
     }
     normalizedTarget.reversed().forEach { statement ->
       source.last().addSiblingAfter(statement)
@@ -209,12 +213,9 @@ private fun findExtractQualifier(options: ExtractOptions): String {
   val targetClassName = options.anchor.containingClass?.name
   val member = findClassMember(options.elements.first())
   if (member == options.anchor) return options.methodName
-  if (callElement.resolveMethod() != null && !options.isConstructor) {
-    return when {
-      options.isStatic -> "$targetClassName.${options.methodName}"
-      else -> "$targetClassName.this.${options.methodName}"
-    }
+  return if (callElement.resolveMethod() != null && !options.isConstructor) {
+    if (options.isStatic) "$targetClassName.${options.methodName}" else "$targetClassName.this.${options.methodName}"
   } else {
-    return options.methodName
+    options.methodName
   }
 }

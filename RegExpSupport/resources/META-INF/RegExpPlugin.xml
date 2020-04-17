@@ -71,6 +71,9 @@
     <localInspection groupName="RegExp" language="RegExp" shortName="RegExpDuplicateCharacterInClass" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" key="inspection.name.duplicate.character.in.class"
                      implementationClass="org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpRedundantNestedCharacterClass" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" key="inspection.name.redundant.nested.character.class"
+                     implementationClass="org.intellij.lang.regexp.inspection.RedundantNestedCharacterClassInspection"/>
 
   </extensions>
 </idea-plugin>

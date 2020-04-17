@@ -2,15 +2,20 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.InMemoryDataEnumerator;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -24,23 +29,23 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private final Path myFile;
   private final boolean myUnmodifiable;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
-  private PersistentStringEnumerator myNameStorage;
+  private DataEnumeratorEx<String> myNameStorage;
   private volatile StubSerializationHelper myStubSerializationHelper;
 
   private volatile boolean mySerializersLoaded;
 
   @SuppressWarnings("unused") // used from componentSets/Lang.xml:14
   public SerializationManagerImpl() {
-    this(new File(PathManager.getIndexRoot(), "rep.names").toPath(), false);
+    this(FileBasedIndex.USE_IN_MEMORY_INDEX ? null : new File(PathManager.getIndexRoot(), "rep.names").toPath(), false);
   }
 
-  public SerializationManagerImpl(@NotNull Path nameStorageFile, boolean unmodifiable) {
+  public SerializationManagerImpl(@Nullable Path nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;
     try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
-      myNameStorage = new PersistentStringEnumerator(myFile, true);
+      myNameStorage = openNameStorage();
       myStubSerializationHelper = new StubSerializationHelper(myNameStorage, unmodifiable, this);
     }
     catch (IOException e) {
@@ -56,6 +61,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     StubElementTypeHolderEP.EP_NAME.addExtensionPointListener(this::dropSerializerData, this);
   }
 
+  @NotNull
+  private DataEnumeratorEx<String> openNameStorage() throws IOException {
+    return myFile == null ? new InMemoryDataEnumerator<>() : new PersistentStringEnumerator(myFile, true);
+  }
+
   @Override
   public boolean isNameStorageCorrupted() {
     return myNameStorageCrashed.get();
@@ -66,17 +76,17 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     if (myNameStorageCrashed.getAndSet(false)) {
       try {
         LOG.info("Name storage is repaired");
-        if (myNameStorage != null) {
-          myNameStorage.close();
-        }
+        closeNameStorage();
 
         StubSerializationHelper prevHelper = myStubSerializationHelper;
         if (myUnmodifiable) {
           LOG.error("Data provided by unmodifiable serialization manager can be invalid after repair");
         }
 
-        IOUtil.deleteAllFilesStartingWith(myFile.toFile());
-        myNameStorage = new PersistentStringEnumerator(myFile, true);
+        if (myFile != null) {
+          IOUtil.deleteAllFilesStartingWith(myFile.toFile());
+        }
+        myNameStorage = openNameStorage();
         myStubSerializationHelper = new StubSerializationHelper(myNameStorage, myUnmodifiable, this);
         myStubSerializationHelper.copyFrom(prevHelper);
       }
@@ -89,8 +99,10 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   @Override
   public void flushNameStorage() {
-    if (myNameStorage.isDirty()) {
-      myNameStorage.force();
+    if (myNameStorage instanceof Forceable) {
+      if (((Forceable)myNameStorage).isDirty()) {
+        ((Forceable)myNameStorage).force();
+      }
     }
   }
 
@@ -118,13 +130,20 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
-    LOG.info("START StubSerializationManager SHUTDOWN");
+    String name = myFile != null ? myFile.toString() : "in-memory storage";
+    LOG.info("Start shutting down " + name);
     try {
-      myNameStorage.close();
-      LOG.info("END StubSerializationManager SHUTDOWN");
+      closeNameStorage();
+      LOG.info("Finished shutting down " + name);
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+  }
+
+  private void closeNameStorage() throws IOException {
+    if (myNameStorage instanceof Closeable) {
+      ((Closeable)myNameStorage).close();
     }
   }
 

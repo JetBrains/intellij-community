@@ -5,15 +5,17 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.JpsImportedEntitySource
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 
 internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
-                                       private val source: JpsFileEntitySource) {
+                                       private val internalSource: JpsFileEntitySource,
+                                       private val componentName: String,
+                                       private val externalStorage: Boolean) {
   internal fun loadFacetEntities(builder: TypedEntityStorageBuilder, moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
-    val facetManagerTag = reader.loadComponent(imlFileUrl.url, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME) ?: return
+    val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName) ?: return
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
     loadFacetEntities(facetManagerState.facets, builder, moduleEntity, null, orderOfFacets)
@@ -25,7 +27,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
         }
       }
       else {
-        builder.addEntity(FacetsOrderEntity::class.java, source) {
+        builder.addEntity(FacetsOrderEntity::class.java, internalSource) {
           module = moduleEntity
           this.orderOfFacets = orderOfFacets
         }
@@ -38,16 +40,19 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
       val configurationXmlTag = facetState.configuration?.let { JDOMUtil.write(it) }
-      val facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet, source)
+      val externalSystemId = facetState.externalSystemId
+      val source = if (externalSystemId == null) internalSource else JpsImportedEntitySource(internalSource, externalSystemId, externalStorage)
+      val facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet,
+                                               source)
       loadFacetEntities(facetState.subFacets, builder, moduleEntity, facetEntity, orderOfFacets)
     }
   }
 
-  internal fun saveFacetEntities(module: ModuleEntity, facets: List<FacetEntity>, writer: JpsFileContentWriter) {
+  internal fun saveFacetEntities(facets: List<FacetEntity>, writer: JpsFileContentWriter) {
     val facetManagerState = FacetManagerState()
     val facetStates = HashMap<String, FacetState>()
     val facetsByName = facets.groupByTo(HashMap()) { it.name }
-    val orderOfFacets = module.facetsOrderEntity?.orderOfFacets ?: emptyList()
+    val orderOfFacets = facets.first().module.facetsOrderEntity?.orderOfFacets ?: emptyList()
     for (facetName in orderOfFacets) {
       facetsByName.remove(facetName)?.forEach {
         saveFacet(it, facetStates, facetManagerState.facets)
@@ -58,9 +63,9 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
         saveFacet(it, facetStates, facetManagerState.facets)
       }
     }
-    val componentTag = JDomSerializationUtil.createComponentElement(JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME)
+    val componentTag = JDomSerializationUtil.createComponentElement(componentName)
     XmlSerializer.serializeInto(facetManagerState, componentTag)
-    writer.saveComponent(imlFileUrl.url, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME, componentTag)
+    writer.saveComponent(imlFileUrl.url, componentName, componentTag)
   }
 
   private fun saveFacet(facetEntity: FacetEntity, facetStates: MutableMap<String, FacetState>, rootFacets: MutableList<FacetState>) {
@@ -76,6 +81,9 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     val state = FacetState().apply {
       name = facetEntity.name
       facetType = facetEntity.facetType
+      if (externalStorage) {
+        externalSystemId = (facetEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
+      }
     }
     facetStates[state.name] = state
     val underlyingFacet = facetEntity.underlyingFacet

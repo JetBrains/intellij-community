@@ -51,55 +51,56 @@ public class SearchUtil {
 
   private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
-      if (configurable instanceof SearchableConfigurable) {
-        //ignore invisible root nodes
-        //noinspection deprecation
-        if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
-          continue;
-        }
+      if (!(configurable instanceof SearchableConfigurable)) {
+        continue;
+      }
+      //ignore invisible root nodes
+      //noinspection deprecation
+      if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
+        continue;
+      }
 
-        final SearchableConfigurable searchableConfigurable = (SearchableConfigurable) configurable;
+      final SearchableConfigurable searchableConfigurable = (SearchableConfigurable)configurable;
 
-        Set<OptionDescription> configurableOptions = new TreeSet<>();
-        options.put(searchableConfigurable, configurableOptions);
+      Set<OptionDescription> configurableOptions = new TreeSet<>();
+      options.put(searchableConfigurable, configurableOptions);
 
-        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
-          extension.beforeConfigurable(searchableConfigurable, configurableOptions);
-        }
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+        extension.beforeConfigurable(searchableConfigurable, configurableOptions);
+      }
 
-        if (configurable instanceof MasterDetails) {
-          final MasterDetails md = (MasterDetails)configurable;
-          md.initUi();
-          processComponent(searchableConfigurable, configurableOptions, md.getMaster());
-          processComponent(searchableConfigurable, configurableOptions, md.getDetails().getComponent());
-        }
-        else {
-          processComponent(searchableConfigurable, configurableOptions, configurable.createComponent());
-          final Configurable unwrapped = unwrapConfigurable(configurable);
-          if (unwrapped instanceof CompositeConfigurable) {
-            unwrapped.disposeUIResources();
-            //noinspection unchecked
-            final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable)unwrapped).getConfigurables();
-            for (final UnnamedConfigurable child : children) {
-              final Set<OptionDescription> childConfigurableOptions = new TreeSet<>();
-              options.put(new SearchableConfigurableAdapter(searchableConfigurable, child), childConfigurableOptions);
+      if (configurable instanceof MasterDetails) {
+        final MasterDetails md = (MasterDetails)configurable;
+        md.initUi();
+        processComponent(searchableConfigurable, configurableOptions, md.getMaster());
+        processComponent(searchableConfigurable, configurableOptions, md.getDetails().getComponent());
+      }
+      else {
+        processComponent(searchableConfigurable, configurableOptions, configurable.createComponent());
+        final Configurable unwrapped = unwrapConfigurable(configurable);
+        if (unwrapped instanceof CompositeConfigurable) {
+          unwrapped.disposeUIResources();
+          //noinspection unchecked
+          final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable)unwrapped).getConfigurables();
+          for (final UnnamedConfigurable child : children) {
+            final Set<OptionDescription> childConfigurableOptions = new TreeSet<>();
+            options.put(new SearchableConfigurableAdapter(searchableConfigurable, child), childConfigurableOptions);
 
-              if (child instanceof SearchableConfigurable) {
-                processUILabel(((SearchableConfigurable)child).getDisplayName(), childConfigurableOptions, null);
-              }
-              final JComponent component = child.createComponent();
-              if (component != null) {
-                processComponent(component, childConfigurableOptions, null);
-              }
-
-              configurableOptions.removeAll(childConfigurableOptions);
+            if (child instanceof SearchableConfigurable) {
+              processUILabel(((SearchableConfigurable)child).getDisplayName(), childConfigurableOptions, null);
             }
+            final JComponent component = child.createComponent();
+            if (component != null) {
+              processComponent(component, childConfigurableOptions, null);
+            }
+
+            configurableOptions.removeAll(childConfigurableOptions);
           }
         }
+      }
 
-        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
-          extension.afterConfigurable(searchableConfigurable, configurableOptions);
-        }
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+        extension.afterConfigurable(searchableConfigurable, configurableOptions);
       }
     }
   }

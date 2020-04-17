@@ -103,7 +103,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   }
   
   @Override
-  public void paint(Editor editor, Graphics g, Rectangle r) {
+  public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
     final TextAttributes color = editor.getColorsScheme().getAttributes(myKey);
     Color bgColor = color.getBackgroundColor();
     if (bgColor == null) {

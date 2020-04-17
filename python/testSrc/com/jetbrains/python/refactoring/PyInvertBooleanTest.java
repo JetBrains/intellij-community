@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.google.common.collect.Lists;
@@ -12,6 +12,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ArrayUtilRt;
 import com.jetbrains.python.fixtures.PyTestCase;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ public class PyInvertBooleanTest extends PyTestCase {
   public void testImport() { doTest(Lists.newArrayList("refactoring/invertBoolean/my_file.py")); }
 
   private void doTest() {
-    doTest(Lists.newArrayList());
+    doTest(new ArrayList<String>());
   }
 
   private void doTest(List<String> files) {

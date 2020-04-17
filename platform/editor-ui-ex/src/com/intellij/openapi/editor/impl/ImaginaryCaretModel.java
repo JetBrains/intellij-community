@@ -56,7 +56,7 @@ class ImaginaryCaretModel implements CaretModel {
   @NotNull
   @Override
   public Caret getPrimaryCaret() {
-    throw notImplemented();
+    return myCaret;
   }
 
   @Override

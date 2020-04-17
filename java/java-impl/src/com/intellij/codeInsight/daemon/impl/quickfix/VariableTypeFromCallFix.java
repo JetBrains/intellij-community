@@ -49,7 +49,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myExpressionType.isValid() && PsiTypesUtil.allTypeParametersResolved(myVar, myExpressionType) && myVar.isValid();
+    return myExpressionType.isValid() && myVar.isValid() && PsiTypesUtil.allTypeParametersResolved(myVar, myExpressionType);
   }
 
   @Override

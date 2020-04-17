@@ -8,13 +8,14 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.model.Symbol;
+import com.intellij.find.usages.SearchTarget;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,7 +28,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.find.actions.ImplKt.findUsages;
+import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
 public class FindUsagesAction extends AnAction {
@@ -60,9 +61,9 @@ public class FindUsagesAction extends AnAction {
     findShowUsages(project, dataContext, FindBundle.message("find.usages.ambiguous.title"), new UsageVariantHandler() {
 
       @Override
-      public void handleSymbol(@NotNull Symbol symbol) {
+      public void handleTarget(@NotNull SearchTarget target) {
         SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
-        findUsages(toShowDialog(), project, searchScope, symbol);
+        findUsages(toShowDialog(), project, searchScope, target);
       }
 
       @Override
@@ -118,7 +119,7 @@ public class FindUsagesAction extends AnAction {
       );
       if (!chosen) {
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
+          if (editor.isDisposed() || !EditorActivityManager.getInstance().isVisible(editor)) return;
           HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
         }, project.getDisposed());
       }

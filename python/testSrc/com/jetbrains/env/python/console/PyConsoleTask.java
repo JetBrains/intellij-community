@@ -2,7 +2,6 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -277,7 +277,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   public void waitForOutput(String... string) throws InterruptedException {
     int count = 0;
     while (true) {
-      List<String> missing = Lists.newArrayList();
+      List<String> missing = new ArrayList<>();
       String out = output();
       boolean flag = true;
       for (String s : string) {
@@ -397,7 +397,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   protected List<String> getCompoundValueChildren(PyDebugValue value) throws PyDebuggerException {
     XValueChildrenList list = myCommunication.loadVariable(value);
-    List<String> result = Lists.newArrayList();
+    List<String> result = new ArrayList<>();
     for (int i = 0; i < list.size(); i++) {
       result.add(((PyDebugValue)list.getValue(i)).getValue());
     }

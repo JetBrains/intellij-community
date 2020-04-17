@@ -124,6 +124,16 @@
     <item name='org.apache.velocity.runtime.visitor.BaseVisitor java.lang.Object visit(org.apache.velocity.runtime.parser.node.SimpleNode, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.visitor.BaseVisitor void setContext(org.apache.velocity.context.InternalContextAdapter)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.visitor.BaseVisitor void setWriter(java.io.Writer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.visitor.NodeViewMode NodeViewMode()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

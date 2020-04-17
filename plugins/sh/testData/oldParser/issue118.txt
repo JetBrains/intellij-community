@@ -32,7 +32,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('FNAME')
+                PsiElement(word)('FNAME')
                 PsiElement(})('}')
               PsiElement(CLOSE_QUOTE)('"')
           PsiElement(;)(';')
@@ -76,7 +76,9 @@ SHELL_SCRIPT
                     PsiElement($)('$')
                     SHELL_PARAMETER_EXPANSION
                       PsiElement({)('{')
-                      PsiElement(parameter_expansion_body)('FNAME:%.+(z|Z|gz)')
+                      PsiElement(word)('FNAME')
+                      PsiElement(param_separator)(':%')
+                      PsiElement(word)('.+(z|Z|gz)')
                       PsiElement(})('}')
                     PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(;)(';')
@@ -168,7 +170,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('FNAME')
+                PsiElement(word)('FNAME')
                 PsiElement(})('}')
               PsiElement(CLOSE_QUOTE)('"')
           PsiElement(;)(';')

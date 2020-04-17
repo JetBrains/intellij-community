@@ -5,63 +5,76 @@ import com.intellij.workspace.api.TypedEntity
 import gnu.trove.TIntHashSet
 
 internal open class EntityFamily<E : TypedEntity> internal constructor(
-  protected open val entities: List<PEntityData<E>?>,
-  protected val emptySlots: TIntHashSet
-) {
+  override val entities: List<PEntityData<E>?>,
+  protected val emptySlotsSize: Int
+) : AbstractEntityFamily<E>() {
 
-  operator fun get(idx: Int) = entities[idx]
+  fun copyToMutable() = MutableEntityFamily(entities.toMutableList())
 
-  fun copyToMutable() = MutableEntityFamily(entities.toMutableList(), true)
+  inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
+    var emptySlotsCounter = 0
 
-  fun all() = entities.asSequence().filterNotNull()
+    entities.forEachIndexed { idx, entity ->
+      if (entity == null) {
+        emptySlotsCounter++
+      }
+      else {
+        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
+        entityAssertion(entity)
+      }
+    }
+    assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
+  }
 
-  fun exists(id: Int) = entities[id] != null
-
-  val size: Int
-    get() = entities.size - emptySlots.size()
+  override fun size(): Int = entities.size - emptySlotsSize
 
   companion object {
     fun <E : TypedEntity> empty(): EntityFamily<E> = Empty as EntityFamily<E>
 
-    private object Empty : EntityFamily<PTypedEntity<*>>(emptyList(),
-                                                         TIntHashSet())
+    private object Empty : EntityFamily<PTypedEntity>(emptyList(), 0)
   }
 }
 
 internal class MutableEntityFamily<E : TypedEntity>(
-  override val entities: MutableList<PEntityData<E>?>,
-  var familyCopiedToModify: Boolean
-) : EntityFamily<E>(
-  entities,
-  TIntHashSet().also { entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) } }
-) {
+  override val entities: MutableList<PEntityData<E>?>
+) : AbstractEntityFamily<E>() {
+
+  // This set contains empty slots at the moment of MutableEntityFamily creation
+  //   New empty slots MUST NOT be added this this set.
+  // TODO Fill the reason
+  private val availableSlots: TIntHashSet = TIntHashSet().also {
+    entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) }
+  }
+
+  private var amountOfGapsInEntities = availableSlots.size()
 
   private val copiedToModify: TIntHashSet = TIntHashSet()
 
   fun remove(id: Int) {
-    if (id in emptySlots) return
+    if (id in availableSlots) return
 
-    emptySlots.add(id)
     copiedToModify.remove(id)
     entities[id] = null
+    amountOfGapsInEntities++
   }
 
   fun add(other: PEntityData<E>) {
-    if (emptySlots.isEmpty) {
+    if (availableSlots.isEmpty) {
       other.id = entities.size
       entities += other
     }
     else {
-      val emptySlot = emptySlots.pop()
+      val emptySlot = availableSlots.pop()
       other.id = emptySlot
       entities[emptySlot] = other
+      amountOfGapsInEntities--
     }
     copiedToModify.add(other.id)
   }
 
   fun replaceById(entity: PEntityData<E>) {
     val id = entity.id
-    emptySlots.remove(id)
+    if (id in availableSlots) error("Nothing to replace")
     entities[id] = entity
     copiedToModify.add(id)
   }
@@ -84,12 +97,27 @@ internal class MutableEntityFamily<E : TypedEntity>(
     return res
   }
 
-  fun freeze() {
-    this.familyCopiedToModify = false
-    this.copiedToModify.clear()
+  fun toImmutable(): EntityFamily<E>{
+    copiedToModify.clear()
+    return EntityFamily(entities.toList(), amountOfGapsInEntities)
   }
 
+  override fun size(): Int = entities.size - amountOfGapsInEntities
+
   companion object {
-    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(mutableListOf(), true)
+    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(mutableListOf())
   }
+}
+
+internal sealed class AbstractEntityFamily<E : TypedEntity> {
+
+  protected abstract val entities: List<PEntityData<E>?>
+
+  operator fun get(idx: Int) = entities.getOrNull(idx)
+
+  fun all() = entities.asSequence().filterNotNull()
+
+  fun exists(id: Int) = get(id) != null
+
+  abstract fun size(): Int
 }

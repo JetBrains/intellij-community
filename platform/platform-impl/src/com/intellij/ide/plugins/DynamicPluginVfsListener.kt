@@ -5,7 +5,6 @@ import com.intellij.ide.FrameStateListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -68,9 +67,11 @@ class DynamicPluginVfsListener : AsyncFileListener {
   }
 
   private fun findPluginByPath(path: String): IdeaPluginDescriptorImpl? {
-    if (!FileUtil.isAncestor(PathManager.getPluginsPath(), path, false)) return null
+    if (!FileUtil.isAncestor(PathManager.getPluginsPath(), path, false)) {
+      return null
+    }
     return PluginManager.getPlugins().firstOrNull {
-      FileUtil.isAncestor(it.path.absolutePath, path, false)
+      FileUtil.isAncestor(it.pluginPath.toAbsolutePath().toString(), path, false)
     } as IdeaPluginDescriptorImpl?
   }
 }

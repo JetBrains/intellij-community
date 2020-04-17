@@ -38,12 +38,14 @@ import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -147,6 +149,7 @@ open class MultipleFileMergeDialog(
           table = it
           it.setTreeCellRenderer(virtualFileRenderer)
           it.rowHeight = virtualFileRenderer.preferredSize.height
+          it.preferredScrollableViewportSize = JBUI.size(600, 300)
         }).constraints(growX, growY, pushX, pushY)
 
         cell(isVerticalFlow = true) {
@@ -173,7 +176,7 @@ open class MultipleFileMergeDialog(
 
       if (project != null) {
         row {
-          checkBox("Group files by directory", groupByDirectory) { _, component ->
+          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"), groupByDirectory) { _, component ->
             toggleGroupByDirectory(component.isSelected)
           }
         }

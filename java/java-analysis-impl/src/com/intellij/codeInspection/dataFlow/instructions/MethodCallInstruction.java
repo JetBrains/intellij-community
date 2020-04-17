@@ -25,19 +25,21 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpression> {
   private static final Nullability[] EMPTY_NULLABILITY_ARRAY = new Nullability[0];
 
-  @Nullable private final PsiType myType;
+  private final @Nullable PsiType myType;
   private final int myArgCount;
-  private final boolean myShouldFlushFields;
-  @NotNull private final PsiElement myContext; // PsiCall or PsiMethodReferenceExpression
-  @Nullable private final PsiMethod myTargetMethod;
+  private final @NotNull MutationSignature myMutation;
+  private final @NotNull PsiElement myContext; // PsiCall or PsiMethodReferenceExpression
+  private final @Nullable PsiMethod myTargetMethod;
   private final List<MethodContract> myContracts;
-  @Nullable private final DfaValue myPrecalculatedReturnValue;
+  private final @Nullable DfaValue myPrecalculatedReturnValue;
   private final boolean myVarArgCall;
   private final Nullability[] myArgRequiredNullability;
   private final Nullability myReturnNullability;
@@ -71,7 +73,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
                                ? EMPTY_NULLABILITY_ARRAY
                                : calcArgRequiredNullability(resolveResult.getSubstitutor(),
                                                             myTargetMethod.getParameterList().getParameters());
-    myShouldFlushFields = !isPureCall();
+    myMutation = MutationSignature.fromMethod(myTargetMethod);
   }
 
   public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<? extends MethodContract> contracts) {
@@ -96,7 +98,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
       myArgRequiredNullability = EMPTY_NULLABILITY_ARRAY;
     }
 
-    myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0 || isPureCall());
+    myMutation = MutationSignature.fromCall(call);
     myPrecalculatedReturnValue = DfaTypeValue.isUnknown(precalculatedReturnValue) ? null : precalculatedReturnValue;
     myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
   }
@@ -164,29 +166,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
     return false;
   }
 
-  private boolean isPureCall() {
-    if (myTargetMethod != null) {
-      return JavaMethodContractUtil.isPure(myTargetMethod) || SpecialField.findSpecialField(myTargetMethod) != null;
-    }
-    if (!(myContext instanceof PsiNewExpression)) return false;
-    PsiNewExpression newExpression = (PsiNewExpression)myContext;
-    if (newExpression.getArgumentList() == null || !newExpression.getArgumentList().isEmpty()) return false;
-    PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference == null) return false;
-    PsiClass clazz = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
-    if (clazz == null) return false;
-    Set<PsiClass> visited = new HashSet<>();
-    while (true) {
-      for (PsiMethod ctor : clazz.getConstructors()) {
-        if(ctor.getParameterList().isEmpty()) return JavaMethodContractUtil.isPure(ctor);
-      }
-      clazz = clazz.getSuperClass();
-      if (clazz == null || !visited.add(clazz)) return false;
-    }
-  }
-
-  @Nullable
-  public PsiType getResultType() {
+  public @Nullable PsiType getResultType() {
     return myType;
   }
 
@@ -194,12 +174,11 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
     return myArgCount;
   }
 
-  public boolean shouldFlushFields() {
-    return myShouldFlushFields;
+  public @NotNull MutationSignature getMutationSignature() {
+    return myMutation;
   }
 
-  @Nullable
-  public PsiMethod getTargetMethod() {
+  public @Nullable PsiMethod getTargetMethod() {
     return myTargetMethod;
   }
 
@@ -207,8 +186,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
     return myVarArgCall;
   }
 
-  @Nullable
-  public Nullability getArgRequiredNullability(int index) {
+  public @Nullable Nullability getArgRequiredNullability(int index) {
     return index >= myArgRequiredNullability.length ? null : myArgRequiredNullability[index];
   }
 
@@ -221,23 +199,19 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
     return visitor.visitMethodCall(this, runner, stateBefore);
   }
 
-  @Nullable
-  public PsiCall getCallExpression() {
+  public @Nullable PsiCall getCallExpression() {
     return ObjectUtils.tryCast(myContext, PsiCall.class);
   }
 
-  @NotNull
-  public PsiElement getContext() {
+  public @NotNull PsiElement getContext() {
     return myContext;
   }
 
-  @Nullable
-  public DfaValue getPrecalculatedReturnValue() {
+  public @Nullable DfaValue getPrecalculatedReturnValue() {
     return myPrecalculatedReturnValue;
   }
 
-  @NotNull
-  public Nullability getReturnNullability() {
+  public @NotNull Nullability getReturnNullability() {
     return myReturnNullability;
   }
 

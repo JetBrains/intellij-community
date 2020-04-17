@@ -23,8 +23,8 @@ public class ProjectProblemPassFactory implements TextEditorHighlightingPassFact
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     if (!Registry.is("project.problems.view") && !ApplicationManager.getApplication().isUnitTestMode()) return null;
     PsiJavaFile javaFile = tryCast(file, PsiJavaFile.class);
-    if (javaFile == null) return null;
-    return new ProjectProblemPass(file.getProject(), editor, (PsiJavaFile) file);
+    if (javaFile == null || !ProjectProblemInlaySettingsProvider.hintsEnabled()) return null;
+    return new ProjectProblemPass(editor, javaFile);
   }
 
   @Override

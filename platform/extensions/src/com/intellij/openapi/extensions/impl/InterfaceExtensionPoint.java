@@ -28,17 +28,15 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     super(name, className, pluginDescriptor, dynamic);
   }
 
-  @NotNull
   @Override
-  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+  public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
     InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
     result.setComponentManager(manager);
     return result;
   }
 
   @Override
-  @NotNull
-  protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
+  protected @NotNull ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
     String implementationClassName = extensionElement.getAttributeValue("implementation");
     if (implementationClassName == null) {
       throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension", pluginDescriptor.getPluginId());
@@ -51,10 +49,10 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  public void unregisterExtensions(@NotNull ComponentManager componentManager,
-                                   @NotNull PluginDescriptor pluginDescriptor,
-                                   @NotNull List<Element> elements,
-                                   List<Runnable> listenerCallbacks) {
+  void unregisterExtensions(@NotNull ComponentManager componentManager,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            @NotNull List<Element> elements,
+                            List<Runnable> listenerCallbacks) {
     Set<String> implementationClassNames = new HashSet<>();
     for (Element element : elements) {
       implementationClassNames.add(element.getAttributeValue("implementation"));

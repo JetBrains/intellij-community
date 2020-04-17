@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.google.common.base.Joiner;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class RemoteProcessUtil {
   public static String remapPathsList(@NotNull String pathsValue, @NotNull PathMapper pathMapper, @NotNull String interpreterPath) {
     boolean isWin = RemoteFile.isWindowsPath(interpreterPath);
     List<String> paths = Lists.newArrayList(pathsValue.split(File.pathSeparator));
-    List<String> mappedPaths = Lists.newArrayList();
+    List<String> mappedPaths = new ArrayList<>();
 
     for (String path : paths) {
       mappedPaths.add(new RemoteFile(pathMapper.convertToRemote(path), isWin).getPath());

@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
+import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
 
 /**
  * Executes a Git operation on a number of repositories surrounding it by stash-unstash procedure.
@@ -65,8 +67,11 @@ public class GitPreservingProcess {
     myDestinationName = destinationName;
     myProgressIndicator = indicator;
     myOperation = operation;
-    myStashMessage = VcsBundle.message("stash.changes.message", StringUtil.capitalize(myOperationTitle)) +
-                                       " at " +DateFormatUtil.formatDateTime(Clock.getTime());
+    myStashMessage = VcsBundle.message(
+      "stash.changes.message.with.date",
+      StringUtil.capitalize(myOperationTitle),
+      DateFormatUtil.formatDateTime(Clock.getTime())
+    );
     mySaver = configureSaver(saveMethod);
   }
 
@@ -110,9 +115,13 @@ public class GitPreservingProcess {
       @NotNull
       @Override
       public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-        return String.format(
-          "<html>Uncommitted changes that were saved before %s have conflicts with files from <code>%s</code></html>",
-          myOperationTitle, myDestinationName);
+        return wrapInHtml(
+          GitBundle.message(
+            "restore.conflict.dialog.description.label.text",
+            myOperationTitle,
+            wrapInHtmlTag(myDestinationName, "code")
+          )
+        );
       }
 
       @NotNull
@@ -127,14 +136,14 @@ public class GitPreservingProcess {
       @NotNull
       @Override
       public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
-        return String.format("<html>Changes from <b>%s</b></html>", myDestinationName);
+        return wrapInHtml(GitBundle.message("restore.conflict.diff.dialog.right.title", wrapInHtmlTag(myDestinationName, "b")));
       }
     };
 
     GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
       setReverse(true).
       setMergeDialogCustomizer(mergeDialogCustomizer).
-      setErrorNotificationTitle("Local changes were not restored");
+      setErrorNotificationTitle(GitBundle.message("preserving.process.local.changes.not.restored.error.title"));
 
     saver.setConflictResolverParams(params);
     return saver;

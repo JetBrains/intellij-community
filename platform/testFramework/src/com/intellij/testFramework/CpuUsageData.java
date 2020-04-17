@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ThrowableRunnable;
+import com.sun.management.OperatingSystemMXBean;
 import gnu.trove.TLongLongHashMap;
 import gnu.trove.TObjectLongHashMap;
 import one.util.streamex.StreamEx;
@@ -31,19 +32,28 @@ public class CpuUsageData {
   private static final ThreadMXBean ourThreadMXBean = ManagementFactory.getThreadMXBean();
   private static final List<GarbageCollectorMXBean> ourGcBeans = ManagementFactory.getGarbageCollectorMXBeans();
   private static final CompilationMXBean ourCompilationMXBean = ManagementFactory.getCompilationMXBean();
+  private static final OperatingSystemMXBean ourOSBean = (OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
 
   public final long durationMs;
   private final FreeMemorySnapshot myMemStart;
   private final FreeMemorySnapshot myMemEnd;
   private final long myCompilationTime;
+  private final long myProcessTime;
   private final List<Pair<Long, String>> myGcTimes = new ArrayList<>();
   private final List<Pair<Long, String>> myThreadTimes = new ArrayList<>();
 
-  private CpuUsageData(long durationMs, TObjectLongHashMap<GarbageCollectorMXBean> gcTimes, TLongLongHashMap threadTimes, long compilationTime, FreeMemorySnapshot memStart, FreeMemorySnapshot memEnd) {
+  private CpuUsageData(long durationMs,
+                       TObjectLongHashMap<GarbageCollectorMXBean> gcTimes,
+                       TLongLongHashMap threadTimes,
+                       long compilationTime,
+                       long processTime,
+                       FreeMemorySnapshot memStart,
+                       FreeMemorySnapshot memEnd) {
     this.durationMs = durationMs;
     myMemStart = memStart;
     myMemEnd = memEnd;
     myCompilationTime = compilationTime;
+    myProcessTime = processTime;
     gcTimes.forEachEntry((bean, gcTime) -> {
       myGcTimes.add(Pair.create(gcTime, bean.getName()));
       return true;
@@ -59,12 +69,21 @@ public class CpuUsageData {
     return printLongestNames(myGcTimes) + "; free " + myMemStart + " -> " + myMemEnd + " MB";
   }
 
+  String getProcessCpuStats() {
+    long gcTotal = myGcTimes.stream().mapToLong(p -> p.first).sum();
+    return myCompilationTime + "ms JITc " +
+           (gcTotal > 0 ? "and " + gcTotal + "ms GC " : "") +
+           "of " + myProcessTime + "ms total";
+  }
+
   public String getThreadStats() {
     return printLongestNames(myThreadTimes);
   }
 
   public String getSummary(String indent) {
-    return indent + "GC: " + getGcStats() + "\n" + indent + "Threads: " + getThreadStats() + "\n" + indent + "JIT: " + myCompilationTime + "ms";
+    return indent + "GC: " + getGcStats() + "\n" +
+           indent + "Threads: " + getThreadStats() + "\n" +
+           indent + "Process: " + getProcessCpuStats();
   }
 
   boolean hasAnyActivityBesides(Thread thread) {
@@ -100,13 +119,15 @@ public class CpuUsageData {
       threadTimes.put(id, ourThreadMXBean.getThreadUserTime(id));
     }
 
-    long compStart = ourCompilationMXBean.getTotalCompilationTime();
+    long compStart = getTotalCompilationMillis();
+    long processStart = ourOSBean.getProcessCpuTime();
 
     long start = System.nanoTime();
     runnable.run();
     long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
-    long compTime = ourCompilationMXBean.getTotalCompilationTime() - compStart;
+    long processTime = TimeUnit.NANOSECONDS.toMillis(ourOSBean.getProcessCpuTime() - processStart);
+    long compTime = getTotalCompilationMillis() - compStart;
 
     FreeMemorySnapshot memEnd = new FreeMemorySnapshot();
 
@@ -118,7 +139,11 @@ public class CpuUsageData {
       gcTimes.put(bean, bean.getCollectionTime() - gcTimes.get(bean));
     }
 
-    return new CpuUsageData(duration, gcTimes, threadTimes, compTime, memStart, memEnd);
+    return new CpuUsageData(duration, gcTimes, threadTimes, compTime, processTime, memStart, memEnd);
+  }
+
+  static long getTotalCompilationMillis() {
+    return ourCompilationMXBean.getTotalCompilationTime();
   }
 
   private static class FreeMemorySnapshot {

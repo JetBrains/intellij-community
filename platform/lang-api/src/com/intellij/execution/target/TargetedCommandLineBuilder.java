@@ -20,6 +20,17 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull private final Map<String, TargetValue<String>> myEnvironment = new HashMap<>();
   @NotNull private final Set<File> myFilesToDeleteOnTermination = new HashSet<>();
 
+  @NotNull private final TargetEnvironmentRequest myRequest;
+
+  public TargetedCommandLineBuilder(@NotNull TargetEnvironmentRequest request) {
+    myRequest = request;
+  }
+
+  @NotNull
+  public TargetEnvironmentRequest getRequest() {
+    return myRequest;
+  }
+
   @NotNull
   public TargetedCommandLine build() {
     return new TargetedCommandLine(myExePath,

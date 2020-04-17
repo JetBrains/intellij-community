@@ -54,7 +54,7 @@ public abstract class LookupElement extends UserDataHolderBase {
       return ((PsiElementNavigationItem)o).getTargetElement();
     }
     if (o instanceof SmartPsiElementPointer) {
-      return ((SmartPsiElementPointer)o).getElement();
+      return ((SmartPsiElementPointer<?>)o).getElement();
     }
     return null;
   }
@@ -87,8 +87,26 @@ public abstract class LookupElement extends UserDataHolderBase {
     return getLookupString();
   }
 
+  /**
+   * Fill the given presentation object with details specifying how this lookup element should look when rendered.
+   * By default, just sets the item text to the lookup string.<p></p>
+   *
+   * This method is called before the item can be shown in the suggestion list, so it should be relatively fast to ensure that
+   * list is shown as soon as possible. If there are heavy computations involved, consider making them optional and moving into
+   * to {@link #getExpensiveRenderer()}.
+   */
   public void renderElement(LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
+  }
+
+  /**
+   * @return a renderer (if any) that performs potentially expensive computations on this lookup element.
+   * It's called on a background thread, not blocking this element from being shown to the user.
+   * It may return this lookup element's presentation appended with more details than {@link #renderElement} has given.
+   * If the {@link Lookup} is already shown, it will be repainted/resized to accommodate the changes.
+   */
+  public @Nullable LookupElementRenderer<? extends LookupElement> getExpensiveRenderer() {
+    return null;
   }
 
   /** Prefer to use {@link #as(Class)} */

@@ -160,7 +160,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       if (myThread != null) {
         int frameCount = myThread.frameCount();
         if (myFrameCount != -1 && myFrameCount != frameCount) {
-          LOG.error("Incorrect frame count");
+          LOG.error("Incorrect frame count, cached " + myFrameCount + ", now " + frameCount +
+                    ", thread " + myThread + " suspend count " + myThread.getSuspendCount());
         }
         myFrameCount = frameCount;
         if (frameCount > 0) {

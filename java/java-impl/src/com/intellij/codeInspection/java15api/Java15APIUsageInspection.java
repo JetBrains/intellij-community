@@ -61,7 +61,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
   private static final Set<String> ourIgnored16ClassesAPI = loadForbiddenApi("ignore16List.txt");
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_12;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_13;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
@@ -74,6 +74,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_10, "11");
     ourPresentableShortMessage.put(LanguageLevel.JDK_11, "12");
     ourPresentableShortMessage.put(LanguageLevel.JDK_12, "13");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_13, "14");
 
   }
 

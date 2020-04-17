@@ -300,7 +300,12 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Inlay getElementAt(@NotNull Point point) {
+    return getElementAt(new EditorLocation(myEditor, point), false);
+  }
+
+  Inlay getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
     Insets insets = myEditor.getContentComponent().getInsets();
+    Point point = location.getPoint();
     if (point.y < insets.top) return null; // can happen for mouse drag events
     int relX = point.x - insets.left;
     if (relX < 0) return null;
@@ -310,10 +315,10 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     boolean hasAfterLineEndElements = hasAfterLineEndElements();
     if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
 
-    VisualPosition visualPosition = myEditor.xyToVisualPosition(point);
+    VisualPosition visualPosition = location.getVisualPosition();
     if (hasBlockElements) {
       int visualLine = visualPosition.line;
-      int baseY = myEditor.visualLineToY(visualLine);
+      int baseY = location.getVisualLineBaseY();
       if (point.y < baseY) {
         List<Inlay> inlays = getBlockElementsForVisualLine(visualLine, true);
         int yDiff = baseY - point.y;
@@ -321,7 +326,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
           Inlay inlay = inlays.get(i);
           yDiff -= inlay.getHeightInPixels();
           if (yDiff <= 0) {
-            return relX < inlay.getWidthInPixels() ? inlay : null;
+            return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
           }
         }
         LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
@@ -345,9 +350,8 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
         }
       }
     }
-    int offset = -1;
     if (hasInlineElements) {
-      offset = myEditor.visualPositionToOffset(visualPosition);
+      int offset = location.getOffset();
       List<Inlay> inlays = getInlineElementsInRange(offset, offset);
       if (!inlays.isEmpty()) {
         VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
@@ -358,7 +362,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       }
     }
     if (hasAfterLineEndElements) {
-      if (offset < 0) offset = myEditor.visualPositionToOffset(visualPosition);
+      int offset = location.getOffset();
       int logicalLine = myEditor.getDocument().getLineNumber(offset);
       if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && !myEditor.getFoldingModel().isOffsetCollapsed(offset)) {
         List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);

@@ -245,6 +245,8 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
            ", isInternal=" + isInternal +
+           ", getImplementationClassName()='"+getImplementationClassName()+"'" +
+           ", language="+language+
            '}';
   }
 }

@@ -133,6 +133,11 @@ public class GlobalSearchScopesCore {
       result = 31 * result + myManager.hashCode();
       return result;
     }
+
+    @Override
+    public String toString() {
+      return "FilterScope adapted from "+mySet;
+    }
   }
 
   private static class ProductionScopeFilter extends GlobalSearchScope {

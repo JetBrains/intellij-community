@@ -120,6 +120,7 @@ public class TypeConversionUtil {
         // 5.5. Casting Contexts
         if ((fromTypeRank == SHORT_RANK || fromTypeRank == BYTE_RANK) && toTypeRank == CHAR_RANK) return false;
 
+        fromType = uncapture(fromType); //starting from javac 9+
         if (fromType instanceof PsiClassType) {
           if (languageLevel == null) {
             languageLevel = ((PsiClassType)fromType).getLanguageLevel();

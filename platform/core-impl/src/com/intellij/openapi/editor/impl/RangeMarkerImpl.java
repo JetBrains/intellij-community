@@ -157,7 +157,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
   }
 
-  void setStickingToRight(boolean value) {
+  public void setStickingToRight(boolean value) {
     if (!isValid() || value == isStickingToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), isGreedyToRight(), value, getLayer());
   }
@@ -174,7 +174,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isGreedyToRight();
   }
 
-  boolean isStickingToRight() {
+  public boolean isStickingToRight() {
     RangeMarkerTree.RMNode<?> node = myNode;
     return node != null && node.isStickingToRight();
   }

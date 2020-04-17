@@ -109,7 +109,7 @@
     EVAL_CONTENT = 'EVAL_CONTENT'
 
     FILEDESCRIPTOR='file descriptor'
-    PARAMETER_EXPANSION_BODY='parameter expansion body'
+    PARAM_SEPARATOR='param separator'
   ]
 
   pin('.*list(?:_\d.*)?')=1
@@ -208,7 +208,7 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-compound_list ::= newlines pipeline_command_list end_of_list  newlines {pin(".*")=2 recoverWhile = compound_list_recover}
+compound_list ::= newlines pipeline_command_list end_of_list newlines {pin(".*")=2 recoverWhile=compound_list_recover}
 private compound_list_recover ::= !(elif | else | then | fi)
 
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
@@ -219,7 +219,7 @@ private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '
 function_definition ::= &(function | word '(') function_definition_inner {
   mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"
 }
-private function_definition_inner ::= word argument_list  newlines block
+private function_definition_inner ::= word argument_list newlines block
                                      | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines block
                                      { pin(".*")="function|argument_list" }
 
@@ -287,8 +287,9 @@ list ::= newlines pipeline_command_list end_of_list? newlines {pin(".*")=2 eleme
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
 
+shell_parameter_expansion ::= '{' shell_parameter_expansion_inner+ '}' {pin=1}
 //noinspection BnfSuspiciousToken
-shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
+private shell_parameter_expansion_inner ::= w | array_expression | param_separator | vars { name="parameter expansion" }
 
 left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
                             {'=' <<parseUntilSpace literal >>}* {

@@ -3,10 +3,7 @@ package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
 import com.intellij.codeInsight.hints.BlockInlayRenderer
-import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
-import com.intellij.codeInsight.hints.presentation.OnClickPresentation
-import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
-import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
+import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -30,7 +27,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
   }
 
   protected fun getProblems(psiFile: PsiFile): List<PsiElement> {
-    val reportedChanges: MutableMap<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(psiFile)
+    val reportedChanges: MutableMap<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(myFixture.editor)
     val targetFile = psiFile.virtualFile
     val problems: MutableList<PsiElement> = mutableListOf()
 
@@ -44,7 +41,10 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
       val rootPresentation = presentation.root as RecursivelyUpdatingRootPresentation
       val hoverPresentation = rootPresentation.content as OnHoverPresentation
       hoverPresentation.mouseMoved(clickEvent, point)
-      val delegatePresentation = hoverPresentation.presentation as DynamicDelegatePresentation
+      val usagesSequencePresentation = (hoverPresentation.presentation as SequencePresentation).presentations[0] as SequencePresentation
+      val usagesHoverPresentation = usagesSequencePresentation.presentations[1] as OnHoverPresentation
+      usagesHoverPresentation.mouseMoved(clickEvent, point)
+      val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
       val onClickPresentation = delegatePresentation.delegate as OnClickPresentation
       onClickPresentation.mouseClicked(clickEvent, point)
       val editor = editorManager.selectedTextEditor!!

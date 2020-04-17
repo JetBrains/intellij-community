@@ -325,7 +325,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   public void reset() {
     // need this to ensure VFS operations will not block because of storage flushing
     // and other maintenance IO tasks run in background
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Resetting Project Structure");
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Resetting Project Structure", HeavyProcessLatch.Type.Reset);
 
     try {
 

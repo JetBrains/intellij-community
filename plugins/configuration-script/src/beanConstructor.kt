@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ScalarProperty
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.serialization.stateProperties.CollectionStoredProperty
 import com.intellij.serialization.stateProperties.MapStoredProperty
+import com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
 import com.intellij.util.ReflectionUtil
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.NodeTuple
@@ -28,10 +29,15 @@ internal fun <T : BaseState> readIntoObject(instance: T, nodes: List<NodeTuple>,
     }
     else if (valueNode is MappingNode) {
       for (property in properties) {
-        if (property is MapStoredProperty<*, *> && key == property.name) {
-          readMap(property, valueNode)
-          affectedPropertyConsumer?.invoke(property)
-          break
+        if (key == property.name) {
+          if (property is MapStoredProperty<*, *>) {
+            readMap(property, valueNode)
+            affectedPropertyConsumer?.invoke(property)
+            break
+          }
+          if (property is ObjectStateStoredPropertyBase<*>) {
+            readIntoObject(property.getValue(instance as BaseState) as BaseState, valueNode.value, affectedPropertyConsumer)
+          }
         }
       }
     }
@@ -50,7 +56,7 @@ internal fun <T : BaseState> readIntoObject(instance: T, nodes: List<NodeTuple>,
 
 private fun readCollection(property: CollectionStoredProperty<*, *>, itemTypeInfoProvider: ItemTypeInfoProvider, valueNode: SequenceNode) {
   @Suppress("UNCHECKED_CAST")
-  val collection = (property as CollectionStoredProperty<Any, MutableList<Any>>).__getValue()
+  val collection = (property as CollectionStoredProperty<Any, MutableCollection<Any>>).__getValue()
   collection.clear()
   if (valueNode.value.isEmpty()) {
     return

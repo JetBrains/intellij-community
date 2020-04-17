@@ -2,6 +2,8 @@
 
 package com.intellij.workspace.api
 
+import com.intellij.workspace.api.pstorage.PEntityStorage
+import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
 import gnu.trove.THashSet
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.annotations.TestOnly
@@ -10,6 +12,17 @@ import org.junit.Assert.assertTrue
 
 @TestOnly
 fun TypedEntityStorage.checkConsistency() {
+
+  if (this is PEntityStorage) {
+    this.assertConsistency()
+    return
+  }
+
+  if (this is PEntityStorageBuilder) {
+    this.assertConsistency()
+    return
+  }
+
   val storage = this as ProxyBasedEntityStorage
   storage.entitiesByType.forEach { (clazz, entities) ->
     entities.forEach {

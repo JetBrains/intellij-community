@@ -28,15 +28,18 @@ abstract class BaseSingleTaskController<Request, Result>(name: String, resultCon
   private fun doRun(indicator: ProgressIndicator) {
     var result: Result? = null
 
-    while (true) {
-      indicator.checkCanceled()
+    try {
+      while (true) {
+        indicator.checkCanceled()
 
-      val requests = popRequests()
-      if (requests.isEmpty()) break
-      result = process(requests, result)
+        val requests = popRequests()
+        if (requests.isEmpty()) break
+        result = process(requests, result)
+      }
     }
-
-    taskCompleted(result)
+    finally {
+      taskCompleted(result)
+    }
   }
 
   protected open fun createProgressIndicator() = EmptyProgressIndicator()

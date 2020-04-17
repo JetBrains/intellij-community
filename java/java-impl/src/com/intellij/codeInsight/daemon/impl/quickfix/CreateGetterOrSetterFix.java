@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
@@ -64,8 +66,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
       what = "create.setter.for.field";
     }
     else {
-      what = "";
-      assert false;
+      throw new IllegalStateException("Either createGetter or createSetter must be true");
     }
     return QuickFixBundle.message(what, myField.getName());
   }
@@ -139,5 +140,10 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new CreateGetterOrSetterFix(myCreateGetter, myCreateSetter, CodeInsightUtilCore.findSameElementInCopy(myField, target));
   }
 }

@@ -3,11 +3,11 @@ package com.jetbrains.python.console;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -31,8 +31,8 @@ public class PyConsoleIndentUtil {
   public static String normalize(@NotNull String codeFragment, int addIndent) {
     Scanner s = new Scanner(codeFragment);
 
-    List<String> lines = Lists.newArrayList();
-    List<Integer> indents = Lists.newArrayList();
+    List<String> lines = new ArrayList<>();
+    List<Integer> indents = new ArrayList<>();
     while (s.hasNextLine()) {
       String line = s.nextLine();
       int indent = 0;

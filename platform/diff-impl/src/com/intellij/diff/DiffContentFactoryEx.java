@@ -35,6 +35,10 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
 
   @NotNull
+  public abstract DocumentContentBuilder documentContent(@Nullable Project project, boolean readOnly);
+
+
+  @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @NotNull FilePath filePath);
 
 
@@ -71,4 +75,21 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
                                                           byte @NotNull [] content,
                                                           @NotNull VirtualFile highlightFile);
+
+
+  public interface DocumentContentBuilder {
+    @NotNull DocumentContentBuilder withFileName(@Nullable String fileName);
+
+    @NotNull DocumentContentBuilder contextByFileType(@Nullable FileType fileType);
+
+    @NotNull DocumentContentBuilder contextByFilePath(@Nullable FilePath filePath);
+
+    @NotNull DocumentContentBuilder contextByHighlightFile(@Nullable VirtualFile file);
+
+    @NotNull DocumentContentBuilder contextByReferent(@Nullable DocumentContent referent);
+
+    @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators);
+
+    @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset);
+  }
 }

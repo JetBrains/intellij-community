@@ -1,7 +1,6 @@
 package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.StoreUtil
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -18,11 +17,17 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.util.ui.UIUtil
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.*
+import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
+import com.intellij.workspace.ide.storagePlace
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.virtualFileUrl
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -39,10 +44,6 @@ import java.nio.file.Files
 
 class LegacyBridgeModulesTest {
   @Rule
-  @JvmField
-  var edtRule = EdtRule()
-
-  @Rule                                                         
   @JvmField
   var application = ApplicationRule()
 
@@ -329,14 +330,13 @@ class LegacyBridgeModulesTest {
     }
 
   @Test
-  @RunsInEdt
   fun `test module component serialized into module iml`() {
     val moduleFile = File(project.basePath, "test.iml")
 
     val moduleManager = ModuleManager.getInstance(project)
     val module = WriteAction.computeAndWait<Module, Exception> { moduleManager.newModule (moduleFile.path, ModuleTypeId.JAVA_MODULE) }
 
-    StoreUtil.saveDocumentsAndProjectSettings(project)
+    WriteAction.computeAndWait<Unit, RuntimeException> { StoreUtil.saveDocumentsAndProjectSettings(project) }
 
     assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
 
@@ -354,18 +354,17 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  @RunsInEdt
   fun `test module extensions`() {
     TestModuleExtension.commitCalled.set(0)
 
-    val module = ApplicationManager.getApplication().runWriteAction<Module> {
+    val module = WriteAction.computeAndWait<Module, RuntimeException> {
       ModuleManager.getInstance(project).newModule(File(project.basePath, "test.iml").path, ModuleType.EMPTY.id)
     }
 
     val modifiableModel = ApplicationManager.getApplication().runReadAction<ModifiableRootModel> { ModuleRootManager.getInstance(module).modifiableModel }
     val moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
     moduleExtension.languageLevel = LanguageLevel.JDK_1_5
-    ApplicationManager.getApplication().runWriteAction { modifiableModel.commit() }
+    WriteAction.computeAndWait<Unit, RuntimeException> { modifiableModel.commit() }
 
     assertEquals(
       LanguageLevel.JDK_1_5,
@@ -380,19 +379,21 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  @RunsInEdt
   fun `test module libraries loaded from cache`() {
     val builder = TypedEntityStorageBuilder.create()
 
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
-    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = IdeUiEntitySource)
+    val iprFile = File(tempDir, "testProject.ipr")
+    val storagePlace = iprFile.asStoragePlace()
+    val source = JpsFileEntitySource.FileInDirectory(storagePlace.baseDirectoryUrl, storagePlace)
+    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
       tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
       roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(), LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = IdeUiEntitySource
+      source = source
     )
     builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       dependencies = listOf(ModuleDependencyItem.Exportable.LibraryDependency(
@@ -400,9 +401,9 @@ class LegacyBridgeModulesTest {
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
-      ProjectManagerEx.getInstanceEx().openProject(project)
-      disposableRule.disposable.attach { ProjectUtil.closeAndDispose(project) }
+      val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
+      invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+      disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
 
@@ -419,27 +420,29 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  @RunsInEdt
   fun `test libraries are loaded from cache`() {
     val builder = TypedEntityStorageBuilder.create()
 
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
+    val iprFile = File(tempDir, "testProject.ipr")
     val jarUrl = File(tempDir, "a.jar").toVirtualFileUrl()
     builder.addLibraryEntity(
       name = "my_lib",
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = IdeUiEntitySource
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(iprFile.asStoragePlace())
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
-      ProjectManagerEx.getInstanceEx().openProject(project)
-      disposableRule.disposable.attach { ProjectUtil.closeAndDispose(project) }
+      val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
+      invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+      disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+      invokeAndWaitIfNeeded { UIUtil.dispatchAllInvocationEvents() }
+
       val library = projectLibraryTable.getLibraryByName("my_lib")
       assertNotNull(library)
 
@@ -449,7 +452,6 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  @RunsInEdt
   fun `test custom source root loading`() {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
     val moduleImlFile = File(tempDir, "my.iml")
@@ -495,7 +497,6 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  @RunsInEdt
   fun `test unknown custom source root type`() {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
     val moduleImlFile = File(tempDir, "my.iml")
@@ -528,7 +529,6 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  @RunsInEdt
   fun `test custom source root saving`() {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
@@ -631,7 +631,7 @@ internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,
   val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
     ProjectManager.getInstance().createProject("testProject", File(projectDir, "testProject.ipr").path)!!
   }
-  invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openProject(project) }
+  invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
   disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
   return project
 }

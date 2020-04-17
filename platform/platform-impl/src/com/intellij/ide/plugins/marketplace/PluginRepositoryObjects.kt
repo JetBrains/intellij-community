@@ -12,6 +12,7 @@ const val PAID_TAG = "Paid"
  * [externalUpdateId] update ID from Plugin Repository database.
  * [externalPluginId] plugin ID from Plugin Repository database.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class IdeCompatibleUpdate(
   @get:JsonProperty("id")
   val externalUpdateId: String = "",

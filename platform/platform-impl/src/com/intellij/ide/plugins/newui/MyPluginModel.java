@@ -5,11 +5,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -966,46 +964,49 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
   }
 
   public boolean hasErrors(@NotNull IdeaPluginDescriptor plugin) {
-    PluginId pluginId = plugin.getPluginId();
-    if (PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(pluginId)) {
-      return true;
-    }
-    if (!isLoaded(pluginId)) {
-      InstalledPluginsState state = InstalledPluginsState.getInstance();
-      return !state.wasInstalled(pluginId) && !state.wasInstalledWithoutRestart(pluginId);
-    }
-    return false;
+    return getErrorMessage(plugin, null) != null;
   }
 
-  @NotNull
-  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
-    String message;
+  @Nullable
+  public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
+    String message = PluginManagerCore.getLoadingError(pluginDescriptor);
 
-    Set<PluginId> requiredPlugins = getRequiredPlugins(pluginDescriptor.getPluginId());
-    if (ContainerUtil.isEmpty(requiredPlugins)) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
-    }
-    else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-      message = "The plugin requires IntelliJ IDEA Ultimate.";
-    }
-    else {
-      boolean[] enable = {true};
-      String deps = StringUtil.join(requiredPlugins, id -> {
-        IdeaPluginDescriptor plugin = findPlugin(id);
-        if (enable[0] && (plugin == null || PluginManagerCore.isIncompatible(plugin))) {
-          enable[0] = false;
+    PluginId disabledDependency = PluginManagerCore.getFirstDisabledDependency(pluginDescriptor);
+    if (disabledDependency != null) {
+      Set<PluginId> requiredPlugins = filterRequiredPlugins(getRequiredPlugins(pluginDescriptor.getPluginId()));
+      if (!ContainerUtil.isEmpty(requiredPlugins)) {
+        boolean[] enable = {true};
+        String deps = StringUtil.join(requiredPlugins, id -> {
+          IdeaPluginDescriptor plugin = findPlugin(id);
+          if (enable[0] && (plugin == null || PluginManagerCore.isIncompatible(plugin))) {
+            enable[0] = false;
+          }
+          return StringUtil.wrapWithDoubleQuote(plugin != null ? plugin.getName() : id.getIdString());
+        }, ", ");
+
+        int size = requiredPlugins.size();
+        message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
+        if (enable[0] && enableAction != null) {
+          enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
         }
-        return StringUtil.wrapWithDoubleQuote(plugin != null ? plugin.getName() : id.getIdString());
-      }, ", ");
-
-      int size = requiredPlugins.size();
-      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      if (enable[0]) {
-        enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
+      }
+      else {
+        message = null;
       }
     }
 
     return message;
+  }
+
+  @Nullable
+  private static Set<PluginId> filterRequiredPlugins(@Nullable Set<PluginId> requiredPlugins) {
+    if (ContainerUtil.isEmpty(requiredPlugins)) {
+      return requiredPlugins;
+    }
+    return requiredPlugins.stream().filter(id -> {
+      IdeaPluginDescriptor plugin = findPlugin(id);
+      return plugin == null || !plugin.isEnabled() ;
+    }).collect(Collectors.toSet());
   }
 
   @NotNull
@@ -1022,11 +1023,11 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       if (pluginId == rootId || appInfo.isEssentialPlugin(pluginId) || !plugin.isEnabled() || plugin.isImplementationDetail()) {
         continue;
       }
-      if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
+      if (!(plugin instanceof IdeaPluginDescriptorImpl) || ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
         continue;
       }
 
-      PluginManagerCore.processAllDependencies(plugin, false, PluginManagerCore.buildPluginIdMap(), (id, descriptor) -> {
+      PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)plugin, false, PluginManagerCore.buildPluginIdMap(), (id, descriptor) -> {
         if (id == rootId) {
           result.add(plugin);
           return FileVisitResult.TERMINATE;

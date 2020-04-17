@@ -44,7 +44,7 @@ internal interface ArtifactsOrderEntity : ModifiableTypedEntity<ArtifactsOrderEn
 }
 
 internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
-                                                  override val entitySource: JpsFileEntitySource,
+                                                  override val internalEntitySource: JpsFileEntitySource,
                                                   private val preserveOrder: Boolean) : JpsFileEntitiesSerializer<ArtifactEntity> {
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
@@ -53,7 +53,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
-    val source = entitySource
+    val source = internalEntitySource
     val orderOfItems = ArrayList<String>()
     artifactListElement.getChildren("artifact").forEach {
       val state = XmlSerializer.deserialize(it, ArtifactState::class.java)
@@ -115,50 +115,44 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun saveEntities(mainEntities: Collection<ArtifactEntity>,
                             entities: Map<Class<out TypedEntity>, List<TypedEntity>>,
-                            writer: JpsFileContentWriter): List<TypedEntity> {
-    if (mainEntities.isEmpty()) {
-      return emptyList()
-    }
+                            writer: JpsFileContentWriter) {
+    if (mainEntities.isEmpty()) return
 
     val componentTag = JDomSerializationUtil.createComponentElement(ARTIFACT_MANAGER_COMPONENT_NAME)
-    val savedEntities = ArrayList<TypedEntity>()
     val artifactsByName = mainEntities.groupByTo(HashMap()) { it.name }
     val orderOfItems = if (preserveOrder) (entities[ArtifactsOrderEntity::class.java]?.firstOrNull() as? ArtifactsOrderEntity?)?.orderOfArtifacts else null
     orderOfItems?.forEach { name ->
       val artifacts = artifactsByName.remove(name)
       artifacts?.forEach {
-        componentTag.addContent(saveArtifact(it, savedEntities))
+        componentTag.addContent(saveArtifact(it))
       }
     }
     artifactsByName.values.forEach {
       it.forEach { artifact ->
-        componentTag.addContent(saveArtifact(artifact, savedEntities))
+        componentTag.addContent(saveArtifact(artifact))
       }
     }
     writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
-    return savedEntities
   }
 
-  private fun saveArtifact(artifact: ArtifactEntity, savedEntities: MutableList<TypedEntity>): Element {
+  private fun saveArtifact(artifact: ArtifactEntity): Element {
     val artifactState = ArtifactState()
     artifactState.name = artifact.name
     artifactState.artifactType = artifact.artifactType
     artifactState.isBuildOnMake = artifact.includeInProjectBuild
     artifactState.outputPath = JpsPathUtil.urlToPath(artifact.outputUrl.url)
-    savedEntities.add(artifact)
     val customProperties = artifact.customProperties.filter { it.entitySource == artifact.entitySource }
-    savedEntities.addAll(customProperties)
     artifactState.propertiesList = customProperties.mapTo(ArrayList()) {
       ArtifactPropertiesState().apply {
         id = it.providerType
         options = it.propertiesXmlTag?.let { JDOMUtil.load(it) }
       }
     }
-    artifactState.rootElement = savePackagingElement(artifact.rootElement, savedEntities)
+    artifactState.rootElement = savePackagingElement(artifact.rootElement)
     return XmlSerializer.serialize(artifactState, SkipDefaultsSerializationFilter())
   }
 
-  private fun savePackagingElement(element: PackagingElementEntity, savedEntities: MutableList<TypedEntity>): Element {
+  private fun savePackagingElement(element: PackagingElementEntity): Element {
     val tag = Element("element")
 
     fun setId(typeId: String) = tag.setAttribute("id", typeId)
@@ -167,8 +161,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
     fun saveElementChildren(composite: CompositePackagingElementEntity) {
       composite.children.forEach {
-        savedEntities.add(it)
-        tag.addContent(savePackagingElement(it, savedEntities))
+        tag.addContent(savePackagingElement(it))
       }
     }
 
@@ -227,7 +220,6 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         }
       }
     }
-    savedEntities.add(element)
     return tag
   }
 }

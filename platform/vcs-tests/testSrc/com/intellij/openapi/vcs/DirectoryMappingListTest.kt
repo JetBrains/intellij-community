@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -18,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.junit.Assume
@@ -41,6 +43,10 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private lateinit var vcsCVS: MockAbstractVcs
 
   override fun setUpProject() {
+    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+                                         "#" + NewMappings::class.java.name,
+                                         "#" + VcsInitialization::class.java.name)
+
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
 
     projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
@@ -48,10 +54,6 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
     ProjectManagerEx.getInstanceEx().openTestProject(myProject)
-    UIUtil.dispatchAllInvocationEvents() // startup activities
-
-    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
-    startupManager.runStartupActivities()
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
@@ -65,6 +67,10 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
     mappings = NewMappings(myProject, vcsManager)
     Disposer.register(testRootDisposable, mappings)
+
+    UIUtil.dispatchAllInvocationEvents()
+    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
+    startupManager.runStartupActivities()
     startupManager.runPostStartupActivitiesRegisteredDynamically()
     vcsManager.waitForInitialized()
   }

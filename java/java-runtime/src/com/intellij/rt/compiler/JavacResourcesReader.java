@@ -98,8 +98,7 @@ public class JavacResourcesReader {
       return false;
     }
     System.err.println(MSG_PATTERNS_START);
-    for (int idx = 0; idx < MSG_NAME_KEY_PAIRS.length; idx++) {
-      BundleKey bundleKey = MSG_NAME_KEY_PAIRS[idx];
+    for (BundleKey bundleKey : MSG_NAME_KEY_PAIRS) {
       try {
         System.err.println(bundleKey.category + CATEGORY_VALUE_DIVIDER + bundleKey.getCategoryValue(messagesBundle));
       }
@@ -111,9 +110,9 @@ public class JavacResourcesReader {
   }
 
   private static ResourceBundle getMessagesBundle() {
-    for (int i = 0; i < BUNDLE_NAMES.length; i++) {
+    for (String name : BUNDLE_NAMES) {
       try {
-        return ResourceBundle.getBundle(BUNDLE_NAMES[i]);
+        return ResourceBundle.getBundle(name);
       }
       catch (MissingResourceException ignored) {
       }
@@ -138,9 +137,9 @@ public class JavacResourcesReader {
       if (keys.length == 1) {
         return messagesBundle.getString(keys[0]);
       }
-      final StringBuffer buf = new StringBuffer();
-      for (int idx = 0; idx < keys.length; idx++) {
-        buf.append(messagesBundle.getString(keys[idx]));
+      final StringBuilder buf = new StringBuilder();
+      for (String key : keys) {
+        buf.append(messagesBundle.getString(key));
       }
       return buf.toString();
     }
@@ -152,7 +151,7 @@ public class JavacResourcesReader {
     }
 
     public String getCategoryValue(ResourceBundle messagesBundle) {
-      return messagesBundle.getString(keys[0]) + MessageFormat.format(messagesBundle.getString(keys[1]), new Object[] {""});
+      return messagesBundle.getString(keys[0]) + MessageFormat.format(messagesBundle.getString(keys[1]), "");
     }
   }
 }

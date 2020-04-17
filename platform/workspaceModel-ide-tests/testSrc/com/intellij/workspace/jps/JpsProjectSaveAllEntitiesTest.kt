@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.IdeUiEntitySource
 import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
@@ -32,11 +31,12 @@ class JpsProjectSaveAllEntitiesTest {
   @Test
   fun `add library to empty project`() {
     val projectDir = FileUtil.createTempDirectory("jpsSaveTest", null)
-    val serializers = createSerializationData(projectDir)
+    val serializers = createProjectSerializers(projectDir)
     val builder = TypedEntityStorageBuilder.create()
     val jarUrl = VirtualFileUrlManager.fromUrl("jar://${projectDir.systemIndependentPath}/lib/foo.jar!/")
     val libraryRoot = LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
-    builder.addLibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), emptyList(), IdeUiEntitySource)
+    val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asStoragePlace())
+    builder.addLibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), emptyList(), source)
     val storage = builder.toStorage()
     serializers.saveAllEntities(storage, projectDir)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
@@ -47,10 +47,11 @@ class JpsProjectSaveAllEntitiesTest {
   @Test
   fun `escape special symbols in library name`() {
     val projectDir = FileUtil.createTempDirectory("jpsSaveTest", null)
-    val serializers = createSerializationData(projectDir)
+    val serializers = createProjectSerializers(projectDir)
     val builder = TypedEntityStorageBuilder.create()
     for (libName in listOf("a lib", "my-lib", "group-id:artifact-id")) {
-      builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), IdeUiEntitySource)
+      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asStoragePlace())
+      builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), source)
     }
     val storage = builder.toStorage()
     serializers.saveAllEntities(storage, projectDir)
@@ -62,7 +63,7 @@ class JpsProjectSaveAllEntitiesTest {
   private fun checkLoadSave(originalProjectFile: File) {
     val projectData = copyAndLoadProject(originalProjectFile)
     FileUtil.delete(projectData.projectDir)
-    projectData.serializationData.saveAllEntities(projectData.storage, projectData.projectDir)
+    projectData.serializers.saveAllEntities(projectData.storage, projectData.projectDir)
     assertDirectoryMatches(projectData.projectDir, projectData.originalProjectDir,
                            setOf(".idea/misc.xml", ".idea/encodings.xml", ".idea/compiler.xml", ".idea/.name"),
                            listOf("CompilerConfiguration", "Encoding", "ProjectRootManager"))

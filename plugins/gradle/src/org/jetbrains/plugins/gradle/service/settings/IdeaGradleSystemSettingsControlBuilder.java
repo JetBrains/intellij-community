@@ -145,7 +145,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public void apply(@NotNull GradleSettings settings) {
     if (myServiceDirectoryPathField != null) {
-      settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()));
+      String serviceDirectoryPath = trimIfPossible(myServiceDirectoryPathField.getText());
+      settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(serviceDirectoryPath));
     }
     if (myGradleVmOptionsField != null) {
       settings.setGradleVmOptions(trimIfPossible(myGradleVmOptionsField.getText()));
@@ -247,7 +248,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
         protected void textChanged(@NotNull DocumentEvent e) {
           boolean showMigration = e.getDocument().getLength() > 0;
           fixLabel.setHyperlinkText(
-            GradleBundle.message("gradle.settings.text.vm.options.link.tooltip"),
+            GradleBundle.message("gradle.settings.text.vm.options.link.tooltip") + " ",
             showMigration ? GradleBundle.message("gradle.settings.text.vm.options.link.text") : "  ", "");
         }
       });

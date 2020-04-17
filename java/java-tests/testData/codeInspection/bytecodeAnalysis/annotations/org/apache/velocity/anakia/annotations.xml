@@ -51,11 +51,41 @@
     <item name='org.apache.velocity.anakia.AnakiaTask void ensureDirectoryFor(java.io.File) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask void setBasedir(java.io.File)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask void setDestdir(java.io.File)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask void setExtension(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.anakia.AnakiaTask void setLastModifiedCheck(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask void setProjectFile(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask void setStyle(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.anakia.AnakiaTask void setTemplatePath(java.io.File) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask void setVelocityPropertiesFile(java.io.File)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.anakia.AnakiaTask.Context Context()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -65,6 +95,16 @@
     <item name='org.apache.velocity.anakia.AnakiaTask.Context java.lang.String getName()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask.Context void setFile(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask.Context void setName(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.anakia.AnakiaTask.Context void setName(java.lang.String) 0'>

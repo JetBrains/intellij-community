@@ -34,8 +34,9 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
-      if (!(regExpClass.getParent() instanceof RegExpClass)) {
-        checkForDuplicates(regExpClass, new HashSet<>());
+      final HashSet<Object> seen = new HashSet<>();
+      for (RegExpClassElement element : regExpClass.getElements()) {
+        checkForDuplicates(element, seen);
       }
     }
 
@@ -57,12 +58,6 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
           myHolder.registerProblem(regExpSimpleClass,
                                    RegExpBundle.message("warning.duplicate.predefined.character.class.0.inside.character.class", text),
                                    new DuplicateCharacterInClassFix(regExpSimpleClass));
-        }
-      }
-      else if (element instanceof RegExpClass) {
-        final RegExpClass regExpClass = (RegExpClass)element;
-        for (RegExpClassElement classElement : regExpClass.getElements()) {
-          checkForDuplicates(classElement, seen);
         }
       }
     }

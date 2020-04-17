@@ -23,20 +23,17 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import java.awt.AWTEvent;
-import java.awt.Component;
-import java.awt.EventQueue;
-import java.awt.Window;
-import java.awt.event.KeyEvent;
-import java.util.Objects;
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.util.Objects;
 
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -48,9 +45,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    */
   public static final int DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS = 300;
 
+  private Runnable myDialogInitialization;
   private ProgressDialog myDialog;
 
-  final Project myProject;
+  @Nullable protected final Project myProject;
   final boolean myShouldShowCancel;
   String myCancelText;
 
@@ -90,17 +88,34 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
 
-    Window parentWindow = calcParentWindow(parentComponent);
-
     if (myProject != null) {
       Disposer.register(myProject, this);
     }
-    myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
-    Disposer.register(this, myDialog);
+
+    myDialogInitialization = () -> {
+      Window parentWindow = calcParentWindow(parentComponent);
+      myDialog = new ProgressDialog(this, shouldShowBackground, myCancelText, parentWindow);
+      Disposer.register(this, myDialog);
+    };
+    UIUtil.invokeLaterIfNeeded(this::initializeDialog);
 
     setModalityProgress(shouldShowBackground ? null : this);
     addStateDelegate(new MyDelegate());
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
+  }
+
+  @CalledInAwt
+  protected void initializeOnEdtIfNeeded() {
+    EDT.assertIsEdt();
+    initializeDialog();
+  }
+
+  @CalledInAwt
+  private void initializeDialog() {
+    Runnable initialization = myDialogInitialization;
+    if (initialization == null) return;
+    myDialogInitialization = null;
+    initialization.run();
   }
 
   private Window calcParentWindow(@Nullable Component parent) {
@@ -180,8 +195,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
+  @CalledInAwt
   public void startBlocking(@NotNull Runnable init) {
-    assert EventQueue.isDispatchThread();
+    EDT.assertIsEdt();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
@@ -202,6 +218,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public void pumpEventsForHierarchy() {
+    initializeOnEdtIfNeeded();
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
       if (isCancellationEvent(event)) {
         cancel();
@@ -223,6 +240,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       return;
     }
 
+    initializeOnEdtIfNeeded();
     myDialog.show();
     if (myDialog != null) {
       myDialog.myRepaintRunnable.run();
@@ -332,7 +350,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
-    assert EventQueue.isDispatchThread();
+    EDT.assertIsEdt();
+    myDialogInitialization = null;
     stopSystemActivity();
     if (isRunning()) {
       cancel();
@@ -345,8 +364,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   private void enableCancelButton(boolean enable) {
-    if (myDialog != null) {
-      myDialog.enableCancelButtonIfNeeded(enable);
+    ProgressDialog dialog = myDialog;
+    if (dialog != null) {
+      dialog.enableCancelButtonIfNeeded(enable);
     }
   }
 
@@ -360,8 +380,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     @Override
     public void cancel() {
       super.cancel();
-      if (myDialog != null) {
-        myDialog.cancel();
+      ProgressDialog dialog = myDialog;
+      if (dialog != null) {
+        dialog.cancel();
       }
     }
 

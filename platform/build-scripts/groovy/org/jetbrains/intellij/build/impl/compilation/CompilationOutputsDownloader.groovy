@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import org.apache.http.HttpStatus
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.entity.ContentType
@@ -21,9 +22,11 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 
 import java.lang.reflect.Type
+import java.nio.charset.StandardCharsets
+import java.util.stream.Collectors
 
 @CompileStatic
-class CompilationOutputsDownloader {
+class CompilationOutputsDownloader implements AutoCloseable {
   private static final Type COMMITS_HISTORY_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
   private static final int COMMITS_COUNT = 1_000
   private static final int COMMITS_SEARCH_TIMEOUT = 10_000
@@ -33,38 +36,66 @@ class CompilationOutputsDownloader {
   private final CompilationContext context
   private final String remoteCacheUrl
   private final String gitUrl
-  /**
-   * If set to false latest commit in current repository copy will be used to download caches.
-   */
-  private final boolean checkHistory
 
   private final NamedThreadPoolExecutor executor
 
   private final SourcesStateProcessor sourcesStateProcessor
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean checkHistory) {
+  private boolean availableForHeadCommitForced = false
+  /**
+   * If true then latest commit in current repository will be used to download caches.
+   */
+  @Lazy
+  boolean availableForHeadCommit = { availableCommitDepth == 0 }()
+
+  @Lazy
+  private List<String> lastCommits = { gitLog() }()
+
+  @Lazy
+  private int availableCommitDepth = {
+    availableForHeadCommitForced ? 0 : lastCommits.findIndexOf {
+      availableCachesKeys.contains(it)
+    }
+  }()
+
+  @Lazy
+  private Set<String> availableCachesKeys = {
+    def commitsHistory = getClient.doGet("$remoteCacheUrl/commit_history.json", COMMITS_HISTORY_TYPE)
+    return commitsHistory[gitUrl] as Set<String>
+  }()
+
+  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
-    this.checkHistory = checkHistory
+    this.availableForHeadCommitForced = availableForHeadCommit
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    context.messages.info("Using $executorThreadsCount threads to download caches.")
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
 
     sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
+  @Override
+  void close() {
+    executor.close()
+    executor.reportErrors(context.messages)
+  }
+
   void downloadCachesAndOutput() {
-    def commits = getLastCommits()
-    int depth = checkHistory ? commits.findIndexOf { getAvailableCachesKeys().contains(it) } : 0
-
-    if (depth != -1) {
-      String lastCachedCommit = commits[depth]
-      context.messages.info("Using cache for commit $lastCachedCommit ($depth behind last commit).")
-
-      executor.submit {
-        saveCache(lastCachedCommit)
+    if (availableCommitDepth != -1) {
+      String lastCachedCommit = lastCommits[availableCommitDepth]
+      if (lastCachedCommit == null) {
+        context.messages.error("Unable to find last cached commit for $availableCommitDepth in $lastCommits")
+      }
+      context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
+      context.messages.info("Using $executor.corePoolSize threads to download caches.")
+      // In case if outputs are available for the current commit
+      // cache is not needed as we are not going to compile anything.
+      if (!availableForHeadCommit) {
+        executor.submit {
+          saveCache(lastCachedCommit)
+        }
       }
 
       def sourcesState = getSourcesState(lastCachedCommit)
@@ -147,21 +178,16 @@ class CompilationOutputsDownloader {
     }
   }
 
-  private Set<String> getAvailableCachesKeys() {
-    def commitsHistory = getClient.doGet("$remoteCacheUrl/commit_history.json", COMMITS_HISTORY_TYPE)
-    return commitsHistory[gitUrl] as Set<String>
-  }
-
-  private List<String> getLastCommits() {
-    def proc = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
-    def output = new StringBuffer()
-    proc.consumeProcessOutputStream(output)
-    proc.waitForOrKill(COMMITS_SEARCH_TIMEOUT)
-    if (proc.exitValue() != 0) {
-      throw new IllegalStateException("git log failed: ${proc.getErrorStream().getText()}")
+  private List<String> gitLog() {
+    def log = "git log -$COMMITS_COUNT --pretty=tformat:%H".execute((List)null, new File(context.paths.projectHome.trim()))
+    def output = new BufferedReader(new InputStreamReader(log.inputStream, StandardCharsets.UTF_8)).withCloseable {
+      it.lines().map { it.trim() }.collect(Collectors.toList())
     }
-
-    return output.readLines()*.trim()
+    log.waitForOrKill(COMMITS_SEARCH_TIMEOUT)
+    if (log.exitValue() != 0) {
+      throw new IllegalStateException("git log failed:\n$log.errorStream.text\n$output")
+    }
+    return output
   }
 }
 
@@ -180,8 +206,10 @@ class GetClient {
     def request = new HttpGet(url)
     try {
       response = httpClient.execute(request)
-
       def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
+      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+        throw new DownloadException(url, response.statusLine.statusCode, responseString)
+      }
       return gson.fromJson(responseString, responseType)
     }
     catch (Exception ex) {
@@ -197,7 +225,9 @@ class GetClient {
     try {
       def request = new HttpGet(url)
       CloseableHttpResponse response = httpClient.execute(request)
-
+      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+        throw new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
+      }
       return response.entity.content
     }
     catch (Exception ex) {
@@ -207,6 +237,10 @@ class GetClient {
 
   @CompileStatic
   static class DownloadException extends RuntimeException {
+    DownloadException(String url, int status, String details) {
+      super("Error while executing GET '$url': $status, $details")
+    }
+
     DownloadException(String url, Throwable cause) {
       super("Error while executing GET '$url': $cause.message")
     }

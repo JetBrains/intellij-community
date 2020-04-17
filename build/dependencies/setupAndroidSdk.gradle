@@ -103,6 +103,16 @@ task syncToolsBaseTemplates(dependsOn: [configurations.androidToolsBaseTemplates
   versionFile = android_m2_version
 }
 
+task syncToolsBaseTemplatesOnly(dependsOn: [configurations.androidToolsBaseTemplates], type: VersionedLazyCopyTask) {
+  from { zipTree(configurations.androidToolsBaseTemplates.singleFile) }
+  into "${project.buildDir}/android-sdk/tools-base/templates"
+  versionFile = android_m2_version
+}
+
+task setupAndroidPluginRuntimeForIdea(dependsOn: [syncToolsBaseTemplatesOnly, setupKotlinPlugin]){
+
+}
+
 task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncAndroidSdk], type: Sync) {
   from "$buildDir/kotlin"
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"

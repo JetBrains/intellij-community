@@ -30,6 +30,8 @@ import java.math.BigInteger;
  */
 class CpuTimings {
 
+  private static final Mandelbrot MANDELBROT = new Mandelbrot(765);
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static long calcStableCpuTiming() {
     long start = System.currentTimeMillis();
@@ -39,7 +41,7 @@ class CpuTimings {
 
     StringBuilder log = new StringBuilder();
     for (int i = 0;; i++) {
-      long time = TimeoutUtil.measureExecutionTime(CpuTimings::addBigIntegers);
+      long time = TimeoutUtil.measureExecutionTime(MANDELBROT::compute);
       if (time < minTime) {
         //log.append("Iteration " + i + ", time " + time + "\n");
         minTime = time;
@@ -49,6 +51,57 @@ class CpuTimings {
         System.out.println(log + "CPU timing: " + minTime + ", calculated in " + (System.currentTimeMillis() - start) + "ms");
         return minTime;
       }
+    }
+  }
+
+  private static class Mandelbrot {
+    private final static double LIMIT_SQUARED = 4.0;
+    private final static int ITERATIONS = 50;
+
+    Mandelbrot(int size) {
+      this.size = size;
+      fac = 2.0 / size;
+
+      int offset = size % 8;
+      shift = offset == 0 ? 0 : (8 - offset);
+    }
+
+    final int size;
+    final double fac;
+    final int shift;
+
+    void compute() {
+      int t = 0;
+      for (int y = 0; y < size; y++) {
+        t += computeRow(y);
+      }
+      if (t == 0) {
+        throw new AssertionError();
+      }
+    }
+
+    private int computeRow(int y) {
+      int count = 0;
+
+      for (int x = 0; x < size; x++) {
+        double Zr = 0.0;
+        double Zi = 0.0;
+        double Cr = (x * fac - 1.5);
+        double Ci = (y * fac - 1.0);
+
+        int i = ITERATIONS;
+        double ZrN = 0;
+        double ZiN = 0;
+        do {
+          Zi = 2.0 * Zr * Zi + Ci;
+          Zr = ZrN - ZiN + Cr;
+          ZiN = Zi * Zi;
+          ZrN = Zr * Zr;
+        } while (!(ZiN + ZrN > LIMIT_SQUARED) && --i > 0);
+
+        if (i == 0) count++;
+      }
+      return count;
     }
   }
 

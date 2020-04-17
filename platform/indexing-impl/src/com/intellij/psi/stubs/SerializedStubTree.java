@@ -195,8 +195,8 @@ public class SerializedStubTree {
   static Map<StubIndexKey, Map<Object, StubIdList>> indexTree(@NotNull Stub root) {
     ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
                                     new ObjectStubTree((ObjectStubBase)root, false);
-    StubIndexEx indexImpl = (StubIndexEx)StubIndex.getInstance();
-    Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree(k -> indexImpl.getKeyHashingStrategy((StubIndexKey<Object, ?>)k));
+    Map<StubIndexKey, Map<Object, int[]>> map =
+      objectStubTree.indexStubTree(k -> StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy((StubIndexKey<Object, ?>)k));
 
     // xxx:fix refs inplace
     for (StubIndexKey key : map.keySet()) {

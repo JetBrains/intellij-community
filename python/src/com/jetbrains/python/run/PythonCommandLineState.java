@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.DefaultExecutionResult;
@@ -419,7 +418,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                      boolean isDebug) {
     Sdk pythonSdk = PythonSdkUtil.findSdkByPath(sdkHome);
     if (pythonSdk != null) {
-      List<String> pathList = Lists.newArrayList();
+      List<String> pathList = new ArrayList<>();
       pathList.addAll(getAddedPaths(pythonSdk));
       pathList.addAll(collectPythonPath(module, sdkHome, shouldAddContentRoots, shouldAddSourceRoots, isDebug));
       initPythonPath(commandLine, passParentEnvs, pathList, sdkHome);

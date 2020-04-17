@@ -812,6 +812,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
+    myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneShown(newPane, currentPane);
   }
 
   // public for tests
@@ -2068,6 +2069,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
   }
+
 
   abstract class Option implements ToggleOptionAction.Option {
     @Override

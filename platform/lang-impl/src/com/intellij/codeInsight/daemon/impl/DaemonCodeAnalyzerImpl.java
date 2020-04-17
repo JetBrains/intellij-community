@@ -134,7 +134,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myDisposed = true;
       myLastSettings = null;
     });
-    myPassExecutorService.resetNextPassId();
   }
 
   @Override
@@ -842,12 +841,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         dca.myPsiDocumentManager.performLaterWhenAllCommitted(this);
         return;
       }
-      if (RefResolveService.ENABLED &&
-          !RefResolveService.getInstance(myProject).isUpToDate() &&
-          RefResolveService.getInstance(myProject).getQueueSize() == 1) {
-        return; // if the user have just typed in something, wait until the file is re-resolved
-        // (or else it will blink like crazy since unused symbols calculation depends on resolve service)
-      }
 
       Map<FileEditor, HighlightingPass[]> passes = new THashMap<>(activeEditors.size());
       for (FileEditor fileEditor : activeEditors) {
@@ -961,7 +954,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (!app.isUnitTestMode()) {
       // editors in tabs
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-      for (FileEditor tabEditor : fileEditorManager.getSelectedEditors()) {
+      for (FileEditor tabEditor : fileEditorManager.getSelectedEditorWithRemotes()) {
         if (!tabEditor.isValid()) continue;
         VirtualFile file = fileEditorManager.getFile(tabEditor);
         if (file != null) {
@@ -996,7 +989,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       TextEditorHighlightingPassRegistrarImpl registrar =
         (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
       registrar.runInspectionsAfterCompletionOfGeneralHighlightPass(flag);
-      myPassExecutorService.resetNextPassId();
     }
     finally {
       setUpdateByTimerEnabled(true);

@@ -162,7 +162,8 @@ public class PyProtectedMemberInspection extends PyInspection {
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
         final String bundleKey = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
-        registerProblem(node, PyPsiBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size() - 1]));
+        registerProblem(node, PyPsiBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
+          LocalQuickFix.EMPTY_ARRAY));
       }
     }
 

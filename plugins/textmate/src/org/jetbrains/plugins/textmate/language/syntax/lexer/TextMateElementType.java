@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.language.TextMateLanguage;
+import org.jetbrains.plugins.textmate.TextMateLanguage;
 
 public class TextMateElementType extends IElementType {
   public TextMateElementType(@NotNull @NonNls String debugName) {

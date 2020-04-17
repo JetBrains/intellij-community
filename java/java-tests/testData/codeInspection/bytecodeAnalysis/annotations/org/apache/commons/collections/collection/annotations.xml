@@ -75,6 +75,11 @@
     <item name='org.apache.commons.collections.collection.CompositeCollection void addComposited(java.util.Collection[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.collection.CompositeCollection void setMutator(org.apache.commons.collections.collection.CompositeCollection.CollectionMutator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.collection.PredicatedCollection PredicatedCollection(java.util.Collection, org.apache.commons.collections.Predicate) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

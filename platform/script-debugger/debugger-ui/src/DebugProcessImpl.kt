@@ -120,7 +120,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
 
   final override fun checkCanPerformCommands(): Boolean = activeOrMainVm != null
 
-  final override fun isValuesCustomSorted(): Boolean = true
+  override fun isValuesCustomSorted(): Boolean = true
 
   final override fun startStepOver(context: XSuspendContext?) {
     val vm = context.vm

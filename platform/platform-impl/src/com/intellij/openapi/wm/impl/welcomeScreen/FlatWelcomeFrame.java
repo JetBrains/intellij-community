@@ -128,6 +128,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.BorderFactory;
@@ -671,6 +672,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
 
       protected final class AccessibleJActionLinkPanel extends AccessibleContextDelegate {
+        private final AccessibleJComponent myAccessibleHelper = new AccessibleJComponent() {};
+
         AccessibleJActionLinkPanel(AccessibleContext context) {
           super(context);
         }
@@ -683,6 +686,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         @Override
         public AccessibleRole getAccessibleRole() {
           return AccessibleRole.PUSH_BUTTON;
+        }
+
+        @Override
+        public int getAccessibleChildrenCount() {
+          return myAccessibleHelper.getAccessibleChildrenCount();
+        }
+
+        @Override
+        public Accessible getAccessibleChild(int i) {
+          return myAccessibleHelper.getAccessibleChild(i);
         }
       }
     }

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
@@ -22,7 +21,8 @@ import javax.swing.*;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.util.NlsActions.*;
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
  * Represents an entity that has a state, a presentation and can be performed.
@@ -71,7 +71,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
-  private SmartFMap<String, String> myActionTextOverrides = SmartFMap.emptyMap();
+  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -375,13 +375,17 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   public void addTextOverride(@NotNull String place, @NotNull String text) {
+    addTextOverride(place, () -> text);
+  }
+
+  public void addTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 
   public void applyTextOverride(AnActionEvent e) {
-    String override = myActionTextOverrides.get(e.getPlace());
+    Supplier<String> override = myActionTextOverrides.get(e.getPlace());
     if (override != null) {
-      e.getPresentation().setText(() -> override);
+      e.getPresentation().setText(override);
     }
   }
 

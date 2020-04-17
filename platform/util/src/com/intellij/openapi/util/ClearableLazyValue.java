@@ -10,23 +10,19 @@ import java.util.function.Supplier;
  * Thread-safe version: {@link AtomicClearableLazyValue}.
  */
 public abstract class ClearableLazyValue<T> {
-  @NotNull
-  public static <T> ClearableLazyValue<T> create(@NotNull Computable<? extends T> computable) {
+  public static @NotNull <T> ClearableLazyValue<T> create(@NotNull Supplier<? extends T> computable) {
     return new ClearableLazyValue<T>() {
-      @NotNull
       @Override
-      protected T compute() {
-        return computable.compute();
+      protected @NotNull T compute() {
+        return computable.get();
       }
     };
   }
 
-  @NotNull
-  public static <T> ClearableLazyValue<T> createAtomic(@NotNull Supplier<? extends T> computable) {
+  public static @NotNull <T> ClearableLazyValue<T> createAtomic(@NotNull Supplier<? extends T> computable) {
     return new AtomicClearableLazyValue<T>() {
-      @NotNull
       @Override
-      protected T compute() {
+      protected @NotNull T compute() {
         return computable.get();
       }
     };
@@ -34,11 +30,9 @@ public abstract class ClearableLazyValue<T> {
 
   private T myValue;
 
-  @NotNull
-  protected abstract T compute();
+  protected abstract @NotNull T compute();
 
-  @NotNull
-  public T getValue() {
+  public @NotNull T getValue() {
     T result = myValue;
     if (result == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();

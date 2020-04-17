@@ -35,7 +35,7 @@ public interface ProjectTemplate {
   String getName();
 
   @Nullable
-  @NlsContexts.Text
+  @NlsContexts.DetailedDescription
   String getDescription();
 
   Icon getIcon();

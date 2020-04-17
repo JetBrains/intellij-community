@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.ClassUtil;
@@ -94,6 +94,7 @@ import java.util.*;
 import static com.intellij.psi.util.PsiTreeUtil.findChildOfType;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkInnerClassReferenceFromInstanceContext;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkUnresolvedCodeReference;
+import static org.jetbrains.plugins.groovy.annotator.StringInjectionKt.getLineFeed;
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
 import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessChecker.checkUnresolvedReference;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext;
@@ -1321,8 +1322,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitGStringInjection(@NotNull GrStringInjection injection) {
     if (((GrString)injection.getParent()).isPlainString()) {
-      if (injection.getText().indexOf('\n') != -1) {
-        myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("injection.should.not.contain.line.feeds")).create();
+      PsiElement lineFeed = getLineFeed(injection);
+      if (lineFeed != null) {
+        myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("injection.should.not.contain.line.feeds"))
+          .range(lineFeed)
+          .create();
       }
     }
   }

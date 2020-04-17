@@ -33,6 +33,25 @@ public interface ActionToolbar {
    */
   int AUTO_LAYOUT_POLICY = 2;
 
+  /**
+   * Constraint that's passed to <code>Container.add</code> when ActionButton is added to the toolbar.
+   */
+  String ACTION_BUTTON_CONSTRAINT = "Constraint.ActionButton";
+
+  /**
+   * Constraint that's passed to <code>Container.add</code> when a custom component is added to the toolbar.
+   */
+  String CUSTOM_COMPONENT_CONSTRAINT = "Constraint.CustomComponent";
+
+  /**
+   * Constraint that's passed to <code>Container.add</code> when a Separator is added to the toolbar.
+   */
+  String SEPARATOR_CONSTRAINT = "Constraint.Separator";
+
+  /**
+   * Constraint that's passed to <code>Container.add</code> when a secondary action is added to the toolbar.
+   */
+  String SECONDARY_ACTION_CONSTRAINT = "Constraint.SecondaryAction";
 
   @MagicConstant(intValues = {NOWRAP_LAYOUT_POLICY, WRAP_LAYOUT_POLICY, AUTO_LAYOUT_POLICY})
   @interface LayoutPolicy {

@@ -71,6 +71,15 @@ public class IntentionPolicy {
   }
 
   /**
+   * @param action action to check (already allowed by {@link #mayInvokeIntention(IntentionAction)})
+   * @return true if it should be checked that given action can generate a preview.
+   * By default preview is not checked for any action, provide custom policy to check it.
+   */
+  protected boolean shouldCheckPreview(@NotNull IntentionAction action) {
+    return false;
+  }
+
+  /**
    * Controls whether the given intention (already approved by {@link #mayInvokeIntention}) is allowed to
    * introduce new highlighting errors into the code. It's recommended to return false by default, 
    * and include found intentions one by one (or make them not break the code).  

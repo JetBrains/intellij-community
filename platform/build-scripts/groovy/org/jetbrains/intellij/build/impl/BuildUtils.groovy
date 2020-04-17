@@ -40,6 +40,7 @@ class BuildUtils {
     addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
   }
 
+  @CompileDynamic
   private static void addToClassLoaderClassPath(String path, AntBuilder ant, ClassLoader classLoader) {
     if (new File(path).exists()) {
       if (classLoader instanceof GroovyClassLoader) {
@@ -48,11 +49,11 @@ class BuildUtils {
       else if (classLoader instanceof AntClassLoader) {
         classLoader.addPathElement(path)
       }
-      else if (classLoader instanceof RootLoader) {
+      else if (classLoader.metaClass.respondsTo(classLoader, 'addURL', URL)) {
         classLoader.addURL(new File(path).toURI().toURL())
       }
       else {
-        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader")
+        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method")
       }
       ant.project.log("'$path' added to classpath", Project.MSG_INFO)
     }

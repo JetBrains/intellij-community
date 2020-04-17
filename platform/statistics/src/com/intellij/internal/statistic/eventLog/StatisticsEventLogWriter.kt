@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.exists
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -46,16 +48,50 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
     catch (e: IOException) {
       System.err.println("Unable to initialize logging for feature usage: " + e.localizedMessage)
     }
+
+    moveLogsFromLegacyDirectories()
+  }
+
+  private fun moveLogsFromLegacyDirectories() {
+    val systemPath = Paths.get(PathManager.getSystemPath())
+    val newEventLogDir = getBaseEventLogDir()
+
+    val oldFusLogs = systemPath.resolve("event-log")
+    if (oldFusLogs.exists()) {
+      copyDirContent(oldFusLogs.toFile(), newEventLogDir.resolve("FUS").toFile())
+      deleteDirectory(oldFusLogs)
+    }
+
+    val oldPluginsLogs = systemPath.resolve("plugins-event-log")
+    if (oldPluginsLogs.exists()) {
+      val pluginLogDirectories = oldPluginsLogs.toFile().listFiles()
+      if (pluginLogDirectories != null) {
+        for (pluginsDirectory in pluginLogDirectories) {
+          copyDirContent(pluginsDirectory, newEventLogDir.resolve(pluginsDirectory.name).toFile())
+        }
+        deleteDirectory(oldPluginsLogs)
+      }
+    }
+  }
+
+  private fun deleteDirectory(path: Path) {
+    try {
+      FileUtil.delete(path)
+    }
+    catch (ignored: IOException) {
+    }
+  }
+
+  private fun copyDirContent(fromDir: File, toDir: File) {
+    try {
+      FileUtil.copyDirContent(fromDir, toDir)
+    }
+    catch (ignored: IOException) {
+    }
   }
 
   private fun getEventLogDir(): Path {
-    return if (recorderId == "FUS") {
-      // don't move FUS logs for backward compatibility
-      Paths.get(PathManager.getSystemPath()).resolve("event-log")
-    }
-    else {
-      Paths.get(PathManager.getSystemPath()).resolve("plugins-event-log").resolve(recorderId)
-    }
+    return getBaseEventLogDir().resolve(recorderId)
   }
 
   override fun log(logEvent: LogEvent) {
@@ -77,5 +113,11 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
 
   override fun rollOver() {
     fileAppender?.rollOver()
+  }
+
+  companion object {
+    private fun getBaseEventLogDir(): Path {
+      return EventLogConfiguration.getEventLogDataPath().resolve("logs")
+    }
   }
 }

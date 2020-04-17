@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
+import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -56,6 +57,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     }
     if (isIgnored(fileName, project)) {
       LOG.debug(String.format("File '%s' is ignored in project '%s'", fileName, project.getName()));
+      return null;
+    }
+
+    if (extension == null && file.getFileType() instanceof FakeFileType) {
       return null;
     }
 

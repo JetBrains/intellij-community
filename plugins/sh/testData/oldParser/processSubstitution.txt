@@ -23,7 +23,12 @@ SHELL_SCRIPT
                   PsiElement($)('$')
                   SHELL_PARAMETER_EXPANSION
                     PsiElement({)('{')
-                    PsiElement(parameter_expansion_body)('BEFORE[@]')
+                    PsiElement(word)('BEFORE')
+                    ARRAY_EXPRESSION
+                      PsiElement([)('[')
+                      LITERAL_EXPRESSION
+                        PsiElement(word)('@')
+                      PsiElement(])(']')
                     PsiElement(})('}')
                   PsiElement(CLOSE_QUOTE)('"')
               PsiWhiteSpace(' ')

@@ -1180,7 +1180,7 @@ public class PluginManagerConfigurable
         tags.add(0, "Paid");
       }
     }
-    else if (productCode != null) {
+    else if (productCode != null && !plugin.isBundled()) {
       LicensingFacade instance = LicensingFacade.getInstance();
       if (instance != null) {
         String stamp = instance.getConfirmationStamp(productCode);
