@@ -237,6 +237,8 @@ class ReferencesInPStorageTest {
     assertEquals(emptyList<PParentEntity>(), builder.entities(PParentEntity::class.java).toList())
   }
 
+  // UNSUPPORTED
+/*
   @Test
   fun `remove parent entity referenced via data class`() {
     val builder = PEntityStorageBuilder.create()
@@ -249,6 +251,7 @@ class ReferencesInPStorageTest {
     assertEquals(listOf(parent1), builder.entities(PParentEntity::class.java).toList())
     assertEquals(emptyList<PChildEntity>(), parent1.children.toList())
   }
+*/
 
   @Test
   fun `remove parent entity referenced via two paths`() {
