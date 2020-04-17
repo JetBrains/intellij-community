@@ -9,11 +9,9 @@ import com.sun.jdi.Value
 object GcRootsPathsParser : ResultParser<ReferringObjectsInfo> {
   override fun parse(value: Value): ReferringObjectsInfo {
     if (value is ArrayReference) {
-      if (value.length() != 2) throw UnexpectedValueFormatException("Array must represent 2 values: objects and backward references")
-      val values = ObjectReferencesParser.parse(value.getValue(0))
-      val backwardReferences = BackwardReferencesParser.parse(value.getValue(1))
+      val referringObjectsInfo = ObjectsReferencesInfoParser.parse(value)
       value.fillWithNulls()
-      return ReferringObjectsInfo(values, backwardReferences)
+      return referringObjectsInfo
     }
     throw UnexpectedValueFormatException("Array of arrays is expected")
   }
