@@ -9,7 +9,7 @@ import java.util.function.Predicate;
  * Allows to refine the stacktrace navigation position based on the previous line 
  */
 @FunctionalInterface
-public interface ExceptionLineRefiner extends Predicate<PsiElement> {
+interface ExceptionLineRefiner extends Predicate<PsiElement> {
   default ExceptionInfo getExceptionInfo() {
     return null;
   }
