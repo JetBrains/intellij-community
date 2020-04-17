@@ -113,7 +113,7 @@ public class RecursionManager {
           T result = computation.compute();
 
           if (memoize && frame.preventionsInside != null) {
-            stack.memoize(realKey, result, frame);
+            stack.memoize(realKey, result, frame.preventionsInside);
           }
 
           return result;
@@ -267,8 +267,8 @@ public class RecursionManager {
       return frame;
     }
 
-    void memoize(MyKey key, @Nullable Object result, StackFrame frame) {
-      intermediateCache.put(key, new MemoizedValue(result, Objects.requireNonNull(frame.preventionsInside).toArray(new MyKey[0])));
+    void memoize(MyKey key, @Nullable Object result, @NotNull Set<MyKey> preventionsInside) {
+      intermediateCache.put(key, new MemoizedValue(result, preventionsInside.toArray(new MyKey[0])));
     }
 
     final void afterComputation(MyKey realKey, int sizeBefore, int sizeAfter) {
