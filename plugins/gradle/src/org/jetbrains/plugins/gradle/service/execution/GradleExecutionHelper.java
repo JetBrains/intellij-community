@@ -23,6 +23,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.lang.JavaVersion;
+import groovyjarjarcommonscli.Option;
+import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
@@ -35,6 +38,8 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
+import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -238,12 +243,14 @@ public class GradleExecutionHelper {
 
   @NotNull
   public TestLauncher getTestLauncher(@NotNull final ExternalSystemTaskId id,
-                                        @NotNull ProjectConnection connection,
-                                        @Nullable GradleExecutionSettings settings,
-                                        @NotNull ExternalSystemTaskNotificationListener listener) {
+                                      @NotNull ProjectConnection connection,
+                                      @NotNull List<String> tasks,
+                                      @Nullable GradleExecutionSettings settings,
+                                      @NotNull ExternalSystemTaskNotificationListener listener) {
     TestLauncher result = connection.newTestLauncher();
     if (settings != null) {
       prepare(result, id, settings, listener, connection);
+      configureTestTasks(result, tasks, settings.getArguments());
     }
     return result;
   }
@@ -730,4 +737,73 @@ public class GradleExecutionHelper {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
+
+  public static void configureTestTasks(@NotNull TestLauncher launcher,
+                                        @NotNull List<String> tasks,
+                                        @NotNull List<String> arguments) {
+    List<String> allArgs = new ArrayList<>(tasks);
+    allArgs.addAll(arguments);
+
+    List<String> filteredArgs = filterOutKnownArgs(allArgs);
+    MultiMap<String, String> taskToTests = groupTestTaskArguments(filteredArgs);
+
+    for (Map.Entry<String, Collection<String>> entry : taskToTests.entrySet()) {
+      launcher.withTaskAndTestClasses(entry.getKey(), entry.getValue());
+    }
+  }
+
+  @NotNull
+  static MultiMap<String, String> groupTestTaskArguments(@NotNull List<String> filteredArgs) {
+    MultiMap<String, String> taskToTests = new MultiMap<>();
+    Iterator<String> argsIter = filteredArgs.iterator();
+    String currentTask = null;
+
+    while (argsIter.hasNext()) {
+      String nextToken = argsIter.next();
+      if (currentTask == null) {
+        currentTask = nextToken;
+      } else {
+        if ("--tests".equals(nextToken) && argsIter.hasNext()) {
+          taskToTests.putValue(currentTask, argsIter.next());
+        } else if (nextToken.startsWith("-")) {
+          break;
+        } else {
+          if (!taskToTests.containsKey(currentTask)) {
+            taskToTests.putValue(currentTask, "*");
+          }
+          currentTask = nextToken;
+        }
+      }
+    }
+
+    if (currentTask != null && !taskToTests.containsKey(currentTask)) {
+      taskToTests.putValue(currentTask, "*");
+    }
+    return taskToTests;
+  }
+
+  static List<String> filterOutKnownArgs(List<String> args) {
+    Map<String, Option> optionsIndex = new HashMap<>();
+    for (Option option : (Collection<Option>)GradleCommandLineOptionsProvider.getSupportedOptions().getOptions()) {
+      optionsIndex.put(option.getOpt(), option);
+      optionsIndex.put(option.getLongOpt(), option);
+    }
+
+    List<String> result = new ArrayList<>(args.size());
+
+    Iterator<String> iter = args.iterator();
+    while(iter.hasNext()) {
+      String token = iter.next();
+      Option option = optionsIndex.get(StringUtil.trimLeading(token, '-'));
+      if (option == null) {
+        result.add(token);
+      } else if (option.hasArg() && iter.hasNext()) {
+        iter.next();
+      }
+    }
+
+    return result;
+  }
+
+
 }
