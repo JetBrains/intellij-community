@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.NaturalComparator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -28,12 +30,14 @@ import java.util.*;
 
 public class BaseCompletionLookupArranger extends LookupArranger implements CompletionLookupArranger {
   private static final Logger LOG = Logger.getInstance(BaseCompletionLookupArranger.class);
-  private static final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
-  private static final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
-    PresentationInvariant invariant = PRESENTATION_INVARIANT.get(o1);
-    assert invariant != null;
-    return invariant.compareTo(PRESENTATION_INVARIANT.get(o2));
-  };
+  private static final Key<LookupElementPresentation> DEFAULT_PRESENTATION = Key.create("PRESENTATION_INVARIANT");
+  private static final Comparator<LookupElementPresentation> PRESENTATION_COMPARATOR = Comparator
+    .comparing(LookupElementPresentation::getItemText, NaturalComparator.INSTANCE)
+    .thenComparing(p -> StringUtil.notNullize(p.getTailText()).length())
+    .thenComparing(LookupElementPresentation::getTailText, NaturalComparator.INSTANCE)
+    .thenComparing(LookupElementPresentation::getTypeText, NaturalComparator.INSTANCE);
+  private static final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR =
+    Comparator.comparing(DEFAULT_PRESENTATION::get, PRESENTATION_COMPARATOR);
   static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Object> FORCE_MIDDLE_MATCH = Key.create("FORCE_MIDDLE_MATCH");
   public static final String OVERFLOW_MESSAGE = "Not all variants are shown, please type more letters to see the rest";
@@ -148,10 +152,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   @Override
   public synchronized void addElement(LookupElement element, LookupElementPresentation presentation) {
-    //StatisticsWeigher.clearBaseStatisticsInfo(element);
-
-    PresentationInvariant invariant = new PresentationInvariant(presentation.getItemText(), presentation.getTailText(), presentation.getTypeText());
-    element.putUserData(PRESENTATION_INVARIANT, invariant);
+    element.putUserData(DEFAULT_PRESENTATION, presentation);
 
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -472,8 +473,9 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       }
 
       for (int i = 0; i < items.size(); i++) {
-        PresentationInvariant invariant = PRESENTATION_INVARIANT.get(items.get(i));
-        if (invariant != null && invariant.equals(PRESENTATION_INVARIANT.get(lastSelection))) {
+        LookupElementPresentation p1 = DEFAULT_PRESENTATION.get(items.get(i));
+        LookupElementPresentation p2 = DEFAULT_PRESENTATION.get(lastSelection);
+        if (p1 != null && p2 != null && PRESENTATION_COMPARATOR.compare(p1, p2) == 0) {
           return i;
         }
       }
