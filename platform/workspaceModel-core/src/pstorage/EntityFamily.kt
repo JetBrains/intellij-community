@@ -119,5 +119,7 @@ internal sealed class AbstractEntityFamily<E : TypedEntity> {
 
   fun exists(id: Int) = get(id) != null
 
+  fun isEmpty() = entities.isEmpty()
+
   abstract fun size(): Int
 }

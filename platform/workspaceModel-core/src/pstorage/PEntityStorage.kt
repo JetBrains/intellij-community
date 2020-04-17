@@ -371,8 +371,8 @@ internal class PEntityStorageBuilder(
     return entity is TypedEntityWithPersistentId
   }
 
-  private fun PEntityData<*>.identificator(): Any {
-    val entity = this.createEntity(this@PEntityStorageBuilder)
+  private fun PEntityData<*>.identificator(storage: AbstractPEntityStorage): Any {
+    val entity = this.createEntity(storage)
     return if (entity is TypedEntityWithPersistentId) {
       entity.persistentId()
     }
@@ -381,8 +381,9 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun ArrayListMultimap<Any, PEntityData<out TypedEntity>>.find(entity: PEntityData<out TypedEntity>): PEntityData<out TypedEntity>? {
-    val possibleValues = this[entity.identificator()]
+  private fun ArrayListMultimap<Any, PEntityData<out TypedEntity>>.find(entity: PEntityData<out TypedEntity>,
+                                                                        storage: AbstractPEntityStorage): PEntityData<out TypedEntity>? {
+    val possibleValues = this[entity.identificator(storage)]
     return if (entity.hasPersistentId()) {
       possibleValues.find {
         (it.createEntity(this@PEntityStorageBuilder) as TypedEntityWithPersistentId).persistentId() ==
@@ -407,7 +408,7 @@ internal class PEntityStorageBuilder(
     // 1) Traverse all entities and store matched only
     this.entitiesByType.all().asSequence().map { it.value }.flatMap { it.all() }
       .filter { sourceFilter(it.entitySource) }
-      .forEach { leftMatchedNodes.put(it.identificator(), it) }
+      .forEach { leftMatchedNodes.put(it.identificator(this), it) }
 
     // 1.1) Cleanup references
     for (matchedEntityData in leftMatchedNodes.values()) {
@@ -419,7 +420,7 @@ internal class PEntityStorageBuilder(
           this.refs.removeParentToChildRef(connectionId, parentId, entityId)
         }
         else {
-          unmatchedLeftReferencedNodes.put(parentEntity.identificator(), parentEntity)
+          unmatchedLeftReferencedNodes.put(parentEntity.identificator(this), parentEntity)
         }
       }
 
@@ -430,7 +431,7 @@ internal class PEntityStorageBuilder(
             this.refs.removeParentToChildRef(connectionId, entityId, childId)
           }
           else {
-            unmatchedLeftReferencedNodes.put(childEntity.identificator(), childEntity)
+            unmatchedLeftReferencedNodes.put(childEntity.identificator(this), childEntity)
           }
         }
       }
@@ -439,9 +440,9 @@ internal class PEntityStorageBuilder(
     // 2) Traverse entities of the enemy
     for ((clazz, entityFamily) in replaceWith.entitiesByType) {
       for (matchedEntityData in entityFamily.all().filter { sourceFilter(it.entitySource) }) {
-        rightMatchedNodes.put(matchedEntityData.identificator(), matchedEntityData)
+        rightMatchedNodes.put(matchedEntityData.identificator(replaceWith), matchedEntityData)
 
-        val leftNode = leftMatchedNodes.find(matchedEntityData)
+        val leftNode = leftMatchedNodes.find(matchedEntityData, replaceWith)
         if (leftNode != null) {
           replaceMap[leftNode.createPid()] = matchedEntityData.createPid()
           if (leftNode.hasPersistentId() && leftNode != matchedEntityData) {
@@ -452,7 +453,7 @@ internal class PEntityStorageBuilder(
             // TODO: 16.04.2020 Soft references
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyMap(), emptyMap())) }
           }
-          leftMatchedNodes.remove(leftNode.identificator(), leftNode)
+          leftMatchedNodes.remove(leftNode.identificator(this), leftNode)
         }
         else {
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, clazz as Class<TypedEntity>)
@@ -832,8 +833,11 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    return entitiesByType.all().asSequence().flatMap { it.value.all() }.filterNotNull()
-      .map { it.createEntity(this) }.filterIsInstance<TypedEntityWithPersistentId>().find { it.persistentId() == id } as E?
+    return entitiesByType.all()
+      .filterValues { !it.isEmpty() && it.all().first().createEntity(this) is TypedEntityWithPersistentId }
+      .asSequence()
+      .flatMap { it.value.all().map { it.createEntity(this) as TypedEntityWithPersistentId } }
+      .find { it.persistentId() == id } as E?
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
@@ -853,6 +857,10 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 internal object ClassConversion {
 
   private val modifiableToEntityCache = HashMap<KClass<*>, KClass<*>>()
+  private val entityToEntityDataCache = HashMap<KClass<*>, KClass<*>>()
+  private val entityDataToEntityCache = HashMap<KClass<*>, KClass<*>>()
+  private val entityDataToModifiableEntityCache = HashMap<KClass<*>, KClass<*>>()
+  private val packageCache = HashMap<KClass<*>, String>()
 
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifiableEntityToEntity(clazz: KClass<out M>): KClass<T> {
     return modifiableToEntityCache.getOrPut(clazz) {
@@ -866,18 +874,22 @@ internal object ClassConversion {
   }
 
   fun <T : TypedEntity> entityToEntityData(clazz: KClass<out T>): KClass<PEntityData<T>> {
-    return (Class.forName(clazz.qualifiedName + "Data") as Class<PEntityData<T>>).kotlin
+    return entityToEntityDataCache.getOrPut(clazz) {
+      (Class.forName(clazz.qualifiedName + "Data") as Class<PEntityData<T>>).kotlin
+    } as KClass<PEntityData<T>>
   }
 
   fun <M : PEntityData<out T>, T : TypedEntity> entityDataToEntity(clazz: KClass<out M>): KClass<T> {
-    return (Class.forName(clazz.qualifiedName!!.dropLast(4)) as Class<T>).kotlin
+    return entityDataToEntityCache.getOrPut(clazz) {
+      (Class.forName(clazz.qualifiedName!!.dropLast(4)) as Class<T>).kotlin
+    } as KClass<T>
   }
 
   fun <D : PEntityData<T>, T : TypedEntity> entityDataToModifiableEntity(clazz: KClass<out D>): KClass<ModifiableTypedEntity<T>> {
-    return Class.forName(getPackage(clazz) + "Modifiable" + clazz.simpleName!!.dropLast(4)).kotlin as KClass<ModifiableTypedEntity<T>>
+    return entityDataToModifiableEntityCache.getOrPut(clazz) {
+      Class.forName(getPackage(clazz) + "Modifiable" + clazz.simpleName!!.dropLast(4)).kotlin as KClass<ModifiableTypedEntity<T>>
+    } as KClass<ModifiableTypedEntity<T>>
   }
 
-  private fun getPackage(clazz: KClass<*>): String {
-    return clazz.qualifiedName!!.dropLastWhile { it != '.' }
-  }
+  private fun getPackage(clazz: KClass<*>): String = packageCache.getOrPut(clazz) { clazz.qualifiedName!!.dropLastWhile { it != '.' } }
 }
