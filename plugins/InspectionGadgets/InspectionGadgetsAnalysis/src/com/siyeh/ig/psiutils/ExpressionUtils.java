@@ -7,6 +7,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -492,6 +493,17 @@ public class ExpressionUtils {
     return hasType(expression, CommonClassNames.JAVA_LANG_STRING);
   }
 
+  /**
+   * The method checks if the passed expression does not need to be converted to string explicitly,
+   * because the method it is passed to can do the string conversion itself.
+   * This is the case for some StringBuilder/Buffer, PrintStream/Writer and some logging methods.
+   * Otherwise it considers the conversion necessary and returns true
+   *
+   * @param expression an expression to examine
+   * @param throwable is the first parameter a conversion to string on a throwable? either {@link Throwable#toString()} or {@link String#valueOf(Object)}
+   *
+   * @return true if the explicit conversion to string is not required, otherwise - false
+   */
   public static boolean isConversionToStringNecessary(PsiExpression expression, boolean throwable) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
     if (parent instanceof PsiPolyadicExpression) {
@@ -1149,6 +1161,12 @@ public class ExpressionUtils {
     EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
     if (isZero(from) && eq.expressionsAreEquivalent(to, diff)) return true;
     if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
+    if (to instanceof PsiBinaryExpression && from instanceof PsiBinaryExpression) {
+      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> binaryExpressionsDiff = getBinaryExpressionsDiff((PsiBinaryExpression)from,
+                                                                                                                  (PsiBinaryExpression)to);
+      from = binaryExpressionsDiff.first;
+      to = binaryExpressionsDiff.second;
+    }
     if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)diff).getROperand();
@@ -1171,12 +1189,6 @@ public class ExpressionUtils {
         return true;
       }
     }
-    if (to instanceof PsiBinaryExpression && from instanceof PsiBinaryExpression) {
-      final BinaryOpExtractor extractor = new BinaryOpExtractor((PsiBinaryExpression)from, (PsiBinaryExpression)to);
-      final BinaryOpExtractor.Result result = extractor.extract();
-      from = result.myFrom;
-      to = result.myTo;
-    }
     Integer fromConstant = tryCast(computeConstantExpression(from), Integer.class);
     if (fromConstant == null) return false;
     Integer toConstant = tryCast(computeConstantExpression(to), Integer.class);
@@ -1186,54 +1198,46 @@ public class ExpressionUtils {
     return diffConstant == toConstant - fromConstant;
   }
 
-  private static final class BinaryOpExtractor {
-    @NotNull static final EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
-    @NotNull private final PsiBinaryExpression myFrom;
-    @NotNull private final PsiBinaryExpression myTo;
+  /**
+   * Eliminate the common part from two {@link PsiBinaryExpression} expressions.
+   * It only handles {@link PsiBinaryExpression} with {@link JavaTokenType#PLUS}
+   * If there are no common parts return the original expressions<br />
+   * <ol>
+   * <li>Example 1: "x + 1", "x + 2" will be converted to ("1", "2")</li>
+   * <li>Example 2: "x + 1", "y + 2" will remain the same, the result is ("x + 1", "y + 2")</li>
+   * </ol>
+   *
+   * @param from the first expression to examine
+   * @param to   the second expression to examine
+   * @return a pair of expressions without common parts
+   */
+  @NotNull
+  private static Pair<@NotNull PsiExpression, @NotNull PsiExpression> getBinaryExpressionsDiff(@NotNull final PsiBinaryExpression from,
+                                                                                               @NotNull final PsiBinaryExpression to) {
+    final IElementType fromOp = from.getOperationTokenType();
+    final IElementType toOp = to.getOperationTokenType();
+    if ((fromOp == JavaTokenType.PLUS) && fromOp == toOp) {
+      @NotNull final EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
+      final EquivalenceChecker.Match match = eq.expressionsMatch(from, to);
+      if (match.isPartialMatch()) {
+        final PsiExpression leftDiff;
+        final PsiExpression rightDiff;
 
-    private BinaryOpExtractor(@NotNull final PsiBinaryExpression from,
-                              @NotNull final PsiBinaryExpression to) {
-      myFrom = from;
-      myTo = to;
-    }
-
-    @NotNull
-    private Result extract() {
-      final IElementType opTo = myTo.getOperationTokenType();
-      final IElementType opFrom = myFrom.getOperationTokenType();
-
-      if (opTo == JavaTokenType.PLUS && opFrom == JavaTokenType.PLUS) {
-        @NotNull final PsiExpression toLeft = myTo.getLOperand();
-        @NotNull final PsiExpression toRight = myTo.getROperand() != null ? myTo.getROperand() : myTo;
-
-        @NotNull final PsiExpression fromLeft = myFrom.getLOperand();
-        @NotNull final PsiExpression fromRight = myFrom.getROperand() != null ? myFrom.getROperand() : myFrom;
-
-        if (eq.expressionsAreEquivalent(fromLeft, toLeft)) {
-          return new Result(fromRight, toRight);
+        if (match.getLeftDiff().getParent() == from) {
+          leftDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getLeftDiff());
+          rightDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getRightDiff());
         }
-        else if (eq.expressionsAreEquivalent(fromLeft, toRight)) {
-          return new Result(fromRight, toLeft);
+        else {
+          rightDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getLeftDiff());
+          leftDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getRightDiff());
         }
-        else if (eq.expressionsAreEquivalent(fromRight, toLeft)) {
-          return new Result(fromLeft, toRight);
-        }
-        else if (eq.expressionsAreEquivalent(fromRight, toRight)) {
-          return new Result(fromLeft, toLeft);
+
+        if (leftDiff != null && rightDiff != null) {
+          return Pair.create(leftDiff, rightDiff);
         }
       }
-      return new Result(myFrom, myTo);
     }
-
-    private static final class Result {
-      @NotNull private final PsiExpression myFrom;
-      @NotNull private final PsiExpression myTo;
-
-      private Result(@NotNull final PsiExpression from, @NotNull final PsiExpression to) {
-        myFrom = from;
-        myTo = to;
-      }
-    }
+    return Pair.create(from, to);
   }
 
   /**

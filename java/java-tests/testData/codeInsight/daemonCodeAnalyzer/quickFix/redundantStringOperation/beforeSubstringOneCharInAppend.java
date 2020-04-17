@@ -9,6 +9,16 @@ class Foo {
     sb.append(args[0].substring(2, 3));
     sb.append(args[0].substring(i, i + 1));
 
+    sb.append(args[0].substring(i - 3, i - 2));
+    sb.append(args[0].substring(i - 3, 2 - i));
+    sb.append(args[0].substring(3 - i, i - 2));
+    sb.append(args[0].substring(3 - i, 2 - i));
+
+    sb.append(args[0].substring(2 - i, 4 - i));
+    sb.append(args[0].substring(i - 2, i - 4));
+
+    sb.append(args[0].substring(i + i, i + (i + 1)));
+
     sb.append(args[0].substring(i + 2, i + 3));
     sb.append(args[0].substring(2 + i, i + 3));
     sb.append(args[0].substring(i + 2, 3 + i));
@@ -17,16 +27,13 @@ class Foo {
     sb.append(args[0].substring(2 + i, 4 + i));
     sb.append(args[0].substring(i + 2, i + 4));
 
+    sb.append(new /*1
+
+      */String(/* 2 */"foo")/*3    */./*    4*/substring(i/*5\n*/+2, i/*\n\r6 */+3))
+
     String s1 = "xxx" + args[0].substring(3, 5);
     String s2 = "xxx" + args[0].substring(3, 4);
     String s3 = args[0].substring(2, 3) + "xxx";
-
-    boolean value = args[0].substring(4, 5).equals("_");
-
-    if(args[0].substring(4, 5).equals("_")) { }
-    if(!args[0].substring(4, 5).equals("_")) { }
-    if(!!args[0].substring(4, 5).equals("_")) { }
-    if(!!!!!args[0].substring(4, 5).equals("_")) { }
 
     System.out.print(args[0].substring(2, 3));
     System.out.println(args[0].substring(2, 3));

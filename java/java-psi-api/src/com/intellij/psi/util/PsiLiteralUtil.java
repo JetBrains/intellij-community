@@ -143,6 +143,29 @@ public class PsiLiteralUtil {
   }
 
   /**
+   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.) to a string (e.g. "'\n'" or "'\\'", etc.)
+   *
+   * @param text a string to convert
+   * @return the converted string
+   */
+  @NotNull
+  public static String charLiteralForCharString(@NotNull final String text) {
+    final int length = text.length();
+    final String character = text.substring(1, length - 1);
+    final String charLiteral;
+    if ("'".equals(character)) {
+      charLiteral = "'\\''";
+    }
+    else if ("\\\"".equals(character)) {
+      charLiteral = "'\"'";
+    }
+    else {
+      charLiteral = '\'' + character + '\'';
+    }
+    return charLiteral;
+  }
+
+  /**
    * Returns true if given literal expression is invalid and reusing its text representation
    * in refactorings/quick-fixes may result in parse errors.
    *
