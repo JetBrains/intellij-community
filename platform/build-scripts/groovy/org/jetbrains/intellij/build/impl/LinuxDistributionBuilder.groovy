@@ -128,6 +128,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       "$unixDistPath/Install-Linux-tar.txt",
       ["product_full"   : fullName,
        "product"        : buildContext.productProperties.baseFileName,
+       "product_vendor" : buildContext.applicationInfo.shortCompanyName,
        "system_selector": buildContext.systemSelector], "@@")
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
