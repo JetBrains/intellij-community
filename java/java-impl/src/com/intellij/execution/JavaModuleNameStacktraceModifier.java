@@ -10,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
 public class JavaModuleNameStacktraceModifier implements ConsoleLineModifier {
   @Override
   public @Nullable String modify(@NotNull String line) {
-    if (StringUtil.trimLeading(line).startsWith("at ")) {
+    int nonWhitespaceIdx = StringUtil.skipWhitespaceForward(line, 0);
+    if (nonWhitespaceIdx < line.length() && line.startsWith("at ", nonWhitespaceIdx)) {
       ExceptionWorker.ParsedLine parsedLine = ExceptionWorker.parseExceptionLine(line);
       if (parsedLine != null) {
         int startOffset = parsedLine.classFqnRange.getStartOffset();
