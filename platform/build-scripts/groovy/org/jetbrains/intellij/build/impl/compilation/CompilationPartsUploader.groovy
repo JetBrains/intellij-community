@@ -110,10 +110,6 @@ class CompilationPartsUploader implements Closeable {
 
       responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
 
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        myMessages.error("POST $url failed with $response.statusLine.statusCode: $responseString")
-      }
-
       def parsedResponse = new Gson().fromJson(responseString, CheckFilesResponse.class)
       return parsedResponse
     }
