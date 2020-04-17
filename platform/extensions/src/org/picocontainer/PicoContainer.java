@@ -56,7 +56,7 @@ public interface PicoContainer {
    * @return the component adapter associated with this key, or <code>null</code> if no component has been
    * registered for the specified key.
    */
-  ComponentAdapter getComponentAdapter(Object componentKey);
+  ComponentAdapter getComponentAdapter(@NotNull Object componentKey);
 
   /**
    * Find a component adapter associated with the specified type. If a component adapter cannot be found in this

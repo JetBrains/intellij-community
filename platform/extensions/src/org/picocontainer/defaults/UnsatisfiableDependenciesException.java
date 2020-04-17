@@ -9,6 +9,7 @@
 */
 package org.picocontainer.defaults;
 
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.PicoIntrospectionException;
@@ -21,7 +22,7 @@ import java.util.Set;
  * @author Aslak Helles&oslash;y
  * @author Mauro Talevi
  */
-public class UnsatisfiableDependenciesException extends PicoIntrospectionException {
+public final class UnsatisfiableDependenciesException extends PicoIntrospectionException {
   public UnsatisfiableDependenciesException(ComponentAdapter instantiatingComponentAdapter,
                                             Set unsatisfiableDependencies, PicoContainer leafContainer) {
     super(instantiatingComponentAdapter.getComponentImplementation().getName() + " has unsatisfiable dependencies: "
@@ -29,10 +30,10 @@ public class UnsatisfiableDependenciesException extends PicoIntrospectionExcepti
           + " was the leaf container being asked for dependencies.");
   }
 
-  public UnsatisfiableDependenciesException(ComponentAdapter instantiatingComponentAdapter,
-                                            Class unsatisfiedDependencyType, Set unsatisfiableDependencies,
+  public UnsatisfiableDependenciesException(@NotNull Class<?> componentImplementation,
+                                            Class<?> unsatisfiedDependencyType, Set unsatisfiableDependencies,
                                             PicoContainer leafContainer) {
-    super(instantiatingComponentAdapter.getComponentImplementation().getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
+    super(componentImplementation.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
           + " among unsatisfiable dependencies: " + unsatisfiableDependencies + " where " + leafContainer
           + " was the leaf container being asked for dependencies.");
   }

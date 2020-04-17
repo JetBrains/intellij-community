@@ -43,7 +43,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  public final @Nullable ComponentAdapter getComponentAdapter(Object componentKey) {
+  public final @Nullable ComponentAdapter getComponentAdapter(@NotNull Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
     if (adapter == null && parent != null) {
       return parent.getComponentAdapter(componentKey);

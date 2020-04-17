@@ -6,9 +6,11 @@ import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
+/**
+ * @deprecated Use {@link com.intellij.serviceContainer.LazyExtensionInstance}.
+ */
 public abstract class AbstractExtensionPointBean implements PluginAware {
   private static final Logger LOG = Logger.getInstance(AbstractExtensionPointBean.class);
 
@@ -89,8 +91,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   public static @NotNull <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container, @SuppressWarnings("unused") boolean allowNonPublicClasses) {
-    ComponentAdapter adapter = new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass);
-    @SuppressWarnings("unchecked") T t = (T)adapter.getComponentInstance(container);
-    return t;
+    //noinspection unchecked
+    return (T)CachingConstructorInjectionComponentAdapter.instantiateGuarded(null, container, aClass);
   }
 }

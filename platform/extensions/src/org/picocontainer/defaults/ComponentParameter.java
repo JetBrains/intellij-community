@@ -6,6 +6,7 @@
 */
 package org.picocontainer.defaults;
 
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.Parameter;
 import org.picocontainer.PicoContainer;
@@ -108,8 +109,8 @@ public final class ComponentParameter implements Parameter {
     }
   }
 
-  private ComponentAdapter resolveAdapter(PicoContainer container, ComponentAdapter adapter, Class expectedType) {
-    final ComponentAdapter result = getTargetAdapter(container, expectedType, adapter);
+  public ComponentAdapter resolveAdapter(PicoContainer container, @Nullable ComponentAdapter adapter, Class expectedType) {
+    ComponentAdapter result = getTargetAdapter(container, expectedType, adapter);
     if (result == null) {
       return null;
     }
@@ -133,7 +134,7 @@ public final class ComponentParameter implements Parameter {
     return null;
   }
 
-  private ComponentAdapter getTargetAdapter(PicoContainer container, Class expectedType, ComponentAdapter excludeAdapter) {
+  private ComponentAdapter getTargetAdapter(PicoContainer container, Class expectedType, @Nullable ComponentAdapter excludeAdapter) {
     if (componentKey != null) {
       // key tells us where to look so we follow
       return container.getComponentAdapter(componentKey);

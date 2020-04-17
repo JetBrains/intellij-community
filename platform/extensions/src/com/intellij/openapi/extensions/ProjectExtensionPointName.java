@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -62,5 +63,9 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
                                         @NotNull ExtensionPointChangeListener listener,
                                         @Nullable Disposable parentDisposable) {
     getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
+  }
+
+  public void processWithPluginDescriptor(@NotNull AreaInstance areaInstance, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
+    getPointImpl(areaInstance).processWithPluginDescriptor(true, consumer);
   }
 }

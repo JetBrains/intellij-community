@@ -186,7 +186,7 @@
     <renameHandler implementation="org.jetbrains.idea.maven.dom.refactorings.MavenPropertyRenameHandler" order="first"/>
     <vetoRenameCondition implementation="org.jetbrains.idea.maven.dom.refactorings.MavenVetoModelRenameCondition"/>
 
-    <createDirectoryCompletionContributor implementationClass="org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor"/>
+    <createDirectoryCompletionContributor implementation="org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor"/>
 
     <standardResourceProvider implementation="org.jetbrains.idea.maven.dom.MavenSchemaProvider"/>
 

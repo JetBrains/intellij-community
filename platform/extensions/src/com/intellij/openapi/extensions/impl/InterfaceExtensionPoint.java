@@ -39,7 +39,11 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   protected @NotNull ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
     String implementationClassName = extensionElement.getAttributeValue("implementation");
     if (implementationClassName == null) {
-      throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension", pluginDescriptor.getPluginId());
+      // deprecated
+      implementationClassName = extensionElement.getAttributeValue("implementationClass");
+      if (implementationClassName == null) {
+        throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension", pluginDescriptor.getPluginId());
+      }
     }
 
     String orderId = extensionElement.getAttributeValue("id");
@@ -70,8 +74,12 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
 
     // has custom attributes
     for (Attribute attribute : extensionElement.getAttributes()) {
-      final String name = attribute.getName();
-      if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name) && !"os".equals(name)) {
+      String name = attribute.getName();
+      if (!("implementation".equals(name) ||
+            "implementationClass".equals(name) ||
+            "id".equals(name) ||
+            "order".equals(name) ||
+            "os".equals(name))) {
         return true;
       }
     }

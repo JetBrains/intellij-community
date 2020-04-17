@@ -55,7 +55,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -724,9 +723,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         group = new DefaultCompactActionGroup();
       }
       else if (id == null) {
-        Class<?> aClass = Class.forName(className, true, plugin.getPluginClassLoader());
-        Object obj = new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
-
+        Object obj = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(className, plugin);
         if (!(obj instanceof ActionGroup)) {
           reportActionError(plugin.getPluginId(), "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
           return null;
