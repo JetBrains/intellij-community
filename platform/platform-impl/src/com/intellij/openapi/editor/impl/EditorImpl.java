@@ -308,9 +308,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
-  public final Object myFractionalMetricsHintValue = Registry.is("editor.text.fractional.metrics")
-                                                     ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
-                                                     : RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+  public final Object myFractionalMetricsHintValue = calcFractionalMetricsHint();
+
   final EditorView myView;
 
   private boolean myCharKeyPressed;
@@ -2714,6 +2713,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void onSubstantialDrag(@NotNull MouseEvent mouseDragEvent) {
     IdeEventQueue.getInstance().blockNextEvents(mouseDragEvent, IdeEventQueue.BlockMode.ACTIONS);
     myCurrentDragIsSubstantial = true;
+  }
+
+  static Object calcFractionalMetricsHint() {
+    return Registry.is("editor.text.fractional.metrics")
+           ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+           : RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
   }
 
   private static class RepaintCursorCommand implements Runnable {

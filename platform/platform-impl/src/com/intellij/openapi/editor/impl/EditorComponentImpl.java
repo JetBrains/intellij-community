@@ -384,6 +384,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // screen reader support code will invoke it
     setUI(new EditorAccessibilityTextUI());
     UISettings.setupEditorAntialiasing(this);
+    // myEditor is null when updateUI() is called from parent's constructor
+    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, myEditor == null ? EditorImpl.calcFractionalMetricsHint()
+                                                                             : myEditor.myFractionalMetricsHintValue);
     invalidate();
   }
 
