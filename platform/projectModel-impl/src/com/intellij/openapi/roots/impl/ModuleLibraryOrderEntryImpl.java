@@ -157,6 +157,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   @Override
   public void setExported(boolean value) {
+    getRootModel().assertWritable();
     myExported = value;
   }
 
@@ -168,6 +169,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   @Override
   public void setScope(@NotNull DependencyScope scope) {
+    getRootModel().assertWritable();
     myScope = scope;
   }
 }
