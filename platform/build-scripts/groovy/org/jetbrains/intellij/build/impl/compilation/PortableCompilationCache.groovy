@@ -80,7 +80,12 @@ class PortableCompilationCache {
                             '(current execution is expected to perform only upload of new commits caches)')
     }
     else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
-      downloader.downloadCachesAndOutput()
+      try {
+        downloader.downloadCachesAndOutput()
+      }
+      finally {
+        downloader.close()
+      }
     }
     compileProject()
   }

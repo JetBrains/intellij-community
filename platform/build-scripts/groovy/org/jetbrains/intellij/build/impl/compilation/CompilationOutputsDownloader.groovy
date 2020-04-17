@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets
 import java.util.stream.Collectors
 
 @CompileStatic
-class CompilationOutputsDownloader {
+class CompilationOutputsDownloader implements AutoCloseable {
   private static final Type COMMITS_HISTORY_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
   private static final int COMMITS_COUNT = 1_000
   private static final int COMMITS_SEARCH_TIMEOUT = 10_000
@@ -74,6 +74,12 @@ class CompilationOutputsDownloader {
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
 
     sourcesStateProcessor = new SourcesStateProcessor(context)
+  }
+
+  @Override
+  void close() {
+    executor.close()
+    executor.reportErrors(context.messages)
   }
 
   void downloadCachesAndOutput() {
