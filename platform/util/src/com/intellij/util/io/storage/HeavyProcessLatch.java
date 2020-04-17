@@ -32,11 +32,9 @@ public final class HeavyProcessLatch {
    * Approximate type of a heavy operation. Used in <code>TrafficLightRenderer</code> UI as brief description.
    */
   public enum Type {
-    Load("heavyProcess.type.load"),
-    Index("heavyProcess.type.index"),
-    Reset("heavyProcess.type.reset"),
-    Refresh("heavyProcess.type.refresh"),
-    Process("heavyProcess.type.process");
+    Indexing("heavyProcess.type.indexing"),
+    Refreshing("heavyProcess.type.refreshing"),
+    Paused("heavyProcess.type.paused");
 
     private final String bundleKey;
     Type(String bundleKey) {
@@ -50,7 +48,7 @@ public final class HeavyProcessLatch {
   }
 
   public @NotNull AccessToken processStarted(@NotNull String operationName) {
-    return processStarted(operationName, Type.Process);
+    return processStarted(operationName, Type.Paused);
   }
 
   public AccessToken processStarted(@NotNull String operationName, @NotNull Type type) {

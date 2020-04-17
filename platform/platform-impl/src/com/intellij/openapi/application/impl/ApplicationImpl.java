@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.*;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -48,7 +49,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -336,7 +336,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components", HeavyProcessLatch.Type.Load);
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       if (indicator == null) {
         // no splash, no need to to use progress manager
