@@ -15,7 +15,7 @@ import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 
-class ExternalSystemModulePropertyManagerForWorkspaceModel(private val module: Module) : ExternalSystemModulePropertyManager {
+class ExternalSystemModulePropertyManagerForWorkspaceModel(private val module: Module) : ExternalSystemModulePropertyManager() {
   private fun findEntity(): ExternalSystemModuleOptionsEntity? {
     val storage = (module as LegacyBridgeModule).entityStore.current
     val moduleEntity = storage.resolve(module.moduleEntityId)

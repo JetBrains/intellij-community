@@ -20,7 +20,7 @@ val EMPTY_STATE: ExternalStateComponent = ExternalStateComponent()
 
 @Suppress("DEPRECATION")
 @State(name = "ExternalSystem")
-class ExternalSystemModulePropertyManagerImpl(private val module: Module) : ExternalSystemModulePropertyManager,
+class ExternalSystemModulePropertyManagerImpl(private val module: Module) : ExternalSystemModulePropertyManager(),
                                                                             PersistentStateComponent<ExternalStateComponent>, ProjectModelElement {
   override fun getExternalSource(): ProjectModelExternalSource? = store.externalSystem?.let {
     ExternalProjectSystemRegistry.getInstance().getSourceById(it)

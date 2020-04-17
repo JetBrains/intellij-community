@@ -6,25 +6,25 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
 
-interface ExternalSystemModulePropertyManager {
-  fun getExternalSystemId(): String?
-  fun getExternalModuleType(): String?
-  fun getExternalModuleVersion(): String?
-  fun getExternalModuleGroup(): String?
-  fun getLinkedProjectId(): String?
-  fun getRootProjectPath(): String?
-  fun getLinkedProjectPath(): String?
+abstract class ExternalSystemModulePropertyManager {
+  abstract fun getExternalSystemId(): String?
+  abstract fun getExternalModuleType(): String?
+  abstract fun getExternalModuleVersion(): String?
+  abstract fun getExternalModuleGroup(): String?
+  abstract fun getLinkedProjectId(): String?
+  abstract fun getRootProjectPath(): String?
+  abstract fun getLinkedProjectPath(): String?
 
-  fun isMavenized(): Boolean
-  fun setMavenized(mavenized: Boolean)
+  abstract fun isMavenized(): Boolean
+  abstract fun setMavenized(mavenized: Boolean)
 
-  fun swapStore()
-  fun unlinkExternalOptions()
-  fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?)
-  fun setExternalId(id: ProjectSystemId)
-  fun setLinkedProjectPath(path: String?)
-  fun setRootProjectPath(path: String?)
-  fun setExternalModuleType(type: String?)
+  abstract fun swapStore()
+  abstract fun unlinkExternalOptions()
+  abstract fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?)
+  abstract fun setExternalId(id: ProjectSystemId)
+  abstract fun setLinkedProjectPath(path: String?)
+  abstract fun setRootProjectPath(path: String?)
+  abstract fun setExternalModuleType(type: String?)
 
   companion object {
     @JvmStatic
