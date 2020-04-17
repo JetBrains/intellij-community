@@ -4,12 +4,14 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -35,6 +37,7 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.*;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
@@ -66,6 +69,12 @@ public class TextMateServiceImpl extends TextMateService {
   @NonNls public static final String INSTALLED_BUNDLES_PATH =
     FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
   private final Interner<CharSequence> myInterner = new WeakInterner<>();
+
+  public TextMateServiceImpl() {
+    Application application = ApplicationManager.getApplication();
+    Runnable checkCancelled = application != null && !application.isUnitTestMode() ? ProgressManager::checkCanceled : null;
+    SyntaxMatchUtils.setCheckCancelledCallback(checkCancelled);
+  }
 
   @Override
   public void reloadEnabledBundles() {
@@ -215,7 +224,13 @@ public class TextMateServiceImpl extends TextMateService {
     if (directory != null && directory.isInLocalFileSystem()) {
       final String path = directory.getCanonicalPath();
       if (path != null) {
-        return myBundleFactory.fromDirectory(new File(path));
+        try {
+          return myBundleFactory.fromDirectory(new File(path));
+        }
+        catch (IOException e) {
+          LOG.debug("Couldn't load bundle from " + path, e);
+          return null;
+        }
       }
     }
     return null;

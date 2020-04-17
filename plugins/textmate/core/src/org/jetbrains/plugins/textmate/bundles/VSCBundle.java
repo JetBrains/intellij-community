@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -20,6 +20,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static org.jetbrains.plugins.textmate.Constants.*;
@@ -46,8 +48,8 @@ public class VSCBundle extends Bundle {
   public Collection<String> getExtensions(@NotNull File file, @NotNull Plist plist) {
     HashSet<String> result = new HashSet<>(super.getExtensions(file, plist));
     loadExtensions();
-    result.addAll(grammarToExtensions.getOrDefault(FileUtil.toSystemIndependentName(
-      Objects.requireNonNull(FileUtil.getRelativePath(bundleFile, file))), emptyList()));
+    result.addAll(grammarToExtensions.getOrDefault(FileUtilRt.toSystemIndependentName(
+      Objects.requireNonNull(FileUtilRt.getRelativePath(bundleFile, file))), emptyList()));
     return result;
   }
 
@@ -70,7 +72,8 @@ public class VSCBundle extends Bundle {
                 if (id instanceof String) {
                   Object extensions = ((Map)language).get("extensions");
                   if (extensions instanceof ArrayList) {
-                    idToExtension.get(id).addAll(ContainerUtil.map((ArrayList)extensions, (ext) -> StringUtil.trimStart((String)ext, ".")));
+                    Stream<String> stream = ((ArrayList)extensions).stream().map(ext -> StringUtil.trimStart((String)ext, "."));
+                    idToExtension.get(id).addAll(stream.collect(Collectors.toList()));
                   }
                   Object filenames = ((Map)language).get("filenames");
                   if (filenames instanceof ArrayList) {
@@ -131,7 +134,7 @@ public class VSCBundle extends Bundle {
   @Override
   public List<Pair<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
     Plist fromJson = loadLanguageConfig(file);
-    return ContainerUtil.map(configToScopes.get(FileUtil.getRelativePath(bundleFile, file)), (String scope) -> Pair.create(scope, fromJson));
+    return ContainerUtil.map(configToScopes.get(FileUtilRt.getRelativePath(bundleFile, file)), (String scope) -> Pair.create(scope, fromJson));
   }
 
   @NotNull

@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.textmate.regex;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Regex;
@@ -35,11 +35,11 @@ public class RegexFacade {
     myRegex = regex;
   }
 
-  public MatchData match(StringWithId string) {
-    return match(string, 0);
+  public MatchData match(StringWithId string, @Nullable Runnable checkCancelledCallback) {
+    return match(string, 0, checkCancelledCallback);
   }
 
-  public MatchData match(@NotNull StringWithId string, int byteOffset) {
+  public MatchData match(@NotNull StringWithId string, int byteOffset, @Nullable Runnable checkCancelledCallback) {
     LastMatch lastResult = matchResult.get();
     Object lastId = lastResult != null ? lastResult.lastId : null;
     int lastOffset = lastResult != null ? lastResult.lastOffset : Integer.MAX_VALUE;
@@ -51,7 +51,9 @@ public class RegexFacade {
         return lastMatch;
       }
     }
-    ProgressManager.checkCanceled();
+    if (checkCancelledCallback != null) {
+      checkCancelledCallback.run();
+    }
     lastId = string.id;
     lastOffset = byteOffset;
     final Matcher matcher = myRegex.matcher(string.bytes);

@@ -1,8 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,12 +47,14 @@ public class TextMateLexer {
 
   private final CharSequence myLanguageScopeName;
   private final int myLineLimit;
+  private final Runnable myCheckCancelledCallback;
   private final TextMateLexerState myLanguageInitialState;
 
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit) {
     myLanguageScopeName = languageDescriptor.getScopeName();
     myLanguageInitialState = TextMateLexerState.notMatched(languageDescriptor.getRootSyntaxNode());
     myLineLimit = lineLimit;
+    myCheckCancelledCallback = SyntaxMatchUtils.getCheckCancelledCallback();
   }
 
   public void init(CharSequence text, int startOffset) {
@@ -198,9 +197,8 @@ public class TextMateLexer {
         lineByteOffset = RegexUtil.byteOffsetByCharOffset(line, linePosition);
       }
 
-      final Application application = ApplicationManager.getApplication();
-      if (application != null && !application.isUnitTestMode()) {
-        ProgressManager.checkCanceled();
+      if (myCheckCancelledCallback != null) {
+        myCheckCancelledCallback.run();
       }
     }
   }

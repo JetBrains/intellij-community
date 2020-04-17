@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.regex;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joni.Region;
@@ -9,7 +9,7 @@ import org.joni.Region;
 import java.util.Arrays;
 
 public class MatchData {
-  public static final MatchData NOT_MATCHED = new MatchData(false, ArrayUtil.EMPTY_INT_ARRAY);
+  public static final MatchData NOT_MATCHED = new MatchData(false, ArrayUtilRt.EMPTY_INT_ARRAY);
 
   private final boolean matched;
   private final int @NotNull [] offsets;

@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Interner;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public final class PreferencesReadUtil {
     if (value != null) {
       scopeName = value.getString();
       final PListValue settingsValue = rootPlist.getPlistValue(Constants.SETTINGS_KEY);
-      if (StringUtil.isNotEmpty(scopeName) && settingsValue != null) {
+      if (scopeName != null && !scopeName.isEmpty() && settingsValue != null) {
         settingsValuePlist = settingsValue.getPlist();
       }
     }
@@ -78,26 +77,6 @@ public final class PreferencesReadUtil {
       return new TextMateSnippet(key, content, interner.intern(scope), name, description, uuid);
     }
     return null;
-  }
-
-  public static double getBackgroundAlpha(@NotNull Plist settingsPlist) {
-    final PListValue value = settingsPlist.getPlistValue(Constants.BACKGROUND_KEY);
-    if (value != null) {
-      String background = value.getString();
-      if (background.length() > 7) {
-        return parseAlpha(background.substring(StringUtil.startsWithChar(background, '#') ? 7 : 6));
-      }
-    }
-    return -1;
-  }
-
-  public static double parseAlpha(String string) {
-    try {
-      return Integer.parseInt(string, 16) / 256.0;
-    }
-    catch (NumberFormatException e) {
-      return -1;
-    }
   }
 
   @NotNull

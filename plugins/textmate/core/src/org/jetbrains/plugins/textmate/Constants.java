@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.textmate;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 public interface Constants {
@@ -99,15 +99,19 @@ public interface Constants {
   @NonNls String HIGHLIGHTING_PAIRS_KEY = "highlightingPairs";
   @NonNls String SMART_TYPING_PAIRS_KEY = "smartTypingPairs";
 
+  // we should depend on intellij util classes as least as possible
+  @SuppressWarnings("SSBasedInspection")
   Collection<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
-    ContainerUtil.immutableList(new TextMateBracePair('[', ']'),
-                                new TextMateBracePair('{', '}'),
-                                new TextMateBracePair('(', ')'));
+    Arrays.asList(new TextMateBracePair('[', ']'),
+                  new TextMateBracePair('{', '}'),
+                  new TextMateBracePair('(', ')'));
 
+  // we should depend on intellij util classes as least as possible
+  @SuppressWarnings("SSBasedInspection")
   Collection<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
-    ContainerUtil.immutableList(new TextMateBracePair('"', '"'),
-                                new TextMateBracePair('\'', '\''),
-                                new TextMateBracePair('[', ']'),
-                                new TextMateBracePair('{', '}'),
-                                new TextMateBracePair('(', ')'));
+    Arrays.asList(new TextMateBracePair('"', '"'),
+                  new TextMateBracePair('\'', '\''),
+                  new TextMateBracePair('[', ']'),
+                  new TextMateBracePair('{', '}'),
+                  new TextMateBracePair('(', ')'));
 }

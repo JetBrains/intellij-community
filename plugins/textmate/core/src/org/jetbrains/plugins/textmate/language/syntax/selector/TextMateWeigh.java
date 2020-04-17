@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -15,6 +14,7 @@ public class TextMateWeigh implements Comparable<TextMateWeigh> {
   }
 
   public final int weigh;
+  @NotNull
   public final Priority priority;
 
   public TextMateWeigh(int weigh, @NotNull Priority priority) {
@@ -24,11 +24,11 @@ public class TextMateWeigh implements Comparable<TextMateWeigh> {
 
   @Override
   public int compareTo(@NotNull TextMateWeigh o) {
-    int priorityCompare = Comparing.compare(priority, o.priority);
+    int priorityCompare = priority.compareTo(o.priority);
     if (priorityCompare != 0) {
       return priorityCompare;
     }
-    return Comparing.compare(weigh, o.weigh);
+    return Integer.compare(weigh, o.weigh);
   }
 
   @Override

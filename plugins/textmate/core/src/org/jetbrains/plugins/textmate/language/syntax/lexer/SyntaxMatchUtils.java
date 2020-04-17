@@ -14,6 +14,7 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorW
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
+import org.jetbrains.plugins.textmate.regex.RegexFacade;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,16 @@ public final class SyntaxMatchUtils {
   private static final ConcurrentMap<MatchKey, TextMateLexerState> CACHE = ContainerUtil.createConcurrentSoftKeySoftValueMap();
   private static final Map<List<CharSequence>, String> MY_SCOPES_INTERNER = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   private static final TextMateSelectorWeigher mySelectorWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
+
+  private static Runnable ourCheckCancelledCallback = null;
+
+  public static void setCheckCancelledCallback(@Nullable Runnable runnable) {
+    ourCheckCancelledCallback = runnable;
+  }
+
+  public static Runnable getCheckCancelledCallback() {
+    return ourCheckCancelledCallback;
+  }
 
   @NotNull
   public static TextMateLexerState matchFirst(@NotNull SyntaxNodeDescriptor syntaxNodeDescriptor,
@@ -111,11 +122,13 @@ public final class SyntaxMatchUtils {
                                                     @NotNull String currentScope) {
     CharSequence match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH);
     if (match != null) {
-      return new TextMateLexerState(syntaxNodeDescriptor, regex(match.toString()).match(string, byteOffset), priority, string);
+      RegexFacade regex = regex(match.toString());
+      return new TextMateLexerState(syntaxNodeDescriptor, regex.match(string, byteOffset, ourCheckCancelledCallback), priority, string);
     }
     CharSequence begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN);
     if (begin != null) {
-      return new TextMateLexerState(syntaxNodeDescriptor, regex(begin.toString()).match(string, byteOffset), priority, string);
+      RegexFacade regex = regex(begin.toString());
+      return new TextMateLexerState(syntaxNodeDescriptor, regex.match(string, byteOffset, ourCheckCancelledCallback), priority, string);
     }
     if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor);
@@ -140,9 +153,11 @@ public final class SyntaxMatchUtils {
                                            int byteOffset,
                                            @NotNull TextMateLexerState lexerState) {
     CharSequence stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
-    return stringRegex != null ? regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData))
-      .match(string, byteOffset)
-                               : MatchData.NOT_MATCHED;
+    if (stringRegex != null) {
+      return regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData))
+        .match(string, byteOffset, ourCheckCancelledCallback);
+    }
+    return MatchData.NOT_MATCHED;
   }
 
   /**

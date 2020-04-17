@@ -7,6 +7,7 @@ import org.jetbrains.plugins.textmate.bundles.BundleFactory;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 
 import java.io.File;
+import java.io.IOException;
 
 public class TestUtil {
   @NonNls public static final String BAT = "bat";
@@ -43,7 +44,7 @@ public class TestUtil {
     return new File(PathManager.getCommunityHomePath() + "/plugins/textmate/lib/bundles", bundleName);
   }
 
-  public static Bundle getBundle(String bundleName) {
+  public static Bundle getBundle(String bundleName) throws IOException {
     return new BundleFactory(new CompositePlistReader()).fromDirectory(getBundleDirectory(bundleName));
   }
 }

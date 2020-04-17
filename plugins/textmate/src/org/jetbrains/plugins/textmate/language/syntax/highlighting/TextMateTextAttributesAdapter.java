@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateTextAttributes;
 
 import java.awt.*;
@@ -93,7 +92,16 @@ public class TextMateTextAttributesAdapter {
     }
     int startOffset = StringUtil.startsWithChar(s, '#') ? 1 : 0;
     Color color = ColorUtil.fromHex(s.substring(startOffset, startOffset + 6), null);
-    double alpha = s.length() > 7 ? PreferencesReadUtil.parseAlpha(s.substring(startOffset + 6)) : -1;
+    double alpha = s.length() > 7 ? parseAlpha(s.substring(startOffset + 6)) : -1;
     return Pair.create(color, alpha);
+  }
+
+  private static double parseAlpha(String string) {
+    try {
+      return Integer.parseInt(string, 16) / 256.0;
+    }
+    catch (NumberFormatException e) {
+      return -1;
+    }
   }
 }

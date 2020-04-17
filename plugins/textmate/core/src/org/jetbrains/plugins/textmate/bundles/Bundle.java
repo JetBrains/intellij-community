@@ -3,7 +3,6 @@ package org.jetbrains.plugins.textmate.bundles;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,10 +14,7 @@ import org.jetbrains.plugins.textmate.plist.PlistReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.Collections.emptyList;
 
@@ -111,12 +107,12 @@ public class Bundle {
     private final Set<String> myExtensions;
 
     public BundleFilesFilter(String... extensions) {
-      myExtensions = ContainerUtil.newHashSet(extensions);
+      myExtensions = new HashSet<>(Arrays.asList(extensions));
     }
 
     @Override
     public boolean accept(@NotNull File path) {
-      return myExtensions.contains(StringUtil.toLowerCase(FileUtilRt.getExtension(path.getName())));
+      return myExtensions.contains(FileUtilRt.getExtension(path.getName()).toLowerCase(Locale.US));
     }
   }
 }

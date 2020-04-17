@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.bundles;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -11,8 +10,6 @@ import java.io.File;
 import java.io.IOException;
 
 public class BundleFactory {
-  private static final Logger LOG = Logger.getInstance(BundleFactory.class);
-
   private final PlistReader myPlistReader;
 
   public BundleFactory(PlistReader plistReader) {
@@ -28,7 +25,7 @@ public class BundleFactory {
    * @return Bundle object or null
    */
   @Nullable
-  public Bundle fromDirectory(@NotNull File directory) {
+  public Bundle fromDirectory(@NotNull File directory) throws IOException {
     final BundleType type = BundleType.fromDirectory(directory);
     switch (type) {
       case TEXTMATE:
@@ -42,17 +39,12 @@ public class BundleFactory {
     }
   }
 
-  private Bundle fromTextMateBundle(File directory) {
+  private Bundle fromTextMateBundle(File directory) throws IOException {
     File infoPlist = new File(directory, Constants.BUNDLE_INFO_PLIST_NAME);
-    try {
-      if (infoPlist.exists() && infoPlist.isFile()) {
-        final Plist plist = myPlistReader.read(infoPlist);
-        final String bundleName = plist.getPlistValue(Constants.NAME_KEY, directory.getName()).getString();
-        return new Bundle(bundleName, directory.getPath(), BundleType.TEXTMATE);
-      }
-    }
-    catch (IOException e) {
-      LOG.debug("Can't read textmate bundle data", e);
+    if (infoPlist.exists() && infoPlist.isFile()) {
+      final Plist plist = myPlistReader.read(infoPlist);
+      final String bundleName = plist.getPlistValue(Constants.NAME_KEY, directory.getName()).getString();
+      return new Bundle(bundleName, directory.getPath(), BundleType.TEXTMATE);
     }
     return null;
   }
