@@ -6,6 +6,7 @@ import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSI
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.UsefulTestCase
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -262,8 +263,41 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     )
   }
 
+  @Test
+  fun testLogSystemEventId() {
+    getSystemEventIdFile().delete()
+    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
+                                                 TestFeatureUsageEventWriter())
+    logger.log(EventLogGroup("group.id.1", 1), "test.action.1", false)
+    logger.log(EventLogGroup("group.id.2", 1), "test.action.2", false)
+    logger.dispose()
+    val logged = logger.testWriter.logged
+    UsefulTestCase.assertSize(2, logged)
+    assertEquals(logged[0].event.data["system_event_id"], 0.toLong())
+    assertEquals(logged[1].event.data["system_event_id"], 1.toLong())
+  }
+
+
+  @Test
+  fun testLogSystemEventIdFromFile() {
+    getSystemEventIdFile().writeText("42")
+    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1",
+                                                 TestFeatureUsageEventWriter())
+    logger.log(EventLogGroup("group.id.1", 1), "test.action.1", false)
+    logger.log(EventLogGroup("group.id.2", 1), "test.action.2", false)
+    logger.dispose()
+    val logged = logger.testWriter.logged
+    UsefulTestCase.assertSize(2, logged)
+    assertEquals(logged[0].event.data["system_event_id"], 42.toLong())
+    assertEquals(logged[1].event.data["system_event_id"], 43.toLong())
+  }
+
+  private fun getSystemEventIdFile() =
+    EventLogConfiguration.getEventLogSettingsPath().resolve("test_system_event_id").toFile()
+
+
   private fun testLogger(callback: (TestFeatureUsageFileEventLogger) -> Unit, vararg expected: LogEvent) {
-    val logger = TestFeatureUsageFileEventLogger( DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())
+    val logger = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())
     testLoggerInternal(logger, callback, *expected)
   }
 
@@ -282,26 +316,27 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   private fun assertEvent(actual: LogEvent, expected: LogEvent) {
     // Compare events but skip event time
-    assertEquals(actual.recorderVersion, expected.recorderVersion)
-    assertEquals(actual.session, expected.session)
-    assertEquals(actual.bucket, expected.bucket)
-    assertEquals(actual.build, expected.build)
-    assertEquals(actual.group, expected.group)
-    assertEquals(actual.event.id, expected.event.id)
+    assertEquals(expected.recorderVersion, actual.recorderVersion)
+    assertEquals(expected.session, actual.session)
+    assertEquals(expected.bucket, actual.bucket)
+    assertEquals(expected.build, actual.build)
+    assertEquals(expected.group, actual.group)
+    assertEquals(expected.event.id, actual.event.id)
 
     assertTrue { actual.event.data.containsKey("created") }
+    assertTrue { actual.event.data.containsKey("system_event_id") }
     assertTrue { actual.time <= actual.event.data["created"] as Long }
 
     if (actual.event.isEventGroup()) {
-      assertEquals(actual.event.data.size - 2, expected.event.data.size)
+      assertEquals(expected.event.data.size, actual.event.data.size - 3)
       assertTrue { actual.event.data.containsKey("last") }
       assertTrue { actual.time <= actual.event.data["last"] as Long }
     }
     else {
-      assertEquals(actual.event.data.size - 1, expected.event.data.size)
+      assertEquals(expected.event.data.size, actual.event.data.size - 2)
     }
-    assertEquals(actual.event.state, expected.event.state)
-    assertEquals(actual.event.count, expected.event.count)
+    assertEquals(expected.event.state, actual.event.state)
+    assertEquals(expected.event.count, actual.event.count)
   }
 }
 

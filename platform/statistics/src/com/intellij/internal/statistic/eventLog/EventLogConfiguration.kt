@@ -3,12 +3,15 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.MathUtil
 import com.intellij.util.io.DigestUtil
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
 import java.util.prefs.Preferences
@@ -83,4 +86,8 @@ object EventLogConfiguration {
     }
     return salt
   }
+
+  fun getEventLogDataPath(): Path = Paths.get(PathManager.getSystemPath()).resolve("event-log-data")
+
+  fun getEventLogSettingsPath(): Path = getEventLogDataPath().resolve("settings")
 }

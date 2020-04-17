@@ -4,8 +4,14 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.util.concurrent.CompletableFuture
+import java.io.File
+import java.io.IOException
+import java.util.*
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
@@ -18,6 +24,25 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
+  private var systemEventId: Long = 0
+  private val systemEventIdFile: File?
+  private val log = logger<StatisticsFileEventLogger>()
+
+  init {
+    systemEventIdFile = try {
+      val file = EventLogConfiguration.getEventLogSettingsPath()
+        .resolve("${StringUtil.toLowerCase(recorderId)}_system_event_id")
+        .toFile()
+      if (file.exists()) {
+        systemEventId = file.readText().toLongOrNull() ?: 0
+      }
+      file
+    }
+    catch (e: IOException) {
+      log.warn("Unable to read event sequence number file", e)
+      null
+    }
+  }
 
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
@@ -58,9 +83,22 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         it.event.addData("last", lastEventTime)
       }
       it.event.addData("created", lastEventCreatedTime)
+      it.event.addData("system_event_id", systemEventId)
+      systemEventId++
+      saveSystemEventId()
       writer.log(it)
     }
     lastEvent = null
+  }
+
+  private fun saveSystemEventId() {
+    try {
+      if (systemEventIdFile != null) {
+        FileUtil.writeToFile(systemEventIdFile, systemEventId.toString())
+      }
+    }
+    catch (ignored: IOException) {
+    }
   }
 
   override fun getActiveLogFile(): EventLogFile? {
