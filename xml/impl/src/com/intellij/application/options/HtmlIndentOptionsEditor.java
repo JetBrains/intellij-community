@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,7 +16,7 @@ public class HtmlIndentOptionsEditor extends SmartIndentOptionsEditor {
   @Override
   protected void addComponents() {
     super.addComponents();
-    myUniformIndentCheckBox = new JCheckBox("Use HTML indents within <style> and <script> tags");
+    myUniformIndentCheckBox = new JCheckBox(XmlBundle.message("checkbox.uniform.indent"));
     add(myUniformIndentCheckBox);
   }
 

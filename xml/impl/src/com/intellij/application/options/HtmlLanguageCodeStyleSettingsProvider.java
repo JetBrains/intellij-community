@@ -49,7 +49,7 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    return CodeStyleAbstractPanel.readFromFile(this.getClass(), "preview.html.template");
+    return CodeStyleAbstractPanel.readFromFile(this.getClass(), "preview.html.indent.template");
   }
 
   @Override
