@@ -78,6 +78,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @NotNull private final List<Change> myChanges = new ArrayList<>();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
   @Nullable private Collection<FilePath> myAffectedPaths;
+  @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
@@ -167,32 +168,32 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
+    myUpdateEmptyText = this::updateEmptyText;
 
     update.run();
 
+    myUpdateEmptyText.accept(myViewer.getEmptyText());
     myViewer.rebuildTree();
     myDispatcher.getMulticaster().onModelUpdated();
   }
 
   public void resetSelectedDetails() {
-    updateModel(() -> myViewer.setEmptyText(""));
+    updateModel(() -> myUpdateEmptyText = text -> text.setText(""));
   }
 
   public void showText(@NotNull Consumer<StatusText> statusTextConsumer) {
-    updateModel(() -> statusTextConsumer.accept(myViewer.getEmptyText()));
+    updateModel(() -> myUpdateEmptyText = statusTextConsumer);
   }
 
   public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
     myAffectedPaths = paths;
+    myUpdateEmptyText.accept(myViewer.getEmptyText());
     myViewer.rebuildTree();
   }
 
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     updateModel(() -> {
-      if (detailsList.isEmpty()) {
-        myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
-      }
-      else {
+      if (!detailsList.isEmpty()) {
         myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
         if (detailsList.size() == 1) {
@@ -205,40 +206,32 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
               myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
             }
           }
-
-          if (myChanges.isEmpty() && detail.getParents().size() > 1) {
-            myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
-              appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
-                                  VcsLogUiUtil.getLinkAttributes(),
-                                  e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
-          }
-          else {
-            setEmptyAffectedText();
-          }
         }
         else {
           myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-          setEmptyAffectedText();
         }
       }
     });
   }
 
-  private void setEmptyAffectedText() {
-    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) {
-      myViewer.setEmptyText("");
+  private void updateEmptyText(@NotNull StatusText emptyText) {
+    if (myRoots.isEmpty()) {
+      emptyText.setText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
+    }
+    else if (!myChangesToParents.isEmpty()) {
+      myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
+        appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
+                            VcsLogUiUtil.getLinkAttributes(),
+                            e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
+    }
+    else if (isShowOnlyAffectedSelected() && myAffectedPaths != null) {
+      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status"))
+        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"), VcsLogUiUtil.getLinkAttributes(),
+                             e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
     else {
-      myViewer.getEmptyText().setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status")).
-        appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"), VcsLogUiUtil.getLinkAttributes(),
-                            e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
+      emptyText.setText("");
     }
-  }
-
-  @NotNull
-  @Override
-  protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-    return new MyChangesTree(project, showCheckboxes, highlightProblems);
   }
 
   @NotNull
