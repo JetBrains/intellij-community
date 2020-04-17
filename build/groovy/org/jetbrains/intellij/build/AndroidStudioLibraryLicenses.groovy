@@ -34,6 +34,8 @@ class AndroidStudioLibraryLicenses {
     // for jetifier-core module library in db-compilerCommon
     new LibraryLicense(name: "Android Jetifier Core", libraryName: "jetifier-core", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Studio Analytics Protos", libraryName: "studio-analytics-proto", license: "Apache 2.0", url: "http://source.android.com/"),
+    // for androidx-test-core-proto module library in intellij.android.core
+    new LibraryLicense(name: "AndroidX Test Library core protos", libraryName: "androidx-test-core-proto", license: "Android Software Development Kit License Agreement", licenseUrl: "https://developer.android.com/studio/terms"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     // for commons-lang module library in db-compiler
