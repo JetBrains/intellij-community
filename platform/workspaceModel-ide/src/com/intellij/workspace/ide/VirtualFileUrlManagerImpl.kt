@@ -21,7 +21,7 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
 
   override fun fromUrl(url: String): VirtualFileUrl {
     if (url.isEmpty()) return EMPTY_URL
-    return add(url, 1)
+    return add(url)
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
@@ -54,7 +54,7 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
     return builder.toString()
   }
 
-  internal fun add(path: String, entityId: Int): VirtualFileUrl {
+  internal fun add(path: String): VirtualFileUrl {
     val segments = splitNames(path)
     var latestNode: FilePathNode? = findRootNode(segments.first())
     val latestElement = segments.size - 1
@@ -67,7 +67,6 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
         id2NodeMapping[nodeId] = newNode
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == latestElement) {
-          newNode.values.add(entityId)
           segmentId2RootNodeMapping[nameId] = newNode
           return VirtualFileUrl(nodeId, this)
         }
@@ -78,10 +77,7 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
 
       if (latestNode === findRootNode(latestNode.contentId)) {
         if (latestNode.contentId == nameId) {
-          if (index == latestElement) {
-            latestNode.values.add(entityId)
-            return VirtualFileUrl(latestNode.nodeId, this)
-          }
+          if (index == latestElement) return VirtualFileUrl(latestNode.nodeId, this)
           continue
         }
       }
@@ -94,36 +90,29 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
         latestNode.children.add(newNode)
         latestNode = newNode
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) {
-          newNode.values.add(entityId)
-          return VirtualFileUrl(nodeId, this)
-        }
+        if (index == latestElement) return VirtualFileUrl(nodeId, this)
       } else {
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) {
-          node.values.add(entityId)
-          return VirtualFileUrl(node.nodeId, this)
-
-        }
+        if (index == latestElement) return VirtualFileUrl(node.nodeId, this)
         latestNode = node
       }
     }
     return EMPTY_URL
   }
 
-  internal fun remove(path: String, entityId: Int) {
+  internal fun remove(path: String) {
     val node = findLatestFilePathNode(path)
-    if (node == null || !node.values.remove(entityId)) {
+    if (node == null) {
       println("File not found")
       return
     }
-    if (node.values.isNotEmpty() || node.children.isNotEmpty()) return
+    if (node.children.isNotEmpty()) return
 
     var currentNode: FilePathNode = node
     do {
       val parent = currentNode.parent
       if (parent == null) {
-        if (currentNode === findRootNode(currentNode.contentId) && currentNode.values.isEmpty() && currentNode.children.isEmpty()) {
+        if (currentNode === findRootNode(currentNode.contentId) && currentNode.children.isEmpty()) {
           removeNameUsage(currentNode.contentId)
           idGenerator.releaseId(currentNode.nodeId)
           id2NodeMapping.remove(currentNode.nodeId)
@@ -137,14 +126,14 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
       idGenerator.releaseId(currentNode.nodeId)
       id2NodeMapping.remove(currentNode.nodeId)
       currentNode = parent
-    } while (currentNode.values.isEmpty() && currentNode.children.isEmpty())
+    } while (currentNode.children.isEmpty())
   }
 
-  internal fun update(oldPath: String, newPath: String, entityId: Int) {
+  internal fun update(oldPath: String, newPath: String) {
     val latestPathNode = findLatestFilePathNode(oldPath)
-    if (latestPathNode == null || !latestPathNode.values.contains(entityId)) return
-    remove(oldPath, entityId)
-    add(newPath, entityId)
+    if (latestPathNode == null) return
+    remove(oldPath)
+    add(newPath)
   }
 
   private fun removeNameUsage(contentId: Int) {
@@ -187,8 +176,32 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
 
   override fun toString() = segmentId2RootNodeMapping.values.joinToString(separator = "\n") { it.toString() }
 
+  override fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
+    if (parentNodeId == 0 && childNodeId == 0) return true
+
+    var current = childNodeId
+    while (current > 0) {
+      if (parentNodeId == current) return true
+      current = id2NodeMapping[current]?.parent?.nodeId ?: return false
+    }
+    /*
+    TODO It may look like this + caching + invalidating
+    val segmentName = getSegmentName(id).toString()
+
+    val parent = id2parent.getValue(id)
+    val parentParent = id2parent.getValue(parent)
+    return if (parentParent <= 0) {
+      val fileSystem = VirtualFileManager.getInstance().getFileSystem(getSegmentName(parent).toString())
+      fileSystem?.findFileByPath(segmentName)
+    } else {
+      getVirtualFileById(parent)?.findChild(segmentName)
+    }
+    }
+    */
+    return false
+  }
+
   private inner class FilePathNode(val nodeId: Int, val contentId: Int, val parent: FilePathNode? = null) {
-    val values: MutableSet<Int> = mutableSetOf()
     val children: MutableSet<FilePathNode> = mutableSetOf()
 
     override fun toString(): String {
@@ -199,7 +212,7 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
 
     private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
       val name = this@VirtualFileUrlManagerImpl.fileNameStore.getNameForId(contentId)
-      if (values.isEmpty()) buffer.append("$prefix $name\n") else buffer.append("$prefix $name => $values\n")
+      buffer.append("$prefix $name\n")
       val iterator = children.iterator()
       while (iterator.hasNext()) {
         val next = iterator.next()
@@ -213,29 +226,4 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
     }
   }
 
-  override fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
-    if (parentNodeId == 0 && childNodeId == 0) return true
-
-    var current = childNodeId
-    while (current > 0) {
-      if (parentNodeId == current) return true
-      current = id2NodeMapping[current]?.parent?.nodeId ?: return false
-    }
-    return false
-  }
-
-  /*
-      TODO It may look like this + caching + invalidating
-      val segmentName = getSegmentName(id).toString()
-
-      val parent = id2parent.getValue(id)
-      val parentParent = id2parent.getValue(parent)
-      return if (parentParent <= 0) {
-        val fileSystem = VirtualFileManager.getInstance().getFileSystem(getSegmentName(parent).toString())
-        fileSystem?.findFileByPath(segmentName)
-      } else {
-        getVirtualFileById(parent)?.findChild(segmentName)
-      }
-    }
-  */
 }
