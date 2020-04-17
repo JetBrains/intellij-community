@@ -169,7 +169,8 @@ public abstract class JBCefApp {
       return new CefAppConfig(new CefSettings(), new String[] {
         "--framework-dir-path=" + normalize(ALT_CEF_FRAMEWORK_DIR),
         "--browser-subprocess-path=" + normalize(ALT_CEF_BROWSER_SUBPROCESS),
-        "--disable-in-process-stack-traces"
+        "--disable-in-process-stack-traces",
+        "--use-mock-keychain"
       });
     }
 
