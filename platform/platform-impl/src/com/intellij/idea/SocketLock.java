@@ -243,7 +243,7 @@ public final class SocketLock {
   }
 
   private static @NotNull String readOneLine(@NotNull Path file) throws IOException {
-    try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+    try (BufferedReader reader = Files.newBufferedReader(file)) {
       return reader.readLine().trim();
     }
   }

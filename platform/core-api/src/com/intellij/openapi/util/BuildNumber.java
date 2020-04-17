@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -269,7 +270,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       }
 
       String communityHomePath = PathManager.getCommunityHomePath();
-      if (communityHomePath != homePath) {
+      if (!communityHomePath.equals(homePath)) {
         result = readFile(Paths.get(communityHomePath, "build.txt"));
         if (result != null) {
           return result;
@@ -280,8 +281,8 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     }
 
     private static @Nullable BuildNumber readFile(@NotNull Path path) {
-      try {
-        String text = Files.newBufferedReader(path).readLine();
+      try (BufferedReader reader = Files.newBufferedReader(path)) {
+        String text = reader.readLine();
         if (text != null) {
           return fromString(text);
         }
