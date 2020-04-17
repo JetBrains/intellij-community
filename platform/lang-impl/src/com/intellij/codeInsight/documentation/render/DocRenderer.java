@@ -36,6 +36,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -208,8 +209,7 @@ class DocRenderer implements EditorCustomElementRenderer {
       fontAttributes.put(TextAttribute.KERNING, 0);
       myPane.setFont(myPane.getFont().deriveFont(fontAttributes));
       myPane.setForeground(getTextColor(editor.getColorsScheme()));
-      // enable soft wrapping not just at spaces, but e.g. at dots (see javax.swing.text.GlyphView.getBreaker())
-      myPane.getDocument().putProperty("multiByte", Boolean.TRUE);
+      UIUtil.enableEagerSoftWrapping(myPane);
       String textToRender = myItem.textToRender;
       if (textToRender == null) {
         textToRender = CodeInsightBundle.message("doc.render.loading.text");

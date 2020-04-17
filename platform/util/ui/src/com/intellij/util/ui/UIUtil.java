@@ -3587,6 +3587,18 @@ public final class UIUtil {
     });
   }
 
+  /**
+   * By default soft wrapping in text components (for ASCII text) is only performed at spaces. This enables wrapping also at other places,
+   * e.g. at dots.
+   * <p>
+   * NOTE: any operation which replaces document in the text component (e.g. {@link JTextComponent#setDocument(Document)},
+   * {@link JEditorPane#setPage(URL)}, {@link JEditorPane#setEditorKit(EditorKit)}) will cancel the effect of this call.
+   */
+  public static void enableEagerSoftWrapping(@NotNull JTextComponent textComponent) {
+    // see javax.swing.text.GlyphView.getBreaker()
+    textComponent.getDocument().putProperty("multiByte", Boolean.TRUE);
+  }
+
   @NotNull
   public static Color getTooltipSeparatorColor() {
     return JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
