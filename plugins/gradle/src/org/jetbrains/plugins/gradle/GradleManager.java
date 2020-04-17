@@ -125,15 +125,11 @@ public final class GradleManager
       DistributionType defaultDistributionType = null;
       final String defaultDistributionTypeValue = GradleEnvironment.GRADLE_DEFAULT_DISTRIBUTION_TYPE;
       if (defaultDistributionTypeValue != null) {
-        try {
-          defaultDistributionType = DistributionType.valueOf(defaultDistributionTypeValue);
-          LOG.info(String.format("Found gradle default distribution type: %s", defaultDistributionType));
-        } catch (final IllegalArgumentException e) {
-          LOG.warn(String.format(
-            "Exception occurred on attempt to parse gradle default distribution type property: %s",
-            defaultDistributionTypeValue
-          ), e);
-        }
+        defaultDistributionType = Arrays.stream(DistributionType.values())
+          .filter(v -> v.name().equals(defaultDistributionTypeValue))
+          .findFirst()
+          .orElse(null);
+        LOG.info("Found gradle default distribution type: " + defaultDistributionType);
       }
 
       final DistributionType distributionType;
@@ -151,7 +147,7 @@ public final class GradleManager
                               : defaultDistributionType)
                            : projectLevelSettings.getDistributionType();
       }
-      LOG.info(String.format("Instructing gradle to use distribution type: %s", distributionType));
+      LOG.info("Instructing gradle to use distribution type: " + distributionType);
 
       GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                    settings.getServiceDirectoryPath(),
