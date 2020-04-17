@@ -24,6 +24,9 @@ class Retry {
       try {
         return operation(i)
       }
+      catch (StopTrying e) {
+        throw e.cause
+      }
       catch (Exception e) {
         if (i == retries) {
           log.error("Failed all $retries attempts, see nested exception for details", e)

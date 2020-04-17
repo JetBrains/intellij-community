@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
+import org.jetbrains.intellij.build.impl.retry.StopTrying
 
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
@@ -214,7 +215,8 @@ class GetClient {
       response = httpClient.execute(request)
       def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
       if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        throw new DownloadException(url, response.statusLine.statusCode, responseString)
+        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
+        throwDownloadException(response, downloadException)
       }
       return gson.fromJson(responseString, responseType)
     }, { StreamUtil.closeStream(response) })
@@ -225,19 +227,32 @@ class GetClient {
     return getWithRetry(url) { HttpGet request ->
       CloseableHttpResponse response = httpClient.execute(request)
       if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        throw new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
+        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
+        throwDownloadException(response, downloadException)
       }
       return response.entity.content
     }
   }
 
-  def <T> T getWithRetry(String url, Closure<T> operation, Closure<T> finalizer = {}) {
-    return new Retry(buildMessages, 3).call {
+  private static void throwDownloadException(CloseableHttpResponse response, DownloadException downloadException) {
+    if (response.statusLine.statusCode == HttpStatus.SC_NOT_FOUND) {
+      throw new StopTrying(downloadException)
+    }
+    else {
+      throw downloadException
+    }
+  }
+
+  private <T> T getWithRetry(String url, Closure<T> operation, Closure<T> finalizer = {}) {
+    return new Retry(buildMessages).call {
       try {
         operation(new HttpGet(url))
       }
+      catch (StopTrying | DownloadException ex) {
+        throw ex
+      }
       catch (Exception ex) {
-        throw ex instanceof DownloadException ? ex : new DownloadException(url, ex)
+        throw new DownloadException(url, ex)
       }
       finally {
         finalizer()
