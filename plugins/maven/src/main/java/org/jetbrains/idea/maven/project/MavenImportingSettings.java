@@ -72,15 +72,19 @@ public class MavenImportingSettings implements Cloneable {
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public enum GeneratedSourcesFolder {
-    IGNORE("Don't detect"),
-    AUTODETECT("Detect automatically"),
-    GENERATED_SOURCE_FOLDER("target/generated-sources"),
-    SUBFOLDER("subdirectories of \"target/generated-sources\"");
+    IGNORE("maven.settings.generated.folder.ignore"),
+    AUTODETECT("maven.settings.generated.folder.autodetect"),
+    GENERATED_SOURCE_FOLDER("maven.settings.generated.folder.targerdir"),
+    SUBFOLDER("maven.settings.generated.folder.targersubdir");
 
-    public final String title;
+    public final String myMessageKey;
 
-    GeneratedSourcesFolder(String title) {
-      this.title = title;
+    GeneratedSourcesFolder(String messageKey) {
+      myMessageKey = messageKey;
+    }
+
+    public String getTitle() {
+      return MavenConfigurableBundle.message(myMessageKey);
     }
   }
 
