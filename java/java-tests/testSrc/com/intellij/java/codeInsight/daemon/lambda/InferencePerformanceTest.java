@@ -75,7 +75,7 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
     PlatformTestUtil.startPerformanceTest("long qualifier chain", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
-  public void _testLongQualifierChainInsideLambdaWithOverloads() {
+  public void testLongQualifierChainInsideLambdaWithOverloads() {
     PlatformTestUtil.startPerformanceTest("long qualifier chain", 12000, () -> {
       configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
       PsiMethodCallExpression callExpression =
