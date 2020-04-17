@@ -1,25 +1,36 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs
 
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.KeyDescriptor
 import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
 @ApiStatus.Internal
-object StubKeyHashingStrategyCache {
-  private val cache: MutableMap<StubIndexKey<*, *>, TObjectHashingStrategy<*>> = ContainerUtil.newConcurrentMap()
+object StubIndexKeyDescriptorCache {
+  private val cache: MutableMap<StubIndexKey<*, *>, Pair<TObjectHashingStrategy<*>, KeyDescriptor<*>>>
+    = ConcurrentHashMap()
 
   @Suppress("UNCHECKED_CAST")
   fun <K> getKeyHashingStrategy(indexKey: StubIndexKey<K, *>): TObjectHashingStrategy<K> {
-    return cache.computeIfAbsent(indexKey) {
-      return@computeIfAbsent StubKeyHashingStrategy(indexKey.findExtension().keyDescriptor)
-    } as TObjectHashingStrategy<K>
+    return getOrCache(indexKey).first as TObjectHashingStrategy<K>
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <K> getKeyDescriptor(indexKey: StubIndexKey<K, *>): KeyDescriptor<K> {
+    return getOrCache(indexKey).second as KeyDescriptor<K>
   }
 
   fun clear() {
     cache.clear()
+  }
+
+  private fun <K> getOrCache(indexKey: StubIndexKey<K, *>): Pair<TObjectHashingStrategy<*>, KeyDescriptor<*>> {
+    return cache.computeIfAbsent(indexKey) {
+      val descriptor = indexKey.findExtension().keyDescriptor
+      return@computeIfAbsent Pair(StubKeyHashingStrategy(descriptor), descriptor)
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
