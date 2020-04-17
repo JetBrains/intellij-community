@@ -4240,15 +4240,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point point = e.getPoint();
     EditorMouseEventArea area = getMouseEventArea(e);
     boolean inEditingArea = area == EditorMouseEventArea.EDITING_AREA;
-    VisualPosition visualPosition = xyToVisualPosition(inEditingArea ? point : new Point(0, point.y));
-    LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
-    int offset = logicalPositionToOffset(logicalPosition);
-    Inlay inlayCandidate = inEditingArea ? myInlayModel.getElementAt(point, true) : null;
+    EditorLocation location = new EditorLocation(this, inEditingArea ? point : new Point(0, point.y));
+    VisualPosition visualPosition = location.getVisualPosition();
+    LogicalPosition logicalPosition = location.getLogicalPosition();
+    int offset = location.getOffset();
+    Inlay inlayCandidate = inEditingArea ? myInlayModel.getElementAt(location, true) : null;
     Inlay inlay = inlayCandidate == null ||
                   (inlayCandidate.getPlacement() == Inlay.Placement.BELOW_LINE ||
                    inlayCandidate.getPlacement() == Inlay.Placement.ABOVE_LINE) &&
                   inlayCandidate.getWidthInPixels() <= point.getX() ? null : inlayCandidate;
-    FoldRegion collapseFoldRegion = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(point) : null;
+    FoldRegion collapseFoldRegion = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(location) : null;
     GutterIconRenderer gutterIconRenderer = inEditingArea ? null : myGutterComponent.getGutterRenderer(point);
     boolean overText = inlayCandidate == null && offsetToLogicalPosition(offset).equals(logicalPosition);
     return new EditorMouseEvent(this, e, area, offset, logicalPosition, visualPosition,
