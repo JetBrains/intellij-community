@@ -834,7 +834,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     return entitiesByType.all()
-      .filterValues { !it.isEmpty() && it.all().first().createEntity(this) is TypedEntityWithPersistentId }
+      .filterValues { it.all().firstOrNull()?.createEntity(this) is TypedEntityWithPersistentId }
       .asSequence()
       .flatMap { it.value.all().map { it.createEntity(this) as TypedEntityWithPersistentId } }
       .find { it.persistentId() == id } as E?
