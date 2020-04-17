@@ -115,8 +115,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
                          boolean sync,
                          boolean modal, @NotNull ThreadToUse use,
                          @Nullable CompletableFuture<P> progressIndicatorFuture) {
-    final ClientId clientId = ClientId.getCurrent();
-    myComputation = indicator -> ClientId.withClientId(clientId, (Callable<R>) () -> computation.apply(indicator));
+    myComputation = ClientId.decorateFunction(computation);
     isSync = sync;
     isModal = modal;
     myThreadToUse = use;

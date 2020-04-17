@@ -256,7 +256,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public @NotNull <T> Future<T> executeOnPooledThread(@SuppressWarnings("BoundedWildcard") @NotNull Callable<T> action) {
-    ClientId currentClientId = ClientId.getCurrent();
+    Callable<T> actionDecorated = ClientId.decorateCallable(action);
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
@@ -265,7 +265,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
 
         try {
-          return ClientId.withClientId(currentClientId, action);
+          return actionDecorated.call();
         }
         catch (ProcessCanceledException e) {
           // ignore

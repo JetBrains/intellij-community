@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeWithMe
 
+import com.intellij.util.Processor
 import java.util.concurrent.Callable
+import java.util.function.Function
 import kotlin.jvm.JvmStatic
 
 /**
@@ -30,6 +32,12 @@ data class ClientId(val value: String) {
          */
         var AbsenceBehaviorValue = AbsenceBehavior.RETURN_LOCAL
 
+
+        /**
+         * Controls propagation behavior. When false, decorateRunnable does nothing.
+         */
+        var propagateAcrossThreads = false
+
         /**
          * The ID considered local to this process. All other IDs (except for null) are considered remote
          */
@@ -50,11 +58,9 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         val current: ClientId
-            get() = when(AbsenceBehaviorValue) {
-                AbsenceBehavior.RETURN_LOCAL -> currentOrNull
-                                                                                                    ?: localId
-                AbsenceBehavior.THROW -> currentOrNull
-                                                                                             ?: throw NullPointerException("ClientId not set")
+            get() = when (AbsenceBehaviorValue) {
+                AbsenceBehavior.RETURN_LOCAL -> currentOrNull ?: localId
+                AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
             }
 
         /**
@@ -92,21 +98,19 @@ data class ClientId(val value: String) {
          * Invokes a runnable under the given ClientId
          */
         @JvmStatic
-        fun withClientId(clientId: ClientId?, action: Runnable) = withClientId(
-            clientId) { action.run() }
+        fun withClientId(clientId: ClientId?, action: Runnable) = withClientId(clientId) { action.run() }
 
         /**
          * Computes a value under given ClientId
          */
         @JvmStatic
-        fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(
-            clientId) { action.call() }
+        fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(clientId) { action.call() }
 
         /**
          * Computes a value under given ClientId
          */
         @JvmStatic
-        fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
+        inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
             val clientIdStore = ClientIdValueStoreService.tryGetInstance() ?: return action()
             val old = clientIdStore.value
             try {
@@ -119,8 +123,30 @@ data class ClientId(val value: String) {
 
         @JvmStatic
         fun decorateRunnable(runnable: java.lang.Runnable) : java.lang.Runnable {
+            if (!propagateAcrossThreads) return runnable
             val currentId = currentOrNull
             return Runnable { withClientId(currentId, runnable) }
+        }
+
+        @JvmStatic
+        fun <T> decorateCallable(callable: Callable<T>) : Callable<T> {
+            if (!propagateAcrossThreads) return callable
+            val currentId = currentOrNull
+            return Callable { withClientId(currentId, callable) }
+        }
+
+        @JvmStatic
+        fun <T, R> decorateFunction(function: Function<T, R>) : Function<T, R> {
+            if (!propagateAcrossThreads) return function
+            val currentId = currentOrNull
+            return Function { withClientId(currentId) { function.apply(it) } }
+        }
+
+        @JvmStatic
+        fun <T> decorateProcessor(processor: Processor<T>) : Processor<T> {
+            if (!propagateAcrossThreads) return processor
+            val currentId = currentOrNull
+            return Processor { withClientId(currentId) { processor.process(it) } }
         }
     }
 }
