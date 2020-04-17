@@ -16,10 +16,12 @@ import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.LaxRedirectStrategy
 import org.apache.http.util.EntityUtils
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.intellij.build.impl.retry.Retry
 
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
@@ -31,7 +33,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
   private static final int COMMITS_COUNT = 1_000
   private static final int COMMITS_SEARCH_TIMEOUT = 10_000
 
-  private final GetClient getClient = new GetClient()
+  private final GetClient getClient = new GetClient(context.messages)
 
   private final CompilationContext context
   private final String remoteCacheUrl
@@ -198,40 +200,48 @@ class GetClient {
     .setMaxConnTotal(10)
     .setMaxConnPerRoute(10)
     .build()
-
   private final Gson gson = new Gson()
+
+  private final BuildMessages buildMessages
+
+  GetClient(BuildMessages buildMessages) {
+    this.buildMessages = buildMessages
+  }
 
   def doGet(String url, Type responseType) {
     CloseableHttpResponse response = null
-    def request = new HttpGet(url)
-    try {
+    return getWithRetry(url, { HttpGet request ->
       response = httpClient.execute(request)
       def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
       if (response.statusLine.statusCode != HttpStatus.SC_OK) {
         throw new DownloadException(url, response.statusLine.statusCode, responseString)
       }
       return gson.fromJson(responseString, responseType)
-    }
-    catch (Exception ex) {
-      throw new DownloadException(url, ex)
-    }
-    finally {
-      StreamUtil.closeStream(response)
-    }
+    }, { StreamUtil.closeStream(response) })
   }
 
   // It's a caller-side responsibility to close the returned stream
   InputStream doGet(String url) {
-    try {
-      def request = new HttpGet(url)
+    return getWithRetry(url) { HttpGet request ->
       CloseableHttpResponse response = httpClient.execute(request)
       if (response.statusLine.statusCode != HttpStatus.SC_OK) {
         throw new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
       }
       return response.entity.content
     }
-    catch (Exception ex) {
-      throw new DownloadException(url, ex)
+  }
+
+  def <T> T getWithRetry(String url, Closure<T> operation, Closure<T> finalizer = {}) {
+    return new Retry(buildMessages, 3).call {
+      try {
+        operation(new HttpGet(url))
+      }
+      catch (Exception ex) {
+        throw ex instanceof DownloadException ? ex : new DownloadException(url, ex)
+      }
+      finally {
+        finalizer()
+      }
     }
   }
 
