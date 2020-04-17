@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class SplashManager {
-
   private static JFrame PROJECT_FRAME;
   private static Splash SPLASH_WINDOW;
 

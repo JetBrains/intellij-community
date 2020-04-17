@@ -75,13 +75,11 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   return list.map(CheckboxDescriptor::asOptionDescriptor)
 }
 
-internal class GitVcsPanel(private val project: Project,
-                           private val applicationSettings: GitVcsApplicationSettings,
-                           private val projectSettings: GitVcsSettings,
-                           private val sharedSettings: GitSharedSettings,
-                           private val executableManager: GitExecutableManager) :
+internal class GitVcsPanel(private val project: Project) :
   BoundConfigurable(GitVcs.NAME, "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
+
+  private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
 
   @Volatile
   private var versionCheckRequested = false
@@ -94,9 +92,8 @@ internal class GitVcsPanel(private val project: Project,
   private lateinit var supportedBranchUpLabel: JLabel
 
   private fun createPathSelector() = VcsExecutablePathSelector("Git") { path ->
-    val pathToGit = path ?: executableManager.detectedExecutable
+    val pathToGit = path ?: GitExecutableManager.getInstance().detectedExecutable
     object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
-
       private val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
       val errorNotifier = InlineErrorNotifierFromSettings(
         GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
@@ -106,6 +103,7 @@ internal class GitVcsPanel(private val project: Project,
       private lateinit var gitVersion: GitVersion
 
       override fun run(indicator: ProgressIndicator) {
+        val executableManager = GitExecutableManager.getInstance()
         executableManager.dropVersionCache(pathToGit)
         gitVersion = executableManager.identifyVersion(pathToGit)
       }
@@ -185,7 +183,7 @@ internal class GitVcsPanel(private val project: Project,
     pathSelector.reset(applicationSettings.savedPathToGit,
                        projectSettingsPathToGit != null,
                        projectSettingsPathToGit,
-                       executableManager.detectedExecutable)
+      GitExecutableManager.getInstance().detectedExecutable)
     updateBranchUpdateInfoRow()
   }
 
@@ -198,7 +196,7 @@ internal class GitVcsPanel(private val project: Project,
         {
           object : Task.Backgroundable(project, GitBundle.getString("git.executable.version.progress.title"), true) {
             override fun run(indicator: ProgressIndicator) {
-              executableManager.testGitExecutableVersionValid(project)
+              GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
             }
           }.queue()
           versionCheckRequested = false
@@ -303,6 +301,7 @@ internal class GitVcsPanel(private val project: Project,
       cell {
         label(message("settings.protected.branched"))
         val protectedBranchesField = ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
+        val sharedSettings = GitSharedSettings.getInstance(project)
         protectedBranchesField(growX)
           .withBinding<List<String>>(
             { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
