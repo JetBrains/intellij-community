@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -54,15 +55,22 @@ private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
 
 fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = emptyList(),
               withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false): List<LightFileStatus.StatusRecord> {
-  val h = GitLineHandler(project, root, GitCommand.STATUS)
-  h.setSilent(true)
-  h.appendParameters(GitExecutableManager.getInstance().tryGetVersion(project) ?: GitVersion.NULL,
-                     withRenames = withRenames, withUntracked = withUntracked, withIgnored = withIgnored)
-  h.endOptions()
-  h.addRelativePaths(files)
+  val result = mutableListOf<LightFileStatus.StatusRecord>()
 
-  val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
-  return parseGitStatusOutput(output)
+  val pathsChunks = if (files.isNotEmpty()) VcsFileUtil.chunkPaths(root, files) else listOf(emptyList()) // empty list to read everything
+  for (pathsChunk in pathsChunks) {
+    val h = GitLineHandler(project, root, GitCommand.STATUS)
+    h.setSilent(true)
+    h.appendParameters(GitExecutableManager.getInstance().tryGetVersion(project) ?: GitVersion.NULL,
+                       withRenames = withRenames, withUntracked = withUntracked, withIgnored = withIgnored)
+    h.endOptions()
+    h.addParameters(pathsChunk)
+
+    val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
+    parseGitStatusOutput(output, result=result)
+  }
+
+  return result
 }
 
 @Throws(VcsException::class)
@@ -117,9 +125,7 @@ fun getFilePath(root: VirtualFile, filePath: FilePath, executable: String): Stri
 }
 
 @Throws(VcsException::class)
-fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRecord> {
-  val result = mutableListOf<LightFileStatus.StatusRecord>()
-
+fun parseGitStatusOutput(output: String, result: MutableList<LightFileStatus.StatusRecord> = mutableListOf()): List<LightFileStatus.StatusRecord> {
   val split = output.split(NUL).toTypedArray()
   val it = split.iterator()
   while (it.hasNext()) {
@@ -146,7 +152,7 @@ fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRecord> {
     }
   }
 
-  return result;
+  return result
 }
 
 @Throws(VcsException::class)
