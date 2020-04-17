@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
@@ -31,6 +32,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.HyperlinkEvent
 
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
@@ -76,6 +78,38 @@ object GithubUIUtil {
       registerKeyboardAction({ action() },
                              KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
                              JComponent.WHEN_FOCUSED)
+    }
+  }
+
+  fun createHtmlErrorPanel(errorPrefix: String, error: Throwable,
+                           errorAction: Action? = null,
+                           horizontalAlignment: Float = JComponent.CENTER_ALIGNMENT): JComponent {
+    val alignmentText = when (horizontalAlignment) {
+      JComponent.LEFT_ALIGNMENT -> "left"
+      JComponent.RIGHT_ALIGNMENT -> "right"
+      else -> "center"
+    }
+
+    //language=HTML
+    val errorDescription = "<p align='$alignmentText'>$errorPrefix</p><p align='$alignmentText'>${error.message}<p/>"
+    val body = if (errorAction == null) errorDescription
+    else {
+      //language=HTML
+      errorDescription + "<br/><p align='$alignmentText'><a href=''>${errorAction.getName()}</a><p/>"
+    }
+
+    return HtmlEditorPane(body).apply {
+      foreground = UIUtil.getErrorForeground()
+
+      if (errorAction != null) {
+        registerKeyboardAction(errorAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
+        removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+        addHyperlinkListener(object : HyperlinkAdapter() {
+          override fun hyperlinkActivated(e: HyperlinkEvent?) {
+            errorAction.actionPerformed(ActionEvent(this@apply, ActionEvent.ACTION_PERFORMED, "perform"))
+          }
+        })
+      }
     }
   }
 

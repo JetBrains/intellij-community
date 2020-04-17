@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.ui.LoadingDecorator
 import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -17,17 +15,15 @@ import com.intellij.util.ui.*
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.getName
 import java.awt.BorderLayout
 import java.awt.GridBagLayout
-import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.KeyStroke
-import javax.swing.event.HyperlinkEvent
 
 class GHLoadingPanel<T> @Deprecated("Replaced with factory method becuse JBLoadingPanel is not really needed for initial loading",
                                     ReplaceWith("GHLoadingPanel.create"))
@@ -96,28 +92,7 @@ constructor(model: GHLoadingModel,
           isOpaque = false
           border = JBUI.Borders.empty(8)
 
-          val errorAction = errorHandler?.getActionForError(error)
-          //language=HTML
-          val errorDescription = "<p align='center'>$errorPrefix</p><p align='center'>${error.message}<p/>"
-          val body = if (errorAction == null) errorDescription
-          else {
-            //language=HTML
-            errorDescription + "<br/><p align='center'><a href=''>${errorAction.getName()}</a><p/>"
-          }
-
-          add(HtmlEditorPane(body).apply {
-            foreground = UIUtil.getErrorForeground()
-
-            if (errorAction != null) {
-              registerKeyboardAction(errorAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
-              removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-              addHyperlinkListener(object : HyperlinkAdapter() {
-                override fun hyperlinkActivated(e: HyperlinkEvent?) {
-                  errorAction.actionPerformed(ActionEvent(this@apply, ActionEvent.ACTION_PERFORMED, "perform"))
-                }
-              })
-            }
-          })
+          add(GithubUIUtil.createHtmlErrorPanel(errorPrefix, error, errorHandler?.getActionForError(error)))
         }
       }
 

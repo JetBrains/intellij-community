@@ -44,6 +44,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
@@ -174,7 +175,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     Disposer.register(loaderPanel, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
-    val statePanel = GHPRStatePanel(project, dataProvider, dataContext.securityService, dataContext.stateService, detailsModel, disposable)
+    val stateModel = GHPRStateModelImpl(project, dataContext.stateService, dataProvider, detailsModel.value, disposable)
+    val statePanel = GHPRStatePanel(dataContext.securityService, stateModel)
+    detailsModel.addAndInvokeValueChangedListener {
+      statePanel.select(detailsModel.value.state, true)
+    }
 
     val contentPanel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
 
