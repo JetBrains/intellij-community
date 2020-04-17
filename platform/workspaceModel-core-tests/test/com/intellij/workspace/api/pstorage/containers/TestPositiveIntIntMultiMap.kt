@@ -4,10 +4,10 @@ package com.intellij.workspace.api.pstorage.containers
 import org.junit.Assert.*
 import org.junit.Test
 
-class TestIntIntMultiMap {
+class TestPositiveIntIntMultiMap {
   @Test
   internal fun `add and remove value`() {
-    val multimap = MutableIntIntMultiMap.ByList()
+    val multimap = MutablePositiveIntIntMultiMap.ByList()
     multimap.putAll(1, intArrayOf(2))
     assertEquals(2, multimap[1].single())
     multimap.remove(1)
@@ -16,7 +16,7 @@ class TestIntIntMultiMap {
 
   @Test
   internal fun `add and remove multiple values`() {
-    val multimap = MutableIntIntMultiMap.ByList()
+    val multimap = MutablePositiveIntIntMultiMap.ByList()
     multimap.putAll(1, intArrayOf(2))
     multimap.putAll(1, intArrayOf(3))
     multimap.putAll(1, intArrayOf(4))
@@ -27,7 +27,7 @@ class TestIntIntMultiMap {
 
   @Test
   internal fun `add and remove multiple values one by one`() {
-    val multimap = MutableIntIntMultiMap.ByList()
+    val multimap = MutablePositiveIntIntMultiMap.ByList()
     multimap.putAll(1, intArrayOf(2))
     multimap.putAll(1, intArrayOf(3))
     multimap.putAll(1, intArrayOf(4))

@@ -8,33 +8,25 @@ import org.jetbrains.annotations.TestOnly
  * @author Alex Plate
  *
  * See:
- *  - [IntIntMultiMap.ByList]
- *  - [IntIntMultiMap.BySet]
+ *  - [ImmutablePositiveIntIntMultiMap.ByList]
+ *  - [ImmutablePositiveIntIntMultiMap.BySet]
  * and
- *  - [MutableIntIntMultiMap.ByList]
- *  - [MutableIntIntMultiMap.BySet]
+ *  - [MutablePositiveIntIntMultiMap.ByList]
+ *  - [MutablePositiveIntIntMultiMap.BySet]
  */
 
-internal sealed class IntIntMultiMap(
+sealed class ImmutablePositiveIntIntMultiMap(
   override var values: IntArray,
   override val links: TIntIntHashMap,
   override val distinctValues: Boolean
-) : AbstractIntIntMultiMap() {
+) : PositiveIntIntMultiMap() {
 
-  class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : IntIntMultiMap(values, links, true) {
-    constructor() : this(IntArray(0), TIntIntHashMap())
-
-    override fun copy(): BySet = doCopy().let { BySet(it.first, it.second) }
-
-    override fun toMutable(): MutableIntIntMultiMap.BySet = MutableIntIntMultiMap.BySet(values.clone(), links.clone() as TIntIntHashMap)
+  class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : ImmutablePositiveIntIntMultiMap(values, links, true) {
+    override fun toMutable(): MutablePositiveIntIntMultiMap.BySet = MutablePositiveIntIntMultiMap.BySet(values, links)
   }
 
-  class ByList internal constructor(values: IntArray, links: TIntIntHashMap) : IntIntMultiMap(values, links, false) {
-    constructor() : this(IntArray(0), TIntIntHashMap())
-
-    override fun copy(): ByList = doCopy().let { ByList(it.first, it.second) }
-
-    override fun toMutable(): MutableIntIntMultiMap.ByList = MutableIntIntMultiMap.ByList(values.clone(), links.clone() as TIntIntHashMap)
+  class ByList internal constructor(values: IntArray, links: TIntIntHashMap) : ImmutablePositiveIntIntMultiMap(values, links, false) {
+    override fun toMutable(): MutablePositiveIntIntMultiMap.ByList = MutablePositiveIntIntMultiMap.ByList(values, links)
   }
 
   override operator fun get(key: Int): IntSequence {
@@ -44,7 +36,7 @@ internal sealed class IntIntMultiMap(
     return RoMultiResultIntSequence(values, idx.unpack())
   }
 
-  abstract fun toMutable(): MutableIntIntMultiMap
+  abstract fun toMutable(): MutablePositiveIntIntMultiMap
 
   private class RoMultiResultIntSequence(
     private val values: IntArray,
@@ -71,30 +63,31 @@ internal sealed class IntIntMultiMap(
   }
 }
 
-internal sealed class MutableIntIntMultiMap(
+sealed class MutablePositiveIntIntMultiMap(
   override var values: IntArray,
-  override val links: TIntIntHashMap,
-  override val distinctValues: Boolean
-) : AbstractIntIntMultiMap() {
+  override var links: TIntIntHashMap,
+  override val distinctValues: Boolean,
+  protected var freezed: Boolean
+) : PositiveIntIntMultiMap() {
 
-  class BySet internal constructor(values: IntArray, links: TIntIntHashMap) : MutableIntIntMultiMap(values, links, true) {
-    constructor() : this(IntArray(0), TIntIntHashMap())
+  class BySet private constructor(values: IntArray, links: TIntIntHashMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links, true, freezed) {
+    constructor() : this(IntArray(0), TIntIntHashMap(), false)
+    internal constructor(values: IntArray, links: TIntIntHashMap) : this(values, links, true)
 
-    override fun copy(): BySet = doCopy().let { BySet(it.first, it.second) }
-
-    override fun toImmutable(): IntIntMultiMap.BySet {
-      return IntIntMultiMap.BySet(values.clone(), links.clone() as TIntIntHashMap)
+    override fun toImmutable(): ImmutablePositiveIntIntMultiMap.BySet {
+      freezed = true
+      return ImmutablePositiveIntIntMultiMap.BySet(values, links)
     }
   }
 
-  class ByList internal constructor(values: IntArray, links: TIntIntHashMap) : MutableIntIntMultiMap(values, links, false) {
-    constructor() : this(IntArray(0), TIntIntHashMap())
+  class ByList private constructor(values: IntArray, links: TIntIntHashMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links, false, freezed) {
+    constructor() : this(IntArray(0), TIntIntHashMap(), false)
+    internal constructor(values: IntArray, links: TIntIntHashMap) : this(values, links, true)
 
-    override fun toImmutable(): IntIntMultiMap.ByList {
-      return IntIntMultiMap.ByList(values.clone(), links.clone() as TIntIntHashMap)
+    override fun toImmutable(): ImmutablePositiveIntIntMultiMap.ByList {
+      freezed = true
+      return ImmutablePositiveIntIntMultiMap.ByList(values, links)
     }
-
-    override fun copy(): ByList = doCopy().let { ByList(it.first, it.second) }
   }
 
   override fun get(key: Int): IntSequence {
@@ -112,16 +105,9 @@ internal sealed class MutableIntIntMultiMap(
 
   }
 
-  private fun exists(value: Int, startRange: Int, endRange: Int): Boolean {
-    for (i in startRange until endRange) {
-      if (values[i] == value) return true
-    }
-    if (values[endRange] == value.pack()) return true
-    return false
-  }
-
   fun putAll(key: Int, newValues: IntArray): Boolean {
     if (newValues.isEmpty()) return false
+    startWrite()
     return if (key in links) {
       var idx = links[key]
       if (idx < 0) {
@@ -202,6 +188,7 @@ internal sealed class MutableIntIntMultiMap(
 
   fun remove(key: Int) {
     if (key !in links) return
+    startWrite()
 
     var idx = links[key]
 
@@ -230,7 +217,7 @@ internal sealed class MutableIntIntMultiMap(
 
   fun remove(key: Int, value: Int): Boolean {
     if (key !in links) return false
-
+    startWrite()
     var idx = links[key]
 
     if (idx >= 0) {
@@ -305,6 +292,28 @@ internal sealed class MutableIntIntMultiMap(
     }
   }
 
+  private fun exists(value: Int, startRange: Int, endRange: Int): Boolean {
+    for (i in startRange until endRange) {
+      if (values[i] == value) return true
+    }
+    if (values[endRange] == value.pack()) return true
+    return false
+  }
+
+  private fun startWrite() {
+    if (!freezed) return
+    values = values.clone()
+    links = links.clone() as TIntIntHashMap
+    freezed = false
+  }
+
+  private fun startWriteDoNotCopyValues() {
+    if (!freezed) return
+    values = values.clone()
+    links = links.clone() as TIntIntHashMap
+    freezed = false
+  }
+
   private fun rightShiftLinks(idx: Int, shiftTo: Int) {
     links.keys().forEach { keyToUpdate ->
       val valueToUpdate = links[keyToUpdate]
@@ -315,18 +324,19 @@ internal sealed class MutableIntIntMultiMap(
   }
 
   fun clear() {
+    startWriteDoNotCopyValues()
     links.clear()
     values = IntArray(0)
   }
 
-  abstract fun toImmutable(): IntIntMultiMap
+  abstract fun toImmutable(): ImmutablePositiveIntIntMultiMap
 
   private class RwIntSequence(private val values: IntArray) : IntSequence() {
     override fun getIterator(): IntIterator = values.iterator()
   }
 }
 
-internal sealed class AbstractIntIntMultiMap {
+sealed class PositiveIntIntMultiMap {
 
   protected abstract var values: IntArray
   protected abstract val links: TIntIntHashMap
@@ -359,7 +369,7 @@ internal sealed class AbstractIntIntMultiMap {
   }
 
   /** This method works o(n) */
-  fun size(key: Int): Int {
+  protected fun size(key: Int): Int {
     if (key !in links) return 0
 
     var idx = links[key]
@@ -379,14 +389,6 @@ internal sealed class AbstractIntIntMultiMap {
 
   fun isEmpty(): Boolean = links.isEmpty
 
-  abstract fun copy(): AbstractIntIntMultiMap
-
-  protected fun doCopy(): Pair<IntArray, TIntIntHashMap> {
-    val newLinks = TIntIntHashMap().clone() as TIntIntHashMap
-    val newValues = values.clone()
-    return newValues to newLinks
-  }
-
   companion object {
     internal fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
     internal fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
@@ -394,7 +396,7 @@ internal sealed class AbstractIntIntMultiMap {
 
   abstract class IntSequence {
 
-    protected abstract fun getIterator(): IntIterator
+    abstract fun getIterator(): IntIterator
 
     inline fun forEach(action: (Int) -> Unit) {
       val iterator = getIterator()
