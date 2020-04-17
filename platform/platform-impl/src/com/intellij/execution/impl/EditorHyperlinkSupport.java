@@ -79,7 +79,7 @@ public class EditorHyperlinkSupport {
             return;
           }
 
-          Runnable runnable = getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+          Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
           if (runnable != null) {
             runnable.run();
           }
@@ -91,7 +91,7 @@ public class EditorHyperlinkSupport {
       @Override
       public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
-        final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getMouseEvent().getPoint());
+        final HyperlinkInfo info = getHyperlinkInfoByEvent(e);
         myEditor.setCustomCursor(EditorHyperlinkSupport.class, info == null ? null : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
     }
@@ -178,8 +178,7 @@ public class EditorHyperlinkSupport {
     return null;
   }
 
-  @Nullable
-  private HyperlinkInfo getHyperlinkAt(final int offset) {
+  public @Nullable HyperlinkInfo getHyperlinkAt(final int offset) {
     RangeHighlighter range = findLinkRangeAt(offset);
     return range == null ? null : getHyperlinkInfo(range);
   }
@@ -266,13 +265,8 @@ public class EditorHyperlinkSupport {
   }
 
   @Nullable
-  public HyperlinkInfo getHyperlinkInfoByPoint(final Point p) {
-    final LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
-    if (EditorUtil.inVirtualSpace(myEditor, pos)) {
-      return null;
-    }
-
-    return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
+  public HyperlinkInfo getHyperlinkInfoByEvent(@NotNull EditorMouseEvent event) {
+    return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
   }
 
   @Deprecated

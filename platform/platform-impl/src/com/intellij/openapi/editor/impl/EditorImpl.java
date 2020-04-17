@@ -3795,8 +3795,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
+      EditorMouseEvent event = createEditorMouseEvent(e);
       myLastPressWasAtBlockInlay = false;
-      myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
+      myLastMousePressedLocation = event.getLogicalPosition();
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
@@ -3804,9 +3805,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean forceProcessing = false;
       myMousePressedEvent = e;
-      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
 
-      myExpectedCaretOffset = logicalPositionToOffset(myLastMousePressedLocation);
+      myExpectedCaretOffset = event.getOffset();
       try {
         for (EditorMouseListener mouseListener : myMouseListeners) {
           boolean wasConsumed = event.isConsumed();
@@ -3848,12 +3848,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void runMouseClickedCommand(@NotNull final MouseEvent e) {
-      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      EditorMouseEvent event = createEditorMouseEvent(e);
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseClicked(event);
-        if (isReleased) return;
-        if (event.isConsumed()) {
-          e.consume();
+        if (isReleased || event.isConsumed()) {
           return;
         }
       }
@@ -3868,7 +3866,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      EditorMouseEvent event = createEditorMouseEvent(e);
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseReleased(event);
         if (isReleased || event.isConsumed()) {
@@ -4238,6 +4236,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myUseEditorAntialiasing = value;
   }
 
+  private EditorMouseEvent createEditorMouseEvent(MouseEvent e) {
+    Point point = e.getPoint();
+    EditorMouseEventArea area = getMouseEventArea(e);
+    boolean inEditingArea = area == EditorMouseEventArea.EDITING_AREA;
+    VisualPosition visualPosition = xyToVisualPosition(inEditingArea ? point : new Point(0, point.y));
+    LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
+    int offset = logicalPositionToOffset(logicalPosition);
+    Inlay inlayCandidate = inEditingArea ? myInlayModel.getElementAt(point, true) : null;
+    Inlay inlay = inlayCandidate == null ||
+                  (inlayCandidate.getPlacement() == Inlay.Placement.BELOW_LINE ||
+                   inlayCandidate.getPlacement() == Inlay.Placement.ABOVE_LINE) &&
+                  inlayCandidate.getWidthInPixels() <= point.getX() ? null : inlayCandidate;
+    FoldRegion collapseFoldRegion = inEditingArea ? myFoldingModel.getFoldingPlaceholderAt(point) : null;
+    GutterIconRenderer gutterIconRenderer = inEditingArea ? null : myGutterComponent.getGutterRenderer(point);
+    boolean overText = inlayCandidate == null && offsetToLogicalPosition(offset).equals(logicalPosition);
+    return new EditorMouseEvent(this, e, area, offset, logicalPosition, visualPosition,
+                                overText, collapseFoldRegion, inlay, gutterIconRenderer);
+  }
+
   private class MyMouseMotionListener implements MouseMotionListener {
     @DirtyUI
     @Override
@@ -4281,7 +4298,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       myMouseMovedEvent = e;
 
-      EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      EditorMouseEvent event = createEditorMouseEvent(e);
       if (e.getSource() == myGutterComponent) {
         myGutterComponent.mouseMoved(e);
       }

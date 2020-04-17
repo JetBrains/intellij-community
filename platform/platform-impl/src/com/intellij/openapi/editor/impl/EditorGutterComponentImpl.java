@@ -2169,7 +2169,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   @Nullable
-  public GutterMark getGutterRenderer(final Point p) {
+  public GutterIconRenderer getGutterRenderer(final Point p) {
     PointInfo info = getPointInfo(p);
     return info == null ? null : info.renderer;
   }

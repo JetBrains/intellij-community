@@ -300,6 +300,10 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Inlay getElementAt(@NotNull Point point) {
+    return getElementAt(point, false);
+  }
+
+  Inlay getElementAt(@NotNull Point point, boolean ignoreBlockElementWidth) {
     Insets insets = myEditor.getContentComponent().getInsets();
     if (point.y < insets.top) return null; // can happen for mouse drag events
     int relX = point.x - insets.left;
@@ -321,7 +325,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
           Inlay inlay = inlays.get(i);
           yDiff -= inlay.getHeightInPixels();
           if (yDiff <= 0) {
-            return relX < inlay.getWidthInPixels() ? inlay : null;
+            return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
           }
         }
         LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
