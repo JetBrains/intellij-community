@@ -8,7 +8,6 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -38,6 +37,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   protected final String myAnnotation;
   final String[] myAnnotationsToRemove;
+  @SafeFieldForPreview
   final PsiNameValuePair[] myPairs; // not used when registering local quick fix
   protected final String myText;
   private final ExternalAnnotationsManager.AnnotationPlace myAnnotationPlace;
@@ -349,15 +349,5 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
                                                                            List<String> annotationsToRemove) {
     if (!isNullabilityAnnotationApplicable(owner)) return null;
     return new AddAnnotationPsiFix(annotationToAdd, owner, PsiNameValuePair.EMPTY_ARRAY, ArrayUtilRt.toStringArray(annotationsToRemove));
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiElement element = myStartElement.getElement();
-    if (element == null) return null;
-    // myPairs is used to copy from, so should be safe 
-    return new AddAnnotationPsiFix(
-      myAnnotation, (PsiModifierListOwner)PreviewUtil.findSameElementInCopy(element, target),
-      myPairs, myAnnotationsToRemove);
   }
 }

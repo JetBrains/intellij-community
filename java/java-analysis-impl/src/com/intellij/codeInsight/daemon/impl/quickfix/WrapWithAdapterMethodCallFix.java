@@ -168,7 +168,9 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM))
   };
 
+  @SafeFieldForPreview
   @Nullable private final PsiType myType;
+  @SafeFieldForPreview
   @Nullable private final Wrapper myWrapper;
 
   public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
@@ -253,12 +255,5 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     for (Wrapper wrapper : WRAPPERS) {
       wrapper.registerCastActions(candidates, call, highlightInfo, fixRange);
     }
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiExpression expression = (PsiExpression)getStartElement();
-    if (expression == null) return null;
-    return new WrapWithAdapterMethodCallFix(myType, PreviewUtil.findSameElementInCopy(expression, target), myWrapper);
   }
 }

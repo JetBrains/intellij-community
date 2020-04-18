@@ -16,16 +16,13 @@
 
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -50,15 +47,5 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     applyFix();
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiElement element = myStartElement.getElement();
-    if (element == null) return null;
-    // myPairs is used to copy from, so should be safe 
-    return new AddAnnotationFix(
-      myAnnotation, (PsiModifierListOwner)PreviewUtil.findSameElementInCopy(element, target),
-      myPairs, myAnnotationsToRemove);
   }
 }
