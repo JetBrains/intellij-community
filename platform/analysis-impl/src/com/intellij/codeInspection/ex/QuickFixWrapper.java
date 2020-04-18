@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -10,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -120,9 +120,9 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
     LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
     if (result == null) return null;
-    PsiElement start = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getStartElement(), target);
-    PsiElement end = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getEndElement(), target);
-    PsiElement psi = CodeInsightUtilCore.findSameElementInCopy(myDescriptor.getPsiElement(), target);
+    PsiElement start = PreviewUtil.findSameElementInCopy(myDescriptor.getStartElement(), target);
+    PsiElement end = PreviewUtil.findSameElementInCopy(myDescriptor.getEndElement(), target);
+    PsiElement psi = PreviewUtil.findSameElementInCopy(myDescriptor.getPsiElement(), target);
     ProblemDescriptor descriptor = new ProblemDescriptor() {
       //@formatter:off
       @Override public PsiElement getPsiElement() { return psi;}

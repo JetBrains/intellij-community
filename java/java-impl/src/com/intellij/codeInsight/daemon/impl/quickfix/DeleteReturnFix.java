@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -81,6 +81,6 @@ public final class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiE
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiReturnStatement returnStatement = myStatementPtr.getElement();
     if (returnStatement == null) return null;
-    return new DeleteReturnFix(CodeInsightUtilCore.findSameElementInCopy(returnStatement, target), myIsLastStatement, myHasSideEffects);
+    return new DeleteReturnFix(PreviewUtil.findSameElementInCopy(returnStatement, target), myIsLastStatement, myHasSideEffects);
   }
 }

@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
@@ -138,6 +138,6 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiSwitchBlock block = myBlock.getElement();
-    return block == null ? null : new CreateDefaultBranchFix(CodeInsightUtilCore.findSameElementInCopy(block, target), myMessage);
+    return block == null ? null : new CreateDefaultBranchFix(PreviewUtil.findSameElementInCopy(block, target), myMessage);
   }
 }

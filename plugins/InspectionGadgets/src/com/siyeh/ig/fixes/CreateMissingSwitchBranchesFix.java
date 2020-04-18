@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -61,6 +61,6 @@ public final class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiSwitchBlock block = myBlock.getElement();
-    return block == null ? null : new CreateMissingSwitchBranchesFix(CodeInsightUtilCore.findSameElementInCopy(block, target), myNames);
+    return block == null ? null : new CreateMissingSwitchBranchesFix(PreviewUtil.findSameElementInCopy(block, target), myNames);
   }
 }

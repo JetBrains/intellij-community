@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -134,8 +134,8 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
   @Override
   public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new RemoveRedundantArgumentsFix(
-      CodeInsightUtilCore.findSameElementInCopy(myTargetMethod, target),
-      ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> CodeInsightUtilCore.findSameElementInCopy(arg, target)),
+      PreviewUtil.findSameElementInCopy(myTargetMethod, target),
+      ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> PreviewUtil.findSameElementInCopy(arg, target)),
       mySubstitutor);
   }
 }

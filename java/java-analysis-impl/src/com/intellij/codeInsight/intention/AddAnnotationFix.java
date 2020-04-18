@@ -16,7 +16,7 @@
 
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -58,7 +58,7 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
     if (element == null) return null;
     // myPairs is used to copy from, so should be safe 
     return new AddAnnotationFix(
-      myAnnotation, (PsiModifierListOwner)CodeInsightUtilCore.findSameElementInCopy(element, target),
+      myAnnotation, (PsiModifierListOwner)PreviewUtil.findSameElementInCopy(element, target),
       myPairs, myAnnotationsToRemove);
   }
 }

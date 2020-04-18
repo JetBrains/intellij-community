@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -69,6 +69,6 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiElement element = getStartElement();
-    return element == null ? null : new DeleteElementFix(CodeInsightUtilCore.findSameElementInCopy(element, target), myText);
+    return element == null ? null : new DeleteElementFix(PreviewUtil.findSameElementInCopy(element, target), myText);
   }
 }
