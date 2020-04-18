@@ -69,8 +69,8 @@ fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
 }
 
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
-  val existing = filterSystemWideSdks(existingSdks)
-  val detected = detectSystemWideSdks(module, existingSdks, context)
+  val existing = filterSystemWideSdks(existingSdks).filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
+  val detected = detectSystemWideSdks(module, existingSdks, context).filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
   return existing + detected
 }
 
