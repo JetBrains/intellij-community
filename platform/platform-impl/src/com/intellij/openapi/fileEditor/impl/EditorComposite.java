@@ -76,7 +76,8 @@ public class EditorComposite implements Disposable {
    * "close non modified editors first" feature.
    */
   private final long myInitialFileTimeStamp;
-  TabbedPaneWrapper myTabbedPaneWrapper;
+  private TabbedPaneWrapper myTabbedPaneWrapper;
+  @NotNull
   private final MyComponent myComponent;
   private final FocusWatcher myFocusWatcher;
   /**
@@ -99,8 +100,8 @@ public class EditorComposite implements Disposable {
    * is {@code null} or {@code providers} is {@code null} or {@code myEditor} arrays is empty
    */
   EditorComposite(@NotNull final VirtualFile file,
-                  final FileEditor @NotNull [] editors,
-                  FileEditorProvider @NotNull [] providers,
+                  @NotNull FileEditor @NotNull [] editors,
+                  @NotNull FileEditorProvider @NotNull [] providers,
                   @NotNull final FileEditorManagerEx fileEditorManager) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
@@ -304,19 +305,19 @@ public class EditorComposite implements Disposable {
     return myTabbedPaneWrapper == null ? null : ((TabbedPaneWrapper.AsJBTabs)myTabbedPaneWrapper).getTabs();
   }
 
-  public void addTopComponent(FileEditor editor, JComponent component) {
+  public void addTopComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
     manageTopOrBottomComponent(editor, component, true, false);
   }
 
-  public void removeTopComponent(FileEditor editor, JComponent component) {
+  public void removeTopComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
     manageTopOrBottomComponent(editor, component, true, true);
   }
 
-  public void addBottomComponent(FileEditor editor, JComponent component) {
+  void addBottomComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
     manageTopOrBottomComponent(editor, component, false, false);
   }
 
-  public void removeBottomComponent(FileEditor editor, JComponent component) {
+  void removeBottomComponent(@NotNull FileEditor editor, @NotNull JComponent component) {
     manageTopOrBottomComponent(editor, component, false, true);
   }
 
@@ -422,6 +423,7 @@ public class EditorComposite implements Disposable {
   /**
    * @return component which represents set of file editors in the UI
    */
+  @NotNull
   public JComponent getComponent() {
     return myComponent;
   }
@@ -456,10 +458,9 @@ public class EditorComposite implements Disposable {
   }
 
   private class MyComponent extends JPanel implements DataProvider{
-    @NotNull
-    private Supplier<JComponent> myFocusComponent;
+    private @NotNull Supplier<? extends JComponent> myFocusComponent;
 
-    MyComponent(@NotNull JComponent realComponent, @NotNull Supplier<JComponent> focusComponent) {
+    MyComponent(@NotNull JComponent realComponent, @NotNull Supplier<? extends JComponent> focusComponent) {
       super(new BorderLayout());
       myFocusComponent = focusComponent;
       add(realComponent, BorderLayout.CENTER);
@@ -522,7 +523,7 @@ public class EditorComposite implements Disposable {
     myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
   }
 
-  void addEditor(@NotNull FileEditor editor) {
+  private void addEditor(@NotNull FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     //noinspection NonAtomicOperationOnVolatileField : field is modified only in EDT
     myEditors = ArrayUtil.append(myEditors, editor);
@@ -564,8 +565,7 @@ public class EditorComposite implements Disposable {
     };
   }
 
-  @NotNull
-  public HistoryEntry currentStateAsHistoryEntry() {
+  @NotNull HistoryEntry currentStateAsHistoryEntry() {
     final FileEditor[] editors = getEditors();
     final FileEditorState[] states = new FileEditorState[editors.length];
     for (int j = 0; j < states.length; j++) {
@@ -578,7 +578,7 @@ public class EditorComposite implements Disposable {
     return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex]);
   }
 
-  public void addEditor(@NotNull FileEditor editor, FileEditorProvider provider) {
+  public void addEditor(@NotNull FileEditor editor, @NotNull FileEditorProvider provider) {
     addEditor(editor);
     myProviders = ArrayUtil.append(myProviders, provider);
   }

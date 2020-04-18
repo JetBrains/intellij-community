@@ -796,7 +796,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   @Override
-  public Document[] getDocuments() {
+  public Document @NotNull [] getDocuments() {
     return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile));
   }
 

@@ -180,7 +180,7 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   @Override
-  public final Document[] getDocuments() {
+  public final Document @NotNull [] getDocuments() {
     return myUndoHelper.getDocuments();
   }
 

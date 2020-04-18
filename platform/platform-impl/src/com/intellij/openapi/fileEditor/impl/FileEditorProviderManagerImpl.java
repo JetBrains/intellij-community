@@ -91,21 +91,21 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
   private final Map<String, String> mySelectedProviders = new HashMap<>();
 
-  void providerSelected(EditorComposite composite) {
+  void providerSelected(@NotNull EditorComposite composite) {
     FileEditorProvider[] providers = composite.getProviders();
     if (providers.length < 2) return;
     mySelectedProviders.put(computeKey(providers),
                             composite.getSelectedWithProvider().getProvider().getEditorTypeId());
   }
 
-  private static String computeKey(FileEditorProvider[] providers) {
+  private static @NotNull String computeKey(FileEditorProvider[] providers) {
     return StringUtil.join(ContainerUtil.map(providers, FileEditorProvider::getEditorTypeId), ",");
   }
 
   @Nullable
-  FileEditorProvider getSelectedFileEditorProvider(EditorHistoryManager editorHistoryManager,
-                                                   VirtualFile file,
-                                                   FileEditorProvider[] providers) {
+  FileEditorProvider getSelectedFileEditorProvider(@NotNull EditorHistoryManager editorHistoryManager,
+                                                   @NotNull VirtualFile file,
+                                                   FileEditorProvider @NotNull [] providers) {
     FileEditorProvider provider = editorHistoryManager.getSelectedProvider(file);
     if (provider != null || providers.length < 2) {
       return provider;

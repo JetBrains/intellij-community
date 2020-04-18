@@ -43,7 +43,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @NotNull protected final VirtualFile myFile;
   private final AsyncEditorLoader myAsyncLoader;
 
-  TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
+  TextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
     myProject = project;
     myFile = file;
     myChangeSupport = new PropertyChangeSupport(this);
@@ -91,7 +91,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @NotNull
-  protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
+  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file) {
     return new TextEditorComponent(project, file, this);
   }
 
@@ -147,12 +147,12 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
-  public void setState(@NotNull final FileEditorState state) {
+  public void setState(@NotNull FileEditorState state) {
     setState(state, false);
   }
 
   @Override
-  public void setState(@NotNull final FileEditorState state, boolean exactState) {
+  public void setState(@NotNull FileEditorState state, boolean exactState) {
     if (state instanceof TextEditorState) {
       myAsyncLoader.setEditorState((TextEditorState)state, exactState);
     }
@@ -180,17 +180,17 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myComponent.updateModifiedProperty();
   }
 
-  void firePropertyChange(final String propertyName, final Object oldValue, final Object newValue) {
+  void firePropertyChange(@NotNull String propertyName, Object oldValue, Object newValue) {
     myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myChangeSupport.addPropertyChangeListener(listener);
   }
 
   @Override
-  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myChangeSupport.removePropertyChangeListener(listener);
   }
 
@@ -219,7 +219,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
-  public void navigateTo(@NotNull final Navigatable navigatable) {
+  public void navigateTo(@NotNull Navigatable navigatable) {
     ((OpenFileDescriptor)navigatable).navigateIn(getEditor());
   }
 
@@ -231,13 +231,13 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   private static class TransientEditorState {
     private boolean softWrapsEnabled;
 
-    private static TransientEditorState forEditor(Editor editor) {
+    private static @NotNull TransientEditorState forEditor(@NotNull Editor editor) {
       TransientEditorState state = new TransientEditorState();
       state.softWrapsEnabled = editor.getSettings().isUseSoftWraps();
       return state;
     }
 
-    private void applyTo(Editor editor) {
+    private void applyTo(@NotNull Editor editor) {
       editor.getSettings().setUseSoftWraps(softWrapsEnabled);
     }
   }

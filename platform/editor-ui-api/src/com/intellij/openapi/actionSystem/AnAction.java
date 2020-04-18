@@ -207,7 +207,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
   }
 
-  public final void unregisterCustomShortcutSet(@Nullable JComponent component) {
+  public final void unregisterCustomShortcutSet(@NotNull JComponent component) {
     List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList != null) {
       actionList.remove(this);

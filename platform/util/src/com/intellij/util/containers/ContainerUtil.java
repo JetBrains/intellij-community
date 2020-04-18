@@ -1536,13 +1536,12 @@ public class ContainerUtil {
 
   @SafeVarargs
   @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> concat(final T[] @NotNull ... iterables) {
+  public static @NotNull <T> Iterable<T> concat(final T[] @NotNull ... arrays) {
     return () -> {
       //noinspection unchecked
-      Iterator<T>[] iterators = new Iterator[iterables.length];
-      for (int i = 0; i < iterables.length; i++) {
-        T[] iterable = iterables[i];
-        iterators[i] = iterate(iterable);
+      Iterator<T>[] iterators = new Iterator[arrays.length];
+      for (int i = 0; i < arrays.length; i++) {
+        iterators[i] = iterate(arrays[i]);
       }
       return concatIterators(iterators);
     };

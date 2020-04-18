@@ -426,14 +426,12 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     }
 
     Document[] documents = TextEditorProvider.getDocuments(editor);
-    if (documents != null) {
-      for (Document each : documents) {
-        Document original = getOriginal(each);
-        // KirillK : in AnAction.update we may have an editor with an invalid file
-        VirtualFile f = FileDocumentManager.getInstance().getFile(each);
-        if (f != null && !f.isValid()) continue;
-        result.add(DocumentReferenceManager.getInstance().create(original));
-      }
+    for (Document each : documents) {
+      Document original = getOriginal(each);
+      // KirillK : in AnAction.update we may have an editor with an invalid file
+      VirtualFile f = FileDocumentManager.getInstance().getFile(each);
+      if (f != null && !f.isValid()) continue;
+      result.add(DocumentReferenceManager.getInstance().create(original));
     }
     return result;
   }
@@ -456,7 +454,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   @NotNull
-  private Pair<String, String> getUndoOrRedoActionNameAndDescription(FileEditor editor, boolean undo) {
+  private Pair<String, String> getUndoOrRedoActionNameAndDescription(@Nullable FileEditor editor, boolean undo) {
     String desc = isUndoOrRedoAvailable(editor, undo) ? doFormatAvailableUndoRedoAction(editor, undo) : null;
     if (desc == null) desc = "";
     String shortActionName = StringUtil.first(desc, 30, true);

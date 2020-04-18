@@ -38,10 +38,17 @@ import java.util.List;
 // w/o making mocks for all of them. perhaps later we will decouple those things
 public class Mock {
   public static class MyFileEditor extends UserDataHolderBase implements DocumentsEditor {
-    public Document[] DOCUMENTS;
+    private final Document @NotNull [] DOCUMENTS;
+
+    public MyFileEditor(Document @NotNull ... DOCUMENTS) {
+      this.DOCUMENTS = DOCUMENTS;
+    }
+    public MyFileEditor() {
+      this(Document.EMPTY_ARRAY);
+    }
 
     @Override
-    public Document[] getDocuments() {
+    public Document @NotNull [] getDocuments() {
       return DOCUMENTS;
     }
 

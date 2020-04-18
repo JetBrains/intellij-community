@@ -95,7 +95,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
     return state;
   }
 
-  private static TextEditorState.CaretState readCaretInfo(@NotNull Element element) {
+  private static @NotNull TextEditorState.CaretState readCaretInfo(@NotNull Element element) {
     TextEditorState.CaretState caretState = new TextEditorState.CaretState();
     caretState.LINE = parseWithDefault(element, LINE_ATTR);
     caretState.COLUMN = parseWithDefault(element, COLUMN_ATTR);
@@ -174,11 +174,10 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
     return new EditorWrapper(editor);
   }
 
-  public static Document @Nullable [] getDocuments(@NotNull FileEditor editor) {
+  public static Document @NotNull [] getDocuments(@NotNull FileEditor editor) {
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
-      Document[] documents = documentsEditor.getDocuments();
-      return documents.length > 0 ? documents : null;
+      return documentsEditor.getDocuments();
     }
 
     if (editor instanceof TextEditor) {
@@ -197,7 +196,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
       }
     }
 
-    return null;
+    return Document.EMPTY_ARRAY;
   }
 
   static void putTextEditor(Editor editor, TextEditor textEditor) {

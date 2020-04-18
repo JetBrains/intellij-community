@@ -2924,7 +2924,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo) {
+  public void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
     TabsLayout newTabsLayout = newTabsLayoutInfo.createTabsLayout(myTabsLayoutCallback);
 
     if (myTabsLayout != null) {
