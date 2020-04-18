@@ -49,6 +49,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
+import static com.intellij.openapi.application.CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -79,6 +80,17 @@ public final class ConfigImportHelper {
     log.info("Importing configs to " + newConfigDir);
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
+    CustomConfigMigrationOption customMigrationOption = readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
+
+    if (customMigrationOption instanceof CustomConfigMigrationOption.SetProperties) {
+      List<String> properties = ((CustomConfigMigrationOption.SetProperties)customMigrationOption).getProperties();
+      log.info("Enabling system properties after restart: " + properties);
+      for (String property : properties) {
+        System.setProperty(property, Boolean.TRUE.toString());
+      }
+      return;
+    }
+
     ConfigImportSettings settings = null;
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
@@ -90,7 +102,6 @@ public final class ConfigImportHelper {
     catch (Exception ignored) { }
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
-    CustomConfigMigrationOption customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile();
     File tempBackup = null;
     boolean vmOptionFileChanged = false;
 
@@ -158,6 +169,14 @@ public final class ConfigImportHelper {
 
     if (vmOptionFileChanged) {
       log.info("The vmoptions file has changed, restarting...");
+
+      List<String> properties = new ArrayList<>();
+      properties.add(FIRST_SESSION_KEY);
+      if (isConfigImported()) {
+        properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+      }
+      new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile();
+
       restart();
     }
   }
@@ -184,10 +203,6 @@ public final class ConfigImportHelper {
         System.exit(0);
       }
     }
-  }
-
-  static @NotNull Path getCustomConfigMarkerFilePath() {
-    return PathManager.getConfigDir().resolve(CUSTOM_MARKER_FILE_NAME);
   }
 
   @NotNull
