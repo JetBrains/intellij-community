@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
@@ -152,7 +153,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
     {
       sdkComboBox.apply {
-        val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
+        val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk.takeIf(FileUtil::exists)
         val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
         selectedSdk = when {
           detectedPreferredSdk != null -> detectedPreferredSdk
