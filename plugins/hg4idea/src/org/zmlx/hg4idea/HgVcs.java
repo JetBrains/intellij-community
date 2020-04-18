@@ -65,7 +65,6 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class HgVcs extends AbstractVcs {
-
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<>("hg4idea.status", HgUpdater.class);
   public static final Topic<HgWidgetUpdater> INCOMING_OUTGOING_CHECK_TOPIC = new Topic<>("hg4idea.incomingcheck", HgWidgetUpdater.class);
@@ -87,8 +86,6 @@ public class HgVcs extends AbstractVcs {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
-  @NotNull private final HgGlobalSettings globalSettings;
-  @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
 
   private HgVFSListener myVFSListener;
@@ -103,14 +100,10 @@ public class HgVcs extends AbstractVcs {
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
-  public HgVcs(@NotNull Project project,
-               @NotNull HgGlobalSettings globalSettings,
-               @NotNull HgProjectSettings projectSettings,
-               ProjectLevelVcsManager vcsManager) {
+  public HgVcs(@NotNull Project project) {
     super(project, VCS_NAME);
-    this.globalSettings = globalSettings;
-    this.projectSettings = projectSettings;
-    myVcsManager = vcsManager;
+
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
@@ -139,12 +132,12 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public Configurable getConfigurable() {
-    return new HgProjectConfigurable(myProject, globalSettings, projectSettings);
+    return new HgProjectConfigurable(myProject);
   }
 
   @NotNull
   public HgProjectSettings getProjectSettings() {
-    return projectSettings;
+    return HgProjectSettings.getInstance(myProject);
   }
 
   @Override
@@ -284,11 +277,6 @@ public class HgVcs extends AbstractVcs {
       return null;
     }
     return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
-  }
-
-  @NotNull
-  public HgGlobalSettings getGlobalSettings() {
-    return globalSettings;
   }
 
   public void showMessageInConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {

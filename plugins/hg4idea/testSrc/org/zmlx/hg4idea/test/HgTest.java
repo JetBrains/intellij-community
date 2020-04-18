@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgErrorUtil;
@@ -86,7 +87,7 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
         activateVCS(HgVcs.VCS_NAME);
 
         myVcs = HgVcs.getInstance(myProject);
-        myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+        HgGlobalSettings.getInstance().setHgExecutable(HgExecutor.getHgExecutable());
       }
       catch (Exception e) {
         e.printStackTrace();
@@ -103,7 +104,7 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
   public void tearDown() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       new RunAll()
-        .append(() -> myVcs.getGlobalSettings().setHgExecutable(null))
+        .append(() -> HgGlobalSettings.getInstance().setHgExecutable(null))
         .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
         .append(() -> myChangeListManager.peer.waitEverythingDoneInTestMode())
         .append(() -> tearDownFixture())

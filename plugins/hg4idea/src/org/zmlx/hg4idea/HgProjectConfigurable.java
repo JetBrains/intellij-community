@@ -17,16 +17,14 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.ui.HgConfigurationProjectPanel;
 
-public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProjectPanel, HgProjectConfigurable.HgSettingsHolder> {
+public final class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProjectPanel, HgProjectConfigurable.HgSettingsHolder> {
   @NotNull private final Project myProject;
   @NotNull private final HgSettingsHolder mySettingsHolder;
 
-  public HgProjectConfigurable(@NotNull Project project,
-                               @NotNull HgGlobalSettings globalSettings,
-                               @NotNull HgProjectSettings projectSettings) {
+  public HgProjectConfigurable(@NotNull Project project) {
     super("vcs.Mercurial", getDISPLAY_NAME(), "project.propVCSSupport.VCSs.Mercurial");
     myProject = project;
-    mySettingsHolder = new HgSettingsHolder(globalSettings, projectSettings);
+    mySettingsHolder = new HgSettingsHolder(HgGlobalSettings.getInstance(), HgProjectSettings.getInstance(myProject));
   }
 
   @NotNull
@@ -40,7 +38,7 @@ public class HgProjectConfigurable extends ConfigurableBase<HgConfigurationProje
     return new HgConfigurationProjectPanel(myProject);
   }
 
-  public static class HgSettingsHolder {
+  public static final class HgSettingsHolder {
     @NotNull private final HgGlobalSettings myGlobalSettings;
     @NotNull private final HgProjectSettings myProjectSettings;
 

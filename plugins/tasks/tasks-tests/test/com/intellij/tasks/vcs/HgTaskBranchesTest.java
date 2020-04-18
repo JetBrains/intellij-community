@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -28,7 +29,7 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     super.setUp();
     HgVcs hgVcs = Objects.requireNonNull(HgVcs.getInstance(myProject));
     hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
-    hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
+    HgGlobalSettings.getInstance().setHgExecutable(HgExecutor.getHgExecutable());
   }
 
   @NotNull

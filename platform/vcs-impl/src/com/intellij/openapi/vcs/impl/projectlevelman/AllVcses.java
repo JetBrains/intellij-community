@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
@@ -100,12 +100,14 @@ public final class AllVcses implements AllVcsesI, Disposable {
   }
 
   @Override
-  public AbstractVcs getByName(final String name) {
-    if (StringUtil.isEmpty(name)) return null;
+  public AbstractVcs getByName(@Nullable String name) {
+    if (StringUtil.isEmpty(name)) {
+      return null;
+    }
 
-    final VcsEP ep;
+    VcsEP ep;
     synchronized (myLock) {
-      final AbstractVcs vcs = myVcses.get(name);
+      AbstractVcs vcs = myVcses.get(name);
       if (vcs != null) {
         return vcs;
       }
@@ -121,8 +123,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
       return null;
     }
 
-    final AbstractVcs vcs = ep.createVcs(myProject);
-    LOG.assertTrue(vcs != null, name);
+    AbstractVcs vcs = ep.createVcs(myProject);
     LOG.assertTrue(name.equals(vcs.getName()), vcs);
 
     vcs.setupEnvironments();
