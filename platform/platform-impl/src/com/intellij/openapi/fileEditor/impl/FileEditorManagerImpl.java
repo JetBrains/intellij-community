@@ -67,6 +67,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import com.intellij.util.ui.UIUtil;
@@ -1230,11 +1231,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public FileEditor @NotNull [] getSelectedEditors() {
-    Set<FileEditor> selectedEditors = new LinkedHashSet<>();
-    for (EditorsSplitters each : getAllSplitters()) {
-      ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
+    Set<FileEditor> selectedEditors = new SmartHashSet<>();
+    for (EditorsSplitters splitters : getAllSplitters()) {
+      splitters.addSelectedEditorsTo(selectedEditors);
     }
-    return selectedEditors.toArray(new FileEditor[0]);
+    return selectedEditors.toArray(EMPTY_EDITOR_ARRAY);
   }
 
   @Override

@@ -253,6 +253,28 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return new Ref<>(component);
   }
 
+  void addSelectedEditorsTo(@NotNull Collection<? super FileEditor> result) {
+    for (EditorWindow window : myWindows) {
+      EditorWithProviderComposite composite = window.getSelectedEditor();
+      if (composite != null) {
+        FileEditor editor = composite.getSelectedEditor();
+        if (!result.contains(editor)) {
+          result.add(editor);
+        }
+      }
+    }
+    EditorWindow currentWindow = getCurrentWindow();
+    if (currentWindow != null && !myWindows.contains(currentWindow)) {
+      EditorWithProviderComposite composite = currentWindow.getSelectedEditor();
+      if (composite != null) {
+        FileEditor editor = composite.getSelectedEditor();
+        if (!result.contains(editor)) {
+          result.add(editor);
+        }
+      }
+    }
+  }
+
   public static void stopOpenFilesActivity(@NotNull Project project) {
     Activity activity = project.getUserData(OPEN_FILES_ACTIVITY);
     if (activity != null) {
