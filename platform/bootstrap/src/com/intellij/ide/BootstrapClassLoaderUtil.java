@@ -7,19 +7,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -48,7 +48,7 @@ public final class BootstrapClassLoaderUtil {
     addParentClasspath(classpath, true);
 
     File mpBoot = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR + "/lib/boot/marketplace-bootstrap.jar");
-    boolean installMarketplace = mpBoot.exists();
+    boolean installMarketplace = shouldInstallMarketplace(mpBoot);
     if (installMarketplace) {
       File marketplaceImpl = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR + "/lib/boot/marketplace-impl.jar");
       if (marketplaceImpl.exists()) {
@@ -89,6 +89,32 @@ public final class BootstrapClassLoaderUtil {
     }
 
     return builder.get();
+  }
+
+  private static boolean shouldInstallMarketplace(File mpBoot) {
+    if (!mpBoot.exists()) {
+      return false;
+    }
+    try {
+      SimpleVersion ideVersion = null;
+      try (BufferedReader reader = Files.newBufferedReader(Paths.get(PathManager.getHomePath()).resolve("build.txt"))) {
+        ideVersion = SimpleVersion.parse(reader.readLine());
+      }
+      if (ideVersion != null) {
+        SimpleVersion sinceVersion = null;
+        SimpleVersion untilVersion = null;
+        try (BufferedReader reader = Files.newBufferedReader(new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR).toPath().resolve("platform-build.txt"))) {
+          sinceVersion = SimpleVersion.parse(reader.readLine());
+          untilVersion = SimpleVersion.parse(reader.readLine());
+        }
+        catch (IOException ignored) {
+        }
+        return ideVersion.isCompatible(sinceVersion, untilVersion);
+      }
+    }
+    catch (Throwable ignored) {
+    }
+    return true;
   }
 
   private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
@@ -260,6 +286,74 @@ public final class BootstrapClassLoaderUtil {
         }
       }
       return b;
+    }
+  }
+
+  private static final class SimpleVersion implements Comparable<SimpleVersion>{
+    private final int myMajor;
+    private final int myMinor;
+
+    SimpleVersion(int major, int minor) {
+      myMajor = major;
+      myMinor = minor;
+    }
+
+    public boolean isAtLeast(@NotNull SimpleVersion ver) {
+      return ver.compareTo(this) <= 0;
+    }
+
+    public boolean isCompatible(@Nullable SimpleVersion since, @Nullable SimpleVersion until) {
+      if (since != null && until != null) {
+        return compareTo(since) >= 0 && compareTo(until) <= 0;
+      }
+      if (since != null) {
+        return isAtLeast(since);
+      }
+      if (until != null) {
+        return until.isAtLeast(this);
+      }
+      return true; // assume compatible of nothing is specified
+    }
+    
+    @Override
+    public int compareTo(@NotNull SimpleVersion ver) {
+      return myMajor != ver.myMajor? myMajor - ver.myMajor : myMinor - ver.myMinor;
+    }
+
+    @Nullable
+    public static SimpleVersion parse(@Nullable String text) {
+      if (!StringUtil.isEmpty(text)) {
+        try {
+          text = text.trim();
+          int dash = text.lastIndexOf('-');
+          if (dash >= 0) {
+            text = text.substring(dash + 1); // strip product code
+          }
+          int dot = text.indexOf('.');
+          if (dot >= 0) {
+            return new SimpleVersion(Integer.parseInt(text.substring(0, dot)), parseMinor(text.substring(dot + 1)));
+          }
+          return new SimpleVersion(Integer.parseInt(text), 0);
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+      return null;
+    }
+
+    private static int parseMinor(String text) {
+      try {
+        if ("*".equals(text)) {
+          return Integer.MAX_VALUE;
+        }
+        if (!"SNAPSHOT".equalsIgnoreCase(text)) {
+          final int dot = text.indexOf('.');
+          return Integer.parseInt(dot >= 0 ? text.substring(0, dot) : text);
+        }
+      }
+      catch (NumberFormatException e) {
+      }
+      return 0;
     }
   }
 }
