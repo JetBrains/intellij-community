@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -142,8 +143,10 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
                                      @NotNull Project project,
                                      @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
-    if (!dialog.showAndGet()) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
+      if (!dialog.showAndGet()) return false;
+    }
     configuration.setUuid(null);
     inspection.addConfiguration(configuration);
     addInspectionToProfile(project, profile, configuration);
