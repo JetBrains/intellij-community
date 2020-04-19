@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
 import com.intellij.webcore.packaging.PackagesNotificationPanel
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
@@ -125,7 +126,7 @@ fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, Executi
   }
   catch (e: ExecutionException) {
     val description = PyPackageManagementService.toErrorDescription(listOf(e), baseSdk) ?: return null
-    PackagesNotificationPanel.showError("Failed to Create Interpreter", description)
+    PackagesNotificationPanel.showError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"), description)
     return null
   }
   val suggestedName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
