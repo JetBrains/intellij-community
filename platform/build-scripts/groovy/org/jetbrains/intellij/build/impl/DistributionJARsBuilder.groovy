@@ -774,7 +774,7 @@ class DistributionJARsBuilder {
     pluginsToInclude.each { plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars.values(), plugin.moduleExcludes)
+        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes)
         patchPluginXml(layoutBuilder, plugin)
       }
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
@@ -849,8 +849,14 @@ class DistributionJARsBuilder {
     new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
-  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiMap<String, String> moduleExcludes) {
-    def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
+  private void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
+    // Don't check modules which are not direct children of lib/ directory
+    List<String> moduleNamesInLib = moduleJars.entrySet()
+      .findAll { !it.key.contains("/") }
+      .collect { it.value }
+      .flatten() as List<String>
+    def modulesWithPluginXml = moduleNamesInLib
+      .findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
@@ -858,7 +864,7 @@ class DistributionJARsBuilder {
       buildContext.messages.error("No module from '$mainPluginModule' plugin contains plugin.xml")
     }
 
-    moduleNames.each {
+    moduleJars.values().each {
       if (it != "intellij.java.guiForms.rt" && containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(it))) {
         buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$it' module in '$mainPluginModule' plugin, because they are included into a platform JAR. " +
                                     "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
