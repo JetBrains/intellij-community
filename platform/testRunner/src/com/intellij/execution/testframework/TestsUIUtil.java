@@ -289,7 +289,8 @@ public class TestsUIUtil {
 
     public TestResultPresentation getPresentation(int failedCount, int passedCount, int notStartedCount, int ignoredCount) {
       if (myRoot == null) {
-        myBalloonText = myTitle = myStarted ? "Tests were interrupted" : ExecutionBundle.message("test.not.started.progress.text");
+        myBalloonText = myTitle = myStarted ? TestRunnerBundle.message("test.interrupted.progress.text")
+                                            : ExecutionBundle.message("test.not.started.progress.text");
         myText = "";
         myType = MessageType.WARNING;
       }
@@ -301,29 +302,28 @@ public class TestsUIUtil {
 
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
-          myBalloonText = "Tests failed: " + failedCount + ", passed: " + passedCount +
-                          (ignoredCount > 0 ? ", ignored: " + ignoredCount : notStartedCount > 0 ? ", not started: " + notStartedCount : "");
-          String notStartedMessage = ignoredCount > 0 ? ", " + ignoredCount + " ignored"
-                                                      : notStartedCount > 0 ? ", " + notStartedCount + " not started" : "";
-          myText = failedCount + " failed, " + passedCount + " passed" + notStartedMessage;
+          myBalloonText = TestRunnerBundle.message("tests.failed.0.passed.1.ignored.2.not.started.3",
+                                                   failedCount, passedCount, ignoredCount, notStartedCount);
+          myText = TestRunnerBundle.message("0.failed.1.passed.2.ignored.3.not.started",
+                                            failedCount, passedCount, ignoredCount, notStartedCount);
           myType = MessageType.ERROR;
         }
         else if (ignoredCount > 0) {
-          myTitle = "Tests Ignored";
-          myBalloonText = "Tests ignored: " + ignoredCount + ", passed: " + passedCount;
-          myText = ignoredCount + " ignored, " + passedCount + " passed";
+          myTitle = TestRunnerBundle.message("tests.ignored.error.message");
+          myBalloonText = TestRunnerBundle.message("tests.ignored.0.passed.1", ignoredCount, passedCount);
+          myText = TestRunnerBundle.message("0.ignored.1.passed", ignoredCount, passedCount);
           myType = MessageType.WARNING;
         }
         else if (notStartedCount > 0) {
           myTitle = ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
-          myBalloonText = "Failed to start: " + notStartedCount + ", passed: " + passedCount;
-          myText = notStartedCount + " not started, " + passedCount + " passed";
+          myBalloonText = TestRunnerBundle.message("failed.to.start.0.passed.1", notStartedCount, passedCount);
+          myText = TestRunnerBundle.message("0.not.started.1.passed", notStartedCount, passedCount);
           myType = MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");
-          myBalloonText = "Tests passed: " + passedCount;
-          myText = passedCount + " passed";
+          myBalloonText = TestRunnerBundle.message("tests.passed.0", passedCount);
+          myText = TestRunnerBundle.message("0.passed", passedCount);
           myType = MessageType.INFO;
         }
         if (myComment != null) {
@@ -332,6 +332,5 @@ public class TestsUIUtil {
       }
       return this;
     }
-
   }
 }
