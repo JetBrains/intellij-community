@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,8 @@ public class PackagesNotificationPanel {
     });
   }
 
-  public static void showError(@NotNull String title, @NotNull PackageManagementService.ErrorDescription description) {
+  public static void showError(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                               @NotNull PackageManagementService.ErrorDescription description) {
     final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
     dialog.show();
   }
@@ -88,7 +90,9 @@ public class PackagesNotificationPanel {
     myErrorDescription = null;
   }
 
-  public void showError(String text, final String detailsTitle, final PackageManagementService.ErrorDescription errorDescription) {
+  public void showError(String text,
+                        @Nullable @Nls(capitalization = Nls.Capitalization.Title) String detailsTitle,
+                        PackageManagementService.ErrorDescription errorDescription) {
     showContent(text, MessageType.ERROR.getPopupBackground());
     myErrorTitle = detailsTitle;
     myErrorDescription = errorDescription;
