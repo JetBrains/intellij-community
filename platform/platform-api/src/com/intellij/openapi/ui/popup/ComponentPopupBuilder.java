@@ -22,7 +22,7 @@ import java.util.List;
 
 public interface ComponentPopupBuilder {
   @NotNull
-  ComponentPopupBuilder setTitle(@NlsContexts.DialogTitle String title);
+  ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title);
 
   @NotNull
   ComponentPopupBuilder setResizable(boolean forceResizable);

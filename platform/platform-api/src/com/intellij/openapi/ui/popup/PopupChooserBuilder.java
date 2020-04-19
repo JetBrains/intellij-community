@@ -147,7 +147,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   @NotNull
-  public PopupChooserBuilder<T> setTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public PopupChooserBuilder<T> setTitle(@NotNull @NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }
