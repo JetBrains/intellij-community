@@ -142,7 +142,7 @@ class BuildMessagesImpl implements BuildMessages {
       throw e
     }
     catch (BuildException e) {
-      throw new IntelliJBuildException(blockNames.join(" > "), e.message, e.cause)
+      throw new IntelliJBuildException(blockNames.join(" > "), e.message, e)
     }
     finally {
       blockNames.pop()
