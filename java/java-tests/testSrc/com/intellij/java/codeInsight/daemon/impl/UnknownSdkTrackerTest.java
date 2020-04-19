@@ -8,10 +8,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -166,6 +163,95 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     assertThat(lookupCalls).hasValue(2);
   }
 
+
+  @TestFor(issues = "IDEA-237884")
+  public void testShouldNotRantOnCustomSDKType() {
+    final Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", SimpleJavaSdkType.getInstance());
+    WriteAction.run(() -> {
+      SdkModificator m = broken.getSdkModificator();
+      m.setHomePath("invalid home path");
+      m.setVersionString("11");
+      m.commitChanges();
+
+      ProjectJdkTable.getInstance().addJdk(broken, getTestRootDisposable());
+
+      ModifiableRootModel mod = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      mod.setSdk(broken);
+      mod.commit();
+
+    });
+    final @NotNull List<String> panel = detectMissingSdks();
+    assertThat(panel).isEmpty();
+  }
+
+  private class SdkTestCases {
+    final Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", JavaSdk.getInstance());
+    final Sdk valid = IdeaTestUtil.getMockJdk18();
+
+    private SdkTestCases() {
+      WriteAction.run(() -> {
+        SdkModificator m = broken.getSdkModificator();
+        m.setHomePath("invalid home path");
+        m.setVersionString("11");
+        m.commitChanges();
+
+        ProjectJdkTable.getInstance().addJdk(broken, getTestRootDisposable());
+        ProjectJdkTable.getInstance().addJdk(valid, getTestRootDisposable());
+      });
+    }
+  }
+
+  public void testBrokenModuleSdk() {
+    new SdkTestCases() {
+      {
+        WriteAction.run(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          m.setSdk(broken);
+          m.commit();
+
+          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+        });
+
+        final List<String> panel = detectMissingSdks();
+        assertThat(panel).hasSize(1).first().asString().startsWith("SdkFixInfo:InvalidSdkFixInfo { name: " + broken.getName());
+      }
+    };
+  }
+
+  public void testValidProjectSdk() {
+    new SdkTestCases() {
+      {
+        WriteAction.run(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          m.inheritSdk();
+          m.commit();
+
+          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+        });
+
+        final List<String> panel = detectMissingSdks();
+        assertThat(panel).isEmpty();
+      }
+    };
+  }
+
+  public void testBrokenProjectValidModuleSdk() {
+    new SdkTestCases() {
+      {
+        WriteAction.run(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          m.setSdk(valid);
+          m.commit();
+
+          ProjectRootManager.getInstance(getProject()).setProjectSdk(broken);
+        });
+
+        final List<String> panel = detectMissingSdks();
+        assertThat(panel).hasSize(1).first().asString().startsWith("SdkFixInfo:InvalidSdkFixInfo { name: " + broken.getName());
+      }
+    };
+  }
+
   private void setModuleSdk(@NotNull String sdkName, @NotNull SdkTypeId type) {
     setModuleSdk(sdkName, type.getName());
   }
@@ -209,7 +295,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
     EditorNotificationPanel sdkNotification = SdkSetupNotificationTestBase.runOnText(myFixture, "Sample.java", "class Sample { java.lang.String foo; }");
     if (sdkNotification != null) {
-      infos.add("SdkSetupNotification:" + sdkNotification.getIntentionAction().getText());
+      infos.add("SdkSetupNotification:" + sdkNotification.getText());
     }
 
     return infos;
