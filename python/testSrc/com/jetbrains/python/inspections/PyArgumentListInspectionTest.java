@@ -418,7 +418,7 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
       LanguageLevel.getLatest(),
       () -> doTestByText("class MetaFoo(type):\n" +
                          "  def __call__(cls, p3, p4):\n" +
-                         "    print(f'MetaFoo: {cls}, {p3}, {p4}')\n" +
+                         "    print(f'MetaFoo.__call__: {cls}, {p3}, {p4}')\n" +
                          "\n" +
                          "class Foo(metaclass=MetaFoo):\n" +
                          "  pass\n" +
@@ -426,10 +426,31 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
                          "class SubFoo(Foo):\n" +
                          "  def __new__(self, p1, p2):\n" +
                          "    # This never gets called\n" +
-                         "    print(f'Foo.__new__: {p1}, {p2}')\n" +
+                         "    print(f'SubFoo.__new__: {p1}, {p2}')\n" +
                          "\n" +
                          "sub = SubFoo(1<warning descr=\"Parameter 'p4' unfilled\">)</warning>\n" +
                          "foo = Foo(3<warning descr=\"Parameter 'p4' unfilled\">)</warning>")
+    );
+  }
+
+  // PY-17877, PY-41380
+  public void testNotMetaclassHavingSelfArgsKwargsDunderCall() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class MetaFoo(type):\n" +
+                         "  def __call__(cls, *args, **kwargs):\n" +
+                         "    print(f'MetaFoo.__call__: {cls}, {args}, {kwargs}')\n" +
+                         "    return super(MetaFoo, cls).__call__(*args, **kwargs)\n" +
+                         "\n" +
+                         "class Foo(metaclass=MetaFoo):\n" +
+                         "  pass\n" +
+                         "\n" +
+                         "class SubFoo(Foo):\n" +
+                         "  def __init__(self, p1, p2):\n" +
+                         "    print(f'SubFoo.__init__: {p1}, {p2}')\n" +
+                         "\n" +
+                         "foo = Foo()\n" +
+                         "sub = SubFoo(1<warning descr=\"Parameter 'p2' unfilled\">)</warning>")
     );
   }
 }
