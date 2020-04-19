@@ -212,8 +212,10 @@ public final class InspectionApplication implements CommandLineInspectionProgres
           reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
           printHelp();
         }
-
-        PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(vfsDir);
+        PsiDirectory psiDirectory = ReadAction.compute(() -> {
+          assert vfsDir != null;
+          return PsiManager.getInstance(project).findDirectory(vfsDir);
+        });
         scope = new AnalysisScope(Objects.requireNonNull(psiDirectory));
       }
       runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
