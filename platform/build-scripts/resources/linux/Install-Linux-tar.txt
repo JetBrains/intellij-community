@@ -12,7 +12,7 @@ INSTALLATION INSTRUCTIONS
        ./@@product@@.sh
 
      This will initialize various configuration files in the configuration directory:
-     ~/.config/JetBrains/@@system_selector@@.
+     ~/.config/@@product_vendor@@/@@system_selector@@.
 
   3. [OPTIONAL] Add "{installation home}/bin" to your PATH environment
      variable so that you can start @@product_full@@ from any directory.
@@ -27,11 +27,11 @@ INSTALLATION INSTRUCTIONS
   ------------------------------------------------------------------------------
 
   By default, @@product_full@@ stores all your settings in the
-  ~/.config/JetBrains/@@system_selector@@ directory
-  and uses ~/.local/share/JetBrains/@@system_selector@@ as a data cache.
+  ~/.config/@@product_vendor@@/@@system_selector@@ directory
+  and uses ~/.local/share/@@product_vendor@@/@@system_selector@@ as a data cache.
   To change the location of these directories:
 
-  1. Open a console and cd into ~/.config/JetBrains/@@system_selector@@
+  1. Open a console and cd into ~/.config/@@product_vendor@@/@@system_selector@@
 
   2. Create a file idea.properties and set the idea.system.path and idea.config.path variables, for example:
 
