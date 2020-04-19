@@ -80,7 +80,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
   }
 
-  private val picoContainer: DefaultPicoContainer = DefaultPicoContainer(parent?.picoContainer)
+  internal val picoContainer: DefaultPicoContainer = DefaultPicoContainer(parent?.picoContainer)
   private val containerState = AtomicReference(ContainerState.ACTIVE)
 
   protected val containerStateName: String
@@ -222,7 +222,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     for ((pluginDescriptor, rootDescriptor) in plugins) {
-      pluginDescriptor.registerExtensions(extensionArea, this, rootDescriptor, listenerCallbacks)
+      pluginDescriptor.registerExtensions(extensionArea, this, rootDescriptor, getContainerDescriptor(pluginDescriptor), listenerCallbacks)
     }
     activity?.end()
 
@@ -658,8 +658,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   internal open val isGetComponentAdapterOfTypeCheckEnabled: Boolean
     get() = true
 
-  final override fun <T : Any> instantiateExtensionWithPicoContainerOnlyIfNeeded(className: String?,
-                                                                                 pluginDescriptor: PluginDescriptor?): T {
+  final override fun <T : Any> instantiateExtensionWithPicoContainerOnlyIfNeeded(className: String?, pluginDescriptor: PluginDescriptor?): T {
     val pluginId = pluginDescriptor?.pluginId ?: PluginId.getId("unknown")
     if (className == null) {
       throw PluginException("implementation class is not specified", pluginId)

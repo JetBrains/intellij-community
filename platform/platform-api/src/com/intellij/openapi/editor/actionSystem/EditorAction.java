@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -8,6 +8,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground, LightEditCompatible {
+  private static final ExtensionPointName<EditorActionHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.editorActionHandler");
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;
@@ -44,18 +46,20 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
     myHandler.setWorksInInjected(isInInjectedContext());
   }
 
-  public synchronized EditorActionHandler getHandler() {
-    if (!myHandlersLoaded) {
-      myHandlersLoaded = true;
-      final String id = ActionManager.getInstance().getId(this);
-      List<EditorActionHandlerBean> extensions = EditorActionHandlerBean.EP_NAME.getExtensionList();
-      for (int i = extensions.size() - 1; i >= 0; i--) {
-        final EditorActionHandlerBean handlerBean = extensions.get(i);
-        if (handlerBean.action.equals(id)) {
-          EditorActionHandler handler = handlerBean.getHandler(myHandler);
-          if (handler != null) {
-            doSetupHandler(handler);
-          }
+  public final synchronized EditorActionHandler getHandler() {
+    if (myHandlersLoaded) {
+      return myHandler;
+    }
+
+    myHandlersLoaded = true;
+    String id = ActionManager.getInstance().getId(this);
+    List<EditorActionHandlerBean> extensions = EP_NAME.getExtensionList();
+    for (int i = extensions.size() - 1; i >= 0; i--) {
+      EditorActionHandlerBean handlerBean = extensions.get(i);
+      if (handlerBean.action.equals(id)) {
+        EditorActionHandler handler = handlerBean.getHandler(myHandler);
+        if (handler != null) {
+          doSetupHandler(handler);
         }
       }
     }

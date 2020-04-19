@@ -17,14 +17,13 @@ import java.util.stream.Stream;
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
 public interface ExtensionPoint<@NotNull T> {
-  @NotNull
-  String getName();
-
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
    */
   @Deprecated
-  void registerExtension(@NotNull T extension);
+  default void registerExtension(@NotNull T extension) {
+    registerExtension(extension, LoadingOrder.ANY);
+  }
 
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, LoadingOrder, Disposable)}.

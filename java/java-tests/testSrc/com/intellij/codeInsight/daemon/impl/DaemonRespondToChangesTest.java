@@ -273,7 +273,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     if (isStressTest()) {
       // all possible inspections
-      List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
+      List<InspectionToolWrapper<?, ?>> all = InspectionToolRegistrar.getInstance().createTools();
       List<LocalInspectionTool> locals = new ArrayList<>();
       all.stream().filter(tool -> tool instanceof LocalInspectionToolWrapper).forEach(tool -> {
         LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();

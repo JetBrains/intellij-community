@@ -3,12 +3,11 @@ package com.intellij.util.pico;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.picocontainer.MutablePicoContainer;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class IdeaPicoContainerTest {
-  private MutablePicoContainer myContainer;
+  private DefaultPicoContainer myContainer;
 
   @Before
   public void setUp() {

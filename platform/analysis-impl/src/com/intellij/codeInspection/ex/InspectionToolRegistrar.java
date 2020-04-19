@@ -6,34 +6,31 @@ import com.intellij.codeInspection.*;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Constructor;
+import java.util.*;
 import java.util.function.Supplier;
 
+@Service
 public final class InspectionToolRegistrar extends InspectionToolsSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionToolRegistrar.class);
+  private static final ExtensionPointName<InspectionToolProvider> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.inspectionToolProvider");
 
-  @NotNull
-  private final NotNullLazyValue<Collection<? extends Supplier<InspectionToolWrapper>>> myInspectionToolFactories = NotNullLazyValue.createValue(() -> {
+  private final @NotNull NotNullLazyValue<Collection<List<Supplier<InspectionToolWrapper<?, ?>>>>> toolFactories = NotNullLazyValue.createValue(() -> {
     Application application = ApplicationManager.getApplication();
-    MultiMap<Object, Supplier<InspectionToolWrapper>> factories = MultiMap.create();
+    Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories = new HashMap<>();
     Map<String, InspectionEP> shortNames = new THashMap<>();
     registerToolProviders(application, factories);
     registerInspections(factories, application, shortNames, LocalInspectionEP.LOCAL_INSPECTION);
@@ -41,16 +38,20 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
     return factories.values();
   });
 
-  private void unregisterInspectionOrProvider(@NotNull Object inspectionOrProvider, @NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories) {
-    Collection<Supplier<InspectionToolWrapper>> removedTools = factories.remove(inspectionOrProvider);
+  public static InspectionToolRegistrar getInstance() {
+    return ApplicationManager.getApplication().getService(InspectionToolRegistrar.class);
+  }
+
+  private void unregisterInspectionOrProvider(@NotNull Object inspectionOrProvider, @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories) {
+    List<Supplier<InspectionToolWrapper<?, ?>>> removedTools = factories.remove(inspectionOrProvider);
     if (removedTools != null) {
-      for (Supplier<InspectionToolWrapper> removedTool : removedTools) {
+      for (Supplier<InspectionToolWrapper<?, ?>> removedTool : removedTools) {
         fireToolRemoved(removedTool);
       }
     }
   }
 
-  private <T extends InspectionEP> void registerInspections(@NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories,
+  private <T extends InspectionEP> void registerInspections(@NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories,
                                                             @NotNull Application application,
                                                             @NotNull Map<String, InspectionEP> shortNames,
                                                             @NotNull ExtensionPointName<T> extensionPointName) {
@@ -72,34 +73,41 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
     }, false, application);
   }
 
-  private static <T extends InspectionEP> Supplier<InspectionToolWrapper> registerInspection(@NotNull T inspection,
-                                                                                             @NotNull Map<String, InspectionEP> shortNames,
-                                                                                             boolean isInternal,
-                                                                                             @NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories) {
+  private static @Nullable <T extends InspectionEP> Supplier<InspectionToolWrapper<?, ?>> registerInspection(@NotNull T inspection,
+                                                                                                             @NotNull Map<String, InspectionEP> shortNames,
+                                                                                                             boolean isInternal,
+                                                                                                             @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories) {
     checkForDuplicateShortName(inspection, shortNames);
     if (!isInternal && inspection.isInternal) {
       return null;
     }
-    Supplier<InspectionToolWrapper> inspectionFactory = () -> inspection instanceof LocalInspectionEP
-                                                              ? new LocalInspectionToolWrapper((LocalInspectionEP)inspection)
-                                                              : new GlobalInspectionToolWrapper(inspection);
-    factories.putValue(inspection, inspectionFactory);
+
+    Supplier<InspectionToolWrapper<?, ?>> inspectionFactory = () -> {
+      return inspection instanceof LocalInspectionEP
+             ? new LocalInspectionToolWrapper((LocalInspectionEP)inspection)
+             : new GlobalInspectionToolWrapper(inspection);
+    };
+    factories.computeIfAbsent(inspection, o -> new ArrayList<>()).add(inspectionFactory);
     return inspectionFactory;
   }
 
-  private void registerToolProviders(@NotNull Application application,
-                                     @NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories) {
-    for (InspectionToolProvider provider : application.getComponentInstancesOfType(InspectionToolProvider.class)) {
-      registerToolProvider(provider, factories);
+  private void registerToolProviders(@NotNull Application app, @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories) {
+    if (app.isUnitTestMode()) {
+      //noinspection deprecation
+      LOG.assertTrue(app.getComponentInstancesOfType(InspectionToolProvider.class).isEmpty());
     }
-    for (InspectionToolProvider provider : InspectionToolProvider.EXTENSION_POINT_NAME.getExtensionList()) {
-      registerToolProvider(provider, factories);
-    }
-    InspectionToolProvider.EXTENSION_POINT_NAME.getPoint(application).addExtensionPointListener(
+
+    EXTENSION_POINT_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
+      registerToolProvider(provider, pluginDescriptor, factories, null);
+    });
+
+    EXTENSION_POINT_NAME.getPoint(app).addExtensionPointListener(
       new ExtensionPointListener<InspectionToolProvider>() {
         @Override
         public void extensionAdded(@NotNull InspectionToolProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-          for (Supplier<InspectionToolWrapper> supplier : registerToolProvider(provider, factories)) {
+          List<Supplier<InspectionToolWrapper<?, ?>>> added = new ArrayList<>();
+          registerToolProvider(provider, pluginDescriptor, factories, added);
+          for (Supplier<InspectionToolWrapper<?, ?>> supplier : added) {
             fireToolAdded(supplier);
           }
         }
@@ -108,17 +116,40 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
         public void extensionRemoved(@NotNull InspectionToolProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
           unregisterInspectionOrProvider(provider, factories);
         }
-      }, false, application);
+      }, false, app);
   }
 
-  private static Collection<Supplier<InspectionToolWrapper>> registerToolProvider(@NotNull InspectionToolProvider provider,
-                                                                                  @NotNull MultiMap<Object, Supplier<InspectionToolWrapper>> factories) {
-    Collection<Supplier<InspectionToolWrapper>> suppliers = new SmartList<>();
+  private static void registerToolProvider(@NotNull InspectionToolProvider provider,
+                                           @NotNull PluginDescriptor pluginDescriptor,
+                                           @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories,
+                                           @Nullable List<Supplier<InspectionToolWrapper<?, ?>>> newlyAddedToCollect) {
+    List<Supplier<InspectionToolWrapper<?, ?>>> suppliers = factories.computeIfAbsent(provider, k -> new ArrayList<>());
     for (Class<? extends InspectionProfileEntry> aClass : provider.getInspectionClasses()) {
-      suppliers.add(() -> ObjectUtils.doIfNotNull(InspectionToolsRegistrarCore.instantiateTool(aClass), e -> wrapTool(e)));
+      Supplier<InspectionToolWrapper<?, ?>> supplier = createSupplier(pluginDescriptor, aClass);
+      suppliers.add(supplier);
+      if (newlyAddedToCollect != null) {
+        newlyAddedToCollect.add(supplier);
+      }
     }
-    factories.putValues(provider, suppliers);
-    return suppliers;
+  }
+
+  @NotNull
+  private static Supplier<InspectionToolWrapper<?, ?>> createSupplier(@NotNull PluginDescriptor pluginDescriptor,
+                                                                      @NotNull Class<? extends InspectionProfileEntry> aClass) {
+    return () -> {
+      try {
+        Constructor<? extends InspectionProfileEntry> constructor = aClass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        return wrapTool(constructor.newInstance());
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
+        return null;
+      }
+    };
   }
 
   private static void checkForDuplicateShortName(InspectionEP ep, Map<String, InspectionEP> shortNames) {
@@ -133,23 +164,21 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
     }
   }
 
-  @NotNull
-  public static InspectionToolWrapper wrapTool(@NotNull InspectionProfileEntry profileEntry) {
+  @ApiStatus.Internal
+  public static @NotNull InspectionToolWrapper<?, ?> wrapTool(@NotNull InspectionProfileEntry profileEntry) {
     if (profileEntry instanceof LocalInspectionTool) {
       return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
     }
-    if (profileEntry instanceof GlobalInspectionTool) {
+    else if (profileEntry instanceof GlobalInspectionTool) {
       return new GlobalInspectionToolWrapper((GlobalInspectionTool)profileEntry);
     }
-    throw new RuntimeException("unknown inspection class: " + profileEntry + "; "+profileEntry.getClass());
+    else {
+      throw new RuntimeException("unknown inspection class: " + profileEntry + "; "+profileEntry.getClass());
+    }
   }
 
-  public static InspectionToolRegistrar getInstance() {
-    return ServiceManager.getService(InspectionToolRegistrar.class);
-  }
-
-  private void fireToolAdded(@Nullable Supplier<InspectionToolWrapper> supplier) {
-    InspectionToolWrapper inspectionToolWrapper = supplier != null ? supplier.get() : null;
+  private void fireToolAdded(@Nullable Supplier<InspectionToolWrapper<?, ?>> supplier) {
+    InspectionToolWrapper<?, ?> inspectionToolWrapper = supplier != null ? supplier.get() : null;
     if (inspectionToolWrapper != null) {
       for (Listener listener : myListeners) {
         listener.toolAdded(inspectionToolWrapper);
@@ -157,8 +186,8 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
     }
   }
 
-  private void fireToolRemoved(@Nullable Supplier<InspectionToolWrapper> supplier) {
-    InspectionToolWrapper inspectionToolWrapper = supplier != null ? supplier.get() : null;
+  private void fireToolRemoved(@Nullable Supplier<InspectionToolWrapper<?, ?>> supplier) {
+    InspectionToolWrapper<?, ?> inspectionToolWrapper = supplier != null ? supplier.get() : null;
     if (inspectionToolWrapper != null) {
       for (Listener listener : myListeners) {
         listener.toolRemoved(inspectionToolWrapper);
@@ -167,15 +196,17 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
   }
 
   @Override
-  @NotNull
-  public List<InspectionToolWrapper> createTools() {
-    Collection<? extends Supplier<InspectionToolWrapper>> inspectionToolFactories = myInspectionToolFactories.getValue();
-    List<InspectionToolWrapper> tools = new ArrayList<>(inspectionToolFactories.size());
-    for (Supplier<InspectionToolWrapper> factory : inspectionToolFactories) {
-      ProgressManager.checkCanceled();
-      InspectionToolWrapper toolWrapper = factory.get();
-      if (toolWrapper != null && checkTool(toolWrapper) == null) {
-        tools.add(toolWrapper);
+  public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
+    Collection<List<Supplier<InspectionToolWrapper<?, ?>>>> inspectionToolFactories = toolFactories.getValue();
+    ArrayList<InspectionToolWrapper<?, ?>> tools = new ArrayList<>();
+    for (List<Supplier<InspectionToolWrapper<?, ?>>> list : inspectionToolFactories) {
+      tools.ensureCapacity(list.size());
+      for (Supplier<InspectionToolWrapper<?, ?>> factory : list) {
+        ProgressManager.checkCanceled();
+        InspectionToolWrapper<?, ?> toolWrapper = factory.get();
+        if (toolWrapper != null && checkTool(toolWrapper) == null) {
+          tools.add(toolWrapper);
+        }
       }
     }
     return tools;
@@ -186,18 +217,18 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @NotNull
-  public List<InspectionToolWrapper> get() {
+  public @NotNull List<InspectionToolWrapper<?, ?>> get() {
     return createTools();
   }
 
-  private static String checkTool(@NotNull final InspectionToolWrapper toolWrapper) {
+  private static String checkTool(@NotNull InspectionToolWrapper<?, ?> toolWrapper) {
     if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
       return null;
     }
+
     String message = null;
     try {
-      final String id = toolWrapper.getID();
+      String id = toolWrapper.getID();
       if (id == null || !LocalInspectionTool.isValidID(id)) {
         message = AnalysisBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN);
       }

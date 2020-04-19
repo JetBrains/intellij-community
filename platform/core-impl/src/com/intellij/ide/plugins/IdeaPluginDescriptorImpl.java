@@ -6,7 +6,6 @@ import com.intellij.DynamicBundle;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -517,27 +516,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return build;
   }
 
-  @ApiStatus.Internal
-  public void registerExtensionPoints(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager) {
-    ContainerDescriptor containerDescriptor;
-    boolean clonePoint = true;
-    if (componentManager.getPicoContainer().getParent() == null) {
-      containerDescriptor = myAppContainerDescriptor;
-      clonePoint = false;
-    }
-    else if (componentManager.getPicoContainer().getParent().getParent() == null) {
-      containerDescriptor = myProjectContainerDescriptor;
-    }
-    else {
-      containerDescriptor = myModuleContainerDescriptor;
-    }
-
-    List<ExtensionPointImpl<?>> extensionPoints = containerDescriptor.extensionPoints;
-    if (extensionPoints != null) {
-      area.registerExtensionPoints(extensionPoints, clonePoint);
-    }
-  }
-
   public @NotNull ContainerDescriptor getAppContainerDescriptor() {
     return myAppContainerDescriptor;
   }
@@ -551,22 +529,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @ApiStatus.Internal
-  public void registerExtensions(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager, boolean notifyListeners) {
-    List<Runnable> listeners = notifyListeners ? new ArrayList<>() : null;
-    registerExtensions(area, componentManager, this, listeners);
-    if (listeners != null) {
-      listeners.forEach(Runnable::run);
-    }
-  }
-
-  @ApiStatus.Internal
   public void registerExtensions(@NotNull ExtensionsAreaImpl area,
                                  @NotNull ComponentManager componentManager,
                                  @NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                 @NotNull ContainerDescriptor containerDescriptor,
                                  @Nullable List<Runnable> listenerCallbacks) {
     THashMap<String, List<Element>> extensions;
-    if (componentManager.getPicoContainer().getParent() == null) {
-      extensions = myAppContainerDescriptor.extensions;
+    if (containerDescriptor == myAppContainerDescriptor) {
+      extensions = containerDescriptor.extensions;
       if (extensions == null) {
         if (myExtensions == null) {
           return;

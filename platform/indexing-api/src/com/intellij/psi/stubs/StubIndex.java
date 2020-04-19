@@ -25,6 +25,7 @@ public abstract class StubIndex {
   private static class StubIndexHolder {
     private static final StubIndex ourInstance = ApplicationManager.getApplication().getService(StubIndex.class);
   }
+
   public static StubIndex getInstance() {
     return StubIndexHolder.ourInstance;
   }

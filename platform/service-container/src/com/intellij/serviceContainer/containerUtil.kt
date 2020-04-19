@@ -25,7 +25,7 @@ fun <T : Any> processComponentInstancesOfType(container: PicoContainer, baseClas
 fun processProjectComponents(container: PicoContainer, @Suppress("DEPRECATION") processor: BiConsumer<com.intellij.openapi.components.ProjectComponent, PluginDescriptor>) {
   // we must use instances only from our adapter (could be service or something else)
   // unsafeGetAdapters should be not used here as ProjectManagerImpl uses it to call projectOpened
-  for (adapter in container.componentAdapters) {
+  for (adapter in (container as DefaultPicoContainer).componentAdapters) {
     if (adapter is MyComponentAdapter) {
       @Suppress("DEPRECATION")
       val instance = adapter.getInitializedInstance() as? com.intellij.openapi.components.ProjectComponent ?: continue

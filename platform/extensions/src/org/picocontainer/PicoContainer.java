@@ -11,16 +11,12 @@ package org.picocontainer;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-
 /**
  * @author Paul Hammant
  * @author Aslak Helles&oslash;y
  * @author Jon Tirs&eacute;n
  */
 public interface PicoContainer {
-
   /**
    * Retrieve a component instance registered with a specific key. If a component cannot be found in this container,
    * the parent container (if one exists) will be searched.
@@ -42,13 +38,6 @@ public interface PicoContainer {
   Object getComponentInstanceOfType(@NotNull Class<?> componentType);
 
   /**
-   * Retrieve the parent container of this container.
-   *
-   * @return a {@link PicoContainer} instance, or <code>null</code> if this container does not have a parent.
-   */
-  PicoContainer getParent();
-
-  /**
    * Find a component adapter associated with the specified key. If a component adapter cannot be found in this
    * container, the parent container (if one exists) will be searched.
    *
@@ -57,35 +46,4 @@ public interface PicoContainer {
    * registered for the specified key.
    */
   ComponentAdapter getComponentAdapter(@NotNull Object componentKey);
-
-  /**
-   * Find a component adapter associated with the specified type. If a component adapter cannot be found in this
-   * container, the parent container (if one exists) will be searched.
-   *
-   * @param componentType the type of the component.
-   * @return the component adapter associated with this class, or <code>null</code> if no component has been
-   * registered for the specified key.
-   */
-  ComponentAdapter getComponentAdapterOfType(@NotNull Class<?> componentType);
-
-  /**
-   * Retrieve all the component adapters inside this container. The component adapters from the parent container are
-   * not returned.
-   *
-   * @return a collection containing all the {@link ComponentAdapter}s inside this container. The collection will not
-   * be modifiable.
-   * @see #getComponentAdaptersOfType(Class) a variant of this method which returns the component adapters inside this
-   * container that are associated with the specified type.
-   */
-  Collection<ComponentAdapter> getComponentAdapters();
-
-  /**
-   * Retrieve all component adapters inside this container that are associated with the specified type. The component
-   * adapters from the parent container are not returned.
-   *
-   * @param componentType the type of the components.
-   * @return a collection containing all the {@link ComponentAdapter}s inside this container that are associated with
-   * the specified type. Changes to this collection will not be reflected in the container itself.
-   */
-  List<ComponentAdapter> getComponentAdaptersOfType(@NotNull Class<?> componentType);
 }

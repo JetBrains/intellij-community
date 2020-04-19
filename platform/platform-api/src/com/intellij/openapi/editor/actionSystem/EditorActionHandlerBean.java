@@ -5,11 +5,9 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.pico.DefaultPicoContainer;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Registers action invoked in the editor.
@@ -17,9 +15,6 @@ import org.jetbrains.annotations.ApiStatus;
  * @author yole
  */
 public final class EditorActionHandlerBean extends AbstractExtensionPointBean {
-  @ApiStatus.Internal
-  public static final ExtensionPointName<EditorActionHandlerBean> EP_NAME = ExtensionPointName.create("com.intellij.editorActionHandler");
-
   /**
    * Action ID.
    */
@@ -41,7 +36,7 @@ public final class EditorActionHandlerBean extends AbstractExtensionPointBean {
 
     try {
       DefaultPicoContainer container = new DefaultPicoContainer((DefaultPicoContainer)ApplicationManager.getApplication().getPicoContainer());
-      container.registerComponentInstance(originalHandler);
+      container.registerComponentInstance(EditorActionHandler.class, originalHandler);
       handler = instantiateClass(implementationClass, container);
       myHandler = handler;
       return handler;

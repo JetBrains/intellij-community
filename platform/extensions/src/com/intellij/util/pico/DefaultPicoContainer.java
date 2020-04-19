@@ -29,7 +29,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     this(null);
   }
 
-  @Override
   public final @NotNull Collection<ComponentAdapter> getComponentAdapters() {
     return componentAdapters.getImmutableSet();
   }
@@ -64,7 +63,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return componentKey instanceof Class ? componentKeyToAdapterCache.get(((Class<?>)componentKey).getName()) : null;
   }
 
-  @Override
   public final  @Nullable ComponentAdapter getComponentAdapterOfType(@NotNull Class<?> componentType) {
     // See http://jira.codehaus.org/secure/ViewIssue.jspa?key=PICO-115
     ComponentAdapter adapterByKey = getComponentAdapter(componentType);
@@ -87,8 +85,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     throw new AmbiguousComponentResolutionException(componentType, foundClasses);
   }
 
-  @Override
-  public final List<ComponentAdapter> getComponentAdaptersOfType(@NotNull Class<?> componentType) {
+  public final @NotNull List<ComponentAdapter> getComponentAdaptersOfType(@NotNull Class<?> componentType) {
     if (componentType == String.class) {
       return Collections.emptyList();
     }
@@ -168,13 +165,12 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   private @Nullable Object getInstance(@NotNull ComponentAdapter componentAdapter) {
-    if (getComponentAdapters().contains(componentAdapter)) {
+    if (componentAdapters.getImmutableSet().contains(componentAdapter)) {
       return componentAdapter.getComponentInstance(this);
     }
     if (parent != null) {
       return parent.getComponentInstance(componentAdapter.getComponentKey());
     }
-
     return null;
   }
 
@@ -199,8 +195,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return registerComponent(new CachingConstructorInjectionComponentAdapter(componentKey, componentImplementation));
   }
 
-  @Override
-  public final PicoContainer getParent() {
+  public final DefaultPicoContainer getParent() {
     return parent;
   }
 

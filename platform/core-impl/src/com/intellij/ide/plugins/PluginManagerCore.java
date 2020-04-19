@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
@@ -1871,13 +1872,16 @@ public final class PluginManagerCore {
       }
     }
 
-    if (descriptor != null) {
-      descriptor.registerExtensionPoints((ExtensionsAreaImpl)area, ApplicationManager.getApplication());
-      descriptor.registerExtensions((ExtensionsAreaImpl)area, ApplicationManager.getApplication(), false);
-    }
-    else {
+    if (descriptor == null) {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
+      return;
     }
+
+    List<ExtensionPointImpl<?>> extensionPoints = descriptor.myAppContainerDescriptor.extensionPoints;
+    if (extensionPoints != null) {
+      ((ExtensionsAreaImpl)area).registerExtensionPoints(extensionPoints, false);
+    }
+    descriptor.registerExtensions((ExtensionsAreaImpl)area, ApplicationManager.getApplication(), descriptor, descriptor.myAppContainerDescriptor, null);
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")

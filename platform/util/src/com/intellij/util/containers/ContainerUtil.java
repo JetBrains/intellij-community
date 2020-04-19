@@ -680,6 +680,14 @@ public class ContainerUtil {
       }
       return result;
     }
+
+    @Override
+    public void forEach(java.util.function.Consumer<? super E> action) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, length = myStore.length; i < length; i++) {
+        action.accept(myStore[i]);
+      }
+    }
   }
 
   @Contract(pure = true)

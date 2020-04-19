@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -18,8 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-public abstract class StubForwardIndexExternalizer<StubKeySerializationState> implements DataExternalizer<Map<StubIndexKey, Map<Object, StubIdList>>> {
-
+public abstract class StubForwardIndexExternalizer<StubKeySerializationState> implements DataExternalizer<Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>> {
   @NotNull
   public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer(@NotNull SerializationManagerEx managerToInitialize) {
     if (System.getProperty("idea.uses.shareable.serialized.stubs") == null) {
@@ -33,7 +32,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     return new FileLocalStubForwardIndexExternalizer();
   }
 
-  protected abstract StubKeySerializationState createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey> set) throws IOException;
+  protected abstract StubKeySerializationState createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey<?, ?>> set) throws IOException;
 
   protected abstract void writeStubIndexKey(@NotNull DataOutput out, @NotNull StubIndexKey key, StubKeySerializationState state) throws IOException;
 
@@ -42,8 +41,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   protected abstract ID<?, ?> readStubIndexKey(@NotNull DataInput input, StubKeySerializationState stubKeySerializationState) throws IOException;
 
   @Override
-  public final void save(@NotNull DataOutput out, Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) throws IOException {
-
+  public final void save(@NotNull DataOutput out, Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs) throws IOException {
     DataInputOutputUtil.writeINT(out, indexedStubs.size());
     if (!indexedStubs.isEmpty()) {
       StubKeySerializationState stubKeySerializationState = createStubIndexKeySerializationState(out, indexedStubs.keySet());
@@ -58,14 +56,14 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   }
 
   @Override
-  public final Map<StubIndexKey, Map<Object, StubIdList>> read(@NotNull DataInput in) throws IOException {
+  public final Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> read(@NotNull DataInput in) throws IOException {
     return doRead(in, null, null);
   }
 
-  <K> Map<StubIndexKey, Map<Object, StubIdList>> doRead(@NotNull DataInput in, @Nullable StubIndexKey<K, ?> requestedIndex, @Nullable K requestedKey) throws IOException {
+  <K> Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> doRead(@NotNull DataInput in, @Nullable StubIndexKey<K, ?> requestedIndex, @Nullable K requestedKey) throws IOException {
     int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);
     if (stubIndicesValueMapSize > 0) {
-      THashMap<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = requestedIndex != null ? null : new THashMap<>(stubIndicesValueMapSize);
+      THashMap<StubIndexKey<?, ?>, Map<Object, StubIdList>> stubIndicesValueMap = requestedIndex != null ? null : new THashMap<>(stubIndicesValueMapSize);
       StubKeySerializationState stubKeySerializationState = createStubIndexKeySerializationState(in, stubIndicesValueMapSize);
       for (int i = 0; i < stubIndicesValueMapSize; ++i) {
         ID<Object, ?> indexKey = (ID<Object, ?>)readStubIndexKey(in, stubKeySerializationState);
@@ -145,7 +143,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     }
 
     @Override
-    protected Void createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey> set) {
+    protected Void createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey<?, ?>> set) {
       return null;
     }
 
@@ -164,7 +162,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     private FileLocalStubForwardIndexExternalizer() { }
 
     @Override
-    protected FileLocalStringEnumerator createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey> set) throws IOException {
+    protected FileLocalStringEnumerator createStubIndexKeySerializationState(@NotNull DataOutput out, @NotNull Set<StubIndexKey<?, ?>> set) throws IOException {
       FileLocalStringEnumerator enumerator = new FileLocalStringEnumerator(true);
       for (StubIndexKey<?, ?> key : set) {
         enumerator.enumerate(key.getName());

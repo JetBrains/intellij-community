@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -25,7 +24,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
@@ -51,11 +53,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
+  static final Predicate<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   final boolean myUpdateAll;
@@ -93,14 +96,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myGlobalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
-  @NotNull
-  private PsiFile getFile() {
+  private @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     // this pass always get not-null document
     //noinspection ConstantConditions
     return super.getDocument();
@@ -165,7 +166,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   @Override
-  protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
+  protected void collectInformationWithProgress(final @NotNull ProgressIndicator progress) {
     final List<HighlightInfo> outsideResult = new ArrayList<>(100);
     final List<HighlightInfo> insideResult = new ArrayList<>(100);
 
@@ -255,18 +256,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   @Override
-  @NotNull
-  public List<HighlightInfo> getInfos() {
+  public @NotNull List<HighlightInfo> getInfos() {
     return new ArrayList<>(myHighlights);
   }
 
-  private boolean collectHighlights(@NotNull final List<? extends PsiElement> elements1,
-                                    @NotNull final List<? extends ProperTextRange> ranges1,
-                                    @NotNull final List<? extends PsiElement> elements2,
-                                    @NotNull final List<? extends ProperTextRange> ranges2,
+  private boolean collectHighlights(final @NotNull List<? extends PsiElement> elements1,
+                                    final @NotNull List<? extends ProperTextRange> ranges1,
+                                    final @NotNull List<? extends PsiElement> elements2,
+                                    final @NotNull List<? extends ProperTextRange> ranges2,
                                     final HighlightVisitor @NotNull [] visitors,
-                                    @NotNull final List<HighlightInfo> insideResult,
-                                    @NotNull final List<? super HighlightInfo> outsideResult,
+                                    final @NotNull List<HighlightInfo> insideResult,
+                                    final @NotNull List<? super HighlightInfo> outsideResult,
                                     final boolean forceHighlightParents) {
     final Set<PsiElement> skipParentsSet = new THashSet<>();
 
@@ -298,9 +298,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private boolean analyzeByVisitors(final HighlightVisitor @NotNull [] visitors,
-                                    @NotNull final HighlightInfoHolder holder,
+                                    final @NotNull HighlightInfoHolder holder,
                                     final int i,
-                                    @NotNull final Runnable action) {
+                                    final @NotNull Runnable action) {
     final boolean[] success = {true};
     if (i == visitors.length) {
       action.run();
@@ -432,7 +432,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
-                                                  @NotNull final Project project) throws ProcessCanceledException {
+                                                  final @NotNull Project project) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -465,15 +465,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
 
-  @NotNull
-  protected HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
+  protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
     final HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(file, filters) {
       int queued;
-      @NotNull
       @Override
-      public TextAttributesScheme getColorsScheme() {
+      public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;
       }
 
@@ -578,10 +576,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  @NotNull
-  private static List<Problem> convertToProblems(@NotNull Collection<? extends HighlightInfo> infos,
-                                                 @NotNull VirtualFile file,
-                                                 final boolean hasErrorElement) {
+  private static @NotNull List<Problem> convertToProblems(@NotNull Collection<? extends HighlightInfo> infos,
+                                                          @NotNull VirtualFile file,
+                                                          final boolean hasErrorElement) {
     List<Problem> problems = new SmartList<>();
     for (HighlightInfo info : infos) {
       if (info.getSeverity() == HighlightSeverity.ERROR) {

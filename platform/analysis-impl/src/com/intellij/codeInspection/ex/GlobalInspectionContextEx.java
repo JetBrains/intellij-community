@@ -43,7 +43,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextEx.class);
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties
     .getIntProperty("max.open.global.inspection.xml.files", 50);
-  private final ConcurrentMap<InspectionToolWrapper, InspectionToolResultExporter> myPresentationMap = new ConcurrentHashMap<>();
+  private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolResultExporter> myPresentationMap = new ConcurrentHashMap<>();
   protected volatile Path myOutputDir;
   protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
@@ -119,7 +119,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
           for (Tools tools : inspections) {
             for (ScopeToolState state : tools.getTools()) {
               try {
-                InspectionToolWrapper toolWrapper = state.getTool();
+                InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
                 InspectionToolResultExporter presentation = getPresentation(toolWrapper);
                 BufferedWriter writer = writers[i];
                 if (writer != null &&
@@ -180,7 +180,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       String toolName = entry.getKey();
       if (sameTools != null) {
         for (ScopeToolState toolDescr : sameTools.getTools()) {
-          InspectionToolWrapper toolWrapper = toolDescr.getTool();
+          InspectionToolWrapper<?, ?> toolWrapper = toolDescr.getTool();
           InspectionToolResultExporter presentation = getPresentation(toolWrapper);
           if (presentation instanceof AggregateResultsExporter) {
             presentation.updateContent();
@@ -245,7 +245,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     }
   }
 
-  public @NotNull InspectionToolResultExporter getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+  public @NotNull InspectionToolResultExporter getPresentation(@NotNull InspectionToolWrapper<?, ?> toolWrapper) {
     InspectionToolResultExporter presentation = myPresentationMap.get(toolWrapper);
     if (presentation == null) {
       presentation = createPresentation(toolWrapper);
@@ -255,14 +255,14 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     return presentation;
   }
 
-  protected @NotNull InspectionToolResultExporter createPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+  protected @NotNull InspectionToolResultExporter createPresentation(@NotNull InspectionToolWrapper<?, ?> toolWrapper) {
     String presentationClass = StringUtil
       .notNullize(toolWrapper.myEP == null ? null : toolWrapper.myEP.presentation, DefaultInspectionToolResultExporter.class.getName());
 
     try {
       InspectionToolResultExporter presentation;
       InspectionEP extension = toolWrapper.getExtension();
-      ClassLoader classLoader = extension == null ? getClass().getClassLoader() : extension.getLoaderForClass();
+      ClassLoader classLoader = extension == null ? getClass().getClassLoader() : extension.getPluginDescriptor().getPluginClassLoader();
       Constructor<?> constructor = Class.forName(presentationClass, true, classLoader)
         .getConstructor(InspectionToolWrapper.class, GlobalInspectionContextEx.class);
       presentation = (InspectionToolResultExporter)constructor.newInstance(toolWrapper, this);

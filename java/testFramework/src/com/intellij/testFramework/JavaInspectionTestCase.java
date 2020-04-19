@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -13,6 +13,8 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -49,10 +51,9 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   private VirtualFile ext_src;
   private LightTestMigration myMigration;
 
-  public static GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
-    InspectionEP ep = new InspectionEP();
+  public static @NotNull GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
+    InspectionEP ep = new InspectionEP(UnusedDeclarationInspection.class.getName(), new DefaultPluginDescriptor(PluginId.getId("JavaInspectionTestCase.getUnusedDeclarationWrapper"), JavaInspectionTestCase.class.getClassLoader()));
     ep.presentation = UnusedDeclarationPresentation.class.getName();
-    ep.implementationClass = UnusedDeclarationInspection.class.getName();
     ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
     ep.displayName = UnusedDeclarationInspectionBase.getDisplayNameText();
     return new GlobalInspectionToolWrapper(ep);

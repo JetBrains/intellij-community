@@ -75,6 +75,6 @@ public final class StubIdList {
 
   @Override
   public String toString() {
-    return Arrays.toString(IntStream.range(0, size()).map(idx -> get(idx)).toArray());
+    return Arrays.toString(IntStream.range(0, size()).map(this::get).toArray());
   }
 }

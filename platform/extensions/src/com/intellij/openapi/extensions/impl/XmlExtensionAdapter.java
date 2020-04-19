@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.pico.DefaultPicoContainer;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Attribute;
@@ -127,7 +128,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     @Override
     protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
       // enable simple instantiateClass for project/module containers in 2020.0 (once Kotlin will be fixed - it is one of the important plugin)
-      if (componentManager.getPicoContainer().getParent() == null) {
+      if (((DefaultPicoContainer)componentManager.getPicoContainer()).getParent() == null) {
         try {
           return super.instantiateClass(aClass, componentManager);
         }
@@ -157,7 +158,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     private static boolean isKnownBadPlugin(@NotNull PluginDescriptor pluginDescriptor) {
       String id = pluginDescriptor.getPluginId().getIdString();
       //noinspection SpellCheckingInspection
-      return id.equals("org.jetbrains.kotlin") || id.equals("Lombook Plugin");
+      return id.equals("Lombook Plugin");
     }
   }
 }
