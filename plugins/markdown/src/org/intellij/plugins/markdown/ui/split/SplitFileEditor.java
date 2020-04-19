@@ -181,7 +181,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     final ActionGroup group = ((ActionGroup)actionManager.getAction(groupId));
     final ActionToolbarImpl editorToolbar =
       ((ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true));
-    editorToolbar.setOpaque(false);
     editorToolbar.setBorder(new JBEmptyBorder(0, 2, 0, 2));
 
     return editorToolbar;
