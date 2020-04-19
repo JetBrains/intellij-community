@@ -131,6 +131,12 @@ public class NlsContexts {
   public @interface Checkbox {
   }
 
+  @NlsContext(prefix = "radio")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface RadioButton {
+  }
+
   @NlsContext(prefix = "border.title")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
