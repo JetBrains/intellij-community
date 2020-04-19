@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
@@ -478,13 +479,33 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   private void hoverComponent(@Nullable Component component) {
+    if (myHoveredComponent == component) return;
+    myHoveredComponent = component;
+    // widgets shall not be opaque, as it may conflict with bg images
+    // the following code can be dropped in future
     if (myHoveredComponent != null) {
       myHoveredComponent.setBackground(null);
     }
     if (component != null && component.isEnabled()) {
       component.setBackground(JBUI.CurrentTheme.StatusBar.hoverBackground());
     }
-    myHoveredComponent = component;
+    repaint();
+  }
+
+  private void paintHoveredComponentBackground(Graphics g) {
+    if (myHoveredComponent != null && myHoveredComponent.isEnabled() &&
+        !(myHoveredComponent instanceof MemoryUsagePanel)) {
+      Rectangle bounds = myHoveredComponent.getBounds();
+      Point point = new RelativePoint(myHoveredComponent.getParent(), bounds.getLocation()).getPoint(this);
+      g.setColor(JBUI.CurrentTheme.StatusBar.hoverBackground());
+      g.fillRect(point.x, point.y, bounds.width, bounds.height);
+    }
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    paintHoveredComponentBackground(g);
+    super.paintChildren(g);
   }
 
   @Override

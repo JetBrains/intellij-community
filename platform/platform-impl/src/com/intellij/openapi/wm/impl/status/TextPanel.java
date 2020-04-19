@@ -62,11 +62,6 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     String s = getText();
     int panelWidth = getWidth();
     int panelHeight = getHeight();
-    Color background = getBackground();
-    if (background != null && background.equals(JBUI.CurrentTheme.StatusBar.hoverBackground())) {
-      g.setColor(background);
-      g.fillRect(0, 0, panelWidth, panelHeight);
-    }
     if (s == null) return;
 
     Graphics2D g2 = (Graphics2D)g;
