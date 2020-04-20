@@ -63,7 +63,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   }
 
   public static MavenTasksManager getInstance(@NotNull Project project) {
-    return project.getComponent(MavenTasksManager.class);
+    return project.getService(MavenTasksManager.class);
   }
 
   public MavenTasksManager(@NotNull Project project) {

@@ -61,7 +61,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   private ToolWindow myToolWindow;
 
   public static MavenProjectsNavigator getInstance(Project project) {
-    return project.getComponent(MavenProjectsNavigator.class);
+    return project.getService(MavenProjectsNavigator.class);
   }
 
   public MavenProjectsNavigator(@NotNull Project project) {

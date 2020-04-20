@@ -16,7 +16,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -79,7 +78,7 @@ import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable, ProjectComponent {
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable {
   private static final int IMPORT_DELAY = 1000;
   private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
   private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
@@ -125,7 +124,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private static final int SAVE_DELAY = 1000;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
-    return project.getComponent(MavenProjectsManager.class);
+    return project.getService(MavenProjectsManager.class);
   }
 
   public MavenProjectsManager(@NotNull Project project) {
@@ -137,6 +136,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
     myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
     MavenRehighlighter.install(project, this);
+    Disposer.register(project, this::projectClosed);
   }
 
   @Override
@@ -380,7 +380,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 
-    myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
+    myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
@@ -524,8 +524,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myWatcher.enableAutoImportInTests();
   }
 
-  @Override
-  public void projectClosed() {
+  private void projectClosed() {
     initLock.lock();
     try {
       if (!isInitialized.getAndSet(false)) return;

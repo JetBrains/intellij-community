@@ -41,7 +41,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   private final MergingUpdateQueue myUpdateQueue;
 
   public static MavenProjectIndicesManager getInstance(Project p) {
-    return p.getComponent(MavenProjectIndicesManager.class);
+    return p.getService(MavenProjectIndicesManager.class);
   }
 
   public MavenProjectIndicesManager(Project project) {
