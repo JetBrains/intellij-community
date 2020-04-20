@@ -363,11 +363,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private JComponent createUpdatesSettingsAndDocs() {
       JPanel panel = new NonOpaquePanel(new BorderLayout());
       panel.add(createUpdatePluginsLink(), BorderLayout.WEST);
-      panel.add(createSettingsAndDocs(), BorderLayout.EAST);
+      panel.add(createSettingsAndDocsPanel(FlatWelcomeFrame.this), BorderLayout.EAST);
       return panel;
     }
 
-    private JComponent createSettingsAndDocs() {
+    private JComponent createSettingsAndDocsPanel(JFrame frame) {
       JPanel panel = new NonOpaquePanel(new BorderLayout());
       NonOpaquePanel toolbar = new NonOpaquePanel();
       AnAction register = ActionManager.getInstance().getAction("Register");
@@ -385,7 +385,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           NonOpaquePanel button = new NonOpaquePanel(new BorderLayout());
           button.setBorder(JBUI.Borders.empty(4, 10));
           button.add(registerLink);
-          installFocusable(button, register, KeyEvent.VK_UP, KeyEvent.VK_RIGHT, true);
+          installFocusable(frame, button, register, KeyEvent.VK_RIGHT,
+                           KeyEvent.VK_UP, UIUtil.findComponentOfType(frame.getRootPane(), JList.class)
+          );
           NonOpaquePanel wrap = new NonOpaquePanel();
           wrap.setBorder(JBUI.Borders.emptyLeft(10));
           wrap.add(button);
@@ -397,10 +399,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
       toolbar.add(createErrorsLink());
       toolbar.add(createEventsLink());
-      toolbar.add(createActionLink(IdeBundle.message("action.Anonymous.text.configure"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
-                                   AllIcons.General.GearPlain, !registeredVisible));
-      toolbar.add(createActionLink(IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
-
+      toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
+                                   AllIcons.General.GearPlain, !registeredVisible
+                                                               ? UIUtil
+                                                                 .findComponentOfType(frame.getRootPane(), JList.class)
+                                                               : null));
+      toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null
+      ));
       panel.add(toolbar, BorderLayout.EAST);
 
 
@@ -461,7 +466,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return myBalloonLayout;
     }
 
-    private JComponent createActionLink(@Nls String text, final String groupId, Icon icon, boolean focusListOnLeft) {
+    private JComponent createActionLink(@NotNull Container parentContainer,
+                                        @Nls String text,
+                                        final String groupId,
+                                        Icon icon,
+                                        @Nullable Component focusOnLeft) {
       final Ref<ActionLink> ref = new Ref<>(null);
       AnAction action = new AnAction() {
         @Override
@@ -476,7 +485,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       };
       JComponent panel = createActionLink(text, icon, ref, action);
-      installFocusable(panel, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, focusListOnLeft);
+      installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
       return panel;
     }
 
@@ -555,7 +564,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             button.add(createArrow(link), BorderLayout.EAST);
             TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
-          installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
+          installFocusable(FlatWelcomeFrame.this, button, action, KeyEvent.VK_DOWN,
+                           KeyEvent.VK_UP, UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class)
+          );
 
           panel.add(button);
           mainPanel.addAction(action);
@@ -621,13 +632,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }
 
-    private void installFocusable(final JComponent comp, final AnAction action, final int prevKeyCode, final int nextKeyCode, final boolean focusListOnLeft) {
+    private void installFocusable(@NotNull final Container parentContainer,
+                                  final JComponent comp,
+                                  final AnAction action,
+                                  final int nextKeyCode,
+                                  final int prevKeyCode,
+                                  @Nullable final Component focusedOnLeft) {
       comp.setFocusable(true);
       comp.setFocusTraversalKeysEnabled(true);
       comp.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
-          JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
           if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
             InputEvent event = e;
             if (e.getComponent() instanceof JComponent) {
@@ -639,23 +654,22 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             action.actionPerformed(AnActionEvent.createFromAnAction(action, event, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext()));
           }
           else if (e.getKeyCode() == prevKeyCode) {
-            focusPrev(comp);
+            focusPrev(parentContainer, comp);
           }
           else if (e.getKeyCode() == nextKeyCode) {
-            focusNext(comp);
+            focusNext(parentContainer, comp);
           }
           else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            if (focusListOnLeft) {
-              if (list != null) {
-                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(list, true));
-              }
+            if (focusedOnLeft != null) {
+              IdeFocusManager.getGlobalInstance()
+                .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(focusedOnLeft, true));
             }
             else {
-              focusPrev(comp);
+              focusPrev(parentContainer, comp);
             }
           }
           else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            focusNext(comp);
+            focusNext(parentContainer, comp);
           }
         }
       });
@@ -675,20 +689,20 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     }
 
-    private void focusPrev(JComponent comp) {
-      FocusTraversalPolicy policy = FlatWelcomeFrame.this.getFocusTraversalPolicy();
+    private void focusPrev(@NotNull Container container, JComponent comp) {
+      FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
       if (policy != null) {
-        Component prev = policy.getComponentBefore(FlatWelcomeFrame.this, comp);
+        Component prev = policy.getComponentBefore(container, comp);
         if (prev != null) {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(prev, true));
         }
       }
     }
 
-    private void focusNext(JComponent comp) {
-      FocusTraversalPolicy policy = FlatWelcomeFrame.this.getFocusTraversalPolicy();
+    private void focusNext(@NotNull Container container, JComponent comp) {
+      FocusTraversalPolicy policy =container.getFocusTraversalPolicy();
       if (policy != null) {
-        Component next = policy.getComponentAfter(FlatWelcomeFrame.this, comp);
+        Component next = policy.getComponentAfter(container, comp);
         if (next != null) {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
         }
