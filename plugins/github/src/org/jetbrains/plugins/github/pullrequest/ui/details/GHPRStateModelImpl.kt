@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
@@ -111,7 +112,7 @@ class GHPRStateModelImpl(private val project: Project,
     actionError = null
 
     val task = request()?.handleOnEdt { _, error ->
-      actionError = error
+      actionError = error?.takeIf { !GithubAsyncUtil.isCancellation(it) }
       isBusy = false
     }
     if (task == null) {

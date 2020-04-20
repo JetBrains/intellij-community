@@ -19,6 +19,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
@@ -229,7 +230,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         private fun update() {
           val mergeability = stateModel.mergeabilityState
           if (mergeability == null) {
-            if (stateModel.mergeabilityLoadingError == null) {
+            if (stateModel.mergeabilityLoadingError?.takeIf { !GithubAsyncUtil.isCancellation(it) } == null) {
               panel.setContent(createNotLoadedComponent())
             }
             else {
