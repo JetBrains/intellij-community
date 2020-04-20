@@ -3,10 +3,8 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.VirtualFileUrlManager
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
-import org.junit.Assert.*
-import org.junit.Before
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class PSourceEntityData : PEntityData<PSourceEntity>() {
@@ -20,7 +18,6 @@ internal class ModifiablePSourceEntity : PModifiableTypedEntity<PSourceEntity>()
 }
 
 internal fun TypedEntityStorageBuilder.addPSourceEntity(data: String,
-                                                        virtualFileManager: VirtualFileUrlManager,
                                                         source: EntitySource): PSourceEntity {
   return addEntity(ModifiablePSourceEntity::class.java, source) {
     this.data = data
@@ -28,18 +25,12 @@ internal fun TypedEntityStorageBuilder.addPSourceEntity(data: String,
 }
 
 class EntitySourceIndexTest {
-  private lateinit var virtualFileManager: VirtualFileUrlManager
-  @Before
-  fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
-  }
-
   @Test
   fun `base index test`() {
     val oldSource = PSampleEntitySource("oldSource")
     val newSource = PSampleEntitySource("newSource")
     val builder = PEntityStorageBuilder.create()
-    val entity = builder.addPSourceEntity("hello", virtualFileManager, oldSource)
+    val entity = builder.addPSourceEntity("hello", oldSource)
     assertEquals(entity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
 
     builder.changeSource(entity, newSource)
@@ -56,14 +47,14 @@ class EntitySourceIndexTest {
     val oldSource = PSampleEntitySource("oldSource")
     val newSource = PSampleEntitySource("newSource")
     val builder = PEntityStorageBuilder.create()
-    val firstEntity = builder.addPSourceEntity("one", virtualFileManager, oldSource)
+    val firstEntity = builder.addPSourceEntity("one", oldSource)
     assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
     assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
     assertNull(diff.entitySourceIndex.getIdsByEntitySource(newSource))
 
-    val secondEntity = diff.addPSourceEntity("two", virtualFileManager, newSource)
+    val secondEntity = diff.addPSourceEntity("two", newSource)
     assertEquals(secondEntity.id, diff.entitySourceIndex.getIdsByEntitySource(newSource)?.get(0))
     assertEquals(firstEntity.id, diff.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
     assertNull(builder.entitySourceIndex.getIdsByEntitySource(newSource))
@@ -77,7 +68,7 @@ class EntitySourceIndexTest {
   fun `remove from diff test`() {
     val oldSource = PSampleEntitySource("oldSource")
     val builder = PEntityStorageBuilder.create()
-    val firstEntity = builder.addPSourceEntity("one", virtualFileManager, oldSource)
+    val firstEntity = builder.addPSourceEntity("one", oldSource)
     assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
@@ -96,7 +87,7 @@ class EntitySourceIndexTest {
     val oldSource = PSampleEntitySource("oldSource")
     val newSource = PSampleEntitySource("newSource")
     val builder = PEntityStorageBuilder.create()
-    val firstEntity = builder.addPSourceEntity("one", virtualFileManager, oldSource)
+    val firstEntity = builder.addPSourceEntity("one", oldSource)
     assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(oldSource)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
