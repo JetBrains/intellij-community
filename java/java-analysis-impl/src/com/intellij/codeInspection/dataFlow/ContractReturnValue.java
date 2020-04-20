@@ -7,8 +7,10 @@ import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,19 +26,23 @@ public abstract class ContractReturnValue {
   private static final int PARAMETER_ORDINAL_BASE = 10;
   private static final int MAX_SUPPORTED_PARAMETER = 100;
 
-  private static final Function<PsiMethod, String> NOT_CONSTRUCTOR =
-    method -> method.isConstructor() ? "not applicable for constructor" : null;
-  private static final Function<PsiMethod, String> NOT_STATIC =
-    method -> method.hasModifierProperty(PsiModifier.STATIC) ? "not applicable for static method" : null;
-  private static final Function<PsiMethod, String> NOT_PRIMITIVE_RETURN =
+  private interface Validator extends Function<PsiMethod, @Nls @Nullable String> {}
+  
+  private static final Validator NOT_CONSTRUCTOR =
+    method -> method.isConstructor() ? JavaAnalysisBundle.message("contract.return.validator.not.applicable.for.constructor") : null;
+  private static final Validator NOT_STATIC =
+    method -> method.hasModifierProperty(PsiModifier.STATIC) ? JavaAnalysisBundle.message("contract.return.validator.not.applicable.static")
+                                                             : null;
+  private static final Validator NOT_PRIMITIVE_RETURN =
     method -> {
       PsiType returnType = method.getReturnType();
       return returnType instanceof PsiPrimitiveType
-             ? "not applicable for primitive return type '" + returnType.getPresentableText() + "'"
+             ? JavaAnalysisBundle.message("contract.return.validator.not.applicable.primitive", returnType.getPresentableText())
              : null;
     };
-  private static final Function<PsiMethod, String> BOOLEAN_RETURN =
-    method -> PsiType.BOOLEAN.equals(method.getReturnType()) ? null : "method return type must be 'boolean'";
+  private static final Validator BOOLEAN_RETURN =
+    method -> PsiType.BOOLEAN.equals(method.getReturnType()) ? null : JavaAnalysisBundle
+      .message("contract.return.validator.return.type.must.be.boolean");
 
   private final @NotNull String myName;
   private final int myOrdinal;
@@ -73,7 +79,7 @@ public abstract class ContractReturnValue {
    */
   public final String getMethodCompatibilityProblem(PsiMethod method) {
     return validators().map(fn -> fn.apply(method)).filter(Objects::nonNull).findFirst()
-                       .map(("Contract return value '" + this + "': ")::concat)
+                       .map((JavaAnalysisBundle.message("contract.return.value.validation.prefix", this)+' ')::concat)
                        .orElse(null);
   }
 
@@ -89,7 +95,7 @@ public abstract class ContractReturnValue {
     return validators().map(fn -> fn.apply(method)).allMatch(Objects::isNull);
   }
 
-  abstract Stream<Function<PsiMethod, String>> validators();
+  abstract Stream<Validator> validators();
 
   public ContractReturnValue intersect(ContractReturnValue other) {
     if (this.equals(other) || other == ANY_VALUE) return this;
@@ -334,7 +340,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue ANY_VALUE = new ContractReturnValue("_", 0) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR);
     }
 
@@ -351,7 +357,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue FAIL_VALUE = new ContractReturnValue("fail", 5) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.empty();
     }
 
@@ -368,7 +374,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NULL_VALUE = new ContractReturnValue("null", 1) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
@@ -385,7 +391,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NOT_NULL_VALUE = new ContractReturnValue("!null", 2) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
@@ -407,7 +413,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue NEW_VALUE = new ContractReturnValue("new", 6) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_PRIMITIVE_RETURN);
     }
 
@@ -439,7 +445,7 @@ public abstract class ContractReturnValue {
 
   private static final ContractReturnValue THIS_VALUE = new ContractReturnValue("this", 7) {
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, NOT_STATIC, NOT_PRIMITIVE_RETURN, method -> {
         PsiType returnType = method.getReturnType();
         if (returnType instanceof PsiClassType) {
@@ -448,7 +454,7 @@ public abstract class ContractReturnValue {
             return null;
           }
         }
-        return "method return type should be compatible with method containing class";
+        return JavaAnalysisBundle.message("contract.return.validator.method.return.incompatible.with.method.containing.class");
       });
     }
 
@@ -497,7 +503,7 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, BOOLEAN_RETURN);
     }
 
@@ -526,21 +532,18 @@ public abstract class ContractReturnValue {
     }
 
     @Override
-    Stream<Function<PsiMethod, String>> validators() {
+    Stream<Validator> validators() {
       return Stream.of(NOT_CONSTRUCTOR, method -> {
         PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length <= myParamNumber) {
-          return "not applicable for method which has " + parameters.length +
-                 " parameter" + (parameters.length == 1 ? "" : "s");
+          return JavaAnalysisBundle
+            .message("contract.return.validator.too.few.parameters", parameters.length);
         }
         PsiType parameterType = parameters[myParamNumber].getType();
         PsiType returnType = method.getReturnType();
         if (returnType != null && !returnType.isConvertibleFrom(parameterType)) {
-          return "return type '" +
-                 returnType.getPresentableText() +
-                 "' must be convertible from parameter type '" +
-                 parameterType.getPresentableText() +
-                 "'";
+          return JavaAnalysisBundle.message("contract.return.validator.incompatible.return.parameter.type", 
+                                            returnType.getPresentableText(), parameterType.getPresentableText());
         }
         return null;
       });
