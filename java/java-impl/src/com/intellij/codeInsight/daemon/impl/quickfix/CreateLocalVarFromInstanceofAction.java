@@ -196,6 +196,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       if (decl == null) return;
       decl = (PsiDeclarationStatement)CodeStyleManager.getInstance(project).reformat(decl);
       decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
+      if (decl == null) return;
 
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];
       PsiExpression initializer = Objects.requireNonNull(localVariable.getInitializer());
