@@ -3,7 +3,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
@@ -435,14 +434,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
 
     private static int getLineNumber(PsiElement element) {
-      final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+      final Document document = element.getContainingFile().getViewProvider().getDocument();
       assert document != null;
       return document.getLineNumber(element.getTextRange().getStartOffset());
-    }
-
-    @Override
-    public @Nullable LocalQuickFix getFileModifierForPreview(@NotNull PsiFile target) {
-      return null; // expects document for file -- see getLineNumber
     }
 
     private static class StringExpressionCollector extends JavaRecursiveElementWalkingVisitor {
