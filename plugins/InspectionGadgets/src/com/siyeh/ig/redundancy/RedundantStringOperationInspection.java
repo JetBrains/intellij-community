@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
@@ -221,49 +222,56 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      */
     @NotNull
     private ProblemDescriptor createSubstringToCharAtProblemDescriptor(@NotNull final PsiMethodCallExpression call) {
-      final PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-      assert qualifierCall != null : "The method is meant to be called only from getRedundantSubstringEqualsProblem";
+      final String converted = getTargetString(call, null);
+      assert converted != null : "Message cannot be null";
 
-      final PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
-      assert receiver != null : "The method is meant to be called only from getRedundantSubstringEqualsProblem";
-
-      final PsiExpression[] args = qualifierCall.getArgumentList().getExpressions();
-      assert args.length == 2 : "The method is meant to be called only from getRedundantSubstringEqualsProblem";
-
-      final PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
-
-      final String equalToValue = PsiLiteralUtil.charLiteralForCharString(equalTo.getText());
-      final Pair<@NotNull PsiExpression, @NotNull Boolean> sign = getExpressionSign(call);
-
-      final PsiElement outermostEqualsExpr = sign.fst;
-      final String eqSign = sign.snd ? "==" : "!=";
-
-      final String converted = String.format("%s.charAt(%s) %s %s",
-                                             receiver.getText(),
-                                             args[0].getText(),
-                                             eqSign,
-                                             equalToValue
-      );
-
+      final PsiElement outermostEqualsExpr = getOutermostEquals(call);
       final SubstringEqualsToCharAtEqualsQuickFix fix = new SubstringEqualsToCharAtEqualsQuickFix(outermostEqualsExpr.getText(),
                                                                                                   converted);
       return myManager.createProblemDescriptor(outermostEqualsExpr,
                                                InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()"),
                                                fix,
-                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly);
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
     }
 
-    @NotNull
-    private static Pair<@NotNull PsiExpression, @NotNull Boolean> getExpressionSign(@NotNull PsiExpression start) {
-      boolean sign = true;
-      PsiExpression expr = start;
-      while (true) {
-        final PsiPrefixExpression negation = (PsiPrefixExpression) BoolUtils.findNegation(expr);
-        if (negation == null) break;
-        sign = !sign;
-        expr = negation;
-      }
-      return Pair.of(expr, sign);
+    @Nullable
+    private static String getTargetString(@NotNull final PsiMethodCallExpression call,
+                                          @Nullable Function<@NotNull PsiElement, @NotNull String> textExtractor) {
+      if (textExtractor == null) textExtractor = PsiElement::getText;
+
+      final PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (qualifierCall == null) return null;
+
+      final PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
+      if (receiver == null) return null;
+
+      final PsiExpression[] args = qualifierCall.getArgumentList().getExpressions();
+      if (args.length != 2) return null;
+
+      final PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
+
+      final String eqSign = isNegated(call, false) ? "!=" : "==";
+
+      final String equalToValue = PsiLiteralUtil.charLiteralForCharString(textExtractor.apply(equalTo));
+
+      return String.format("%s.charAt(%s) %s %s",
+                           textExtractor.apply(receiver),
+                           textExtractor.apply(args[0]),
+                           eqSign,
+                           equalToValue
+      );
+    }
+
+    private static boolean isNegated(@NotNull final PsiExpression start, boolean negated) {
+      final PsiExpression negation = BoolUtils.findNegation(start);
+      if (negation == null) return negated;
+      else return isNegated(negation, !negated);
+    }
+
+    private static PsiExpression getOutermostEquals(@NotNull final PsiExpression start) {
+      final PsiExpression negation = BoolUtils.findNegation(start);
+      if (negation == null) return start;
+      else return getOutermostEquals(negation);
     }
 
     private boolean lengthMatches(PsiExpression equalTo, PsiExpression from, PsiExpression to) {
@@ -383,7 +391,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                   substring.getStartOffsetInParent() + substring.getTextLength());
         return myManager.createProblemDescriptor(call, textRange,
                                                  CommonQuickFixBundle.message("fix.replace.x.with.y", call.getText(), converted),
-                                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                  fix);
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
@@ -529,8 +537,23 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         final PsiElement element = descriptor.getPsiElement();
         if (element == null) return;
 
+        final PsiMethodCallExpression call;
+
+        if (element instanceof PsiMethodCallExpression) {
+          call = (PsiMethodCallExpression)element;
+        }
+        else {
+          // Strip PsiPrefixExpression
+          call = PsiTreeUtil.findChildOfType(element, PsiMethodCallExpression.class);
+        }
+
+        if (call == null) return;
+
         final CommentTracker ct = new CommentTracker();
-        ct.replaceAndRestoreComments(element, myConverted);
+        final String convertTo = getTargetString(call, ct::text);
+        if (convertTo == null) return;
+
+        ct.replaceAndRestoreComments(element, convertTo);
       }
     }
 

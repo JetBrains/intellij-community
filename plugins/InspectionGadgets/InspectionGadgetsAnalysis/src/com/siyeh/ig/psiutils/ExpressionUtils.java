@@ -495,12 +495,15 @@ public class ExpressionUtils {
 
   /**
    * The method checks if the passed expression does not need to be converted to string explicitly,
-   * because the method it is passed to can do the string conversion itself.
+   * because the containing expression (e.g. a {@code PrintStream#println} call or string concatenation expression)
+   * will convert to the string automatically.
+   *
    * This is the case for some StringBuilder/Buffer, PrintStream/Writer and some logging methods.
-   * Otherwise it considers the conversion necessary and returns true
+   * Otherwise it considers the conversion necessary and returns true.
    *
    * @param expression an expression to examine
-   * @param throwable is the first parameter a conversion to string on a throwable? either {@link Throwable#toString()} or {@link String#valueOf(Object)}
+   * @param throwable is the first parameter a conversion to string on a throwable? Either {@link Throwable#toString()}
+   *                 or {@link String#valueOf(Object)}
    *
    * @return true if the explicit conversion to string is not required, otherwise - false
    */
@@ -1158,14 +1161,16 @@ public class ExpressionUtils {
   public static boolean isDifference(@NotNull PsiExpression from, @NotNull PsiExpression to, @NotNull PsiExpression diff) {
     diff = PsiUtil.skipParenthesizedExprDown(diff);
     if (diff == null) return false;
+
     EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
     if (isZero(from) && eq.expressionsAreEquivalent(to, diff)) return true;
     if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
-    if (to instanceof PsiBinaryExpression && from instanceof PsiBinaryExpression) {
-      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> binaryExpressionsDiff = getBinaryExpressionsDiff((PsiBinaryExpression)from,
-                                                                                                                  (PsiBinaryExpression)to);
-      from = binaryExpressionsDiff.first;
-      to = binaryExpressionsDiff.second;
+
+    if (to instanceof PsiPolyadicExpression && from instanceof PsiPolyadicExpression) {
+      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff(((PsiPolyadicExpression)from),
+                                                                                                ((PsiPolyadicExpression)to));
+      from = polyadicDiff.first;
+      to = polyadicDiff.second;
     }
     if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
@@ -1196,6 +1201,61 @@ public class ExpressionUtils {
     Integer diffConstant = tryCast(computeConstantExpression(diff), Integer.class);
     if (diffConstant == null) return false;
     return diffConstant == toConstant - fromConstant;
+  }
+
+  /**
+   * Get a diff from two {@link PsiPolyadicExpression} instances using {@link EquivalenceChecker}.
+   * @param from the first expression to examine
+   * @param to the second expression to examine
+   * @return a pair of expressions without common parts if the original expressions had any,
+   * or the original expressions if no common parts were found
+   */
+  @NotNull
+  private static Pair<@NotNull PsiExpression, @NotNull PsiExpression> getPolyadicDiff(@NotNull final PsiPolyadicExpression from,
+                                                                                      @NotNull final PsiPolyadicExpression to) {
+    final EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
+    final EquivalenceChecker.Match match = eq.expressionsMatch(from, to);
+    if (match.isPartialMatch()) {
+      final PsiExpression leftDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getLeftDiff());
+      final PsiExpression rightDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getRightDiff());
+
+      if (leftDiff == null || rightDiff == null) return Pair.create(from, to);
+
+      final PsiPolyadicExpression leftParent = PsiTreeUtil.getParentOfType(leftDiff, PsiPolyadicExpression.class);
+      assert leftParent != null;
+
+      final IElementType op = leftParent.getOperationTokenType();
+      if (op == JavaTokenType.MINUS || op == JavaTokenType.PLUS) {
+        if (shouldBeInverted(leftDiff, from)) return Pair.create(rightDiff, leftDiff);
+        else return Pair.create(leftDiff, rightDiff);
+      }
+    }
+    return Pair.create(from, to);
+  }
+
+  /**
+   * The method checks all the algebraic rules for subtraction to decide
+   * if the operand comes into the expression with the negative or positive sign
+   * by traversing the PSI tree going up to the specified element.
+   *
+   * @param start the operand to check the sign for
+   * @param end the end element to stop traversal
+   * @return true if the operand comes into the expression with the positive sign, otherwise false
+   */
+  private static boolean shouldBeInverted(@NotNull PsiElement start, @NotNull final PsiElement end) {
+    boolean result = false;
+    PsiElement parent = start;
+    while (parent != end) {
+      start = parent;
+      parent = parent.getParent();
+      if (!(parent instanceof PsiPolyadicExpression)) continue;
+
+      final IElementType op = ((PsiPolyadicExpression)parent).getOperationTokenType();
+      if (op == JavaTokenType.MINUS && parent.getFirstChild() != start) {
+        result = !result;
+      }
+    }
+    return result;
   }
 
   /**
