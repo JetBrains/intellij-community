@@ -1,9 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -15,10 +12,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -80,17 +75,6 @@ public class ExceptionInfoCache {
     ClassResolveInfo(Map<VirtualFile, PsiElement> classes, boolean library) {
       myClasses = classes;
       myInLibrary = library;
-    }
-
-    static TextAttributes getLinkAttributes(boolean inLibrary) {
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
-      if (inLibrary) {
-        Color libTextColor = UIUtil.getInactiveTextColor();
-        attributes = attributes.clone();
-        attributes.setForegroundColor(libTextColor);
-        attributes.setEffectColor(libTextColor);
-      }
-      return attributes;
     }
 
     @NotNull
