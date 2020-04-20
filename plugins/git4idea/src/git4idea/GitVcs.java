@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,11 +72,10 @@ public final class GitVcs extends AbstractVcs {
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
+  private Disposable myDisposable;
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
-
-  private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
 
   @NotNull
   public static GitVcs getInstance(@NotNull Project project) {
@@ -202,6 +202,8 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
+    myDisposable = Disposer.newDisposable();
+
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> ProgressManager.getInstance().executeProcessUnderProgress(
         () -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject), new EmptyProgressIndicator()));
@@ -211,9 +213,8 @@ public final class GitVcs extends AbstractVcs {
     }
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
 
-    if (myRepositoryForAnnotationsListener == null) {
-      myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
-    }
+    GitRepositoryForAnnotationsListener.registerListener(myProject, myDisposable);
+
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
   }
@@ -223,6 +224,10 @@ public final class GitVcs extends AbstractVcs {
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
+    }
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
     }
   }
 
