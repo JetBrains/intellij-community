@@ -12,8 +12,7 @@ public class SimpleReferenceInfo extends MemoryAgentReferenceInfo {
     super(referrer, kind);
   }
 
+  @NotNull
   @Override
-  public ReferringObject createReferringObject() {
-    return new SimpleReferringObject(referrer);
-  }
+  public ReferringObject createReferringObject() { return new SimpleReferringObject(referrer); }
 }

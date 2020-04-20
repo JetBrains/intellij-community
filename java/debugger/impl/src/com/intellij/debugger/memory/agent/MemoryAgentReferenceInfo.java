@@ -46,8 +46,8 @@ public abstract class MemoryAgentReferenceInfo {
     }
   }
 
-  protected ReferenceKind kind;
-  protected ObjectReference referrer;
+  @NotNull protected final ReferenceKind kind;
+  @NotNull protected final ObjectReference referrer;
 
   public MemoryAgentReferenceInfo(@NotNull ObjectReference referrer,
                                   @NotNull ReferenceKind kind) {
@@ -55,9 +55,9 @@ public abstract class MemoryAgentReferenceInfo {
     this.kind = kind;
   }
 
-  public ReferenceKind getKind() { return kind; }
+  public @NotNull ReferenceKind getKind() { return kind; }
 
-  public ObjectReference getReferrer() { return referrer; }
+  public @NotNull ObjectReference getReferrer() { return referrer; }
 
-  public abstract ReferringObject createReferringObject();
+  public abstract @NotNull ReferringObject createReferringObject();
 }

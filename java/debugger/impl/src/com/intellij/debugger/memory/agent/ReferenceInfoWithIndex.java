@@ -8,11 +8,12 @@ import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.ListIterator;
 
 public class ReferenceInfoWithIndex extends MemoryAgentReferenceInfo {
-  private Field field;
+  @Nullable private Field field;
 
   public ReferenceInfoWithIndex(@NotNull ObjectReference referrer,
                                 @NotNull ReferenceKind kind,
@@ -21,7 +22,7 @@ public class ReferenceInfoWithIndex extends MemoryAgentReferenceInfo {
     this.field = getFieldByJVMTIFieldIndex(referrer, fieldIndex);
   }
 
-  private static Field getFieldByJVMTIFieldIndex(ObjectReference reference, int index) {
+  private static @Nullable Field getFieldByJVMTIFieldIndex(ObjectReference reference, int index) {
     if (index < 0) {
       return null;
     }
@@ -44,6 +45,7 @@ public class ReferenceInfoWithIndex extends MemoryAgentReferenceInfo {
     return null;
   }
 
+  @NotNull
   @Override
   public ReferringObject createReferringObject() {
     return field == null ?
