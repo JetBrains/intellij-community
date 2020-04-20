@@ -5,6 +5,7 @@ import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.api.VirtualFileUrlManager
+import com.intellij.workspace.api.*
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlNullableProperty
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlProperty
@@ -16,16 +17,25 @@ import org.junit.Test
 internal class PVFUEntityData : PEntityData<PVFUEntity>() {
   lateinit var data: String
   lateinit var fileProperty: VirtualFileUrl
+  override fun createEntity(snapshot: TypedEntityStorage): PVFUEntity {
+    return PVFUEntity(data, fileProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PNullableVFUEntityData : PEntityData<PNullableVFUEntity>() {
   lateinit var data: String
   var fileProperty: VirtualFileUrl? = null
+  override fun createEntity(snapshot: TypedEntityStorage): PNullableVFUEntity {
+    return PNullableVFUEntity(data, fileProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
-internal class PListVFUEntityData : PEntityData<PVFUEntity>() {
+internal class PListVFUEntityData : PEntityData<PListVFUEntity>() {
   lateinit var data: String
   lateinit var fileProperty: List<VirtualFileUrl>
+  override fun createEntity(snapshot: TypedEntityStorage): PListVFUEntity {
+    return PListVFUEntity(data, fileProperty.toList()).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PVFUEntity(val data: String, val fileProperty: VirtualFileUrl) : PTypedEntity()

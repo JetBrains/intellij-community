@@ -107,9 +107,7 @@ internal class PEntityStorageBuilder(
     val entityDataClass = ClassConversion.entityToEntityData(unmodifiableEntityClass.kotlin)
 
     // Construct entity data
-    val primaryConstructor = entityDataClass.primaryConstructor!!
-    primaryConstructor.isAccessible = true
-    val pEntityData = primaryConstructor.call()
+    val pEntityData = entityDataClass.java.newInstance()
     pEntityData.entitySource = source
 
     // Add entity data to the structure

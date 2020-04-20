@@ -7,6 +7,9 @@ import org.junit.Test
 
 internal class PPersistentIdEntityData : PEntityData<PPersistentIdEntity>() {
   lateinit var data: String
+  override fun createEntity(snapshot: TypedEntityStorage): PPersistentIdEntity {
+    return PPersistentIdEntity(data).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PPersistentIdEntity(val data: String) : TypedEntityWithPersistentId, PTypedEntity() {

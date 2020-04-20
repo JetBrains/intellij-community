@@ -2,6 +2,7 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.PersistentEntityId
 import com.intellij.workspace.api.SampleEntitySource
+import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityWithPersistentId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -10,6 +11,9 @@ import org.junit.Test
 internal class PNamedSampleEntityData : PEntityData<PNamedSampleEntity>() {
   lateinit var name: String
   lateinit var next: PSampleEntityId
+  override fun createEntity(snapshot: TypedEntityStorage): PNamedSampleEntity {
+    return PNamedSampleEntity(name, next).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PNamedSampleEntity(
@@ -41,6 +45,9 @@ internal data class PChildEntityId(val childName: String,
 internal class PChildWithPersistentIdEntityData : PEntityData<PChildWithPersistentIdEntity>() {
   lateinit var parent: PNamedSampleEntity
   lateinit var childName: String
+  override fun createEntity(snapshot: TypedEntityStorage): PChildWithPersistentIdEntity {
+    return PChildWithPersistentIdEntity(parent, childName).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PChildWithPersistentIdEntity(

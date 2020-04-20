@@ -2,6 +2,7 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.EntitySource
+import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -9,6 +10,9 @@ import org.junit.Test
 
 internal class PSourceEntityData : PEntityData<PSourceEntity>() {
   lateinit var data: String
+  override fun createEntity(snapshot: TypedEntityStorage): PSourceEntity {
+    return PSourceEntity(data).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PSourceEntity(val data: String) : PTypedEntity()

@@ -2,6 +2,7 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.EntitySource
+import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.pstorage.references.ManyToOne
 import com.intellij.workspace.api.pstorage.references.MutableManyToOne
@@ -45,12 +46,16 @@ private fun printStorage(pStoreBuilder: TypedEntityStorageBuilder) {
 
 internal class PFolderEntityData : PEntityData<PFolderEntity>() {
   lateinit var data: String
+  override fun createEntity(snapshot: TypedEntityStorage): PFolderEntity = PFolderEntity(data).also { addMetaData(it, snapshot) }
 }
 
-internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolderEntity>()
+internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolderEntity>() {
+  override fun createEntity(snapshot: TypedEntityStorage): PSoftSubFolderEntity = PSoftSubFolderEntity().also { addMetaData(it, snapshot) }
+}
 
 internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
   lateinit var data: String
+  override fun createEntity(snapshot: TypedEntityStorage): PSubFolderEntity = PSubFolderEntity(data).also { addMetaData(it, snapshot) }
 }
 
 internal class PFolderEntity(

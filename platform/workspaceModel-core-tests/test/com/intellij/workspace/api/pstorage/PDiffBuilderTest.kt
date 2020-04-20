@@ -11,6 +11,9 @@ import org.junit.Test
 
 internal class PChildSampleEntityData : PEntityData<PChildSampleEntity>() {
   lateinit var data: String
+  override fun createEntity(snapshot: TypedEntityStorage): PChildSampleEntity {
+    return PChildSampleEntity(data).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PChildSampleEntity(

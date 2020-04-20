@@ -76,7 +76,6 @@ abstract class PModifiableTypedEntity<T : PTypedEntity> : PTypedEntity(), Modifi
 internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
   init {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
-    if (clazz.isAbstract) error("An abstract class cannot have an id: $clazz")
   }
 
   override fun toString(): String = clazz.simpleName + "-:-"+ arrayId.toString()
@@ -95,26 +94,17 @@ abstract class PEntityData<E : TypedEntity> {
 
   internal fun createPid(): PId<E> = PId(id, ClassConversion.entityDataToEntity(this::class))
 
-  internal fun createEntity(snapshot: AbstractPEntityStorage): E {
-    val returnClass = ClassConversion.entityDataToEntity(this::class)
+  abstract fun createEntity(snapshot: TypedEntityStorage): E
 
-    val params = returnClass.primaryConstructor!!.parameters
-      .associateWith { param ->
-        val value = this::class.memberProperties.first { it.name == param.name }.getter.call(this)
-        if (param.type.isList()) ArrayList(value as List<*>) else value
-      }.toMutableMap()
-    val res = returnClass.primaryConstructor!!.callBy(params)
+  fun addMetaData(res: E, snapshot: TypedEntityStorage) {
     (res as PTypedEntity).entitySource = entitySource
     (res as PTypedEntity).id = createPid() as PId<TypedEntity>
-    (res as PTypedEntity).snapshot = snapshot
-    return res
+    (res as PTypedEntity).snapshot = snapshot as AbstractPEntityStorage
   }
 
   internal fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
     val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
-    val primaryConstructor = returnClass.primaryConstructor!!
-    primaryConstructor.isAccessible = true
-    val res = primaryConstructor.call() as ModifiableTypedEntity<E>
+    val res = returnClass.java.newInstance()
     res as PModifiableTypedEntity
     res.original = this
     res.diff = diff

@@ -13,6 +13,9 @@ internal class PSampleEntityData : PEntityData<PSampleEntity>() {
   lateinit var stringProperty: String
   lateinit var stringListProperty: List<String>
   lateinit var fileProperty: VirtualFileUrl
+  override fun createEntity(snapshot: TypedEntityStorage): PSampleEntity {
+    return PSampleEntity(booleanProperty, stringProperty, stringListProperty.toList(), fileProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PSampleEntity(

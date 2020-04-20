@@ -14,6 +14,9 @@ import org.junit.Test
 internal class PChildEntityData : PEntityData<PChildEntity>() {
   lateinit var childProperty: String
   var dataClass: PDataClass? = null
+  override fun createEntity(snapshot: TypedEntityStorage): PChildEntity {
+    return PChildEntity(childProperty, dataClass).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PChildEntity(
@@ -25,6 +28,9 @@ internal class PChildEntity(
 
 internal class PNoDataChildEntityData : PEntityData<PNoDataChildEntity>() {
   lateinit var childProperty: String
+  override fun createEntity(snapshot: TypedEntityStorage): PNoDataChildEntity {
+    return PNoDataChildEntity(childProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PNoDataChildEntity(
@@ -33,7 +39,11 @@ internal class PNoDataChildEntity(
   val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
 }
 
-internal class PChildChildEntityData : PEntityData<PChildChildEntity>()
+internal class PChildChildEntityData : PEntityData<PChildChildEntity>() {
+  override fun createEntity(snapshot: TypedEntityStorage): PChildChildEntity {
+    return PChildChildEntity().also { addMetaData(it, snapshot) }
+  }
+}
 
 internal class PChildChildEntity : PTypedEntity() {
   val parent1: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
@@ -42,6 +52,9 @@ internal class PChildChildEntity : PTypedEntity() {
 
 internal class PParentEntityData : PEntityData<PParentEntity>() {
   lateinit var parentProperty: String
+  override fun createEntity(snapshot: TypedEntityStorage): PParentEntity {
+    return PParentEntity(parentProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PParentEntity(
@@ -59,6 +72,9 @@ internal data class PDataClass(val stringProperty: String, val parent: EntityRef
 
 internal class PChildWithOptionalParentEntityData : PEntityData<PChildWithOptionalParentEntity>() {
   lateinit var childProperty: String
+  override fun createEntity(snapshot: TypedEntityStorage): PChildWithOptionalParentEntity {
+    return PChildWithOptionalParentEntity(childProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PChildWithOptionalParentEntity(
