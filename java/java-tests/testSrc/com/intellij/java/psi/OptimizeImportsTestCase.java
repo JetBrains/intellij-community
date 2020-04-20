@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,7 @@ public abstract class OptimizeImportsTestCase extends LightJavaCodeInsightFixtur
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         myFixture.checkResultByFile(getTestName(false) + "_after" + extension);
+        PsiTestUtil.checkFileStructure(file);
       }
       catch (Exception e) {
         LOG.error(e);

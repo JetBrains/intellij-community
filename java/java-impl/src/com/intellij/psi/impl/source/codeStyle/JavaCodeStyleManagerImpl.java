@@ -106,7 +106,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       if (newList != null) {
         final PsiImportList importList = ((PsiJavaFile)file).getImportList();
         if (importList != null) {
-          importList.replace(newList);
+          importList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), importList);
+          importList.delete();
         }
       }
     }

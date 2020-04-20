@@ -134,21 +134,8 @@ public class ImportHelper{
 
       PsiImportList newImportList = dummyFile.getImportList();
       assert newImportList != null : dummyFile.getText();
-      PsiImportList result = (PsiImportList)newImportList.copy();
-      if (oldList.isReplaceEquivalent(result)) return null;
-      if (!nonImports.isEmpty()) {
-        PsiElement firstPrevious = newImportList.getPrevSibling();
-        while (firstPrevious != null && firstPrevious.getPrevSibling() != null) {
-          firstPrevious = firstPrevious.getPrevSibling();
-        }
-        for (PsiElement element = firstPrevious; element != null && element != newImportList; element = element.getNextSibling()) {
-          result.add(element.copy());
-        }
-        for (PsiElement element = newImportList.getNextSibling(); element != null; element = element.getNextSibling()) {
-          result.add(element.copy());
-        }
-      }
-      return result;
+      if (oldList.isReplaceEquivalent(newImportList)) return null;
+      return newImportList;
     }
     catch(IncorrectOperationException e) {
       LOG.error(e);
