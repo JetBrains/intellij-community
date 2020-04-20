@@ -50,7 +50,8 @@ try:
 
 except:
     # fallback in case matplotlib is not loaded correctly
-    traceback.print_exc()
+    if SHOW_DEBUG_INFO:
+        traceback.print_exc()
 
     keys = list(sys.modules.keys())
     if modules_list:
