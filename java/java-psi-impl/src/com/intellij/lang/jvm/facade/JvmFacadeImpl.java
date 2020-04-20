@@ -42,13 +42,11 @@ public class JvmFacadeImpl implements JvmFacade {
 
   private final DumbService myDumbService;
   private final JavaPsiFacadeImpl myJavaPsiFacade;
-  private final JvmElementProvider[] myElementProviders;
   private final Map<GlobalSearchScope, Map<String, List<JvmClass>>> myClassCache = createConcurrentWeakKeySoftValueMap();
 
   public JvmFacadeImpl(@NotNull Project project, MessageBus bus) {
     myDumbService = DumbService.getInstance(project);
     myJavaPsiFacade = (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(project);
-    myElementProviders = JvmElementProvider.EP_NAME.getExtensions(project);
     if (bus != null) {
       bus.connect().subscribe(PsiModificationTracker.TOPIC, () -> myClassCache.clear());
     }
@@ -118,6 +116,6 @@ public class JvmFacadeImpl implements JvmFacade {
 
   @NotNull
   private List<JvmElementProvider> filteredProviders() {
-    return myDumbService.filterByDumbAwareness(myElementProviders);
+    return myDumbService.filterByDumbAwareness(JvmElementProvider.EP_NAME.getExtensions(myJavaPsiFacade.getProject()));
   }
 }

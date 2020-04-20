@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInspection.SuppressionUtilCore;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -25,6 +26,21 @@ public class JavadocManagerImpl implements JavadocManager {
   public JavadocManagerImpl(Project project) {
     myInfos = new ArrayList<>();
 
+    reloadJavadocTagInfos(project);
+
+    ExtensionPointChangeListener listener = new ExtensionPointChangeListener() {
+      @Override
+      public void extensionListChanged() {
+        reloadJavadocTagInfos(project);
+      }
+    };
+
+    JavadocTagInfo.EP_NAME.getPoint(project).addExtensionPointListener(listener, false, project);
+    CustomJavadocTagProvider.EP_NAME.addExtensionPointListener(listener, null);
+  }
+
+  private void reloadJavadocTagInfos(Project project) {
+    myInfos.clear();
     myInfos.add(new AuthorDocTagInfo());
     myInfos.add(new SimpleDocTagInfo("deprecated", LanguageLevel.JDK_1_3, false, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("serialData", LanguageLevel.JDK_1_3, false, PsiMethod.class));
