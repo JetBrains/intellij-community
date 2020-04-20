@@ -318,14 +318,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     });
   }
 
-  public static boolean shouldRunTasksInParallelInHeadlessMode() {
+  public static boolean shouldRunHeadlessTasksSynchronously() {
     return SystemProperties.getBooleanProperty("intellij.progress.task.ignoreHeadless", false);
   }
 
   // from any: bg or current if can't
   @Override
   public void run(@NotNull final Task task) {
-    if (task.isHeadless() && !shouldRunTasksInParallelInHeadlessMode()) {
+    if (task.isHeadless() && !shouldRunHeadlessTasksSynchronously()) {
       if (SwingUtilities.isEventDispatchThread()) {
         runProcessWithProgressSynchronously(task, null);
       }

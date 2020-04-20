@@ -134,7 +134,7 @@ public class BackgroundTaskQueue {
         task.setTitle(myTitle);
       }
 
-      boolean synchronous = task.isHeadless() && !CoreProgressManager.shouldRunTasksInParallelInHeadlessMode() && !myForceAsyncInTests ||
+      boolean synchronous = task.isHeadless() && !CoreProgressManager.shouldRunHeadlessTasksSynchronously() && !myForceAsyncInTests ||
                             task.isConditionalModal() && !task.shouldStartInBackground();
 
       ProgressManagerImpl pm = (ProgressManagerImpl)ProgressManager.getInstance();
