@@ -172,7 +172,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
     if (!Files.exists(file)) {
       if (file.getFileSystem().isReadOnly()) {
-        throw new IOException(file.getFileSystem() + " is read only");
+        throw new IOException(file + " in " + file.getFileSystem() + " is not exist");
       }
       FileUtil.delete(keyStreamFile());
       if (!FileUtil.createIfDoesntExist(file.toFile())) {
