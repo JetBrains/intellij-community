@@ -4,12 +4,11 @@ package com.intellij.codeInspection.numeric;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,12 +21,12 @@ import org.jetbrains.annotations.NotNull;
 final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
 
   @NotNull private final String myConvertedValue;
-  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) private final String myName;
-  @NotNull private @NlsContexts.ListItem final String myFamilyName;
+  @NotNull @IntentionName private final String myName;
+  @NotNull @IntentionFamilyName private final String myFamilyName;
 
   ConvertNumericLiteralQuickFix(@NotNull final String convertedValue,
-                                @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) final String name,
-                                @NotNull final @NlsContexts.ListItem String familyName) {
+                                @NotNull @IntentionName final String name,
+                                @NotNull @IntentionFamilyName String familyName) {
     myConvertedValue = convertedValue;
     myName = name;
     myFamilyName = familyName;
@@ -39,7 +38,7 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
+  public @IntentionName @NotNull String getName() {
     return myName;
   }
 

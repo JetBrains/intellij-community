@@ -2,6 +2,8 @@
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionText;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -18,16 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.Open;
-import static com.intellij.openapi.util.NlsContexts.ListItem;
 
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
-  @ListItem
+  @IntentionText
   @Override
   public @NotNull String getText() {
     return ApplicationBundle.message("light.edit.open.in.project.intention");
   }
 
-  @ListItem
+  @IntentionFamilyName
   @Override
   public @NotNull String getFamilyName() {
     return getText();
