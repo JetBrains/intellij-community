@@ -23,6 +23,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -369,6 +370,7 @@ object DynamicPlugins {
           com.intellij.openapi.util.DefaultJDOMExternalizer.clearFieldCache()
           application.getServiceIfCreated(TopHitCache::class.java)?.clear()
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
+          PresentationFactory.clearPresentationCaches()
           IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
 
           if (disable) {
