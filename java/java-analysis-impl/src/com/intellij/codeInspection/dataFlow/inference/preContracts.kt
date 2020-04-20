@@ -44,11 +44,11 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
 
     val methodContracts = StandardMethodContract.toNonIntersectingStandardContracts(JavaMethodContractUtil.getMethodContracts(targetMethod))
                           ?: return emptyList()
-    var fromDelegate = methodContracts.mapNotNull { dc ->
+    val fromDelegate = methodContracts.mapNotNull { dc ->
       convertDelegatedMethodContract(method, parameters, qualifier, arguments, varArgCall, dc)
-    }
+    }.toMutableList()
     while (fromDelegate.isNotEmpty() && fromDelegate[fromDelegate.size - 1].returnValue == ContractReturnValue.returnAny()) {
-      fromDelegate = fromDelegate.subList(0, fromDelegate.size - 1)
+      fromDelegate.removeAt(fromDelegate.size - 1)
     }
     if (NullableNotNullManager.isNotNull(targetMethod)) {
       fromDelegate += listOf(
