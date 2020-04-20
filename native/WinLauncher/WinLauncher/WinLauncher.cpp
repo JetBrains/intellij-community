@@ -31,9 +31,6 @@ JNIEnv* env = NULL;
 volatile bool terminating = false;
 volatile int hookExitCode = 0;
 
-//tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
-bool toolsArchiveExists = false;
-
 HANDLE hFileMapping;
 HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
@@ -233,7 +230,6 @@ bool FindJVMInRegistry()
 {
 #ifndef _M_X64
   if (FindJVMInRegistryWithVersion("1.8", true))
-    toolsArchiveExists = true;
     return true;
   if (FindJVMInRegistryWithVersion("9", true))
     return true;
@@ -242,7 +238,6 @@ bool FindJVMInRegistry()
 #endif
 
   if (FindJVMInRegistryWithVersion("1.8", false))
-    toolsArchiveExists = true;
     return true;
   if (FindJVMInRegistryWithVersion("9", false))
     return true;
@@ -421,7 +416,7 @@ std::string BuildClassPath()
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
   std::string result = CollectLibJars(classpathLibs);
 
-  if (toolsArchiveExists)
+  if (LoadStdString(IDS_JDK_ONLY) == std::string("true"))
   {
     std::string toolsJar = FindToolsJar();
     if (toolsJar.size() > 0)
