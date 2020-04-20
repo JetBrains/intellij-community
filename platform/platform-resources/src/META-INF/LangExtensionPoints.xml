@@ -497,7 +497,7 @@
     <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider" dynamic="true"/>
     <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider" dynamic="true"/>
 
-    <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider"/>
+    <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider" dynamic="true"/>
 
     <extensionPoint name="psiViewerExtension" interface="com.intellij.internal.psiView.PsiViewerExtension" dynamic="true"/>
 
