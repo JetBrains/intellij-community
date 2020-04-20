@@ -56,12 +56,22 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @TestOnly
   public void clearCache(@NotNull Language language) {
-    Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);
+    clearCacheForDerivedLanguages(language);
+    clearCache();
+  }
+
+  protected void clearCacheForDerivedLanguages(@NotNull Language language) {
+    Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);  // includes language itself
     for (Language derivedLanguage : languages) {
       derivedLanguage.putUserData(myCacheKey, null);
       derivedLanguage.putUserData(myAllCacheKey, null);
+
+      Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(derivedLanguage);
+      for (MetaLanguage metaLanguage : metaLanguages) {
+        metaLanguage.putUserData(myCacheKey, null);
+        metaLanguage.putUserData(myAllCacheKey, null);
+      }
     }
-    clearCache();
   }
 
   @Override
@@ -70,11 +80,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
     final Language language = Language.findLanguageByID(key);
     if (language != null) {
-      Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);
-      for (Language derivedLanguage : languages) {
-        derivedLanguage.putUserData(myCacheKey, null);
-        derivedLanguage.putUserData(myAllCacheKey, null);
-      }
+      clearCacheForDerivedLanguages(language);
     }
   }
 
