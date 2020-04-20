@@ -182,7 +182,8 @@ object DynamicPlugins {
       }
     }
 
-    if (!hasNoComponentsOrServiceOverrides(descriptor) || !ActionManagerImpl.canUnloadActions(descriptor)) {
+    val pluginId = loadedPluginDescriptor?.pluginId ?: baseDescriptor?.pluginId
+    if (!hasNoComponentsOrServiceOverrides(pluginId, descriptor) || !ActionManagerImpl.canUnloadActions(descriptor)) {
       return false
     }
 
@@ -271,21 +272,21 @@ object DynamicPlugins {
         it.key == BundledKeymapBean.EP_NAME.name}) {
       return false
     }
-    return hasNoComponentsOrServiceOverrides(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
+    return hasNoComponentsOrServiceOverrides(pluginDescriptor.pluginId, pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
   }
 
-  private fun hasNoComponentsOrServiceOverrides(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean =
-    hasNoComponentsOrServiceOverrides(pluginDescriptor.appContainerDescriptor) &&
-    hasNoComponentsOrServiceOverrides(pluginDescriptor.projectContainerDescriptor) &&
-    hasNoComponentsOrServiceOverrides(pluginDescriptor.moduleContainerDescriptor)
+  private fun hasNoComponentsOrServiceOverrides(pluginId: PluginId?, pluginDescriptor: IdeaPluginDescriptorImpl): Boolean =
+    hasNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.appContainerDescriptor) &&
+    hasNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.projectContainerDescriptor) &&
+    hasNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.moduleContainerDescriptor)
 
-  private fun hasNoComponentsOrServiceOverrides(containerDescriptor: ContainerDescriptor): Boolean {
+  private fun hasNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): Boolean {
     if (!containerDescriptor.components.isNullOrEmpty()) {
-      LOG.info("Plugin is not unload-safe because it declares components")
+      LOG.info("Plugin $pluginId is not unload-safe because it declares components")
       return false
     }
     if (containerDescriptor.services?.any { it.overrides } == true) {
-      LOG.info("Plugin is not unload-safe because it overrides services")
+      LOG.info("Plugin $pluginId is not unload-safe because it overrides services")
       return false
     }
     return true
