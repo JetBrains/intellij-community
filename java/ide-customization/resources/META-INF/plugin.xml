@@ -31,9 +31,6 @@
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
 
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
-    <!--
-    <projectTemplatesFactory implementation="com.intellij.platform.templates.RemoteTemplatesFactory"/>
-    -->
     <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
