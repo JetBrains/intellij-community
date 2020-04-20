@@ -327,7 +327,7 @@
     </extensionPoint>
 
     <extensionPoint name="findUsagesHandlerFactory" area="IDEA_PROJECT" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" dynamic="true"/>
-    <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher"/>
+    <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher" dynamic="true"/>
 
     <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector" dynamic="true"/>
     <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>

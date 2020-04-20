@@ -97,7 +97,7 @@
     <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerClassUsagesHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.testGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.testGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.testIntegration.createTest.TestGenerator"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -185,7 +185,7 @@
     <extensionPoint qualifiedName="com.intellij.compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory"/>
     <extensionPoint qualifiedName="com.intellij.compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.buildProcess.parametersProvider" area="IDEA_PROJECT"
-                    interface="com.intellij.compiler.server.BuildProcessParametersProvider"/>
+                    interface="com.intellij.compiler.server.BuildProcessParametersProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider"/>
 

@@ -29,7 +29,7 @@
     <extensionPoint qualifiedName="com.intellij.externalSystem.beforeRunTaskImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemConfigLocator"
-                    interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator"/>
+                    interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemNotificationExtension"
                     interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemKeymapProvider"
@@ -49,7 +49,7 @@
                     interface="com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectWatcherContributor"
                     interface="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl$Contributor"/>
-    <extensionPoint qualifiedName="com.intellij.externalIconProvider" beanClass="com.intellij.util.KeyedLazyInstanceEP">
+    <extensionPoint qualifiedName="com.intellij.externalIconProvider" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.externalExecutionAware" beanClass="com.intellij.util.KeyedLazyInstanceEP">
