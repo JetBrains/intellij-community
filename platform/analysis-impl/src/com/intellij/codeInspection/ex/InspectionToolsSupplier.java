@@ -9,22 +9,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class InspectionToolsSupplier implements Disposable {
-  protected final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
+  protected final DisposableWrapperList<Listener> listeners = new DisposableWrapperList<>();
 
   public abstract @NotNull List<InspectionToolWrapper<?, ?>> createTools();
 
   public void addListener(@NotNull Listener listener, @Nullable Disposable parentDisposable) {
     if (parentDisposable == null) {
-      myListeners.add(listener);
+      listeners.add(listener);
     }
     else {
-      myListeners.add(listener, parentDisposable);
+      listeners.add(listener, parentDisposable);
     }
   }
 
   @Override
   public void dispose() {
-    myListeners.clear();
+    listeners.clear();
   }
 
   public interface Listener {

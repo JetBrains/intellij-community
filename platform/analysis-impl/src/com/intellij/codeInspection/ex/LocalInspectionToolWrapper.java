@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.GlobalInspectionContext;
@@ -34,9 +33,8 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     super(other);
   }
 
-  @NotNull
   @Override
-  public LocalInspectionToolWrapper createCopy() {
+  public @NotNull LocalInspectionToolWrapper createCopy() {
     return new LocalInspectionToolWrapper(this);
   }
 
@@ -58,8 +56,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
   }
 
-  @Nullable
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return myEP == null ? getTool().getAlternativeID() : myEP.alternativeId;
   }
 
@@ -68,41 +65,39 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   }
 
   private static final NotNullLazyValue<Map<String, LocalInspectionEP>> ourEPMap = new NotNullLazyValue<Map<String, LocalInspectionEP>>() {
-    @NotNull
     @Override
-    protected Map<String, LocalInspectionEP> compute() {
+    protected @NotNull Map<String, LocalInspectionEP> compute() {
       Map<String, LocalInspectionEP> map = new THashMap<>();
       Application application = ApplicationManager.getApplication();
-      LocalInspectionEP.LOCAL_INSPECTION.getPoint(application).addExtensionPointListener(
-        new ExtensionPointListener<LocalInspectionEP>() {
-          @Override
-          public void extensionAdded(@NotNull LocalInspectionEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-            map.put(extension.getShortName(), extension);
-          }
+      LocalInspectionEP.LOCAL_INSPECTION.getPoint(application).addExtensionPointListener(new ExtensionPointListener<LocalInspectionEP>() {
+        @Override
+        public void extensionAdded(@NotNull LocalInspectionEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+          map.put(extension.getShortName(), extension);
+        }
 
-          @Override
-          public void extensionRemoved(@NotNull LocalInspectionEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-            map.remove(extension.getShortName());
-          }
-        }, true, application);
+        @Override
+        public void extensionRemoved(@NotNull LocalInspectionEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+          map.remove(extension.getShortName());
+        }
+      }, true, application);
       return map;
     }
   };
 
-  @Nullable
-  public static InspectionToolWrapper findTool2RunInBatch(@NotNull Project project, @Nullable PsiElement element, @NotNull String name) {
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    final InspectionToolWrapper toolWrapper = element == null
-                                           ? inspectionProfile.getInspectionTool(name, project)
-                                           : inspectionProfile.getInspectionTool(name, element);
+  public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,
+                                                                          @Nullable PsiElement element,
+                                                                          @NotNull String name) {
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    InspectionToolWrapper<?, ?> toolWrapper = element == null
+                                              ? inspectionProfile.getInspectionTool(name, project)
+                                              : inspectionProfile.getInspectionTool(name, element);
     return findTool2RunInBatch(project, element, inspectionProfile, toolWrapper);
   }
 
-  @Nullable
-  public static InspectionToolWrapper findTool2RunInBatch(@NotNull Project project,
-                                                          @Nullable PsiElement element,
-                                                          @NotNull InspectionProfile inspectionProfile,
-                                                          @Nullable InspectionToolWrapper toolWrapper) {
+  public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,
+                                                                          @Nullable PsiElement element,
+                                                                          @NotNull InspectionProfile inspectionProfile,
+                                                                          @Nullable InspectionToolWrapper<?, ?> toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
       LocalInspectionTool inspectionTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
       if (inspectionTool instanceof PairedUnfairLocalInspectionTool) {

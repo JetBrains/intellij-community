@@ -1,244 +1,215 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.ex;
+package com.intellij.codeInspection.ex
 
-import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInspection.*;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.NotNullLazyValue;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.analysis.AnalysisBundle
+import com.intellij.codeInspection.*
+import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.SmartList
+import gnu.trove.THashMap
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
-import java.lang.reflect.Constructor;
-import java.util.*;
-import java.util.function.Supplier;
+private val LOG = logger<InspectionToolRegistrar>()
+private val EP_NAME = ExtensionPointName<InspectionToolProvider>("com.intellij.inspectionToolProvider")
+
+private typealias InspectionFactory = () -> InspectionToolWrapper<*, *>?
 
 @Service
-public final class InspectionToolRegistrar extends InspectionToolsSupplier {
-  private static final Logger LOG = Logger.getInstance(InspectionToolRegistrar.class);
-  private static final ExtensionPointName<InspectionToolProvider> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.inspectionToolProvider");
+class InspectionToolRegistrar : InspectionToolsSupplier() {
+  companion object {
+    @JvmStatic
+    fun getInstance() = service<InspectionToolRegistrar>()
 
-  private final @NotNull NotNullLazyValue<Collection<List<Supplier<InspectionToolWrapper<?, ?>>>>> toolFactories = NotNullLazyValue.createValue(() -> {
-    Application application = ApplicationManager.getApplication();
-    Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories = new HashMap<>();
-    Map<String, InspectionEP> shortNames = new THashMap<>();
-    registerToolProviders(application, factories);
-    registerInspections(factories, application, shortNames, LocalInspectionEP.LOCAL_INSPECTION);
-    registerInspections(factories, application, shortNames, InspectionEP.GLOBAL_INSPECTION);
-    return factories.values();
-  });
-
-  public static InspectionToolRegistrar getInstance() {
-    return ApplicationManager.getApplication().getService(InspectionToolRegistrar.class);
-  }
-
-  private void unregisterInspectionOrProvider(@NotNull Object inspectionOrProvider, @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories) {
-    List<Supplier<InspectionToolWrapper<?, ?>>> removedTools = factories.remove(inspectionOrProvider);
-    if (removedTools != null) {
-      for (Supplier<InspectionToolWrapper<?, ?>> removedTool : removedTools) {
-        fireToolRemoved(removedTool);
+    @ApiStatus.Internal
+    @JvmStatic
+    fun wrapTool(profileEntry: InspectionProfileEntry): InspectionToolWrapper<*, *> {
+      return when (profileEntry) {
+        is LocalInspectionTool -> LocalInspectionToolWrapper(profileEntry)
+        is GlobalInspectionTool -> GlobalInspectionToolWrapper(profileEntry)
+        else -> throw RuntimeException("unknown inspection class: " + profileEntry + "; " + profileEntry.javaClass)
       }
     }
   }
 
-  private <T extends InspectionEP> void registerInspections(@NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories,
-                                                            @NotNull Application application,
-                                                            @NotNull Map<String, InspectionEP> shortNames,
-                                                            @NotNull ExtensionPointName<T> extensionPointName) {
-    boolean isInternal = application.isInternal();
-    for (T extension : extensionPointName.getExtensionList()) {
-      registerInspection(extension, shortNames, isInternal, factories);
-    }
-    extensionPointName.getPoint(application).addExtensionPointListener(new ExtensionPointListener<T>() {
-      @Override
-      public void extensionAdded(@NotNull T inspection, @NotNull PluginDescriptor pluginDescriptor) {
-        fireToolAdded(registerInspection(inspection, shortNames, isInternal, factories));
-      }
+  private val toolFactories: MutableCollection<MutableList<InspectionFactory>>
 
-      @Override
-      public void extensionRemoved(@NotNull T inspection, @NotNull PluginDescriptor pluginDescriptor) {
-        unregisterInspectionOrProvider(inspection, factories);
-        shortNames.remove(inspection.getShortName());
-      }
-    }, false, application);
+  init {
+    val app = ApplicationManager.getApplication()
+    val result = HashMap<Any, MutableList<InspectionFactory>>()
+    val shortNames: MutableMap<String, InspectionEP> = THashMap()
+    registerToolProviders(app, result)
+    registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
+    registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)
+    toolFactories = result.values
   }
 
-  private static @Nullable <T extends InspectionEP> Supplier<InspectionToolWrapper<?, ?>> registerInspection(@NotNull T inspection,
-                                                                                                             @NotNull Map<String, InspectionEP> shortNames,
-                                                                                                             boolean isInternal,
-                                                                                                             @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories) {
-    checkForDuplicateShortName(inspection, shortNames);
-    if (!isInternal && inspection.isInternal) {
-      return null;
+  private fun unregisterInspectionOrProvider(inspectionOrProvider: Any, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
+    for (removedTool in (factories.remove(inspectionOrProvider) ?: return)) {
+      fireToolRemoved(removedTool)
     }
-
-    Supplier<InspectionToolWrapper<?, ?>> inspectionFactory = () -> {
-      return inspection instanceof LocalInspectionEP
-             ? new LocalInspectionToolWrapper((LocalInspectionEP)inspection)
-             : new GlobalInspectionToolWrapper(inspection);
-    };
-    factories.computeIfAbsent(inspection, o -> new ArrayList<>()).add(inspectionFactory);
-    return inspectionFactory;
   }
 
-  private void registerToolProviders(@NotNull Application app, @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories) {
-    if (app.isUnitTestMode()) {
-      //noinspection deprecation
-      LOG.assertTrue(app.getComponentInstancesOfType(InspectionToolProvider.class).isEmpty());
+  private fun <T : InspectionEP> registerInspections(factories: MutableMap<Any, MutableList<InspectionFactory>>,
+                                                     app: Application,
+                                                     shortNames: MutableMap<String, InspectionEP>,
+                                                     extensionPointName: ExtensionPointName<T>) {
+    val isInternal = app.isInternal
+    for (extension in extensionPointName.extensionList) {
+      registerInspection(extension, shortNames, isInternal, factories)
     }
 
-    EXTENSION_POINT_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
-      registerToolProvider(provider, pluginDescriptor, factories, null);
-    });
+    extensionPointName.addExtensionPointListener(object : ExtensionPointListener<T> {
+      override fun extensionAdded(inspection: T, pluginDescriptor: PluginDescriptor) {
+        fireToolAdded(registerInspection(inspection, shortNames, isInternal, factories) ?: return)
+      }
 
-    EXTENSION_POINT_NAME.getPoint(app).addExtensionPointListener(
-      new ExtensionPointListener<InspectionToolProvider>() {
-        @Override
-        public void extensionAdded(@NotNull InspectionToolProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-          List<Supplier<InspectionToolWrapper<?, ?>>> added = new ArrayList<>();
-          registerToolProvider(provider, pluginDescriptor, factories, added);
-          for (Supplier<InspectionToolWrapper<?, ?>> supplier : added) {
-            fireToolAdded(supplier);
-          }
+      override fun extensionRemoved(inspection: T, pluginDescriptor: PluginDescriptor) {
+        unregisterInspectionOrProvider(inspection, factories)
+        shortNames.remove(inspection.getShortName())
+      }
+    }, app)
+  }
+
+  private fun registerToolProviders(app: Application, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
+    if (app.isUnitTestMode) {
+      @Suppress("DEPRECATION")
+      LOG.assertTrue(app.getComponentInstancesOfType(InspectionToolProvider::class.java).isEmpty())
+    }
+
+    EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
+      registerToolProvider(provider, pluginDescriptor, factories, null)
+    }
+    EP_NAME.addExtensionPointListener(object : ExtensionPointListener<InspectionToolProvider?> {
+      override fun extensionAdded(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
+        val added = mutableListOf<InspectionFactory>()
+        registerToolProvider(provider, pluginDescriptor, factories, added)
+        for (supplier in added) {
+          fireToolAdded(supplier)
         }
-
-        @Override
-        public void extensionRemoved(@NotNull InspectionToolProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-          unregisterInspectionOrProvider(provider, factories);
-        }
-      }, false, app);
-  }
-
-  private static void registerToolProvider(@NotNull InspectionToolProvider provider,
-                                           @NotNull PluginDescriptor pluginDescriptor,
-                                           @NotNull Map<Object, List<Supplier<InspectionToolWrapper<?, ?>>>> factories,
-                                           @Nullable List<Supplier<InspectionToolWrapper<?, ?>>> newlyAddedToCollect) {
-    List<Supplier<InspectionToolWrapper<?, ?>>> suppliers = factories.computeIfAbsent(provider, k -> new ArrayList<>());
-    for (Class<? extends InspectionProfileEntry> aClass : provider.getInspectionClasses()) {
-      Supplier<InspectionToolWrapper<?, ?>> supplier = createSupplier(pluginDescriptor, aClass);
-      suppliers.add(supplier);
-      if (newlyAddedToCollect != null) {
-        newlyAddedToCollect.add(supplier);
       }
-    }
-  }
 
-  @NotNull
-  private static Supplier<InspectionToolWrapper<?, ?>> createSupplier(@NotNull PluginDescriptor pluginDescriptor,
-                                                                      @NotNull Class<? extends InspectionProfileEntry> aClass) {
-    return () -> {
-      try {
-        Constructor<? extends InspectionProfileEntry> constructor = aClass.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        return wrapTool(constructor.newInstance());
+      override fun extensionRemoved(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
+        unregisterInspectionOrProvider(provider, factories)
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
-        return null;
-      }
-    };
+    }, app)
   }
 
-  private static void checkForDuplicateShortName(InspectionEP ep, Map<String, InspectionEP> shortNames) {
-    final String shortName = ep.getShortName();
-    final InspectionEP duplicate = shortNames.put(shortName, ep);
-    if (duplicate != null) {
-      final PluginDescriptor descriptor = ep.getPluginDescriptor();
-      LOG.error(new PluginException(
-        "Short name '" + shortName + "' is not unique\nclass '" + ep.instantiateTool().getClass().getCanonicalName() + "' in " + descriptor +
-        "\nand\nclass '" + duplicate.instantiateTool().getClass().getCanonicalName() + "' in " + duplicate.getPluginDescriptor() + "\nconflict",
-        descriptor.getPluginId()));
+  private fun fireToolAdded(factory: InspectionFactory) {
+    val inspectionToolWrapper = factory() ?: return
+    for (listener in listeners) {
+      listener.toolAdded(inspectionToolWrapper)
     }
   }
 
-  @ApiStatus.Internal
-  public static @NotNull InspectionToolWrapper<?, ?> wrapTool(@NotNull InspectionProfileEntry profileEntry) {
-    if (profileEntry instanceof LocalInspectionTool) {
-      return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
-    }
-    else if (profileEntry instanceof GlobalInspectionTool) {
-      return new GlobalInspectionToolWrapper((GlobalInspectionTool)profileEntry);
-    }
-    else {
-      throw new RuntimeException("unknown inspection class: " + profileEntry + "; "+profileEntry.getClass());
+  private fun fireToolRemoved(factory: InspectionFactory) {
+    val inspectionToolWrapper = factory() ?: return
+    for (listener in listeners) {
+      listener.toolRemoved(inspectionToolWrapper)
     }
   }
 
-  private void fireToolAdded(@Nullable Supplier<InspectionToolWrapper<?, ?>> supplier) {
-    InspectionToolWrapper<?, ?> inspectionToolWrapper = supplier != null ? supplier.get() : null;
-    if (inspectionToolWrapper != null) {
-      for (Listener listener : myListeners) {
-        listener.toolAdded(inspectionToolWrapper);
-      }
-    }
-  }
-
-  private void fireToolRemoved(@Nullable Supplier<InspectionToolWrapper<?, ?>> supplier) {
-    InspectionToolWrapper<?, ?> inspectionToolWrapper = supplier != null ? supplier.get() : null;
-    if (inspectionToolWrapper != null) {
-      for (Listener listener : myListeners) {
-        listener.toolRemoved(inspectionToolWrapper);
-      }
-    }
-  }
-
-  @Override
-  public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
-    Collection<List<Supplier<InspectionToolWrapper<?, ?>>>> inspectionToolFactories = toolFactories.getValue();
-    ArrayList<InspectionToolWrapper<?, ?>> tools = new ArrayList<>();
-    for (List<Supplier<InspectionToolWrapper<?, ?>>> list : inspectionToolFactories) {
-      tools.ensureCapacity(list.size());
-      for (Supplier<InspectionToolWrapper<?, ?>> factory : list) {
-        ProgressManager.checkCanceled();
-        InspectionToolWrapper<?, ?> toolWrapper = factory.get();
+  override fun createTools(): List<InspectionToolWrapper<*, *>> {
+    val tools = ArrayList<InspectionToolWrapper<*, *>>()
+    for (list in toolFactories) {
+      tools.ensureCapacity(list.size)
+      for (factory in list) {
+        ProgressManager.checkCanceled()
+        val toolWrapper = factory()
         if (toolWrapper != null && checkTool(toolWrapper) == null) {
-          tools.add(toolWrapper);
+          tools.add(toolWrapper)
         }
       }
     }
-    return tools;
+    return tools
   }
 
-  /**
-   * @deprecated use {@link #createTools()} instead
-   */
-  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public @NotNull List<InspectionToolWrapper<?, ?>> get() {
-    return createTools();
+  @Deprecated("use {@link #createTools()} instead", ReplaceWith("createTools()"))
+  fun get() = createTools()
+}
+
+private fun <T : InspectionEP> registerInspection(inspection: T,
+                                                  shortNames: MutableMap<String, InspectionEP>,
+                                                  isInternal: Boolean,
+                                                  factories: MutableMap<Any, MutableList<InspectionFactory>>): (InspectionFactory)? {
+  checkForDuplicateShortName(inspection, shortNames)
+  if (!isInternal && inspection.isInternal) {
+    return null
   }
 
-  private static String checkTool(@NotNull InspectionToolWrapper<?, ?> toolWrapper) {
-    if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
-      return null;
-    }
+  val factory = {
+    if (inspection is LocalInspectionEP) LocalInspectionToolWrapper(inspection) else GlobalInspectionToolWrapper(inspection)
+  }
+  factories.computeIfAbsent(inspection) { SmartList() }.add(factory)
+  return factory
+}
 
-    String message = null;
-    try {
-      String id = toolWrapper.getID();
-      if (id == null || !LocalInspectionTool.isValidID(id)) {
-        message = AnalysisBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN);
+private fun registerToolProvider(provider: InspectionToolProvider,
+                                 pluginDescriptor: PluginDescriptor,
+                                 keyToFactories: MutableMap<Any, MutableList<InspectionFactory>>,
+                                 added: MutableList<InspectionFactory>?) {
+  val factories = keyToFactories.computeIfAbsent(provider) { ArrayList() }
+  for (aClass in provider.inspectionClasses) {
+    val supplier = {
+      try {
+        val constructor = aClass.getDeclaredConstructor()
+        constructor.isAccessible = true
+        InspectionToolRegistrar.wrapTool(constructor.newInstance())
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Exception) {
+        LOG.error(PluginException(e, pluginDescriptor.pluginId))
+        null
       }
     }
-    catch (Throwable t) {
-      message = AnalysisBundle.message("inspection.disabled.error", toolWrapper.getShortName(), t.getMessage());
-    }
-    if (message != null) {
-      LOG.error(message);
-    }
-    return message;
+    factories.add(supplier)
+    added?.add(supplier)
   }
+}
+
+private fun checkForDuplicateShortName(ep: InspectionEP, shortNames: MutableMap<String, InspectionEP>) {
+  val shortName = ep.getShortName()
+  val duplicate = shortNames.put(shortName, ep) ?: return
+  val descriptor = ep.pluginDescriptor
+  LOG.error(PluginException(
+    """
+      Short name '$shortName' is not unique
+      class '${ep.instantiateTool().javaClass.canonicalName}' in $descriptor
+      and class '${duplicate.instantiateTool().javaClass.canonicalName}' in ${duplicate.pluginDescriptor}
+      conflict
+      """.trimIndent(),
+    descriptor.pluginId))
+}
+
+private fun checkTool(toolWrapper: InspectionToolWrapper<*, *>): String? {
+  if (toolWrapper !is LocalInspectionToolWrapper) {
+    return null
+  }
+
+  var message: String? = null
+  try {
+    val id = toolWrapper.getID()
+    if (id == null || !LocalInspectionTool.isValidID(id)) {
+      message = AnalysisBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN)
+    }
+  }
+  catch (t: Throwable) {
+    message = AnalysisBundle.message("inspection.disabled.error", toolWrapper.getShortName(), t.message)
+  }
+  if (message != null) {
+    LOG.error(message)
+  }
+  return message
 }

@@ -106,8 +106,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return Comparing.equal(toolList1, toolList2);
   }
 
-  protected static @NotNull InspectionToolWrapper copyToolSettings(@NotNull InspectionToolWrapper toolWrapper) {
-    final InspectionToolWrapper inspectionTool = toolWrapper.createCopy();
+  protected static @NotNull InspectionToolWrapper<?, ?> copyToolSettings(@NotNull InspectionToolWrapper toolWrapper) {
+    InspectionToolWrapper<?, ?> inspectionTool = toolWrapper.createCopy();
     if (toolWrapper.isInitialized()) {
       Element config = new Element("config");
       ScopeToolState.tryWriteSettings(toolWrapper.getTool(), config);
@@ -738,7 +738,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public void resetToBase(@NotNull String toolId, NamedScope scope, @NotNull Project project) {
     ToolsImpl tools = myBaseProfile.getToolsOrNull(toolId, project);
     if (tools == null) return;
-    InspectionToolWrapper baseDefaultWrapper = tools.getDefaultState().getTool();
+    InspectionToolWrapper<?, ?> baseDefaultWrapper = tools.getDefaultState().getTool();
     ScopeToolState state = myTools.get(toolId).getTools().stream().filter(s -> scope == s.getScope(project)).findFirst().orElseThrow(IllegalStateException::new);
     state.setTool(copyToolSettings(baseDefaultWrapper));
     schemeState = SchemeState.POSSIBLY_CHANGED;

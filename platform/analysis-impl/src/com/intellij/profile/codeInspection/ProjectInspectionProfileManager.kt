@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.JDOMUtil
@@ -93,7 +92,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
       currentProfile.initInspectionTools(project)
     }
 
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(DumbAwareRunnable {
+    StartupManager.getInstance(project).runAfterOpened {
       project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profilesInitialized()
 
       val scopeListener = NamedScopesHolder.ScopeListener {
@@ -104,7 +103,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
 
       scopesManager.addScopeListener(scopeListener, project)
       NamedScopeManager.getInstance(project).addScopeListener(scopeListener, project)
-    })
+    }
   }
 
   override fun dispose() {
