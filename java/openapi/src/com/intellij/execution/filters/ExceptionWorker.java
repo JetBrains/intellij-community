@@ -61,7 +61,7 @@ public class ExceptionWorker {
     return execute(line, textEndOffset, null);
   }
 
-  public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable ExceptionLineRefiner elementMatcher) {
+  Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable ExceptionLineRefiner elementMatcher) {
     myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null || myProject.isDisposed()) {
@@ -112,7 +112,7 @@ public class ExceptionWorker {
     return result;
   }
 
-  public ExceptionLineRefiner getLocationRefiner() {
+  ExceptionLineRefiner getLocationRefiner() {
     return myLocationRefiner;
   }
 
