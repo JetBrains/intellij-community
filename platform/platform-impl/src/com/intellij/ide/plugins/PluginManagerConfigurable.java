@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
@@ -64,6 +65,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -482,7 +484,14 @@ public class PluginManagerConfigurable
                       }
                     }
                   }
-                  allTags.addAll(MarketplaceRequests.getAllPluginsTags());
+                  try {
+                    ProcessIOExecutorService.INSTANCE.submit(() -> {
+                      allTags.addAll(MarketplaceRequests.getAllPluginsTags());
+                    }).get();
+                  }
+                  catch (InterruptedException | ExecutionException e) {
+                    LOG.error("Error while getting tags from marketplace", e);
+                  }
                   myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
                 }
                 return myTagsSorted;
@@ -492,7 +501,14 @@ public class PluginManagerConfigurable
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
                   List<String> customRepositoriesVendors = MyPluginModel.getVendors(myCustomRepositoryPluginsList);
                   LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
-                  vendors.addAll(MarketplaceRequests.getAllPluginsVendors());
+                  try {
+                    ProcessIOExecutorService.INSTANCE.submit(() -> {
+                      vendors.addAll(MarketplaceRequests.getAllPluginsVendors());
+                    }).get();
+                  }
+                  catch (InterruptedException | ExecutionException e) {
+                    LOG.error("Error while getting vendors from marketplace", e);
+                  }
                   myVendorsSorted = new ArrayList<>(vendors);
                 }
                 return myVendorsSorted;
