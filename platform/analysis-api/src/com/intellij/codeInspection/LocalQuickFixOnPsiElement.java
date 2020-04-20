@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +81,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     return myEndElement == null ? null : myEndElement.getElement();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   public abstract String getText();
 

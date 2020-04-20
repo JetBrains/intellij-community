@@ -3,7 +3,7 @@ package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionText;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.Open;
 
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
-  @IntentionText
+  @IntentionName
   @Override
   public @NotNull String getText() {
     return ApplicationBundle.message("light.edit.open.in.project.intention");

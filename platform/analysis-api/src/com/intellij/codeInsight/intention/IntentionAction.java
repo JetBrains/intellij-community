@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionText;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -37,7 +37,7 @@ public interface IntentionAction extends FileModifier {
    * @return the text to show in the intention popup.
    * @see #isAvailable(Project, Editor, PsiFile)
    */
-  @IntentionText
+  @IntentionName
   @NotNull
   String getText();
 
