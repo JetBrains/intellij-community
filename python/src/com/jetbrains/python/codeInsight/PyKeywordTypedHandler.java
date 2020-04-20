@@ -23,8 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,10 +61,8 @@ public class PyKeywordTypedHandler extends TypedHandlerDelegate {
 
     PsiElement elem = file.findElementAt(offset);
     if (elem == null) return Result.CONTINUE;
-    if (elem instanceof PyStringLiteralExpression || elem.getParent() instanceof PyStringLiteralExpression) return Result.CONTINUE;
 
-    // double colons aren't found in Python's syntax, so we can safely overtype a colon everywhere but strings.
-    if (elem.textMatches(":")) {
+    if (elem.getNode().getElementType() == PyTokenTypes.COLON) {
       editor.getCaretModel().moveToOffset(offset + 1); // overtype, that is, jump over
       return Result.STOP;
     }

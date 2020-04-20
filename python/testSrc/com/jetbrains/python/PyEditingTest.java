@@ -822,6 +822,22 @@ public class PyEditingTest extends PyTestCase {
                  "s = 'def func():<caret>: pass'");
   }
 
+  public void testOverTypingColonInFStringFragment() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestTyping("s = f'{(lambda<caret>: 42)}'",
+                   ":",
+                   "s = f'{(lambda:<caret> 42)}'");
+    });
+  }
+
+  public void testOverTypingFormatStartInFStringFragment() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestTyping("s = f'{42<caret>:3d}'",
+                   ":",
+                   "s = f'{42:<caret>:3d}'");
+    });
+  }
+
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
