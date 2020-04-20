@@ -64,6 +64,7 @@ public class SemKey<T extends SemElement> {
   }
 
   @SafeVarargs
+  @NotNull
   public static <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T> @NotNull ... supers) {
     return new SemKey<>(debugName, supers);
   }
@@ -78,6 +79,7 @@ public class SemKey<T extends SemElement> {
   }
 
   @SafeVarargs
+  @NotNull
   public final <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super K> @NotNull ... otherSupers) {
     if (otherSupers.length == 0) {
       return new SemKey<>(debugName, this);
