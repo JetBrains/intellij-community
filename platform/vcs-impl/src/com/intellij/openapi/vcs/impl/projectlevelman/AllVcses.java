@@ -10,6 +10,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -69,33 +71,37 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   @Override
   public void registerManually(@NotNull AbstractVcs vcs) {
-    synchronized (myLock) {
-      String name = vcs.getName();
-      if (myVcses.containsKey(name)) {
-        LOG.error(String.format("vcs is already registered: %s", vcs), new Throwable());
-        return;
+    ReadAction.run(() -> {
+      synchronized (myLock) {
+        String name = vcs.getName();
+        if (myVcses.containsKey(name)) {
+          LOG.error(String.format("vcs is already registered: %s", vcs), new Throwable());
+          return;
+        }
+        if (myExtensions.containsKey(name)) {
+          LOG.error(String.format("can't override vcs from EP. vcs: %s, ep: %s", vcs, myExtensions.get(name).vcsClass), new Throwable());
+          return;
+        }
+        myVcses.put(name, vcs);
+        registerVcs(vcs);
       }
-      if (myExtensions.containsKey(name)) {
-        LOG.error(String.format("can't override vcs from EP. vcs: %s, ep: %s", vcs, myExtensions.get(name).vcsClass), new Throwable());
-        return;
-      }
-      myVcses.put(name, vcs);
-      registerVcs(vcs);
-    }
+    });
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
   }
 
   @Override
   public void unregisterManually(@NotNull AbstractVcs vcs) {
-    synchronized (myLock) {
-      String name = vcs.getName();
-      if (!myVcses.containsKey(name)) {
-        LOG.error(String.format("vcs is not registered: %s", vcs), new Throwable());
-        return;
+    ReadAction.run(() -> {
+      synchronized (myLock) {
+        String name = vcs.getName();
+        if (!myVcses.containsKey(name)) {
+          LOG.error(String.format("vcs is not registered: %s", vcs), new Throwable());
+          return;
+        }
+        myVcses.remove(name);
+        unregisterVcs(vcs);
       }
-      myVcses.remove(name);
-      unregisterVcs(vcs);
-    }
+    });
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
   }
 
@@ -128,18 +134,20 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
     vcs.setupEnvironments();
 
-    synchronized (myLock) {
-      if (myExtensions.get(name) != ep) return null;
+    return ReadAction.compute(() -> {
+      synchronized (myLock) {
+        if (myExtensions.get(name) != ep) return null;
 
-      AbstractVcs oldVcs = myVcses.get(name);
-      if (oldVcs != null) {
-        return oldVcs;
+        AbstractVcs oldVcs = myVcses.get(name);
+        if (oldVcs != null) {
+          return oldVcs;
+        }
+
+        myVcses.put(name, vcs);
+        registerVcs(vcs);
+        return vcs;
       }
-
-      myVcses.put(name, vcs);
-      registerVcs(vcs);
-      return vcs;
-    }
+    });
   }
 
   @Nullable
@@ -162,6 +170,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   }
 
   private void registerVcs(@NotNull AbstractVcs vcs) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       vcs.loadSettings();
       vcs.doStart();
@@ -173,6 +182,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   }
 
   private void unregisterVcs(@NotNull AbstractVcs vcs) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       vcs.doShutdown();
     }
