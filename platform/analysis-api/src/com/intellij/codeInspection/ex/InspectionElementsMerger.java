@@ -39,10 +39,11 @@ public abstract class InspectionElementsMerger {
   
   private static synchronized Map<String, InspectionElementsMerger> getMergers() {
     if (ourMergers == null) {
-      ourMergers = new HashMap<>();
+      Map<String, InspectionElementsMerger> mergers = new HashMap<>();
       for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
-        ourMergers.put(merger.getMergedToolName(), merger);
+        mergers.put(merger.getMergedToolName(), merger);
       }
+      return ourMergers = mergers;
     }
     return ourMergers;
   }
