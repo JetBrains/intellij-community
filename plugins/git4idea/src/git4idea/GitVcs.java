@@ -2,11 +2,9 @@
 package git4idea;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -204,9 +202,8 @@ public final class GitVcs extends AbstractVcs {
   protected void activate() {
     myDisposable = Disposer.newDisposable();
 
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> ProgressManager.getInstance().executeProcessUnderProgress(
-        () -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject), new EmptyProgressIndicator()));
+    BackgroundTaskUtil.executeOnPooledThread(myDisposable, ()
+      -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
     if (myVFSListener == null) {
       myVFSListener = GitVFSListener.createInstance(this);
