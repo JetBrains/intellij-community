@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class OptimizeImportsTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest(@NotNull String extension) {
-    WriteCommandAction.runWriteCommandAction(null, () -> {
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       String fileName = getTestName(false) + extension;
       try {
         PsiFile file = myFixture.configureByFile(fileName);
