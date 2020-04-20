@@ -103,11 +103,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Set<FileType> myDefaultTypes = new THashSet<>();
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
-  private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<>(); // TODO sync
+  private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<>();
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
-  private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>(); // TODO sync
+  private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<>();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
 
@@ -134,10 +134,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private final MessageBus myMessageBus;
-  private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<>(); // TODO sync
+  private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<>();
   @NonNls
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
-  private final SchemeManager<FileType> mySchemeManager; // TODO sync
+  private final SchemeManager<FileType> mySchemeManager;
   @NonNls
   static final String FILE_SPEC = "filetypes";
 
