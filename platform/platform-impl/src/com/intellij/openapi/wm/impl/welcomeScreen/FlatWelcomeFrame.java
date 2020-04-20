@@ -2,8 +2,6 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
-import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
@@ -20,7 +18,6 @@ import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -45,7 +42,6 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
@@ -400,7 +396,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
 
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
-      toolbar.add(createErrorsLink());
+      toolbar.add(createErrorsLink(this));
       toolbar.add(createEventsLink());
       toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
                                    AllIcons.General.GearPlain, !registeredVisible
@@ -413,14 +409,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
 
       panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
-      return panel;
-    }
-
-    private JComponent createErrorsLink() {
-      IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
-      panel.setBorder(JBUI.Borders.emptyRight(13));
-      panel.setOpaque(false);
-      Disposer.register(this, panel);
       return panel;
     }
 
@@ -467,42 +455,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     @Override
     public @Nullable BalloonLayout getBalloonLayout() {
       return myBalloonLayout;
-    }
-
-    private JComponent createActionLink(@NotNull Container parentContainer,
-                                        @Nls String text,
-                                        final String groupId,
-                                        Icon icon,
-                                        @Nullable Component focusOnLeft) {
-      final Ref<ActionLink> ref = new Ref<>(null);
-      AnAction action = new AnAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
-          PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-            null, configureGroup, e.getDataContext(),
-            false, false, false, false, null, -1, null,
-            ActionPlaces.WELCOME_SCREEN,
-            new MenuItemPresentationFactory(true), false);
-          popup.showUnderneathOfLabel(ref.get());
-        }
-      };
-      JComponent panel = createActionLink(text, icon, ref, action);
-      installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
-      return panel;
-    }
-
-    private JComponent createActionLink(@Nls String text, Icon icon, Ref<? super ActionLink> ref, AnAction action) {
-      ActionLink link = new ActionLink(text, icon, action);
-      ref.set(link);
-      // Don't allow focus, as the containing panel is going to focusable.
-      link.setFocusable(false);
-      link.setPaintUnderline(false);
-      link.setNormalColor(getLinkNormalColor());
-      JActionLinkPanel panel = new JActionLinkPanel(link);
-      panel.setBorder(JBUI.Borders.empty(4, 6));
-      panel.add(createArrow(link), BorderLayout.EAST);
-      return panel;
     }
 
     @NotNull

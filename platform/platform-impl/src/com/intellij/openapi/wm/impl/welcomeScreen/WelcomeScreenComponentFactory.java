@@ -1,29 +1,40 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 
 public class WelcomeScreenComponentFactory {
@@ -140,5 +151,49 @@ public class WelcomeScreenComponentFactory {
         return myAccessibleHelper.getAccessibleChild(i);
       }
     }
+  }
+
+  static JComponent createActionLink(@NotNull Container parentContainer,
+                                     @Nls String text,
+                                     final String groupId,
+                                     Icon icon,
+                                     @Nullable Component focusOnLeft) {
+    final Ref<ActionLink> ref = new Ref<>(null);
+    AnAction action = new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
+        PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
+          null, configureGroup, e.getDataContext(),
+          false, false, false, false, null, -1, null,
+          ActionPlaces.WELCOME_SCREEN,
+          new MenuItemPresentationFactory(true), false);
+        popup.showUnderneathOfLabel(ref.get());
+      }
+    };
+    JComponent panel = createActionLink(text, icon, ref, action);
+    installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
+    return panel;
+  }
+
+  static JComponent createActionLink(@Nls String text, Icon icon, Ref<? super ActionLink> ref, AnAction action) {
+    ActionLink link = new ActionLink(text, icon, action);
+    ref.set(link);
+    // Don't allow focus, as the containing panel is going to be focusable.
+    link.setFocusable(false);
+    link.setPaintUnderline(false);
+    link.setNormalColor(getLinkNormalColor());
+    JActionLinkPanel panel = new JActionLinkPanel(link);
+    panel.setBorder(JBUI.Borders.empty(4, 6));
+    panel.add(createArrow(link), BorderLayout.EAST);
+    return panel;
+  }
+
+  static JComponent createErrorsLink(Disposable parent) {
+    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
+    panel.setBorder(JBUI.Borders.emptyRight(13));
+    panel.setOpaque(false);
+    Disposer.register(parent, panel);
+    return panel;
   }
 }
