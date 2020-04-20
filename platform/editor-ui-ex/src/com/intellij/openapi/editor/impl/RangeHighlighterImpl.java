@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -30,6 +31,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   private final MarkupModelImpl myModel;
   private TextAttributes myTextAttributes;
+  private TextAttributesKey myTextAttributesKey;
   private LineMarkerRenderer myLineMarkerRenderer;
   private Color myErrorStripeColor;
   private Color myLineSeparatorColor;
@@ -57,6 +59,10 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @MagicConstant(flags = {CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_OR_COLOR_CHANGED_MASK})
   private @interface ChangeStatus {}
 
+  /**
+   * @deprecated Use constructor with TextAttributeKey
+   */
+  @Deprecated
   RangeHighlighterImpl(@NotNull MarkupModelImpl model,
                        int start,
                        int end,
@@ -65,8 +71,21 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
                        TextAttributes textAttributes,
                        boolean greedyToLeft,
                        boolean greedyToRight) {
+    this(model, start, end, layer, target, textAttributes, null, greedyToLeft, greedyToRight);
+  }
+
+  RangeHighlighterImpl(@NotNull MarkupModelImpl model,
+                       int start,
+                       int end,
+                       int layer,
+                       @NotNull HighlighterTargetArea target,
+                       @Nullable TextAttributes textAttributes,
+                       @Nullable TextAttributesKey textAttributesKey,
+                       boolean greedyToLeft,
+                       boolean greedyToRight) {
     super((DocumentEx)model.getDocument(), start, end, false, false);
     myTextAttributes = textAttributes;
+    myTextAttributesKey = textAttributesKey;
     setFlag(TARGET_AREA_IS_EXACT_MASK, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
 
@@ -81,6 +100,11 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 
+
+  @Override
+  public TextAttributesKey getTextAttributesKey() {
+    return myTextAttributesKey;
+  }
 
   @Override
   public TextAttributes getTextAttributes() {
@@ -101,6 +125,15 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     else if (!Comparing.equal(old, textAttributes)) {
       fireChanged(false, getFontStyle(old) != getFontStyle(textAttributes) ||
                          !Comparing.equal(getForegroundColor(old), getForegroundColor(textAttributes)));
+    }
+  }
+
+  @Override
+  public void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey) {
+    TextAttributesKey old = myTextAttributesKey;
+    myTextAttributesKey = textAttributesKey;
+    if (!Comparing.equal(old, textAttributesKey)) {
+      fireChanged(false, true);
     }
   }
 

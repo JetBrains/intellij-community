@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +35,11 @@ public interface MarkupModel extends UserDataHolder {
    *                       layer number override highlighters with lower layer number;
    *                       layer number values for standard IDE highlighters are defined in
    *                       {@link HighlighterLayer})
-   * @param textAttributes the attributes to use for highlighting, or {@code null} if the highlighter
-   *                       does not modify the text attributes.
+   * @param textAttributes forced attributes to use for highlighting,
+   *                       or {@code null} if the textAttributeKey should be used,
+   *                       or it doesn't modify the text attributes.
+   * @param textAttributesKey the key to use for highlighting with the current color scheme,
+   *                       or {@code null} if the highlighter doesn't have one
    * @param targetArea     type of highlighting (specific range or all full lines covered by the range).
    * @return the highlighter instance.
    */
@@ -44,7 +48,21 @@ public interface MarkupModel extends UserDataHolder {
                                        int endOffset,
                                        int layer,
                                        @Nullable TextAttributes textAttributes,
+                                       @Nullable TextAttributesKey textAttributesKey,
                                        @NotNull HighlighterTargetArea targetArea);
+
+  /**
+   * @deprecated Use the overload with TextAttributeKey
+   */
+  @Deprecated
+  @NotNull
+  default RangeHighlighter addRangeHighlighter(int startOffset,
+                                       int endOffset,
+                                       int layer,
+                                       @Nullable TextAttributes textAttributes,
+                                       @NotNull HighlighterTargetArea targetArea) {
+    return addRangeHighlighter(startOffset, endOffset, layer, textAttributes, null, targetArea);
+  }
 
   /**
    * Adds a highlighter covering the specified line in the document.
@@ -54,12 +72,27 @@ public interface MarkupModel extends UserDataHolder {
    *                       layer number override highlighters with lower layer number;
    *                       layer number values for standard IDE highlighters are defined in
    *                       {@link HighlighterLayer})
-   * @param textAttributes the attributes to use for highlighting, or {@code null} if the highlighter
-   *                       does not modify the text attributes.
+   * @param textAttributes forced attributes to use for highlighting,
+   *                       or {@code null} if the textAttributeKey should be used,
+   *                       or it doesn't modify the text attributes.
+   * @param textAttributesKey the key to use for highlighting with the current color scheme,
+   *                       or {@code null} if the highlighter doesn't have one
    * @return the highlighter instance.
    */
   @NotNull
-  RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes);
+  RangeHighlighter addLineHighlighter(int line,
+                                      int layer,
+                                      @Nullable TextAttributes textAttributes,
+                                      @Nullable TextAttributesKey textAttributesKey);
+
+  /**
+   * @deprecated Use the overload with TextAttributeKey
+   */
+  @Deprecated
+  @NotNull
+  default RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
+    return addLineHighlighter(line, layer, textAttributes, null);
+  }
 
   /**
    * Removes the specified highlighter instance.

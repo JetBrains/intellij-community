@@ -3,6 +3,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -22,6 +23,8 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   void setTextAttributes(@NotNull TextAttributes textAttributes);
 
+  default void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey) {}
+
   /**
    * @see #isVisibleIfFolded()
    */
@@ -38,8 +41,8 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   /**
    * If {@code true}, this highlighter is persistent and is retained between code analyzer runs and IDE restarts.
    *
-   * @see MarkupModelEx#addPersistentLineHighlighter(int, int, TextAttributes)
-   * @see MarkupModelEx#addRangeHighlighterAndChangeAttributes(int, int, int, TextAttributes, HighlighterTargetArea, boolean, Consumer)
+   * @see MarkupModelEx#addPersistentLineHighlighter(TextAttributesKey, int, int)
+   * @see MarkupModelEx#addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)
    */
   default boolean isPersistent() {
     return false;

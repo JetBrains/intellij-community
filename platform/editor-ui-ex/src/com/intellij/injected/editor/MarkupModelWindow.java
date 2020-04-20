@@ -18,6 +18,7 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -55,10 +57,12 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public RangeHighlighter addRangeHighlighter(final int startOffset,
                                               final int endOffset,
                                               final int layer,
-                                              final TextAttributes textAttributes,
+                                              final @Nullable TextAttributes textAttributes,
+                                              final @Nullable TextAttributesKey textAttributesKey,
                                               @NotNull final HighlighterTargetArea targetArea) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
-    return myHostModel.addRangeHighlighter(hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes, targetArea);
+    return myHostModel.addRangeHighlighter(
+      hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes, textAttributesKey, targetArea);
   }
 
   @NotNull
@@ -66,12 +70,14 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                    int endOffset,
                                                                    int layer,
-                                                                   TextAttributes textAttributes,
+                                                                   @Nullable TextAttributes textAttributes,
+                                                                   @Nullable TextAttributesKey textAttributesKey,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
-    return myHostModel.addRangeHighlighterAndChangeAttributes(hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes,
+    return myHostModel.addRangeHighlighterAndChangeAttributes(hostRange.getStartOffset(), hostRange.getEndOffset(), layer,
+                                                              textAttributes, textAttributesKey,
                                                               targetArea, isPersistent, changeAttributesAction);
   }
 
@@ -83,9 +89,12 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
 
   @Override
   @NotNull
-  public RangeHighlighter addLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
+  public RangeHighlighter addLineHighlighter(final int line,
+                                             final int layer,
+                                             final @Nullable TextAttributes textAttributes,
+                                             final @Nullable TextAttributesKey textAttributesKey) {
     int hostLine = myDocument.injectedToHostLine(line);
-    return myHostModel.addLineHighlighter(hostLine, layer, textAttributes);
+    return myHostModel.addLineHighlighter(hostLine, layer, textAttributes, textAttributesKey);
   }
 
   @Override
@@ -109,9 +118,12 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   }
 
   @Override
-  public RangeHighlighterEx addPersistentLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
+  public RangeHighlighterEx addPersistentLineHighlighter(final int line,
+                                                         final int layer,
+                                                         final @Nullable TextAttributes textAttributes,
+                                                         final @Nullable TextAttributesKey textAttributesKey) {
     int hostLine = myDocument.injectedToHostLine(line);
-    return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes);
+    return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes, textAttributesKey);
   }
 
 

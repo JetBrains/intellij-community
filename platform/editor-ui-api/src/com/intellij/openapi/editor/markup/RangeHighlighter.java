@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +13,8 @@ import java.awt.*;
  * Represents a range of text in the document which has specific markup (special text attributes,
  * line marker, gutter icon, error stripe marker or line separator).
  *
- * @see MarkupModel#addRangeHighlighter(int, int, int, TextAttributes, HighlighterTargetArea)
- * @see MarkupModel#addLineHighlighter(int, int, TextAttributes)
+ * @see MarkupModel#addRangeHighlighter(int, int, int, TextAttributes, TextAttributesKey, HighlighterTargetArea)
+ * @see MarkupModel#addLineHighlighter(int, int, TextAttributes, TextAttributesKey)
  * @see com.intellij.lang.annotation.Annotation
  */
 public interface RangeHighlighter extends RangeMarker {
@@ -38,10 +39,22 @@ public interface RangeHighlighter extends RangeMarker {
   HighlighterTargetArea getTargetArea();
 
   /**
-   * Returns the text attributes used for highlighting.
-   *
-   * @return the attributes to use for highlighting, or {@code null} if the highlighter
+   * Returns the text attributes key used for highlighting.
+   * Having a key is preferred over raw attributes which make impossible to tell what the highlighter is.
+   * @return the attributes key to use for highlighting, or {@code null} if the highlighter
    * does not modify the text attributes.
+   */
+  @Nullable
+  default TextAttributesKey getTextAttributesKey() {
+    return null;
+  }
+
+  /**
+   * Returns forced text attributes used for highlighting.
+   * @return the attributes to use for highlighting,
+   * or {@code null} if the @see {@link RangeHighlighter#getTextAttributesKey()} should be used,
+   * or it does not modify the text attributes.
+   * @see RangeHighlighter#getTextAttributesKey()
    */
   @Nullable
   TextAttributes getTextAttributes();

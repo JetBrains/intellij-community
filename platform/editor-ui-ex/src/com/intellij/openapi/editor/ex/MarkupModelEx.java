@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -15,8 +16,21 @@ import org.jetbrains.annotations.Nullable;
 public interface MarkupModelEx extends MarkupModel {
   void dispose();
 
+
   @Nullable
-  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
+  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber,
+                                                  int layer,
+                                                  @Nullable TextAttributes textAttributes,
+                                                  @Nullable TextAttributesKey textAttributesKey);
+
+  /**
+   * @deprecated Use the overload with TextAttributeKey
+   */
+  @Deprecated
+  @Nullable
+  default RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
+    return addPersistentLineHighlighter(lineNumber, layer, textAttributes, null);
+  }
 
   void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
 
@@ -54,10 +68,27 @@ public interface MarkupModelEx extends MarkupModel {
   RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                             int endOffset,
                                                             int layer,
-                                                            TextAttributes textAttributes,
+                                                            @Nullable TextAttributes textAttributes,
+                                                            @Nullable TextAttributesKey textAttributesKey,
                                                             @NotNull HighlighterTargetArea targetArea,
                                                             boolean isPersistent,
                                                             Consumer<? super RangeHighlighterEx> changeAttributesAction);
+
+  /**
+   * @deprecated Use the overload with TextAttributesKey
+   */
+  @Deprecated
+  @NotNull
+  default RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+                                                                    int endOffset,
+                                                                    int layer,
+                                                                    TextAttributes textAttributes,
+                                                                    @NotNull HighlighterTargetArea targetArea,
+                                                                    boolean isPersistent,
+                                                                    Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+    return addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, null, targetArea, isPersistent,
+                                                  changeAttributesAction);
+  }
 
   // runs change attributes action and fires highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);

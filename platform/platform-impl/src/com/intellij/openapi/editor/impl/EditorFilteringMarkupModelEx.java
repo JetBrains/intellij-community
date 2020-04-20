@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -117,8 +118,11 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   @Override
   @Nullable
-  public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
-    return myDelegate.addPersistentLineHighlighter(lineNumber, layer, textAttributes);
+  public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber,
+                                                         int layer,
+                                                         @Nullable TextAttributes textAttributes,
+                                                         @Nullable TextAttributesKey textAttributesKey) {
+    return myDelegate.addPersistentLineHighlighter(lineNumber, layer, textAttributes, textAttributesKey);
   }
 
   @Override
@@ -137,14 +141,18 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
                                               int endOffset,
                                               int layer,
                                               @Nullable TextAttributes textAttributes,
+                                              @Nullable TextAttributesKey textAttributesKey,
                                               @NotNull HighlighterTargetArea targetArea) {
-    return myDelegate.addRangeHighlighter(startOffset, endOffset, layer, textAttributes, targetArea);
+    return myDelegate.addRangeHighlighter(startOffset, endOffset, layer, textAttributes, textAttributesKey, targetArea);
   }
 
   @Override
   @NotNull
-  public RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
-    return myDelegate.addLineHighlighter(line, layer, textAttributes);
+  public RangeHighlighter addLineHighlighter(int line,
+                                             int layer,
+                                             @Nullable TextAttributes textAttributes,
+                                             @Nullable TextAttributesKey textAttributesKey) {
+    return myDelegate.addLineHighlighter(line, layer, textAttributes, textAttributesKey);
   }
 
   @Override
@@ -152,12 +160,13 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                    int endOffset,
                                                                    int layer,
-                                                                   TextAttributes textAttributes,
+                                                                   @Nullable TextAttributes textAttributes,
+                                                                   @Nullable TextAttributesKey textAttributesKey,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    return myDelegate.addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, targetArea, isPersistent,
-                                                             changeAttributesAction);
+    return myDelegate.addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, textAttributesKey,
+                                                             targetArea, isPersistent, changeAttributesAction);
   }
 
   @Override

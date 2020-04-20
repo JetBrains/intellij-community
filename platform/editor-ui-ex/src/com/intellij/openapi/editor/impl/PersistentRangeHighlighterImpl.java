@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
@@ -36,10 +37,11 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
                                                         int layer,
                                                         @NotNull HighlighterTargetArea target,
                                                         @Nullable TextAttributes textAttributes,
-                                                        boolean normalizeStartOffset) {
+                                                        @Nullable TextAttributesKey textAttributesKey,
+                                               boolean normalizeStartOffset) {
     int line = model.getDocument().getLineNumber(offset);
     int startOffset = normalizeStartOffset ? model.getDocument().getLineStartOffset(line) : offset;
-    return new PersistentRangeHighlighterImpl(model, startOffset, line, layer, target, textAttributes);
+    return new PersistentRangeHighlighterImpl(model, startOffset, line, layer, target, textAttributes, textAttributesKey);
   }
 
   private PersistentRangeHighlighterImpl(@NotNull MarkupModelImpl model,
@@ -47,8 +49,9 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
                                          int line,
                                          int layer,
                                          @NotNull HighlighterTargetArea target,
-                                         @Nullable TextAttributes textAttributes) {
-    super(model, startOffset, model.getDocument().getLineEndOffset(line), layer, target, textAttributes, false, false);
+                                         @Nullable TextAttributes textAttributes,
+                                         @Nullable TextAttributesKey textAttributesKey) {
+    super(model, startOffset, model.getDocument().getLineEndOffset(line), layer, target, textAttributes, textAttributesKey, false, false);
 
     myLine = line;
   }
