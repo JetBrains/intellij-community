@@ -16,10 +16,12 @@
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
 import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -77,6 +79,16 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     descriptor.setPattern("file:*.java");
     temp.getExcludedFiles().addDescriptor(descriptor);
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
+  }
+
+  public void testLeavesDocumentUnblocked() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", "import static java.ut<caret>il.List.*; class Foo {}");
+    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+
+    assertFalse(PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(myFixture.getEditor().getDocument()));
+
+    myFixture.checkResult("class Foo {}");
   }
 
   public void testPerFileImportSettings() {
