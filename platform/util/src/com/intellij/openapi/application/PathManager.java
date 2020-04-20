@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,9 @@ public class PathManager {
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
   public static final String DEFAULT_OPTIONS_FILE = "other" + DEFAULT_EXT;
+
+  @NonNls private static final String KOTLIN_IDE_IML_RELATIVE_PATH = "kotlin/idea/kotlin.idea.iml";
+  @NonNls private static final String INTELLIJ_SUB_REPO_NAME = "intellij";
 
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
 
@@ -141,8 +145,25 @@ public class PathManager {
     if (rootPath == null) return null;
 
     Path root = Paths.get(rootPath).toAbsolutePath();
-    do { root = root.getParent(); } while (root != null && !isIdeaHome(root));
-    return root != null ? root.toString() : null;
+    Path kotlinIdeRepoIntellijSubRepoRoot;
+    do {
+      root = root.getParent();
+      if (isKotlinIdeRepo()) {
+        kotlinIdeRepoIntellijSubRepoRoot = root.resolve(INTELLIJ_SUB_REPO_NAME);
+      } else {
+        kotlinIdeRepoIntellijSubRepoRoot = root;
+      }
+    } while (root != null && !isIdeaHome(kotlinIdeRepoIntellijSubRepoRoot));
+    return kotlinIdeRepoIntellijSubRepoRoot != null ? kotlinIdeRepoIntellijSubRepoRoot.toString() : null;
+  }
+
+  /**
+   * Checks whether it's intellij + kotlin kotlin-ide repo.
+   * <p></p>
+   * This is temp util method and it's supposed to be removed when kotlin-20202 experiment is over
+   */
+  public static boolean isKotlinIdeRepo() {
+    return IsKotlinIdeRepoLazyHolder.VALUE;
   }
 
   private static boolean isIdeaHome(Path root) {
@@ -619,5 +640,21 @@ public class PathManager {
     }
 
     throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
+  }
+
+  private static final class IsKotlinIdeRepoLazyHolder {
+    private static final boolean VALUE = calculateValue();
+
+    private static boolean calculateValue() {
+      for (Path currentPath = Paths.get("").toAbsolutePath(); currentPath != null; currentPath = currentPath.getParent()) {
+        if (Files.isDirectory(currentPath) &&
+            Files.isRegularFile(currentPath.resolve(KOTLIN_IDE_IML_RELATIVE_PATH)) &&
+            Files.isDirectory(currentPath.resolve(INTELLIJ_SUB_REPO_NAME)) &&
+            isIdeaHome(currentPath.resolve(INTELLIJ_SUB_REPO_NAME))) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }
