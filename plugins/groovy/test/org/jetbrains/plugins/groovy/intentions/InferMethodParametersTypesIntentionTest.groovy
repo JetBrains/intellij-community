@@ -560,4 +560,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testForInLoopWithMap() {
     doTest(true)
   }
+
+  void testRecursiveCalls() {
+    doTest(true)
+  }
 }
