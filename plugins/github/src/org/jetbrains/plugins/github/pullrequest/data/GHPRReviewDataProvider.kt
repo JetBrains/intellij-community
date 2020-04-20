@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
@@ -25,43 +24,43 @@ interface GHPRReviewDataProvider {
   @CalledInAwt
   fun resetReviewThreads()
 
-  @CalledInAny
+  @CalledInAwt
   fun submitReview(progressIndicator: ProgressIndicator, reviewId: String?, event: GHPullRequestReviewEvent, body: String? = null)
     : CompletableFuture<out Any?>
 
-  @CalledInAny
+  @CalledInAwt
   fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?>
 
-  @CalledInAny
+  @CalledInAwt
   fun canComment(): Boolean
 
-  @CalledInAny
+  @CalledInAwt
   fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
 
-  @CalledInAny
+  @CalledInAwt
   fun addComment(progressIndicator: ProgressIndicator, body: String, replyToCommentId: Long)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
-  @CalledInAny
+  @CalledInAwt
   fun addComment(progressIndicator: ProgressIndicator, body: String, commitSha: String, fileName: String, diffLine: Int)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
-  @CalledInAny
+  @CalledInAwt
   fun addComment(progressIndicator: ProgressIndicator, reviewId: String?, body: String, commitSha: String, fileName: String, diffLine: Int)
     : CompletableFuture<out GHPullRequestReviewComment>
 
-  @CalledInAny
+  @CalledInAwt
   fun deleteComment(progressIndicator: ProgressIndicator, commentId: String)
     : CompletableFuture<out Any>
 
-  @CalledInAny
+  @CalledInAwt
   fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
 
-  @CalledInAny
+  @CalledInAwt
   fun resolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread>
 
-  @CalledInAny
+  @CalledInAwt
   fun unresolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread>
 
   @CalledInAwt
