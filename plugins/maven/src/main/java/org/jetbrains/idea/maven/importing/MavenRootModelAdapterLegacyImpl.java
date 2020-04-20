@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Set;
@@ -192,7 +193,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   private boolean exists(String path) {
-    return VfsUtil.findFile(Paths.get(toPath(path).getPath()), true) != null;
+    return Files.exists(Paths.get(toPath(path).getPath()));
   }
 
   @Override
