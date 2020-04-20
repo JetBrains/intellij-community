@@ -3,10 +3,10 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 
   @NotNull
-  IPopupChooserBuilder<T> setTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title);
+  IPopupChooserBuilder<T> setTitle(@NotNull @NlsContexts.PopupTitle String title);
 
   @NotNull
   IPopupChooserBuilder<T> setCouldPin(@Nullable Processor<? super JBPopup> callback);
