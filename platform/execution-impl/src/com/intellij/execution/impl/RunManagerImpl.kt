@@ -808,8 +808,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         // This may also happen if there are several RCs but all stored in .run.xml files AND workspace.xml file is malformed or deleted or
         // doesn't contain info about selected RC for any other reason. We'll set any RC as selected in this case.
         StartupManager.getInstance(project).runAfterOpened {
-          GuiUtils.invokeLaterIfNeeded(Runnable { selectedConfiguration = allSettings.firstOrNull { it.type.isManaged } },
-                                       ModalityState.NON_MODAL, project.disposed)
+          GuiUtils.invokeLaterIfNeeded(Runnable {
+            if (selectedConfiguration == null) {
+              selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+            }
+          },
+          ModalityState.NON_MODAL,
+          project.disposed)
         }
       }
     }
