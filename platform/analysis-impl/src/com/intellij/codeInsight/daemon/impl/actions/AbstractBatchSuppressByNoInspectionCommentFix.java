@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ContainerBasedSuppressQuickFix;
 import com.intellij.codeInspection.InjectionAwareSuppressQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.WriteAction;
