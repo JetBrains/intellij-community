@@ -7,9 +7,9 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleReferenceInfo extends MemoryAgentReferenceInfo {
-  public SimpleReferenceInfo(@NotNull ObjectReference from,
+  public SimpleReferenceInfo(@NotNull ObjectReference referrer,
                              @NotNull ReferenceKind kind) {
-    super(from, kind);
+    super(referrer, kind);
   }
 
   @Override

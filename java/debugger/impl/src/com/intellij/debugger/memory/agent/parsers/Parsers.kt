@@ -3,8 +3,6 @@ package com.intellij.debugger.memory.agent.parsers
 
 import com.intellij.debugger.memory.agent.*
 import com.sun.jdi.*
-import java.util.*
-import kotlin.collections.ArrayList
 
 object BooleanParser : ResultParser<Boolean> {
   override fun parse(value: Value): Boolean {
@@ -59,34 +57,43 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array of arrays is expected")
 
     val result = ArrayList<List<MemoryAgentReferenceInfo>>()
-    for ((infoIndex, linksInfo) in value.values.withIndex()) {
+    for (linksInfo in value.values) {
       if (linksInfo !is ArrayReference) throw UnexpectedValueFormatException("Object references information should be represented by array")
 
       val indices = IntArrayParser.parse(linksInfo.getValue(0))
       val kinds = IntArrayParser.parse(linksInfo.getValue(1))
       val infos = linksInfo.getValue(2) as? ArrayReference ?:
                   throw UnexpectedValueFormatException("Object references information should be represented by array")
-      val distinctIndices = mutableSetOf(infoIndex)
-      val referenceInfos =  mutableListOf<MemoryAgentReferenceInfo>()
-      for ((i, index) in indices.withIndex()) {
-        if (index == -1 || distinctIndices.contains(index)) {
-          continue
-        }
 
-        distinctIndices.add(index)
-        referenceInfos.add(
-          createReferenceInfo(
-            objects[index],
-            MemoryAgentReferenceInfo.ReferenceKind.valueOf(kinds[i]),
-            infos.getValue(i)
-          )
-        )
-      }
-
-      result.add(referenceInfos)
+      result.add(getReferenceInfos(objects, indices, kinds, infos))
     }
 
     return result
+  }
+
+  private fun getReferenceInfos(
+    objects: List<ObjectReference>,
+    indices: List<Int>,
+    kinds: List<Int>,
+    infos: ArrayReference): List<MemoryAgentReferenceInfo> {
+    val distinctIndices = mutableSetOf<Int>()
+    val referenceInfos =  mutableListOf<MemoryAgentReferenceInfo>()
+    for ((i, index) in indices.withIndex()) {
+      if (index == -1 || distinctIndices.contains(index)) {
+        continue
+      }
+
+      distinctIndices.add(index)
+      referenceInfos.add(
+        createReferenceInfo(
+          objects[index],
+          MemoryAgentReferenceInfo.ReferenceKind.valueOf(kinds[i]),
+          infos.getValue(i)
+        )
+      )
+    }
+
+    return referenceInfos
   }
 
   private fun createReferenceInfo(
