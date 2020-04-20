@@ -1062,6 +1062,25 @@ public final class PluginManagerCore {
     }
   }
 
+  public static void getDescriptorsToMigrate(@NotNull Path dir,
+                                             List<IdeaPluginDescriptorImpl> pluginsToMigrate,
+                                             List<IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
+    PluginLoadingResult loadingResult = createLoadingResult(null);
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), loadingResult);
+    loadBundledDescriptorsAndDescriptorsFromDir(context, dir);
+
+    for (IdeaPluginDescriptorImpl descriptor : loadingResult.idMap.values()) {
+      if (!descriptor.isBundled()) {
+        pluginsToMigrate.add(descriptor);
+      }
+    }
+    for (IdeaPluginDescriptorImpl descriptor : loadingResult.incompletePlugins.values()) {
+      if (!descriptor.isBundled()) {
+        incompatiblePlugins.add(descriptor);
+      }
+    }
+  }
+
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, String> disabledIds,
                                                         @NotNull Set<PluginId> disabledRequiredIds,
                                                         @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
@@ -1284,9 +1303,6 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   private static @NotNull DescriptorListLoadingContext loadDescriptors() {
-    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
-    ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
-    URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
     int flags = DescriptorListLoadingContext.IS_PARALLEL | DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
     boolean isUnitTestMode = PluginManagerCore.isUnitTestMode;
     if (isUnitTestMode) {
@@ -1299,15 +1315,7 @@ public final class PluginManagerCore {
     PluginLoadingResult result = createLoadingResult(null);
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, disabledPlugins(), result);
     try {
-      try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, /* isBundled = */ true, /* isEssential, doesn't matter = */ true, new ClassPathXmlPathResolver(classLoader))) {
-        loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL);
-      }
-
-      loadDescriptorsFromDir(Paths.get(PathManager.getPluginsPath()), /* isBundled = */ false, context);
-
-      if (!isUnitTestMode) {
-        loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
-      }
+      loadBundledDescriptorsAndDescriptorsFromDir(context, Paths.get(PathManager.getPluginsPath()));
 
       loadDescriptorsFromProperty(result, context);
 
@@ -1326,6 +1334,22 @@ public final class PluginManagerCore {
 
     context.result.finishLoading();
     return context;
+  }
+
+  private static void loadBundledDescriptorsAndDescriptorsFromDir(DescriptorListLoadingContext context, Path dir)
+    throws ExecutionException, InterruptedException {
+    ClassLoader classLoader = PluginManagerCore.class.getClassLoader();
+    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
+    URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
+    try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, /* isBundled = */ true, /* isEssential, doesn't matter = */ true, new ClassPathXmlPathResolver(classLoader))) {
+      loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL);
+    }
+
+    loadDescriptorsFromDir(dir, /* isBundled = */ false, context);
+
+    if (!isUnitTestMode) {
+      loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
+    }
   }
 
   static @NotNull PluginLoadingResult createLoadingResult(@Nullable BuildNumber buildNumber) {

@@ -158,19 +158,8 @@ public final class PluginInstaller {
     Ref<IOException> ref = new Ref<>();
     Ref<File> refTarget = new Ref<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      String pluginsPath = PathManager.getPluginsPath();
       try {
-        File target;
-        if (sourceFile.getName().endsWith(".jar")) {
-          target = new File(pluginsPath, sourceFile.getName());
-          FileUtilRt.copy(sourceFile, target);
-        }
-        else {
-          target = new File(pluginsPath, rootEntryName(sourceFile));
-          FileUtil.delete(target);
-          new Decompressor.Zip(sourceFile).extract(new File(pluginsPath));
-        }
-        refTarget.set(target);
+        refTarget.set(unpackPlugin(sourceFile, PathManager.getPluginsPath()));
       }
       catch (IOException e) {
         ref.set(e);
@@ -182,6 +171,21 @@ public final class PluginInstaller {
     }
     PluginStateManager.fireState(descriptor, true);
     return exception != null ? null : refTarget.get();
+  }
+
+  @NotNull
+  public static File unpackPlugin(File sourceFile, String targetPath) throws IOException {
+    File target;
+    if (sourceFile.getName().endsWith(".jar")) {
+      target = new File(targetPath, sourceFile.getName());
+      FileUtilRt.copy(sourceFile, target);
+    }
+    else {
+      target = new File(targetPath, rootEntryName(sourceFile));
+      FileUtil.delete(target);
+      new Decompressor.Zip(sourceFile).extract(new File(targetPath));
+    }
+    return target;
   }
 
   private static String rootEntryName(File zip) throws IOException {

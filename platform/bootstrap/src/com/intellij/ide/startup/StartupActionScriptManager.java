@@ -40,6 +40,12 @@ public class StartupActionScriptManager {
 
   public static synchronized void executeActionScript(@NotNull File scriptFile, @NotNull File oldTarget, @NotNull File newTarget) throws IOException {
     List<ActionCommand> commands = loadActionScript(scriptFile.toPath());
+    executeActionScriptCommands(commands, oldTarget, newTarget);
+  }
+
+  public static void executeActionScriptCommands(List<ActionCommand> commands,
+                                                 @NotNull File oldTarget,
+                                                 @NotNull File newTarget) throws IOException {
     for (ActionCommand command : commands) {
       ActionCommand toExecute = mapPaths(command, oldTarget, newTarget);
       if (toExecute != null) {
@@ -79,7 +85,7 @@ public class StartupActionScriptManager {
   }
 
   @NotNull
-  private static List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
+  public static List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
     if (!Files.isRegularFile(scriptFile)) {
       return new ArrayList<>();
     }

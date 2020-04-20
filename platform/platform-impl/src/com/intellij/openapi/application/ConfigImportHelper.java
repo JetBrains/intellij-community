@@ -5,6 +5,8 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
@@ -12,7 +14,9 @@ import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -30,6 +34,7 @@ import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +50,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -621,6 +627,8 @@ public final class ConfigImportHelper {
     // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
     FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), file -> !blockImport(file.toPath(), oldConfigDir, newConfigDir, oldPluginsDir));
 
+    List<StartupActionScriptManager.ActionCommand> actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
+
     // copy plugins, unless new plugin directory is not empty (the plugin manager will sort out incompatible ones)
     if (!Files.isDirectory(oldPluginsDir)) {
       log.info("non-existing plugins directory: " + oldPluginsDir);
@@ -629,7 +637,7 @@ public final class ConfigImportHelper {
       log.info("non-empty plugins directory: " + newPluginsDir);
     }
     else {
-      FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
+      migratePlugins(oldPluginsDir, newPluginsDir, actionCommands, log);
     }
 
     if (SystemInfo.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
@@ -637,6 +645,12 @@ public final class ConfigImportHelper {
     }
 
     // apply stale plugin updates
+    StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir.toFile(), new File(PathManager.getPluginsPath()));
+    updateVMOptions(newConfigDir, log);
+  }
+
+  private static @NotNull List<StartupActionScriptManager.ActionCommand> loadStartupActionScript(@NotNull Path oldConfigDir, @Nullable Path oldIdeHome, @NotNull Path oldPluginsDir)
+    throws IOException {
     if (Files.isDirectory(oldPluginsDir)) {
       Path oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
       if (!Files.isDirectory(oldSystemDir)) {
@@ -650,11 +664,68 @@ public final class ConfigImportHelper {
       }
       Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
       if (Files.isRegularFile(script)) {
-        StartupActionScriptManager.executeActionScript(script.toFile(), oldPluginsDir.toFile(), new File(PathManager.getPluginsPath()));
+        return StartupActionScriptManager.loadActionScript(script);
       }
     }
+    return Collections.emptyList();
+  }
 
-    updateVMOptions(newConfigDir, log);
+  private static void migratePlugins(@NotNull Path oldPluginsDir,
+                                     @NotNull Path newPluginsDir,
+                                     List<StartupActionScriptManager.ActionCommand> actionCommands,
+                                     @NotNull Logger log) throws IOException {
+    try {
+      List<IdeaPluginDescriptorImpl> pluginsToMigrate = new ArrayList<>();
+      List<IdeaPluginDescriptorImpl> incompatiblePlugins = new ArrayList<>();
+      PluginManagerCore.getDescriptorsToMigrate(oldPluginsDir, pluginsToMigrate, incompatiblePlugins);
+
+      for (IdeaPluginDescriptorImpl descriptor : pluginsToMigrate) {
+        log.info("Migrating plugin " + descriptor.getPluginId() + " version " + descriptor.getVersion());
+        File path = descriptor.getPath();
+        if (path.isDirectory()) {
+          FileUtil.copyDir(path, new File(newPluginsDir.toFile(), path.getName()));
+        }
+        else {
+          FileUtil.copy(path, new File(newPluginsDir.toFile(), path.getName()));
+        }
+      }
+
+      if (!incompatiblePlugins.isEmpty()) {
+        ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
+        dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
+        AppUIUtil.updateWindowIcon(dialog);
+
+        SplashManager.executeWithHiddenSplash(dialog, () -> {
+          new Thread(() -> {
+            for (Iterator<IdeaPluginDescriptorImpl> iterator = incompatiblePlugins.iterator(); iterator.hasNext(); ) {
+              IdeaPluginDescriptorImpl plugin = iterator.next();
+              try {
+                PluginDownloader downloader = PluginDownloader.createDownloader(plugin);
+                if (downloader.prepareToInstall(dialog.getIndicator())) {
+                  PluginInstaller.unpackPlugin(downloader.getFile(), newPluginsDir.toFile().getPath());
+                  log.info("Downloaded and unpacked compatible version of plugin " + plugin.getPluginId());
+                  iterator.remove();
+                }
+              }
+              catch (ProcessCanceledException e) {
+                log.info("Plugin download cancelled");
+                break;
+              }
+              catch (IOException e) {
+                log.info("Failed to download and install compatible version of " + plugin.getPluginId() + ": " + e.getMessage());
+              }
+            }
+            SwingUtilities.invokeLater(() -> dialog.setVisible(false));
+          }, "Plugin migration downloader").start();
+
+          dialog.setVisible(true);
+        });
+      }
+    }
+    catch (ExecutionException | InterruptedException e) {
+      log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
+      FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
+    }
   }
 
   private static boolean isEmptyDirectory(Path newPluginsDir) {
