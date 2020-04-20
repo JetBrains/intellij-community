@@ -81,6 +81,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override fun filesChanged(events: List<VFileEvent>) {
     if (!needProcessExternalFiles()) return
 
+    LOG.debug("Got events", events)
     val configDir = project.getProjectConfigDir()
     val externallyAddedFiles =
       events.asSequence()
