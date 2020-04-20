@@ -172,35 +172,23 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun addToVirtualFileIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+  private fun addChangesToIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
     builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
-  }
-
-  private fun updateVirtualFileIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
-    builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
-  }
-
-  private fun removeFromVirtualFileIndex(entityId: PId<out TypedEntity>) = virtualFileIndex.index(entityId)
-
-  private fun addToEntitySourceIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
     builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
-  }
-
-  private fun updateEntitySourceIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
-    builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
-  }
-
-  private fun removeFromEntitySourceIndex(entityId: PId<out TypedEntity>) = entitySourceIndex.index(entityId)
-
-  private fun addToPersistentIdIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
     builder.persistentIdIndex.getPersistentId(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
 
-  private fun updatePersistentIdIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+  private fun updateIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+    builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
+    builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
     builder.persistentIdIndex.getPersistentId(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
 
-  private fun removeFromPersistentIdIndex(entityId: PId<out TypedEntity>) = persistentIdIndex.index(entityId)
+  private fun removeFromIndices(entityId: PId<out TypedEntity>) {
+    virtualFileIndex.index(entityId)
+    entitySourceIndex.index(entityId)
+    persistentIdIndex.index(entityId)
+  }
 
   // modificationCount is not incremented
   private fun <T : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
@@ -673,9 +661,7 @@ internal class PEntityStorageBuilder(
 
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
           updateEntityRefs(entity2id.second, updatedChildren, updatedParents)
-          addToVirtualFileIndex(change.entityData.createPid(), entity2id.second, builder)
-          addToEntitySourceIndex(change.entityData.createPid(), entity2id.second, builder)
-          addToPersistentIdIndex(change.entityData.createPid(), entity2id.second, builder)
+          addChangesToIndices(change.entityData.createPid(), entity2id.second, builder)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
           }
@@ -683,9 +669,7 @@ internal class PEntityStorageBuilder(
         is ChangeEntry.RemoveEntity -> {
           val outdatedId = change.id
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
-          removeFromVirtualFileIndex(outdatedId)
-          removeFromEntitySourceIndex(outdatedId)
-          removeFromPersistentIdIndex(outdatedId)
+          removeFromIndices(outdatedId)
           if (this.entityDataById(usedPid) != null) {
             removeEntity(usedPid)
             replaceMap.remove(outdatedId, usedPid)
@@ -703,9 +687,7 @@ internal class PEntityStorageBuilder(
           val newData = change.newData.clone()
           newData.id = usedPid.arrayId
 
-          updateVirtualFileIndex(outdatedId, newData.createPid(), builder)
-          updateEntitySourceIndex(outdatedId, newData.createPid(), builder)
-          updatePersistentIdIndex(outdatedId, newData.createPid(), builder)
+          updateIndices(outdatedId, newData.createPid(), builder)
           if (this.entityDataById(usedPid) != null) {
             replaceEntityWithRefs(newData, outdatedId.clazz.java, updatedChildren, updatedParents)
           }
