@@ -52,7 +52,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
@@ -111,7 +110,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<>();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
 
-  private final BidirectionalMap<String, FileTypeBean> myPendingFileTypes = new BidirectionalMap<>();
+  private final Map<String, FileTypeBean> myPendingFileTypes = new HashMap<>();
   private final FileTypeAssocTable<FileTypeBean> myPendingAssociations = new FileTypeAssocTable<>();
   private final ReadWriteLock myPendingInitializationLock = new ReentrantReadWriteLock();
 
