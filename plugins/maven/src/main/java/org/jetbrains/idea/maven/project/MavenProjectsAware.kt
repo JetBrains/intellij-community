@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectRefreshListener
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -33,6 +34,7 @@ class MavenProjectsAware(
   }
 
   override fun refreshProject() {
+    FileDocumentManager.getInstance().saveAllDocuments()
     manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
   }
 
