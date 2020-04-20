@@ -1259,48 +1259,6 @@ public class ExpressionUtils {
   }
 
   /**
-   * Eliminate the common part from two {@link PsiBinaryExpression} expressions.
-   * It only handles {@link PsiBinaryExpression} with {@link JavaTokenType#PLUS}
-   * If there are no common parts return the original expressions<br />
-   * <ol>
-   * <li>Example 1: "x + 1", "x + 2" will be converted to ("1", "2")</li>
-   * <li>Example 2: "x + 1", "y + 2" will remain the same, the result is ("x + 1", "y + 2")</li>
-   * </ol>
-   *
-   * @param from the first expression to examine
-   * @param to   the second expression to examine
-   * @return a pair of expressions without common parts
-   */
-  @NotNull
-  private static Pair<@NotNull PsiExpression, @NotNull PsiExpression> getBinaryExpressionsDiff(@NotNull final PsiBinaryExpression from,
-                                                                                               @NotNull final PsiBinaryExpression to) {
-    final IElementType fromOp = from.getOperationTokenType();
-    final IElementType toOp = to.getOperationTokenType();
-    if ((fromOp == JavaTokenType.PLUS) && fromOp == toOp) {
-      @NotNull final EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
-      final EquivalenceChecker.Match match = eq.expressionsMatch(from, to);
-      if (match.isPartialMatch()) {
-        final PsiExpression leftDiff;
-        final PsiExpression rightDiff;
-
-        if (match.getLeftDiff().getParent() == from) {
-          leftDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getLeftDiff());
-          rightDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getRightDiff());
-        }
-        else {
-          rightDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getLeftDiff());
-          leftDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getRightDiff());
-        }
-
-        if (leftDiff != null && rightDiff != null) {
-          return Pair.create(leftDiff, rightDiff);
-        }
-      }
-    }
-    return Pair.create(from, to);
-  }
-
-  /**
    * Returns an expression which represents an array element with given index if array is known to be never modified
    * after initialization.
    *
