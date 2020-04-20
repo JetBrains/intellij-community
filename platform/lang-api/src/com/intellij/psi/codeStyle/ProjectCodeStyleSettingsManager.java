@@ -23,10 +23,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "ProjectCodeStyleConfiguration",
@@ -87,8 +84,6 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   @Override
   public void setMainProjectCodeStyle(@Nullable CodeStyleSettings settings) {
-    // TODO<rv>: Remove the assignment below when there are no direct usages of PER_PROJECT_SETTINGS.
-    PER_PROJECT_SETTINGS = settings;
     mySettingsMap.put(MAIN_PROJECT_CODE_STYLE_NAME, settings != null ? settings : new CodeStyleSettings());
   }
 
@@ -132,6 +127,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
     CodeStyleSettings oldProjectSettings = PER_PROJECT_SETTINGS;
     if (oldProjectSettings != null) oldProjectSettings.resetDeprecatedFields();
     setMainProjectCodeStyle(oldProjectSettings);
+    PER_PROJECT_SETTINGS = null;
   }
 
   @Override
