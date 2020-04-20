@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 data class SignatureInferenceOptions(val searchScope: SearchScope,
+                                     val restrictScopeToLocal: Boolean,
                                      val signatureInferenceContext: SignatureInferenceContext,
                                      val calls: Lazy<List<PsiReference>>)
 

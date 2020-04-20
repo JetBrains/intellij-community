@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.search.LocalSearchScope
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
@@ -26,7 +27,11 @@ fun runInferenceProcess(method: GrMethod, options: SignatureInferenceOptions): G
     return convertToGroovyMethod(overridableMethod) ?: method
   }
   val newOptions = options.copy(calls = lazy(NONE) {
-    searchWithClosureAvoidance(originalMethod, options.searchScope).sortedBy { it.element.textOffset }
+    val restrictedScope = if (options.restrictScopeToLocal) {
+      LocalSearchScope(arrayOf(originalMethod.containingFile), null, true)
+    }
+    else options.searchScope
+    searchWithClosureAvoidance(originalMethod, restrictedScope).sortedBy { it.element.textOffset }
   })
   val driver = createDriver(originalMethod, newOptions)
   val signatureSubstitutor = driver.collectSignatureSubstitutor().removeForeignTypeParameters(method)

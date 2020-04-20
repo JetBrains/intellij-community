@@ -72,7 +72,7 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
     }
     val enclosingCall: GrMethodCall? = element.parentOfType<GrMethodCall>()?.takeIf { it.invokedExpression === element }
     if (enclosingCall is GrMethodCall) {
-      val enclosingMethod: GrMethod? = enclosingCall.parentOfType<GrMethod>()?.takeIf { it === anchorElement }
+      val enclosingMethod: GrMethod? = enclosingCall.parentOfType<GrMethod>()?.takeIf { it.name == anchorElement.name }
       val bannedIdentifiers: Array<String> = enclosingMethod?.parameters?.map2Array { it.name } ?: emptyArray()
       val collisionFinder = CollisionFinder(anchorElement.name, *bannedIdentifiers)
       if (enclosingCall.expressionArguments.any { argument -> collisionFinder.apply { argument.accept(this) }.foundCollision }) {
