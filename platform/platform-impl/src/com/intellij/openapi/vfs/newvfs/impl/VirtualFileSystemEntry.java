@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -458,7 +459,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     FileType type = cache == null ? null : cache.getUpToDateOrNull();
     if (type == null) {
       type = super.getFileType();
-      myFileType = CachedFileType.forType(type);
+      if (!NoAccessDuringPsiEvents.isInsideEventProcessing()) {
+        myFileType = CachedFileType.forType(type);
+      }
     }
     return type;
   }

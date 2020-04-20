@@ -1149,6 +1149,8 @@ public class FSRecords {
 
   private static void incModCount(int id) {
     incLocalModCount();
+    CachedFileType.clearCache();
+
     final int count = doGetModCount() + 1;
     getRecords().putInt(HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
 
@@ -1159,7 +1161,6 @@ public class FSRecords {
     DbConnection.markDirty();
     //noinspection NonAtomicOperationOnVolatileField
     ourLocalModificationCount++;
-    CachedFileType.clearCache();
   }
 
   static int getLocalModCount() {

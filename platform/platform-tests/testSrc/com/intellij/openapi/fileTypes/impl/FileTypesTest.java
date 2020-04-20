@@ -816,12 +816,16 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   public void testIsFileTypeRunsDetector() throws IOException {
     final AtomicInteger detectorCalls = new AtomicInteger();
+    VirtualFile vFile = createTempFile("foo.bbb", null, "#!archive!!!", CharsetToolkit.UTF8_CHARSET);
+
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
       @Override
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
-        detectorCalls.incrementAndGet();
-        if (firstCharsIfText.toString().startsWith("#!archive")) {
+        if (file.equals(vFile)) {
+          detectorCalls.incrementAndGet();
+        }
+        if (firstCharsIfText != null && firstCharsIfText.toString().startsWith("#!archive")) {
           return ArchiveFileType.INSTANCE;
         }
         return null;
@@ -834,7 +838,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
 
-    VirtualFile vFile = createTempFile("foo.bbb", null, "#!archive!!!", CharsetToolkit.UTF8_CHARSET);
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
     assertEquals(1, detectorCalls.get());
