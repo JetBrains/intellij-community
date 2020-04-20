@@ -28,6 +28,13 @@ public class FormattingContext {
     this.myForbidNewLineInSpacing = forbidNewLineInSpacing;
   }
 
+  public FormattingContext(@NotNull CommonCodeStyleSettings settings,
+                           @NotNull AlignmentProvider provider,
+                           @NotNull GroovyCodeStyleSettings groovySettings,
+                           boolean forbidWrapping) {
+    this(settings, provider, groovySettings, forbidWrapping, false);
+  }
+
   public CommonCodeStyleSettings getSettings() {
     return mySettings;
   }
