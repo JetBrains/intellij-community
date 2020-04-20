@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -77,9 +78,9 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setCloseOnEnter(boolean closeOnEnter);
 
   @NotNull
-  IPopupChooserBuilder<T> setAdText(String ad);
+  IPopupChooserBuilder<T> setAdText(@PopupAdvertisement String ad);
 
-  IPopupChooserBuilder<T> setAdText(String ad, int alignment);
+  IPopupChooserBuilder<T> setAdText(@PopupAdvertisement String ad, int alignment);
 
   IPopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 

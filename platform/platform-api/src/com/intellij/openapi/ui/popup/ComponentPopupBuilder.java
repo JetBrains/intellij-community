@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
@@ -110,10 +111,10 @@ public interface ComponentPopupBuilder {
    * Adds "advertising" text to the bottom (e.g.: hints in code completion popup).
    */
   @NotNull
-  ComponentPopupBuilder setAdText(@Nullable String text);
+  ComponentPopupBuilder setAdText(@Nullable @PopupAdvertisement String text);
 
   @NotNull
-  ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment);
+  ComponentPopupBuilder setAdText(@Nullable @PopupAdvertisement String text, int textAlignment);
 
   @NotNull
   ComponentPopupBuilder setShowShadow(boolean show);

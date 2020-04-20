@@ -39,6 +39,12 @@ public class NlsContexts {
   public @interface PopupContent {
   }
 
+  @NlsContext(prefix = "popup.advertisement")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface PopupAdvertisement {
+  }
+
   /**
    * Notifications
    */

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -15,7 +16,6 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  public void setAdvertisementText(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String text) {
+  public void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text) {
     if (text == null) return;
 
     if (myApiCompletionProcess instanceof CompletionProcessEx) {
@@ -144,7 +144,7 @@ public class BaseCompletionService extends CompletionService {
     }
 
     @Override
-    public void addLookupAdvertisement(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) {
+    public void addLookupAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String text) {
       getCompletionService().setAdvertisementText(text);
     }
 
