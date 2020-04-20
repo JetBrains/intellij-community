@@ -69,7 +69,9 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,6 +80,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 
@@ -632,82 +635,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }
 
-    private void installFocusable(@NotNull final Container parentContainer,
-                                  final JComponent comp,
-                                  final AnAction action,
-                                  final int nextKeyCode,
-                                  final int prevKeyCode,
-                                  @Nullable final Component focusedOnLeft) {
-      comp.setFocusable(true);
-      comp.setFocusTraversalKeysEnabled(true);
-      comp.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
-            InputEvent event = e;
-            if (e.getComponent() instanceof JComponent) {
-              ActionLink link = UIUtil.findComponentOfType((JComponent)e.getComponent(), ActionLink.class);
-              if (link != null) {
-                event = new MouseEvent(link, MouseEvent.MOUSE_CLICKED, e.getWhen(), e.getModifiers(), 0, 0, 1, false, MouseEvent.BUTTON1);
-              }
-            }
-            action.actionPerformed(AnActionEvent.createFromAnAction(action, event, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext()));
-          }
-          else if (e.getKeyCode() == prevKeyCode) {
-            focusPrev(parentContainer, comp);
-          }
-          else if (e.getKeyCode() == nextKeyCode) {
-            focusNext(parentContainer, comp);
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            if (focusedOnLeft != null) {
-              IdeFocusManager.getGlobalInstance()
-                .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(focusedOnLeft, true));
-            }
-            else {
-              focusPrev(parentContainer, comp);
-            }
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            focusNext(parentContainer, comp);
-          }
-        }
-      });
-      comp.addFocusListener(new FocusListener() {
-        @Override
-        public void focusGained(FocusEvent e) {
-          comp.setOpaque(true);
-          comp.setBackground(getActionLinkSelectionColor());
-        }
 
-        @Override
-        public void focusLost(FocusEvent e) {
-          comp.setOpaque(false);
-          comp.setBackground(getMainBackground());
-        }
-      });
-
-    }
-
-    private void focusPrev(@NotNull Container container, JComponent comp) {
-      FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
-      if (policy != null) {
-        Component prev = policy.getComponentBefore(container, comp);
-        if (prev != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(prev, true));
-        }
-      }
-    }
-
-    private void focusNext(@NotNull Container container, JComponent comp) {
-      FocusTraversalPolicy policy =container.getFocusTraversalPolicy();
-      if (policy != null) {
-        Component next = policy.getComponentAfter(container, comp);
-        if (next != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
-        }
-      }
-    }
 
     @Override
     public void setupFrame(JFrame frame) {
