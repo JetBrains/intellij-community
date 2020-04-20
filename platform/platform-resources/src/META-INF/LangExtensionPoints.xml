@@ -413,7 +413,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
-    <extensionPoint name="moduleType" beanClass="com.intellij.openapi.module.ModuleTypeEP">
+    <extensionPoint name="moduleType" beanClass="com.intellij.openapi.module.ModuleTypeEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.module.ModuleType"/>
     </extensionPoint>
 
