@@ -1935,11 +1935,11 @@ public abstract class DialogWrapper {
    * <code>{@link #setErrorText(String, JComponent)}</code> method.
    * @param text the error text to display
    */
-  protected void setErrorText(@Nls @Nullable final String text) {
+  protected void setErrorText(@NlsContexts.DialogMessage @Nullable final String text) {
     setErrorText(text, null);
   }
 
-  protected void setErrorText(@Nls @Nullable final String text, @Nullable final JComponent component) {
+  protected void setErrorText(@NlsContexts.DialogMessage @Nullable final String text, @Nullable final JComponent component) {
     setErrorInfoAll(text == null ?
                     Collections.emptyList() :
                     Collections.singletonList(new ValidationInfo(text, component)));

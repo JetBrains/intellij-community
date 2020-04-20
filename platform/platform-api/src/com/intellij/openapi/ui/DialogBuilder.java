@@ -437,11 +437,11 @@ public class DialogBuilder implements Disposable {
     }
   }
 
-  public void setErrorText(@Nullable final String text) {
+  public void setErrorText(@NlsContexts.DialogMessage @Nullable final String text) {
     myDialogWrapper.setErrorText(text);
   }
 
-  public void setErrorText(@Nullable final String text, @Nullable JComponent component) {
+  public void setErrorText(@NlsContexts.DialogMessage @Nullable final String text, @Nullable JComponent component) {
     myDialogWrapper.setErrorText(text, component);
   }
 }
