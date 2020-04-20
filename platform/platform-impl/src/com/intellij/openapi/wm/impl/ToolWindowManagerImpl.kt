@@ -957,7 +957,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val contentFactory = task.contentFactory
 
     val windowInfoSnapshot = info.copy()
-    if (windowInfoSnapshot.isVisible && contentFactory == null) {
+    if (windowInfoSnapshot.isVisible && (contentFactory == null || !task.shouldBeAvailable)) {
       // isVisible cannot be true if contentFactory is null, because we cannot show toolwindow without content
       windowInfoSnapshot.isVisible = false
     }
@@ -985,7 +985,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     idToEntry.put(task.id, entry)
 
     // only after added to idToEntry map
-    button.isSelected = info.isVisible
+    button.isSelected = windowInfoSnapshot.isVisible
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
 
@@ -994,11 +994,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // mode. But if tool window was active but its mode doesn't allow to activate it again
     // (for example, tool window is in auto hide mode) then we just activate editor component.
     if (contentFactory != null /* not null on init tool window from EP */) {
-      if (info.isVisible) {
+      if (windowInfoSnapshot.isVisible) {
         showToolWindowImpl(entry, info, dirtyMode = false)
 
         // do not activate tool window that is the part of project frame - default component should be focused
-        if (info.isActiveOnStart && (info.type == ToolWindowType.WINDOWED || info.type == ToolWindowType.FLOATING) && ApplicationManager.getApplication().isActive) {
+        if (windowInfoSnapshot.isActiveOnStart && (windowInfoSnapshot.type == ToolWindowType.WINDOWED || windowInfoSnapshot.type == ToolWindowType.FLOATING) && ApplicationManager.getApplication().isActive) {
           entry.toolWindow.requestFocusInToolWindow()
         }
       }
