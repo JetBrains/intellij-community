@@ -895,7 +895,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     WAITING_FOR_FINISH,
 
     /**
-     * Indicates that project has been just loaded and {@link DumbModeStartupTask}-s were not executed to ensure project smart mode.
+     * Indicates that project has been just loaded and {@link StartupActivity.RequiredForSmartMode}-s were not executed to ensure project smart mode.
      */
     WAITING_PROJECT_SMART_MODE_STARTUP_TASKS
   }
