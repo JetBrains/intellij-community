@@ -34,38 +34,38 @@
   </applicationListeners>
 
   <extensionPoints>
-    <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
-    <extensionPoint name="overloadResolver" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>
-    <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
-    <extensionPoint name="importContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor"/>
-    <extensionPoint name="astTransformationSupport" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
-    <extensionPoint name="renameHelper" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
-    <extensionPoint name="closureMissingMethodContributor"
+    <extensionPoint dynamic="true" name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
+    <extensionPoint dynamic="true" name="overloadResolver" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>
+    <extensionPoint dynamic="true" name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
+    <extensionPoint dynamic="true" name="importContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor"/>
+    <extensionPoint dynamic="true" name="astTransformationSupport" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
+    <extensionPoint dynamic="true" name="renameHelper" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
+    <extensionPoint dynamic="true" name="closureMissingMethodContributor"
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
-    <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
-    <extensionPoint name="typeAugmenter" interface="org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter"/>
-    <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer"/>
-    <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter"/>
-    <extensionPoint name="expectedTypesContributor"
+    <extensionPoint dynamic="true" name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
+    <extensionPoint dynamic="true" name="typeAugmenter" interface="org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter"/>
+    <extensionPoint dynamic="true" name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer"/>
+    <extensionPoint dynamic="true" name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter"/>
+    <extensionPoint dynamic="true" name="expectedTypesContributor"
                     interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
 
-    <extensionPoint name="positionManagerDelegate"
+    <extensionPoint dynamic="true" name="positionManagerDelegate"
                     interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
-    <extensionPoint name="scriptTypeDetector" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector"/>
+    <extensionPoint dynamic="true" name="scriptTypeDetector" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector"/>
 
-    <extensionPoint name="namedArgumentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider"/>
-    <extensionPoint name="applicabilityProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider"/>
-    <extensionPoint name="mapContentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider"/>
+    <extensionPoint dynamic="true" name="namedArgumentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider"/>
+    <extensionPoint dynamic="true" name="applicabilityProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider"/>
+    <extensionPoint dynamic="true" name="mapContentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider"/>
 
-    <extensionPoint name="unresolvedHighlightFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter"/>
-    <extensionPoint name="unresolvedHighlightFileFilter"
+    <extensionPoint dynamic="true" name="unresolvedHighlightFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter"/>
+    <extensionPoint dynamic="true" name="unresolvedHighlightFileFilter"
                     interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
-    <extensionPoint name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport"/>
+    <extensionPoint dynamic="true" name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport"/>
 
-    <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+    <extensionPoint dynamic="true" name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator"/>
     </extensionPoint>
-    <extensionPoint name="callTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.typing.GrCallTypeCalculator"/>
+    <extensionPoint dynamic="true" name="callTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.typing.GrCallTypeCalculator"/>
 
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="classDescriptor" dynamic="true"
