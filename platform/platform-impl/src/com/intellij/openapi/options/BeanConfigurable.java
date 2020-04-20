@@ -5,6 +5,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -14,7 +15,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,12 +253,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
    * Initial checkbox value is obtained from {@code getter}.
    * After the apply, the value from the check box is written back to model via {@code setter}.
    */
-  protected void checkBox(@Nls @NotNull String title, @NotNull Getter<Boolean> getter, @NotNull Setter<Boolean> setter) {
+  protected void checkBox(@NlsContexts.Checkbox @NotNull String title, @NotNull Getter<Boolean> getter, @NotNull Setter<Boolean> setter) {
     CheckboxField field = new CheckboxField(new BeanMethodAccessor<>(getter, setter), title);
     myFields.add(field);
   }
 
-  protected void checkBox(@Nls @NotNull String title, @NotNull KMutableProperty0<Boolean> prop) {
+  protected void checkBox(@NlsContexts.Checkbox @NotNull String title, @NotNull KMutableProperty0<Boolean> prop) {
     myFields.add(new CheckboxField(new BeanKPropertyAccessor<>(prop), title));
   }
 
