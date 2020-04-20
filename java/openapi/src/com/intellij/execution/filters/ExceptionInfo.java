@@ -416,7 +416,9 @@ class ExceptionInfo {
     boolean hasDot = false;
     for (int i = from; i < to; i++) {
       char c = line.charAt(i);
-      if (c != '.' && !Character.isJavaIdentifierPart(c)) return null;
+      if (c == '.' && i == from) return null;
+      if (c == '$' && !hasDot) return null;
+      if (c != '.' && c != '$' && !Character.isJavaIdentifierPart(c)) return null;
       hasDot |= c == '.';
     }
     if (!hasDot) return null;
