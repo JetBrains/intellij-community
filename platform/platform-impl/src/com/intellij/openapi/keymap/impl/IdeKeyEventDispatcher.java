@@ -721,20 +721,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
     if (actionNames.isEmpty()) {
-      return getUnavailableMessage(IdeBundle.message("this.action"), false);
+      return getUnavailableMessage(IdeBundle.message("dumb.balloon.this.action"), false);
     }
     else if (actionNames.size() == 1) {
       return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
     }
     else {
-      return getUnavailableMessage(IdeBundle.message("none.of.the.following.actions"), true) +
+      return getUnavailableMessage(IdeBundle.message("dumb.balloon.none.of.the.following.actions"), true) +
              ": " + StringUtil.join(actionNames, ", ");
     }
   }
 
   public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
-    return plural ? IdeBundle.message("0.are.not.available.while.indexing", action) :
-           IdeBundle.message("0.is.not.available.while.indexing", action);
+    return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
+           IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
   }
 
   private static DumbModeWarningListener dumbModeWarningListener  = null;
