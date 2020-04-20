@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public class SuppressByCommentFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   public String getText() {
     return AnalysisBundle.message("suppress.inspection.statement");
