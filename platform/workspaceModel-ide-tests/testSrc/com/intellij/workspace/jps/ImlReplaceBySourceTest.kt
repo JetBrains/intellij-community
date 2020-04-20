@@ -84,12 +84,17 @@ class ImlReplaceBySourceTest {
     val changes = builder.collectChanges(before).values.flatten()
     Assert.assertEquals(5, changes.size)
 
-    Assert.assertEquals(3, (changes[0] as EntityChange.Replaced<ModuleEntity>).oldEntity.dependencies.size)
-    Assert.assertEquals(2, (changes[0] as EntityChange.Replaced<ModuleEntity>).newEntity.dependencies.size)
+    val moduleChange = changes.filterIsInstance<EntityChange.Replaced<ModuleEntity>>().single()
+    Assert.assertEquals(3, moduleChange.oldEntity.dependencies.size)
+    Assert.assertEquals(2, moduleChange.newEntity.dependencies.size)
 
     // Changes 1 & 2 handle source roots ordering [ModuleSerializersFactory.SourceRootOrderEntry]
-    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, (changes[3] as EntityChange.Added<SourceRootEntity>).entity.url.url)
-    Assert.assertEquals(true, (changes[4] as EntityChange.Added<JavaSourceRootEntity>).entity.generated)
+    @Suppress("USELESS_IS_CHECK")
+    val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.entity is SourceRootEntity }
+    @Suppress("USELESS_IS_CHECK")
+    val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootEntity>>().single { it.entity is JavaSourceRootEntity }
+    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, sourceRootChange.entity.url.url)
+    Assert.assertEquals(true, javaSourceRootChange.entity.generated)
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {
