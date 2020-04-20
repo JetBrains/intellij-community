@@ -722,7 +722,6 @@ public class JavaKeywordCompletion {
       for (String primitiveType : PRIMITIVE_TYPES) {
         result.consume(PsiTypeLookupItem.createLookupItem(factory.createTypeFromText(primitiveType + "[]", null), null));
       }
-      result.consume(PsiTypeLookupItem.createLookupItem(factory.createTypeFromText("void[]", null), null));
       return;
     }
 
