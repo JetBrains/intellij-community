@@ -45,10 +45,6 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
       return
     }
 
-    for (withElement in extensionPoint.withElements) {
-      if (checkProperXmlFileForClass(extensionPoint, withElement.implements.value)) return
-    }
-
     val shortName = extensionPoint.effectiveQualifiedName.substringAfterLast('.')
     val module = extensionPoint.module
     val project = module!!.project
