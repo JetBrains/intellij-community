@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CancellationException
@@ -33,4 +34,10 @@ object GHPRDataProviderUtil {
     }
 
   fun <T> futureOfMutableOnEDT(futureSupplier: () -> CompletableFuture<T>) = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { futureSupplier() } }
+
+  fun <T> futureOfMutableOnEDT(progressIndicator: ProgressIndicator, futureSupplier: () -> CompletableFuture<T>) =
+    GithubAsyncUtil.futureOfMutable {
+      progressIndicator.checkCanceled()
+      invokeAndWaitIfNeeded { futureSupplier() }
+    }
 }

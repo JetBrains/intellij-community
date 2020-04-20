@@ -10,12 +10,12 @@ import java.util.concurrent.CompletableFuture
 interface GHPRDataProvider : GHPRTimelineLoaderHolder, Disposable {
   val id: GHPRIdentifier
 
-  val mergeabilityStateRequest: CompletableFuture<GHPRMergeabilityState>
   val headBranchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GHCommit>>
   val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
 
   val detailsData: GHPRDetailsDataProvider
+  val stateData: GHPRStateDataProvider
   val commentsData: GHPRCommentsDataProvider
   val reviewData: GHPRReviewDataProvider
 
@@ -26,11 +26,7 @@ interface GHPRDataProvider : GHPRTimelineLoaderHolder, Disposable {
   @CalledInAwt
   fun reloadChanges()
 
-  @CalledInAwt
-  fun reloadMergeabilityState()
-
   interface RequestsChangedListener : EventListener {
     fun commitsRequestChanged() {}
-    fun mergeabilityStateRequestChanged() {}
   }
 }

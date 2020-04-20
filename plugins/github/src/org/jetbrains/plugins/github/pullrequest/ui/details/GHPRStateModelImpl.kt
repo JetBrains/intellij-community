@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
 import org.jetbrains.plugins.github.util.handleOnEdt
@@ -22,10 +21,11 @@ import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
 
 class GHPRStateModelImpl(private val project: Project,
-                         private val stateService: GHPRStateService,
                          private val dataProvider: GHPRDataProvider,
                          override val details: GHPullRequestShort,
                          disposable: Disposable) : GHPRStateModel {
+
+  private val stateDataProvider = dataProvider.stateData
 
   private val mergeabilityEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   private val busyEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
@@ -44,37 +44,30 @@ class GHPRStateModelImpl(private val project: Project,
   override var actionError: Throwable? by observableField(null, actionErrorEventDispatcher)
 
   init {
-    dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {
-      override fun mergeabilityStateRequestChanged() {
-        loadMergeabilityState()
-      }
-    })
-    loadMergeabilityState()
-  }
+    stateDataProvider.loadMergeabilityState(disposable) {
+      it.handleOnEdt { result: GHPRMergeabilityState?, error: Throwable? ->
+        mergeabilityState = result
+        mergeabilityLoadingError = error
+        mergeabilityEventDispatcher.multicaster.eventOccurred()
 
-  private fun loadMergeabilityState() {
-    dataProvider.mergeabilityStateRequest.handleOnEdt { result: GHPRMergeabilityState?, error: Throwable? ->
-      mergeabilityState = result
-      mergeabilityLoadingError = error
-      mergeabilityEventDispatcher.multicaster.eventOccurred()
-
-      if (error == null && result?.hasConflicts == null) {
-        mergeabilityPoller.start()
+        if (error == null && result?.hasConflicts == null) {
+          mergeabilityPoller.start()
+        }
+        else mergeabilityPoller.stop()
       }
-      else mergeabilityPoller.stop()
     }
   }
 
   override fun reloadMergeabilityState() {
-    dataProvider.reloadMergeabilityState()
+    stateDataProvider.reloadMergeabilityState()
   }
 
   override fun submitCloseTask() = submitTask {
-    stateService.close(EmptyProgressIndicator(), details)
+    stateDataProvider.close(EmptyProgressIndicator())
   }
 
   override fun submitReopenTask() = submitTask {
-    stateService.reopen(EmptyProgressIndicator(), details)
+    stateDataProvider.reopen(EmptyProgressIndicator())
   }
 
   override fun submitMergeTask() = submitTask {
@@ -87,12 +80,12 @@ class GHPRStateModelImpl(private val project: Project,
       return@submitTask null
     }
 
-    stateService.merge(EmptyProgressIndicator(), mergeability, dialog.message, mergeability.headRefOid)
+    stateDataProvider.merge(EmptyProgressIndicator(), dialog.message, mergeability.headRefOid)
   }
 
   override fun submitRebaseMergeTask() = submitTask {
     val mergeability = mergeabilityState ?: return@submitTask null
-    stateService.rebaseMerge(EmptyProgressIndicator(), mergeability, mergeability.headRefOid)
+    stateDataProvider.rebaseMerge(EmptyProgressIndicator(), mergeability.headRefOid)
   }
 
   override fun submitSquashMergeTask() = submitTask {
@@ -101,14 +94,14 @@ class GHPRStateModelImpl(private val project: Project,
       val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
       val dialog = GithubMergeCommitMessageDialog(project,
                                                   GithubBundle.message("pull.request.merge.message.dialog.title"),
-                                                  GithubBundle.message("pull.request.merge.pull.request", mergeability.number),
+                                                  GithubBundle.message("pull.request.merge.pull.request", details.number),
                                                   body)
       if (!dialog.showAndGet()) {
         throw ProcessCanceledException()
       }
       dialog.message
     }.thenCompose { message ->
-      stateService.squashMerge(EmptyProgressIndicator(), mergeability, message, mergeability.headRefOid)
+      stateDataProvider.squashMerge(EmptyProgressIndicator(), message, mergeability.headRefOid)
     }
   }
 

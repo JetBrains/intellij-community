@@ -171,7 +171,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     Disposer.register(loaderPanel, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
-    val stateModel = GHPRStateModelImpl(project, dataContext.stateService, dataProvider, detailsModel.value, disposable)
+    val stateModel = GHPRStateModelImpl(project, dataProvider, detailsModel.value, disposable)
     val statePanel = GHPRStatePanel(dataContext.securityService, stateModel)
     detailsModel.addAndInvokeValueChangedListener {
       statePanel.select(detailsModel.value.state, true)

@@ -119,6 +119,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, currentUserTeams,
                                                   repoWithPermissions)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
+    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), messageBus, securityService,
+                                            requestExecutor, account.server, repoWithPermissions.path)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
                                               repositoryCoordinates)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
@@ -134,14 +136,17 @@ internal class GHPRDataContextRepository(private val project: Project) {
           loadedDetails?.let { listLoader.updateData(it) }
         }
       }
+      val stateData = GHPRStateDataProviderImpl(stateService, id, detailsData)
       val reviewData = GHPRReviewDataProviderImpl(reviewService, id)
       val commentsData = GHPRCommentsDataProviderImpl(commentService, id)
-      GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), securityService, requestExecutor,
+      GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor,
                            gitRemoteCoordinates, repositoryCoordinates, id,
                            detailsData,
+                           stateData,
                            commentsData,
                            reviewData).also {
         Disposer.register(it, detailsData)
+        Disposer.register(it, stateData)
         Disposer.register(it, reviewData)
       }
     }
@@ -171,8 +176,6 @@ internal class GHPRDataContextRepository(private val project: Project) {
     })
     val metadataService = GHPRMetadataServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, account.server,
                                                   repoWithPermissions.path, repoOwner)
-    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), messageBus,
-                                            requestExecutor, account.server, repoWithPermissions.path)
 
     return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
                            requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
