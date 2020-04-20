@@ -36,10 +36,7 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
-import com.intellij.openapi.vcs.impl.VcsStartupActivity;
+import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -139,6 +136,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     });
 
     VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(myProject, () -> {
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    }, myProject);
+    VcsEP.EP_NAME.addExtensionPointListener(() -> {
+      resetChangedFiles();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, myProject);
 
@@ -423,6 +424,30 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   @Override
   public void scheduleUpdate() {
     myUpdater.schedule();
+  }
+
+  private void resetChangedFiles() {
+    try {
+      synchronized (myDataLock) {
+        DataHolder dataHolder = new DataHolder(myComposite.copy(), new ChangeListUpdater(myWorker), true);
+        dataHolder.notifyStart();
+        dataHolder.notifyEnd();
+
+        ChangeListWorker updatedWorker = dataHolder.getChangeListUpdater().finish();
+        myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(myProject, myScheduler));
+        myComposite = dataHolder.getComposite();
+
+        myUpdateException = null;
+        myAdditionalInfo = null;
+
+        myDelayedNotificator.unchangedFileStatusChanged();
+        myDelayedNotificator.changeListUpdateDone();
+        ((ChangesViewEx)myChangesViewManager).refreshImmediately();
+      }
+    }
+    catch (Exception | AssertionError ex) {
+      LOG.error(ex);
+    }
   }
 
   private void updateImmediately() {
