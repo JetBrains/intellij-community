@@ -67,7 +67,7 @@ public abstract class ContractReturnValue {
    * E.g. "true" contract value makes sense for method returning {@code boolean}, but does not make sense for method returning {@code int}.
    * This method can be used to check the contract correctness.
    *
-   * @param method
+   * @param method method to check
    * @return null if this contract return value makes sense for the supplied return type.
    * Otherwise the human-readable error message is returned.
    */
@@ -82,7 +82,7 @@ public abstract class ContractReturnValue {
    * E.g. "true" contract value makes sense for method returning {@code boolean}, but does not make sense for method returning {@code int}.
    * This method can be used to check the contract correctness.
    *
-   * @param method
+   * @param method method to check
    * @return true if this contract return value makes sense for the supplied return type.
    */
   public final boolean isMethodCompatible(PsiMethod method) {
@@ -112,6 +112,10 @@ public abstract class ContractReturnValue {
     if (newValue instanceof DfaVariableValue) {
       memState.meetDfType(newValue, result);
       return newValue;
+    }
+    if (defaultValue instanceof DfaVariableValue) {
+      memState.meetDfType(defaultValue, result);
+      return defaultValue;
     }
     return defaultValue.getFactory().fromDfType(result);
   }

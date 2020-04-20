@@ -62,7 +62,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (!(dfaDest instanceof DfaVariableValue &&
           ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
           dfaSource instanceof DfaVariableValue &&
-          ControlFlowAnalyzer.isTempVariable((DfaVariableValue)dfaSource))) {
+          (ControlFlowAnalyzer.isTempVariable((DfaVariableValue)dfaSource) || 
+          ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
       dropLocality(dfaSource, memState);
     }
 
