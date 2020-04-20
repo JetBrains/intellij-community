@@ -2,11 +2,13 @@
   <module value="com.intellij.modules.remoteServers"/>
 
   <extensionPoints>
-    <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType"/>
-    <extensionPoint name="remoteServer.deploymentSource.type" interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"/>
-
+    <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType" dynamic="true"/>
+    <extensionPoint name="remoteServer.deploymentSource.type"
+                    interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"
+                    dynamic="true"/>
     <extensionPoint name="remoteServer.runConfigurationExtension"
-                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
+                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
