@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProviderUtil.futureOfMutableOnEDT
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
@@ -38,13 +37,13 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
   }
 
   private val baseBranchProtectionRulesRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    futureOfMutableOnEDT(indicator) { detailsData.loadDetails() }.thenCompose {
+    detailsData.loadDetails().thenCompose {
       stateService.loadBranchProtectionRules(indicator, pullRequestId, it.baseRefName)
     }
   }
   private val mergeabilityStateRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
     val baseBranchProtectionRulesRequest = baseBranchProtectionRulesRequestValue.value
-    futureOfMutableOnEDT(indicator) { detailsData.loadDetails() }.thenCompose { details ->
+    detailsData.loadDetails().thenCompose { details ->
 
       baseBranchProtectionRulesRequest.thenCompose {
         stateService.loadMergeabilityState(indicator, pullRequestId, details.headRefOid, details.url, it)

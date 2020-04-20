@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProviderUtil.futureOfMutableOnEDT
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.function.BiFunction
@@ -29,7 +28,7 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
   }
 
   private val baseBranchFetchRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    futureOfMutableOnEDT(indicator) { detailsData.loadDetails() }.thenCompose {
+    detailsData.loadDetails().thenCompose {
       changesService.fetchBranch(indicator, it.baseRefName)
     }
   }
@@ -47,7 +46,7 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
     val baseFetch = baseBranchFetchRequestValue.value
     val headFetch = headBranchFetchRequestValue.value
 
-    futureOfMutableOnEDT(indicator) { detailsData.loadDetails() }.thenCompose {
+    detailsData.loadDetails().thenCompose {
       changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid)
     }.thenCombine<Unit, String>(baseFetch, BiFunction { mergeBase, _ ->
       mergeBase

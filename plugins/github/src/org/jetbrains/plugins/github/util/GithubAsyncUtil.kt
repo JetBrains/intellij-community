@@ -40,6 +40,7 @@ object GithubAsyncUtil {
     return result
   }
 
+  @Deprecated("Background process value now always drops on PCE")
   @JvmStatic
   fun <T> futureOfMutable(futureSupplier: () -> CompletableFuture<T>): CompletableFuture<T> {
     val result = CompletableFuture<T>()
@@ -132,6 +133,17 @@ fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> Unit): Completab
       val actualError = extractError(error)
       if (isCancellation(actualError)) throw ProcessCanceledException()
       handler(actualError)
+      throw actualError
+    }
+    @Suppress("UNCHECKED_CAST")
+    result as T
+  }, EDT_EXECUTOR)
+
+fun <T> CompletableFuture<T>.cancellationOnEdt(handler: (ProcessCanceledException) -> Unit): CompletableFuture<T> =
+  handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
+    if (error != null) {
+      val actualError = extractError(error)
+      if (isCancellation(actualError)) handler(ProcessCanceledException())
       throw actualError
     }
     @Suppress("UNCHECKED_CAST")

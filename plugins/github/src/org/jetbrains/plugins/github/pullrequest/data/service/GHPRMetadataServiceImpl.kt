@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.messages.MessageBus
@@ -18,7 +17,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
@@ -46,7 +44,7 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
   }
 
   override val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { collaboratorsValue.value } }
+    get() = collaboratorsValue.value
 
   private val teamsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     if (repoOwner !is GHRepositoryOwnerName.Organization) emptyList()
@@ -56,17 +54,13 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
   }
 
   override val teams: CompletableFuture<List<GHTeam>>
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { teamsValue.value } }
+    get() = teamsValue.value
 
   override val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
-    get() = GithubAsyncUtil.futureOfMutable {
-      invokeAndWaitIfNeeded {
-        collaboratorsWithPushAccess.thenCombine(teams,
-                                                BiFunction<List<GHUser>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
-                                                  users + teams
-                                                })
-      }
-    }
+    get() = collaboratorsWithPushAccess.thenCombine(teams,
+                                                    BiFunction<List<GHUser>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
+                                                      users + teams
+                                                    })
 
   private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader
@@ -76,7 +70,8 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
   }
 
   override val issuesAssignees: CompletableFuture<List<GHUser>>
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { assigneesValue.value } }
+    get() = assigneesValue.value
+
   private val labelsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader
       .loadAll(requestExecutor, indicator,
@@ -85,7 +80,7 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
   }
 
   override val labels: CompletableFuture<List<GHLabel>>
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { labelsValue.value } }
+    get() = labelsValue.value
 
   override fun resetData() {
     collaboratorsValue.drop()

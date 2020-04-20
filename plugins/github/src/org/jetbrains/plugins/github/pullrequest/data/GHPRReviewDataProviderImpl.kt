@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProviderUtil.futureOfMutableOnEDT
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import org.jetbrains.plugins.github.util.errorOnEdt
@@ -31,11 +30,11 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService, p
     reviewService.loadReviewThreads(it, pullRequestId)
   }
 
-  override fun loadPendingReview() = futureOfMutableOnEDT { pendingReviewRequestValue.value }
+  override fun loadPendingReview() = pendingReviewRequestValue.value
 
   override fun resetPendingReview() = pendingReviewRequestValue.drop()
 
-  override fun loadReviewThreads() = futureOfMutableOnEDT { reviewThreadsRequestValue.value }
+  override fun loadReviewThreads() = reviewThreadsRequestValue.value
 
   override fun resetReviewThreads() = reviewThreadsRequestValue.drop()
 
