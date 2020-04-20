@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.api.pstorage
+package com.intellij.workspace.api.pstorage.indices
 
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.VirtualFileUrl
+import com.intellij.workspace.api.pstorage.PId
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.PTypedEntity
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
@@ -15,7 +18,7 @@ open class VirtualFileIndex private constructor(
 ) {
   constructor() : this(BidirectionalMultiMap<VirtualFileUrl, Int>())
 
-  internal fun getVirtualFileForProperty(id: PId<out TypedEntity>): Set<VirtualFileUrl>? =
+  internal fun getVirtualFiles(id: PId<out TypedEntity>): Set<VirtualFileUrl>? =
     index.getKeys(id.arrayId)
 
   internal fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, Int> {

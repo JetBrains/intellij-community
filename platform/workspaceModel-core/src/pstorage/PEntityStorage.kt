@@ -6,8 +6,10 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.VirtualFileIndex.MutableVirtualFileIndex
-import java.util.*
+import com.intellij.workspace.api.pstorage.indices.EntitySourceIndex
+import com.intellij.workspace.api.pstorage.indices.EntitySourceIndex.MutableEntitySourceIndex
+import com.intellij.workspace.api.pstorage.indices.VirtualFileIndex
+import com.intellij.workspace.api.pstorage.indices.VirtualFileIndex.MutableVirtualFileIndex
 import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashMap
 import kotlin.reflect.KClass
@@ -35,7 +37,8 @@ internal class PEntityStorage constructor(
   override val entitiesByType: EntitiesBarrel,
   override val refs: RefsTable,
   override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>,
-  override val virtualFileIndex: VirtualFileIndex
+  override val virtualFileIndex: VirtualFileIndex,
+  override val entitySourceIndex: EntitySourceIndex
 ) : AbstractPEntityStorage() {
   override fun assertConsistency() {
     entitiesByType.assertConsistency()
@@ -49,7 +52,8 @@ internal class PEntityStorageBuilder(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
   override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>,
-  override val virtualFileIndex: MutableVirtualFileIndex
+  override val virtualFileIndex: MutableVirtualFileIndex,
+  override val entitySourceIndex: MutableEntitySourceIndex
 ) : TypedEntityStorageBuilder, AbstractPEntityStorage() {
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
@@ -62,7 +66,8 @@ internal class PEntityStorageBuilder(
     modificationCount++
   }
 
-  private constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create(), VirtualFileIndex()), MutableEntitiesBarrel(), MutableRefsTable(), HashMultimap.create(), MutableVirtualFileIndex())
+  private constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create(), VirtualFileIndex(), EntitySourceIndex()),
+                               MutableEntitiesBarrel(), MutableRefsTable(), HashMultimap.create(), MutableVirtualFileIndex(), MutableEntitySourceIndex())
 
   private sealed class ChangeEntry {
     data class AddEntity<E : TypedEntity>(
@@ -122,6 +127,7 @@ internal class PEntityStorageBuilder(
       }
     }
 
+    entitySourceIndex.index(pid, source)
     return pEntityData.createEntity(this)
   }
 
@@ -159,14 +165,24 @@ internal class PEntityStorageBuilder(
   }
 
   private fun addToVirtualFileIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
-    builder.virtualFileIndex.getVirtualFileForProperty(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
+    builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
   }
 
   private fun updateVirtualFileIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
-    builder.virtualFileIndex.getVirtualFileForProperty(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
+    builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
   }
 
   private fun removeFromVirtualFileIndex(entityId: PId<out TypedEntity>) = virtualFileIndex.index(entityId)
+
+  private fun addToEntitySourceIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+    builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
+  }
+
+  private fun updateEntitySourceIndex(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+    builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
+  }
+
+  private fun removeFromEntitySourceIndex(entityId: PId<out TypedEntity>) = entitySourceIndex.index(entityId)
 
   // modificationCount is not incremented
   private fun <T : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
@@ -267,6 +283,7 @@ internal class PEntityStorageBuilder(
     val children = this.refs.getChildrenRefsOfParentBy(pid, false)
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
 
+    entitySourceIndex.index(copiedData.createPid(), newSource)
     return copiedData.createEntity(this)
   }
 
@@ -275,6 +292,7 @@ internal class PEntityStorageBuilder(
 
     removeEntity(e.id)
     virtualFileIndex.index(e.id)
+    entitySourceIndex.index(e.id)
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
@@ -611,7 +629,8 @@ internal class PEntityStorageBuilder(
     val newRefs = refs.toImmutable()
     val copiedLinks = HashMultimap.create(this.softLinks)
     val newVirtualFileIndex = virtualFileIndex.toImmutable()
-    return PEntityStorage(newEntities, newRefs, copiedLinks, newVirtualFileIndex)
+    val newEntitySourceIndex = entitySourceIndex.toImmutable()
+    return PEntityStorage(newEntities, newRefs, copiedLinks, newVirtualFileIndex, newEntitySourceIndex)
   }
 
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
@@ -634,6 +653,7 @@ internal class PEntityStorageBuilder(
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
           updateEntityRefs(entity2id.second, updatedChildren, updatedParents)
           addToVirtualFileIndex(change.entityData.createPid(), entity2id.second, builder)
+          addToEntitySourceIndex(change.entityData.createPid(), entity2id.second, builder)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
           }
@@ -642,6 +662,7 @@ internal class PEntityStorageBuilder(
           val outdatedId = change.id
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
           removeFromVirtualFileIndex(outdatedId)
+          removeFromEntitySourceIndex(outdatedId)
           if (this.entityDataById(usedPid) != null) {
             removeEntity(usedPid)
             replaceMap.remove(outdatedId, usedPid)
@@ -660,6 +681,7 @@ internal class PEntityStorageBuilder(
           newData.id = usedPid.arrayId
 
           updateVirtualFileIndex(outdatedId, newData.createPid(), builder)
+          updateEntitySourceIndex(outdatedId, newData.createPid(), builder)
           if (this.entityDataById(usedPid) != null) {
             replaceEntityWithRefs(newData, outdatedId.clazz.java, updatedChildren, updatedParents)
           }
@@ -687,14 +709,16 @@ internal class PEntityStorageBuilder(
           val copiedRefs = MutableRefsTable.from(storage.refs)
           val copiedSoftLinks = HashMultimap.create(storage.softLinks)
           val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex)
-          PEntityStorageBuilder(storage, copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex)
+          val copiedEntitySourceIndex = MutableEntitySourceIndex.from(storage.entitySourceIndex)
+          PEntityStorageBuilder(storage, copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex)
         }
         is PEntityStorageBuilder -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
           val copiedSoftLinks = HashMultimap.create(storage.softLinks)
           val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex.toImmutable())
-          PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex)
+          val copiedEntitySourceIndex = MutableEntitySourceIndex.from(storage.entitySourceIndex.toImmutable())
+          PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex)
         }
       }
     }
@@ -708,6 +732,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   internal abstract val refs: AbstractRefsTable
   internal abstract val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
   internal abstract val virtualFileIndex: VirtualFileIndex
+  internal abstract val entitySourceIndex: EntitySourceIndex
 
   abstract fun assertConsistency()
 
