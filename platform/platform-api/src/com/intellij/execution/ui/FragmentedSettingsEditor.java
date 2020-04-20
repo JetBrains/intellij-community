@@ -6,27 +6,24 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.options.CompositeSettingsBuilder;
-import com.intellij.openapi.options.CompositeSettingsEditor;
-import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.icons.AllIcons.Actions.FindAndShowNextMatches;
 
-public abstract class FragmentedSettingsEditor<Settings> extends CompositeSettingsEditor<Settings> {
+public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettings> extends CompositeSettingsEditor<Settings> {
 
   private final NotNullLazyValue<Collection<SettingsEditorFragment<Settings, ?>>> myFragments =
     NotNullLazyValue.createValue(() -> createFragments());
@@ -38,6 +35,22 @@ public abstract class FragmentedSettingsEditor<Settings> extends CompositeSettin
   }
 
   protected abstract String getTitle();
+
+  @Override
+  public void resetEditorFrom(@NotNull Settings settings) {
+    super.resetEditorFrom(settings);
+    @Nullable Set<String> visibleFragments = settings.getVisibleFragments();
+    for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {
+      fragment.setVisible(visibleFragments.contains(fragment.getId()));
+    }
+  }
+
+  @Override
+  public void applyEditorTo(@NotNull Settings settings) throws ConfigurationException {
+    super.applyEditorTo(settings);
+    settings.setVisibleFragments(
+      getFragments().stream().filter(fragment -> fragment.isVisible()).map(fragment -> fragment.getId()).collect(Collectors.toSet()));
+  }
 
   @Override
   public CompositeSettingsBuilder<Settings> getBuilder() {

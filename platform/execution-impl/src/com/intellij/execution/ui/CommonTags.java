@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 public class CommonTags {
 
   public static <S extends RunConfiguration> SettingsEditorFragment<S, ?> parallelRun() {
-    return new TagFragment<>(ExecutionBundle.message("run.configuration.allow.running.parallel"),
+    return new TagFragment<>("runParallel", ExecutionBundle.message("run.configuration.allow.running.parallel"),
                              s -> s.isAllowRunningInParallel(),
                              (s, aBoolean) -> s.setAllowRunningInParallel(aBoolean));
   }

@@ -18,13 +18,20 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     void apply(Settings s);
   }
 
+  private final String myId;
   private final String myName;
   private final C myComponent;
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
 
-  public SettingsEditorFragment(String name, C component, int commandLinePosition, BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply) {
+  public SettingsEditorFragment(String id,
+                                String name,
+                                C component,
+                                int commandLinePosition,
+                                BiConsumer<Settings, C> reset,
+                                BiConsumer<Settings, C> apply) {
+    myId = id;
     myName = name;
     myComponent = component;
     myReset = reset;
@@ -32,14 +39,18 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myCommandLinePosition = commandLinePosition;
   }
 
-  public SettingsEditorFragment(String name, C component, BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply)  {
-    this(name, component, -1, reset, apply);
+  public SettingsEditorFragment(String id, String name, C component, BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply)  {
+    this(id, name, component, -1, reset, apply);
   }
 
-  public static <S> SettingsEditorFragment<S, ?> create(String name, Component<? super S> component) {
-    return new SettingsEditorFragment<>(name, (JComponent)component,
+  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, Component<? super S> component) {
+    return new SettingsEditorFragment<>(id, name, (JComponent)component,
                                         (settings, c) -> component.reset(settings),
                                         (settings, c) -> component.apply(settings));
+  }
+
+  public String getId() {
+    return myId;
   }
 
   public String getName() {

@@ -9,8 +9,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 public class TagFragment<Settings> extends SettingsEditorFragment<Settings, JButton> {
-  public TagFragment(String name, Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
-    super(name, new TagButton(name),
+  public TagFragment(String id, String name, Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
+    super(id, name, new TagButton(name),
           (settings, label) -> label.setVisible(getter.test(settings)),
           (settings, label) -> setter.accept(settings, label.isVisible()));
 

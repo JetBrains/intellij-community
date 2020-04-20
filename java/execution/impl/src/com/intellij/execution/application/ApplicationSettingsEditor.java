@@ -40,19 +40,20 @@ public class ApplicationSettingsEditor extends FragmentedSettingsEditor<Applicat
                                                                               ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
     vmParams.setLabelLocation(BorderLayout.WEST);
     fragments.addAll(Arrays.asList(
-      new SettingsEditorFragment<>(null, jrePathEditor, 5,
-                                   (configuration, editor) -> editor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled()),
+      new SettingsEditorFragment<>("jrePath", null, jrePathEditor, 5,
+                                   (configuration, editor) -> editor
+                                     .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled()),
                                    (configuration, editor) -> {
-                                                configuration.setAlternativeJrePath(editor.getJrePathOrName());
-                                                configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
-                                             }),
-      new SettingsEditorFragment<>(null, mainClass, 10,
+                                     configuration.setAlternativeJrePath(editor.getJrePathOrName());
+                                     configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
+                                   }),
+      new SettingsEditorFragment<>("mainClass", null, mainClass, 10,
                                    (configuration, component) -> component.getComponent().setText(configuration.getMainClassName()),
                                    (configuration, component) -> configuration.setMainClassName(component.getComponent().getText())),
-      new SettingsEditorFragment<>(ExecutionBundle.message("run.configuration.java.vm.parameters.name"), vmParams,
+      new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), vmParams,
                                    (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
                                    (configuration, component) -> configuration.setVMParameters(component.getComponent().getText())),
-      new SettingsEditorFragment<>(ExecutionBundle.message("redirect.input.from.name"), new ProgramInputRedirectPanel(),
+      new SettingsEditorFragment<>("redirectInput", ExecutionBundle.message("redirect.input.from.name"), new ProgramInputRedirectPanel(),
                                    (configuration, panel) -> panel.reset(configuration.getInputRedirectOptions()),
                                    (configuration, panel) -> panel.applyTo(configuration.getInputRedirectOptions()))));
     return fragments;
