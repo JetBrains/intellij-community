@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.EventLogListener;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -13,7 +14,6 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,10 +81,10 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
     ToolWindow eventLog = EventLog.getEventLog(project);
     if (eventLog != null) {
       List<Notification> notifications = EventLog.getNotifications(project);
-      LayeredIcon icon = IdeNotificationArea.createIconWithNotificationCount(new JBLabel(),
-                                                                              IdeNotificationArea.getMaximumType(notifications),
-                                                                              notifications.size(), true);
-      ApplicationManager.getApplication().invokeLater(() -> eventLog.setIcon(icon));
+      NotificationType type = IdeNotificationArea.getMaximumType(notifications);
+      int size = notifications.size();
+      ApplicationManager.getApplication()
+        .invokeLater(() -> eventLog.setIcon(IdeNotificationArea.createIconWithNotificationCount(new JBLabel(), type, size, true)));
     }
   }
 }
