@@ -180,12 +180,14 @@ object ExtractMethodHelper {
     if (statements.isEmpty()) return true
     if (! areSame(statements)) return false
     val returnExpressions = statements.mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
-    return returnExpressions.none { expression -> hasReference(expression) }
-    /* TODO it's also possible to extract single return expression with external references */
+    return returnExpressions.all { expression -> PsiUtil.isConstantExpression(expression) || expression.type == PsiType.NULL }
   }
 
-  private fun hasReference(element: PsiElement): Boolean {
-    return PsiTreeUtil.findChildOfType(element, PsiJavaCodeReferenceElement::class.java, false) != null
+  fun haveReferenceToScope(elements: List<PsiElement>, scope: List<PsiElement>): Boolean {
+    val scopeRange = TextRange(scope.first().textRange.startOffset, scope.last().textRange.endOffset)
+    return elements.asSequence()
+      .flatMap { PsiTreeUtil.findChildrenOfAnyType(it, false, PsiJavaCodeReferenceElement::class.java).asSequence() }
+      .mapNotNull { reference -> reference.resolve() }
+      .any{ referencedElement -> referencedElement.textRange in scopeRange }
   }
-
 }

@@ -735,6 +735,26 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testExtractConstantExpressions() throws Exception {
+      doTest();
+  }
+
+  public void testDontExtractLocalConstant() throws Exception {
+    try {
+      doTest();
+      fail("Should fail if expression is linked to the scope");
+    } catch (PrepareFailedException e){
+    }
+  }
+
+  public void testDontExtractCustomFinalObjects() throws Exception {
+    try {
+      doTest();
+      fail("Should fail if expression contains mutable object");
+    } catch (PrepareFailedException e){
+    }
+  }
+
   public void testReturnStatementFolding() throws Exception {
     doTest();
   }

@@ -15,6 +15,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUs
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.haveReferenceToScope
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.uniqueNameOf
@@ -39,11 +40,17 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val expression = elements.singleOrNull() as? PsiExpression
 
+
+  fun canExtractStatementsFromScope(statements: List<PsiStatement>, scope: List<PsiElement>): Boolean {
+    return ExtractMethodHelper.areSemanticallySame(statements) && !haveReferenceToScope(statements, scope)
+  }
+
   //TODO use correct error messages
   val dataOutput = when {
     expression != null  -> ExpressionOutput(getExpressionType(expression), null, listOf(expression), CodeFragmentAnalyzer.inferNullability(listOf(expression)))
     variableData is VariableOutput -> when {
-      ! ExtractMethodHelper.areSemanticallySame(flowOutput.statements) && flowOutput is ConditionalFlow -> throw PrepareFailedException("Out var and different flow statements", flowOutput.statements.first())
+      flowOutput is ConditionalFlow && ! canExtractStatementsFromScope(flowOutput.statements, elements)
+        -> throw PrepareFailedException("Out var and different flow statements", flowOutput.statements.first())
       variableData.nullability != Nullability.NOT_NULL && flowOutput is ConditionalFlow -> throw PrepareFailedException("Nullable out var and branching", variableData.variable)
       flowOutput is ConditionalFlow -> variableData.copy(nullability = Nullability.NULLABLE)
       else -> variableData
