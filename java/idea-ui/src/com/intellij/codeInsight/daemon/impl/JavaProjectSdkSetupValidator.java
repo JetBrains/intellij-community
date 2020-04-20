@@ -126,7 +126,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
       .withProject(project)
       .withSdkTypeFilter(type -> type instanceof JavaSdkType);
 
-    if (info.isUsingInvalidSdk()) {
+    if (info.isSdkMissing()) {
       return builder.updateSdkForFile(file);
     }
 
