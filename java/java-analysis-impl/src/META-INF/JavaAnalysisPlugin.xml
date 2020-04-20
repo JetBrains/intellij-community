@@ -247,6 +247,17 @@
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.unneededThrows.RedundantThrowsInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.style.ConstantOnWrongSideOfComparisonInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.style.MultipleVariablesInDeclarationInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.controlflow.SimplifiableConditionalExpressionInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ObjectEqualityInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.security.SerializableClassInSecureContextMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.internationalization.CallToSuspiciousStringMethodInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.threading.WaitNotifyNotInSynchronizedContextInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.inheritance.MethodDoesntCallSuperMethodInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.junit.MalformedSetUpTearDownInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.naming.MisspelledMethodNameInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ThrowableNeverThrownInspectionMerger"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
     <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.DefaultInferredAnnotationProvider"/>

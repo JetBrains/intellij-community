@@ -8,14 +8,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 
-    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ThrowableNeverThrownInspectionMerger"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.naming.MisspelledMethodNameInspectionMerger"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.junit.MalformedSetUpTearDownInspectionMerger"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.inheritance.MethodDoesntCallSuperMethodInspectionMerger"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.threading.WaitNotifyNotInSynchronizedContextInspectionMerger"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.internationalization.CallToSuspiciousStringMethodInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.security.SerializableClassInSecureContextMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantStringOperationMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.jdk.ForwardCompatibilityInspectionMerger"/>
 
@@ -316,7 +309,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="NewObjectEquality" bundle="messages.InspectionGadgetsBundle" key="inspection.new.object.equality.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.NewObjectEqualityInspection"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ObjectEqualityInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObjectEquality" bundle="messages.InspectionGadgetsBundle" key="object.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.bugs.ObjectEqualityInspection"/>
@@ -600,7 +592,6 @@
                      implementationClass="com.siyeh.ig.cloneable.UseOfCloneInspection"/>
 
     <!--group.names.control.flow.issues-->
-    <inspectionElementsMerger implementation="com.siyeh.ig.controlflow.SimplifiableConditionalExpressionInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanExpressionMayBeConditional" bundle="messages.InspectionGadgetsBundle"
                      key="boolean.expression.may.be.conditional.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
@@ -2258,8 +2249,6 @@
                      implementationClass="com.siyeh.ig.serialization.TransientFieldNotInitializedInspection"/>
 
     <!--group.names.code.style.issues-->
-    <inspectionElementsMerger implementation="com.siyeh.ig.style.MultipleVariablesInDeclarationInspectionMerger"/>
-    <inspectionElementsMerger implementation="com.siyeh.ig.style.ConstantOnWrongSideOfComparisonInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertMessageNotString" bundle="messages.InspectionGadgetsBundle"
                      key="assert.message.not.string.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.style.AssertMessageNotStringInspection"/>
