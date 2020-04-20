@@ -4,6 +4,7 @@ package com.intellij.execution.filters;
 import com.intellij.execution.filters.Filter.ResultItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,9 @@ public class NavigateToExceptionClassFilter implements JvmExceptionOccurrenceFil
       ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex().isInContent(psiClass.getContainingFile().getVirtualFile());
     TextAttributes attributes = ExceptionInfoCache.ClassResolveInfo.getLinkAttributes(!inContent);
     HyperlinkInfo hyperlink = HyperlinkInfoFactory.getInstance().createMultiplePsiElementHyperlinkInfo(classes);
-    return new Filter.Result(exceptionStartOffset, exceptionStartOffset + exceptionClassName.length(), 
+    String shortName = StringUtil.getShortName(exceptionClassName);
+    return new Filter.Result(exceptionStartOffset + exceptionClassName.length() - shortName.length(), 
+                             exceptionStartOffset + exceptionClassName.length(), 
                              hyperlink, attributes, attributes);
   }
 }
