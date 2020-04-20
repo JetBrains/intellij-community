@@ -1,10 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows a custom language plugin to define annotations for files in that language.
@@ -23,7 +27,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createErrorAnnotation(@NotNull PsiElement elt, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createErrorAnnotation(@NotNull PsiElement elt, @Nullable @InspectionMessage String message);
 
   /**
    * Creates an error annotation with the specified message over the specified AST node.
@@ -34,7 +38,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createErrorAnnotation(@NotNull ASTNode node, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createErrorAnnotation(@NotNull ASTNode node, @Nullable @InspectionMessage String message);
 
   /**
    * Creates an error annotation with the specified message over the specified text range.
@@ -45,7 +49,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createErrorAnnotation(@NotNull TextRange range, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createErrorAnnotation(@NotNull TextRange range, @Nullable @InspectionMessage String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified PSI element.
@@ -56,7 +60,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWarningAnnotation(@NotNull PsiElement elt, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createWarningAnnotation(@NotNull PsiElement elt, @Nullable @InspectionMessage String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified AST node.
@@ -67,7 +71,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable @InspectionMessage String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified text range.
@@ -78,7 +82,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWarningAnnotation(@NotNull TextRange range, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createWarningAnnotation(@NotNull TextRange range, @Nullable @InspectionMessage String message);
 
   /**
    * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
@@ -91,7 +95,7 @@ public interface AnnotationHolder {
    */
   @Deprecated
   Annotation createWeakWarningAnnotation(@NotNull PsiElement elt,
-                                         @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+                                         @Nullable @InspectionMessage String message);
 
   /**
    * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
@@ -104,7 +108,7 @@ public interface AnnotationHolder {
    */
   @Deprecated
   Annotation createWeakWarningAnnotation(@NotNull ASTNode node,
-                                         @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+                                         @Nullable @InspectionMessage String message);
 
   /**
    * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
@@ -117,7 +121,7 @@ public interface AnnotationHolder {
    */
   @Deprecated
   Annotation createWeakWarningAnnotation(@NotNull TextRange range,
-                                         @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+                                         @Nullable @InspectionMessage String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -129,7 +133,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createInfoAnnotation(@NotNull PsiElement elt, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createInfoAnnotation(@NotNull PsiElement elt, @Nullable @InspectionMessage String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -141,7 +145,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createInfoAnnotation(@NotNull ASTNode node, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createInfoAnnotation(@NotNull ASTNode node, @Nullable @InspectionMessage String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -153,7 +157,7 @@ public interface AnnotationHolder {
    * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+  Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable @InspectionMessage String message);
 
   /**
    * Creates an annotation with the given severity (colored highlighting only, with no gutter mark and not participating in
@@ -168,7 +172,7 @@ public interface AnnotationHolder {
   @Deprecated
   Annotation createAnnotation(@NotNull HighlightSeverity severity,
                               @NotNull TextRange range,
-                              @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
+                              @Nullable @InspectionMessage String message);
 
   /**
    * Creates an annotation with the given severity (colored highlighting only, with no gutter mark and not participating in
@@ -184,7 +188,7 @@ public interface AnnotationHolder {
   @Deprecated
   Annotation createAnnotation(@NotNull HighlightSeverity severity,
                               @NotNull TextRange range,
-                              @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                              @Nullable @InspectionMessage String message,
                               @Nullable String htmlTooltip);
 
   @NotNull
@@ -203,7 +207,7 @@ public interface AnnotationHolder {
   @Contract(pure = true)
   @NotNull
   default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
-                                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
+                                          @NotNull @InspectionMessage String message) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
   }
 
