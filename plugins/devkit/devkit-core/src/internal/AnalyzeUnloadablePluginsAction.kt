@@ -138,9 +138,12 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         it.unspecifiedDynamicEPs.any { !it.startsWith("cidr") && !it.startsWith("appcode") }
       }
       if (closePlugins.isNotEmpty()) {
-        appendln("Plugins closest to being unloadable (${closePlugins.size.coerceAtMost(40)} out of ${closePlugins.size}):")
-        for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }.take(40)) {
-          appendln("${status.pluginId} - ${status.unspecifiedDynamicEPs.joinToString()}")
+        appendln("Plugins with non-dynamic EPs (${closePlugins.size}):")
+        for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }) {
+          appendln("${status.pluginId} (${status.unspecifiedDynamicEPs.size})")
+          for (ep in status.unspecifiedDynamicEPs) {
+            appendln("  $ep")
+          }
         }
         appendln()
       }
