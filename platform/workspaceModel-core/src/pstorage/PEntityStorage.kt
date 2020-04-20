@@ -12,12 +12,8 @@ import com.intellij.workspace.api.pstorage.indices.PersistentIdIndex
 import com.intellij.workspace.api.pstorage.indices.PersistentIdIndex.MutablePersistentIdIndex
 import com.intellij.workspace.api.pstorage.indices.VirtualFileIndex
 import com.intellij.workspace.api.pstorage.indices.VirtualFileIndex.MutableVirtualFileIndex
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.isAccessible
 
 
 internal typealias ChildrenConnectionsInfo<T> = Map<ConnectionId<T, TypedEntity>, Set<PId<out TypedEntity>>>
@@ -872,11 +868,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    return entitiesByType.all()
-      .filterValues { it.all().firstOrNull()?.createEntity(this) is TypedEntityWithPersistentId }
-      .asSequence()
-      .flatMap { it.value.all().map { it.createEntity(this) as TypedEntityWithPersistentId } }
-      .find { it.persistentId() == id } as E?
+    val pid = persistentIdIndex.getIdsByPersistentId(id)?.single() ?: return null
+    return entityDataById(pid)?.createEntity(this) as E?
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
