@@ -63,6 +63,10 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
 
   private static volatile Map<String, List<ErrorFixExtensionPoint>> ourCodeToFix;
 
+  static {
+    ERROR_FIX_EXTENSION_POINT.addExtensionPointListener(() -> ourCodeToFix = null, null);
+  }  
+  
   @NotNull
   private static Map<String, List<ErrorFixExtensionPoint>> getCodeToFixMap() {
     Map<String, List<ErrorFixExtensionPoint>> map = ourCodeToFix;
