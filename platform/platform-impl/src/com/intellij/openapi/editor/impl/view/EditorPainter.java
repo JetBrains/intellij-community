@@ -564,10 +564,7 @@ public class EditorPainter implements TextDrawingCallback {
       markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, highlighter -> {
         CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
         if (customRenderer != null) {
-          int highlighterStart = highlighter.getStartOffset();
-          int highlighterEnd = highlighter.getEndOffset();
-          if (highlighterStart <= myEndOffset && highlighterEnd >= myStartOffset &&
-              myClipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
+          if (myClipDetector.rangeCanBeVisible(highlighter.getStartOffset(), highlighter.getEndOffset())) {
             if (customRenderer.isForeground()) {
               myForegroundCustomHighlighters.add(highlighter);
             }
