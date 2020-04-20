@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationPanel.ActionHandler;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +41,13 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
 
   @Override
   public boolean isApplicableFor(@NotNull Project project, @NotNull VirtualFile file) {
-    return JavaSdk.getInstance().isRelevantForFile(project, file);
+    if (file.getFileType() != JavaClassFileType.INSTANCE) {
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile != null) {
+        return psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+      }
+    }
+    return false;
   }
 
   private static class ContextInfo {
