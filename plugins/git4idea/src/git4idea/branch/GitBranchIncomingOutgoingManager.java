@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -57,7 +56,7 @@ import static git4idea.repo.GitRefUtil.getResolvedHashes;
 import static java.util.stream.Collectors.toSet;
 import static one.util.streamex.StreamEx.of;
 
-public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener {
+public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener, Disposable {
 
   private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
   public static final Topic<GitIncomingOutgoingListener> GIT_INCOMING_OUTGOING_CHANGED =
@@ -89,13 +88,12 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     myProject = project;
 
     myQueue = new MergingUpdateQueue("GitBranchIncomingOutgoingManager", 1000, true, null,
-                                     myProject, null, Alarm.ThreadToUse.POOLED_THREAD);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        stopScheduling();
-      }
-    });
+                                     this, null, Alarm.ThreadToUse.POOLED_THREAD);
+  }
+
+  @Override
+  public void dispose() {
+    stopScheduling();
   }
 
   private static boolean hasExternalSSHAgent() {
@@ -132,7 +130,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (myConnection == null) {
-        myConnection = myProject.getMessageBus().connect();
+        myConnection = myProject.getMessageBus().connect(this);
         myConnection.subscribe(GitRepository.GIT_REPO_CHANGE, this);
         myConnection.subscribe(GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS, this);
       }
@@ -200,7 +198,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void scheduleUpdate() {
-    myQueue.queue(DisposableUpdate.createDisposable(myProject, "update", () -> {
+    myQueue.queue(DisposableUpdate.createDisposable(this, "update", () -> {
       List<GitRepository> withIncoming;
       List<GitRepository> withOutgoing;
 
