@@ -261,7 +261,12 @@ internal class PEntityStorageBuilder(
   override fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T {
     val copiedData = entitiesByType.getEntityDataForModification((e as PTypedEntity).id) as PEntityData<T>
     copiedData.entitySource = newSource
-    modificationCount++
+
+    val pid = e.id as PId<T>
+    val parents = this.refs.getParentRefsOfChild(pid, false)
+    val children = this.refs.getChildrenRefsOfParentBy(pid, false)
+    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
+
     return copiedData.createEntity(this)
   }
 
