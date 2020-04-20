@@ -279,7 +279,6 @@
     <lang.commenter language="GitExclude" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
      <!--END Git exclude lang-->
 
-    <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
     <backgroundPostStartupActivity implementation="git4idea.ignore.GitIgnoreInStoreDirGeneratorActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig" />
 
@@ -312,6 +311,9 @@
   </extensionPoints>
 
   <projectListeners>
+    <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyConflictsListener"
+              topic="git4idea.repo.GitConflictsHolder$ConflictsListener"
+              activeInHeadlessMode="false"/>
     <listener class="git4idea.ui.branch.GitBranchWidget$Listener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
