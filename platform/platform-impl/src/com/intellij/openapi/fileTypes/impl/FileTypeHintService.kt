@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.util.xmlb.annotations.XCollection
 
 private class FileTypeHint: BaseState() {
@@ -57,17 +58,20 @@ private class FileTypeHintPersistentComponent : SimplePersistentStateComponent<F
 
 class FileTypeHintService: FileTypeOverrider {
   override fun getOverriddenFileType(file: VirtualFile): FileType? {
-    val project = ProjectLocator.getInstance().guessProjectForFile(file) ?: return null
+    if (file is VirtualFileSystemEntry) {
+      val project = ProjectLocator.getInstance().guessProjectForFile(file) ?: return null
 
-    val textHint = FileTypeHintPersistentComponent.getInstance(project).state.text
-    if (textHint.matches(file)) {
-      return PlainTextFileType.INSTANCE
-    }
-    val ignoredHint = FileTypeHintPersistentComponent.getInstance(project).state.ignored
-    if (ignoredHint.matches(file)) {
-      return UnknownFileType.INSTANCE
-    }
+      val textHint = FileTypeHintPersistentComponent.getInstance(project).state.text
+      if (textHint.matches(file)) {
+        return PlainTextFileType.INSTANCE
+      }
+      val ignoredHint = FileTypeHintPersistentComponent.getInstance(project).state.ignored
+      if (ignoredHint.matches(file)) {
+        return UnknownFileType.INSTANCE
+      }
 
+      return null
+    }
     return null
   }
 
