@@ -1288,7 +1288,7 @@ class C {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test no type inference for variables from outer context'() {
+  void 'test do type inference for variables from outer context'() {
     doNestedDfaTest '''
 def foo(p) {
   p = 1
@@ -1296,7 +1296,7 @@ def foo(p) {
     <caret>p
   }
 }
-''', null
+''', JAVA_LANG_INTEGER
   }
 
   void 'test do type inference for outer variables with explicit type'() {
