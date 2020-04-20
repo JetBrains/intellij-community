@@ -44,7 +44,10 @@ object GHPRChangesBrowser {
     }
 
     val toolbar = createToolbar(actionManager, diffAction, changesTreePanel)
-    val scrollPane = ScrollPaneFactory.createScrollPane(changesTreePanel, SideBorder.TOP)
+    val scrollPane = ScrollPaneFactory.createScrollPane(changesTreePanel, SideBorder.TOP).apply {
+      isOpaque = false
+      viewport.isOpaque = false
+    }
 
     return BorderLayoutPanel().andTransparent()
       .addToTop(toolbar)
