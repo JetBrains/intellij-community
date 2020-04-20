@@ -17,10 +17,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ObjectUtils
 import com.intellij.util.indexing.FindSymbolParameters
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
@@ -114,7 +118,7 @@ class Cls {
 
     assert gotoSymbol('pkg.Cls.bar') as Set == methods[1..3] as Set
     assert gotoSymbol('pkg.Cls#bar') as Set == methods[1..3] as Set
-    
+
     assert gotoSymbol('pkg.Cls#bar(int)') == [methods[1]]
     assert gotoSymbol('pkg.Cls#bar(boolean)') == [methods[2]]
     assert gotoSymbol('pkg.Cls#bar(java.util.List)') == [methods[3]]
@@ -451,7 +455,7 @@ class Intf {
     assert gotoClass('SomeClass') == [camel, upper]
     assert gotoFile('SomeClass.java') == [camel.containingFile, upper.containingFile]
   }
-  
+
   void "test prefer closer path match"() {
     def index = addEmptyFile("content/objc/features/index.html")
     def i18n = addEmptyFile("content/objc/features/screenshots/i18n.html")
@@ -531,16 +535,48 @@ class Intf {
                     "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java") == [veryLongNameFile]
   }
 
-  private List<Object> gotoClass(String text, boolean checkboxState = false) {
-    return getContributorElements(createClassContributor(project, null, checkboxState), text)
+  void "test source-test-resources priority"() {
+    def srcDir = myFixture.tempDirFixture.findOrCreateDir("src")
+    def resourcesDir = myFixture.tempDirFixture.findOrCreateDir("resources")
+    def testSrcDir = myFixture.tempDirFixture.findOrCreateDir("test")
+
+    try {
+      PsiTestUtil.addSourceRoot(myFixture.module, srcDir, JavaSourceRootType.SOURCE)
+      PsiTestUtil.addSourceRoot(myFixture.module, testSrcDir, JavaSourceRootType.TEST_SOURCE)
+      PsiTestUtil.addSourceRoot(myFixture.module, resourcesDir, JavaResourceRootType.RESOURCE)
+
+      def testSrcFile1 = addEmptyFile("${testSrcDir.name}/fileForSearch.txt")
+      def testSrcFile2 = addEmptyFile("${testSrcDir.name}/sub/fileForSearch.txt")
+      def srcFile1 = addEmptyFile("${srcDir.name}/sub/fileForSearch.txt")
+      def srcFile2 = addEmptyFile("${srcDir.name}/sub/sub/fileForSearch.txt")
+      def resourcesFile = addEmptyFile("${resourcesDir.name}/fileForSearch.txt")
+
+      def contextFile = addEmptyFile("context.txt")
+      def contextFile2 = addEmptyFile("${testSrcDir.name}/context.txt")
+
+      //tests have low priority because of com.intellij.psi.util.proximity.InResolveScopeWeigher
+      assert gotoFile("fileForSearch.txt", false, contextFile) ==
+             [srcFile1, srcFile2, resourcesFile, testSrcFile1, testSrcFile2]
+
+      //tests have high priority because of search from same root
+      assert gotoFile("fileForSearch.txt", false, contextFile2) ==
+             [testSrcFile1, testSrcFile2, srcFile1, srcFile2, resourcesFile]
+    }
+    finally {
+      PsiTestUtil.removeAllRoots(myFixture.module, IdeaTestUtil.getMockJdk17())
+    }
   }
 
-  private List<Object> gotoSymbol(String text, boolean checkboxState = false) {
-    return getContributorElements(createSymbolContributor(project, null, checkboxState), text)
+  private List<Object> gotoClass(String text, boolean checkboxState = false, PsiElement context = null) {
+    return getContributorElements(createClassContributor(project, context, checkboxState), text)
   }
 
-  private List<Object> gotoFile(String text, boolean checkboxState = false) {
-    return getContributorElements(createFileContributor(project, null, checkboxState), text)
+  private List<Object> gotoSymbol(String text, boolean checkboxState = false, PsiElement context = null) {
+    return getContributorElements(createSymbolContributor(project, context, checkboxState), text)
+  }
+
+  private List<Object> gotoFile(String text, boolean checkboxState = false, PsiElement context = null) {
+    return getContributorElements(createFileContributor(project, context, checkboxState), text)
   }
 
   private static List<Object> getContributorElements(SearchEverywhereContributor<?> contributor, String text) {
