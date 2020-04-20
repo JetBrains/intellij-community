@@ -35,7 +35,8 @@ public enum IntelliJPlatformProduct {
   DBE("DB", "DataGrip", PlatformUtils.DBE_PREFIX),
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX),
-  ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio");
+  ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio"),
+  INTELLIJ_CLIENT("IJC", "IntelliJ Client", PlatformUtils.INTELLIJ_CLIENT_PREFIX);
 
   private final String myProductCode;
   private final String myName;
