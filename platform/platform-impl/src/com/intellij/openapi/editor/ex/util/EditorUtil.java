@@ -676,7 +676,7 @@ public final class EditorUtil {
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
     int line = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
-    return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
+    return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : getFirstDisplayedLogicalLine(editor);
   }
 
   /**
@@ -687,7 +687,23 @@ public final class EditorUtil {
     int visualLine = editor.yToVisualLine(y);
     int visualLineStartY = editor.visualLineToY(visualLine);
     if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
-    return visualLine > 0 ? editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line : 0;
+    return visualLine > 0 ? editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line : getFirstDisplayedLogicalLine(editor);
+  }
+
+  /**
+   * This returns {@code 0}, unless there's a rendered documentation comment shown at the beginning of file.
+   */
+  public static int getFirstDisplayedLogicalLine(@NotNull Editor editor) {
+    if (editor instanceof EditorEx) {
+      FoldRegion[] regions = ((EditorEx)editor).getFoldingModel().fetchTopLevel();
+      if (regions != null && regions.length > 0) {
+        FoldRegion region = regions[0];
+        if (region.shouldNeverExpand() && region.getStartOffset() == 0) {
+          return editor.getDocument().getLineNumber(region.getEndOffset());
+        }
+      }
+    }
+    return 0;
   }
 
   public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {

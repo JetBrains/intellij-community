@@ -348,7 +348,8 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       return myDelegate != null
              ? myDelegate.visualToLogicalColumn(column)
              : myFoldRegion != null
-               ? column == myCurrentVisualColumn && myFoldRegionColumns > 0 ? getEndLogicalColumn() : getStartLogicalColumn()
+               ? column == myCurrentVisualColumn && (myFoldRegionColumns > 0 || myFoldRegion.getStartOffset() == 0)
+                 ? getEndLogicalColumn(): getStartLogicalColumn()
                : getEndLogicalColumn();
     }
 

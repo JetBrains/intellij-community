@@ -469,7 +469,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
         VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
         while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-          int logLine = visLinesIterator.getStartLogicalLine();
+          int logLine = getDisplayedLogicalLine(visLinesIterator);
           int y = visLinesIterator.getY();
           paintAnnotationLine(g, gutterProvider, logLine, x, y, annotationSize, lineHeight);
 
@@ -600,7 +600,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
         if (!visLinesIterator.startsWithSoftWrap()) {
-          int logicalLine = visLinesIterator.getStartLogicalLine();
+          int logicalLine = getDisplayedLogicalLine(visLinesIterator);
           Integer lineToDisplay = converter.convert(myEditor, logicalLine + 1);
           if (lineToDisplay != null) {
             int startY = visLinesIterator.getY();
@@ -631,6 +631,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     finally {
       if (old != null) g.setTransform(old);
     }
+  }
+
+  private int getDisplayedLogicalLine(VisualLinesIterator linesIterator) {
+    int logicalLine = linesIterator.getStartLogicalLine();
+    return logicalLine == 0 ? EditorUtil.getFirstDisplayedLogicalLine(myEditor) : logicalLine;
   }
 
   private int endLineNumber() {

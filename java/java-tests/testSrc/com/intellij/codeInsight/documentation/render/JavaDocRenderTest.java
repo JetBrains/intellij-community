@@ -76,6 +76,14 @@ public class JavaDocRenderTest extends AbstractEditorTest {
                       "<td valign='top'><p>foo, bar</td></table>");
   }
 
+  public void testDocumentStart() {
+    configure("/**\n" +
+              " * comment\n" +
+              " */\n" +
+              "class C {}", true);
+    verifyFoldingState("[FoldRegion +(0:19), placeholder='']");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
