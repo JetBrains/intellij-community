@@ -90,7 +90,7 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun submitSquashMergeTask() = submitTask {
     val mergeability = mergeabilityState ?: return@submitTask null
-    dataProvider.apiCommitsRequest.successOnEdt { commits ->
+    dataProvider.changesData.loadCommitsFromApi().successOnEdt { commits ->
       val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
       val dialog = GithubMergeCommitMessageDialog(project,
                                                   GithubBundle.message("pull.request.merge.message.dialog.title"),

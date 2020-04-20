@@ -5,12 +5,9 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 
 object GHPRDataProviderUtil {
   @Throws(ProcessCanceledException::class)
@@ -26,12 +23,6 @@ object GHPRDataProviderUtil {
       throw GithubAsyncUtil.extractError(e)
     }
   }
-
-  fun <T> backgroundProcessValue(backingValue: LazyCancellableBackgroundProcessValue<T>): ReadOnlyProperty<Any?, CompletableFuture<T>> =
-    object : ReadOnlyProperty<Any?, CompletableFuture<T>> {
-      override fun getValue(thisRef: Any?, property: KProperty<*>) =
-        futureOfMutableOnEDT { backingValue.value }
-    }
 
   fun <T> futureOfMutableOnEDT(futureSupplier: () -> CompletableFuture<T>) = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { futureSupplier() } }
 

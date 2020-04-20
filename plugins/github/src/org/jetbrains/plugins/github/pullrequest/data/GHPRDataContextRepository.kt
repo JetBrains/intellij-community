@@ -33,6 +33,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.P
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PullRequestEditedListener
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import org.jetbrains.plugins.github.util.GithubUrlUtil
@@ -121,9 +122,11 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), messageBus, securityService,
                                             requestExecutor, account.server, repoWithPermissions.path)
+    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
+    val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), Git.getInstance(), project, requestExecutor,
+                                                gitRemoteCoordinates, repositoryCoordinates)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
                                               repositoryCoordinates)
-    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
@@ -137,16 +140,18 @@ internal class GHPRDataContextRepository(private val project: Project) {
         }
       }
       val stateData = GHPRStateDataProviderImpl(stateService, id, detailsData)
+      val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData)
       val reviewData = GHPRReviewDataProviderImpl(reviewService, id)
       val commentsData = GHPRCommentsDataProviderImpl(commentService, id)
-      GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), requestExecutor,
-                           gitRemoteCoordinates, repositoryCoordinates, id,
-                           detailsData,
-                           stateData,
-                           commentsData,
-                           reviewData).also {
+      GHPRDataProviderImpl(detailsData, stateData, changesData, commentsData, reviewData) {
+        val timelineModel = GHPRTimelineMergingModel()
+        GHPRTimelineLoader(ProgressManager.getInstance(), requestExecutor,
+                           account.server, repoWithPermissions.path, id.number,
+                           timelineModel)
+      }.also {
         Disposer.register(it, detailsData)
         Disposer.register(it, stateData)
+        Disposer.register(it, changesData)
         Disposer.register(it, reviewData)
       }
     }

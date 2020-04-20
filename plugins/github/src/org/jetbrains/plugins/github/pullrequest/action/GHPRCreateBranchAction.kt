@@ -31,12 +31,13 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val context = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
     val repository = context.gitRepositoryCoordinates.repository
     val repositoryList = listOf(repository)
-    val dataProvider = context.pullRequestDataProvider ?: return
+    val details = context.pullRequestDetails
+    val dataProvider = context.pullRequestDataProvider
 
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
-                                                                              dataProvider.id.number),
-                                                         "pull/${dataProvider.id.number}") ?: return
+                                                                              details.number),
+                                                         "pull/${details.number}") ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
@@ -45,7 +46,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
 
         override fun run(indicator: ProgressIndicator) {
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsData.loadDetails()).headRefOid
-          GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
+          GithubAsyncUtil.awaitFuture(indicator, dataProvider.changesData.fetchHeadBranch())
 
           indicator.text = GithubBundle.message("pull.request.branch.checkout.create.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
@@ -68,7 +69,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
 
         override fun run(indicator: ProgressIndicator) {
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsData.loadDetails()).headRefOid
-          GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
+          GithubAsyncUtil.awaitFuture(indicator, dataProvider.changesData.fetchHeadBranch())
 
           indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))

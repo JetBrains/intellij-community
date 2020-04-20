@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDetailsDataProvider
@@ -104,8 +105,9 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val commitsModel = GHPRCommitsModelImpl()
     val cumulativeChangesModel = GHPRChangesModelImpl(project)
-    val diffHelper = GHPRChangesDiffHelperImpl(avatarIconsProviderFactory, dataContext.securityService.currentUser)
-    val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider, disposable)
+    val diffHelper = GHPRChangesDiffHelperImpl(dataProvider, avatarIconsProviderFactory, dataContext.securityService.currentUser)
+    val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider.changesData,
+                                                        disposable)
 
     val actionDataContext = GHPRFixedActionDataContext(dataContext, dataProvider, avatarIconsProviderFactory) {
       detailsLoadingModel.result ?: details
@@ -210,7 +212,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                     disposable,
                                                     GithubBundle.message("cannot.load.commits"),
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
-                                                      actionDataContext.pullRequestDataProvider.reloadChanges()
+                                                      actionDataContext.pullRequestDataProvider.changesData.reloadChanges()
                                                     })
 
     val changesBrowser = GHPRChangesBrowser.create(project,
@@ -240,12 +242,12 @@ internal class GHPRComponentFactory(private val project: Project) {
   private fun createChangesLoadingModel(commitsModel: GHPRCommitsModel,
                                         cumulativeChangesModel: GHPRChangesModel,
                                         diffHelper: GHPRChangesDiffHelper,
-                                        dataProvider: GHPRDataProvider,
+                                        changesProvider: GHPRChangesDataProvider,
                                         disposable: Disposable): GHPRChangesLoadingModel {
-    val model = GHPRChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper).also {
-      it.dataProvider = dataProvider
+    val model = GHPRChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, disposable)
+    changesProvider.loadChanged(disposable) {
+      model.future = it
     }
-    Disposer.register(disposable, Disposable { model.dataProvider = null })
     return model
   }
 

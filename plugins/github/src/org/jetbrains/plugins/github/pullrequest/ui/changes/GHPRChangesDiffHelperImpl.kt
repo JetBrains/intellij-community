@@ -19,30 +19,28 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
-class GHPRChangesDiffHelperImpl(private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+class GHPRChangesDiffHelperImpl(private val dataProvider: GHPRDataProvider,
+                                private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
-  private var dataProvider: GHPRDataProvider? = null
+
   private var changesProvider: GHPRChangesProvider? = null
 
-  override fun setUp(dataProvider: GHPRDataProvider, changesProvider: GHPRChangesProvider) {
-    this.dataProvider = dataProvider
+  override fun setUp(changesProvider: GHPRChangesProvider) {
     this.changesProvider = changesProvider
   }
 
   override fun reset() {
-    dataProvider = null
     changesProvider = null
   }
 
   override fun getReviewSupport(change: Change): GHPRDiffReviewSupport? {
-    val reviewDataProvider = dataProvider?.reviewData ?: return null
 
     return changesProvider?.let { provider ->
       val diffData = provider.findChangeDiffData(change) ?: return null
       val createReviewCommentHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
 
-      return GHPRDiffReviewSupportImpl(reviewDataProvider, diffData.diffRanges,
+      return GHPRDiffReviewSupportImpl(dataProvider.reviewData, diffData.diffRanges,
                                        { mapThread(diffData, it) },
                                        createReviewCommentHelper,
                                        avatarIconsProviderFactory, currentUser)

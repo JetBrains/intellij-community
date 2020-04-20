@@ -6,10 +6,9 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 
 interface GHPRChangesDiffHelper {
-  fun setUp(dataProvider: GHPRDataProvider, changesProvider: GHPRChangesProvider)
+  fun setUp(changesProvider: GHPRChangesProvider)
   fun reset()
 
   fun getReviewSupport(change: Change): GHPRDiffReviewSupport?

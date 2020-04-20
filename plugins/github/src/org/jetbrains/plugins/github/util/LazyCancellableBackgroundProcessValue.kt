@@ -67,7 +67,7 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
 
     fun <T> create(computer: (ProgressIndicator) -> CompletableFuture<T>) =
       object : LazyCancellableBackgroundProcessValue<T>() {
-        override fun compute(indicator: ProgressIndicator) = computer(indicator)
+        override fun compute(indicator: ProgressIndicator): CompletableFuture<T> = computer(indicator)
       }
   }
 }
