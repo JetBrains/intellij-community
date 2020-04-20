@@ -121,8 +121,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
                                               repositoryCoordinates)
-    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
-                                                repositoryCoordinates)
+    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
