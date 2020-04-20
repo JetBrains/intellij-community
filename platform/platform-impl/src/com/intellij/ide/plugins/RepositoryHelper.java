@@ -94,7 +94,6 @@ public final class RepositoryHelper {
     File pluginListFile;
     Url url;
     if (repositoryUrl == null) {
-      LOG.error("Should not be called! We are getting rid of this!");
       String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
       url = Urls.newFromEncoded(base).addParameters(singletonMap("uuid", PermanentInstallationID.get()));
       pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
