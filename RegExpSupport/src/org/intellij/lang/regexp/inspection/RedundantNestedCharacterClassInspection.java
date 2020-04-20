@@ -5,8 +5,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.lang.regexp.RegExpBundle;
@@ -60,7 +60,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
     private static class RedundantNestedCharacterClassFix implements LocalQuickFix {
 
       @Override
-      public @NlsContexts.ListItem @NotNull String getFamilyName() {
+      public @IntentionFamilyName @NotNull String getFamilyName() {
         return RegExpBundle.message("inspection.quick.fix.replace.redundant.character.class.with.contents");
       }
 

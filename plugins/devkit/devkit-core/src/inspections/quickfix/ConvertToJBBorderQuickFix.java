@@ -3,9 +3,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertToJBBorderQuickFix implements LocalQuickFix {
   @Override
-  public @NlsContexts.ListItem @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return "Convert to JBUI.Borders.empty(...)";
   }
 

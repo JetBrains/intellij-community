@@ -7,11 +7,11 @@ import com.intellij.codeInspection.DefaultXmlSuppressionProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -576,7 +576,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   public LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[]{new LocalQuickFix() {
       @Override
-      public @NlsContexts.ListItem @NotNull String getFamilyName() {
+      public @IntentionFamilyName @NotNull String getFamilyName() {
         return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
       }
 

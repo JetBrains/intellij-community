@@ -5,8 +5,9 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -473,12 +474,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
 
       @Override
-      public @NlsContexts.ListItem @NotNull String getName() {
+      public @IntentionName @NotNull String getName() {
         return CommonQuickFixBundle.message("fix.replace.x.with.y", myText, myConverted);
       }
 
       @Override
-      public @NlsContexts.ListItem @NotNull String getFamilyName() {
+      public @IntentionFamilyName @NotNull String getFamilyName() {
         return CommonQuickFixBundle.message("fix.replace.x.with.y", "substring()", "charAt()");
       }
 
@@ -514,12 +515,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
 
       @Override
-      public @NlsContexts.ListItem @NotNull String getName() {
+      public @IntentionName @NotNull String getName() {
         return CommonQuickFixBundle.message("fix.replace.x.with.y", myText, myConverted);
       }
 
       @Override
-      public @NlsContexts.ListItem @NotNull String getFamilyName() {
+      public @IntentionFamilyName @NotNull String getFamilyName() {
         return CommonQuickFixBundle.message("fix.replace.x.with.y", "substring()", "charAt()");
       }
 

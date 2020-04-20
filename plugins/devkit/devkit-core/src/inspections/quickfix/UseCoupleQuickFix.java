@@ -3,8 +3,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
@@ -21,12 +22,12 @@ public class UseCoupleQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @NlsContexts.ListItem @NotNull String getName() {
+  public @IntentionName @NotNull String getName() {
     return myText;
   }
 
   @Override
-  public @NlsContexts.ListItem @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return "Replace 'Pair' with 'Couple'";
   }
 

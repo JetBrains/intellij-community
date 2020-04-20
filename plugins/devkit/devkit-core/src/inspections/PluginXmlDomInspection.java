@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -23,7 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -491,7 +494,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous"), null,
                                new LocalQuickFix() {
                                  @Override
-                                 public @NlsContexts.ListItem @NotNull String getFamilyName() {
+                                 public @IntentionFamilyName @NotNull String getFamilyName() {
                                    return DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix");
                                  }
 

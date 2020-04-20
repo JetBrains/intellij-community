@@ -3,7 +3,7 @@ package com.intellij.codeInspection.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
@@ -34,7 +34,7 @@ final class ConvertNumericLiteralQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @NlsContexts.ListItem @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return myFamilyName;
   }
 

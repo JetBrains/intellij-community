@@ -1,11 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionText;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public interface IntentionAction extends FileModifier {
    * @return the text to show in the intention popup.
    * @see #isAvailable(Project, Editor, PsiFile)
    */
-  @NlsContexts.ListItem
+  @IntentionText
   @NotNull
   String getText();
 
@@ -50,7 +51,7 @@ public interface IntentionAction extends FileModifier {
    * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
   @NotNull
-  @NlsContexts.ListItem
+  @IntentionFamilyName
   String getFamilyName();
 
   /**
