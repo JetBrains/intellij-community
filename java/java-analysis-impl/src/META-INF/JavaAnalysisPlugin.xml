@@ -119,7 +119,7 @@
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="CodeBlock2Expr"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection"
-                     key="inspection.code.block.2.expr.display.name" bundle="messages.JavaAnalysisBundle"/>
+                     key="statement.lambda.can.be.replaced.with.expression.lambda" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InvalidComparatorMethodReference"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.InvalidComparatorMethodReferenceInspection"
