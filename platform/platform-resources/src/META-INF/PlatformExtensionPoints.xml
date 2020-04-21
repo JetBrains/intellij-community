@@ -292,7 +292,7 @@
     <extensionPoint name="gutterMarkPreprocessor" interface="com.intellij.openapi.editor.GutterMarkPreprocessor" />
     <extensionPoint name="remote.credentialsType" interface="com.intellij.remote.CredentialsType"/>
     <extensionPoint name="remote.credentialsLanguageContribution"
-                    interface="com.intellij.remote.ext.CredentialsLanguageContribution"/>
+                    interface="com.intellij.remote.ext.CredentialsLanguageContribution" dynamic="true"/>
     <extensionPoint name="stripTrailingSpacesFilterFactory" interface="com.intellij.openapi.editor.StripTrailingSpacesFilterFactory" dynamic="true"/>
 
     <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
