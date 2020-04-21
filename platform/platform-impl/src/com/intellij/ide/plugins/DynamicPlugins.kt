@@ -96,6 +96,7 @@ object DynamicPlugins {
   @JvmOverloads
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
+      LOG.info("Not allowing load/unload without restart because of pending restart operation")
       return false
     }
 
