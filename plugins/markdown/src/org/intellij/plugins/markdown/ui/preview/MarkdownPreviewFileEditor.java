@@ -20,6 +20,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.markdown.html.HtmlGenerator;
+import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import org.intellij.plugins.markdown.settings.MarkdownCssSettings;
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings;
@@ -279,7 +280,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
 
       Messages.showMessageDialog(
         myHtmlPanelWrapper,
-        "Tried to use preview panel provider (" + providerInfo.getName() + "), but it is unavailable. Reverting to default.",
+        MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.getName()),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
