@@ -450,8 +450,14 @@ public final class EditorTestUtil {
     return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EmptyInlayRenderer(widthInPixels));
   }
 
-  public static Inlay addBlockInlay(@NotNull Editor editor, int offset, boolean showAbove, int widthInPixels, Integer heightInPixels) {
-    return editor.getInlayModel().addBlockElement(offset, false, showAbove, 0, new EmptyInlayRenderer(widthInPixels, heightInPixels));
+  public static Inlay addBlockInlay(@NotNull Editor editor,
+                                    int offset,
+                                    boolean relatesToPrecedingText,
+                                    boolean showAbove,
+                                    int widthInPixels,
+                                    Integer heightInPixels) {
+    return editor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, 0,
+                                                  new EmptyInlayRenderer(widthInPixels, heightInPixels));
   }
 
   public static Inlay addAfterLineEndInlay(@NotNull Editor editor, int offset, int widthInPixels) {

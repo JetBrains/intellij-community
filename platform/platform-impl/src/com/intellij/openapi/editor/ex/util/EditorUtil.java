@@ -881,6 +881,18 @@ public final class EditorUtil {
   }
 
   /**
+   * Tells whether given inlay element is invisible due to its anchor offset lying in folded text region
+   */
+  public static boolean isInlayFolded(@NotNull Inlay inlay) {
+    Inlay.Placement placement = inlay.getPlacement();
+    int offset = inlay.getOffset();
+    if ((placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) && !inlay.isRelatedToPrecedingText()) {
+      offset--;
+    }
+    return inlay.getEditor().getFoldingModel().isOffsetCollapsed(offset);
+  }
+
+  /**
    * Returns top Y coordinate of editor visual line's area. The latter includes visual line itself and block inlays related to it.
    */
   public static int getVisualLineAreaStartY(@NotNull Editor editor, int visualLine) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
@@ -220,7 +221,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     int endOffset = visualLine == visibleLineCount - 1 ? myEditor.getDocument().getTextLength()
                                                        : myEditor.visualLineStartOffset(visualLine + 1) - 1;
     myBlockElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      if (inlay.myShowAbove == above && !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+      if (inlay.myShowAbove == above && !EditorUtil.isInlayFolded(inlay)) {
         result.add(inlay);
       }
       return true;
@@ -247,7 +248,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
                    myEditor.getFoldingModel().getHeightOfFoldedBlockInlaysBefore(startOffset);
     }
     myBlockElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      if (inlay.myShowAbove && !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+      if (inlay.myShowAbove && !EditorUtil.isInlayFolded(inlay)) {
         result[0] += inlay.getHeightInPixels();
       }
       return true;
