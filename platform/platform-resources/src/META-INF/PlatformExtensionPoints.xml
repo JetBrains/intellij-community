@@ -117,7 +117,7 @@
                     interface="com.intellij.platform.ProjectTemplatesFactory"
                     dynamic="true"/>
     <extensionPoint name="projectTemplate"
-                    beanClass="com.intellij.platform.ProjectTemplateEP"/>
+                    beanClass="com.intellij.platform.ProjectTemplateEP" dynamic="true"/>
 
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
     <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
