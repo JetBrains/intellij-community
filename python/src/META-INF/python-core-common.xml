@@ -468,7 +468,6 @@
 
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
-    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator" id="integratedTools" order="after sdk"/>
 
 
@@ -537,6 +536,9 @@
     <!-- flake8 -->
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
     <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.flake8.Flake8SuppressingCommentLocalityDetector"/>
+
+    <!-- Pipenv -->
+    <editorFactoryListener implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
   </extensions>
 
   <extensionPoints>
