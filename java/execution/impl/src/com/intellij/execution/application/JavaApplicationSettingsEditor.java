@@ -15,10 +15,10 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
-public class ApplicationSettingsEditor extends FragmentedSettingsEditor<ApplicationConfiguration> {
+public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<ApplicationConfiguration> {
   private final Project myProject;
 
-  public ApplicationSettingsEditor(Project project) {
+  public JavaApplicationSettingsEditor(Project project) {
     myProject = project;
   }
 
@@ -57,6 +57,9 @@ public class ApplicationSettingsEditor extends FragmentedSettingsEditor<Applicat
                                                (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
                                                (configuration, component) -> configuration.setVMParameters(component.getComponent().getText()),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
+    fragments.add(new TagFragment<>("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"),
+                                    configuration -> configuration.isSwingInspectorEnabled(),
+                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
     fragments.add(CommonParameterFragments.createRedirectFragment());
     return fragments;
   }
