@@ -16,7 +16,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-public final class SpellCheckerSettingsManager implements SearchableConfigurable, Configurable.NoScroll, Configurable.WithEpDependencies {
+public class SpellCheckerSettingsManager implements SearchableConfigurable, Configurable.NoScroll, Configurable.WithEpDependencies {
   private SpellCheckerSettingsPane settingsPane;
   private final SpellCheckerSettings settings;
   private final Project project;
