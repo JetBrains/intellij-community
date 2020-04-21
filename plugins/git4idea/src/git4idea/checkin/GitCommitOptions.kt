@@ -25,6 +25,7 @@ import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitUserRegistry
 import git4idea.GitUtil.getRepositoryManager
+import git4idea.checkin.GitCheckinEnvironment.collectActiveMovementProviders
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import java.awt.GridBagConstraints
@@ -52,11 +53,11 @@ internal var CommitContext.isSignOffCommit: Boolean by commitProperty(IS_SIGN_OF
 internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(IS_COMMIT_RENAMES_SEPARATELY_KEY)
 
 private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
+private val HierarchyEvent.isParentChanged get() = (changeFlags and HierarchyEvent.PARENT_CHANGED.toLong()) != 0L
 
 class GitCommitOptionsUi(
   private val commitPanel: CheckinProjectPanel,
   private val commitContext: CommitContext,
-  private val explicitMovementProviders: List<GitCheckinExplicitMovementProvider>,
   private val showAmendOption: Boolean
 ) : RefreshableOnComponent,
     CheckinChangeListSpecificComponent,
@@ -83,7 +84,7 @@ class GitCommitOptionsUi(
     toolTipText = XmlStringUtil.wrapInHtml(GitBundle.message("commit.options.sign.off.commit.message.line", signature))
   }
   private val commitRenamesSeparately = JBCheckBox(
-    explicitMovementProviders.singleOrNull()?.description ?: GitBundle.message("commit.options.create.extra.commit.with.file.movements"),
+    GitBundle.message("commit.options.create.extra.commit.with.file.movements"),
     settings.isCommitRenamesSeparately
   )
 
@@ -124,6 +125,9 @@ class GitCommitOptionsUi(
     add(commitRenamesSeparately, gb.nextLine().next().coverLine())
   }
 
+  // called before popup size calculation => changing preferred size here will be correctly reflected by popup
+  private fun beforeShow() = updateRenamesCheckboxState()
+
   override fun amendCommitModeToggled() = updateRenamesCheckboxState()
 
   override fun dispose() = Unit
@@ -133,6 +137,10 @@ class GitCommitOptionsUi(
   override fun restoreState() {
     if (commitPanel.isNonModalCommit) {
       changeListManager.addChangeListListener(this, this)
+
+      panel.addHierarchyListener { e ->
+        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
+      }
     }
     refresh()
   }
@@ -140,6 +148,7 @@ class GitCommitOptionsUi(
   override fun refresh() = refresh(null)
 
   override fun saveState() {
+    if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
     val author = getAuthor()
 
     commitContext.apply {
@@ -205,10 +214,13 @@ class GitCommitOptionsUi(
     }
 
   private fun updateRenamesCheckboxState() {
-    val canCommitRenamesSeparately = explicitMovementProviders.isNotEmpty()
+    val providers = collectActiveMovementProviders(project)
 
-    commitRenamesSeparately.isVisible = canCommitRenamesSeparately
-    commitRenamesSeparately.isEnabled = canCommitRenamesSeparately && !amendHandler.isAmendCommitMode
+    commitRenamesSeparately.apply {
+      text = providers.singleOrNull()?.description ?: GitBundle.message("commit.options.create.extra.commit.with.file.movements")
+      isVisible = providers.isNotEmpty()
+      isEnabled = isVisible && !amendHandler.isAmendCommitMode
+    }
   }
 
   private fun showAuthorWarning() {
