@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
@@ -35,7 +36,7 @@ public class HgTagDialog extends DialogWrapper {
 
   public HgTagDialog(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
     super(project, false);
-    hgRepositorySelectorComponent.setTitle("Select repository to tag");
+    hgRepositorySelectorComponent.setTitle(HgBundle.message("action.hg4idea.tag.select.repo"));
     DocumentListener documentListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -45,7 +46,7 @@ public class HgTagDialog extends DialogWrapper {
 
     tagTxt.getDocument().addDocumentListener(documentListener);
 
-    setTitle("Tag");
+    setTitle(HgBundle.message("action.hg4idea.tag.title"));
     init();
 
     setRoots(repositories, selectedRepo);
@@ -74,7 +75,7 @@ public class HgTagDialog extends DialogWrapper {
     String name = getTagName();
     if (!validator.checkInput(name)) {
       String message = validator.getErrorText(name);
-      setErrorText(message == null ? "You have to specify tag name." : message, tagTxt);
+      setErrorText(message == null ? HgBundle.message("action.hg4idea.tag.name.error") : message, tagTxt);
       setOKActionEnabled(false);
       return;
     }

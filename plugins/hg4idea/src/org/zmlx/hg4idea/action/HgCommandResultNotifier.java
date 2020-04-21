@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -33,13 +34,15 @@ public final class HgCommandResultNotifier {
     myProject = project;
   }
 
-  public void notifyError(@Nullable HgCommandResult result, @NotNull String failureTitle, @NotNull String failureDescription) {
+  public void notifyError(@Nullable HgCommandResult result,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureTitle,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureDescription) {
     notifyError(result, failureTitle, failureDescription, null);
   }
 
   public void notifyError(@Nullable HgCommandResult result,
-                          @NotNull String failureTitle,
-                          @NotNull String failureDescription,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureTitle,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String failureDescription,
                           @Nullable NotificationListener listener) {
     List<String> err;
     String errorMessage;

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.branch;
 
+import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
@@ -31,6 +32,7 @@ import icons.DvcsImplIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
@@ -80,8 +82,8 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator(specificRepository == null ?
-                            "Bookmarks":
-                            "Bookmarks in " + DvcsUtil.getShortRepositoryName(specificRepository));
+                            HgBundle.message("hg4idea.branch.bookmarks") :
+                            HgBundle.message("hg4idea.branch.bookmarks.in.repo", DvcsUtil.getShortRepositoryName(specificRepository)));
     String currentBookmark = myRepository.getCurrentBookmark();
     List<BookmarkActions> bookmarkActions = StreamEx.of(getSortedNamesWithoutHashes(myRepository.getBookmarks()))
       .filter(bm -> !bm.equals(currentBookmark))
@@ -98,8 +100,8 @@ public class HgBranchPopupActions {
 
     //only opened branches have to be shown
     popupGroup.addSeparator(specificRepository == null ?
-                            "Branches":
-                            "Branches in " + DvcsUtil.getShortRepositoryName(specificRepository));
+                            HgBundle.message("hg4idea.branch.branches.separator") :
+                            HgBundle.message("hg4idea.branch.branches.in.repo.separator", DvcsUtil.getShortRepositoryName(specificRepository)));
     List<BranchActions> branchActions = StreamEx.of(myRepository.getOpenedBranches())
       .sorted(StringUtil::naturalCompare)
       .filter(b -> !b.equals(myRepository.getCurrentBranch()))
@@ -122,11 +124,11 @@ public class HgBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final String name = getNewBranchNameFromUser(myPreselectedRepo, "Create New Branch");
+      final String name = getNewBranchNameFromUser(myPreselectedRepo, HgBundle.message("hg4idea.branch.create"));
       if (name == null) {
         return;
       }
-      new Task.Backgroundable(myProject, "Creating " + StringUtil.pluralize("Branch", myRepositories.size()) + "...") {
+      new Task.Backgroundable(myProject, HgBundle.message("hg4idea.branch.creating.progress", myRepositories.size())) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           createNewBranchInCurrentThread(name);
@@ -141,11 +143,11 @@ public class HgBranchPopupActions {
           repository.update();
           if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
             new HgCommandResultNotifier(myProject)
-              .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
+              .notifyError(result, HgBundle.message("hg4idea.branch.creation.error"), HgBundle.message("hg4idea.branch.creation.error.msg", name));
           }
         }
         catch (HgCommandException exception) {
-          HgErrorUtil.handleException(myProject, "Can't create new branch: ", exception);
+          HgErrorUtil.handleException(myProject, HgBundle.message("hg4idea.branch.cannot.create"), exception);
         }
       }
     }
@@ -156,8 +158,9 @@ public class HgBranchPopupActions {
     @NotNull final HgRepository myPreselectedRepo;
 
     HgCloseBranchAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
-      super("Close " + StringUtil.pluralize("branch", repositories.size()),
-            "Close current " + StringUtil.pluralize("branch", repositories.size()), AllIcons.Actions.Cancel);
+      super(HgBundle.message("action.hg4idea.branch.close", repositories.size()),
+            HgBundle.message("action.hg4idea.branch.close.description", repositories.size()),
+            AllIcons.Actions.Cancel);
       myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;
     }
@@ -199,7 +202,7 @@ public class HgBranchPopupActions {
     @NotNull final HgRepository myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
-      super("New Bookmark", "Create new bookmark", AllIcons.General.Add);
+      super(HgBundle.message("action.hg4idea.bookmark.new"), HgBundle.message("action.hg4idea.bookmark.new.description"), AllIcons.General.Add);
       myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;
     }
@@ -208,7 +211,7 @@ public class HgBranchPopupActions {
     public void update(@NotNull AnActionEvent e) {
       if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
         e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription("Bookmark creation is not possible before the first commit.");
+        e.getPresentation().setDescription(HgBundle.message("action.hg4idea.bookmark.not.possible.before.commit"));
       }
     }
 
@@ -234,7 +237,7 @@ public class HgBranchPopupActions {
       super(Presentation.NULL_STRING, true);
       myRepository = repository;
       myCurrentBranchName = repository.getCurrentBranch();
-      getTemplatePresentation().setText(String.format("Unnamed heads for %s", myCurrentBranchName));
+      getTemplatePresentation().setText(HgBundle.message("action.hg4idea.show.unnamed.heads", myCurrentBranchName));
       myHeads = filterUnnamedHeads();
     }
 
@@ -311,7 +314,7 @@ public class HgBranchPopupActions {
     private static class DeleteBookmarkAction extends HgBranchAbstractAction {
 
       DeleteBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
-        super(project, "Delete", repositories, branchName);
+        super(project, CommonBundle.message("button.delete"), repositories, branchName);
       }
 
       @Override

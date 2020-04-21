@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -36,8 +37,8 @@ public class HgQFinishFromLogAction extends HgMqAppliedPatchAction {
       HgCommandExecutor executor = new HgCommandExecutor(project);
       HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qfinish", singletonList("qbase:" + revision));
       if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-        new HgCommandResultNotifier(project).notifyError(result, "QFinish command failed",
-                                                         "Could not apply patches into repository history.");
+        new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("action.hg4idea.QFinish.error"),
+                                                         HgBundle.message("action.hg4idea.QFinish.error.msg"));
       }
       repository.update();
     });

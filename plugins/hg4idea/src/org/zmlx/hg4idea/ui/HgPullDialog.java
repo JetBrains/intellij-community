@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorComboBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -40,7 +41,7 @@ public class HgPullDialog extends DialogWrapper {
   public HgPullDialog(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable final HgRepository selectedRepo) {
     super(project, false);
     this.project = project;
-    hgRepositorySelector.setTitle("Select repository to pull changesets for");
+    hgRepositorySelector.setTitle(HgBundle.message("action.hg4idea.pull.select.repo"));
     hgRepositorySelector.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -48,8 +49,8 @@ public class HgPullDialog extends DialogWrapper {
       }
     });
 
-    setTitle("Pull");
-    setOKButtonText("Pull");
+    setTitle(HgBundle.message("action.hg4idea.pull"));
+    setOKButtonText(HgBundle.message("action.hg4idea.pull"));
     init();
     setRoots(repositories, selectedRepo);
   }

@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.command.HgPullCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgPullDialog;
@@ -32,7 +33,7 @@ public class HgPullAction extends HgAbstractGlobalSingleRepoAction {
     if (dialog.showAndGet()) {
       final String source = dialog.getSource();
       final HgRepository hgRepository = dialog.getRepository();
-      new Task.Backgroundable(project, "Pulling changes from " + source, false) {
+      new Task.Backgroundable(project, HgBundle.message("action.hg4idea.pull.progress", source), false) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {

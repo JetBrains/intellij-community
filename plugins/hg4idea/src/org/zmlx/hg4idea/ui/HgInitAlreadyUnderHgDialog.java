@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TitlePanel;
+import com.intellij.xml.util.XmlStringUtil;
 import org.zmlx.hg4idea.HgBundle;
 
 import javax.swing.*;
@@ -76,7 +77,7 @@ public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myTitlePanel = new TitlePanel(HgBundle.message("hg4idea.init.already.under.hg.title"),
-                                  HgBundle.message("hg4idea.init.already.under.hg.description", mySelectedRoot, myParentRoot));
+                                  XmlStringUtil.wrapInHtml(HgBundle.message("hg4idea.init.already.under.hg.description", mySelectedRoot, myParentRoot)));
   }
   
 }

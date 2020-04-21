@@ -5,11 +5,12 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
 import org.jetbrains.annotations.Nls
+import org.zmlx.hg4idea.HgBundle
 
 //todo:should be moved to create patch dialog as an EP -> create patch with...  MQ
 class HgMQNewExecutor : CommitExecutor {
   @Nls
-  override fun getActionText(): String = "Create M&Q Patch"
+  override fun getActionText(): String = HgBundle.message("action.hg4idea.QNew")
 
   override fun createCommitSession(commitContext: CommitContext): CommitSession {
     commitContext.isMqNewPatch = true

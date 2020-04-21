@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgPushCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -82,17 +83,18 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
 
     if (result.getExitValue() == PUSH_SUCCEEDED_EXIT_VALUE) {
       int commitsNum = getNumberOfPushedCommits(result);
-      String successTitle = "Pushed successfully";
-      String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
-                                                repo.getPresentableName());
+      String successTitle = HgBundle.message("action.hg4idea.push.success");
+      String successDescription = HgBundle.message("action.hg4idea.push.success.msg",
+                                                   commitsNum,
+                                                   repo.getPresentableName());
       VcsNotifier.getInstance(project).notifySuccess(successTitle, successDescription);
     }
     else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
-      VcsNotifier.getInstance(project).notifySuccess("Nothing to push");
+      VcsNotifier.getInstance(project).notifySuccess(HgBundle.message("action.hg4idea.push.nothing"));
     }
     else {
-      new HgCommandResultNotifier(project).notifyError(result, "Push failed",
-                                                       "Failed to push to [" + repo.getPresentableName() + "]");
+      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("action.hg4idea.push.error"),
+                                                       HgBundle.message("action.hg4idea.push.error.msg", repo.getPresentableName()));
     }
   }
 

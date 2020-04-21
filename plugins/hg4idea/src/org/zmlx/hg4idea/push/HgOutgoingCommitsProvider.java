@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -22,9 +23,7 @@ import java.util.List;
 
 public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgRepository, HgPushSource, HgTarget> {
 
-
   private static final Logger LOG = Logger.getInstance(HgOutgoingCommitsProvider.class);
-  private static final String LOGIN_AND_REFRESH_LINK = "Enter Password & Refresh";
 
   @NotNull
   @Override
@@ -40,14 +39,14 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
     HgTarget hgTarget = pushSpec.getTarget();
     List<VcsError> errors = new ArrayList<>();
     if (StringUtil.isEmptyOrSpaces(hgTarget.myTarget)) {
-      errors.add(new VcsError("Hg push path could not be empty."));
+      errors.add(new VcsError(HgBundle.message("hg4idea.commit.path.empty.error")));
       return new OutgoingResult(Collections.emptyList(), errors);
     }
     HgCommandResult result = hgOutgoingCommand
       .execute(repository.getRoot(), HgChangesetUtil.makeTemplate(templates), pushSpec.getSource().getPresentation(),
                hgTarget.myTarget, initial);
     if (result == null) {
-      errors.add(new VcsError("Couldn't execute hg outgoing command for " + repository));
+      errors.add(new VcsError(HgBundle.message("hg4idea.commit.cmd.execute.error", repository)));
       return new OutgoingResult(Collections.emptyList(), errors);
     }
     List<String> resultErrors = result.getErrorLines();
@@ -56,7 +55,7 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
         if (HgErrorUtil.isAbortLine(error)) {
           if (HgErrorUtil.isAuthorizationError(error)) {
             VcsError authorizationError =
-              new VcsError(error + "<a href='authenticate'>" + LOGIN_AND_REFRESH_LINK + "</a>", new VcsErrorHandler() {
+              new VcsError(HgBundle.message("hg4idea.commit.auth.error", error), new VcsErrorHandler() {
                 @Override
                 public void handleError(@NotNull CommitLoader commitLoader) {
                   commitLoader.reloadCommits();

@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.annotate.AnnotationTooltipBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcs;
@@ -111,8 +112,8 @@ public class HgAnnotation extends FileAnnotation {
 
     AnnotationTooltipBuilder atb = new AnnotationTooltipBuilder(myProject, asHtml);
     atb.appendRevisionLine(revision.getRevisionNumber(), null);
-    atb.appendLine("Author: " + revision.getAuthor());
-    atb.appendLine("Date: " + revision.getRevisionDate());
+    atb.appendLine(HgBundle.message("hg4idea.annotation.author", revision.getAuthor()));
+    atb.appendLine(HgBundle.message("hg4idea.annotation.date", revision.getRevisionDate()));
     String message = revision.getCommitMessage();
     if (message != null) atb.appendCommitMessageBlock(message);
     return atb.toString();

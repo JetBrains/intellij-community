@@ -80,7 +80,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
   }
 
   private void testExecutable(@NotNull String executable) {
-    new Task.Modal(myProject, "Identifying Mercurial Version", true) {
+    new Task.Modal(myProject, HgBundle.message("hg4idea.configuration.identifying.version"), true) {
       HgVersion version;
 
       @Override
@@ -95,7 +95,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
 
       @Override
       public void onSuccess() {
-        Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
+        Messages.showInfoMessage(myMainPanel, HgBundle.message("hg4idea.configuration.version", version.toString()),
                                  HgBundle.message("hg4idea.run.success.title"));
       }
 

@@ -16,6 +16,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -24,7 +25,6 @@ import java.util.List;
 
 public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
-  private final static String ENTER_REMOTE = "Enter Remote";
   private final HgRepository myRepository;
   private final String myBranchName;
   private final TextFieldWithCompletion myDestTargetPanel;
@@ -51,7 +51,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     }
     String targetText = myDestTargetPanel.getText();
     if (StringUtil.isEmptyOrSpaces(targetText)) {
-      renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, myTargetRenderedComponent);
+      renderer.append(HgBundle.message("action.hg4idea.push.enter.remote"), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, myTargetRenderedComponent);
     }
     myTargetRenderedComponent.setSelected(isSelected);
     myTargetRenderedComponent.setTransparent(!isActive);

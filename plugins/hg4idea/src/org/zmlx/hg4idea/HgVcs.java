@@ -364,17 +364,14 @@ public class HgVcs extends AbstractVcs {
       //if version is not supported, but have valid hg executable
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);
-        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Hg is not supported: %s.<br/> " +
-                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
-                                       myVersion, HgVersion.MIN);
-        vcsNotifier.notifyError("Unsupported Hg version", message, linkAdapter);
+        String message = HgBundle.message("hg4idea.version.update", SETTINGS_LINK, myVersion, HgVersion.MIN, UPDATE_LINK);
+        vcsNotifier.notifyError(HgBundle.message("hg4idea.version.unsupported"), message, linkAdapter);
       }
       else if (myVersion.hasUnsupportedExtensions()) {
         String unsupportedExtensionsAsString = myVersion.getUnsupportedExtensions().toString();
         LOG.warn("Unsupported Hg extensions: " + unsupportedExtensionsAsString);
-        String message = String.format("Some hg extensions %s are not found or not supported by your hg version and will be ignored.\n" +
-                                       "Please, update your hgrc or Mercurial.ini file", unsupportedExtensionsAsString);
-        vcsNotifier.notifyWarning("Unsupported Hg version", message);
+        String message = HgBundle.message("hg4idea.version.unsupported.ext", unsupportedExtensionsAsString);
+        vcsNotifier.notifyWarning(HgBundle.message("hg4idea.version.unsupported"), message);
       }
     }
     catch (Exception e) {
@@ -384,10 +381,7 @@ public class HgVcs extends AbstractVcs {
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = HgBundle.message("hg4idea.unable.to.run.hg", executable);
         vcsNotifier.notifyError(message,
-                                reason +
-                                "<br/> Please check your hg executable path in <a href='" +
-                                SETTINGS_LINK +
-                                "'> settings </a>",
+                                HgBundle.message("hg4idea.exec.not.found", reason, SETTINGS_LINK),
                                 linkAdapter
         );
       }
