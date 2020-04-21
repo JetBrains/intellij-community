@@ -143,7 +143,7 @@ interface Instruction {
 
     @Override
     public String generate() {
-      if (myInstructions.size() == 1 && !hasElseBranch()) {
+      if (myInstructions.size() == 1 && !hasElseBranch() && !(myInstructions.get(0) instanceof Declaration)) {
         return "if(" + myCondition.getText() + ")" + myInstructions.get(0).generate();
       }
       String thenBranch = "if(" + myCondition.getText() + "){\n" +

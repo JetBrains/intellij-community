@@ -67,7 +67,7 @@ abstract class SourceOperation implements Operation {
                            @NotNull ChainVariable outVar,
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
-      if (SourceOperation.getSourceName(myArg) != null) {
+      if (SourceOperation.getSourceName(myArg) != null || myArg.getText().equals(outVar.getName())) {
         return "if(" + outVar.getName() + "==null)throw new java.lang.NullPointerException();" +
                code;
       }
@@ -111,7 +111,7 @@ abstract class SourceOperation implements Operation {
                            @NotNull ChainVariable outVar,
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
-      if (SourceOperation.getSourceName(myArg) != null) {
+      if (SourceOperation.getSourceName(myArg) != null || myArg.getText().equals(outVar.getName())) {
         return context.generateNotNullCondition(outVar.getName(), code);
       }
       return outVar.getDeclaration(myArg.getText()) +

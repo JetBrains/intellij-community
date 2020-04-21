@@ -50,6 +50,20 @@ class Test {
       }
   }
 
+  void nestedFlatMap(String var0) {
+      boolean b = false;
+      if (var0 != null) {
+          String var2 = var0.toLowerCase();
+          b = true;
+      }
+  }
+
+  String flatMapWithOrInside() {
+      Object o1 = null;
+      String empty = null;
+      throw new NoSuchElementException("No value present");
+  }
+
   <T> T id(T t) {
     return t;
   }

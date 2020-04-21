@@ -57,6 +57,10 @@ class OptionalToIfContext extends ChainContext {
     myElseBranch = elseBranch;
   }
 
+  String getElseBranch() {
+    return myElseBranch;
+  }
+
   @NotNull
   String generateNotNullCondition(@NotNull String arg, @NotNull String code) {
     if (myElseBranch == null) {

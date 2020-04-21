@@ -204,8 +204,11 @@ abstract class IntermediateOperation implements Operation {
                            @NotNull ChainVariable outVar,
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
+      String elseBranch = context.getElseBranch();
       List<OperationRecord> records = StreamEx.of(myRecords).map(r -> replaceFnVariable(r, inVar, context)).collect(Collectors.toList());
-      return OptionalToIfInspection.wrapCode(context, records, code);
+      String wrapped = OptionalToIfInspection.wrapCode(context, records, code);
+      context.setElseBranch(elseBranch);
+      return wrapped;
     }
 
     @NotNull
