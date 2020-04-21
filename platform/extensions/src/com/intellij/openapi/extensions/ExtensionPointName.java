@@ -174,9 +174,19 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * <p>
    * To exclude extension from cache, return null key.
    */
+  @ApiStatus.Experimental
   public final <@NotNull K, @NotNull V> @Nullable V getByKey(@NotNull K key,
-                                                                       @NotNull Function<@NotNull T, @Nullable K> keyMapper,
-                                                                       @NotNull Function<@NotNull T, @Nullable V> valueMapper) {
+                                                             @NotNull Function<@NotNull T, @Nullable K> keyMapper,
+                                                             @NotNull Function<@NotNull T, @Nullable V> valueMapper) {
     return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, keyMapper, valueMapper);
+  }
+
+  /**
+   * For performance reasons, cached by key directly. It means that you cannot call computeIfAbsent with different value mapper for the same key.
+   */
+  @ApiStatus.Experimental
+  public final <@NotNull K, @NotNull V> @NotNull V computeIfAbsent(@NotNull K key,
+                                                                   @NotNull Function<@NotNull K, @NotNull V> valueMapper) {
+    return ExtensionProcessingHelper.computeIfAbsent(getPointImpl(null), key, valueMapper);
   }
 }

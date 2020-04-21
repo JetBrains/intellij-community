@@ -16,7 +16,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
-import com.intellij.model.psi.impl.ReferenceProviders
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -363,7 +362,6 @@ object DynamicPlugins {
           for (project in ProjectManager.getInstance().openProjects) {
             (CachedValuesManager.getManager(project) as CachedValuesManagerImpl).clearCachedValues()
           }
-          ReferenceProviders.getInstance().clearCaches()
           jdomSerializer.clearSerializationCaches()
           BeanBinding.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()

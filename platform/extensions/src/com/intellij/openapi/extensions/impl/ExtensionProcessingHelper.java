@@ -109,6 +109,17 @@ public final class ExtensionProcessingHelper {
     return doGetByKey(point, keyMapper, key, keyMapper, Function.identity(), point.getCacheMap());
   }
 
+  /**
+   * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
+   */
+  @ApiStatus.Internal
+  public static <@NotNull K, @NotNull T, @NotNull V> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
+                                                                                @NotNull K key,
+                                                                                @NotNull Function<@NotNull K, @NotNull V> valueProducer) {
+    ConcurrentMap<K, V> cache = point.getCacheMap();
+    return cache.computeIfAbsent(key, valueProducer);
+  }
+
   private static <CACHE_KEY, K, T, V> @Nullable V doGetByKey(@NotNull ExtensionPointImpl<T> point,
                                                              @NotNull CACHE_KEY cacheKey,
                                                              @NotNull K key,

@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Internal
-public final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
+final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   /**
    * This field is intentionally private.
    * Clients are supposed to use {@link #getReferences(PsiElement)} to obtain all available references.
@@ -42,11 +42,11 @@ public final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceSe
   }
 
   @Override
-  public Collection<? extends PsiSymbolReference> getExternalReferences(@NotNull PsiExternalReferenceHost element,
-                                                                        @NotNull PsiSymbolReferenceHints hints) {
-    final LanguageReferenceProviders languageReferenceProviders = ReferenceProviders.getInstance().byLanguage(element.getLanguage());
-    final List<PsiSymbolReferenceProvider> providers = languageReferenceProviders.getProviders(element);
-    final List<PsiSymbolReference> result = new SmartList<>();
+  public @NotNull Collection<? extends PsiSymbolReference> getExternalReferences(@NotNull PsiExternalReferenceHost element,
+                                                                                 @NotNull PsiSymbolReferenceHints hints) {
+    LanguageReferenceProviders languageReferenceProviders = ReferenceProviders.byLanguage(element.getLanguage());
+    List<PsiSymbolReferenceProvider> providers = languageReferenceProviders.getProviders(element);
+    List<PsiSymbolReference> result = new SmartList<>();
     for (PsiSymbolReferenceProvider provider : providers) {
       result.addAll(provider.getReferences(element, hints));
     }

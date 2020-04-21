@@ -90,13 +90,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     componentManager = value;
   }
 
-  final <@NotNull CACHE_KEY, @NotNull K, @NotNull V> @NotNull ConcurrentMap<@NotNull CACHE_KEY, Map<@NotNull K, @NotNull V>> getCacheMap() {
+  final <@NotNull CACHE_KEY, @NotNull V> @NotNull ConcurrentMap<@NotNull CACHE_KEY, V> getCacheMap() {
     ConcurrentMap<?, ?> keyMapperToCache = keyMapperToCacheRef.get();
     if (keyMapperToCache == null) {
       keyMapperToCache = keyMapperToCacheRef.updateAndGet(prev -> prev == null ? new ConcurrentHashMap<>() : prev);
     }
     //noinspection unchecked
-    return (ConcurrentMap<CACHE_KEY, Map<K, V>>)keyMapperToCache;
+    return (ConcurrentMap<CACHE_KEY, V>)keyMapperToCache;
   }
 
   public final @NotNull String getName() {
