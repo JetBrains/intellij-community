@@ -95,15 +95,26 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyItem(0, 19, "whatever");
   }
 
+  public void testModuleInfo() {
+    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
+    configureFromFileText("module-info.java",
+                          "/**\n" +
+                          " * whatever\n" +
+                          " */\n" +
+                          "module some {}");
+    updateRenderedItems(true);
+    verifyItem(0, 19, "whatever");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
     updateRenderedItems(enableRendering);
   }
 
-  private void updateRenderedItems(boolean enableRendering) {
+  private void updateRenderedItems(boolean collapseNewRegions) {
     DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor().getDocument(), getFile());
-    DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, enableRendering);
+    DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
   }
 
   private void toggleItem() {

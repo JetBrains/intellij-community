@@ -590,13 +590,20 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @Override
   public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
     if (!(file instanceof PsiJavaFile)) return;
-    if ("package-info.java".equals(file.getName())) {
+    String fileName = file.getName();
+    if ("package-info.java".equals(fileName)) {
       PsiPackageStatement packageStatement = ((PsiJavaFile)file).getPackageStatement();
       if (packageStatement != null) {
         PsiElement prevElement = PsiTreeUtil.skipWhitespacesBackward(packageStatement);
         if (prevElement instanceof PsiDocCommentBase) {
           sink.accept((PsiDocCommentBase)prevElement);
         }
+      }
+    }
+    else if (PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
+      PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();
+      if (module != null) {
+        collectDocComment(module, sink);
       }
     }
     else {
@@ -620,7 +627,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  private static void collectDocComment(@NotNull PsiDocCommentOwner commentOwner, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+  private static void collectDocComment(@NotNull PsiJavaDocumentedElement commentOwner,
+                                        @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
     PsiDocComment comment = commentOwner.getDocComment();
     if (comment != null) sink.accept(comment);
   }

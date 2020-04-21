@@ -364,7 +364,7 @@ public class JavaDocInfoGenerator {
       generatePackageJavaDoc(buffer, (PsiPackage)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiJavaModule) {
-      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement, generatePrologue);
+      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement, generatePrologue, false);
     }
     else {
       return false;
@@ -426,6 +426,9 @@ public class JavaDocInfoGenerator {
     }
     else if (myElement instanceof PsiField) {
       generateFieldJavaDoc(buffer, (PsiField)myElement, true, true);
+    }
+    else if (myElement instanceof PsiJavaModule) {
+      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement, true, true);
     }
     else if (myElement instanceof PsiDocComment) { // package-info case
       generatePackageJavaDoc(buffer, (PsiDocComment)myElement, true);
@@ -716,13 +719,15 @@ public class JavaDocInfoGenerator {
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
-  private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologue) {
+  private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologue, boolean rendered) {
     if (generatePrologue) generatePrologue(buffer);
 
-    buffer.append(DocumentationMarkup.DEFINITION_START);
-    generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
-    buffer.append("module <b>").append(module.getName()).append("</b>");
-    buffer.append(DocumentationMarkup.DEFINITION_END);
+    if (!rendered) {
+      buffer.append(DocumentationMarkup.DEFINITION_START);
+      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
+      buffer.append("module <b>").append(module.getName()).append("</b>");
+      buffer.append(DocumentationMarkup.DEFINITION_END);
+    }
 
     PsiDocComment comment = getDocComment(module);
     if (comment != null) {
