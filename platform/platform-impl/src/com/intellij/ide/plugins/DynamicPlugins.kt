@@ -499,7 +499,7 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, wasDisabled: Boolean) {
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     if (!app.isUnitTestMode) {
       PluginManagerCore.initClassLoader(pluginDescriptor)
@@ -522,8 +522,17 @@ object DynamicPlugins {
           (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
         }
 
-        if (wasDisabled) {
-          val newPlugins = PluginManagerCore.getPlugins().map { if (it.pluginId == pluginDescriptor.pluginId) pluginDescriptor else it }
+        var foundExistingPlugin = false
+        val newPlugins = PluginManagerCore.getPlugins().map {
+          if (it.pluginId == pluginDescriptor.pluginId) {
+            foundExistingPlugin = true
+            pluginDescriptor
+          } else {
+            it
+          }
+        }
+
+        if (foundExistingPlugin) {
           PluginManager.getInstance().setPlugins(newPlugins)
         }
         else {

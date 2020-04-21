@@ -85,7 +85,7 @@ class DynamicPluginsTest {
       </idea-plugin>""")
     val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
     descriptor.setLoader(DynamicPlugins::class.java.classLoader)
-    DynamicPlugins.loadPlugin(descriptor, false)
+    DynamicPlugins.loadPlugin(descriptor)
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
 
@@ -101,7 +101,7 @@ class DynamicPluginsTest {
     val descriptor = loadDescriptorInTest(pluginFile.parent.parent)
     assertThat(descriptor).isNotNull
 
-    DynamicPlugins.loadPlugin(descriptor, false)
+    DynamicPlugins.loadPlugin(descriptor)
 
     PluginManagerCore.saveDisabledPlugins(arrayListOf(PluginId.getId("bar")), false)
     DynamicPlugins.unloadPlugin(descriptor, true)
@@ -110,7 +110,7 @@ class DynamicPluginsTest {
     PluginManagerCore.saveDisabledPlugins(arrayListOf(), false)
     val newDescriptor = loadDescriptorInTest(pluginFile.parent.parent)
     PluginManagerCore.initClassLoader(newDescriptor)
-    DynamicPlugins.loadPlugin(newDescriptor, true)
+    DynamicPlugins.loadPlugin(newDescriptor)
     try {
       assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
     }
@@ -580,7 +580,7 @@ class DynamicPluginsTest {
     descriptor.setLoader(DynamicPluginsTest::class.java.classLoader)
     assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
 
-    DynamicPlugins.loadPlugin(descriptor, wasDisabled = false)
+    DynamicPlugins.loadPlugin(descriptor)
 
     return Disposable {
       val unloadDescriptor = loadDescriptorInTest(plugin.parent.parent)

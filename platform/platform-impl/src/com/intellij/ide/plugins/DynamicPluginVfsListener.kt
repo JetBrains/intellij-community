@@ -57,7 +57,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
               continue
             }
             reloaded.add(pluginDescriptor.name)
-            DynamicPlugins.loadPlugin(pluginDescriptor, false)
+            DynamicPlugins.loadPlugin(pluginDescriptor)
           }
           if (reloaded.isNotEmpty()) {
             DynamicPlugins.notify("${reloaded.joinToString()} reloaded successfully", NotificationType.INFORMATION)

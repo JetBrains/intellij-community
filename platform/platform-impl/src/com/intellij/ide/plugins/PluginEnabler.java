@@ -63,7 +63,7 @@ public final class PluginEnabler {
 
       if (!needRestart) {
         for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
-          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor, true);
+          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
         }
         return true;
       }

@@ -55,7 +55,7 @@ internal fun loadPluginWithText(pluginXml: String, loader: ClassLoader, fs: File
   assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
   descriptor.setLoader(loader)
   try {
-    loadPlugin(descriptor, false)
+    loadPlugin(descriptor)
   }
   catch (e: Exception) {
     unloadPlugin(descriptor, false)
