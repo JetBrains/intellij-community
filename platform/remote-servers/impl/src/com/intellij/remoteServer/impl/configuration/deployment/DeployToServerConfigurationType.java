@@ -42,6 +42,10 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     }
   }
 
+  boolean isForServerType(@NotNull ServerType<?> serverType) {
+    return serverType.equals(myServerType);
+  }
+
   /**
    * @param sourceType hint for a type of deployment source or null if unknown
    */
