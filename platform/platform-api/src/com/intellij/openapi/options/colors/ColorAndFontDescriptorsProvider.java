@@ -17,7 +17,7 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,6 +54,6 @@ public interface ColorAndFontDescriptorsProvider {
    * @return the title of the custom page.
    */
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NlsContexts.ConfigurableName
   String getDisplayName();
 }
