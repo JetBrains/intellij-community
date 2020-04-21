@@ -474,8 +474,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Lock writeLock = myPendingInitializationLock.writeLock();
     writeLock.lock();
     try {
-      if (!myPendingFileTypes.containsKey(bean.name)) return mySchemeManager.findSchemeByName(bean.name);
       FileType fileType;
+
+      if (!myPendingFileTypes.containsKey(bean.name)) {
+        fileType = mySchemeManager.findSchemeByName(bean.name);
+        if (fileType != null) {
+          return fileType;
+        }
+      }
+
       PluginId pluginId = bean.getPluginDescriptor().getPluginId();
       try {
         @SuppressWarnings("unchecked")
