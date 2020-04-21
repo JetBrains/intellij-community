@@ -439,6 +439,7 @@
                          key="configurable.PyConsoleOptionsConfigurable.display.name"/>
 
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
+    <projectService serviceImplementation="com.jetbrains.python.console.PythonConsoleToolWindow"/>
 
     <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
                          instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
@@ -750,10 +751,4 @@
   <applicationListeners>
     <listener class="com.jetbrains.python.testing.VFSTestFrameworkListener$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
-
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>
