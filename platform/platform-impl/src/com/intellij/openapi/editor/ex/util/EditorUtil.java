@@ -881,15 +881,19 @@ public final class EditorUtil {
   }
 
   /**
-   * Tells whether given inlay element is invisible due to its anchor offset lying in folded text region
+   * Tells whether given inlay element is invisible due to folding of text in editor
    */
   public static boolean isInlayFolded(@NotNull Inlay inlay) {
+    Editor editor = inlay.getEditor();
     Inlay.Placement placement = inlay.getPlacement();
     int offset = inlay.getOffset();
-    if ((placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) && !inlay.isRelatedToPrecedingText()) {
+    if (placement == Inlay.Placement.AFTER_LINE_END) {
+      offset = DocumentUtil.getLineEndOffset(offset, editor.getDocument());
+    }
+    else if ((placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) && !inlay.isRelatedToPrecedingText()) {
       offset--;
     }
-    return inlay.getEditor().getFoldingModel().isOffsetCollapsed(offset);
+    return editor.getFoldingModel().isOffsetCollapsed(offset);
   }
 
   /**
