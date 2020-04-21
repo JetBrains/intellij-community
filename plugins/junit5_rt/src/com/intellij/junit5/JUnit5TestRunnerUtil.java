@@ -159,7 +159,7 @@ public class JUnit5TestRunnerUtil {
     return null;
   }
 
-  private static String getDisabledCondition(ClassLoader loader, AnnotatedElement annotatedElement) {
+  private static String getDisabledCondition(ClassLoader loader, AnnotatedElement annotatedElement) throws ClassNotFoundException {
     if (isDisabledCondition(DISABLED_COND_ANNO, loader, annotatedElement)) {
       return "org.junit.*Disabled*Condition";
     }
@@ -174,15 +174,11 @@ public class JUnit5TestRunnerUtil {
     return null;
   }
 
-  private static boolean isDisabledCondition(String[] anno, ClassLoader loader, AnnotatedElement annotatedElement) {
+  private static boolean isDisabledCondition(String[] anno, ClassLoader loader, AnnotatedElement annotatedElement) throws ClassNotFoundException {
     for (String disabledAnnotationName : anno) {
-      try {
-        Class<? extends Annotation> disabledAnnotation = (Class<? extends Annotation>)Class.forName(disabledAnnotationName, false, loader);
-        if (AnnotationUtils.findAnnotation(annotatedElement, disabledAnnotation).isPresent()) {
-          return true;
-        }
-      } catch (ClassNotFoundException e) {
-        // TODO we just ignore it. In later Junit5 versions some condition annotations were removed, i.e. @DisabledIf
+      Class<? extends Annotation> disabledAnnotation = (Class<? extends Annotation>)Class.forName(disabledAnnotationName, false, loader);
+      if (AnnotationUtils.findAnnotation(annotatedElement, disabledAnnotation).isPresent()) {
+        return true;
       }
     }
     return false;
