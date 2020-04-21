@@ -93,10 +93,12 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         fireKeymapRemoved(keymap)
       }
       DefaultKeymap.instance.removeKeymap(keymapName)
-      if (isCurrent && !schemeManager.isEmpty) {
-        val newActiveKeymap = activeKeymap
-        schemeManager.setCurrent(activeKeymap, true, true)
-        fireActiveKeymapChanged(newActiveKeymap)
+      if (isCurrent) {
+        val activeKeymap = schemeManager.activeScheme
+                           ?: schemeManager.findSchemeByName(DefaultKeymap.instance.defaultKeymapName)
+                           ?: schemeManager.findSchemeByName(KeymapManager.DEFAULT_IDEA_KEYMAP)
+        schemeManager.setCurrent(activeKeymap, notify = true, processChangeSynchronously = true)
+        fireActiveKeymapChanged(activeKeymap)
       }
     }
 
