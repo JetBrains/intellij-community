@@ -105,6 +105,7 @@ object DynamicPlugins {
 
     val projectManager = ProjectManager.getInstance()
     val anyProject = projectManager.openProjects.firstOrNull() ?: projectManager.defaultProject
+    val anyModule = projectManager.openProjects.asSequence().flatMap { ModuleManager.getInstance(it).modules.asSequence() }.firstOrNull()
 
     val loadedPluginDescriptor = if (descriptor.pluginId == null) null else PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl
 
@@ -148,6 +149,7 @@ object DynamicPlugins {
         @Suppress("RemoveExplicitTypeArguments") val ep =
           app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
           ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+          ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
         if (ep != null) {
           if (!ep.isDynamic) {
             if (baseDescriptor != null) {
@@ -432,7 +434,12 @@ object DynamicPlugins {
         val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
         if (!isAppLevelEp) {
           for (project in openProjects) {
-            (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
+            val isProjectLevelEp = (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
+            if (!isProjectLevelEp) {
+              for (module in ModuleManager.getInstance(project).modules) {
+                (module.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
+              }
+            }
           }
         }
       }
@@ -478,6 +485,13 @@ object DynamicPlugins {
     pluginDescriptor.projectContainerDescriptor.extensionPoints?.let { extensionPoints ->
       for (project in projects) {
         processor(extensionPoints, project.extensionArea as ExtensionsAreaImpl)
+      }
+    }
+    pluginDescriptor.moduleContainerDescriptor.extensionPoints?.let { extensionPoints ->
+      for (project in projects) {
+        for (module in ModuleManager.getInstance(project).modules) {
+          processor(extensionPoints, module.extensionArea as ExtensionsAreaImpl)
+        }
       }
     }
   }
