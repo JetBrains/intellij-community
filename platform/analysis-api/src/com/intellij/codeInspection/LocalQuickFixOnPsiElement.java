@@ -141,6 +141,13 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     return clone;
   }
 
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    if (!startInWriteAction()) return null;
+    if (myStartElement != null) return myStartElement.getContainingFile();
+    return currentFile;
+  }
+
   /**
    * @throws CloneNotSupportedException always
    * @deprecated do not call this method, it's non-functional
