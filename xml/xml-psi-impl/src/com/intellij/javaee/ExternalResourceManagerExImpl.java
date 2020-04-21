@@ -113,6 +113,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   public ExternalResourceManagerExImpl() {
     StandardResourceProvider.EP_NAME.addExtensionPointListener(this::dropCache, null);
+    StandardResourceEP.EP_NAME.addExtensionPointListener(this::dropCache, null);
   }
 
   private void dropCache() {
