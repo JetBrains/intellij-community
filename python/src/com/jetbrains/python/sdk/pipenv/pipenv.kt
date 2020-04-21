@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
@@ -317,8 +318,8 @@ class PipEnvInstallQuickFix : LocalQuickFix {
 /**
  * Watches for edits in Pipfiles inside modules with a pipenv SDK set.
  */
-class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
-  override fun projectOpened() {
+class PipEnvPipFileWatcher : StartupActivity.Background {
+  override fun runActivity(project: Project) {
     val editorFactoryListener = object : EditorFactoryListener {
       private val changeListenerKey = Key.create<DocumentListener>("Pipfile.change.listener")
       private val notificationActive = Key.create<Boolean>("Pipfile.notification.active")

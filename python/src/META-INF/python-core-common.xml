@@ -468,6 +468,7 @@
 
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator" id="integratedTools" order="after sdk"/>
 
 
@@ -747,12 +748,6 @@
   <applicationListeners>
     <listener class="com.jetbrains.python.testing.VFSTestFrameworkListener$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
-
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcherComponent</implementation-class>
-    </component>
-  </project-components>
 
   <project-components>
     <component>
