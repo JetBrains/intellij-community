@@ -20,7 +20,6 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import com.sun.tools.javac.util.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,7 +221,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
      */
     @NotNull
     private ProblemDescriptor createSubstringToCharAtProblemDescriptor(@NotNull final PsiMethodCallExpression call) {
-      final String converted = getTargetString(call, null);
+      final String converted = SubstringEqualsToCharAtEqualsQuickFix.getTargetString(call, PsiElement::getText);
       assert converted != null : "Message cannot be null";
 
       final PsiElement outermostEqualsExpr = getOutermostEquals(call);
@@ -232,34 +231,6 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()"),
                                                fix,
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
-    }
-
-    @Nullable
-    private static String getTargetString(@NotNull final PsiMethodCallExpression call,
-                                          @Nullable Function<@NotNull PsiElement, @NotNull String> textExtractor) {
-      if (textExtractor == null) textExtractor = PsiElement::getText;
-
-      final PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-      if (qualifierCall == null) return null;
-
-      final PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
-      if (receiver == null) return null;
-
-      final PsiExpression[] args = qualifierCall.getArgumentList().getExpressions();
-      if (args.length != 2) return null;
-
-      final PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
-
-      final String eqSign = isNegated(call, false) ? "!=" : "==";
-
-      final String equalToValue = PsiLiteralUtil.charLiteralForCharString(textExtractor.apply(equalTo));
-
-      return String.format("%s.charAt(%s) %s %s",
-                           textExtractor.apply(receiver),
-                           textExtractor.apply(args[0]),
-                           eqSign,
-                           equalToValue
-      );
     }
 
     private static boolean isNegated(@NotNull final PsiExpression start, boolean negated) {
@@ -554,6 +525,32 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         if (convertTo == null) return;
 
         ct.replaceAndRestoreComments(element, convertTo);
+      }
+
+      @Nullable
+      private static String getTargetString(@NotNull final PsiMethodCallExpression call,
+                                            @NotNull Function<@NotNull PsiElement, @NotNull String> textExtractor) {
+        final PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+        if (qualifierCall == null) return null;
+
+        final PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
+        if (receiver == null) return null;
+
+        final PsiExpression[] args = qualifierCall.getArgumentList().getExpressions();
+        if (args.length != 2) return null;
+
+        final PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
+
+        final String eqSign = isNegated(call, false) ? "!=" : "==";
+
+        final String equalToValue = PsiLiteralUtil.charLiteralForCharString(textExtractor.apply(equalTo));
+
+        return String.format("%s.charAt(%s) %s %s",
+                             textExtractor.apply(receiver),
+                             textExtractor.apply(args[0]),
+                             eqSign,
+                             equalToValue
+        );
       }
     }
 

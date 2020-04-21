@@ -151,6 +151,8 @@ public class PsiLiteralUtil {
   @NotNull
   public static String charLiteralForCharString(@NotNull final String text) {
     final int length = text.length();
+    if (length <= 1) return text;
+
     final String character = text.substring(1, length - 1);
     final String charLiteral;
     if ("'".equals(character)) {
