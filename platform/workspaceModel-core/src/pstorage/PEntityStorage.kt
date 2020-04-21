@@ -6,6 +6,8 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.external.ExternalStorageIndex
+import com.intellij.workspace.api.pstorage.external.ExternalStorageIndex.MutableExternalStorageIndex
 import com.intellij.workspace.api.pstorage.indices.EntitySourceIndex
 import com.intellij.workspace.api.pstorage.indices.EntitySourceIndex.MutableEntitySourceIndex
 import com.intellij.workspace.api.pstorage.indices.PersistentIdIndex
@@ -37,7 +39,8 @@ internal class PEntityStorage constructor(
   override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>,
   override val virtualFileIndex: VirtualFileIndex,
   override val entitySourceIndex: EntitySourceIndex,
-  override val persistentIdIndex: PersistentIdIndex
+  override val persistentIdIndex: PersistentIdIndex,
+  override val externalIndices: Map<String, ExternalStorageIndex<*>>
 ) : AbstractPEntityStorage() {
   override fun assertConsistency() {
     entitiesByType.assertConsistency()
@@ -53,7 +56,8 @@ internal class PEntityStorageBuilder(
   override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>,
   override val virtualFileIndex: MutableVirtualFileIndex,
   override val entitySourceIndex: MutableEntitySourceIndex,
-  override val persistentIdIndex: MutablePersistentIdIndex
+  override val persistentIdIndex: MutablePersistentIdIndex,
+  override val externalIndices: MutableMap<String, MutableExternalStorageIndex<*>>
 ) : TypedEntityStorageBuilder, AbstractPEntityStorage() {
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
@@ -67,9 +71,9 @@ internal class PEntityStorageBuilder(
   }
 
   private constructor() : this(
-    PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create(), VirtualFileIndex(), EntitySourceIndex(), PersistentIdIndex()),
+    PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create(), VirtualFileIndex(), EntitySourceIndex(), PersistentIdIndex(), mapOf()),
     MutableEntitiesBarrel(), MutableRefsTable(), HashMultimap.create(), MutableVirtualFileIndex(), MutableEntitySourceIndex(),
-    MutablePersistentIdIndex())
+    MutablePersistentIdIndex(), mutableMapOf())
 
   private sealed class ChangeEntry {
     data class AddEntity<E : TypedEntity>(
@@ -633,7 +637,8 @@ internal class PEntityStorageBuilder(
     val newVirtualFileIndex = virtualFileIndex.toImmutable()
     val newEntitySourceIndex = entitySourceIndex.toImmutable()
     val newPersistentIdIndex = persistentIdIndex.toImmutable()
-    return PEntityStorage(newEntities, newRefs, copiedLinks, newVirtualFileIndex, newEntitySourceIndex, newPersistentIdIndex)
+    val newExternalIndices = MutableExternalStorageIndex.toImmutable(externalIndices)
+    return PEntityStorage(newEntities, newRefs, copiedLinks, newVirtualFileIndex, newEntitySourceIndex, newPersistentIdIndex, newExternalIndices)
   }
 
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
@@ -689,12 +694,30 @@ internal class PEntityStorageBuilder(
         }
       }
     }
+    applyExternalIndexChanges(diff)
     // TODO: 27.03.2020 Here should be consistency check
     val res = HashMap<TypedEntity, TypedEntity>()
     replaceMap.forEach { (oldId, newId) ->
       res[diff.entityDataByIdOrDie(oldId).createEntity(diff)] = this.entityDataByIdOrDie(newId).createEntity(this)
     }
     return res
+  }
+
+  private fun applyExternalIndexChanges(diff: PEntityStorageBuilder) {
+    diff.externalIndices.forEach { (identifier, index) ->
+      externalIndices[identifier]?.applyChanges(index)
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalStorageIndex<T> {
+    return externalIndices.computeIfAbsent(identifier) { MutableExternalStorageIndex<T>() }
+      as MutableExternalStorageIndex<T>
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <T> getExternalIndex(identifier: String): MutableExternalStorageIndex<T>? {
+    return externalIndices[identifier] as? MutableExternalStorageIndex<T>
   }
 
   companion object {
@@ -711,18 +734,21 @@ internal class PEntityStorageBuilder(
           val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex)
           val copiedEntitySourceIndex = MutableEntitySourceIndex.from(storage.entitySourceIndex)
           val copiedPersistentIdIndex = MutablePersistentIdIndex.from(storage.persistentIdIndex)
+          val copiedExternalIndices = MutableExternalStorageIndex.from(storage.externalIndices)
           PEntityStorageBuilder(storage, copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex,
-                                copiedPersistentIdIndex)
+                                copiedPersistentIdIndex, copiedExternalIndices)
         }
         is PEntityStorageBuilder -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
           val copiedSoftLinks = HashMultimap.create(storage.softLinks)
+          // TODO:: Rewrite
           val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex.toImmutable())
           val copiedEntitySourceIndex = MutableEntitySourceIndex.from(storage.entitySourceIndex.toImmutable())
           val copiedPersistentIdIndex = MutablePersistentIdIndex.from(storage.persistentIdIndex.toImmutable())
+          val copiedExternalIndices = MutableExternalStorageIndex.fromMutable(storage.externalIndices)
           PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex,
-                                copiedEntitySourceIndex, copiedPersistentIdIndex)
+                                copiedEntitySourceIndex, copiedPersistentIdIndex, copiedExternalIndices)
         }
       }
     }
@@ -738,6 +764,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   internal abstract val virtualFileIndex: VirtualFileIndex
   internal abstract val entitySourceIndex: EntitySourceIndex
   internal abstract val persistentIdIndex: PersistentIdIndex
+  internal abstract val externalIndices: Map<String, ExternalStorageIndex<*>>
 
   abstract fun assertConsistency()
 
@@ -883,6 +910,11 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
       }
     }
     return res
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  open fun <T> getExternalIndex(identifier: String): ExternalStorageIndex<T>? {
+    return externalIndices[identifier] as? ExternalStorageIndex<T>
   }
 }
 
