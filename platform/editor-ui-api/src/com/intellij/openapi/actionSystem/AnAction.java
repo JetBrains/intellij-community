@@ -109,7 +109,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    *  Use it if you need to localize action text.
    */
-  public AnAction(@NotNull Supplier<String> dynamicText) {
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText) {
     this(dynamicText, Presentation.NULL_STRING, null);
   }
 
@@ -138,7 +138,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@NotNull Supplier<String> dynamicText, @NotNull Icon icon) {
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @NotNull Icon icon) {
     this(dynamicText, Presentation.NULL_STRING, icon);
   }
 
@@ -153,7 +153,9 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText,
+                  @NotNull Supplier<@ActionDescription String> dynamicDescription,
+                  @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(dynamicText);
     presentation.setDescription(dynamicDescription);
