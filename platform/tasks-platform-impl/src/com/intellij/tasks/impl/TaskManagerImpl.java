@@ -701,6 +701,10 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));
     }
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      startRefreshTimer();
+    }
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -709,20 +713,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public void initializeComponent() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myCacheRefreshTimer = TimerUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          if (myConfig.updateEnabled && !myUpdating) {
-            LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
-            updateIssues(null);
-          }
-        }
-      });
-      myCacheRefreshTimer.setInitialDelay(0);
-      StartupManager.getInstance(myProject).registerPostStartupActivity(() -> myCacheRefreshTimer.start());
-    }
-
     // make sure that the default task is exist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     if (defaultTask == null) {
@@ -751,6 +741,20 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     myActiveTask = activeTask;
     doActivate(myActiveTask, false);
     myDispatcher.getMulticaster().taskActivated(myActiveTask);
+  }
+
+  void startRefreshTimer() {
+    myCacheRefreshTimer = TimerUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        if (myConfig.updateEnabled && !myUpdating) {
+          LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
+          updateIssues(null);
+        }
+      }
+    });
+    myCacheRefreshTimer.setInitialDelay(0);
+    myCacheRefreshTimer.start();
   }
 
   @NotNull
@@ -1041,7 +1045,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
   }
 
-  private static class Activity implements StartupActivity {
+  private static class Activity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
       ((TaskManagerImpl)TaskManager.getManager(project)).projectOpened();
