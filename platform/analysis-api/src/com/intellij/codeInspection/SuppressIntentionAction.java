@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -10,7 +11,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +26,13 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   public String getText() {
     return myText;
   }
 
-  protected void setText(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String text) {
+  protected void setText(@IntentionName @NotNull String text) {
     myText = text;
   }
 
