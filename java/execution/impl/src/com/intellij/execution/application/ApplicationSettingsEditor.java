@@ -57,10 +57,7 @@ public class ApplicationSettingsEditor extends FragmentedSettingsEditor<Applicat
                                                (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
                                                (configuration, component) -> configuration.setVMParameters(component.getComponent().getText()),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
-    fragments.add(new SettingsEditorFragment<>("redirectInput", ExecutionBundle.message("redirect.input.from.name"), new ProgramInputRedirectPanel(),
-                                               (configuration, panel) -> panel.reset(configuration.getInputRedirectOptions()),
-                                               (configuration, panel) -> panel.applyTo(configuration.getInputRedirectOptions()),
-                                               configuration -> configuration.getInputRedirectOptions().isRedirectInput()));
+    fragments.add(CommonParameterFragments.createRedirectFragment());
     return fragments;
   }
 
