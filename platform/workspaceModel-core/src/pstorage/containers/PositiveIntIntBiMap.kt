@@ -87,4 +87,22 @@ sealed class PositiveIntIntBiMap {
   fun isEmpty(): Boolean = key2Value.isEmpty && value2Keys.isEmpty()
 
   abstract fun toImmutable(): ImmutablePositiveIntIntBiMap
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PositiveIntIntBiMap
+
+    if (key2Value != other.key2Value) return false
+    if (value2Keys != other.value2Keys) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = key2Value.hashCode()
+    result = 31 * result + value2Keys.hashCode()
+    return result
+  }
 }

@@ -389,6 +389,27 @@ sealed class PositiveIntIntMultiMap {
 
   fun isEmpty(): Boolean = links.isEmpty
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PositiveIntIntMultiMap
+
+    if (!values.contentEquals(other.values)) return false
+    if (links != other.links) return false
+    if (distinctValues != other.distinctValues) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = values.contentHashCode()
+    result = 31 * result + links.hashCode()
+    result = 31 * result + distinctValues.hashCode()
+    return result
+  }
+
+
   companion object {
     internal fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
     internal fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
