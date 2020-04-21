@@ -117,13 +117,7 @@ public class PluginManagerConfigurable
     @Override
     @NotNull
     public Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
-      synchronized (myRepositoriesLock) {
-        if (myCustomRepositoryPluginsList != null) {
-          return myCustomRepositoryPluginsList;
-        }
-      }
-      LOG.error("PluginManagerConfigurable.myPluginModel.getCustomRepoPlugins() has been called before PluginManagerConfigurable#createMarketplaceTab()");
-      return ContainerUtil.emptyList();
+      return getCustomRepositoryPlugins();
     }
   };
 
@@ -476,7 +470,7 @@ public class PluginManagerConfigurable
               case "/tag:":
                 if (ContainerUtil.isEmpty(myTagsSorted)) {
                   Set<String> allTags = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : myCustomRepositoryPluginsList) {
+                  for (IdeaPluginDescriptor descriptor : getCustomRepositoryPlugins()) {
                     if (descriptor instanceof PluginNode) {
                       List<String> tags = ((PluginNode)descriptor).getTags();
                       if (!ContainerUtil.isEmpty(tags)) {
@@ -499,7 +493,7 @@ public class PluginManagerConfigurable
                 return Arrays.asList("downloads", "name", "rating", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
-                  List<String> customRepositoriesVendors = MyPluginModel.getVendors(myCustomRepositoryPluginsList);
+                  List<String> customRepositoriesVendors = MyPluginModel.getVendors(getCustomRepositoryPlugins());
                   LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {
@@ -1521,6 +1515,17 @@ public class PluginManagerConfigurable
       panel.initialSelection();
     }
     return pane;
+  }
+
+  @NotNull
+  private Collection<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
+    synchronized (myRepositoriesLock) {
+      if (myCustomRepositoryPluginsList != null) {
+        return myCustomRepositoryPluginsList;
+      }
+    }
+    LOG.error("PluginManagerConfigurable#getCustomRepoPlugins() has been called before PluginManagerConfigurable#createMarketplaceTab()");
+    return ContainerUtil.emptyList();
   }
 
   @NotNull
