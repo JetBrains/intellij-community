@@ -66,16 +66,19 @@ public class IElementType {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getClass().getClassLoader() == loader) {
-        ourRegistry[i] = null;
+        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
       }
     }
   }
 
   public static void unregisterElementTypes(@NotNull Language language) {
+    if (language == Language.ANY) {
+      throw new IllegalArgumentException("Trying to unregister Language.ANY");
+    }
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getLanguage().equals(language)) {
-        ourRegistry[i] = null;
+        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
       }
     }
   }
@@ -195,7 +198,11 @@ public class IElementType {
    */
   public static IElementType find(short idx) {
     // volatile read; array always grows, never shrinks, never overwritten
-    return ourRegistry[idx];
+    IElementType type = ourRegistry[idx];
+    if (type instanceof TombstoneElementType) {
+      throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type.myDebugName);
+    }
+    return type;
   }
 
   /**
@@ -229,5 +236,11 @@ public class IElementType {
       }
     }
     return matches.toArray(new IElementType[0]);
+  }
+
+  public static class TombstoneElementType extends IElementType {
+    public TombstoneElementType(@NotNull String debugName) {
+      super(debugName, Language.ANY);
+    }
   }
 }
