@@ -3,6 +3,7 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -126,6 +127,8 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
   void deliverMessage(@NotNull Message message) {
     final Message messageOnLocalQueue = myPendingMessages.get().poll();
     assert messageOnLocalQueue == message;
+
+    ProgressManager.checkCanceled();
 
     Topic<?> topic = message.getTopic();
     Object handler = mySubscriptions.get(topic);

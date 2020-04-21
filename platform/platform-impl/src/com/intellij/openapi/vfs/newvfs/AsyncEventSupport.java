@@ -94,6 +94,7 @@ public final class AsyncEventSupport {
 
   private static void beforeVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
+      updateEdtProgress();
       try {
         applier.beforeVfsChange();
       }
@@ -105,6 +106,7 @@ public final class AsyncEventSupport {
 
   private static void afterVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
+      updateEdtProgress();
       try {
         applier.afterVfsChange();
       }
@@ -112,6 +114,10 @@ public final class AsyncEventSupport {
         LOG.error(e);
       }
     }
+  }
+
+  private static void updateEdtProgress() {
+    ProgressManager.checkCanceled();
   }
 
   static void processEvents(List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
