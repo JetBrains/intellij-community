@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -39,6 +40,7 @@ final class ProgressDialog implements Disposable {
   private final boolean myShouldShowBackground;
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> update(), 500, this);
   private boolean myWasShown;
+  private final long myStartMillis = System.currentTimeMillis();
 
   final Runnable myRepaintRunnable = new Runnable() {
     @Override
@@ -50,6 +52,9 @@ final class ProgressDialog implements Disposable {
       if (myProgressBar.isShowing()) {
         myProgressBar.setIndeterminate(myProgressWindow.isIndeterminate());
         myProgressBar.setValue((int)(fraction * 100));
+        if (myProgressBar.isIndeterminate() && isWriteActionProgress() && myProgressBar.getUI() instanceof DarculaProgressBarUI) {
+          ((DarculaProgressBarUI)myProgressBar.getUI()).updateIndeterminateAnimationIndex(myStartMillis);
+        }
       }
 
       myTextLabel.setText(fitTextToLabel(text, myTextLabel));
