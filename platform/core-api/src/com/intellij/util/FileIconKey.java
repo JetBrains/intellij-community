@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,12 +20,14 @@ class FileIconKey {
   private final Project myProject;
   private final @Iconable.IconFlags int myFlags;
   private final @Nullable Language myInitialLanguage;
+  private final long myStamp;
 
-  FileIconKey(@NotNull VirtualFile file, Project project, @Iconable.IconFlags int flags) {
+  FileIconKey(@NotNull VirtualFile file, @Nullable Project project, @Iconable.IconFlags int flags) {
     myFile = file;
     myProject = project;
     myFlags = flags;
     myInitialLanguage = myFile instanceof LightVirtualFile ? ((LightVirtualFile)myFile).getLanguage() : null;
+    myStamp = project == null ? 0 : PsiManager.getInstance(project).getModificationTracker().getModificationCount();
   }
 
   @Override
@@ -34,6 +37,7 @@ class FileIconKey {
 
     FileIconKey that = (FileIconKey)o;
     if (myFlags != that.myFlags) return false;
+    if (myStamp != that.myStamp) return false;
     if (!myFile.equals(that.myFile)) return false;
     if (!Objects.equals(myProject, that.myProject)) return false;
 
@@ -44,10 +48,7 @@ class FileIconKey {
 
   @Override
   public int hashCode() {
-    int result = myFile.hashCode();
-    result = 31 * result + Objects.hashCode(myProject);
-    result = 31 * result + myFlags;
-    return result;
+    return Objects.hash(myFile, myProject, myFlags, myStamp);
   }
 
   VirtualFile getFile() {
