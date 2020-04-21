@@ -64,6 +64,7 @@ public class VcsRepositoryManager implements Disposable {
     VcsRepositoryCreator.EXTENSION_POINT_NAME.addExtensionPointListener(project, () -> {
       disposeAllRepositories(false);
       scheduleUpdate();
+      BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }, project);
   }
 
