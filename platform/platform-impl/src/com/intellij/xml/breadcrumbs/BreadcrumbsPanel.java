@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.Gray;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -161,6 +162,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
     Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
+
+    BreadcrumbsProvider.EP_NAME.addExtensionPointListener(() -> queueUpdate(), this);
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myQueue.setPassThrough(true);
