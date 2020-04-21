@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -216,15 +217,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
     final List<RangeHighlighter> highlighters = new ArrayList<>();
-    final TextAttributes attributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    final TextAttributesKey attributesKey = EditorColors.SEARCH_RESULT_ATTRIBUTES;
     list.addListSelectionListener(__ -> {
       final PsiMethod selectedMethod = list.getSelectedValue();
       if (selectedMethod == null) return;
       dropHighlighters(highlighters);
-      updateView(selectedMethod, editor, attributes, highlighters, superMethod);
+      updateView(selectedMethod, editor, attributesKey, highlighters, superMethod);
     });
-    updateView(validEnclosingMethods.get(0), editor, attributes, highlighters, superMethod);
+    updateView(validEnclosingMethods.get(0), editor, attributesKey, highlighters, superMethod);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -256,16 +256,18 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
   private static void updateView(PsiMethod selectedMethod,
                                  Editor editor,
-                                 TextAttributes attributes,
+                                 @NotNull TextAttributesKey attributesKey,
                                  List<? super RangeHighlighter> highlighters,
                                  JCheckBox superMethod) {
     final MarkupModel markupModel = editor.getMarkupModel();
     final PsiIdentifier nameIdentifier = selectedMethod.getNameIdentifier();
     if (nameIdentifier != null) {
       final TextRange textRange = nameIdentifier.getTextRange();
+      final TextAttributes attributes =
+        EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
       final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
         textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
-        attributes,
+        attributes, attributesKey,
         HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(rangeHighlighter);
     }

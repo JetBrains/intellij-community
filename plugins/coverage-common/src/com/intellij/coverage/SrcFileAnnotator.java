@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -464,7 +465,8 @@ public class SrcFileAnnotator implements Disposable {
                                                   @NotNull final CoverageSuitesBundle coverageSuite, Object[] lines,
                                                   @NotNull MyEditorBean editorBean) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes attributes = scheme.getAttributes(CoverageLineMarkerRenderer.getAttributesKey(line, executableLines));
+    final TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
+    final TextAttributes attributes = scheme.getAttributes(attributesKey);
     TextAttributes textAttributes = null;
     if (attributes.getBackgroundColor() != null) {
       textAttributes = attributes;
@@ -474,7 +476,7 @@ public class SrcFileAnnotator implements Disposable {
     final int startOffset = document.getLineStartOffset(lineNumberInCurrent);
     final int endOffset = document.getLineEndOffset(lineNumberInCurrent);
     final RangeHighlighter highlighter =
-      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, textAttributes, attributesKey, HighlighterTargetArea.LINES_IN_RANGE);
     final Function<Integer, Integer> newToOldConverter = newLine -> {
       if (editor == null) return -1;
       final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date, editorBean);

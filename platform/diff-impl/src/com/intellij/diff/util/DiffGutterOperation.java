@@ -17,7 +17,7 @@ public abstract class DiffGutterOperation {
   public DiffGutterOperation(@NotNull Editor editor, int offset) {
     myHighlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
                                                                 HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                null,
+                                                                null, null,
                                                                 HighlighterTargetArea.LINES_IN_RANGE);
   }
 

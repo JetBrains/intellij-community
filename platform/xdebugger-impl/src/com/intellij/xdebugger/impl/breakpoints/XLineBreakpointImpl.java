@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -99,8 +100,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
     }
 
+    TextAttributesKey attributesKey = DebuggerColors.BREAKPOINT_ATTRIBUTES;
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
+    TextAttributes attributes = scheme.getAttributes(attributesKey);
 
     if (!isEnabled()) {
       attributes = attributes.clone();
@@ -127,12 +129,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
         if (range.intersects(lineRange)) {
           highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                        DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                                                        DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes, attributesKey,
                                                         HighlighterTargetArea.EXACT_RANGE);
         }
       }
       if (highlighter == null) {
-        highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
+        highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes, attributesKey);
       }
       if (highlighter == null) {
         return;
