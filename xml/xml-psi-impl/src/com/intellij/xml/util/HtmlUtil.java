@@ -471,6 +471,18 @@ public class HtmlUtil {
            || "media.rnc".equals(name);
   }
 
+  public static boolean tagHasHtml5Schema(@NotNull XmlTag context) {
+    XmlElementDescriptor descriptor = context.getDescriptor();
+    if (descriptor != null) {
+      XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
+      XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile() : null;
+      String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
+      return Objects.equals(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
+             Objects.equals(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
+    }
+    return false;
+  }
+
   private static class TerminateException extends RuntimeException {
     private static final TerminateException INSTANCE = new TerminateException();
   }
