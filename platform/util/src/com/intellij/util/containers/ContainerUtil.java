@@ -2322,7 +2322,7 @@ public class ContainerUtil {
    */
   @Contract(pure = true)
   public static @NotNull <T> Set<T> singleton(final T o, final @NotNull TObjectHashingStrategy<T> strategy) {
-    return strategy == TObjectHashingStrategy.CANONICAL ? new SingletonSet<>(o) : SingletonSet.withCustomStrategy(o, strategy);
+    return strategy == canonicalStrategy() ? new SingletonSet<>(o) : SingletonSet.withCustomStrategy(o, strategy);
   }
 
   /**

@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectObjectProcedure;
@@ -48,7 +49,7 @@ public class ObjectStubTree<T extends Stub> {
 
   @Deprecated
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree() {
-    return indexStubTree(key -> TObjectHashingStrategy.CANONICAL);
+    return indexStubTree(key -> ContainerUtil.canonicalStrategy());
   }
 
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> keyHashingStrategyFunction) {
