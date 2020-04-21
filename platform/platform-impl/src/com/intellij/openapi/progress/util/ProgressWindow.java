@@ -16,6 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ProgressDetails;
+import com.intellij.openapi.util.NlsContexts.ProgressText;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -295,7 +298,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@ProgressText String text) {
     if (!Objects.equals(text, getText())) {
       super.setText(text);
       update();
@@ -311,7 +314,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void setText2(String text) {
+  public void setText2(@ProgressDetails String text) {
     if (!Objects.equals(text, getText2())) {
       super.setText2(text);
       update();
@@ -324,7 +327,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@ProgressTitle String title) {
     if (!Objects.equals(title, myTitle)) {
       myTitle = title;
       update();
