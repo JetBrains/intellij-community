@@ -12,7 +12,8 @@ public class TagFragment<Settings> extends SettingsEditorFragment<Settings, JBut
   public TagFragment(String id, String name, Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
     super(id, name, new TagButton(name),
           (settings, label) -> label.setVisible(getter.test(settings)),
-          (settings, label) -> setter.accept(settings, label.isVisible()));
+          (settings, label) -> setter.accept(settings, label.isVisible()),
+          getter);
 
     getComponent().addKeyListener(new KeyAdapter() {
       @Override

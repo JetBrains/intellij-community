@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 public class SettingsEditorFragment<Settings, C extends JComponent> extends SettingsEditor<Settings> {
 
@@ -16,6 +17,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   public interface Component<Settings> {
     void reset(Settings s);
     void apply(Settings s);
+    boolean isVisible(Settings s);
   }
 
   private final String myId;
@@ -24,29 +26,35 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
+  private final Predicate<Settings> myInitialVisibility;
 
   public SettingsEditorFragment(String id,
                                 String name,
                                 C component,
                                 int commandLinePosition,
                                 BiConsumer<Settings, C> reset,
-                                BiConsumer<Settings, C> apply) {
+                                BiConsumer<Settings, C> apply,
+                                Predicate<Settings> initialVisibility) {
     myId = id;
     myName = name;
     myComponent = component;
     myReset = reset;
     myApply = apply;
     myCommandLinePosition = commandLinePosition;
+    myInitialVisibility = initialVisibility;
   }
 
-  public SettingsEditorFragment(String id, String name, C component, BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply)  {
-    this(id, name, component, -1, reset, apply);
+  public SettingsEditorFragment(String id, String name, C component,
+                                BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply,
+                                Predicate<Settings> initialVisibility)  {
+    this(id, name, component, -1, reset, apply, initialVisibility);
   }
 
   public static <S> SettingsEditorFragment<S, ?> create(String id, String name, Component<? super S> component) {
     return new SettingsEditorFragment<>(id, name, (JComponent)component,
                                         (settings, c) -> component.reset(settings),
-                                        (settings, c) -> component.apply(settings));
+                                        (settings, c) -> component.apply(settings),
+                                        s -> component.isVisible(s));
   }
 
   public String getId() {
@@ -61,6 +69,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public boolean isVisible() {
     return myComponent.isVisible();
+  }
+
+  public boolean isInitiallyVisible(Settings settings) {
+    return myInitialVisibility.test(settings);
   }
 
   public void setVisible(boolean selected) {
@@ -86,5 +98,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected @NotNull JComponent createEditor() {
     myComponent.setVisible(isVisible());
     return myComponent;
+  }
+
+  @Override
+  public String toString() {
+    return myId + " " + myName;
   }
 }

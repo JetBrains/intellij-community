@@ -31,7 +31,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   protected abstract Collection<SettingsEditorFragment<Settings, ?>> createFragments();
 
   protected Collection<SettingsEditorFragment<Settings, ?>> getFragments() {
-    return myFragments.getValue();
+    return new ArrayList<>(myFragments.getValue());
   }
 
   protected abstract String getTitle();
@@ -41,7 +41,9 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
     super.resetEditorFrom(settings);
     @Nullable Set<String> visibleFragments = settings.getVisibleFragments();
     for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {
-      fragment.setVisible(visibleFragments.contains(fragment.getId()));
+      fragment.setVisible(visibleFragments.isEmpty() ?
+                          fragment.isInitiallyVisible(settings) :
+                          visibleFragments.contains(fragment.getId()));
     }
   }
 

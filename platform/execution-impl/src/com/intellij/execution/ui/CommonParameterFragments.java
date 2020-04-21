@@ -16,15 +16,18 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+
 public class CommonParameterFragments<Settings extends CommonProgramRunConfigurationParameters> {
 
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
 
   public CommonParameterFragments(@NotNull Project project) {
     myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, new RawCommandLineEditor(),
-                                                   100,
-                                                   (settings, component) -> component.setText(settings.getProgramParameters()),
-                                                   (settings, component) -> settings.setProgramParameters(component.getText())));
+                                                 100,
+                                                 (settings, component) -> component.setText(settings.getProgramParameters()),
+                                                 (settings, component) -> settings.setProgramParameters(component.getText()),
+                                                 settings -> true));
 
     TextFieldWithBrowseButton workingDirectoryField = new TextFieldWithBrowseButton();
     workingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
@@ -37,10 +40,12 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     field.setLabelLocation(BorderLayout.WEST);
     myFragments.add(new SettingsEditorFragment<>("workingDirectory", null, field,
                                                  (settings, component) -> component.getComponent().setText(settings.getWorkingDirectory()),
-                                                 (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText())));
+                                                 (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText()),
+                                                 settings -> isNotEmpty(settings.getWorkingDirectory())));
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
-    myFragments.add(SettingsEditorFragment.create("environmentVariables", ExecutionBundle.message("environment.variables.fragment.name"), env));
+    myFragments.add(SettingsEditorFragment.create("environmentVariables",
+                                                  ExecutionBundle.message("environment.variables.fragment.name"), env));
   }
 
   public List<SettingsEditorFragment<Settings, ?>> getFragments() {

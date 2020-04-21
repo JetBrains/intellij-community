@@ -74,6 +74,11 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     s.setPassParentEnvs(isPassParentEnvs());
   }
 
+  @Override
+  public boolean isVisible(CommonProgramRunConfigurationParameters s) {
+    return !s.getEnvs().isEmpty();
+  }
+
   /**
    * Consider using {@link EnvironmentVariablesData#readExternal(Element)} instead for simplicity and better performance.
    */
