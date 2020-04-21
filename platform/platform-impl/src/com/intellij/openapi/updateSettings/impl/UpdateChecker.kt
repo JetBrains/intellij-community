@@ -281,15 +281,13 @@ object UpdateChecker {
     toUpdate: MutableMap<PluginId, PluginDownloader>
   ): MutableCollection<IdeaPluginDescriptor>? {
     if (newBuildNumber == null) return null
-    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor> =  HashSet()
-    for ((pluginId, installedPlugin) in updateable) {
-      if (!PluginManagerCore.isDisabled(pluginId)) {
-        // collect plugins that were not updated and would be incompatible with the new version
-        if (installedPlugin != null && installedPlugin.isEnabled &&
-            !toUpdate.containsKey(installedPlugin.pluginId) &&
-            !PluginManagerCore.isCompatible(installedPlugin, newBuildNumber)) {
-          incompatiblePlugins += installedPlugin
-        }
+    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor> = HashSet()
+    for ((_, installedPlugin) in updateable) {
+      // collect plugins that were not updated and would be incompatible with the new version
+      if (installedPlugin != null && installedPlugin.isEnabled &&
+          !toUpdate.containsKey(installedPlugin.pluginId) &&
+          !PluginManagerCore.isCompatible(installedPlugin, newBuildNumber)) {
+        incompatiblePlugins += installedPlugin
       }
     }
     return incompatiblePlugins
