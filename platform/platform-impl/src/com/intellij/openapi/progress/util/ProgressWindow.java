@@ -166,7 +166,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         if (isRunning()) {
           showDialog();
         }
-        else {
+        else if (isPopupWasShown()) {
           Disposer.dispose(this);
           final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
           focusManager.doWhenFocusSettlesDown(() -> focusManager.requestDefaultFocus(true), ModalityState.defaultModalityState());

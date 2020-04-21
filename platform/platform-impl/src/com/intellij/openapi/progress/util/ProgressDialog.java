@@ -258,7 +258,7 @@ final class ProgressDialog implements Disposable {
     myPopup.pack();
 
     SwingUtilities.invokeLater(() -> {
-      if (myPopup != null) {
+      if (myPopup != null && !myPopup.isDisposed()) {
         myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
       }
     });
