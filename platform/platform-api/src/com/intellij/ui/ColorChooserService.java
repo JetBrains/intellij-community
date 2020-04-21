@@ -17,9 +17,9 @@ package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.picker.ColorListener;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,10 +39,10 @@ public abstract class ColorChooserService {
    */
   @Deprecated
   @Nullable
-  public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
+  public abstract Color showDialog(Component parent, @DialogTitle String caption, Color preselectedColor, boolean enableOpacity,
                                    List<? extends ColorPickerListener> listeners, boolean opacityInPercent);
   @Nullable
-  public abstract Color showDialog(Project project, Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
+  public abstract Color showDialog(Project project, Component parent, @DialogTitle String caption, Color preselectedColor, boolean enableOpacity,
                                    List<? extends ColorPickerListener> listeners, boolean opacityInPercent);
 
   public void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
