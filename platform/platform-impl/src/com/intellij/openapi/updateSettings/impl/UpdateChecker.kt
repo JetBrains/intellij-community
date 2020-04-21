@@ -209,6 +209,15 @@ object UpdateChecker {
     return HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
   }
 
+  /**
+   * [availableUpdates] - new versions of plugins compatible with the specified build
+
+   * [customRepositoryPlugins] - plugins from custom repositories for the specified build
+
+   * [incompatiblePlugins] - plugins that would be incompatible and don't have updates with the specified build
+   *
+   * If build is not specified then current IDE version is used.
+   */
   private data class CheckPluginsUpdateResult(
     val availableUpdates: Collection<PluginDownloader>?,
     val customRepositoryPlugins: Collection<IdeaPluginDescriptor>,
@@ -218,12 +227,9 @@ object UpdateChecker {
   private val EMPTY_CHECK_UPDATE_RESULT = CheckPluginsUpdateResult(null, emptyList(), null)
 
   /**
-   * Checks for plugin updates for current build if `build` is not provided.
+   * If [newBuildNumber] is null, returns new versions of plugins compatible with the current IDE version.
    *
-   * Checks for plugin updates for provided `build` and calculates plugins that don't have updates and would be incompatible with provided build.
-   *
-   * If [newBuildNumber] is null, returns new versions of plugins compatible with the current IDE version. If not null, returns
-   * new versions of plugins compatible with the specified build.
+   * If not null, returns new versions of plugins compatible with the specified build.
    */
   private fun checkPluginsUpdate(
     indicator: ProgressIndicator?,
@@ -264,13 +270,6 @@ object UpdateChecker {
     }
 
     val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>? = getIncompatiblePlugins(newBuildNumber, updateable, toUpdate)
-
-    //TODO: check if code in this `if` duplicates `getIncompatiblePlugins`
-    if (incompatiblePlugins != null && newBuildNumber != null) {
-      updateable.values.filterNotNull().filterTo(incompatiblePlugins) {
-        it.isEnabled && !PluginManagerCore.isCompatible(it, newBuildNumber)
-      }
-    }
 
     return CheckPluginsUpdateResult(if (toUpdate.isEmpty()) null else toUpdate.values, latestCustomPluginsAsMap.values, incompatiblePlugins)
   }
