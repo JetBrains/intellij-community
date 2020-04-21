@@ -207,7 +207,7 @@
                     interface="com.intellij.execution.JUnitRecognizer" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.unusedDeclarationFixProvider"
-                    interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider"/>
+                    interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider" dynamic="true"/>
 
     <!-- RefMethod -->
     <extensionPoint qualifiedName="com.intellij.canBeEmpty"
