@@ -21,19 +21,20 @@
   <resource-bundle>messages.MavenProjectBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
-    <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension"/>
-    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter"/>
-    <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
-    <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
+    <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
+    <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
+    <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
+    <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
+                    dynamic="true"/>
+    <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider" dynamic="true"/>
 
-    <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor"/>
+    <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" dynamic="true"/>
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"
                     dynamic="true"/>
     <extensionPoint name="executionEnvironmentProvider"
-                    interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
-    <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder"/>
+                    interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider" dynamic="true"/>
+    <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
