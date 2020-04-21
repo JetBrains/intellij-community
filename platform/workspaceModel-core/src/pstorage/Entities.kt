@@ -3,10 +3,11 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.*
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
+import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.isAccessible
 
 abstract class PTypedEntity : ReferableTypedEntity, Any() {
   override lateinit var entitySource: EntitySource
@@ -88,7 +89,7 @@ interface PSoftLinkable {
                  affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean
 }
 
-abstract class PEntityData<E : TypedEntity> {
+abstract class PEntityData<E : TypedEntity>: Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
@@ -113,18 +114,7 @@ abstract class PEntityData<E : TypedEntity> {
     return res
   }
 
-  fun clone(): PEntityData<E> {
-    val copied = this::class.primaryConstructor!!.call()
-    this::class.memberProperties.filterIsInstance<KMutableProperty<*>>().forEach {
-      if (it.returnType.isList()) {
-        it.setter.call(copied, ArrayList(it.getter.call(this) as List<*>))
-      }
-      else {
-        it.setter.call(copied, it.getter.call(this))
-      }
-    }
-    return copied
-  }
+  public override fun clone(): PEntityData<E> = super.clone() as PEntityData<E>
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
