@@ -221,9 +221,8 @@ object UpdateChecker {
    * Checks for plugin updates for current build if `build` is not provided.
    *
    * Checks for plugin updates for provided `build` and calculates plugins that don't have updates and would be incompatible with provided build.
-   */
-  /**
-   * If [buildNumber] is null, returns new versions of plugins compatible with the current IDE version. If not null, returns
+   *
+   * If [newBuildNumber] is null, returns new versions of plugins compatible with the current IDE version. If not null, returns
    * new versions of plugins compatible with the specified build.
    */
   private fun checkPluginsUpdate(
