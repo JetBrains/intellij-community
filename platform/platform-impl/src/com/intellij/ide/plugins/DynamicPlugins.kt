@@ -456,12 +456,12 @@ object DynamicPlugins {
     processExtensionPoints(pluginDescriptor, openProjects) { points, area -> area.unregisterExtensionPoints(points) }
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
-    pluginDescriptor.appContainerDescriptor.services ?.let { application.unloadServices(it, pluginId) }
+    application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
     (application.messageBus as MessageBusImpl).unsubscribePluginListeners(pluginDescriptor)
 
     for (project in openProjects) {
-      pluginDescriptor.projectContainerDescriptor.services?.let { (project as ProjectImpl).unloadServices(it, pluginId) }
-      val moduleServices = pluginDescriptor.moduleContainerDescriptor.services ?: continue
+      (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
+      val moduleServices = pluginDescriptor.moduleContainerDescriptor.getServices()
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
       }

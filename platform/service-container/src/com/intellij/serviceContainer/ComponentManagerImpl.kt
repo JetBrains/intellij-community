@@ -732,15 +732,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   @Internal
   fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
-    val container = checkStateAndGetPicoContainer()
-    val stateStore = stateStore
-    for (service in services) {
-      val adapter = (container.unregisterComponent(service.`interface`) ?: continue) as ServiceComponentAdapter
-      val instance = adapter.getInitializedInstance() ?: continue
-      if (instance is Disposable) {
-        Disposer.dispose(instance)
+    if (services.isNotEmpty()) {
+      val container = checkStateAndGetPicoContainer()
+      val stateStore = stateStore
+      for (service in services) {
+        val adapter = (container.unregisterComponent(service.`interface`) ?: continue) as ServiceComponentAdapter
+        val instance = adapter.getInitializedInstance() ?: continue
+        if (instance is Disposable) {
+          Disposer.dispose(instance)
+        }
+        stateStore.unloadComponent(instance)
       }
-      stateStore.unloadComponent(instance)
     }
 
     if (lightServices != null) {
