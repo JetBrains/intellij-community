@@ -109,13 +109,6 @@ internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>):
   return uastTypePattern
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use custom pattern with PsiElementPattern.Capture<PsiElement>")
-fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
-  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java),
-  this::accepts
-)
-
 /**
  * Creates UAST reference provider that accepts additional PSI element that could be either the same as reference PSI element or reference
  * element that is used in the same file and satisfy usage pattern.
