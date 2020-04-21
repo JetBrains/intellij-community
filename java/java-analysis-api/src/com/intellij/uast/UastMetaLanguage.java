@@ -3,6 +3,7 @@ package com.intellij.uast;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UastLanguagePlugin;
@@ -22,7 +23,22 @@ public class UastMetaLanguage extends MetaLanguage {
 
     Collection<UastLanguagePlugin> languagePlugins = UastLanguagePlugin.Companion.getInstances();
     myLanguages = new THashSet<>(languagePlugins.size());
-    for (UastLanguagePlugin plugin: languagePlugins) {
+    initLanguages(languagePlugins);
+
+    UastLanguagePlugin.Companion
+      .getExtensionPointName()
+      .getPoint(null)
+      .addExtensionPointListener(new ExtensionPointChangeListener() {
+        @Override
+        public void extensionListChanged() {
+          myLanguages.clear();
+          initLanguages(UastLanguagePlugin.Companion.getInstances());
+        }
+      }, false, null);
+  }
+
+  private void initLanguages(Collection<UastLanguagePlugin> languagePlugins) {
+    for (UastLanguagePlugin plugin : languagePlugins) {
       myLanguages.add(plugin.getLanguage());
     }
   }
