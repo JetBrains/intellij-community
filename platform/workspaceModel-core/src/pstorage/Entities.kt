@@ -132,8 +132,6 @@ abstract class PEntityData<E : TypedEntity>: Cloneable {
       .map { it.getter.call(this).hashCode() }
       .fold(31) { acc, i -> acc * 17 + i }
   }
-
-  private fun KType.isList(): Boolean = this.toString().startsWith("kotlin.collections.List")
 }
 
 class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
