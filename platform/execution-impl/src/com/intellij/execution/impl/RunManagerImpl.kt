@@ -9,6 +9,8 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -205,19 +207,30 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    val messageBusConnection = project.messageBus.connect()
+    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
-        selectedConfiguration?.let {
-          iconCache.remove(it.uniqueID)
-        }
+        clearSelectedConfigurationIcon()
 
         deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+      }
+    })
+
+    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        clearSelectedConfigurationIcon()
       }
     })
 
     BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addExtensionPointListener(
       ExtensionPointChangeListener { stringIdToBeforeRunProvider.drop() },
       true, project)
+  }
+
+  private fun clearSelectedConfigurationIcon() {
+    selectedConfiguration?.let {
+      iconCache.remove(it.uniqueID)
+    }
   }
 
   @TestOnly
