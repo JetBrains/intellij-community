@@ -2582,7 +2582,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       iDidIt();
     }
-  };
+  }
   public void testTypingMustRescheduleDaemonBackByReparseDelayMillis() {
     EmptyAnnotator emptyAnnotator = new EmptyAnnotator();
     executeWithReparseDelay(2000, () ->
