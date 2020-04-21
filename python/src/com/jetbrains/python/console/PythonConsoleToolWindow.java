@@ -21,9 +21,6 @@ import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.util.List;
 
 public class PythonConsoleToolWindow {
@@ -139,28 +136,6 @@ public class PythonConsoleToolWindow {
 
     content.putUserData(CONTENT_DESCRIPTOR, contentDescriptor);
   }
-
-  private static FocusListener createFocusListener(final ToolWindow toolWindow) {
-    return new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        JComponent component = getComponentToFocus(toolWindow);
-        if (component != null) {
-          component.requestFocusInWindow();
-        }
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-
-      }
-    };
-  }
-
-  private static JComponent getComponentToFocus(ToolWindow window) {
-    return window.getContentManager().getComponent();
-  }
-
 
   public void activate(@NotNull Runnable runnable) {
     getToolWindow(myProject).activate(runnable);
