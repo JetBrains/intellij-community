@@ -744,11 +744,9 @@
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
 
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
-    </component>
-  </application-components>
+  <applicationListeners>
+    <listener class="com.jetbrains.python.testing.VFSTestFrameworkListener$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 
   <project-components>
     <component>
