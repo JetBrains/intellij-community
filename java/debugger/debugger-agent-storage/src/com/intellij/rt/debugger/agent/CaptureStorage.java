@@ -278,12 +278,12 @@ public class CaptureStorage {
         }
         int newEnd = depth + 2;
         if (newEnd > size) {
-          IllegalStateException exception = new IllegalStateException("Insertion point was not found in stack:");
-          exception.setStackTrace(stackTrace.toArray(new StackTraceElement[0]));
-          throw exception;
+          stack = null; // Insertion point was not found - stop
         }
-        stackTrace = stackTrace.subList(0, newEnd);
-        stack = ((DeepCapturedStack)stack).myInsertMatch;
+        else {
+          stackTrace = stackTrace.subList(0, newEnd);
+          stack = ((DeepCapturedStack)stack).myInsertMatch;
+        }
       }
       else {
         stack = null;
