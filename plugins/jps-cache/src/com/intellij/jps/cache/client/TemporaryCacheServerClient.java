@@ -30,6 +30,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 public class TemporaryCacheServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
@@ -154,7 +155,8 @@ public class TemporaryCacheServerClient implements JpsServerClient {
             HttpURLConnection httpConnection = (HttpURLConnection)connection;
             if (httpConnection.getResponseCode() == 200) {
               InputStream inputStream = httpConnection.getInputStream();
-              return OBJECT_MAPPER.readValue(inputStream, new TypeReference<Map<String, List<String>>>() {});
+              GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream);
+              return OBJECT_MAPPER.readValue(gzipInputStream, new TypeReference<Map<String, List<String>>>() {});
             }
 
             else {
