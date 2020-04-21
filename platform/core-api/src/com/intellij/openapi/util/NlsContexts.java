@@ -87,7 +87,7 @@ public class NlsContexts {
   @NlsContext(prefix = "parsing.error")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public static @interface ParsingError {
+  public @interface ParsingError {
   }
 
   /**
@@ -97,7 +97,7 @@ public class NlsContexts {
   @NlsContext(prefix = "system.notification.title")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public static @interface SystemNotificationTitle {
+  public @interface SystemNotificationTitle {
   }
 
   /**
@@ -107,13 +107,19 @@ public class NlsContexts {
   @NlsContext(prefix = "system.notification.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public static @interface SystemNotificationText {
+  public @interface SystemNotificationText {
   }
 
   @NlsContext(prefix = "command.name")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public static @interface Command {
+  public @interface Command {
+  }
+
+  @NlsContext(prefix = "tab.title")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface TabTitle {
   }
 
   /**
