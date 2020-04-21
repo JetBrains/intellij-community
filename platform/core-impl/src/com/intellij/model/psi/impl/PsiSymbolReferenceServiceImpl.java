@@ -18,7 +18,6 @@ import java.util.List;
 
 @Internal
 public final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
-
   /**
    * This field is intentionally private.
    * Clients are supposed to use {@link #getReferences(PsiElement)} to obtain all available references.
@@ -26,17 +25,15 @@ public final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceSe
   private static final PsiSymbolReferenceHints EMPTY_HINTS = new PsiSymbolReferenceHints() {
   };
 
-  @NotNull
   @Override
-  public Iterable<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element) {
+  public @NotNull Iterable<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element) {
     return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(
       Collections.unmodifiableList(getReferences(element, EMPTY_HINTS)), PsiModificationTracker.MODIFICATION_COUNT)
     );
   }
 
-  @NotNull
   @Override
-  public List<PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints) {
+  public @NotNull List<PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints) {
     List<PsiSymbolReference> result = ContainerUtil.newArrayList(element.getOwnReferences());
     if (element instanceof PsiExternalReferenceHost) {
       result.addAll(getExternalReferences((PsiExternalReferenceHost)element, hints));
@@ -44,7 +41,6 @@ public final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceSe
     return applyHints(result, hints);
   }
 
-  @NotNull
   @Override
   public Collection<? extends PsiSymbolReference> getExternalReferences(@NotNull PsiExternalReferenceHost element,
                                                                         @NotNull PsiSymbolReferenceHints hints) {
@@ -57,9 +53,8 @@ public final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceSe
     return result;
   }
 
-  @NotNull
-  private static List<PsiSymbolReference> applyHints(@NotNull List<PsiSymbolReference> references,
-                                                     @NotNull PsiSymbolReferenceHints hints) {
+  private static @NotNull List<PsiSymbolReference> applyHints(@NotNull List<PsiSymbolReference> references,
+                                                              @NotNull PsiSymbolReferenceHints hints) {
     if (hints == EMPTY_HINTS) {
       return references;
     }
