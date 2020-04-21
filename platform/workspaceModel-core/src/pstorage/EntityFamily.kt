@@ -111,7 +111,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
 internal sealed class AbstractEntityFamily<E : TypedEntity> {
 
-  protected abstract val entities: List<PEntityData<E>?>
+  internal abstract val entities: List<PEntityData<E>?>
 
   operator fun get(idx: Int) = entities.getOrNull(idx)
 
