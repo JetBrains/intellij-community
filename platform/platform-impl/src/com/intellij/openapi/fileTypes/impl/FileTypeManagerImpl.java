@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -1172,6 +1173,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void unregisterFileTypeWithoutNotification(@NotNull FileType fileType) {
+    CachedFileType.remove(fileType);
     myPatternsTable.removeAllAssociations(fileType);
     myInitialAssociations.removeAllAssociations(fileType);
     mySchemeManager.removeScheme(fileType);
