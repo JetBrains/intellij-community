@@ -40,7 +40,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                  (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText())));
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
-    myFragments.add(SettingsEditorFragment.create("environmentVariables", null, env));
+    myFragments.add(SettingsEditorFragment.create("environmentVariables", ExecutionBundle.message("environment.variables.fragment.name"), env));
   }
 
   public List<SettingsEditorFragment<Settings, ?>> getFragments() {
