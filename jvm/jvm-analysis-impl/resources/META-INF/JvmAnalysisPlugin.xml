@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.codeInsight.blockingMethodChecker"
-                    interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker"/>
+                    interface="com.intellij.codeInspection.blockingCallsDetection.BlockingMethodChecker" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.nonBlockingContextChecker"
                     interface="com.intellij.codeInspection.blockingCallsDetection.NonBlockingContextChecker"/>
   </extensionPoints>
