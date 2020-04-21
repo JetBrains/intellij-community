@@ -68,11 +68,11 @@ abstract class SourceOperation implements Operation {
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
       if (SourceOperation.getSourceName(myArg) != null) {
-        return "if(" + outVar.getName() + " == null) throw new java.lang.NullPointerException();" +
+        return "if(" + outVar.getName() + "==null)throw new java.lang.NullPointerException();" +
                code;
       }
       return outVar.getDeclaration(myArg.getText()) +
-             "if(" + outVar.getName() + " == null) throw new java.lang.NullPointerException();" +
+             "if(" + outVar.getName() + "==null)throw new java.lang.NullPointerException();" +
              code;
     }
 

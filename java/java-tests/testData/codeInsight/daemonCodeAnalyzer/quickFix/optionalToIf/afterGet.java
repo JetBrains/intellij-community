@@ -9,4 +9,10 @@ class Test {
       return in;
   }
 
+  void ofNullableGetFinalVar(String in) {
+      if (in == null) throw new NoSuchElementException("No value present");
+      final String out = in;
+      Runnable r = () -> java.lang.System.out.println(out);
+  }
+
 }

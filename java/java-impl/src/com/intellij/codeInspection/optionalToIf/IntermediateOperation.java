@@ -155,9 +155,9 @@ abstract class IntermediateOperation implements Operation {
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
       String orResult = myRecords.get(myRecords.size() - 1).myOutVar.getName();
-      String orCode = OptionalToIfInspection.wrapCode(context, myRecords, outVar.getName() + " = " + orResult + ";");
+      String orCode = OptionalToIfInspection.wrapCode(context, myRecords, outVar.getName() + "=" + orResult + ";");
       if (orCode == null) return null;
-      return "if (" + outVar.getName() + " == null) {\n" +
+      return "if(" + outVar.getName() + "==null){\n" +
              orCode +
              "\n}" +
              context.generateNotNullCondition(outVar.getName(), code);
