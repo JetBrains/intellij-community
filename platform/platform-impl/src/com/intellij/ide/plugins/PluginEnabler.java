@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.util.*;
 
 /**
@@ -83,7 +84,22 @@ public final class PluginEnabler {
 
   @Nullable
   public static IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled());
+    PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor);
+    return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled(), resolver);
+  }
+
+  @NotNull
+  static PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    PathBasedJdomXIncluder.PathResolver<?> resolver;
+    if (PluginManagerCore.isRunningFromSources() &&
+        descriptor.getPluginPath().getFileSystem().equals(FileSystems.getDefault()) &&
+        descriptor.getPath().toString().contains("out/classes")) {
+      resolver = new ClassPathXmlPathResolver(descriptor.getPluginClassLoader());
+    }
+    else {
+      resolver = PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER;
+    }
+    return resolver;
   }
 
   @NotNull

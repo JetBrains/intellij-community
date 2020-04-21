@@ -210,7 +210,6 @@ object DynamicPlugins {
                                                   processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
     val pluginXmlFactory = PluginXmlFactory()
     val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
-    val pathResolver = PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER
     for (descriptor in PluginManagerCore.getLoadedPlugins(null)) {
       for (dependency in (descriptor.pluginDependencies ?: continue)) {
         if (!dependency.isOptional || dependency.id != dependencyPluginId) {
@@ -218,6 +217,7 @@ object DynamicPlugins {
         }
 
         val dependencyConfigFile = dependency.configFile ?: continue
+        val pathResolver = PluginEnabler.createPathResolverForPlugin(descriptor)
         val context = DescriptorLoadingContext(listContext, false, false, pathResolver)
         val element = try {
           val jarPair = URLUtil.splitJarUrl(descriptor.basePath.toUri().toString())
