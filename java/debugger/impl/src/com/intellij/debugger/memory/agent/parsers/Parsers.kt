@@ -100,12 +100,14 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
     referrer: ObjectReference,
     kind: MemoryAgentReferenceInfo.ReferenceKind,
     value: Value?): MemoryAgentReferenceInfo {
-    return if (value == null) SimpleReferenceInfo(referrer, kind) else
+    return if (value == null) SimpleReferenceInfo(referrer) else
       when (kind) {
         MemoryAgentReferenceInfo.ReferenceKind.FIELD,
         MemoryAgentReferenceInfo.ReferenceKind.STATIC_FIELD ->
-          ReferenceInfoWithIndex(referrer, kind, IntArrayParser.parse(value)[0])
-        else -> SimpleReferenceInfo(referrer, kind)
+          FieldReferenceInfo(referrer, IntArrayParser.parse(value)[0])
+        MemoryAgentReferenceInfo.ReferenceKind.ARRAY_ELEMENT ->
+          ArrayReferenceInfo(referrer, IntArrayParser.parse(value)[0])
+        else -> SimpleReferenceInfo(referrer)
     }
   }
 }

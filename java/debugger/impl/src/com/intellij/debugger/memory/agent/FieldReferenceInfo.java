@@ -12,17 +12,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.ListIterator;
 
-public class ReferenceInfoWithIndex extends MemoryAgentReferenceInfo {
-  @Nullable private Field field;
+public class FieldReferenceInfo extends MemoryAgentReferenceInfo {
+  @Nullable private final Field field;
 
-  public ReferenceInfoWithIndex(@NotNull ObjectReference referrer,
-                                @NotNull ReferenceKind kind,
-                                int fieldIndex) {
-    super(referrer, kind);
+  public FieldReferenceInfo(@NotNull ObjectReference referrer,
+                            int fieldIndex) {
+    super(referrer);
     this.field = getFieldByJVMTIFieldIndex(referrer, fieldIndex);
   }
 
-  private static @Nullable Field getFieldByJVMTIFieldIndex(ObjectReference reference, int index) {
+  @Nullable
+  private static Field getFieldByJVMTIFieldIndex(ObjectReference reference, int index) {
     if (index < 0) {
       return null;
     }
