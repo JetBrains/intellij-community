@@ -24,6 +24,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
@@ -74,6 +75,8 @@ public final class ConfigImportHelper {
   // constant is used instead of util method to ensure that ConfigImportHelper class is not loaded by StartupUtil
   public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
 
+  private static final long OLD_CONFIG_PERIOD = 1000L * 60 * 60 * 24 * 30 * 6; // 6 months
+
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(boolean veryFirstStartOnThisComputer, @NotNull Path newConfigDir, @NotNull Logger log) {
@@ -101,7 +104,7 @@ public final class ConfigImportHelper {
     }
     catch (Exception ignored) { }
 
-    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
+    @NotNull List<PathAndFileTime> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
     File tempBackup = null;
     boolean vmOptionFileChanged = false;
 
@@ -138,8 +141,13 @@ public final class ConfigImportHelper {
         }
       }
       else {
-        Path bestConfigGuess = guessedOldConfigDirs.get(0);
-        oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+        PathAndFileTime bestConfigGuess = guessedOldConfigDirs.get(0);
+        if (isConfigOld(bestConfigGuess.fileTime)) {
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
+        }
+        else {
+          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.path);
+        }
       }
 
       if (oldConfigDirAndOldIdePath != null) {
@@ -181,6 +189,12 @@ public final class ConfigImportHelper {
 
       restart();
     }
+  }
+
+  private static boolean isConfigOld(@NotNull FileTime time) {
+    long now = System.currentTimeMillis();
+    long then = time.toMillis();
+    return now - then > OLD_CONFIG_PERIOD;
   }
 
   private static boolean doesVmOptionFileExist(@NotNull Path configDir) {
@@ -287,8 +301,9 @@ public final class ConfigImportHelper {
   }
 
   @Nullable
-  private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<Path> guessedOldConfigDirs) {
-    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
+  private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<PathAndFileTime> guessedOldConfigDirs) {
+    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(ContainerUtil.map(guessedOldConfigDirs, it -> it.path),
+                                                             ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
 
@@ -329,7 +344,17 @@ public final class ConfigImportHelper {
     return Arrays.stream(OPTIONS).anyMatch(name -> Files.exists(candidate.resolve(name)));
   }
 
-  static @NotNull List<Path> findConfigDirectories(@NotNull Path newConfigDir) {
+  static class PathAndFileTime {
+    final Path path;
+    final FileTime fileTime;
+
+    PathAndFileTime(@NotNull Path path, @NotNull FileTime fileTime) {
+      this.path = path;
+      this.fileTime = fileTime;
+    }
+  }
+
+  static @NotNull List<PathAndFileTime> findConfigDirectories(@NotNull Path newConfigDir) {
     // looking for existing config directories ...
     Set<Path> homes = new HashSet<>();
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
@@ -385,11 +410,12 @@ public final class ConfigImportHelper {
       lastModified.put(candidate, max != null ? max : FileTime.fromMillis(0));
     }
 
-    List<Path> result = new ArrayList<>(lastModified.keySet());
+    List<PathAndFileTime> result = ContainerUtil.map(lastModified.entrySet(),
+                                                     entry -> new PathAndFileTime(entry.getKey(), entry.getValue()));
     result.sort((o1, o2) -> {
-      int diff = lastModified.get(o2).compareTo(lastModified.get(o1));
+      int diff = o2.fileTime.compareTo(o1.fileTime);
       if (diff == 0) {
-        diff = StringUtil.naturalCompare(o2.toString(), o1.toString());
+        diff = StringUtil.naturalCompare(o2.path.toString(), o1.path.toString());
       }
       return diff;
     });
