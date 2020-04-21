@@ -122,6 +122,12 @@ public class NlsContexts {
   public @interface TabTitle {
   }
 
+  @NlsContext(prefix = "attribute.descriptor")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface AttributeDescriptor {
+  }
+
   /**
    * Swing components
    */
