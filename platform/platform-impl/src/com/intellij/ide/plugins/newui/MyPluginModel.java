@@ -205,6 +205,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (myDynamicPluginsToUninstall.contains(descriptor)) {
         continue;
       }
+      if (descriptor.isImplementationDetail()) {
+        // implementation detail plugins are never explicitly disabled
+        continue;
+      }
 
       PluginId pluginId = descriptor.getPluginId();
       if (enabledMap.get(pluginId) == null) { // if enableMap contains null for id => enable/disable checkbox don't touch
