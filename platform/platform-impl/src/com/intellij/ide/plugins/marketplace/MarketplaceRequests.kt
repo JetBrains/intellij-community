@@ -113,10 +113,7 @@ object MarketplaceRequests {
       .productNameAsUserAgent()
       .throwStatusCodeException(false)
       .connect {
-        objectMapper.readValue(
-          it.inputStream,
-          object : TypeReference<List<String>>() {}
-        )
+        objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
       }
   }
   catch (e: Exception) {
@@ -131,10 +128,7 @@ object MarketplaceRequests {
       .productNameAsUserAgent()
       .throwStatusCodeException(false)
       .connect {
-        objectMapper.readValue(
-          it.inputStream,
-          object : TypeReference<List<String>>() {}
-        )
+        objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
       }
   }
   catch (e: Exception) {

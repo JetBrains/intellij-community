@@ -85,3 +85,10 @@ internal class MarketplaceSearchPluginData(
     return pluginNode
   }
 }
+
+/**
+ * @param aggregations map of results and count of plugins
+ * @param total count of plugins
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+internal class AggregationSearchResponse(val aggregations: Map<String, Int> = emptyMap(), val total: Int = 0)
