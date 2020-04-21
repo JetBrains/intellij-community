@@ -145,25 +145,25 @@ public class PathManager {
     if (rootPath == null) return null;
 
     Path root = Paths.get(rootPath).toAbsolutePath();
-    Path kotlinIdeRepoIntellijSubRepoRoot;
     do {
       root = root.getParent();
-      if (isKotlinIdeRepo()) {
-        kotlinIdeRepoIntellijSubRepoRoot = root.resolve(INTELLIJ_SUB_REPO_NAME);
-      } else {
-        kotlinIdeRepoIntellijSubRepoRoot = root;
-      }
-    } while (root != null && !isIdeaHome(kotlinIdeRepoIntellijSubRepoRoot));
-    return kotlinIdeRepoIntellijSubRepoRoot != null ? kotlinIdeRepoIntellijSubRepoRoot.toString() : null;
+    } while (root != null && !isIdeaHome(root) && !isKotlinIdeRepoHome(root));
+    if (root != null && isKotlinIdeRepoHome(root)) {
+      root = root.resolve(INTELLIJ_SUB_REPO_NAME);
+    }
+    return root != null ? root.toString() : null;
   }
 
   /**
-   * Checks whether it's intellij + kotlin kotlin-ide repo.
+   * Checks whether it's intellij + kotlin kotlin-ide repo home.
    * <p></p>
    * This is temp util method and it's supposed to be removed when kotlin-20202 experiment is over
    */
-  public static boolean isKotlinIdeRepo() {
-    return IsKotlinIdeRepoLazyHolder.VALUE;
+  private static boolean isKotlinIdeRepoHome(@NotNull Path path) {
+    return Files.isDirectory(path) &&
+           Files.isRegularFile(path.resolve(KOTLIN_IDE_IML_RELATIVE_PATH)) &&
+           Files.isDirectory(path.resolve(INTELLIJ_SUB_REPO_NAME)) &&
+           isIdeaHome(path.resolve(INTELLIJ_SUB_REPO_NAME));
   }
 
   private static boolean isIdeaHome(Path root) {
@@ -640,21 +640,5 @@ public class PathManager {
     }
 
     throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
-  }
-
-  private static final class IsKotlinIdeRepoLazyHolder {
-    private static final boolean VALUE = calculateValue();
-
-    private static boolean calculateValue() {
-      for (Path currentPath = Paths.get("").toAbsolutePath(); currentPath != null; currentPath = currentPath.getParent()) {
-        if (Files.isDirectory(currentPath) &&
-            Files.isRegularFile(currentPath.resolve(KOTLIN_IDE_IML_RELATIVE_PATH)) &&
-            Files.isDirectory(currentPath.resolve(INTELLIJ_SUB_REPO_NAME)) &&
-            isIdeaHome(currentPath.resolve(INTELLIJ_SUB_REPO_NAME))) {
-          return true;
-        }
-      }
-      return false;
-    }
   }
 }
