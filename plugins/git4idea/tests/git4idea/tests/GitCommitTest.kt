@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
 import com.intellij.openapi.extensions.Extensions
@@ -30,7 +30,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
 
     val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
     point.registerExtension(myMovementProvider, testRootDisposable)
-    Registry.get("git.allow.explicit.commit.renames").setValue(true)
     Registry.get("git.force.commit.using.staging.area").setValue(useStagingArea)
 
     commitContext.isCommitRenamesSeparately = true
@@ -38,8 +37,6 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
 
   override fun tearDown() {
     try {
-      val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
-      Registry.get("git.allow.explicit.commit.renames").resetToDefault()
       Registry.get("git.force.commit.using.staging.area").resetToDefault()
     }
     finally {

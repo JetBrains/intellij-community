@@ -1186,7 +1186,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
     List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
     if (enabledProviders.isEmpty()) return Collections.emptyList();
-    if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
 
     List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
     List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.*
@@ -206,7 +205,7 @@ class GitCommitOptionsUi(
     }
 
   private fun updateRenamesCheckboxState() {
-    val canCommitRenamesSeparately = explicitMovementProviders.isNotEmpty() && Registry.`is`("git.allow.explicit.commit.renames")
+    val canCommitRenamesSeparately = explicitMovementProviders.isNotEmpty()
 
     commitRenamesSeparately.isVisible = canCommitRenamesSeparately
     commitRenamesSeparately.isEnabled = canCommitRenamesSeparately && !amendHandler.isAmendCommitMode
