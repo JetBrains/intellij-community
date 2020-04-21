@@ -5,6 +5,7 @@ import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
@@ -24,7 +25,8 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
 
   public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
     super(serverType.getId() + "-deploy", serverType.getDeploymentConfigurationTypePresentableName(),
-          "Deploy to " + serverType.getPresentableName() + " run configuration", serverType.getIcon());
+          CloudBundle.message("deploy.to.server.configuration.type.description", serverType.getPresentableName()),
+          serverType.getIcon());
 
     myServerType = serverType;
     if (myServerType.mayHaveProjectSpecificDeploymentSources()) {
