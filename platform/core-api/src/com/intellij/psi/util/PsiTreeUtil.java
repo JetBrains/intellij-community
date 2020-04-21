@@ -18,6 +18,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1241,38 +1242,41 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null; !null, _ -> !null")
   public static <T extends PsiElement> T findSameElementInCopy(@Nullable T element, @NotNull PsiFile copy) throws IllegalStateException {
     if (element == null) return null;
-    if (element.getClass().equals(copy.getClass())) {
-      //noinspection unchecked
-      return (T)copy;
-    }
-    TextRange range = element.getTextRange();
-    if (range.getLength() == 0 && range.getStartOffset() > 0) {
-      PsiElement predecessor = copy.findElementAt(range.getStartOffset()-1);
-      while (predecessor != null) {
-        PsiElement newElement = predecessor.getNextSibling();
-        if (newElement != null) {
-          TextRange newRange = newElement.getTextRange();
-          if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
-            //noinspection unchecked
-            return (T)newElement;
-          }
-        }
-        if (predecessor.getTextRange().getEndOffset() > range.getEndOffset()) break;
-        predecessor = predecessor.getParent();
+    TIntArrayList offsets = new TIntArrayList();
+    PsiElement cur = element;
+    while (!cur.getClass().equals(copy.getClass())) {
+      int pos = 0;
+      for (PsiElement sibling = cur.getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
+        pos++;
       }
-    } else {
-      PsiElement newElement = copy.findElementAt(range.getStartOffset());
-      while (newElement != null) {
-        TextRange newRange = newElement.getTextRange();
-        if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
-          //noinspection unchecked
-          return (T)newElement;
-        }
-        if (newRange.getStartOffset() < range.getStartOffset() || newRange.getEndOffset() > range.getEndOffset()) break;
-        newElement = newElement.getParent();
+      offsets.add(pos);
+      cur = cur.getParent();
+      if (cur == null) {
+        throw new IllegalStateException("Cannot find parent file");
       }
     }
-    throw new IllegalStateException("Cannot find element in copy file");
+    cur = copy;
+    for (int level = offsets.size() - 1; level >= 0; level--) {
+      int pos = offsets.get(level);
+      cur = cur.getFirstChild();
+      if (cur == null) {
+        throw new IllegalStateException("File structure differs: no child");
+      }
+      for (int i = 0; i < pos; i++) {
+        cur = cur.getNextSibling();
+        if (cur == null) {
+          throw new IllegalStateException("File structure differs: number of siblings is less than " + pos);
+        }
+      }
+    }
+    if (!cur.getClass().equals(element.getClass())) {
+      throw new IllegalStateException("File structure differs: " + cur.getClass() + " != " + element.getClass());
+    }
+    if (!cur.getTextRange().equals(element.getTextRange())) {
+      throw new IllegalStateException("File structure differs: " + cur.getTextRange() + " != " + element.getTextRange());
+    }
+    //noinspection unchecked
+    return (T)cur;
   }
   
   //<editor-fold desc="Deprecated stuff.">
