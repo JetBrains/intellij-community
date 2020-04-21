@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,7 +27,8 @@ class AdvancedExceptionFilter extends ExceptionFilter {
     List<PsiClass> classMap = new ArrayList<>();
     info.myClasses.forEach((key, value) -> {
       PsiClass psiClass = ObjectUtils.tryCast(value, PsiClass.class);
-      if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      if (psiClass != null &&
+          (DumbService.isDumb(psiClass.getProject()) || InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE))) {
         classMap.add(psiClass);
       }
     });
