@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.observable
 
+import com.intellij.openapi.observable.properties.comap
+import com.intellij.openapi.observable.properties.map
+import com.intellij.openapi.observable.properties.transform
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -186,5 +189,51 @@ class PropertyTest : PropertyTestCase() {
     assertEquals(numProperties * numCounts, producers.sumBy { it.get() })
     assertEquals(numProperties * numCounts, consumers.sumBy { it.get() })
     assertEquals(numProperties * numCounts, accumulator.get())
+  }
+
+  @Test
+  fun `test property view`() {
+    val property0 = property { 0 }
+    val property1 = property { 1 }.map { it * 2 }
+    val property2 = property { 2 }.comap { it / 2 }
+    val property3 = property { 3 }.transform( { it * 3 }, {it / 3} )
+    val property4 = property { 4 to 5 }.transform({ it.first * it.second }, { (it / 5) to (it / 4) })
+
+    /**
+     * (0) -> (1) -> (2) ⟷ (3) <- (4)
+     */
+
+    property1.dependsOn(property0) { property0.get() }
+    property2.dependsOn(property1) { property1.get() }
+    property3.dependsOn(property2) { property2.get() }
+    property2.dependsOn(property3) { property3.get() }
+    property3.dependsOn(property4) { property4.get() }
+
+    assertProperty(property0, 0, false)
+    assertProperty(property1, 2, false)
+    assertProperty(property2, 2, false)
+    assertProperty(property3, 9, false)
+    assertProperty(property4, 20, false)
+
+    property0.set(3)
+    assertProperty(property0, 3, true)
+    assertProperty(property1, 6, false)
+    assertProperty(property2, 3, false)
+    assertProperty(property3, 3, false)
+    assertProperty(property4, 20, false)
+
+    property4.set(100)
+    assertProperty(property0, 3, true)
+    assertProperty(property1, 6, false)
+    assertProperty(property2, 249, false)
+    assertProperty(property3, 498, false)
+    assertProperty(property4, 500, true)
+
+    property2.set(100)
+    assertProperty(property0, 3, true)
+    assertProperty(property1, 6, false)
+    assertProperty(property2, 50, true)
+    assertProperty(property3, 48, false)
+    assertProperty(property4, 500, true)
   }
 }

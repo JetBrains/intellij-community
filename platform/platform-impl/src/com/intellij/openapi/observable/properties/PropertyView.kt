@@ -4,6 +4,9 @@ package com.intellij.openapi.observable.properties
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+@Deprecated("",
+            replaceWith = ReplaceWith("instance.transform<S, T>(map, comap)",
+                                      "com.intellij.openapi.observable.properties.transform"))
 class PropertyView<R, S, T>(
   private val instance: ReadWriteProperty<R, S>,
   private val map: (S) -> T,
@@ -19,8 +22,12 @@ class PropertyView<R, S, T>(
   }
 
   companion object {
+    @Suppress("DEPRECATION")
+    @Deprecated("", replaceWith = ReplaceWith("this.map<T>(transform)", "com.intellij.openapi.observable.properties.map"))
     fun <R, T> ReadWriteProperty<R, T>.map(transform: (T) -> T) = PropertyView(this, transform, { it })
 
+    @Suppress("DEPRECATION")
+    @Deprecated("", replaceWith = ReplaceWith("this.comap<T>(transform)", "com.intellij.openapi.observable.properties.comap"))
     fun <R, T> ReadWriteProperty<R, T>.comap(transform: (T) -> T) = PropertyView(this, { it }, transform)
   }
 }
