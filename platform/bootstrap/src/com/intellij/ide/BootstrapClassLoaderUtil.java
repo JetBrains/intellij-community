@@ -19,6 +19,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -96,14 +97,22 @@ public final class BootstrapClassLoaderUtil {
       return false;
     }
     try {
+      Path homePath = Paths.get(PathManager.getHomePath());
       SimpleVersion ideVersion = null;
-      try (BufferedReader reader = Files.newBufferedReader(Paths.get(PathManager.getHomePath()).resolve("build.txt"))) {
+      try (BufferedReader reader = Files.newBufferedReader(homePath.resolve("build.txt"))) {
         ideVersion = SimpleVersion.parse(reader.readLine());
+      }
+      catch (IOException ignored){
+      }
+      if (ideVersion == null && SystemInfoRt.isMac) {
+        try (BufferedReader reader = Files.newBufferedReader(homePath.resolve("Resources/build.txt"))) {
+          ideVersion = SimpleVersion.parse(reader.readLine());
+        }
       }
       if (ideVersion != null) {
         SimpleVersion sinceVersion = null;
         SimpleVersion untilVersion = null;
-        try (BufferedReader reader = Files.newBufferedReader(new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR).toPath().resolve("platform-build.txt"))) {
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get(PathManager.getPluginsPath()).resolve(MARKETPLACE_PLUGIN_DIR).resolve("platform-build.txt"))) {
           sinceVersion = SimpleVersion.parse(reader.readLine());
           untilVersion = SimpleVersion.parse(reader.readLine());
         }
@@ -317,7 +326,7 @@ public final class BootstrapClassLoaderUtil {
     
     @Override
     public int compareTo(@NotNull SimpleVersion ver) {
-      return myMajor != ver.myMajor? myMajor - ver.myMajor : myMinor - ver.myMinor;
+      return myMajor != ver.myMajor? Integer.compare(myMajor, ver.myMajor) : Integer.compare(myMinor, ver.myMinor);
     }
 
     @Nullable
