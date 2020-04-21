@@ -68,8 +68,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
               "java.lang.NoSuchMethodException")
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
                                        "getField", "getDeclaredField"), "java.lang.NoSuchFieldException");
-  private static final CallMatcher MOCKITO_STUBBER_WHEN =
-    CallMatcher.instanceCall("org.mockito.stubbing.Stubber", "when");
+  private static final CallMatcher MOCKITO_EXCLUDED_QUALIFIER_CALLS =
+    CallMatcher.anyOf(
+      CallMatcher.instanceCall("org.mockito.stubbing.Stubber", "when"),
+      CallMatcher.staticCall("org.mockito.Mockito", "verify"));
   private static final Set<String> IGNORE_ANNOTATIONS = ContainerUtil
     .immutableSet("org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
   protected final MethodMatcher myMethodMatcher;
@@ -289,7 +291,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
       if (call instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
-        if (MOCKITO_STUBBER_WHEN.test(previousCall)) return false;
+        if (MOCKITO_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
       }
       if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
       if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
