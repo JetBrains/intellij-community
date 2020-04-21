@@ -316,6 +316,9 @@
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyConflictsListener"
               topic="git4idea.repo.GitConflictsHolder$ConflictsListener"
               activeInHeadlessMode="false"/>
+    <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyRepositoryListener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false"/>
     <listener class="git4idea.ui.branch.GitBranchWidget$Listener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
