@@ -33,7 +33,7 @@
   <resource-bundle>messages.StreamDebuggerBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider"/>
+    <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.debugger.streams">
