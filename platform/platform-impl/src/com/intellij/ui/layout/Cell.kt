@@ -21,6 +21,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.*
+import com.intellij.ui.components.fields.ExpandableTextField
+import com.intellij.util.Function
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -474,6 +477,33 @@ abstract class Cell : BaseBuilder {
     }.installOn(label)
 
     return component(label)
+  }
+
+  fun expandableTextField(getter: () -> String,
+                          setter: (String) -> Unit,
+                          parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
+                          joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER)
+    : CellBuilder<ExpandableTextField> {
+    return ExpandableTextField(parser, joiner)()
+      .withBinding({ editor -> editor.text.orEmpty() },
+                   { editor, value -> editor.text = value },
+                   PropertyBinding(getter, setter))
+  }
+
+  fun expandableTextField(prop: KMutableProperty0<String>,
+                          parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
+                          joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER)
+    : CellBuilder<ExpandableTextField> {
+    return expandableTextField(prop::get, prop::set, parser, joiner)
+  }
+
+  fun expandableTextField(prop: GraphProperty<String>,
+                          parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
+                          joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER)
+    : CellBuilder<ExpandableTextField> {
+    return expandableTextField(prop::get, prop::set, parser, joiner)
+      .withGraphProperty(prop)
+      .applyToComponent { bind(prop) }
   }
 
   /**
