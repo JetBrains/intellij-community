@@ -2,26 +2,26 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseIntentionAction implements IntentionAction {
   private String myText = "";
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   public String getText() {
     return myText;
   }
 
-  protected void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) {
+  protected void setText(@NotNull @IntentionName String text) {
     myText = text;
   }
 
