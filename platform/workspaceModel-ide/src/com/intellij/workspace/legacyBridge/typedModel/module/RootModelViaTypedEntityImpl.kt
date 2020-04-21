@@ -20,6 +20,8 @@ import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvi
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
+import org.jdom.Element
+import org.jetbrains.annotations.NotNull
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
@@ -165,17 +167,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
       for (extension in ModuleExtension.EP_NAME.getExtensions(module)) {
-        val readOnlyExtension = extension.getModifiableModel(false).also { parentDisposable.attachChild(it) }
-
-        if (rootManagerElement != null) {
-          if (readOnlyExtension is PersistentStateComponent<*>) {
-            deserializeAndLoadState(readOnlyExtension, rootManagerElement)
-          }
-          else {
-            @Suppress("DEPRECATION")
-            readOnlyExtension.readExternal(rootManagerElement)
-          }
-        }
+        val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
         if (writable) {
           val modifiableExtension = readOnlyExtension.getModifiableModel(true).also { parentDisposable.attachChild(it) }
@@ -186,6 +178,23 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
       }
 
       return result
+    }
+
+    internal fun loadExtension(extension: ModuleExtension,
+                               parentDisposable: Disposable,
+                               rootManagerElement: @NotNull Element?): @NotNull ModuleExtension {
+      val readOnlyExtension = extension.getModifiableModel(false).also { parentDisposable.attachChild(it) }
+
+      if (rootManagerElement != null) {
+        if (readOnlyExtension is PersistentStateComponent<*>) {
+          deserializeAndLoadState(readOnlyExtension, rootManagerElement)
+        }
+        else {
+          @Suppress("DEPRECATION")
+          readOnlyExtension.readExternal(rootManagerElement)
+        }
+      }
+      return readOnlyExtension
     }
   }
 }

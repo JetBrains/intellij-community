@@ -11,18 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ExportableOrderEntry;
-import com.intellij.openapi.roots.InheritedJdkOrderEntry;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleExtension;
-import com.intellij.openapi.roots.ModuleJdkOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleSourceOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -36,23 +25,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
+
+import java.util.*;
 
 /**
  * @author dsl
@@ -560,6 +539,21 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   protected Set<ContentEntry> getContent() {
     return myContent;
+  }
+
+  public void addModuleExtension(ModuleExtension extension) {
+    ModuleExtension model = extension.getModifiableModel(false);
+    myExtensions.add(model);
+    registerOnDispose(model);
+  }
+
+  public void removeModuleExtension(ModuleExtension extension) {
+    ModuleExtension instance = ContainerUtil.findInstance(myExtensions, extension.getClass());
+    if (instance != null) {
+      myExtensions.remove(instance);
+      unregisterOnDispose(instance);
+      Disposer.dispose(instance);
+    }
   }
 
   private static class ContentComparator implements Comparator<ContentEntry> {
