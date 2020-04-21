@@ -4,6 +4,7 @@ package com.intellij.ide.lightEdit;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.EmptyCompletionNotifier;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
@@ -86,8 +87,8 @@ public final class LightEditUtil {
     FileSaverDialog saver =
       FileChooserFactory.getInstance()
         .createSaveFileDialog(new FileSaverDescriptor(
-          "Save as",
-          "Choose a target file",
+          IdeBundle.message("dialog.title.save.as"),
+          IdeBundle.message("label.choose.target.file"),
           getKnownExtensions()),parent);
     VirtualFileWrapper fileWrapper = saver.save(VfsUtil.getUserHomeDir(), editorInfo.getFile().getPresentableName());
     if (fileWrapper != null) {

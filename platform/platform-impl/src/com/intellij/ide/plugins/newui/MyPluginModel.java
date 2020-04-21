@@ -146,10 +146,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     if (!dependencies.isEmpty()) {
-      throw new ConfigurationException("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin" +
-                                       (dependencies.size() == 1 ? " " : "s ") +
-                                       StringUtil.join(dependencies, ", ") +
-                                       " won't be able to load.</body></html>");
+      throw new ConfigurationException(IdeBundle.message("dialog.message.unable.to.apply.changes", dependencies.size() == 1 ? " " : "s ",
+                                                         StringUtil.join(dependencies, ", ")));
     }
 
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
@@ -888,8 +886,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }, "<br>");
       String beginS = deps.size() == 1 ? "" : "s";
       String middleS = deps.size() == 1 ? "s" : "";
-      String message = "<html>Following plugin" + beginS + " depend" + middleS + " on " + descriptor.getName() +
-                       ". Continue to remove?<br>" + listOfDeps + "</html>";
+      String message = IdeBundle.message("dialog.message.following.plugin.depend.on", beginS, middleS, descriptor.getName(), listOfDeps);
       String title = IdeBundle.message("title.plugin.uninstall");
       if (Messages.showYesNoDialog(uiParent, message, title, Messages.getQuestionIcon()) != Messages.YES) {
         return;

@@ -2,6 +2,7 @@
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -122,7 +123,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
           ContainerUtil.filter(myFragments.getValue(), fragment -> fragment.getName() != null);
         List<ToggleFragmentAction> actions = ContainerUtil.map(fragments, fragment -> new ToggleFragmentAction(fragment));
         DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
-        JBPopupFactory.getInstance().createActionGroupPopup("Add Run Options",
+        JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
                                                             new DefaultActionGroup(actions),
                                                             dataContext,
                                                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).showInBestPositionFor(dataContext);

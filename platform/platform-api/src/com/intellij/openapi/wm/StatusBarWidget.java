@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
@@ -51,7 +52,7 @@ public interface StatusBarWidget extends Disposable {
 
   interface WidgetPresentation {
     @Nullable
-    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Tooltip
     String getTooltipText();
 
     @Nullable

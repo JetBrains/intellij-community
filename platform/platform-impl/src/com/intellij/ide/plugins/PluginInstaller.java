@@ -316,7 +316,7 @@ public final class PluginInstaller {
       }
       String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
-      String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
+      String message = IdeBundle.message("dialog.message.plugin.depends.on.enable", pluginDescriptor.getName(), part, deps, part.trim());
       if (Messages
             .showOkCancelDialog(message, IdeBundle.message("dialog.title.install.plugin"), IdeBundle.message("button.install"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) ==
           Messages.OK) {

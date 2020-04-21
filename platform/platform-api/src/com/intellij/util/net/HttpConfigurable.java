@@ -324,8 +324,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       }
       AuthenticationDialog dialog = new AuthenticationDialog(
         PopupUtil.getActiveComponent(),
-        "Proxy authentication: " + host,
-        "Please enter credentials for: " + prompt,
+        IdeBundle.message("dialog.title.proxy.authentication", host),
+        IdeBundle.message("dialog.message.please.enter.credentials.for", prompt),
         getSecure("proxy.login"),
         "",
         KEEP_PROXY_PASSWORD

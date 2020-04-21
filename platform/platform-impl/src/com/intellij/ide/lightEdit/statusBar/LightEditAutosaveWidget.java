@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.statusBar;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditorListener;
@@ -8,6 +9,7 @@ import com.intellij.ide.lightEdit.LightEditorManager;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.JBColor;
@@ -48,10 +50,11 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
   public void dispose() {
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   @Override
   public String getTooltipText() {
-    return "Autosave Mode";
+    return IdeBundle.message("tooltip.autosave.mode");
   }
 
   @Nullable

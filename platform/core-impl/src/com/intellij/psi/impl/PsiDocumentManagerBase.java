@@ -2,6 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -243,7 +244,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         ProgressManager.checkCanceled();
       }
     };
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(commitAllDocumentsRunnable, "Processing Documents",
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(commitAllDocumentsRunnable,
+                                                                             CoreBundle.message("progress.title.processing.documents"),
                                                                              true, myProject);
   }
 
