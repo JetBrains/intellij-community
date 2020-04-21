@@ -930,7 +930,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   @ApiStatus.Experimental
-  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
+  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
                                                                           @Nullable Project project,
                                                                           @Nullable JComponent parentComponent,
                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
@@ -939,7 +939,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   @ApiStatus.Experimental
-  public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
+  public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
                                                                        @Nullable Project project,
                                                                        @Nullable JComponent parentComponent,
                                                                        @NotNull Consumer<? super ProgressIndicator> action) {
