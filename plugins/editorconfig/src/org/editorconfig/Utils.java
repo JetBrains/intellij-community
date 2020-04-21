@@ -120,7 +120,7 @@ public class Utils {
     final VirtualFile baseDir = project.getBaseDir();
     final VirtualFile child = baseDir.findChild(".editorconfig");
     if (child != null) {
-      final String message = ".editorconfig already present in " + baseDir.getPath() + "\nOverwrite?";
+      final String message = EditorConfigBundle.message("dialog.message.editorconfig.already.present.in.overwrite", baseDir.getPath());
       if (Messages.showYesNoDialog(project, message, EditorConfigBundle.message("dialog.title.editorconfig.exists"), null) == Messages.NO) return;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
