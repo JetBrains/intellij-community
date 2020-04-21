@@ -426,7 +426,7 @@ public abstract class DebuggerUtils {
   }
 
   @Nullable
-  public static PsiClass findClass(@NotNull final String className, @NotNull Project project, final GlobalSearchScope scope) {
+  public static PsiClass findClass(@NotNull String className, @NotNull Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       if (getArrayClass(className) != null) {
@@ -435,6 +435,9 @@ public abstract class DebuggerUtils {
       if (project.isDefault()) {
         return null;
       }
+
+      // remove generics if any
+      className = StringUtil.notNullize(StringUtil.substringBefore(className, "<"), className);
 
       PsiManager psiManager = PsiManager.getInstance(project);
       PsiClass psiClass = ClassUtil.findPsiClass(psiManager, className, null, true, scope);
