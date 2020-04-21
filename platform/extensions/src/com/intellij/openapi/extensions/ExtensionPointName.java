@@ -148,11 +148,21 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 
+  /**
+   * Build cache by arbitrary key using provided key to value mapper. Return value by key.
+   * <p>
+   * To exclude extension from cache, return null key.
+   */
   @ApiStatus.Experimental
   public final @NotNull <@NotNull K> List<T> getByGroupingKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
     return ExtensionProcessingHelper.getByGroupingKey(getPointImpl(null), key, keyMapper);
   }
 
+  /**
+   * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into list. Return values by key.
+   * <p>
+   * To exclude extension from cache, return null key.
+   */
   @ApiStatus.Experimental
   public final @Nullable <@NotNull K> T getByKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
     return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, keyMapper);

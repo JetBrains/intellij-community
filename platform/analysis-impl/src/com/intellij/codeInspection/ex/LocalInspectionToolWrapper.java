@@ -1,28 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.LocalInspectionEP;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    super(tool, ourEPMap.getValue().get(tool.getShortName()));
+    super(tool, LocalInspectionEP.LOCAL_INSPECTION.getByKey(tool.getShortName(), InspectionEP::getShortName));
   }
 
   public LocalInspectionToolWrapper(@NotNull LocalInspectionEP ep) {
@@ -63,26 +52,6 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   public boolean runForWholeFile() {
     return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
   }
-
-  private static final NotNullLazyValue<Map<String, LocalInspectionEP>> ourEPMap = new NotNullLazyValue<Map<String, LocalInspectionEP>>() {
-    @Override
-    protected @NotNull Map<String, LocalInspectionEP> compute() {
-      Map<String, LocalInspectionEP> map = new THashMap<>();
-      Application application = ApplicationManager.getApplication();
-      LocalInspectionEP.LOCAL_INSPECTION.getPoint(application).addExtensionPointListener(new ExtensionPointListener<LocalInspectionEP>() {
-        @Override
-        public void extensionAdded(@NotNull LocalInspectionEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-          map.put(extension.getShortName(), extension);
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull LocalInspectionEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-          map.remove(extension.getShortName());
-        }
-      }, true, application);
-      return map;
-    }
-  };
 
   public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,
                                                                           @Nullable PsiElement element,

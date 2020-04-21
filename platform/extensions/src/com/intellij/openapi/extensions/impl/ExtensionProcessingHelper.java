@@ -66,6 +66,9 @@ public final class ExtensionProcessingHelper {
     return null;
   }
 
+  /**
+   * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByGroupingKey}.
+   */
   public static @NotNull <@NotNull K, @NotNull T> List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point, @NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
     ConcurrentMap<Function<T, K>, Map<K, List<T>>> keyMapperToCache = point.getCacheMap();
     Map<K, List<T>> cache = keyMapperToCache.get(keyMapper);
@@ -82,8 +85,9 @@ public final class ExtensionProcessingHelper {
   }
 
   /**
-   * To exclude extension from result, return null key.
+   * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
    */
+  @ApiStatus.Internal
   public static <@NotNull K, @NotNull T> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point, @NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
     ConcurrentMap<Function<T, K>, Map<K, T>> keyMapperToCache = point.getCacheMap();
     Map<K, T> cache = keyMapperToCache.get(keyMapper);
