@@ -910,7 +910,12 @@ public class EditorPainter implements TextDrawingCallback {
     private void paintBorderEffect(int startOffset, int endOffset, EffectDescriptor borderDescriptor) {
       startOffset = DocumentUtil.alignToCodePointBoundary(myDocument, startOffset);
       endOffset = DocumentUtil.alignToCodePointBoundary(myDocument, endOffset);
+
+      FoldRegion foldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+      if (foldRegion != null && endOffset <= foldRegion.getEndOffset()) return;
+
       if (!myClipDetector.rangeCanBeVisible(startOffset, endOffset)) return;
+
       int startLine = myDocument.getLineNumber(startOffset);
       int endLine = myDocument.getLineNumber(endOffset);
       if (startLine + 1 == endLine &&
