@@ -22,15 +22,14 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.nio.file.FileSystems;
-import java.util.ArrayList;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class RootFileElement extends FileElement {
   private List<VirtualFile> myFiles;
@@ -58,17 +57,11 @@ public class RootFileElement extends FileElement {
   private static List<VirtualFile> getFileSystemRoots() {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
 
-    final List<VirtualFile> result =
-      new ArrayList<>(StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false).
-        map(root -> localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(root.toString()))).
-        collect(Collectors.toList()));
+    StreamEx<String> paths = StreamEx.of(FileSystems.getDefault().getRootDirectories().spliterator()).map(Path::toString);
 
     if (SystemInfo.isWin10OrNewer && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
-      final List<VirtualFile> wslRoots =
-        ContainerUtil.mapNotNull(WSLUtil.getExistingUNCRoots(),
-          root -> localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(root.getAbsolutePath())));
-      result.addAll(wslRoots);
+      paths = paths.append(StreamEx.of(WSLUtil.getExistingUNCRoots()).map(File::getAbsolutePath));
     }
-    return result;
+    return paths.map(name -> localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(name))).nonNull().toList();
   }
 }
