@@ -135,6 +135,7 @@ public class PythonConsoleToolWindow {
     content.setComponent(panel);
     content.setDisposer(contentDescriptor);
     content.setPreferredFocusableComponent(contentDescriptor.getComponent());
+    content.setPreferredFocusedComponent(contentDescriptor.getPreferredFocusComputable());
 
     content.putUserData(CONTENT_DESCRIPTOR, contentDescriptor);
   }
