@@ -60,6 +60,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   public @NotNull List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
+    @SuppressWarnings("deprecation")
     ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
     ExtensionPoint<T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
     return point == null ? Collections.emptyList() : point.getExtensionList();
@@ -149,22 +150,33 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   /**
-   * Build cache by arbitrary key using provided key to value mapper. Return value by key.
-   * <p>
-   * To exclude extension from cache, return null key.
-   */
-  @ApiStatus.Experimental
-  public final @NotNull <@NotNull K> List<T> getByGroupingKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
-    return ExtensionProcessingHelper.getByGroupingKey(getPointImpl(null), key, keyMapper);
-  }
-
-  /**
    * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into list. Return values by key.
    * <p>
    * To exclude extension from cache, return null key.
    */
   @ApiStatus.Experimental
-  public final @Nullable <@NotNull K> T getByKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
+  public final <@NotNull K> @NotNull List<T> getByGroupingKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
+    return ExtensionProcessingHelper.getByGroupingKey(getPointImpl(null), key, keyMapper);
+  }
+
+  /**
+   * Build cache by arbitrary key using provided key to value mapper. Return value by key.
+   * <p>
+   * To exclude extension from cache, return null key.
+   */
+  @ApiStatus.Experimental
+  public final <@NotNull K> @Nullable T getByKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
     return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, keyMapper);
+  }
+
+  /**
+   * Build cache by arbitrary key using provided key to value mapper. Return value by key.
+   * <p>
+   * To exclude extension from cache, return null key.
+   */
+  public final <@NotNull K, @NotNull V> @Nullable V getByKey(@NotNull K key,
+                                                                       @NotNull Function<@NotNull T, @Nullable K> keyMapper,
+                                                                       @NotNull Function<@NotNull T, @Nullable V> valueMapper) {
+    return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, keyMapper, valueMapper);
   }
 }

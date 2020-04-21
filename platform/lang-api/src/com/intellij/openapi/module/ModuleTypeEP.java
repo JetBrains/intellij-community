@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.serviceContainer.LazyExtensionInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,16 +20,14 @@ public final class ModuleTypeEP extends LazyExtensionInstance<ModuleType<?>> imp
   @Attribute("classpathProvider")
   public boolean classpathProvider;
 
-  @ApiStatus.Internal
-  @Transient
-  public PluginDescriptor pluginDescriptor;
+  private PluginDescriptor pluginDescriptor;
 
   @Override
   protected @Nullable String getImplementationClassName() {
     return implementationClass;
   }
 
-  public ModuleType<?> getModuleType() {
+  public @NotNull ModuleType<?> getModuleType() {
     return getInstance(ApplicationManager.getApplication(), pluginDescriptor);
   }
 

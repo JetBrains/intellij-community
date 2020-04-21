@@ -291,11 +291,13 @@ public class ExtensionPointImplTest {
     assertThat(extensionPoint.getExtensionList()).containsExactly(4, 2);
 
     assertThat(ExtensionProcessingHelper.getByGroupingKey(extensionPoint, "foo", it -> "foo")).isEqualTo(extensionPoint.getExtensionList());
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, Function.identity(), Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, Function.identity(), (Integer it) -> it * 2)).isEqualTo(4);
 
     Function<@NotNull Integer, @Nullable Integer> filteringKeyMapper = it -> it < 3 ? it : null;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, filteringKeyMapper)).isEqualTo(2);
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, filteringKeyMapper)).isNull();
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, filteringKeyMapper, Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, filteringKeyMapper, Function.identity())).isNull();
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, Function.identity(), (Integer it) -> (Integer)null)).isNull();
   }
 
   @Test

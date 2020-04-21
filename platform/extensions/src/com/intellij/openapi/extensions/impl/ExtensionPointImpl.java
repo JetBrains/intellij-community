@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -25,11 +24,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @SuppressWarnings("SynchronizeOnThis")
@@ -71,7 +74,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   private final boolean isDynamic;
 
-  private final AtomicReference<ConcurrentMap<Function<T, ?>, Map<?, ?>>> keyMapperToCacheRef = new AtomicReference<>();
+  private final AtomicReference<ConcurrentMap<?, Map<?, ?>>> keyMapperToCacheRef = new AtomicReference<>();
 
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
@@ -87,14 +90,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     componentManager = value;
   }
 
-  final @NotNull <@NotNull K, @NotNull V> ConcurrentMap<Function<@NotNull T, @Nullable K>, Map<@NotNull K, @NotNull V>> getCacheMap() {
-    @SuppressWarnings("rawtypes")
-    ConcurrentMap keyMapperToCache = keyMapperToCacheRef.get();
+  final <@NotNull CACHE_KEY, @NotNull K, @NotNull V> @NotNull ConcurrentMap<@NotNull CACHE_KEY, Map<@NotNull K, @NotNull V>> getCacheMap() {
+    ConcurrentMap<?, ?> keyMapperToCache = keyMapperToCacheRef.get();
     if (keyMapperToCache == null) {
       keyMapperToCache = keyMapperToCacheRef.updateAndGet(prev -> prev == null ? new ConcurrentHashMap<>() : prev);
     }
     //noinspection unchecked
-    return (ConcurrentMap<Function<T, K>, Map<K, V>>)keyMapperToCache;
+    return (ConcurrentMap<CACHE_KEY, Map<K, V>>)keyMapperToCache;
   }
 
   public final @NotNull String getName() {
@@ -535,11 +537,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     if (fireEvents && myListeners.length > 0) {
       if (oldList != null) {
-        notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(oldList, extension -> new Pair<>(extension, getPluginDescriptor())), myListeners);
+        notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(oldList, extension -> new SimpleImmutableEntry<>(extension, getPluginDescriptor())), myListeners);
       }
-      notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(list, extension -> {
-        return new Pair<>(extension, getPluginDescriptor());
-      }), myListeners);
+      notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(list, extension -> new SimpleImmutableEntry<>(extension, getPluginDescriptor())), myListeners);
     }
 
     Disposer.register(parentDisposable, new Disposable() {
@@ -550,14 +550,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
           myExtensionsCache = oldList;
           myExtensionsCacheAsArray = oldArray;
 
-          if (fireEvents && myListeners.length > 0) {
-            notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(list, extension ->
-              new Pair<>(extension, getPluginDescriptor())), myListeners);
+          if (!fireEvents || myListeners.length <= 0) {
+            return;
+          }
 
-            if (oldList != null) {
-              notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(oldList, extension ->
-                new Pair<>(extension, getPluginDescriptor())), myListeners);
-            }
+          notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(list, extension -> new SimpleImmutableEntry<>(extension, getPluginDescriptor())), myListeners);
+
+          if (oldList != null) {
+            notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(oldList, extension -> new SimpleImmutableEntry<>(extension, getPluginDescriptor())), myListeners);
           }
         }
       }
@@ -651,21 +651,21 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
                                @NotNull T extensionObject,
                                @NotNull PluginDescriptor pluginDescriptor,
                                @NotNull ExtensionPointListener<T> @NotNull [] listeners) {
-    notifyListeners(event, () -> Collections.singletonList(new Pair<>(extensionObject, pluginDescriptor)), listeners);
+    notifyListeners(event, () -> Collections.singletonList(new SimpleImmutableEntry<>(extensionObject, pluginDescriptor)), listeners);
   }
 
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull List<? extends ExtensionComponentAdapter> adapters,
                                @NotNull ExtensionPointListener<T> @NotNull [] listeners) {
     notifyListeners(event, () -> ContainerUtil.mapNotNull(adapters, adapter ->
-      adapter.isInstanceCreated() ? new Pair<>(adapter.createInstance(componentManager), adapter.getPluginDescriptor()) : null
+      adapter.isInstanceCreated() ? new SimpleImmutableEntry<>(adapter.createInstance(componentManager), adapter.getPluginDescriptor()) : null
     ), listeners);
   }
 
   private void notifyListeners(@NotNull ExtensionEvent event,
-                               @NotNull Supplier<List<Pair<T, PluginDescriptor>>> extensions,
+                               @NotNull Supplier<List<SimpleImmutableEntry<T, PluginDescriptor>>> extensions,
                                @NotNull ExtensionPointListener<T> @NotNull [] listeners) {
-    List<Pair<T, PluginDescriptor>> extensionList = null;
+    List<SimpleImmutableEntry<T, PluginDescriptor>> extensionList = null;
     for (ExtensionPointListener<T> listener : listeners) {
       if (listener instanceof ExtensionPointAdapter) {
         try {
@@ -683,14 +683,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         if (extensionList == null) {
           extensionList = extensions.get();
         }
-        for (Pair<? extends T, PluginDescriptor> extension : extensionList) {
+        for (SimpleImmutableEntry<? extends T, PluginDescriptor> extension : extensionList) {
           try {
             switch (event) {
               case REMOVED:
-                listener.extensionRemoved(extension.first, extension.second);
+                listener.extensionRemoved(extension.getKey(), extension.getValue());
                 break;
               case ADDED:
-                listener.extensionAdded(extension.first, extension.second);
+                listener.extensionAdded(extension.getKey(), extension.getValue());
                 break;
             }
           }
@@ -815,7 +815,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   final void clearUserCache() {
-    ConcurrentMap<Function<T, ?>, Map<?, ?>> map = keyMapperToCacheRef.get();
+    ConcurrentMap<?, Map<?, ?>> map = keyMapperToCacheRef.get();
     if (map != null) {
       map.clear();
     }
@@ -882,7 +882,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       listenerCallbacks.add(() -> {
         notifyListeners(ExtensionEvent.ADDED, () -> {
           return ContainerUtil.map(myAdapters.subList(oldSize, newSize),
-                                   adapter -> new Pair<>(processAdapter(adapter), pluginDescriptor));
+                                   adapter -> new SimpleImmutableEntry<>(processAdapter(adapter), pluginDescriptor));
         }, myListeners);
       });
     }
