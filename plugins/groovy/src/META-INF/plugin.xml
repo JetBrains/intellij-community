@@ -36,7 +36,7 @@
   <extensionPoints>
     <extensionPoint name="methodComparator" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="overloadResolver" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>
-    <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
+    <extensionPoint name="membersContributor" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="importContributor" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor"/>
     <extensionPoint name="astTransformationSupport" dynamic="true" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
     <extensionPoint name="renameHelper" dynamic="true" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
