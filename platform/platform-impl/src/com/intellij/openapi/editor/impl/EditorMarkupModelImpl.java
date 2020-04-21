@@ -66,6 +66,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.plaf.FontUIResource;
@@ -84,6 +85,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 public final class EditorMarkupModelImpl extends MarkupModelImpl
       implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
@@ -1686,7 +1688,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private class StatusAction extends DumbAwareAction implements CustomComponentAction {
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return new StatusButton(this, presentation, new EditorToolbarButtonLook(), place, myEditor.getColorsScheme());
+      return new StatusButton(this, presentation, new EditorToolbarButtonLook(),
+                              place, myEditor.getColorsScheme(),
+                              () -> showNavigation);
     }
 
     @Override
@@ -1738,7 +1742,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     private StatusButton(@NotNull AnAction action, @NotNull Presentation presentation,
                          @NotNull ActionButtonLook buttonLook, @NotNull String place,
-                         @NotNull EditorColorsScheme colorsScheme) {
+                         @NotNull EditorColorsScheme colorsScheme,
+                         @NotNull BooleanSupplier hasNavButtons) {
       setLayout(new GridBagLayout());
       setOpaque(false);
 
@@ -1817,7 +1822,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         updateContents(newStatus);
       }
 
-      setBorder(JBUI.Borders.empty(2, 2, 2, 0));
+      setBorder(new Border() {
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {}
+
+        @Override
+        public boolean isBorderOpaque() {
+          return false;
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+          return hasNavButtons.getAsBoolean() ? JBUI.insets(2, 2, 2, 0) : JBUI.insets(2);
+        }
+      });
     }
 
     @Override
