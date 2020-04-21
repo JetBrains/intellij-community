@@ -273,7 +273,7 @@ public class HtmlUtil {
     return false;
   }
 
-  public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
+  public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(PsiElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
 
