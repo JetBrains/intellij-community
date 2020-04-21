@@ -65,6 +65,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
   IntelliJPlatformProduct.RIDER -> "com.jetbrains.intellij.rider" to "riderRD"
 
   IntelliJPlatformProduct.RUBYMINE,
+  IntelliJPlatformProduct.PYCHARM_DS,
   IntelliJPlatformProduct.PYCHARM_EDU,
   IntelliJPlatformProduct.PHPSTORM,
   IntelliJPlatformProduct.WEBSTORM,
