@@ -222,8 +222,8 @@ public abstract class NonCodeMembersContributor {
   }
 
   private static final class Cache {
-    public MultiMap<String, NonCodeMembersContributor> classSpecifiedContributors;
-    public NonCodeMembersContributor[] allTypeContributors;
+    public final MultiMap<String, NonCodeMembersContributor> classSpecifiedContributors;
+    public final NonCodeMembersContributor[] allTypeContributors;
 
     private Cache(MultiMap<String, NonCodeMembersContributor> classSpecifiedContributors,
                   NonCodeMembersContributor[] allTypeContributors) {
