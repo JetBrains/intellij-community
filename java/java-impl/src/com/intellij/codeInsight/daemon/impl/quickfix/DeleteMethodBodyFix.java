@@ -19,13 +19,13 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +77,6 @@ public final class DeleteMethodBodyFix implements IntentionAction {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new DeleteMethodBodyFix(PreviewUtil.findSameElementInCopy(myMethod, target));
+    return new DeleteMethodBodyFix(PsiTreeUtil.findSameElementInCopy(myMethod, target));
   }
 }

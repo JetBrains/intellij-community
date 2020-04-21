@@ -21,11 +21,11 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -134,8 +134,8 @@ public final class RemoveRedundantArgumentsFix implements IntentionAction {
   @Override
   public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new RemoveRedundantArgumentsFix(
-      PreviewUtil.findSameElementInCopy(myTargetMethod, target),
-      ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> PreviewUtil.findSameElementInCopy(arg, target)),
+      PsiTreeUtil.findSameElementInCopy(myTargetMethod, target),
+      ContainerUtil.map2Array(myArguments, PsiExpression.class, arg -> PsiTreeUtil.findSameElementInCopy(arg, target)),
       mySubstitutor);
   }
 }

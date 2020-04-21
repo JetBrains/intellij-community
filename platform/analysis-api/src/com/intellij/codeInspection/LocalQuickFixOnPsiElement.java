@@ -3,13 +3,13 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,8 +121,8 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     PsiElement endElement = getEndElement();
     if (startElement == null && myStartElement != null || 
         endElement == null && myEndElement != null) return null;
-    startElement = PreviewUtil.findSameElementInCopy(startElement, target);
-    endElement = PreviewUtil.findSameElementInCopy(endElement, target);
+    startElement = PsiTreeUtil.findSameElementInCopy(startElement, target);
+    endElement = PsiTreeUtil.findSameElementInCopy(endElement, target);
     LocalQuickFixOnPsiElement clone;
     try {
       clone = (LocalQuickFixOnPsiElement)super.clone();

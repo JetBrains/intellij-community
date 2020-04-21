@@ -2,8 +2,8 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
@@ -61,6 +61,6 @@ public final class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiSwitchBlock block = myBlock.getElement();
-    return block == null ? null : new CreateMissingSwitchBranchesFix(PreviewUtil.findSameElementInCopy(block, target), myNames);
+    return block == null ? null : new CreateMissingSwitchBranchesFix(PsiTreeUtil.findSameElementInCopy(block, target), myNames);
   }
 }

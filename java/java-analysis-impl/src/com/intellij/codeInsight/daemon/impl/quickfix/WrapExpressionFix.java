@@ -6,13 +6,13 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -186,6 +186,6 @@ public class WrapExpressionFix implements IntentionAction {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new WrapExpressionFix(myExpectedType, PreviewUtil.findSameElementInCopy(myExpression, target));
+    return new WrapExpressionFix(myExpectedType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

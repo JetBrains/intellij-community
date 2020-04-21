@@ -18,11 +18,11 @@ package com.intellij.codeInspection.dataFlow.fix;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +64,6 @@ public class SurroundWithRequireNonNullFix implements LocalQuickFix {
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiExpression expression = myQualifierPointer.getElement();
     if (expression == null) return null;
-    return new SurroundWithRequireNonNullFix(PreviewUtil.findSameElementInCopy(expression, target));
+    return new SurroundWithRequireNonNullFix(PsiTreeUtil.findSameElementInCopy(expression, target));
   }
 }

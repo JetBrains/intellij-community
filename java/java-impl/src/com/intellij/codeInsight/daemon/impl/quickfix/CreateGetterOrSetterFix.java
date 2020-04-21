@@ -21,12 +21,12 @@ import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -144,6 +144,6 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CreateGetterOrSetterFix(myCreateGetter, myCreateSetter, PreviewUtil.findSameElementInCopy(myField, target));
+    return new CreateGetterOrSetterFix(myCreateGetter, myCreateSetter, PsiTreeUtil.findSameElementInCopy(myField, target));
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -30,6 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -243,7 +243,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
 
     @Override
     public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return new MyMethodArgumentFix(PreviewUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+      return new MyMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                      (Wrapper)myArgumentFixerActionFactory);
     }
   }

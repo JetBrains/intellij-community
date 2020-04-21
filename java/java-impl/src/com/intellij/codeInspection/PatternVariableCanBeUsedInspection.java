@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -93,7 +92,7 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     @Override
     public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
       PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
-      return instanceOf == null ? null : new PatternVariableCanBeUsedFix(myName, PreviewUtil
+      return instanceOf == null ? null : new PatternVariableCanBeUsedFix(myName, PsiTreeUtil
         .findSameElementInCopy(instanceOf, target));
     }
   }

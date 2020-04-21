@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
@@ -138,6 +137,6 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     PsiSwitchBlock block = myBlock.getElement();
-    return block == null ? null : new CreateDefaultBranchFix(PreviewUtil.findSameElementInCopy(block, target), myMessage);
+    return block == null ? null : new CreateDefaultBranchFix(PsiTreeUtil.findSameElementInCopy(block, target), myMessage);
   }
 }

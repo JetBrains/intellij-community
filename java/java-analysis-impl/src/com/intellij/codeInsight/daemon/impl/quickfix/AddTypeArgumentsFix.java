@@ -17,11 +17,11 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -137,7 +137,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddTypeArgumentsFix(PreviewUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                    myArgumentFixerActionFactory);
   }
 

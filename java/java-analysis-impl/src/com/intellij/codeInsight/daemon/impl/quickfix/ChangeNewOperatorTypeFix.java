@@ -9,7 +9,6 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -203,6 +202,6 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new ChangeNewOperatorTypeFix(myType, PreviewUtil.findSameElementInCopy(myExpression, target));
+    return new ChangeNewOperatorTypeFix(myType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

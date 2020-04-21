@@ -21,7 +21,6 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -128,7 +127,7 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
     PsiExpression expression = myExpressionPtr.getElement();
     PsiStatement statement = myStatementPtr.getElement();
     if (expression == null || statement == null) return null;
-    return new DeleteSideEffectsAwareFix(PreviewUtil.findSameElementInCopy(statement, target),
-                                         PreviewUtil.findSameElementInCopy(expression, target));
+    return new DeleteSideEffectsAwareFix(PsiTreeUtil.findSameElementInCopy(statement, target),
+                                         PsiTreeUtil.findSameElementInCopy(expression, target));
   }
 }

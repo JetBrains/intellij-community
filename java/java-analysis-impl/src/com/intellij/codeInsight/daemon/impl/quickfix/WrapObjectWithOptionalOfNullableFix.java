@@ -23,10 +23,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.codeInspection.util.PreviewUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -68,7 +68,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new WrapObjectWithOptionalOfNullableFix(PreviewUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+    return new WrapObjectWithOptionalOfNullableFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                                    myArgumentFixerActionFactory);
   }
 
