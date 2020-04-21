@@ -14,7 +14,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,7 +45,6 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     myLock = "lock for KeyedExtensionCollector " + epName;
   }
 
-  @TestOnly
   public void clearCache() {
     myCache.clear();
     myTracker.incModificationCount();
