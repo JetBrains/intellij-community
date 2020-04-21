@@ -96,6 +96,8 @@ iml_project(
         "//tools/adt/idea/android-lang:intellij.android.lang.tests",
         "//tools/adt/idea/android-layout-inspector",
         "//tools/adt/idea/android-layout-inspector:android-layout-inspector-test",
+        "//tools/adt/idea/android-npw:intellij.android.newProjectWizard",
+        "//tools/adt/idea/android-npw:intellij.android.newProjectWizard.tests",
         "//tools/adt/idea/android-plugin:intellij.android.plugin",
         "//tools/adt/idea/android-templates:intellij.android.templates.tests",
         "//tools/adt/idea/android-test-framework:intellij.android.testFramework",
