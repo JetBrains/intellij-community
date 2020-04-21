@@ -107,7 +107,8 @@ public interface DocumentationProvider {
   /**
    * This is used to display rendered documentation in editor, in place of corresponding documentation comment's text.
    * Documentation comment PSI elements should implement {@link PsiDocCommentBase} for this functionality to work.
-   * Value returned by {@link PsiDocCommentBase#getOwner()} will be passed as {@code element} parameter to this method.
+   * Value returned by {@link PsiDocCommentBase#getOwner()} will be passed as {@code element} parameter to this method
+   * (in {@code getOwner} method returns {@code null}, comment element itself will be passed as a parameter).
    *
    * @see #collectDocComments(PsiFile, Consumer)
    */

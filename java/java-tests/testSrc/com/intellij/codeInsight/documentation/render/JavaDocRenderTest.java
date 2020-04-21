@@ -84,9 +84,24 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyFoldingState("[FoldRegion +(0:19), placeholder='']");
   }
 
+  public void testPackageInfo() {
+    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
+    configureFromFileText("package-info.java",
+                          "/**\n" +
+                          " * whatever\n" +
+                          " */\n" +
+                          "package some;");
+    updateRenderedItems(true);
+    verifyItem(0, 19, "whatever");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
+    updateRenderedItems(enableRendering);
+  }
+
+  private void updateRenderedItems(boolean enableRendering) {
     DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor().getDocument(), getFile());
     DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, enableRendering);
   }

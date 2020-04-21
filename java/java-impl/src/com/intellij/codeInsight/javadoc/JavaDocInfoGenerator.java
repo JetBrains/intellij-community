@@ -427,6 +427,9 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiField) {
       generateFieldJavaDoc(buffer, (PsiField)myElement, true, true);
     }
+    else if (myElement instanceof PsiDocComment) { // package-info case
+      generatePackageJavaDoc(buffer, (PsiDocComment)myElement, true);
+    }
     else {
       return null;
     }
@@ -694,9 +697,7 @@ public class JavaDocInfoGenerator {
         if (node != null) {
           ASTNode docCommentNode = findRelevantCommentNode(node);
           if (docCommentNode != null) {
-            if (generatePrologue) generatePrologue(buffer);
-            generateCommonSection(buffer, (PsiDocComment)docCommentNode.getPsi());
-            buffer.append(DocumentationMarkup.SECTIONS_END);
+            generatePackageJavaDoc(buffer, (PsiDocComment)docCommentNode.getPsi(), generatePrologue);
             break;
           }
         }
@@ -707,6 +708,12 @@ public class JavaDocInfoGenerator {
         break;
       }
     }
+  }
+
+  private void generatePackageJavaDoc(StringBuilder buffer, PsiDocComment comment, boolean generatePrologue) {
+    if (generatePrologue) generatePrologue(buffer);
+    generateCommonSection(buffer, comment);
+    buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
   private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologue) {
