@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ref.GCWatcher;
-import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,7 +62,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private @Nullable List<Element> myActionElements;
   // extension point name -> list of extension elements
-  @Nullable THashMap<String, List<Element>> myExtensions;
+  // LinkedHashMap for predictable register order
+  private @Nullable LinkedHashMap<String, List<Element>> epNameToExtensionElements;
 
   final ContainerDescriptor myAppContainerDescriptor = new ContainerDescriptor();
   final ContainerDescriptor myProjectContainerDescriptor = new ContainerDescriptor();
@@ -81,7 +81,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private boolean myEnabled = true;
   private boolean myDeleted;
-  private boolean myExtensionsCleared = false;
+  private boolean isExtensionsCleared = false;
 
   boolean incomplete;
 
@@ -179,7 +179,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       Element child = (Element)content;
       switch (child.getName()) {
         case "extensions":
-          XmlReader.readExtensions(this, context.parentContext, child);
+          epNameToExtensionElements = XmlReader.readExtensions(this, epNameToExtensionElements, context.parentContext, child);
           break;
 
         case "extensionPoints":
@@ -534,28 +534,29 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
                                  @NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                  @NotNull ContainerDescriptor containerDescriptor,
                                  @Nullable List<Runnable> listenerCallbacks) {
-    THashMap<String, List<Element>> extensions;
+    LinkedHashMap<String, List<Element>> extensions;
     if (containerDescriptor == myAppContainerDescriptor) {
       extensions = containerDescriptor.extensions;
       if (extensions == null) {
-        if (myExtensions == null) {
+        if (epNameToExtensionElements == null) {
           return;
         }
 
-        myExtensions.retainEntries((name, list) -> {
-          if (area.registerExtensions(name, list, rootDescriptor, componentManager, listenerCallbacks)) {
+        Iterator<Map.Entry<String, List<Element>>> iterator = epNameToExtensionElements.entrySet().iterator();
+        while (iterator.hasNext()) {
+          Map.Entry<String, List<Element>> entry = iterator.next();
+          if (area.registerExtensions(entry.getKey(), entry.getValue(), rootDescriptor, componentManager, listenerCallbacks)) {
+            iterator.remove();
             if (myAppContainerDescriptor.extensions == null) {
-              myAppContainerDescriptor.extensions = new THashMap<>();
+              myAppContainerDescriptor.extensions = new LinkedHashMap<>();
             }
-            addExtensionList(myAppContainerDescriptor.extensions, name, list);
-            return false;
+            addExtensionList(myAppContainerDescriptor.extensions, entry.getKey(), entry.getValue());
           }
-          return true;
-        });
-        myExtensionsCleared = true;
+        }
+        isExtensionsCleared = true;
 
-        if (myExtensions.isEmpty()) {
-          myExtensions = null;
+        if (epNameToExtensionElements.isEmpty()) {
+          epNameToExtensionElements = null;
         }
 
         return;
@@ -563,15 +564,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       // else... it means that another application is created for the same set of plugins - at least, this case should be supported for tests
     }
     else {
-      extensions = myExtensions;
+      extensions = epNameToExtensionElements;
       if (extensions == null) {
         return;
       }
     }
 
-    extensions.forEachEntry((name, list) -> {
+    extensions.forEach((name, list) -> {
       area.registerExtensions(name, list, rootDescriptor, componentManager, listenerCallbacks);
-      return true;
     });
   }
 
@@ -686,16 +686,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public @Nullable Map<String, List<Element>> getExtensions() {
-    if (myExtensionsCleared) {
+    if (isExtensionsCleared) {
       throw new IllegalStateException("Trying to retrieve extensions list after extension elements have been cleared");
     }
-    if (myExtensions == null) {
+    if (epNameToExtensionElements == null) {
       return null;
     }
     else {
-      Map<String, List<Element>> result = new THashMap<>(myExtensions.size());
-      result.putAll(myExtensions);
-      return result;
+      return new LinkedHashMap<>(epNameToExtensionElements);
     }
   }
 
@@ -864,13 +862,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   void mergeOptionalConfig(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    if (myExtensions == null) {
-      myExtensions = descriptor.myExtensions;
+    if (epNameToExtensionElements == null) {
+      epNameToExtensionElements = descriptor.epNameToExtensionElements;
     }
-    else if (descriptor.myExtensions != null) {
-      descriptor.myExtensions.forEachEntry((name, list) -> {
-        addExtensionList(myExtensions, name, list);
-        return true;
+    else if (descriptor.epNameToExtensionElements != null) {
+      descriptor.epNameToExtensionElements.forEach((name, list) -> {
+        addExtensionList(epNameToExtensionElements, name, list);
       });
     }
 

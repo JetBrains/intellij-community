@@ -14,15 +14,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
-import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 final class XmlReader {
@@ -254,9 +255,11 @@ final class XmlReader {
     return value == null || Boolean.parseBoolean(value);
   }
 
-  static void readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor, DescriptorListLoadingContext loadingContext, Element child) {
+  static @Nullable LinkedHashMap<String, List<Element>> readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                       @Nullable LinkedHashMap<String, List<Element>> epNameToExtensions,
+                                                                       @NotNull DescriptorListLoadingContext loadingContext,
+                                                                       @NotNull Element child) {
     String ns = child.getAttributeValue("defaultExtensionNs");
-    THashMap<String, List<Element>> epNameToExtensions = descriptor.myExtensions;
     Interner<String> stringInterner = loadingContext.getStringInterner();
     for (Element extensionElement : child.getChildren()) {
       String os = extensionElement.getAttributeValue("os");
@@ -281,8 +284,7 @@ final class XmlReader {
           break;
         default:
           if (epNameToExtensions == null) {
-            epNameToExtensions = new THashMap<>();
-            descriptor.myExtensions = epNameToExtensions;
+            epNameToExtensions = new LinkedHashMap<>();
           }
 
           List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
@@ -296,6 +298,7 @@ final class XmlReader {
 
       containerDescriptor.addService(readServiceDescriptor(extensionElement, loadingContext));
     }
+    return epNameToExtensions;
   }
 
   /**
