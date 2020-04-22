@@ -120,9 +120,9 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @Nullable
   public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber,
                                                          int layer,
-                                                         @Nullable TextAttributes textAttributes,
+                                                         @Nullable TextAttributes forcedTextAttributes,
                                                          @Nullable TextAttributesKey textAttributesKey) {
-    return myDelegate.addPersistentLineHighlighter(lineNumber, layer, textAttributes, textAttributesKey);
+    return myDelegate.addPersistentLineHighlighter(lineNumber, layer, forcedTextAttributes, textAttributesKey);
   }
 
   @Override
@@ -140,19 +140,19 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   public RangeHighlighter addRangeHighlighter(int startOffset,
                                               int endOffset,
                                               int layer,
-                                              @Nullable TextAttributes textAttributes,
+                                              @Nullable TextAttributes forcedTextAttributes,
                                               @Nullable TextAttributesKey textAttributesKey,
                                               @NotNull HighlighterTargetArea targetArea) {
-    return myDelegate.addRangeHighlighter(startOffset, endOffset, layer, textAttributes, textAttributesKey, targetArea);
+    return myDelegate.addRangeHighlighter(startOffset, endOffset, layer, forcedTextAttributes, textAttributesKey, targetArea);
   }
 
   @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(int line,
                                              int layer,
-                                             @Nullable TextAttributes textAttributes,
+                                             @Nullable TextAttributes forcedTextAttributes,
                                              @Nullable TextAttributesKey textAttributesKey) {
-    return myDelegate.addLineHighlighter(line, layer, textAttributes, textAttributesKey);
+    return myDelegate.addLineHighlighter(line, layer, forcedTextAttributes, textAttributesKey);
   }
 
   @Override
@@ -160,12 +160,12 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                    int endOffset,
                                                                    int layer,
-                                                                   @Nullable TextAttributes textAttributes,
+                                                                   @Nullable TextAttributes forcedTextAttributes,
                                                                    @Nullable TextAttributesKey textAttributesKey,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    return myDelegate.addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, textAttributesKey,
+    return myDelegate.addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, forcedTextAttributes, textAttributesKey,
                                                              targetArea, isPersistent, changeAttributesAction);
   }
 

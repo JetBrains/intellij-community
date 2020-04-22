@@ -54,7 +54,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   public RangeHighlighter addRangeHighlighter(int startOffset,
                                               int endOffset,
                                               int layer,
-                                              @Nullable TextAttributes textAttributes,
+                                              @Nullable TextAttributes forcedTextAttributes,
                                               @Nullable TextAttributesKey textAttributesKey,
                                               @NotNull HighlighterTargetArea targetArea) {
     throw new ProcessCanceledException();
@@ -65,7 +65,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                    int endOffset,
                                                                    int layer,
-                                                                   TextAttributes textAttributes,
+                                                                   TextAttributes forcedTextAttributes,
                                                                    @Nullable TextAttributesKey textAttributesKey,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
@@ -82,7 +82,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   @NotNull
   public RangeHighlighter addLineHighlighter(int line,
                                              int layer,
-                                             @Nullable TextAttributes textAttributes,
+                                             @Nullable TextAttributes forcedTextAttributes,
                                              @Nullable TextAttributesKey textAttributesKey) {
     throw new ProcessCanceledException();
   }
@@ -116,7 +116,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   @Override
   public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber,
                                                          int layer,
-                                                         @Nullable TextAttributes textAttributes,
+                                                         @Nullable TextAttributes forcedTextAttributes,
                                                          @Nullable TextAttributesKey textAttributesKey) {
     return null;
   }

@@ -57,12 +57,12 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public RangeHighlighter addRangeHighlighter(final int startOffset,
                                               final int endOffset,
                                               final int layer,
-                                              final @Nullable TextAttributes textAttributes,
+                                              final @Nullable TextAttributes forcedTextAttributes,
                                               final @Nullable TextAttributesKey textAttributesKey,
                                               @NotNull final HighlighterTargetArea targetArea) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myHostModel.addRangeHighlighter(
-      hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes, textAttributesKey, targetArea);
+      hostRange.getStartOffset(), hostRange.getEndOffset(), layer, forcedTextAttributes, textAttributesKey, targetArea);
   }
 
   @NotNull
@@ -70,14 +70,14 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                    int endOffset,
                                                                    int layer,
-                                                                   @Nullable TextAttributes textAttributes,
+                                                                   @Nullable TextAttributes forcedTextAttributes,
                                                                    @Nullable TextAttributesKey textAttributesKey,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myHostModel.addRangeHighlighterAndChangeAttributes(hostRange.getStartOffset(), hostRange.getEndOffset(), layer,
-                                                              textAttributes, textAttributesKey,
+                                                              forcedTextAttributes, textAttributesKey,
                                                               targetArea, isPersistent, changeAttributesAction);
   }
 
@@ -91,10 +91,10 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   @NotNull
   public RangeHighlighter addLineHighlighter(final int line,
                                              final int layer,
-                                             final @Nullable TextAttributes textAttributes,
+                                             final @Nullable TextAttributes forcedTextAttributes,
                                              final @Nullable TextAttributesKey textAttributesKey) {
     int hostLine = myDocument.injectedToHostLine(line);
-    return myHostModel.addLineHighlighter(hostLine, layer, textAttributes, textAttributesKey);
+    return myHostModel.addLineHighlighter(hostLine, layer, forcedTextAttributes, textAttributesKey);
   }
 
   @Override
@@ -120,10 +120,10 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   @Override
   public RangeHighlighterEx addPersistentLineHighlighter(final int line,
                                                          final int layer,
-                                                         final @Nullable TextAttributes textAttributes,
+                                                         final @Nullable TextAttributes forcedTextAttributes,
                                                          final @Nullable TextAttributesKey textAttributesKey) {
     int hostLine = myDocument.injectedToHostLine(line);
-    return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes, textAttributesKey);
+    return myHostModel.addPersistentLineHighlighter(hostLine, layer, forcedTextAttributes, textAttributesKey);
   }
 
 

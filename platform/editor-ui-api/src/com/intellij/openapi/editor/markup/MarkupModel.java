@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Document;
@@ -35,11 +35,11 @@ public interface MarkupModel extends UserDataHolder {
    *                       layer number override highlighters with lower layer number;
    *                       layer number values for standard IDE highlighters are defined in
    *                       {@link HighlighterLayer})
-   * @param textAttributes forced attributes to use for highlighting,
+   * @param forcedTextAttributes forced attributes to use for highlighting,
    *                       or {@code null} if the textAttributeKey should be used,
    *                       or it doesn't modify the text attributes.
    * @param textAttributesKey the key to use for highlighting with the current color scheme,
-   *                       or {@code null} if the highlighter doesn't have one
+   *                       or {@code null} if it doesn't modify the text attributes.
    * @param targetArea     type of highlighting (specific range or all full lines covered by the range).
    * @return the highlighter instance.
    */
@@ -47,7 +47,7 @@ public interface MarkupModel extends UserDataHolder {
   RangeHighlighter addRangeHighlighter(int startOffset,
                                        int endOffset,
                                        int layer,
-                                       @Nullable TextAttributes textAttributes,
+                                       @Nullable TextAttributes forcedTextAttributes,
                                        @Nullable TextAttributesKey textAttributesKey,
                                        @NotNull HighlighterTargetArea targetArea);
 
@@ -72,17 +72,17 @@ public interface MarkupModel extends UserDataHolder {
    *                       layer number override highlighters with lower layer number;
    *                       layer number values for standard IDE highlighters are defined in
    *                       {@link HighlighterLayer})
-   * @param textAttributes forced attributes to use for highlighting,
+   * @param forcedTextAttributes forced attributes to use for highlighting,
    *                       or {@code null} if the textAttributeKey should be used,
    *                       or it doesn't modify the text attributes.
    * @param textAttributesKey the key to use for highlighting with the current color scheme,
-   *                       or {@code null} if the highlighter doesn't have one
+   *                       or {@code null} if it doesn't modify the text attributes.
    * @return the highlighter instance.
    */
   @NotNull
   RangeHighlighter addLineHighlighter(int line,
                                       int layer,
-                                      @Nullable TextAttributes textAttributes,
+                                      @Nullable TextAttributes forcedTextAttributes,
                                       @Nullable TextAttributesKey textAttributesKey);
 
   /**

@@ -20,7 +20,7 @@ public interface MarkupModelEx extends MarkupModel {
   @Nullable
   RangeHighlighterEx addPersistentLineHighlighter(int lineNumber,
                                                   int layer,
-                                                  @Nullable TextAttributes textAttributes,
+                                                  @Nullable TextAttributes forcedTextAttributes,
                                                   @Nullable TextAttributesKey textAttributesKey);
 
   /**
@@ -68,7 +68,7 @@ public interface MarkupModelEx extends MarkupModel {
   RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                             int endOffset,
                                                             int layer,
-                                                            @Nullable TextAttributes textAttributes,
+                                                            @Nullable TextAttributes forcedTextAttributes,
                                                             @Nullable TextAttributesKey textAttributesKey,
                                                             @NotNull HighlighterTargetArea targetArea,
                                                             boolean isPersistent,
