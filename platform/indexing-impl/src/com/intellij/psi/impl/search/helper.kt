@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.SearchSession
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
@@ -243,6 +244,7 @@ private class Layer<T>(
       request.searchContext,
       options,
       request.containerName,
+      SearchSession(),
       MyBulkOccurrenceProcessor(project, processors)
     )
   }

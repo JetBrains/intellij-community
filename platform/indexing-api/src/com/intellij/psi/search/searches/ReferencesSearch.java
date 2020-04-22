@@ -42,7 +42,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       myScope = scope;
       myIgnoreAccessScope = ignoreAccessScope;
       isSharedOptimizer = optimizer != null;
-      myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession()) : optimizer;
+      myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession(elementToSearch)) : optimizer;
       myProject = PsiUtilCore.getProjectInReadAction(elementToSearch);
     }
 
