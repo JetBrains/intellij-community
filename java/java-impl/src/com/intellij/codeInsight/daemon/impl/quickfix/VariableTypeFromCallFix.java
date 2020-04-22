@@ -17,6 +17,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -103,7 +104,8 @@ public class VariableTypeFromCallFix implements IntentionAction {
                                                                                    parameters,
                                                                                    expressions, PsiSubstitutor.EMPTY, resolved,
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
-            if (psiSubstitutor.getSubstitutionMap().values().stream().anyMatch(t -> t.equalsToText(CommonClassNames.JAVA_LANG_VOID))) {
+            if (ContainerUtil.exists(psiSubstitutor.getSubstitutionMap().values(), 
+                                     t -> t != null && t.equalsToText(CommonClassNames.JAVA_LANG_VOID))) {
               continue;
             }
             final PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(JavaPsiFacade.getElementFactory(
