@@ -319,6 +319,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     });
   }
 
+  @ApiStatus.Internal
   public static boolean shouldRunHeadlessTasksSynchronously() {
     return SystemProperties.getBooleanProperty("intellij.progress.task.ignoreHeadless", false);
   }
