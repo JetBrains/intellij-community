@@ -14,6 +14,7 @@ import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.InMemoryDataEnumerator;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(SerializationManagerImpl.class);
 
@@ -219,7 +221,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  private void dropSerializerData() {
+  public void dropSerializerData() {
     //noinspection SynchronizeOnThis
     synchronized (this) {
       IStubElementType.dropRegisteredTypes();
