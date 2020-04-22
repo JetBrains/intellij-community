@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -739,19 +739,21 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           myResult = new IdentityEvaluator(labeledValue);
           return;
         }
+        final PsiVariable psiVar = (PsiVariable)element;
+        String localName = psiVar.getName();
         //synthetic variable
         final PsiFile containingFile = element.getContainingFile();
-        if(containingFile instanceof PsiCodeFragment && myCurrentFragmentEvaluator != null && myVisitedFragments.contains(containingFile)) {
+        if (myCurrentFragmentEvaluator != null &&
+            ((containingFile instanceof PsiCodeFragment && myVisitedFragments.contains(containingFile)) ||
+             myCurrentFragmentEvaluator.hasValue(localName))) {
           // psiVariable may live in PsiCodeFragment not only in debugger editors, for example Fabrique has such variables.
           // So treat it as synthetic var only when this code fragment is located in DebuggerEditor,
           // that's why we need to check that containing code fragment is the one we visited
           JVMName jvmName = JVMNameUtil.getJVMQualifiedName(CompilingEvaluatorTypesUtil.getVariableType((PsiVariable)element));
-          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName(), jvmName);
+          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, localName, jvmName);
           return;
         }
         // local variable
-        final PsiVariable psiVar = (PsiVariable)element;
-        final String localName = psiVar.getName();
         PsiClass variableClass = getContainingClass(psiVar);
         final PsiClass positionClass = getPositionClass();
         if (Objects.equals(positionClass, variableClass)) {
@@ -935,7 +937,19 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       expression.getOperand().accept(this);
 //    ClassObjectEvaluator typeEvaluator = new ClassObjectEvaluator(type.getCanonicalText());
       Evaluator operandEvaluator = myResult;
-      myResult = new InstanceofEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)));
+
+      Evaluator patternVariable = null;
+      PsiPattern pattern = expression.getPattern();
+      if (pattern instanceof PsiTypeTestPattern) {
+        PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+        if (variable != null) {
+          String variableName = variable.getName();
+          myCurrentFragmentEvaluator.setInitialValue(variableName, null);
+          patternVariable = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, variableName, null);
+        }
+      }
+
+      myResult = new InstanceofEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)), patternVariable);
     }
 
     @Override
@@ -1525,6 +1539,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     protected ExpressionEvaluator buildElement(final PsiElement element) throws EvaluateException {
       LOG.assertTrue(element.isValid());
 
+      setNewCodeFragmentEvaluator(); // in case element is not a code fragment
       myContextPsiClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
       try {
         element.accept(this);
