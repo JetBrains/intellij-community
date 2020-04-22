@@ -53,9 +53,9 @@ fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement
 inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   uastReferenceProvider(T::class.java, provider)
 
-private val CACHED_UAST_ELEMENTS = Key.create<MutableMap<List<Class<out UElement>>, UElement>>("CACHED_UAST_ELEMENTS")
-internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEMENT")
-internal val USAGE_PSI_ELEMENT = Key.create<PsiElement>("USAGE_PSI_ELEMENT")
+private val CACHED_UAST_ELEMENTS : Key<MutableMap<List<Class<out UElement>>, UElement>> = Key.create("CACHED_UAST_ELEMENTS")
+internal val REQUESTED_PSI_ELEMENT : Key<PsiElement> = Key.create("REQUESTED_PSI_ELEMENT")
+internal val USAGE_PSI_ELEMENT : Key<PsiElement> = Key.create("USAGE_PSI_ELEMENT")
 
 internal fun getOrCreateCachedElement(element: PsiElement,
                                       context: ProcessingContext,
