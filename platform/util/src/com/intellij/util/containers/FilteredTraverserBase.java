@@ -195,7 +195,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    * Configures the traverser to cache its structure.
    * <p/>
    * This property is not reset by {@code reset()} call.
-   * @see TreeTraversal#cached()
+   * @see TreeTraversal#cached(Map)
    */
   @NotNull
   public final Self cached() {
@@ -551,6 +551,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
       return result == null ? (Condition<T>)this::valueAnd : Conditions.alwaysTrue();
     }
 
+    /** @noinspection SameParameterValue*/
     Cond<T>[] toArray(boolean inverse) {
       //noinspection unchecked
       Cond<T>[] result = new Cond[length];
