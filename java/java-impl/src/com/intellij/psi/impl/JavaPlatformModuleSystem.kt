@@ -211,6 +211,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     protected abstract fun update(options: MutableList<String>)
 
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
+
     override fun startInWriteAction() = true
   }
 
