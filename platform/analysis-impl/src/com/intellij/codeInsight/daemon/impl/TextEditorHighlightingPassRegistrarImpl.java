@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
+public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
@@ -41,7 +41,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
 
-    reregisterFactories();
+    reRegisterFactories();
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<TextEditorHighlightingPassFactoryRegistrar>() {
       @Override
@@ -56,12 +56,12 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       @Override
       public void extensionRemoved(@NotNull TextEditorHighlightingPassFactoryRegistrar factoryRegistrar,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-        reregisterFactories();
+        reRegisterFactories();
       }
     }, this);
   }
 
-  private void reregisterFactories() {
+  private void reRegisterFactories() {
     synchronized (this) {
       checkedForCycles = false;
       myRegisteredPassFactories.clear();
@@ -80,7 +80,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   @ApiStatus.Internal
   void runInspectionsAfterCompletionOfGeneralHighlightPass(boolean flag) {
     runInspectionsAfterCompletionOfGeneralHighlightPass = flag;
-    reregisterFactories();
+    reRegisterFactories();
   }
 
   @ApiStatus.Internal
