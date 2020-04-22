@@ -32,7 +32,7 @@ import javax.swing.*;
 
 public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
-  public boolean ignoreAnnotatedObject = false;
+  public boolean ignoreAnnotatedObject = true;
 
   @Nullable
   @Override
