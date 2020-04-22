@@ -4,6 +4,10 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.EntityDataDelegation
+import com.intellij.workspace.api.pstorage.PEntityData
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.PTypedEntity
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
 import org.jdom.Element
@@ -41,8 +45,20 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
  * This entity stores order of artifacts in ipr file. This is needed to ensure that artifact tags are saved in the same order to avoid
  * unnecessary modifications of ipr file.
  */
-internal interface ArtifactsOrderEntity : ModifiableTypedEntity<ArtifactsOrderEntity> {
-  var orderOfArtifacts: List<String>
+@Suppress("unused")
+internal class ArtifactsOrderEntityData : PEntityData<ArtifactsOrderEntity>() {
+  lateinit var orderOfArtifacts: List<String>
+  override fun createEntity(snapshot: TypedEntityStorage): ArtifactsOrderEntity {
+    return ArtifactsOrderEntity(orderOfArtifacts.toList()).also { addMetaData(it, snapshot) }
+  }
+}
+
+internal class ArtifactsOrderEntity(
+  val orderOfArtifacts: List<String>
+) : PTypedEntity()
+
+internal class ModifiableArtifactsOrderEntity : PModifiableTypedEntity<ArtifactsOrderEntity>()  {
+  var orderOfArtifacts: List<String> by EntityDataDelegation()
 }
 
 internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
@@ -72,12 +88,12 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     if (preserveOrder) {
       val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
       if (entity != null) {
-        builder.modifyEntity(ArtifactsOrderEntity::class.java, entity) {
+        builder.modifyEntity(ModifiableArtifactsOrderEntity::class.java, entity) {
           orderOfArtifacts = orderOfItems
         }
       }
       else {
-        builder.addEntity(ArtifactsOrderEntity::class.java, source) {
+        builder.addEntity(ModifiableArtifactsOrderEntity::class.java, source) {
           orderOfArtifacts = orderOfItems
         }
       }

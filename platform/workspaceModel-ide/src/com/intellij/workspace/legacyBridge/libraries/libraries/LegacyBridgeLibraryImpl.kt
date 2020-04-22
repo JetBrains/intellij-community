@@ -120,25 +120,7 @@ internal class LegacyBridgeLibraryImpl(
   internal val snapshotValue = CachedValueWithParameter { storage, id: LibraryId ->
     LibraryViaTypedEntity(
       libraryImpl = this,
-      libraryEntity = storage.resolve(id) ?: object : LibraryEntity {
-        override val entitySource: EntitySource
-          get() = throw NotImplementedError()
-
-        override fun hasEqualProperties(e: TypedEntity): Boolean {
-          return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
-        }
-
-        override val tableId: LibraryTableId
-          get() = throw NotImplementedError()
-        override val name: String
-          get() = id.name
-        override val roots: List<LibraryRoot>
-          get() = emptyList()
-        override val excludedRoots: List<VirtualFileUrl>
-          get() = emptyList()
-
-        override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String) = emptySequence<R>()
-      },
+      libraryEntity = storage.resolve(id) ?: FakeLibraryEntity(id.name),
       storage = storage,
       libraryTable = libraryTable,
       filePointerProvider = filePointerProvider,

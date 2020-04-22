@@ -152,13 +152,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         // Save the order in which sourceRoots appear in the module
         val orderingEntity = contentRootEntity.getSourceRootOrder()
         if (orderingEntity == null) {
-          builder.addEntity(SourceRootOrderEntity::class.java, entitySource) {
+          builder.addEntity(ModifiableSourceRootOrderEntity::class.java, entitySource) {
             this.contentRootEntity = contentRootEntity
             this.orderOfSourceRoots = orderOfItems
           }
         }
         else {
-          builder.modifyEntity(SourceRootOrderEntity::class.java, orderingEntity) {
+          builder.modifyEntity(ModifiableSourceRootOrderEntity::class.java, orderingEntity) {
             orderOfSourceRoots = orderOfItems
           }
         }

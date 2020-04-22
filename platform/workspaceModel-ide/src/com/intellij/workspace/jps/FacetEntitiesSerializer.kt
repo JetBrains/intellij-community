@@ -4,6 +4,12 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.EntityDataDelegation
+import com.intellij.workspace.api.pstorage.PEntityData
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.PTypedEntity
+import com.intellij.workspace.api.pstorage.references.MutableOneToOneChild
+import com.intellij.workspace.api.pstorage.references.OneToOneChild
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -22,12 +28,12 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     if (orderOfFacets.size > 1) {
       val entity = moduleEntity.facetsOrderEntity
       if (entity != null) {
-        builder.modifyEntity(FacetsOrderEntity::class.java, entity) {
+        builder.modifyEntity(ModifiableFacetsOrderEntity::class.java, entity) {
           this.orderOfFacets = orderOfFacets
         }
       }
       else {
-        builder.addEntity(FacetsOrderEntity::class.java, internalSource) {
+        builder.addEntity(ModifiableFacetsOrderEntity::class.java, internalSource) {
           module = moduleEntity
           this.orderOfFacets = orderOfFacets
         }
@@ -100,9 +106,25 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
  * This entity stores order of facets in iml file. This is needed to ensure that facet tags are saved in the same order to avoid
  * unnecessary modifications of iml file.
  */
-internal interface FacetsOrderEntity : ModifiableTypedEntity<FacetsOrderEntity> {
-  var orderOfFacets: List<String>
-  var module: ModuleEntity
+
+@Suppress("unused")
+internal class FacetsOrderEntityData : PEntityData<FacetsOrderEntity>() {
+  lateinit var orderOfFacets: List<String>
+
+  override fun createEntity(snapshot: TypedEntityStorage): FacetsOrderEntity {
+    return FacetsOrderEntity(orderOfFacets.toList()).also { addMetaData(it, snapshot) }
+  }
+}
+
+internal class FacetsOrderEntity(
+  val orderOfFacets: List<String>
+) : PTypedEntity() {
+  val module: ModuleEntity by OneToOneChild.HardRef.NotNull(ModuleEntity::class, true)
+}
+
+internal class ModifiableFacetsOrderEntity : PModifiableTypedEntity<FacetsOrderEntity>() {
+  var orderOfFacets: List<String> by EntityDataDelegation()
+  var module: ModuleEntity by MutableOneToOneChild.HardRef.NotNull(FacetsOrderEntity::class, ModuleEntity::class, true)
 }
 
 private val ModuleEntity.facetsOrderEntity get() = referrers(FacetsOrderEntity::module).firstOrNull()

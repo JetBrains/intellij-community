@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.VirtualFileUrlManager
-import com.intellij.workspace.api.verifySerializationRoundTrip
+import com.intellij.workspace.api.verifyPSerializationRoundTrip
 import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Before
 import org.junit.ClassRule
@@ -34,7 +34,7 @@ class ImlSerializationTest {
     val storageBuilder = TypedEntityStorageBuilder.create()
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     val storage = storageBuilder.toStorage()
-    val byteArray = verifySerializationRoundTrip(storage, virtualFileManager)
+    val byteArray = verifyPSerializationRoundTrip(storage, virtualFileManager)
     println("Serialized size: ${byteArray.size}")
   }
 

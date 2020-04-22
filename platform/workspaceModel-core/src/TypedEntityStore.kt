@@ -1,6 +1,5 @@
 package com.intellij.workspace.api
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -140,30 +139,13 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
 
   companion object {
 
-    private const val NEW_STORE_REGISTRY_KEY = "ide.new.project.model.newstorage"
-    private val newStoreEnabled = Registry.`is`(NEW_STORE_REGISTRY_KEY, false)
-
-    fun create(): TypedEntityStorageBuilder {
-      return if (newStoreEnabled) {
-        PEntityStorageBuilder.create()
-      }
-      else {
-        TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
-      }
-    }
+    fun create(): TypedEntityStorageBuilder = PEntityStorageBuilder.create()
 
     fun createProxy(): TypedEntityStorageBuilder {
       return TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
     }
 
-    fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder {
-      return if (newStoreEnabled) {
-        PEntityStorageBuilder.from(storage)
-      }
-      else {
-        TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
-      }
-    }
+    fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder = PEntityStorageBuilder.from(storage)
 
     fun fromProxy(storage: TypedEntityStorage): TypedEntityStorageBuilder {
       return TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)

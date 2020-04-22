@@ -68,28 +68,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
         .sortedByDescending { it.url.url.length }
         .find { it.url.isEqualOrParentOf(sourceRoot.url) }
 
-      val contentEntry = existingContentEntry ?: object : ContentRootEntity {
-        override val url: VirtualFileUrl
-          get() = sourceRoot.url
-
-        override val excludedUrls: List<VirtualFileUrl>
-          get() = emptyList()
-
-        override val excludedPatterns: List<String>
-          get() = emptyList()
-
-        override val module: ModuleEntity
-          get() = moduleEntity
-
-        override val entitySource: EntitySource
-          get() = moduleEntity.entitySource
-
-        override fun hasEqualProperties(e: TypedEntity): Boolean = throw UnsupportedOperationException()
-
-        override fun <R : TypedEntity> referrers(
-          entityClass: Class<R>, propertyName: String
-        ): Sequence<R> = throw UnsupportedOperationException()
-      }.also { contentEntries.add(it) }
+      val contentEntry = existingContentEntry ?: FakeContentRootEntity(sourceRoot.url, moduleEntity).also { contentEntries.add(it) }
 
       contentEntry.url
     }
