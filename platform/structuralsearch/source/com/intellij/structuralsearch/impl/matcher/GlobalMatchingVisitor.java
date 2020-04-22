@@ -7,6 +7,7 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -45,7 +46,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private PsiElement myElement;
 
   /**
-   * The result of matching in visitor
+   * The result of matching in the language specific visitor
    */
   private boolean myResult;
 
@@ -132,11 +133,11 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     }
 
     // copy changed data to local stack
-    PsiElement prevElement = myElement;
+    final PsiElement prevElement = myElement;
     myElement = matchElement;
 
     try {
-      PsiElementVisitor visitor = getVisitorForElement(patternElement);
+      final PsiElementVisitor visitor = getVisitorForElement(patternElement);
       if (visitor != null) {
         patternElement.accept(visitor);
       }
@@ -153,18 +154,18 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   @Nullable
   private PsiElementVisitor getVisitorForElement(PsiElement element) {
-    Language language = element.getLanguage();
+    final Language language = element.getLanguage();
     PsiElementVisitor visitor = myLanguage2MatchingVisitor.get(language);
     if (visitor == null) {
-      visitor = createMatchingVisitor(language);
+      visitor = createMatchingVisitor(language, element.getProject());
       myLanguage2MatchingVisitor.put(language, visitor);
     }
     return visitor;
   }
 
   @Nullable
-  private PsiElementVisitor createMatchingVisitor(Language language) {
-    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
+  private PsiElementVisitor createMatchingVisitor(Language language, Project project) {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language, project);
     if (profile == null) {
       LOG.warn("there is no StructuralSearchProfile for language " + language.getID());
       return null;

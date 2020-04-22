@@ -33,6 +33,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -216,6 +218,12 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         myAlarm.addRequest(runnable, 100);
       }
     };
+    StructuralSearchProfile.EP_NAME.addExtensionPointListener(new ExtensionPointListener<StructuralSearchProfile>() {
+      @Override
+      public void extensionRemoved(@NotNull StructuralSearchProfile extension, @NotNull PluginDescriptor pluginDescriptor) {
+        close(CANCEL_EXIT_CODE);
+      }
+    }, getDisposable());
     getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
@@ -242,7 +250,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   }
 
   private EditorTextField createEditor(boolean replace) {
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType, getProject());
     assert profile != null;
     final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
     document.addDocumentListener(this, myDisposable);
@@ -406,7 +414,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       myScopePanel.setVisible(false);
     }
 
-    myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
+    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
     myFilterPanel.setConstraintChangedCallback(() -> initiateValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
@@ -535,14 +543,14 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     myMatchCase.addActionListener(e -> initiateValidation());
     myFileType = UIUtil.detectFileType(mySearchContext);
     myDialect = myFileType.getLanguage();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType, getProject());
     if (profile != null) {
       final List<PatternContext> contexts = profile.getPatternContexts();
       if (!contexts.isEmpty()) {
         myPatternContext = contexts.get(0);
       }
     }
-    myFileTypesComboBox = new FileTypeSelector();
+    myFileTypesComboBox = new FileTypeSelector(getProject());
     myFileTypesComboBox.setMinimumAndPreferredWidth(200);
     myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myPatternContext);
     myFileTypesComboBox.addItemListener(new ItemListener() {
@@ -552,10 +560,12 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           final FileTypeInfo item = myFileTypesComboBox.getSelectedItem();
           if (item == null) return;
           myFileType = item.getFileType();
+          myFilterPanel.setFileType(myFileType);
+
           myDialect = item.getDialect();
           myPatternContext = item.getContext();
           final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
-          final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+          final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType, getProject());
           assert profile != null;
 
           final Document searchDocument =
@@ -570,7 +580,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
-          myFilterPanel.setProfile(profile);
           initiateValidation();
         }
       }
@@ -1055,7 +1064,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 
     myMatchCase.setSelected(matchOptions.isCaseSensitiveMatch());
-    myFileTypesComboBox.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
+    myFileTypesComboBox.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext(getProject()));
     final Editor searchEditor = mySearchCriteriaEdit.getEditor();
     if (searchEditor != null) {
       searchEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
@@ -1136,7 +1145,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   }
 
   private String getPattern(EditorTextField textField) {
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType, getProject());
     assert profile != null;
     final Document document = textField.getDocument();
     final String pattern = ReadAction.compute(() -> {
@@ -1309,7 +1318,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       final EditorEx editor = super.createEditor();
       editor.setHorizontalScrollbarVisible(true);
       editor.setVerticalScrollbarVisible(true);
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType, getProject());
       assert profile != null;
       TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
       SubstitutionShortInfoHandler.install(editor, variableName -> {

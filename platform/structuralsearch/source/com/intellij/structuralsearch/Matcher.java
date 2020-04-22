@@ -537,7 +537,7 @@ public class Matcher {
         ReadAction.nonBlocking(
           () -> {
             if (!file.isValid()) return;
-            final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(file.getLanguage());
+            final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
             if (profile == null) return;
             match(profile.extendMatchOnePsiFile(file), patternLanguage);
           }

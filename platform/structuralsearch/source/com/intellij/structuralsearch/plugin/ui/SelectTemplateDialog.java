@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
@@ -208,7 +208,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
     UIUtil.setContent(searchPatternEditor, matchOptions.getSearchPattern());
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType(), project);
     if (profile != null) {
       TemplateEditorUtil.setHighlighter(searchPatternEditor, UIUtil.getTemplateContextType(profile));
     }

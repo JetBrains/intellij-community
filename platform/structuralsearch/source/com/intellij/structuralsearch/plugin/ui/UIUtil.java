@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -262,7 +262,7 @@ public class UIUtil {
     }
     if (context != null) {
       final Language language = context.getLanguage();
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language, searchContext.getProject());
       if (profile != null) {
         final LanguageFileType fileType = profile.detectFileType(context);
         return fileType != null ? fileType : language.getAssociatedFileType();

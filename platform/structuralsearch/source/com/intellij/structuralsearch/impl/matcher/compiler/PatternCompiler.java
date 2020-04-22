@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
@@ -78,7 +78,7 @@ public class PatternCompiler {
                                                   boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType(), project);
     assert profile != null : "no profile found for " + options.getFileType().getDescription();
     final CompiledPattern result = profile.createCompiledPattern();
 
@@ -500,7 +500,7 @@ public class PatternCompiler {
           }
         }
 
-        addExtensionPredicates(options, constraint, handler);
+        addExtensionPredicates(options, constraint, handler, project);
         addScriptConstraint(project, name, constraint, handler, variableNames, options, checkForErrors);
 
         if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
@@ -537,7 +537,7 @@ public class PatternCompiler {
         addPredicate(handler, predicate);
       }
 
-      addExtensionPredicates(options, constraint, handler);
+      addExtensionPredicates(options, constraint, handler, project);
       addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames, options, checkForErrors);
     }
 
@@ -546,7 +546,7 @@ public class PatternCompiler {
     final PsiElement[] patternElements;
     try {
       PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
-                                                              options.getPatternContext(),
+                                                              options.getPatternContext(project),
                                                               constraint != null ? constraint.getContextConstraint() : null);
       patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, options.getFileType(),
                                                            options.getDialect(), project, false);
@@ -576,8 +576,11 @@ public class PatternCompiler {
     return elements;
   }
 
-  private static void addExtensionPredicates(MatchOptions options, MatchVariableConstraint constraint, SubstitutionHandler handler) {
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
+  private static void addExtensionPredicates(MatchOptions options,
+                                             MatchVariableConstraint constraint,
+                                             SubstitutionHandler handler,
+                                             Project project) {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType(), project);
     assert profile != null;
     for (MatchPredicate matchPredicate : profile.getCustomPredicates(constraint, handler.getName(), options)) {
       addPredicate(handler, matchPredicate);

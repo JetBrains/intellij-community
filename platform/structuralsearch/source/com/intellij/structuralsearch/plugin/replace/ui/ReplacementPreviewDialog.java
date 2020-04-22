@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -89,7 +89,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final JComponent centerPanel = new JPanel(new BorderLayout());
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType, project);
     assert profile != null;
     replacement = UIUtil.createEditor(project, myFileType, null, "", false, profile);
 

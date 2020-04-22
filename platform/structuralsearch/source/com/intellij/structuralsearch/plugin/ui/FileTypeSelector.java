@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.structuralsearch.PatternContext;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -24,8 +25,8 @@ import java.util.List;
  */
 public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
-  public FileTypeSelector() {
-    super(createModel());
+  public FileTypeSelector(Project project) {
+    super(createModel(project));
     setRenderer(new MyCellRenderer());
     setSwingPopup(false);
   }
@@ -56,17 +57,17 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   }
 
   @NotNull
-  private static DefaultComboBoxModel<FileTypeInfo> createModel() {
+  private static DefaultComboBoxModel<FileTypeInfo> createModel(Project project) {
     final List<LanguageFileType> types = new ArrayList<>();
     for (LanguageFileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
+      if (StructuralSearchUtil.getProfileByFileType(fileType, project) != null) {
         types.add(fileType);
       }
     }
     types.sort((o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
     final List<FileTypeInfo> infos = new ArrayList<>();
     for (LanguageFileType fileType : types) {
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType, project);
       assert profile != null;
       final Language language = fileType.getLanguage();
       final List<PatternContext> patternContexts = new ArrayList<>(profile.getPatternContexts());

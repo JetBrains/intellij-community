@@ -6,15 +6,20 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -29,19 +34,42 @@ import java.util.stream.Collectors;
  */
 public final class StructuralSearchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
-  private static final Key<StructuralSearchProfile> STRUCTURAL_SEARCH_PROFILE_KEY = new Key<>("Structural Search Profile");
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
   private static LanguageFileType ourDefaultFileType = null;
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
-  private static StructuralSearchProfile[] ourNewStyleProfiles;
+  private static final ModificationTracker ourMatchingAlgorithmTracker = () -> ourUseUniversalMatchingAlgorithm ? 1 : 0;
+
   private static List<Configuration> ourPredefinedConfigurations = null;
+  static {
+    StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
+      ourPredefinedConfigurations = null;
+      ourDefaultFileType = null;
+    }, null);
+  }
 
   private StructuralSearchUtil() {}
 
   @Nullable
   public static StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
-    return getProfileByLanguage(element.getLanguage());
+    return getProfileByLanguage(element.getLanguage(), element.getProject());
+  }
+
+  @Nullable
+  public static StructuralSearchProfile getProfileByFileType(LanguageFileType fileType, Project project) {
+    return getProfileByLanguage(fileType.getLanguage(), project);
+  }
+
+  @Nullable
+  public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language, @NotNull Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(language, () -> {
+      for (StructuralSearchProfile profile : getProfiles()) {
+        if (profile.isMyLanguage(language)) {
+          return new CachedValueProvider.Result<>(profile, ourMatchingAlgorithmTracker);
+        }
+      }
+      return new CachedValueProvider.Result<>(null, ourMatchingAlgorithmTracker);
+    });
   }
 
   @Contract("null -> false")
@@ -63,18 +91,14 @@ public final class StructuralSearchUtil {
   }
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {
-    if (ourNewStyleProfiles == null) {
-      final List<StructuralSearchProfile> list = new ArrayList<>();
-
-      for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
-        if (profile instanceof StructuralSearchProfileBase) {
-          list.add(profile);
-        }
+    final List<StructuralSearchProfile> list = new SmartList<>();
+    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+      if (profile instanceof StructuralSearchProfileBase) {
+        list.add(profile);
       }
-      list.add(new XmlStructuralSearchProfile());
-      ourNewStyleProfiles = list.toArray(new StructuralSearchProfile[0]);
     }
-    return ourNewStyleProfiles;
+    list.add(new XmlStructuralSearchProfile());
+    return list.toArray(new StructuralSearchProfile[0]);
   }
 
   private static StructuralSearchProfile[] getProfiles() {
@@ -96,31 +120,8 @@ public final class StructuralSearchUtil {
     return ourDefaultFileType;
   }
 
-  @TestOnly
-  public static void clearProfileCache(@NotNull Language language) {
-    language.putUserData(STRUCTURAL_SEARCH_PROFILE_KEY, null);
-  }
-
-  @Nullable
-  public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
-    final StructuralSearchProfile cachedProfile = language.getUserData(STRUCTURAL_SEARCH_PROFILE_KEY);
-    if (cachedProfile != null) return cachedProfile;
-    for (StructuralSearchProfile profile : getProfiles()) {
-      if (profile.isMyLanguage(language)) {
-        language.putUserData(STRUCTURAL_SEARCH_PROFILE_KEY, profile);
-        return profile;
-      }
-    }
-    return null;
-  }
-
   public static boolean isTypedVariable(@NotNull String name) {
     return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
-  }
-
-  @Nullable
-  public static StructuralSearchProfile getProfileByFileType(LanguageFileType fileType) {
-    return getProfileByLanguage(fileType.getLanguage());
   }
 
   public static LanguageFileType @NotNull [] getSuitableFileTypes() {
@@ -225,8 +226,8 @@ public final class StructuralSearchUtil {
     return stripAccents(normalizeWhiteSpace(text));
   }
 
-  public static PatternContext findPatternContextByID(@Nullable String id, @NotNull Language language) {
-    return findPatternContextByID(id, getProfileByLanguage(language));
+  public static PatternContext findPatternContextByID(@Nullable String id, @NotNull Language language, @NotNull Project project) {
+    return findPatternContextByID(id, getProfileByLanguage(language, project));
   }
 
   public static PatternContext findPatternContextByID(@Nullable String id, @Nullable StructuralSearchProfile profile) {

@@ -65,7 +65,7 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
 
   public static String checkApplicableConstraints(MatchOptions options, Project project) {
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, options, true, false);
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType(), project);
     assert profile != null;
     for (String varName : options.getVariableConstraintNames()) {
       final List<PsiElement> nodes = compiledPattern.getVariableNodes(varName);

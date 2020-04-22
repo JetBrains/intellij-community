@@ -43,7 +43,7 @@ public class Replacer {
   public Replacer(Project project, ReplaceOptions options) {
     this.project = project;
     this.options = options;
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getMatchOptions().getFileType());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getMatchOptions().getFileType(), project);
     assert profile != null;
     replaceHandler = profile.getReplaceHandler(project, options);
     assert replaceHandler != null;
@@ -301,7 +301,7 @@ public class Replacer {
         }
       }
 
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType, project);
       assert profile != null;
       ReadAction.run(() -> profile.checkReplacementPattern(project, options));
     } catch (IncorrectOperationException ex) {

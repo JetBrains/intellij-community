@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -111,7 +111,8 @@ public class GlobalCompilingVisitor {
     }
     myCodeBlockLevel = 0;
     this.context = context;
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
+    final StructuralSearchProfile profile =
+      StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType(), context.getProject());
     assert profile != null;
     profile.compile(elements, this);
 
@@ -216,7 +217,8 @@ public class GlobalCompilingVisitor {
     if (!compileContext.getSearchHelper().doOptimizing()) {
       return;
     }
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(compileContext.getOptions().getFileType());
+    final StructuralSearchProfile profile =
+      StructuralSearchUtil.getProfileByFileType(compileContext.getOptions().getFileType(), compileContext.getProject());
     assert profile != null;
     if (profile.getReservedWords().contains(word)) return; // skip our special annotations !!!
 
