@@ -33,6 +33,10 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
    */
   boolean isVisibleIfFolded();
 
+  default boolean isPersistent() {
+    return false;
+  }
+
   default boolean isRenderedInGutter() {
     return getGutterIconRenderer() != null || getLineMarkerRenderer() != null;
   }

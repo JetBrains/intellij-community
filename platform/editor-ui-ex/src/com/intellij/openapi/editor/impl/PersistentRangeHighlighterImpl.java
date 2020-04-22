@@ -54,6 +54,11 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   }
 
   @Override
+  public boolean isPersistent() {
+    return true;
+  }
+
+  @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     // todo Denis Zhdanov
     DocumentEventImpl event = (DocumentEventImpl)e;
