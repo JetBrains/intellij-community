@@ -24,27 +24,56 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 
 public class NotificationCollector {
   private static final Logger LOG = Logger.getInstance(NotificationCollector.class);
-  private static final Map<String, PluginInfo> ourNotificationGroupsWhitelist = new HashMap<>();
-  private static final Set<String> ourNotificationsWhitelist = new HashSet<>();
+  private static final AtomicReference<NotificationsWhitelist> ourNotificationsWhitelist = new AtomicReference<>();
   private static final String NOTIFICATIONS = "notifications";
   private static final String UNKNOWN = "unknown";
   private static final String NOTIFICATION_GROUP = "notification_group";
 
   private NotificationCollector() {
-    for (NotificationWhitelistEP extension : NotificationWhitelistEP.EP_NAME.getExtensionList()) {
-      addNotificationToWhitelist(extension);
-    }
+    ourNotificationsWhitelist.set(createNotificationsWhitelist());
     NotificationWhitelistEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<NotificationWhitelistEP>() {
       @Override
       public void extensionAdded(@NotNull NotificationWhitelistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        addNotificationToWhitelist(extension);
+        ourNotificationsWhitelist.set(createNotificationsWhitelist());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull NotificationWhitelistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ourNotificationsWhitelist.set(createNotificationsWhitelist());
       }
     }, ApplicationManager.getApplication());
+  }
+
+  private static NotificationsWhitelist createNotificationsWhitelist() {
+    HashMap<String, PluginInfo> notificationGroups = new HashMap<>();
+    Set<String> notificationIds = new HashSet<>();
+    for (NotificationWhitelistEP extension : NotificationWhitelistEP.EP_NAME.getExtensionList()) {
+      PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
+      if (pluginDescriptor == null) continue;
+      PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
+      if (!info.isDevelopedByJetBrains()) continue;
+
+      List<String> groups = parseIds(extension.groupIds);
+      for (String notificationGroup : groups) {
+        notificationGroups.merge(notificationGroup, info, (oldValue, newValue) -> {
+          if (!oldValue.equals(newValue)) {
+            LOG.warn("Notification group '" + notificationGroup + "' is already registered in whitelist");
+            return getUnknownPlugin();
+          }
+          return oldValue;
+        });
+      }
+
+      notificationIds.addAll(parseIds(extension.notificationIds));
+    }
+    return new NotificationsWhitelist(notificationGroups, notificationIds);
   }
 
   public void logBalloonShown(@Nullable Project project,
@@ -125,33 +154,16 @@ public class NotificationCollector {
     return ServiceManager.getService(NotificationCollector.class);
   }
 
+  @NotNull
   private static PluginInfo getPluginInfo(@Nullable String groupId) {
-    if (groupId == null) return null;
-    PluginInfo pluginInfo = ourNotificationGroupsWhitelist.get(groupId);
+    if (groupId == null) return getUnknownPlugin();
+    PluginInfo pluginInfo = ourNotificationsWhitelist.get().getPluginInfo(groupId);
     if (pluginInfo != null) {
       return pluginInfo;
     }
     NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
-    if (group == null) return null;
+    if (group == null) return getUnknownPlugin();
     return getPluginInfoById(group.getPluginId());
-  }
-
-  private static void addNotificationToWhitelist(NotificationWhitelistEP extension) {
-    if (extension == null) return;
-    PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
-    if (pluginDescriptor == null) return;
-    PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
-    if (!info.isDevelopedByJetBrains()) return;
-
-    List<String> notificationGroups = parseIds(extension.groupIds);
-    for (String notificationGroup : notificationGroups) {
-      PluginInfo oldValue = ourNotificationGroupsWhitelist.put(notificationGroup, info);
-      if (oldValue != null && !oldValue.equals(info)) {
-        LOG.warn("Notification group '" + notificationGroup + "' is already registered in whitelist");
-      }
-    }
-
-    ourNotificationsWhitelist.addAll(parseIds(extension.notificationIds));
   }
 
   @NotNull
@@ -177,7 +189,9 @@ public class NotificationCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
-      return ourNotificationGroupsWhitelist.containsKey(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      return ourNotificationsWhitelist.get().isAllowedNotificationGroups(data)
+             ? ValidationResultType.ACCEPTED
+             : ValidationResultType.REJECTED;
     }
   }
 
@@ -192,11 +206,33 @@ public class NotificationCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
-      return ourNotificationsWhitelist.contains(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      return ourNotificationsWhitelist.get().isAllowedNotificationId(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
     }
   }
 
   public enum NotificationPlace {
     BALLOON, EVENT_LOG
+  }
+
+  private static class NotificationsWhitelist {
+    private final Map<String, PluginInfo> myNotificationGroups;
+    private final Set<String> myNotificationIds;
+
+    private NotificationsWhitelist(Map<String, PluginInfo> notificationGroups, Set<String> notificationIds) {
+      myNotificationGroups = notificationGroups;
+      myNotificationIds = notificationIds;
+    }
+
+    public boolean isAllowedNotificationGroups(@NotNull String notificationGroup) {
+      return myNotificationGroups.containsKey(notificationGroup);
+    }
+
+    public boolean isAllowedNotificationId(@NotNull String notificationId) {
+      return myNotificationIds.contains(notificationId);
+    }
+
+    public PluginInfo getPluginInfo(@NotNull String notificationGroup) {
+      return myNotificationGroups.get(notificationGroup);
+    }
   }
 }

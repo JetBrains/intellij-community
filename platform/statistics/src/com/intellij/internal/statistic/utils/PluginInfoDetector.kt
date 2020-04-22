@@ -116,7 +116,7 @@ fun findPluginTypeByValue(value: String): PluginType? {
   return null
 }
 
-class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
+data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
 
   /**
    * @return true if code is from IntelliJ platform or JB plugin.
@@ -130,10 +130,6 @@ class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
    */
   fun isSafeToReport(): Boolean {
     return type.isSafeToReport()
-  }
-
-  override fun toString(): String {
-    return "PluginInfo(type=$type, id=$id, version=$version)"
   }
 }
 
