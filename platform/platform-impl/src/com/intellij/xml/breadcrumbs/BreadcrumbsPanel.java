@@ -164,6 +164,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     Disposer.register(this, myQueue);
 
     BreadcrumbsProvider.EP_NAME.addExtensionPointListener(() -> queueUpdate(), this);
+    BreadcrumbsPresentationProvider.EP_NAME.addExtensionPointListener(() -> queueUpdate(), this);
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myQueue.setPassThrough(true);
