@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup
 
-import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.util.ui.EmptyIcon
@@ -26,7 +25,7 @@ enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) p
 /*
  * Per language highlight level
  */
-data class LanguageHighlightLevel(val language: Language, val level: InspectionsLevel)
+data class LanguageHighlightLevel(val langID: String, val level: InspectionsLevel)
 
 /**
  * Light wrapper for <code>ProgressableTextEditorHighlightingPass</code> with only essential UI data.

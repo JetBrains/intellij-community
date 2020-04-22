@@ -2273,7 +2273,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
         else if (levels.size() > 1) {
           for(LanguageHighlightLevel level: levels) {
-            JLabel highlightLabel = new JLabel(level.getLanguage().getDisplayName() + ": ");
+            JLabel highlightLabel = new JLabel(level.getLangID() + ": ");
             highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
 
             panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
@@ -2295,7 +2295,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       return new DropDownLink<>(level.getLevel(),
                                 controller.getAvailableLevels(),
                                 inspectionsLevel -> {
-                                  controller.setHighLightLevel(level.copy(level.getLanguage(), inspectionsLevel));
+                                  controller.setHighLightLevel(level.copy(level.getLangID(), inspectionsLevel));
                                   myContent.revalidate();
 
                                   Dimension size = myContent.getPreferredSize();
@@ -2305,7 +2305,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                   // Update statistics
                                   FeatureUsageData data = new FeatureUsageData().
                                     addProject(myEditor.getProject()).
-                                    addLanguage(level.getLanguage()).
+                                    addLanguage(level.getLangID()).
                                     addData("level", inspectionsLevel.toString());
 
                                   FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
