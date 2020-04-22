@@ -2,10 +2,8 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerMain;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -287,8 +285,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(indicator);
-          IdeaPluginDescriptor descriptor = ContainerUtil.find(plugins, d -> d.getPluginId() == vcs.pluginId);
+          PluginNode descriptor = MarketplaceRequests.getLastCompatiblePluginUpdate(vcs.pluginId.getIdString(), null, indicator);
           if (descriptor != null) {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {

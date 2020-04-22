@@ -210,7 +210,7 @@ object MarketplaceRequests {
 
   @JvmStatic
   @JvmOverloads
-  fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null): PluginNode? {
+  fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null, indicator: ProgressIndicator? = null): PluginNode? {
     val data = try {
       getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
     }
@@ -218,7 +218,7 @@ object MarketplaceRequests {
       LOG.warn("Can not get compatible update from Marketplace", e)
       null
     }
-    return data?.let { loadPluginDescriptor(id, it) }
+    return data?.let { loadPluginDescriptor(id, it, indicator) }
   }
 
   @JvmStatic
