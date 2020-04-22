@@ -352,13 +352,11 @@ public final class BootstrapClassLoaderUtil {
 
     private static int parseMinor(String text) {
       try {
-        if ("*".equals(text)) {
+        if ("*".equals(text) || "SNAPSHOT".equals(text)) {
           return Integer.MAX_VALUE;
         }
-        if (!"SNAPSHOT".equalsIgnoreCase(text)) {
-          final int dot = text.indexOf('.');
-          return Integer.parseInt(dot >= 0 ? text.substring(0, dot) : text);
-        }
+        final int dot = text.indexOf('.');
+        return Integer.parseInt(dot >= 0 ? text.substring(0, dot) : text);
       }
       catch (NumberFormatException e) {
       }
