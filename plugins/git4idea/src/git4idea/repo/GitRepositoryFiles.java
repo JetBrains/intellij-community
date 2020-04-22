@@ -41,7 +41,7 @@ public class GitRepositoryFiles {
   public static final String GITIGNORE = ".gitignore";
 
   private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
-  private static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
+  public static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
   private static final String CONFIG = "config";
   private static final String HEAD = "HEAD";
   private static final String INDEX = "index";

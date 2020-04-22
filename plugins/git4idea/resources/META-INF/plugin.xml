@@ -310,6 +310,9 @@
                             order="after codeStyleWidget,before readOnlyWidget"/>
 
     <vcsBulkMovesOnlyChangesFilter implementation="git4idea.GitBulkMovesOnlyChangesFilter"/>
+
+    <editorNotificationProvider implementation="git4idea.ui.GitEditorPromo" order="first"/>
+
   </extensions>
 
   <extensionPoints>
