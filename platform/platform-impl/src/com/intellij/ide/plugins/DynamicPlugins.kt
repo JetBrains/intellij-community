@@ -197,7 +197,7 @@ object DynamicPlugins {
     // if not a sub plugin descriptor, then check that any dependent plugin also reloadable
     if (descriptor.pluginId != null) {
       processOptionalDependenciesOnPlugin(descriptor.pluginId) { _, subDescriptor ->
-        if (!allowLoadUnloadWithoutRestart(subDescriptor, descriptor)) {
+        if (subDescriptor != null && !allowLoadUnloadWithoutRestart(subDescriptor, descriptor)) {
           canUnload = false
         }
         canUnload
@@ -208,46 +208,50 @@ object DynamicPlugins {
   }
 
   private fun processOptionalDependenciesOnPlugin(dependencyPluginId: PluginId,
-                                                  processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
-    val pluginXmlFactory = PluginXmlFactory()
-    val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
+                                                  processor: (mainDescriptor: IdeaPluginDescriptorImpl, subDescriptor: IdeaPluginDescriptorImpl?) -> Boolean) {
     for (descriptor in PluginManagerCore.getLoadedPlugins(null)) {
       for (dependency in (descriptor.pluginDependencies ?: continue)) {
         if (!dependency.isOptional || dependency.id != dependencyPluginId) {
           continue
         }
 
-        val dependencyConfigFile = dependency.configFile ?: continue
-        val pathResolver = PluginEnabler.createPathResolverForPlugin(descriptor)
-        val context = DescriptorLoadingContext(listContext, false, false, pathResolver)
-        val element = try {
-          val jarPair = URLUtil.splitJarUrl(descriptor.basePath.toUri().toString())
-          val newBasePath = if (jarPair == null) {
-            descriptor.basePath
-          }
-          else {
-            context.open(Paths.get(jarPair.first)).getPath(jarPair.second)
-          }
-          pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
-        }
-        catch (e: Exception) {
-          LOG.error("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile", e)
-          continue
-        }
-        finally {
-          context.close()
-        }
-
-        val subDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, descriptor.basePath, false)
-        if (!subDescriptor.readExternal(element, pathResolver, context, descriptor)) {
-          LOG.error("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
-          continue
-        }
+        val subDescriptor = dependency.configFile?.let { loadOptionalDependencyDescriptor(descriptor, it) }
         if (!processor(descriptor, subDescriptor)) {
           break
         }
       }
     }
+  }
+
+  private fun loadOptionalDependencyDescriptor(descriptor: IdeaPluginDescriptorImpl, dependencyConfigFile: String): IdeaPluginDescriptorImpl? {
+    val pluginXmlFactory = PluginXmlFactory()
+    val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
+    val pathResolver = PluginEnabler.createPathResolverForPlugin(descriptor)
+    val context = DescriptorLoadingContext(listContext, false, false, pathResolver)
+    val element = try {
+      val jarPair = URLUtil.splitJarUrl(descriptor.basePath.toUri().toString())
+      val newBasePath = if (jarPair == null) {
+        descriptor.basePath
+      }
+      else {
+        context.open(Paths.get(jarPair.first)).getPath(jarPair.second)
+      }
+      pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
+    }
+    catch (e: Exception) {
+      LOG.error("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile", e)
+      return null
+    }
+    finally {
+      context.close()
+    }
+
+    val subDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, descriptor.basePath, false)
+    if (!subDescriptor.readExternal(element, pathResolver, context, descriptor)) {
+      LOG.error("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
+      return null
+    }
+    return subDescriptor
   }
 
   private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): ExtensionPointImpl<*>? {
@@ -335,7 +339,10 @@ object DynamicPlugins {
       application.runWriteAction {
         try {
           processOptionalDependenciesOnPlugin(pluginDescriptor.pluginId) { mainDescriptor, subDescriptor ->
-            unloadPluginDescriptor(subDescriptor, mainDescriptor)
+            if (subDescriptor != null) {
+              unloadPluginDescriptor(subDescriptor, mainDescriptor)
+            }
+
             var detached: Boolean? = false
             if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
               detached = (mainDescriptor.pluginClassLoader as? PluginClassLoader)?.detachParent(loadedPluginDescriptor.pluginClassLoader)
@@ -514,7 +521,9 @@ object DynamicPlugins {
             (loadedDescriptorOfDependency.pluginClassLoader as? PluginClassLoader)?.attachParent(pluginDescriptor.pluginClassLoader)
           }
 
-          loadPluginDescriptor(loadedDescriptorOfDependency, fullDescriptor, app)
+          if (fullDescriptor != null) {
+            loadPluginDescriptor(loadedDescriptorOfDependency, fullDescriptor, app)
+          }
           true
         }
 
