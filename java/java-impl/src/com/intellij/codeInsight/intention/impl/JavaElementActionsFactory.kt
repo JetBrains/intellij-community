@@ -15,12 +15,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.uast.UDeclaration
 import java.util.*
 
 class JavaElementActionsFactory : JvmElementActionsFactory() {
 
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
-    val declaration = target as PsiModifierListOwner
+    val declaration = if (target is UDeclaration) target.sourcePsi as PsiModifierListOwner else target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
     return listOf(ChangeModifierFix(declaration, request))
   }
