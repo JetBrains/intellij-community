@@ -1,10 +1,10 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.xml"/>
 
-  <projectListeners>
+  <applicationListeners>
     <listener class="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyCommandListener" topic="com.intellij.openapi.command.CommandListener"/>
     <listener class="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
-  </projectListeners>
+  </applicationListeners>
 
   <project-components>
     <component>
