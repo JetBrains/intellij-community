@@ -5,6 +5,8 @@
                  description="Enable new entities-based project model (workspace model)"/>
     <registryKey key="ide.new.project.model.newstorage" defaultValue="false" restartRequired="true"
                  description="Enable new storage for workspace model"/>
+    <registryKey key="ide.new.project.model.cache" defaultValue="false" restartRequired="false"
+                 description="Enable cache for the workspace model"/>
 
     <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
                  description="Enable .iml reading/writing including settings (temporary key)"/>

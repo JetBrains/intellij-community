@@ -29,10 +29,12 @@ import org.picocontainer.MutablePicoContainer
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
     const val ENABLED_REGISTRY_KEY = "ide.new.project.model"
+    const val ENABLED_CACHE_KEY = "ide.new.project.model.cache"
 
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
 
     fun enabled(project: Project) = ModuleManager.getInstance(project) is LegacyBridgeModuleManagerComponent
+    val cacheEnabled = Registry.`is`(ENABLED_CACHE_KEY)
   }
 
   override fun serviceRegistered(project: Project) {
