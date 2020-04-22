@@ -4,12 +4,14 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.TypedEntity
 import gnu.trove.TIntHashSet
 
-internal open class EntityFamily<E : TypedEntity> internal constructor(
-  override val entities: List<PEntityData<E>?>,
-  protected val emptySlotsSize: Int
-) : AbstractEntityFamily<E>() {
+internal class ImmutableEntityFamily<E : TypedEntity>(
+  override val entities: ArrayList<PEntityData<E>?>,
+  private val emptySlotsSize: Int
+) : EntityFamily<E>() {
 
-  fun copyToMutable() = MutableEntityFamily(entities.toMutableList())
+  fun toMutable() = MutableEntityFamily(entities, true)
+
+  override fun size(): Int = entities.size - emptySlotsSize
 
   inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
     var emptySlotsCounter = 0
@@ -25,19 +27,12 @@ internal open class EntityFamily<E : TypedEntity> internal constructor(
     }
     assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
   }
-
-  override fun size(): Int = entities.size - emptySlotsSize
-
-  companion object {
-    fun <E : TypedEntity> empty(): EntityFamily<E> = Empty as EntityFamily<E>
-
-    private object Empty : EntityFamily<PTypedEntity>(emptyList(), 0)
-  }
 }
 
 internal class MutableEntityFamily<E : TypedEntity>(
-  override val entities: MutableList<PEntityData<E>?>
-) : AbstractEntityFamily<E>() {
+  override var entities: ArrayList<PEntityData<E>?>,
+  private var freezed: Boolean
+) : EntityFamily<E>() {
 
   // This set contains empty slots at the moment of MutableEntityFamily creation
   //   New empty slots MUST NOT be added this this set.
@@ -51,7 +46,8 @@ internal class MutableEntityFamily<E : TypedEntity>(
   private val copiedToModify: TIntHashSet = TIntHashSet()
 
   fun remove(id: Int) {
-    if (id in availableSlots) return
+    if (id in availableSlots) error("id $id is already removed")
+    startWrite()
 
     copiedToModify.remove(id)
     entities[id] = null
@@ -59,9 +55,11 @@ internal class MutableEntityFamily<E : TypedEntity>(
   }
 
   fun add(other: PEntityData<E>) {
+    startWrite()
+
     if (availableSlots.isEmpty) {
       other.id = entities.size
-      entities += other
+      entities.add(other)
     }
     else {
       val emptySlot = availableSlots.pop()
@@ -75,6 +73,8 @@ internal class MutableEntityFamily<E : TypedEntity>(
   fun replaceById(entity: PEntityData<E>) {
     val id = entity.id
     if (id in availableSlots) error("Nothing to replace")
+    startWrite()
+
     entities[id] = entity
     copiedToModify.add(id)
   }
@@ -82,11 +82,27 @@ internal class MutableEntityFamily<E : TypedEntity>(
   fun getEntityDataForModification(id: PId<E>): PEntityData<E> {
     val entity = entities[id.arrayId] ?: error("Nothing to modify")
     if (id.arrayId in copiedToModify) return entity
+    startWrite()
 
     val clonedEntity = entity.clone()
     entities[id.arrayId] = clonedEntity
     copiedToModify.add(id.arrayId)
     return clonedEntity
+  }
+
+  fun toImmutable(): ImmutableEntityFamily<E> {
+    freezed = true
+    copiedToModify.clear()
+    return ImmutableEntityFamily(entities, amountOfGapsInEntities)
+  }
+
+  override fun size(): Int = entities.size - amountOfGapsInEntities
+
+  private fun startWrite() {
+    if (!freezed) return
+
+    entities = ArrayList(entities)
+    freezed = false
   }
 
   private fun TIntHashSet.pop(): Int {
@@ -97,19 +113,12 @@ internal class MutableEntityFamily<E : TypedEntity>(
     return res
   }
 
-  fun toImmutable(): EntityFamily<E>{
-    copiedToModify.clear()
-    return EntityFamily(entities.toList(), amountOfGapsInEntities)
-  }
-
-  override fun size(): Int = entities.size - amountOfGapsInEntities
-
   companion object {
-    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(mutableListOf())
+    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(ArrayList(), false)
   }
 }
 
-internal sealed class AbstractEntityFamily<E : TypedEntity> {
+internal sealed class EntityFamily<E : TypedEntity> {
 
   internal abstract val entities: List<PEntityData<E>?>
 

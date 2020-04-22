@@ -34,7 +34,7 @@ internal class PEntityReference<E : TypedEntity>(private val id: PId<E>) : Entit
 }
 
 internal class PEntityStorage constructor(
-  override val entitiesByType: EntitiesBarrel,
+  override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val softLinks: Multimap<PersistentEntityId<*>, PId<*>>,
   override val virtualFileIndex: VirtualFileIndex,
@@ -49,8 +49,8 @@ internal class PEntityStorage constructor(
   }
 
   companion object {
-    val EMPTY = PEntityStorage(EntitiesBarrel(), RefsTable(), HashMultimap.create(), VirtualFileIndex(),
-                                                      EntitySourceIndex(), PersistentIdIndex(), mapOf())
+    val EMPTY = PEntityStorage(ImmutableEntitiesBarrel.EMPTY, RefsTable(), HashMultimap.create(), VirtualFileIndex(),
+                               EntitySourceIndex(), PersistentIdIndex(), mapOf())
   }
 }
 
@@ -768,7 +768,7 @@ internal class PEntityStorageBuilder(
 
 internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
-  internal abstract val entitiesByType: AbstractEntitiesBarrel
+  internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
   internal abstract val softLinks: Multimap<PersistentEntityId<*>, PId<*>>
   internal abstract val virtualFileIndex: VirtualFileIndex
