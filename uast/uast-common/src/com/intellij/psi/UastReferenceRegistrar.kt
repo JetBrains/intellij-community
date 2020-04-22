@@ -9,12 +9,12 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.uast.UElementPattern
 import com.intellij.util.ProcessingContext
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.toUElementOfExpectedTypes
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
@@ -72,7 +72,7 @@ private fun getCachedUastElements(context: ProcessingContext): MutableMap<List<C
   val map = context.sharedContext.get(CACHED_UAST_ELEMENTS)
   if (map != null) return map
 
-  val newMap = THashMap<List<Class<out UElement>>, UElement?>()
+  val newMap = ConcurrentHashMap<List<Class<out UElement>>, UElement?>()
   context.sharedContext.put(CACHED_UAST_ELEMENTS, newMap)
   return newMap
 }
