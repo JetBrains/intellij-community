@@ -34,7 +34,7 @@ import org.jetbrains.uast.*;
 import javax.swing.*;
 import java.util.*;
 
-class LanguageResolvingUtil {
+final class LanguageResolvingUtil {
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
 
   static Collection<LanguageDefinition> getAllLanguageDefinitions(ConvertContext context) {
@@ -206,12 +206,9 @@ class LanguageResolvingUtil {
     return new LanguageDefinition(anyLanguageId, languageClass, AllIcons.FileTypes.Any_type, "<any language>");
   }
 
-  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = ContainerUtil.immutableSet(
-    CompletionContributorEP.class.getName(),
-    CompletionConfidenceEP.class.getName()
-  );
+  private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName())));
 
-  private static String calculateAnyLanguageId(ConvertContext context) {
+  private static String calculateAnyLanguageId(@NotNull ConvertContext context) {
     final Extension extension = context.getInvocationElement().getParentOfType(Extension.class, true);
     if (extension == null) {
       return ANY_LANGUAGE_DEFAULT_ID;
