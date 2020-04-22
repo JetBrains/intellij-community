@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
   val parentClass: KClass<T>,
   val childClass: KClass<SUBT>,
-  val isHard: Boolean,
+  val isHard: Boolean, // TODO: 22.04.2020 To be removed
   val connectionType: ConnectionType,
   val isParentNullable: Boolean,
   val isChildNullable: Boolean
