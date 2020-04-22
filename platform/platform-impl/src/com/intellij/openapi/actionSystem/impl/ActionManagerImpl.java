@@ -29,7 +29,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -1203,7 +1202,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private static void notifyCustomActionsSchema(@NotNull String registeredID) {
-    CustomActionsSchema schema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
+    CustomActionsSchema schema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (schema == null) return;
     for (ActionUrl url : schema.getActions()) {
       if (registeredID.equals(url.getComponent())) {
