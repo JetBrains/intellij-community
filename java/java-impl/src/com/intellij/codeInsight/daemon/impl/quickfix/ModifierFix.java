@@ -40,7 +40,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @PsiModifier.ModifierConstant @NotNull String modifier,
                      boolean shouldHave,
                      boolean showContainingClass) {
-    super(modifierList);
+    super(ObjectUtils.tryCast(modifierList.getParent(), PsiModifierListOwner.class));
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
@@ -52,7 +52,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @PsiModifier.ModifierConstant @NotNull String modifier,
                      boolean shouldHave,
                      boolean showContainingClass) {
-    super(owner.getModifierList());
+    super(owner);
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
@@ -112,8 +112,9 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                              @Nullable Editor editor,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    final PsiModifierList modifierList = (PsiModifierList)startElement;
-    PsiVariable variable = ObjectUtils.tryCast(modifierList.getParent(), PsiVariable.class);
+    final PsiModifierList modifierList = ((PsiModifierListOwner)startElement).getModifierList();
+    if (modifierList == null) return false;
+    PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
     boolean isAvailable = BaseIntentionAction.canModify(modifierList) &&
                           modifierList.hasExplicitModifier(myModifier) != myShouldHave &&
                           !(variable instanceof SyntheticElement) &&
@@ -122,7 +123,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (isAvailable && myShowContainingClass && editor != null) {
       PsiElement elementUnderCaret = file.findElementAt(editor.getCaretModel().getOffset());
       if (elementUnderCaret != null) {
-        if (PsiTreeUtil.isAncestor(modifierList.getParent(), elementUnderCaret, false)) {
+        if (PsiTreeUtil.isAncestor(startElement, elementUnderCaret, false)) {
           myName = format(variable, modifierList, false);
         }
       }
@@ -156,20 +157,21 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @NotNull PsiElement endElement) {
     if (myStartInWriteAction) {
       PsiModifierList modifierList;
-      PsiVariable variable = ObjectUtils.tryCast(startElement.getParent(), PsiVariable.class);
+      PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
       if (variable != null && variable.isValid()) {
         variable.normalizeDeclaration();
         modifierList = variable.getModifierList();
-        assert modifierList != null;
       } else {
-        modifierList = (PsiModifierList)startElement;
+        modifierList = ((PsiModifierListOwner)startElement).getModifierList();
       }
+      assert modifierList != null;
       updateModifier(modifierList, modifierList.getParent());
       return;
     }
     if (!FileModificationService.getInstance().preparePsiElementForWrite(startElement)) return;
-    PsiModifierList modifierList = (PsiModifierList)startElement;
-    PsiElement owner = modifierList.getParent();
+    PsiModifierListOwner owner = (PsiModifierListOwner)startElement;
+    PsiModifierList modifierList = owner.getModifierList();
+    assert modifierList != null;
     updateAccessInHierarchy(project, modifierList, owner);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
