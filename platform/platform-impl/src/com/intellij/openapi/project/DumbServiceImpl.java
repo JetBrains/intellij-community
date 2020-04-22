@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
@@ -467,7 +468,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void showDumbModeNotification(final @NotNull String message) {
+  public void showDumbModeNotification(@NotNull @PopupContent String message) {
     UIUtil.invokeLaterIfNeeded(() -> {
       final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
       if (ideFrame != null) {
@@ -477,7 +478,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void showDumbModeActionBalloon(@NotNull String balloonText,
+  public void showDumbModeActionBalloon(@NotNull @PopupContent String balloonText,
                                         @NotNull Runnable runWhenSmartAndBalloonStillShowing) {
     if (LightEdit.owns(myProject)) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -493,7 +494,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing);
   }
 
-  private void tryShowBalloonTillSmartMode(@NotNull String balloonText,
+  private void tryShowBalloonTillSmartMode(@NotNull @PopupContent String balloonText,
                                            @NotNull Runnable runWhenSmartAndBalloonNotHidden) {
     LOG.assertTrue(myBalloon == null);
     long startTimestamp = System.nanoTime();
