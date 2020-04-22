@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.context;
 
@@ -30,7 +30,7 @@ final class ProjectViewContextProvider extends WorkingContextProvider {
 
   @Override
   public void saveContext(@NotNull Project project, @NotNull Element toElement) throws WriteExternalException {
-    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensionList(project)) {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP.getExtensions(project)) {
       Element paneElement = new Element(pane.getId());
       pane.writeExternal(paneElement);
       toElement.addContent(paneElement);
@@ -39,7 +39,7 @@ final class ProjectViewContextProvider extends WorkingContextProvider {
 
   @Override
   public void loadContext(@NotNull Project project, @NotNull Element fromElement) throws InvalidDataException {
-    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensionList(project)) {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP.getExtensions(project)) {
       Element paneElement = fromElement.getChild(pane.getId());
       if (paneElement != null) {
         pane.readExternal(paneElement);
@@ -52,7 +52,7 @@ final class ProjectViewContextProvider extends WorkingContextProvider {
 
   @Override
   public void clearContext(@NotNull Project project) {
-    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP_NAME.getExtensionList(project)) {
+    for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP.getExtensions(project)) {
       JTree tree = pane.getTree();
       if (tree != null) {
         TreeUtil.collapseAll(tree, 0);
