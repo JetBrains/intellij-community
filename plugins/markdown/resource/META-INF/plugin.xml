@@ -28,7 +28,8 @@ Includes the following features:</p>
                     interface="org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.codeFencePluginGeneratingProvider"
-                    interface="org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider" />
+                    interface="org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
