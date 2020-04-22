@@ -544,6 +544,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-core/intellij.cidr.core.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-core/intellij.cidr.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/commandInterpreterLang/intellij.cidr.debugger.commandInterpreterLang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/commandInterpreterLang/intellij.cidr.debugger.commandInterpreterLang.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-modulemap-language/intellij.cidr.modulemap.language.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-modulemap-language/intellij.cidr.modulemap.language.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/ui/intellij.cidr.util.ui.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/ui/intellij.cidr.util.ui.iml" />
