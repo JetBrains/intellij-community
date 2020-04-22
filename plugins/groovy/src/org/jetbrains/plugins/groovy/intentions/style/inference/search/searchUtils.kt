@@ -8,11 +8,13 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -70,18 +72,35 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
     if (arguments?.contains(enclosingClosure) == true && call.callReference?.methodName == anchorElement.name) {
       return true
     }
-    val enclosingCall: GrMethodCall? = element.parentOfType<GrMethodCall>()?.takeIf { it.invokedExpression === element }
-    if (enclosingCall is GrMethodCall) {
-      val enclosingMethod: GrMethod? = enclosingCall.parentOfType<GrMethod>()?.takeIf { it.name == anchorElement.name }
+    if (checkSelfReferencesInArguments(element)) {
+      return true
+    }
+    return delegateProcessor.processTextOccurrence(element, offsetInElement, consumer)
+  }
+
+  fun checkSelfReferencesInArguments(element: PsiElement): Boolean {
+    val expressionWithArguments: GrExpression? = element.parentOfTypes(GrMethodCall::class, GrAssignmentExpression::class) ?: return false
+    val isCorrectlyPointing = when (expressionWithArguments) {
+      is GrMethodCall -> expressionWithArguments.invokedExpression === element
+      is GrAssignmentExpression -> expressionWithArguments.lValue === element
+      else -> return false
+    }
+    if (isCorrectlyPointing) {
+      val enclosingMethod: GrMethod? = expressionWithArguments.parentOfType<GrMethod>()?.takeIf { it.name == anchorElement.name }
       val bannedIdentifiers: Array<String> = enclosingMethod?.parameters?.map2Array { it.name } ?: emptyArray()
       val collisionFinder = CollisionFinder(anchorElement.name, *bannedIdentifiers)
-      if (enclosingCall.expressionArguments.any { argument -> collisionFinder.apply { argument.accept(this) }.foundCollision }) {
+      val arguments = when (expressionWithArguments) {
+        is GrMethodCall -> expressionWithArguments.expressionArguments
+        is GrAssignmentExpression -> arrayOf(expressionWithArguments.rValue)
+        else -> return false
+      }
+      if (arguments.any { argument -> collisionFinder.apply { argument.accept(this) }.foundCollision }) {
         // there should be provided some connection between method return type and its argument,
         // but currently this option is absent
         return true
       }
     }
-    return delegateProcessor.processTextOccurrence(element, offsetInElement, consumer)
+    return false
   }
 
 }

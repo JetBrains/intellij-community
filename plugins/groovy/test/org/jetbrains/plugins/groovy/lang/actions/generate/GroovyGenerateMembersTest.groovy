@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.actions.generate
 import com.intellij.codeInsight.generation.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -244,7 +243,6 @@ class Test {
   }
 
   void testSetter3() {
-    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     myFixture.configureByText 'a.groovy', '''
 class Test {
     static foo
