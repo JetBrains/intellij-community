@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.testFramework.LightVirtualFile
 import javax.swing.JComponent
 
+@Deprecated("Unused, to be removed")
 class VCSContentVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc: () -> String)
   : LightVirtualFile(getTabNameFunc(), GraphViewFileType.INSTANCE, "") {
   companion object {

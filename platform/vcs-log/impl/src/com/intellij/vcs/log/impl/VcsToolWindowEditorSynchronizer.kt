@@ -5,6 +5,7 @@ import com.intellij.diff.editor.VCSContentVirtualFile
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 
+@Deprecated("Unused, to be removed")
 internal class VcsToolWindowEditorSynchronizer {
   private class MyFileEditorListener : FileEditorManagerListener {
     override fun selectionChanged(e: FileEditorManagerEvent) {

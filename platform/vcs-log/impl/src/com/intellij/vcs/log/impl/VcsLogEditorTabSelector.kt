@@ -12,6 +12,7 @@ import com.intellij.ui.content.TabbedContent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 
+@Deprecated("Unused, to be removed")
 open class VcsLogEditorTabSelector(private val project: Project) : ContentManagerAdapter(), PropertyChangeListener {
 
   override fun selectionChanged(event: ContentManagerEvent) {

@@ -4,6 +4,7 @@ import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
+@Deprecated("Unused, to be removed")
 class VCSContentEditor(
   private val file: VCSContentVirtualFile
 ) : FileEditorBase() {
