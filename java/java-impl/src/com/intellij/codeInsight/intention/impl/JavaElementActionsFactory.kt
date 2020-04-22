@@ -21,7 +21,9 @@ import java.util.*
 class JavaElementActionsFactory : JvmElementActionsFactory() {
 
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
-    val declaration = if (target is UDeclaration) target.sourcePsi as PsiModifierListOwner else target as PsiModifierListOwner
+    val declaration = if (target is UDeclaration && target.sourcePsi is PsiModifierListOwner) 
+      target.sourcePsi as PsiModifierListOwner 
+    else target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
     return listOf(ChangeModifierFix(declaration, request))
   }
