@@ -104,7 +104,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
                                           @NlsContexts.DialogTitle String title,
                                           @Nullable final Executor executor) {
     SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration, executor);
-    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, IdeModalityType.IDE) {
+    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, null, IdeModalityType.IDE) {
       {
         if (executor != null) {
           setOKButtonText(executor.getActionName());
