@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +22,20 @@ public abstract class MetaLanguage extends Language {
 
   protected MetaLanguage(@NotNull String ID) {
     super(ID);
+
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<MetaLanguage>() {
+      @Override
+      public void extensionAdded(@NotNull MetaLanguage language, @NotNull PluginDescriptor pluginDescriptor) { }
+
+      @Override
+      public void extensionRemoved(@NotNull MetaLanguage language, @NotNull PluginDescriptor pluginDescriptor) {
+        unregisterLanguage(language);
+
+        for (Language registeredLanguage : Language.getRegisteredLanguages()) {
+          LanguageUtil.matchingMetaLanguages(registeredLanguage).remove(language);
+        }
+      }
+    }, null);
   }
 
   @NotNull

@@ -10,11 +10,10 @@ import org.jetbrains.uast.analysis.UastAnalysisPlugin
 interface UastLanguagePlugin {
   companion object {
     val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
-    private val extensions by lazy(LazyThreadSafetyMode.PUBLICATION) { extensionPointName.extensionList }
 
-    fun getInstances(): Collection<UastLanguagePlugin> = extensions
+    fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 
-    fun byLanguage(language: Language): UastLanguagePlugin? = extensions.firstOrNull { it.language === language }
+    fun byLanguage(language: Language): UastLanguagePlugin? = extensionPointName.extensionList.firstOrNull { it.language === language }
   }
 
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)
