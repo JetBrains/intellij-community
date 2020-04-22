@@ -154,7 +154,7 @@
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
-                        serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
+                        serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl" preload="notHeadless"/>
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
@@ -648,8 +648,7 @@
 
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.application.Preloader"/>
-    <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader$AppInitListener"/>
+    <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
     <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
@@ -703,7 +702,6 @@
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
-    <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
 
     <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ConfigurableHit;
@@ -30,7 +30,6 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private final SearchTextField mySearch;
   private final List<? extends ConfigurableGroup> myGroups;
 
-  private final SearchableOptionsRegistrar myRegistrar = SearchableOptionsRegistrar.getInstance();
   private Set<Configurable> myFiltered;
   private ConfigurableHit myHits;
 
@@ -133,6 +132,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     if (myUpdateRejected) {
       return;
     }
+
     String text = getFilterText();
     if (text.isEmpty()) {
       myContext.setHoldingFilter(false);
@@ -140,7 +140,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     }
     else {
       myContext.setHoldingFilter(true);
-      myHits = myRegistrar.getConfigurables(myGroups, type, myFiltered, text, myProject);
+      myHits = SearchableOptionsRegistrar.getInstance().getConfigurables(myGroups, type, myFiltered, text, myProject);
       myFiltered = myHits.getAll();
     }
     mySearch.getTextEditor().setBackground(myFiltered != null && myFiltered.isEmpty()
