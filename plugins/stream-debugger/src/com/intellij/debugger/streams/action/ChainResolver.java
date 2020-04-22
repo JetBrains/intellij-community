@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +24,7 @@ import java.util.List;
 class ChainResolver {
   private static final Logger LOG = Logger.getInstance(ChainResolver.class);
 
-  private ChainsSearchResult mySearchResult = new ChainsSearchResult(".", -1, -1);
+  private ChainsSearchResult mySearchResult = new ChainsSearchResult(0, -1, null);
 
   @NotNull ChainStatus tryFindChain(@NotNull PsiElement elementAtDebugger) {
     if (mySearchResult.isSuitableFor(elementAtDebugger)) {
@@ -101,20 +102,23 @@ class ChainResolver {
   }
 
   private static class ChainsSearchResult {
-    final String filePath;
+    final long elementHash;
     final long offset;
     final long fileModificationStamp;
     volatile @NotNull ChainStatus chainsStatus = ChainStatus.COMPUTING;
 
-    ChainsSearchResult(String path, long offsetInFile, long modificationStamp) {
-      filePath = path;
+    ChainsSearchResult(long elementHash, long offsetInFile, @Nullable PsiFile containingFile) {
+      this.elementHash = elementHash;
+      fileModificationStamp = getModificationStamp(containingFile);
       offset = offsetInFile;
-      fileModificationStamp = modificationStamp;
+    }
+
+    private static long getModificationStamp(@Nullable PsiFile file) {
+      return file == null ? -1 : file.getModificationStamp();
     }
 
     static @NotNull ChainsSearchResult of(@NotNull PsiElement element) {
-      PsiFile file = element.getContainingFile();
-      return new ChainsSearchResult(file.getVirtualFile().getPath(), element.getTextOffset(), file.getModificationStamp());
+      return new ChainsSearchResult(element.hashCode(), element.getTextOffset(), element.getContainingFile());
     }
 
     void updateStatus(boolean found) {
@@ -128,10 +132,9 @@ class ChainResolver {
     }
 
     boolean isSuitableFor(@NotNull PsiElement element) {
-      PsiFile containingFile = element.getContainingFile();
-      return filePath.equals(containingFile.getVirtualFile().getPath())
-             && fileModificationStamp == containingFile.getModificationStamp()
-             && offset == element.getTextOffset();
+      return elementHash == element.hashCode()
+             && offset == element.getTextOffset()
+             && fileModificationStamp == getModificationStamp(element.getContainingFile());
     }
   }
 }
