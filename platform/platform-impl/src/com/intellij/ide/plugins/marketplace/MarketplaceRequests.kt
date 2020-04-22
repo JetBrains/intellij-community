@@ -1,21 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.updateSettings.IdeCompatibleUpdate
-import com.intellij.openapi.updateSettings.IntellijUpdateMetadata
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
@@ -27,17 +28,29 @@ import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 
 @ApiStatus.Internal
-object PluginsMetaLoader {
+object MarketplaceRequests {
 
-  private val LOG = Logger.getInstance(PluginsMetaLoader::class.java)
+  private val LOG = Logger.getInstance(MarketplaceRequests::class.java)
 
   private const val TAG_EXT = ".etag"
 
   private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 
-  private val AVAILABLE_PLUGINS_XML_IDS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
+  private val PLUGIN_MANAGER_URL = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
 
-  private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')}/api/search/compatibleUpdates"
+  private val AVAILABLE_PLUGINS_XML_IDS_URL = "${PLUGIN_MANAGER_URL}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
+
+  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests())
+
+  private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded(
+    "${PLUGIN_MANAGER_URL}/api/search/aggregation/organizations"
+  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
+
+  private val MARKETPLACE_TAGS_URL = Urls.newFromEncoded(
+    "${PLUGIN_MANAGER_URL}/api/search/aggregation/tags"
+  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
+
+  private val COMPATIBLE_UPDATE_URL = "${PLUGIN_MANAGER_URL}/api/search/compatibleUpdates"
 
   private val objectMapper = ObjectMapper()
 
@@ -47,8 +60,13 @@ object PluginsMetaLoader {
     update.externalUpdateId + ".json")
 
   private fun getUpdateMetadataUrl(update: IdeCompatibleUpdate) =
-    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/${update.externalPluginId}/${update.externalUpdateId}/meta.json"
+    "${PLUGIN_MANAGER_URL}/files/${update.externalPluginId}/${update.externalUpdateId}/meta.json"
 
+  private fun createSearchUrl(query: String, count: Int): Url = Urls.newFromEncoded(
+    "$PLUGIN_MANAGER_URL/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count"
+  )
+
+  @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return readOrUpdateFile(
@@ -60,7 +78,66 @@ object PluginsMetaLoader {
     )
   }
 
-  fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator?): PluginNode {
+  @JvmStatic
+  fun getBuildForPluginRepositoryRequests(): String {
+    val instance = ApplicationInfoImpl.getShadowInstance()
+    val compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild()
+    return if (compatibleBuild != null) {
+      BuildNumber.fromStringWithProductCode(
+        compatibleBuild,
+        instance.build.productCode
+      )!!.asString()
+    }
+    else instance.apiVersion
+  }
+
+  @JvmStatic
+  @Throws(IOException::class)
+  fun searchPlugins(query: String, count: Int): List<PluginNode> {
+    val marketplaceSearchPluginData = HttpRequests.request(createSearchUrl(query, count))
+      .throwStatusCodeException(false)
+      .connect {
+        objectMapper.readValue(
+          it.inputStream,
+          object : TypeReference<List<MarketplaceSearchPluginData>>() {}
+        )
+      }
+    // Marketplace Search Service can produce objects without "externalUpdateId". It means that an update is not in the search index yet.
+    return marketplaceSearchPluginData.filter { it.externalUpdateId != null }.map { it.toPluginNode() }
+  }
+
+  @JvmStatic
+  fun getAllPluginsVendors(): List<String> = try {
+    HttpRequests
+      .request(MARKETPLACE_ORGANIZATIONS_URL)
+      .productNameAsUserAgent()
+      .throwStatusCodeException(false)
+      .connect {
+        objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
+      }
+  }
+  catch (e: Exception) {
+    LOG.warn("Can not get organizations from Marketplace", e)
+    emptyList()
+  }
+
+  @JvmStatic
+  fun getAllPluginsTags(): List<String> = try {
+    HttpRequests
+      .request(MARKETPLACE_TAGS_URL)
+      .productNameAsUserAgent()
+      .throwStatusCodeException(false)
+      .connect {
+        objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
+      }
+  }
+  catch (e: Exception) {
+    LOG.warn("Can not get tags from Marketplace", e)
+    emptyList()
+  }
+
+  @Throws(IOException::class)
+  fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginNode {
     return readOrUpdateFile(
       getUpdateMetadataFile(ideCompatibleUpdate),
       getUpdateMetadataUrl(ideCompatibleUpdate),
@@ -68,6 +145,12 @@ object PluginsMetaLoader {
       IdeBundle.message("progress.downloading.plugins.meta", xmlId),
       ::parseJsonPluginMeta
     ).toPluginNode()
+  }
+
+  @JvmStatic
+  fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
+    val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
+    return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
   }
 
   @JvmStatic
@@ -95,7 +178,7 @@ object PluginsMetaLoader {
           indicator.text2 = indicatorMessage
         }
         if (file != null) {
-          synchronized(PluginsMetaLoader) {
+          synchronized(MarketplaceRequests) {
             request.saveToFile(file, indicator)
             connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
           }
@@ -107,12 +190,14 @@ object PluginsMetaLoader {
       }
   }
 
-  fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> {
+  @Throws(IOException::class)
+  fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
     return HttpRequests
       .post(url, HttpRequests.JSON_CONTENT_TYPE)
       .productNameAsUserAgent()
+      .throwStatusCodeException(false)
       .connect {
         it.write(data)
         objectMapper
@@ -121,6 +206,19 @@ object PluginsMetaLoader {
             object : TypeReference<List<IdeCompatibleUpdate>>() {}
           )
       }
+  }
+
+  @JvmStatic
+  @JvmOverloads
+  fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null): PluginNode? {
+    val data = try {
+      getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
+    }
+    catch (e: Exception) {
+      LOG.warn("Can not get compatible update from Marketplace", e)
+      null
+    }
+    return data?.let { loadPluginDescriptor(id, it) }
   }
 
   @JvmStatic

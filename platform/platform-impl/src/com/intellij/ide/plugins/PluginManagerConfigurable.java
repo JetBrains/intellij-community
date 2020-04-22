@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -31,8 +33,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,7 +47,6 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
@@ -64,6 +65,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -113,15 +115,15 @@ public class PluginManagerConfigurable
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
-    public List<IdeaPluginDescriptor> getAllRepoPlugins() {
-      return getRepositoryPlugins();
+    @NotNull
+    public Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+      return getCustomRepositoryPlugins();
     }
   };
 
   private PluginUpdatesService myPluginUpdatesService;
 
-  private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
-  private Map<PluginId, IdeaPluginDescriptor> myAllRepositoryPluginsMap;
+  private Collection<IdeaPluginDescriptor> myCustomRepositoryPluginsList;
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myTagsSorted;
@@ -313,8 +315,7 @@ public class PluginManagerConfigurable
 
   private void resetPanels() {
     synchronized (myRepositoriesLock) {
-      myAllRepositoryPluginsList = null;
-      myAllRepositoryPluginsMap = null;
+      myCustomRepositoryPluginsList = null;
       myCustomRepositoryPluginsMap = null;
     }
 
@@ -379,15 +380,15 @@ public class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadRepositoryPlugins();
-            Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
-            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
-
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadCustomRepositoryPlugins();
             try {
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true", "/sortBy:featured");
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date", "/sortBy:updated");
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads", "/sortBy:downloads");
-              addGroup(groups, allRepositoriesMap, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
+                                         "/sortBy:featured");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date",
+                                         "/sortBy:updated");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads",
+                                         "/sortBy:downloads");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
             }
             catch (IOException e) {
               LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
@@ -396,12 +397,13 @@ public class PluginManagerConfigurable
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
-                addGroup(groups, IdeBundle.message("plugins.configurable.repository.0", host), "/repository:\"" + host + "\"", descriptors -> {
-                  int allSize = allDescriptors.size();
-                  descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
-                  PluginsGroup.sortByName(descriptors);
-                  return allSize > ITEMS_PER_GROUP;
-                });
+                addGroup(groups, IdeBundle.message("plugins.configurable.repository.0", host), "/repository:\"" + host + "\"",
+                         descriptors -> {
+                           int allSize = allDescriptors.size();
+                           descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
+                           PluginsGroup.sortByName(descriptors);
+                           return allSize > ITEMS_PER_GROUP;
+                         });
               }
             }
           }
@@ -432,7 +434,8 @@ public class PluginManagerConfigurable
 
         myMarketplacePanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.marketplace.plugins.not.loaded"))
           .appendSecondaryText(IdeBundle.message("message.check.the.internet.connection.and") + " ", StatusText.DEFAULT_ATTRIBUTES, null)
-          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myMarketplaceRunnable.run());
+          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                               e -> myMarketplaceRunnable.run());
 
         ApplicationManager.getApplication().executeOnPooledThread(runnable);
         return createScrollPane(myMarketplacePanel, false);
@@ -467,13 +470,21 @@ public class PluginManagerConfigurable
               case "/tag:":
                 if (ContainerUtil.isEmpty(myTagsSorted)) {
                   Set<String> allTags = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
+                  for (IdeaPluginDescriptor descriptor : getCustomRepositoryPlugins()) {
                     if (descriptor instanceof PluginNode) {
                       List<String> tags = ((PluginNode)descriptor).getTags();
                       if (!ContainerUtil.isEmpty(tags)) {
                         allTags.addAll(tags);
                       }
                     }
+                  }
+                  try {
+                    ProcessIOExecutorService.INSTANCE.submit(() -> {
+                      allTags.addAll(MarketplaceRequests.getAllPluginsTags());
+                    }).get();
+                  }
+                  catch (InterruptedException | ExecutionException e) {
+                    LOG.error("Error while getting tags from marketplace", e);
                   }
                   myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
                 }
@@ -482,7 +493,17 @@ public class PluginManagerConfigurable
                 return Arrays.asList("downloads", "name", "rating", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
-                  myVendorsSorted = MyPluginModel.getVendors(getRepositoryPlugins());
+                  List<String> customRepositoriesVendors = MyPluginModel.getVendors(getCustomRepositoryPlugins());
+                  LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
+                  try {
+                    ProcessIOExecutorService.INSTANCE.submit(() -> {
+                      vendors.addAll(MarketplaceRequests.getAllPluginsVendors());
+                    }).get();
+                  }
+                  catch (InterruptedException | ExecutionException e) {
+                    LOG.error("Error while getting vendors from marketplace", e);
+                  }
+                  myVendorsSorted = new ArrayList<>(vendors);
                 }
                 return myVendorsSorted;
               case "/repository:":
@@ -555,7 +576,8 @@ public class PluginManagerConfigurable
 
         //noinspection unchecked
         myMarketplaceSortByAction.setListener(
-          (component, __) -> showRightBottomPopup(component.getParent().getParent(), IdeBundle.message("plugins.configurable.sort.by"), myMarketplaceSortByGroup), null);
+          (component, __) -> showRightBottomPopup(component.getParent().getParent(), IdeBundle.message("plugins.configurable.sort.by"),
+                                                  myMarketplaceSortByGroup), null);
 
         myMarketplaceSortByCallback = updateAction -> {
           MarketplaceSortByAction removeAction = null;
@@ -639,23 +661,9 @@ public class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadRepositoryPlugins();
-                Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = p.first;
-                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
+                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadCustomRepositoryPlugins();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
-
-                // TODO: parser.vendors on server
-                if (!parser.vendors.isEmpty()) {
-                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
-                    if (MyPluginModel.isVendor(descriptor, parser.vendors)) {
-                      result.descriptors.add(descriptor);
-                    }
-                  }
-                  ContainerUtil.removeDuplicates(result.descriptors);
-                  result.sortByName();
-                  return;
-                }
 
                 if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
@@ -679,13 +687,8 @@ public class PluginManagerConfigurable
                   return;
                 }
 
-                Url url = PluginRepositoryRequests.createSearchUrl(parser.getUrlQuery(), 10000);
-                for (PluginId pluginId : PluginRepositoryRequests.requestToPluginRepository(url)) {
-                  IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
-                  if (descriptor != null) {
-                    result.descriptors.add(descriptor);
-                  }
-                }
+                List<PluginNode> plugins = MarketplaceRequests.searchPlugins(parser.getUrlQuery(), 10000);
+                result.descriptors.addAll(plugins);
 
                 if (parser.searchQuery != null) {
                   String builtinUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
@@ -701,15 +704,6 @@ public class PluginManagerConfigurable
                   }
 
                   result.descriptors.addAll(0, builtinList);
-                }
-
-                if (result.descriptors.isEmpty() && "/tag:Paid".equals(query)) {
-                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
-                    if (descriptor.getProductCode() != null) {
-                      result.descriptors.add(descriptor);
-                    }
-                  }
-                  result.sortByName();
                 }
 
                 ContainerUtil.removeDuplicates(result.descriptors);
@@ -731,10 +725,12 @@ public class PluginManagerConfigurable
               }
               catch (IOException e) {
                 LOG.info(e);
-
-                ApplicationManager.getApplication().invokeLater(() -> myPanel.getEmptyText().setText(
-                  IdeBundle.message("plugins.configurable.search.result.not.loaded"))
-                  .appendSecondaryText(IdeBundle.message("plugins.configurable.check.internet"), StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any());
+                ApplicationManager.getApplication().invokeLater(
+                  () -> myPanel.getEmptyText()
+                    .setText(IdeBundle.message("plugins.configurable.search.result.not.loaded"))
+                    .appendSecondaryText(
+                      IdeBundle.message("plugins.configurable.check.internet"), StatusText.DEFAULT_ATTRIBUTES, null), ModalityState.any()
+                );
               }
             }
           };
@@ -1015,7 +1011,8 @@ public class PluginManagerConfigurable
                 query.contains("/invalid") || query.contains("/bundled")) {
               return;
             }
-            myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+            myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
+                                                       SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
           }
 
@@ -1383,7 +1380,9 @@ public class PluginManagerConfigurable
     public void setState(@NotNull SearchQueryParser.Marketplace parser) {
       if (myOption == SortBySearchOption.Relevance) {
         myState = parser.sortBy == null;
-        getTemplatePresentation().setVisible(parser.sortBy == null || !parser.tags.isEmpty() || parser.searchQuery != null);
+        getTemplatePresentation().setVisible(
+          parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null
+        );
       }
       else {
         myState = parser.sortBy != null && myOption.name().equalsIgnoreCase(parser.sortBy);
@@ -1519,86 +1518,73 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private List<IdeaPluginDescriptor> getRepositoryPlugins() {
+  private Collection<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoryPluginsList != null) {
-        return myAllRepositoryPluginsList;
+      if (myCustomRepositoryPluginsList != null) {
+        return myCustomRepositoryPluginsList;
       }
     }
-    try {
-      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
-      if (list != null) {
-        return list;
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    return Collections.emptyList();
+    LOG.error("PluginManagerConfigurable#getCustomRepoPlugins() has been called before PluginManagerConfigurable#createMarketplaceTab()");
+    return ContainerUtil.emptyList();
   }
 
   @NotNull
-  private Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadRepositoryPlugins() {
+  private Map<String, List<IdeaPluginDescriptor>> loadCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoryPluginsMap != null) {
-        return Pair.create(myAllRepositoryPluginsMap, myCustomRepositoryPluginsMap);
+      if (myCustomRepositoryPluginsMap != null) {
+        return myCustomRepositoryPluginsMap;
       }
     }
-
-    List<IdeaPluginDescriptor> list = new ArrayList<>();
-    Map<PluginId, IdeaPluginDescriptor> map = new HashMap<>();
-    Map<String, List<IdeaPluginDescriptor>> custom = new HashMap<>();
-
+    Map<PluginId, IdeaPluginDescriptor> latestCustomPluginsAsMap = new HashMap<>();
+    Map<String, List<IdeaPluginDescriptor>> customRepositoryPluginsMap = new HashMap<>();
     for (String host : RepositoryHelper.getPluginHosts()) {
       try {
-        List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null);
         if (host != null) {
-          custom.put(host, descriptors);
-        }
-        for (IdeaPluginDescriptor plugin : descriptors) {
-          PluginId id = plugin.getPluginId();
-          if (!map.containsKey(id)) {
-            list.add(plugin);
-            map.put(id, plugin);
+          List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null);
+          for (IdeaPluginDescriptor descriptor : descriptors) {
+            PluginId pluginId = descriptor.getPluginId();
+            IdeaPluginDescriptor savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
+            if (savedDescriptor == null) {
+              latestCustomPluginsAsMap.put(pluginId, descriptor);
+            } else {
+              if (StringUtil.compareVersionNumbers(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
+                latestCustomPluginsAsMap.put(pluginId, descriptor);
+              }
+            }
           }
+          customRepositoryPluginsMap.put(host, descriptors);
         }
       }
       catch (IOException e) {
-        if (host == null) {
-          LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
-        }
-        else {
-          LOG.info(host, e);
-        }
+        LOG.info(host, e);
       }
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      InstalledPluginsState state = InstalledPluginsState.getInstance();
-      for (IdeaPluginDescriptor descriptor : list) {
-        state.onDescriptorDownload(descriptor);
-      }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
     });
 
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoryPluginsList == null) {
-        myAllRepositoryPluginsList = list;
-        myAllRepositoryPluginsMap = map;
-        myCustomRepositoryPluginsMap = custom;
+      if (myCustomRepositoryPluginsMap == null) {
+        myCustomRepositoryPluginsMap = customRepositoryPluginsMap;
+        myCustomRepositoryPluginsList = latestCustomPluginsAsMap.values();
       }
-      return Pair.create(myAllRepositoryPluginsMap, myCustomRepositoryPluginsMap);
+      return myCustomRepositoryPluginsMap;
     }
   }
 
-  private void addGroup(@NotNull List<? super PluginsGroup> groups,
-                        @NotNull @Nls String name,
-                        @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function)
+  private void addGroup(
+    @NotNull List<? super PluginsGroup> groups,
+    @NotNull @Nls String name,
+    @NotNull String showAllQuery,
+    @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function
+  )
     throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
-      group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
+      group.rightAction =
+        new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
@@ -1607,12 +1593,17 @@ public class PluginManagerConfigurable
     }
   }
 
-  private void addGroup(@NotNull List<? super PluginsGroup> groups,
-                        @NotNull Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap,
-                        @NotNull @Nls String name,
-                        @NotNull @NonNls String query,
-                        @NotNull @NonNls String showAllQuery) throws IOException {
-    addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, allRepositoriesMap, query));
+  private void addGroupViaLightDescriptor(
+    @NotNull List<? super PluginsGroup> groups,
+    @NotNull @Nls String name,
+    @NotNull @NonNls String query,
+    @NotNull @NonNls String showAllQuery
+  ) throws IOException {
+    addGroup(groups, name, showAllQuery, descriptors -> {
+      List<PluginNode> pluginNodes = MarketplaceRequests.searchPlugins(query, ITEMS_PER_GROUP);
+      descriptors.addAll(pluginNodes);
+      return pluginNodes.size() == ITEMS_PER_GROUP;
+    });
   }
 
   @Override
@@ -1661,7 +1652,8 @@ public class PluginManagerConfigurable
     if (myPluginModel.apply(myCardPanel)) return;
 
     if (myPluginModel.createShutdownCallback) {
-      InstalledPluginsState.getInstance().setShutdownCallback(() -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp()));
+      InstalledPluginsState.getInstance()
+        .setShutdownCallback(() -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp()));
     }
   }
 

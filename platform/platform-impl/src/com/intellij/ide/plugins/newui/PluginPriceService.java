@@ -2,16 +2,25 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginRepositoryRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.JsonReaderEx;
+import org.jetbrains.io.JsonUtil;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -69,7 +78,7 @@ public class PluginPriceService {
   private static void loadPrice() {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        Object priceJson = PluginRepositoryRequests.getPluginPricesJsonObject();
+        Object priceJson = getPluginPricesJsonObject();
 
         if (priceJson instanceof Map) {
           Map<String, String> result = parsePrices((Map)priceJson);
@@ -93,6 +102,24 @@ public class PluginPriceService {
       catch (IOException e) {
         e.printStackTrace();
         LOG.debug(e);
+      }
+    });
+  }
+
+  @Nullable
+  private static Object getPluginPricesJsonObject() throws IOException {
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    Url url = Urls.newFromEncoded(instance.getPluginManagerUrl() + "/geo/files/prices");
+
+    return HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
+      URLConnection connection = request.getConnection();
+
+      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() != HttpURLConnection.HTTP_OK) {
+        return null;
+      }
+
+      try (JsonReaderEx json = new JsonReaderEx(FileUtil.loadTextAndClose(request.getReader()))) {
+        return JsonUtil.nextAny(json);
       }
     });
   }

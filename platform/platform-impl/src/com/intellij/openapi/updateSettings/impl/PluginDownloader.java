@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -345,7 +346,7 @@ public final class PluginDownloader {
 
   @NotNull
   public static String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
-    return buildNumber != null ? buildNumber.asString() : PluginRepositoryRequests.getBuildForPluginRepositoryRequests();
+    return buildNumber != null ? buildNumber.asString() : MarketplaceRequests.getBuildForPluginRepositoryRequests();
   }
 
   @NotNull

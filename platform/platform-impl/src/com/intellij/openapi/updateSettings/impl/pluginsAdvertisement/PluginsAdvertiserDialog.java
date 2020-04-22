@@ -26,6 +26,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
+  //TODO: change it to custom plugins - non custom plugins will be checked during installation
   private final List<? extends IdeaPluginDescriptor> myAllPlugins;
   private final Set<PluginId> mySkippedPlugins = new HashSet<>();
 

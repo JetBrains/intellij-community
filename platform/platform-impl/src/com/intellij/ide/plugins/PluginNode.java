@@ -46,6 +46,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String myRating;
   private boolean myIncomplete;
   private List<String> myTags;
+  private String externalUpdateId;
+  private String externalPluginId;
 
   public PluginNode() { }
 
@@ -115,6 +117,32 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setLicenseOptional(boolean optional) {
     this.licenseOptional = optional;
+  }
+
+  /**
+   * Plugin update unique ID from Marketplace database.
+   * Needed for getting Plugin meta information.
+   */
+  @Nullable
+  public String getExternalUpdateId() {
+    return externalUpdateId;
+  }
+
+  public void setExternalUpdateId(String externalUpdateId) {
+    this.externalUpdateId = externalUpdateId;
+  }
+
+  /**
+   * Plugin unique ID from Marketplace storage.
+   * Needed for getting Plugin meta information.
+   */
+  @Nullable
+  public String getExternalPluginId() {
+    return externalPluginId;
+  }
+
+  public void setExternalPluginId(String externalPluginId) {
+    this.externalPluginId = externalPluginId;
   }
 
   @Override
@@ -262,7 +290,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myTags = new ArrayList<>(tags);
   }
 
-  void addTags(@NotNull String tag) {
+  public void addTags(@NotNull String tag) {
     (myTags != null ? myTags : (myTags = new ArrayList<>())).add(tag);
   }
 

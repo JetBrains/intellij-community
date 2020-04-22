@@ -46,30 +46,39 @@ import java.util.*;
 public class PluginUpdateDialog extends DialogWrapper {
   private final Collection<PluginDownloader> myDownloaders;
 
-  private final MyPluginModel myPluginModel = new MyPluginModel() {
-    @Override
-    public void runRestartButton(@NotNull Component component) {
-      doOKAction();
-    }
-  };
+  private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
   private final PluginsGroup myGroup;
   private final PluginDetailsPageComponent myDetailsPage;
 
   private final Action myIgnoreAction;
 
-  public PluginUpdateDialog(@NotNull Collection<PluginDownloader> uploadedPlugins) {
+  public PluginUpdateDialog(@NotNull Collection<PluginDownloader> updatedPlugins,
+                            @NotNull Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
     super(true);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
 
-    myDownloaders = uploadedPlugins;
+    myDownloaders = updatedPlugins;
 
     myIgnoreAction = new AbstractAction(
-      IdeBundle.message(uploadedPlugins.size() == 1 ? "updates.ignore.update.button" : "updates.ignore.updates.button")) {
+      IdeBundle.message(updatedPlugins.size() == 1 ? "updates.ignore.update.button" : "updates.ignore.updates.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         close(CANCEL_EXIT_CODE);
         ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.myUpdateDescriptor));
+      }
+    };
+
+    myPluginModel = new MyPluginModel() {
+      @Override
+      public void runRestartButton(@NotNull Component component) {
+        doOKAction();
+      }
+
+      @Override
+      @NotNull
+      protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+        return customRepositoryPlugins;
       }
     };
 
@@ -112,7 +121,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     });
 
     myGroup = new PluginsGroup(IdeBundle.message("title.plugin.updates.available"));
-    for (PluginDownloader plugin : uploadedPlugins) {
+    for (PluginDownloader plugin : updatedPlugins) {
       myGroup.descriptors.add(plugin.getDescriptor());
     }
     myGroup.sortByName();

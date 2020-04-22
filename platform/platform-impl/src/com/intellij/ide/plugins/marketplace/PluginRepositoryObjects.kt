@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.updateSettings
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
+
+const val PAID_TAG = "Paid"
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -55,3 +57,38 @@ data class IntellijUpdateMetadata(
     return pluginNode
   }
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+internal class MarketplaceSearchPluginData(
+  @get:JsonProperty("xmlId")
+  val id: String = "",
+  var isPaid: Boolean = false,
+  val rating: Double = 0.0,
+  val name: String = "",
+  val vendor: String = "",
+  @get:JsonProperty("updateId")
+  val externalUpdateId: String? = null,
+  @get:JsonProperty("id")
+  val externalPluginId: String? = null,
+  val downloads: String = ""
+) {
+  fun toPluginNode(): PluginNode {
+    val pluginNode = PluginNode()
+    pluginNode.setId(id)
+    pluginNode.name = name
+    pluginNode.rating = String.format("%.2f", rating)
+    pluginNode.downloads = downloads
+    pluginNode.vendor = vendor
+    pluginNode.externalPluginId = externalPluginId
+    pluginNode.externalUpdateId = externalUpdateId
+    if (isPaid) pluginNode.tags = listOf(PAID_TAG)
+    return pluginNode
+  }
+}
+
+/**
+ * @param aggregations map of results and count of plugins
+ * @param total count of plugins
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+internal class AggregationSearchResponse(val aggregations: Map<String, Int> = emptyMap(), val total: Int = 0)
