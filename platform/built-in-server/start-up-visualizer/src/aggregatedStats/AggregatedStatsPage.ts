@@ -9,6 +9,7 @@ import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
 import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
 import {Location} from "vue-router"
 import {Notification} from "element-ui"
+import ClusteredPage from "@/aggregatedStats/ClusteredPage.vue"
 
 export const projectNameToTitle = new Map<string, string>()
 
@@ -22,7 +23,7 @@ projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
 Object.seal(projectNameToTitle)
 
 @Component({
-  components: {LineChartComponent, ClusteredChartComponent}
+  components: {LineChartComponent, ClusteredChartComponent, ClusteredPage}
 })
 export default class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)

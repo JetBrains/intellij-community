@@ -1,9 +1,7 @@
 <!-- Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
   <div>
-    <LineChartComponent type="duration" :order="order" :dataRequest="dataRequest"
-                        :metrics="metrics"
-                        :chartSettings="chartSettings"/>
+    <ClusteredChartComponent :dataRequest="dataRequest" :metrics="metrics" :chartSettings="chartSettings" :timeRange="timeRange"/>
   </div>
 </template>
 
@@ -12,38 +10,32 @@ import {Component, Vue} from "vue-property-decorator"
 import LineChartComponent from "./LineChartComponent.vue"
 import ClusteredChartComponent from "./ClusteredChartComponent.vue"
 import {DataRequest} from "@/aggregatedStats/model"
-import {getModule} from "vuex-module-decorators"
-import {AppStateModule} from "@/state/state"
+import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 
 const rison: { decode: (o: any) => string } = require("rison-node")
-const pathPrefix = "/line-chart/"
+const pathPrefix = "/clustered-chart/"
 
 @Component({
   components: {LineChartComponent, ClusteredChartComponent}
 })
-export default class AggregatedStatsSingleChartPage extends Vue {
+export default class SingleClusteredChartPage extends Vue {
   dataRequest: DataRequest | null = null
 
   metrics: Array<string> = []
 
-  order: string = ""
-  chartSettings = getModule(AppStateModule, this.$store).chartSettings
+  timeRange: string = ""
+  chartSettings!: ChartSettings
 
-  // LineChartComponent doesn't watch changes of metric - properties must be set before create
   beforeMount() {
     this.applyConfiguration(this.$route.path)
   }
 
-  // @Watch("$route")
-  // onRouteChanged(location: Location, _oldLocation: Location): void {
-  //   this.applyConfiguration(location.path!!)
-  // }
-
   private applyConfiguration(path: string) {
     const configuration: any = rison.decode(path.substring(path.indexOf(pathPrefix) + pathPrefix.length))
     console.log(configuration)
+    this.chartSettings = configuration.chartSettings
     this.metrics = configuration.metrics
-    this.order = configuration.order
+    this.timeRange = configuration.timeRange
     this.dataRequest = Object.seal(configuration.dataRequest)
   }
 }
