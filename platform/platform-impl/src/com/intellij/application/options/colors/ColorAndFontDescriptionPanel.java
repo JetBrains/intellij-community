@@ -101,6 +101,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     }
     myEffectsCombo.addActionListener(actionListener);
 
+    //noinspection HardCodedStringLiteral
     Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
     myInheritanceLabel.addHyperlinkListener(e -> myDispatcher.getMulticaster().onHyperLinkClicked(e));
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));

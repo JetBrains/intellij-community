@@ -637,6 +637,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     String message;
     if (pluginsToDisable.size() == 1) {
       IdeaPluginDescriptor plugin = pluginsToDisable.iterator().next();
+      //noinspection HardCodedStringLiteral
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt", plugin.getName()) + "<br/>" +
                 DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps" : "error.dialog.disable.prompt.lone") + "<br/><br/>" +
@@ -644,6 +645,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
                 "</html>";
     }
     else {
+      //noinspection HardCodedStringLiteral
       message = "<html>" +
                 DiagnosticBundle.message("error.dialog.disable.prompt.multiple") + "<br/>" +
                 DiagnosticBundle.message(hasDependents ? "error.dialog.disable.prompt.deps.multiple" : "error.dialog.disable.prompt.lone.multiple") + "<br/><br/>" +

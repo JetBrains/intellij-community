@@ -204,6 +204,7 @@ public class RecentLocationsAction extends DumbAwareAction implements LightEditC
 
   @NotNull
   public static JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet, boolean showChanged) {
+    //noinspection HardCodedStringLiteral
     String text = "<html>"
                   + IdeBundle.message("recent.locations.title.text")
                   + " <font color=\"" + Holder.SHORTCUT_HEX_COLOR + "\">"

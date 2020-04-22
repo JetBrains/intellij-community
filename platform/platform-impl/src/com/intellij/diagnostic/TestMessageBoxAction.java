@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class TestMessageBoxAction extends AnAction {
   private final Random myRandom = new Random();
 

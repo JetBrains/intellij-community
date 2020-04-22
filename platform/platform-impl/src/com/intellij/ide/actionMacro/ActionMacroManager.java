@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.AnimatedIcon.Recording;
@@ -486,10 +487,11 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       e.getPresentation().setEnabled(!getInstance().isPlaying());
     }
 
+    @ActionText
     @Nullable
     @Override
     public String getTemplateText() {
-      return "Invoke Macro";
+      return IdeBundle.message("action.invoke.macro.text");
     }
   }
 
