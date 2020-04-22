@@ -16,12 +16,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -234,12 +230,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                     range = lineRange;
                   }
                   if (!range.isEmpty() && range.intersects(lineRange)) {
-                    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-                    TextAttributesKey attributesKey = DebuggerColors.BREAKPOINT_ATTRIBUTES;
-                    TextAttributes attributes = scheme.getAttributes(attributesKey);
                     myHighlighter = editor.getMarkupModel().addRangeHighlighter(
                       range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
-                      attributes, attributesKey, HighlighterTargetArea.EXACT_RANGE);
+                      null, DebuggerColors.BREAKPOINT_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);
                   }
                 }
               }

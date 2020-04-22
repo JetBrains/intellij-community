@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
@@ -184,9 +183,7 @@ public class ExecutionPointHighlighter {
 
     if (myRangeHighlighter != null) return;
 
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributesKey attributesKey = myNotTopFrame ? DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES : DebuggerColors.EXECUTIONPOINT_ATTRIBUTES;
-    TextAttributes attributes = scheme.getAttributes(attributesKey);
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     if (mySourcePosition instanceof HighlighterProvider) {
       TextRange range = ((HighlighterProvider)mySourcePosition).getHighlightRange();
@@ -195,12 +192,12 @@ public class ExecutionPointHighlighter {
         if (!range.equals(lineRange)) {
           myRangeHighlighter = markupModel
             .addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                 attributes, attributesKey, HighlighterTargetArea.EXACT_RANGE);
+                                 null, attributesKey, HighlighterTargetArea.EXACT_RANGE);
         }
       }
     }
     if (myRangeHighlighter == null) {
-      myRangeHighlighter = markupModel.addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes);
+      myRangeHighlighter = markupModel.addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, null, attributesKey);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, !myNotTopFrame);
     myRangeHighlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());

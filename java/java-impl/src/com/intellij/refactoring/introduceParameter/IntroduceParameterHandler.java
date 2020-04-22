@@ -19,9 +19,11 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -217,14 +219,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
     final List<RangeHighlighter> highlighters = new ArrayList<>();
-    final TextAttributesKey attributesKey = EditorColors.SEARCH_RESULT_ATTRIBUTES;
     list.addListSelectionListener(__ -> {
       final PsiMethod selectedMethod = list.getSelectedValue();
       if (selectedMethod == null) return;
       dropHighlighters(highlighters);
-      updateView(selectedMethod, editor, attributesKey, highlighters, superMethod);
+      updateView(selectedMethod, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, highlighters, superMethod);
     });
-    updateView(validEnclosingMethods.get(0), editor, attributesKey, highlighters, superMethod);
+    updateView(validEnclosingMethods.get(0), editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, highlighters, superMethod);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -263,11 +264,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     final PsiIdentifier nameIdentifier = selectedMethod.getNameIdentifier();
     if (nameIdentifier != null) {
       final TextRange textRange = nameIdentifier.getTextRange();
-      final TextAttributes attributes =
-        EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
       final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
         textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
-        attributes, attributesKey,
+        null, attributesKey,
         HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(rangeHighlighter);
     }

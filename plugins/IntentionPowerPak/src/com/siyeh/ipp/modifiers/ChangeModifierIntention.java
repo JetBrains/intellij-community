@@ -15,14 +15,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -163,11 +160,9 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return;
     }
 
-    TextAttributesKey attributesKey = EditorColors.LIVE_TEMPLATE_ATTRIBUTES;
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
     RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.LAST + 1,
-                           attributes, attributesKey, HighlighterTargetArea.EXACT_RANGE);
+                           null, EditorColors.LIVE_TEMPLATE_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToRight(true);
     highlighter.setGreedyToLeft(true);
     ModifierUpdater updater = new ModifierUpdater(file, document, range, getFamilyName());
