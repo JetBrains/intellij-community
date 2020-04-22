@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,9 +50,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
   @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayName();
 
-  void setTabName(@Nls(capitalization = Nls.Capitalization.Title)String tabName);
+  void setTabName(@TabTitle String tabName);
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @TabTitle
   String getTabName();
 
   String getToolwindowTitle();
