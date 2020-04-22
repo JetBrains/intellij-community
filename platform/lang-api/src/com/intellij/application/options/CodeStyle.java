@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.function.Consumer;
+
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
  */
@@ -268,6 +270,30 @@ public class CodeStyle {
     CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
     try {
       settingsManager.setTemporarySettings(tempSettings);
+      runnable.run();
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        settingsManager.setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        settingsManager.dropTemporarySettings();
+      }
+    }
+  }
+
+  public static void doWithTemporarySettings(@NotNull Project project,
+                                             @NotNull CodeStyleSettings baseSettings,
+                                             @Nullable Consumer<CodeStyleSettings> settingsModifier,
+                                             @NotNull Runnable runnable) {
+    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
+    try {
+      CodeStyleSettings tempSettings = settingsManager.createTemporarySettings();
+      tempSettings.copyFrom(baseSettings);
+      if (settingsModifier != null) {
+        settingsModifier.accept(tempSettings);
+      }
       runnable.run();
     }
     finally {

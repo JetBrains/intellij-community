@@ -47,7 +47,7 @@ public class IntellijPropertyKindMap {
   }
 
   private static void collectCommonLanguageProperties() {
-    AbstractCodeStylePropertyMapper mapper = new AbstractCodeStylePropertyMapper(new CodeStyleSettings()) {
+    AbstractCodeStylePropertyMapper mapper = new AbstractCodeStylePropertyMapper(CodeStyleSettings.getDefaults()) {
       @NotNull
       @Override
       protected List<CodeStyleObjectDescriptor> getSupportedFields() {

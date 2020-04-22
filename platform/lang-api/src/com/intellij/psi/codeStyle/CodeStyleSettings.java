@@ -78,10 +78,20 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
+  /**
+   * @deprecated Use {@link CodeStyleSettingsManager#createSettings()}
+   * or {@link CodeStyleSettingsManager#createTemporarySettings()}
+   */
+  @Deprecated
   public CodeStyleSettings() {
     this(true);
   }
 
+  /**
+   * @param loadExtensions
+   * @deprecated See {@link #CodeStyleSettings()}
+   */
+  @Deprecated
   public CodeStyleSettings(boolean loadExtensions) {
     initImportsByDefault();
 
@@ -134,7 +144,12 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  @Override
+  /**
+   * @deprecated
+   * For short-lived temporary settings use {@code CodeStyle.doWithTemporarySettings(project,baseSettings,modifier,runnable},
+   * for permanently created settings use {@link CodeStyleSettingsManager#cloneSettings(CodeStyleSettings)}
+   */
+  @Deprecated
   public CodeStyleSettings clone() {
     CodeStyleSettings clone = new CodeStyleSettings();
     clone.copyFrom(this);

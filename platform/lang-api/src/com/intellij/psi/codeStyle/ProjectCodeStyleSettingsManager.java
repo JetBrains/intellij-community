@@ -84,7 +84,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   @Override
   public void setMainProjectCodeStyle(@Nullable CodeStyleSettings settings) {
-    mySettingsMap.put(MAIN_PROJECT_CODE_STYLE_NAME, settings != null ? settings : new CodeStyleSettings());
+    mySettingsMap.put(MAIN_PROJECT_CODE_STYLE_NAME, settings != null ? settings : createSettings());
   }
 
   @NotNull
@@ -97,7 +97,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
     CodeStyleSettingsManager appCodeStyleSettingsManager = CodeStyleSettingsManager.getInstance();
     if (appCodeStyleSettingsManager != null) {
       CodeStyleSettings defaultProjectSettings = appCodeStyleSettingsManager.getMainProjectCodeStyle();
-      setMainProjectCodeStyle(defaultProjectSettings != null ? defaultProjectSettings.clone() : null);
+      setMainProjectCodeStyle(defaultProjectSettings != null ? cloneSettings(defaultProjectSettings) : null);
       USE_PER_PROJECT_SETTINGS = appCodeStyleSettingsManager.USE_PER_PROJECT_SETTINGS;
       PREFERRED_PROJECT_CODE_STYLE = appCodeStyleSettingsManager.PREFERRED_PROJECT_CODE_STYLE;
     }
@@ -110,7 +110,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
     updateFromOldProjectSettings();
     for (Element subStyle : state.getChildren(CodeStyleScheme.CODE_STYLE_TAG_NAME)) {
       String name = subStyle.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR);
-      CodeStyleSettings settings = new CodeStyleSettings();
+      CodeStyleSettings settings = createSettings();
       settings.readExternal(subStyle);
       if (MAIN_PROJECT_CODE_STYLE_NAME.equals(name)) {
         setMainProjectCodeStyle(settings);

@@ -18,12 +18,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakList;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +46,33 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
 
   private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  private final WeakList<CodeStyleSettings> myReferencedSettings = new WeakList<>();
+
+  public final CodeStyleSettings createSettings() {
+    @SuppressWarnings("deprecation") CodeStyleSettings newSettings = new CodeStyleSettings();
+    myReferencedSettings.add(newSettings);
+    return newSettings;
+  }
+
+  public final CodeStyleSettings createTemporarySettings() {
+    //noinspection deprecation
+    myTemporarySettings = new CodeStyleSettings();
+    return myTemporarySettings;
+  }
+
+  public final CodeStyleSettings cloneSettings(@NotNull CodeStyleSettings settings) {
+    @SuppressWarnings("deprecation") CodeStyleSettings clonedSettings = new CodeStyleSettings();
+    clonedSettings.copyFrom(settings);
+    myReferencedSettings.add(clonedSettings);
+    return clonedSettings;
+  }
+
+  private Collection<CodeStyleSettings> getAllSettings() {
+    List<CodeStyleSettings> allSettings = new ArrayList<>(enumSettings());
+    allSettings.addAll(myReferencedSettings.toStrongList());
+    return allSettings;
+  }
+
   @Override
   public long getStateModificationCount() {
     return enumSettings().stream()
@@ -59,10 +88,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return project.getService(ProjectCodeStyleSettingsManager.class);
   }
 
-  /**
-   * @deprecated Use {@link CodeStyle#getDefaultSettings()} instead.
-   */
-  @Deprecated
   public static CodeStyleSettingsManager getInstance() {
     return ApplicationManager.getApplication().getService(AppCodeStyleSettingsManager.class);
   }
@@ -74,13 +99,13 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
         @Override
         public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-          registerFileTypeIndentOptions(enumSettings(), extension.getFileType(), extension.createIndentOptions());
+          registerFileTypeIndentOptions(getAllSettings(), extension.getFileType(), extension.createIndentOptions());
         }
 
         @Override
         public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          unregisterFileTypeIndentOptions(enumSettings(), extension.getFileType());
+          unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
         }
       }, disposable);
     LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
@@ -88,15 +113,15 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
         @Override
         public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
           LanguageCodeStyleSettingsProvider.registerSettingsPageProvider(extension);
-          registerLanguageSettings(enumSettings(), extension);
-          registerCustomSettings(enumSettings(), extension);
+          registerLanguageSettings(getAllSettings(), extension);
+          registerCustomSettings(getAllSettings(), extension);
         }
 
         @Override
         public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
           LanguageCodeStyleSettingsProvider.unregisterSettingsPageProvider(extension);
-          unregisterLanguageSettings(enumSettings(), extension);
-          unregisterCustomSettings(enumSettings(), extension);
+          unregisterLanguageSettings(getAllSettings(), extension);
+          unregisterCustomSettings(getAllSettings(), extension);
         }
       }, disposable
     );
@@ -105,13 +130,13 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
         @Override
         public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-          registerCustomSettings(enumSettings(), extension);
+          registerCustomSettings(getAllSettings(), extension);
         }
 
         @Override
         public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          unregisterCustomSettings(enumSettings(), extension);
+          unregisterCustomSettings(getAllSettings(), extension);
         }
       }, disposable
     );
@@ -180,7 +205,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   /**
-   * @deprecated see comments for {@link #getSettings(Project)}
+   * @deprecated see comments for {@link #getSettings(Project)} or {@link CodeStyle#getDefaultSettings()}
    */
   @Deprecated
   @NotNull

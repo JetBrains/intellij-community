@@ -26,6 +26,7 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
   private CodeStyleSettingsModifier myModifier;
   private final List<Object> myDependencies = new ArrayList<>();
 
+  @SuppressWarnings("deprecation")
   public TransientCodeStyleSettings(@NotNull PsiFile psiFile, @NotNull CodeStyleSettings settings) {
     myPsiFile = psiFile;
     copyFrom(settings);
