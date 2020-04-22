@@ -863,10 +863,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     myDocumentCache.keySet().forEach(key -> {
       if (key.getFileType().isBinary()) {
         key.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
-        Document document = myDocumentCache.get(key);
-        if (document != null) {
-          unbindFileFromDocument(key, document);
-        }
+        removeDocumentFromCache(key);
       }
     });
   }
