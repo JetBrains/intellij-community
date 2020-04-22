@@ -89,40 +89,28 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         }
       }
 
-      val unloadablePlugins = result.filter {
-        it.componentCount == 0 &&
-        it.unspecifiedDynamicEPs.isEmpty() &&
-        it.nonDynamicEPs.isEmpty() &&
-        it.nonDynamicEPsInDependencies.isEmpty() &&
-        it.serviceOverrides.isEmpty()
-      }
+      val unloadablePlugins = result.filter { it.getStatus() == UnloadabilityStatus.UNLOADABLE }
       appendln("Can unload ${unloadablePlugins.size} plugins out of ${result.size}")
       for (status in unloadablePlugins) {
         appendln(status.pluginId)
       }
       appendln()
 
-      val pluginsUsingComponents = result.filter { it.componentCount > 0 }.sortedByDescending { it.componentCount }
+      val pluginsUsingComponents = result.filter { it.getStatus() == UnloadabilityStatus.USES_COMPONENTS }.sortedByDescending { it.componentCount }
       appendln("Plugins using components (${pluginsUsingComponents.size}):")
       for (status in pluginsUsingComponents) {
         appendln("${status.pluginId} (${status.componentCount})")
       }
       appendln()
 
-      val pluginsUsingServiceOverrides = result.filter { it.serviceOverrides.isNotEmpty() }.sortedByDescending { it.serviceOverrides.size }
+      val pluginsUsingServiceOverrides = result.filter { it.getStatus() == UnloadabilityStatus.USES_SERVICE_OVERRIDES }.sortedByDescending { it.serviceOverrides.size }
       appendln("Plugins using service overrides (${pluginsUsingServiceOverrides.size}):")
       for (status in pluginsUsingServiceOverrides) {
         appendln("${status.pluginId} (${status.serviceOverrides.joinToString()})")
       }
       appendln()
 
-      val pluginsWithOptionalDependencies = result.filter {
-        it.componentCount == 0 &&
-        it.unspecifiedDynamicEPs.isEmpty() &&
-        it.nonDynamicEPs.isEmpty() &&
-        it.nonDynamicEPsInDependencies.isNotEmpty() &&
-        it.serviceOverrides.isEmpty()
-      }
+      val pluginsWithOptionalDependencies = result.filter { it.getStatus() == UnloadabilityStatus.NON_DYNAMIC_IN_DEPENDENCIES }
       appendln("Plugins not unloadable because of optional dependencies (${pluginsWithOptionalDependencies.size}):")
       for (status in pluginsWithOptionalDependencies) {
         appendln(status.pluginId)
@@ -132,9 +120,20 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
       appendln()
 
+      val nonDynamicPlugins = result.filter { it.getStatus() == UnloadabilityStatus.USES_NON_DYNAMIC_EPS }
+      if (nonDynamicPlugins.isNotEmpty()) {
+        appendln("Plugins with EPs explicitly marked as dynamic=false:")
+        for (nonDynamicPlugin in nonDynamicPlugins) {
+          appendln("${nonDynamicPlugin.pluginId} (${nonDynamicPlugin.nonDynamicEPs.size})")
+          for (ep in nonDynamicPlugin.nonDynamicEPs) {
+            appendln("  $ep")
+          }
+        }
+        appendln()
+      }
+
       val closePlugins = result.filter {
-        it.componentCount == 0 &&
-        it.nonDynamicEPs.isEmpty() &&
+        it.getStatus() == UnloadabilityStatus.USES_UNSPECIFIED_DYNAMIC_EPS &&
         it.unspecifiedDynamicEPs.any { !it.startsWith("cidr") && !it.startsWith("appcode") }
       }
       if (closePlugins.isNotEmpty()) {
@@ -277,6 +276,10 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
   }
 }
 
+enum class UnloadabilityStatus {
+  UNLOADABLE, USES_COMPONENTS, USES_SERVICE_OVERRIDES, USES_NON_DYNAMIC_EPS, USES_UNSPECIFIED_DYNAMIC_EPS, NON_DYNAMIC_IN_DEPENDENCIES
+}
+
 private data class PluginUnloadabilityStatus(
   val pluginId: String,
   val unspecifiedDynamicEPs: Set<String>,
@@ -285,7 +288,18 @@ private data class PluginUnloadabilityStatus(
   val componentCount: Int,
   val serviceOverrides: List<String>,
   val analysisErrors: List<String>
-)
+) {
+  fun getStatus(): UnloadabilityStatus {
+    return when {
+      componentCount > 0 -> UnloadabilityStatus.USES_COMPONENTS
+      serviceOverrides.isNotEmpty() -> UnloadabilityStatus.USES_SERVICE_OVERRIDES
+      nonDynamicEPs.isNotEmpty() -> UnloadabilityStatus.USES_NON_DYNAMIC_EPS
+      unspecifiedDynamicEPs.isNotEmpty() -> UnloadabilityStatus.USES_UNSPECIFIED_DYNAMIC_EPS
+      nonDynamicEPsInDependencies.isNotEmpty() -> UnloadabilityStatus.NON_DYNAMIC_IN_DEPENDENCIES
+      else -> UnloadabilityStatus.UNLOADABLE
+    }
+  }
+}
 
 private class ExtensionPointOwners {
   private val annotations = mutableMapOf<VirtualFile, FileAnnotation?>()
