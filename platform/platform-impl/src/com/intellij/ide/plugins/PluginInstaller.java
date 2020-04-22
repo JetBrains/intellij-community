@@ -315,7 +315,7 @@ public final class PluginInstaller {
           dependencies.add(ideaPluginDescriptor);
         }
       }
-      String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
+      String part = IdeBundle.message("dialog.message.plugin.depends.disabled.plugins", dependencies.size()) + " ";
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
       String message = IdeBundle.message("dialog.message.plugin.depends.on.enable", pluginDescriptor.getName(), part, deps, part.trim());
       if (Messages

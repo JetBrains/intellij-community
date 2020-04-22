@@ -146,7 +146,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
     }
 
     if (!dependencies.isEmpty()) {
-      throw new ConfigurationException(IdeBundle.message("dialog.message.unable.to.apply.changes", dependencies.size() == 1 ? " " : "s ",
+      throw new ConfigurationException(IdeBundle.message("dialog.message.unable.to.apply.changes", dependencies.size(),
                                                          StringUtil.join(dependencies, ", ")));
     }
 
@@ -888,9 +888,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       String listOfDeps = StringUtil.join(deps, plugin -> {
         return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName();
       }, "<br>");
-      String beginS = deps.size() == 1 ? "" : "s";
-      String middleS = deps.size() == 1 ? "s" : "";
-      String message = IdeBundle.message("dialog.message.following.plugin.depend.on", beginS, middleS, descriptor.getName(), listOfDeps);
+      String message = IdeBundle.message("dialog.message.following.plugin.depend.on", deps.size(), descriptor.getName(), listOfDeps);
       String title = IdeBundle.message("title.plugin.uninstall");
       if (Messages.showYesNoDialog(uiParent, message, title, Messages.getQuestionIcon()) != Messages.YES) {
         return;

@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeStyle;
 
-import com.intellij.core.CoreBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -115,7 +115,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction imple
     String currentSeparator = LoadTextUtil.detectLineSeparator(virtualFile, false);
     final String commandText;
     if (StringUtil.isEmpty(currentSeparator)) {
-      commandText = CoreBundle.message("command.name.changed.line.separators.to", LineSeparator.fromString(newSeparator));
+      commandText = PlatformEditorBundle.message("command.name.changed.line.separators.to", LineSeparator.fromString(newSeparator));
     }
     else {
       commandText = String.format("Changed line separators from %s to %s",
