@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.merge.*;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
@@ -37,6 +38,8 @@ public class ApplyPatchMergeTool implements MergeTool {
       super(createWrapperDiffContext(context), request);
       myMergeContext = context;
       myMergeRequest = request;
+
+      getResultEditor().putUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG, true);
     }
 
     @NotNull

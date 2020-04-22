@@ -102,7 +102,14 @@ public interface DiffUserDataKeys {
 
   Key<Boolean> FORCE_READ_ONLY = Key.create("Diff.ForceReadOnly");
 
-  // Marks central <code>Editor</code> in merge view with Boolean.TRUE otherwise
-  // the client property contains Boolean.FALSE or null.
+  //
+  // Editor
+  //
+
+  /**
+   * Marks central <code>Editor</code> in merge view with <code>Boolean.TRUE</code>.
+   *
+   * @see com.intellij.openapi.editor.EditorKind#DIFF
+   */
   Key<Boolean> MERGE_EDITOR_FLAG = Key.create("Diff.mergeEditor");
 }

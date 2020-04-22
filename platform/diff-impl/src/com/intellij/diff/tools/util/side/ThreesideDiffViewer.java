@@ -24,12 +24,10 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
-import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.icons.AllIcons;
@@ -104,20 +102,11 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   @NotNull
   protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
     List<DiffContent> contents = myRequest.getContents();
-    boolean[] contentFlags = myRequest.getUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS);
-    boolean hasInfo = contentFlags != null && contentFlags.length == contents.size();
 
     List<T> holders = new ArrayList<>(3);
     for (int i = 0; i < 3; i++) {
       DiffContent content = contents.get(i);
-
-      T editorHolder = factory.create(content, myContext);
-      holders.add(editorHolder);
-
-      if (hasInfo && editorHolder instanceof TextEditorHolder) {
-        TextEditorHolder textEditorHolder = (TextEditorHolder)editorHolder;
-        textEditorHolder.getEditor().putUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG, !contentFlags[i]);
-      }
+      holders.add(factory.create(content, myContext));
     }
     return holders;
   }
