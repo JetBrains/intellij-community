@@ -4,6 +4,8 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -15,6 +17,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +33,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
 
   private final MarkupModelImpl myModel;
-  private TextAttributes myTextAttributes;
+  private TextAttributes myForcedTextAttributes;
   private TextAttributesKey myTextAttributesKey;
   private LineMarkerRenderer myLineMarkerRenderer;
   private Color myErrorStripeColor;
@@ -84,7 +87,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
                        boolean greedyToLeft,
                        boolean greedyToRight) {
     super((DocumentEx)model.getDocument(), start, end, false, false);
-    myTextAttributes = textAttributes;
+    myForcedTextAttributes = textAttributes;
     myTextAttributesKey = textAttributesKey;
     setFlag(TARGET_AREA_IS_EXACT_MASK, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
@@ -106,16 +109,25 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return myTextAttributesKey;
   }
 
+  @ApiStatus.Internal
+  public TextAttributes getForcedTextAttributes() {
+    return myForcedTextAttributes;
+  }
+
   @Override
-  public TextAttributes getTextAttributes() {
-    return myTextAttributes;
+  public @Nullable TextAttributes getTextAttributes(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme) {
+    if (myForcedTextAttributes != null) return myForcedTextAttributes;
+
+    EditorColorsScheme colorScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
+    if (myTextAttributesKey == null) return null;
+    return colorScheme.getAttributes(myTextAttributesKey);
   }
 
   @Override
   public void setTextAttributes(@NotNull TextAttributes textAttributes) {
     boolean oldRenderedInScrollBar = isRenderedInScrollBar();
-    TextAttributes old = myTextAttributes;
-    myTextAttributes = textAttributes;
+    TextAttributes old = myForcedTextAttributes;
+    myForcedTextAttributes = textAttributes;
     if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
       myModel.treeFor(this).updateRenderedFlags(this);
     }
@@ -215,7 +227,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   public Color getErrorStripeMarkColor() {
     if (myErrorStripeColor == NULL_COLOR) return null;
     if (myErrorStripeColor != null) return myErrorStripeColor;
-    if (myTextAttributes != null) return myTextAttributes.getErrorStripeColor();
+    if (myForcedTextAttributes != null) return myForcedTextAttributes.getErrorStripeColor();
     return null;
   }
 

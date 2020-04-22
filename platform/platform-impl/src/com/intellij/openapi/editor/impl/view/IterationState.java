@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -38,8 +39,8 @@ public class IterationState {
     // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
     // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
     // while the other one has only foreground color). See IDEA-85697 for concrete example.
-    final TextAttributes a1 = o1.getTextAttributes();
-    final TextAttributes a2 = o2.getTextAttributes();
+    final TextAttributes a1 = o1.getTextAttributes(null);
+    final TextAttributes a2 = o2.getTextAttributes(null);
     if (a1 == null ^ a2 == null) {
       return a1 == null ? 1 : -1;
     }
@@ -140,10 +141,11 @@ public class IterationState {
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
     MarkupModelEx editorMarkup = editor.getMarkupModel();
-    myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    myView = new HighlighterSweep(scheme, editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
 
     MarkupModelEx docMarkup = editor.getFilteredDocumentMarkupModel();
-    myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
+    myDoc = new HighlighterSweep(scheme, docMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
 
     myEndOffset = myStartOffset;
 
@@ -190,14 +192,20 @@ public class IterationState {
 
   private class HighlighterSweep {
     private final MarkupModelEx myMarkupModel;
+    private final EditorColorsScheme myColorsScheme;
     private final boolean myOnlyFullLine;
     private final boolean myOnlyFontOrForegroundAffecting;
     private RangeHighlighterEx myNextHighlighter;
     int i;
     private final RangeHighlighterEx[] highlighters;
 
-    private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, 
-                             final boolean onlyFullLine, final boolean onlyFontOrForegroundAffecting) {
+    private HighlighterSweep(@NotNull EditorColorsScheme scheme,
+                             @NotNull MarkupModelEx markupModel,
+                             int start,
+                             int end,
+                             final boolean onlyFullLine,
+                             final boolean onlyFontOrForegroundAffecting) {
+      myColorsScheme = scheme;
       myMarkupModel = markupModel;
       myOnlyFullLine = onlyFullLine;
       myOnlyFontOrForegroundAffecting = onlyFontOrForegroundAffecting;
@@ -211,7 +219,7 @@ public class IterationState {
                                                               return (!onlyFullLine || 
                                                                       ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) && 
                                                                      (!onlyFontOrForegroundAffecting ||
-                                                                      EditorUtil.attributesImpactFontStyleOrColor(ex.getTextAttributes()));
+                                                                      EditorUtil.attributesImpactFontStyleOrColor(ex.getTextAttributes(myColorsScheme)));
                                                             }
                                                           });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(RangeHighlighterEx.EMPTY_ARRAY);
@@ -268,7 +276,7 @@ public class IterationState {
       }
       myMarkupModel.processRangeHighlightersOverlappingWith(offset, offset, h -> {
         if ((!myOnlyFullLine || h.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
-            (!myOnlyFontOrForegroundAffecting || EditorUtil.attributesImpactFontStyleOrColor(h.getTextAttributes())) &&
+            (!myOnlyFontOrForegroundAffecting || EditorUtil.attributesImpactFontStyleOrColor(h.getTextAttributes(myColorsScheme))) &&
             !skipHighlighter(h)) {
           myCurrentHighlighters.add(h);
         }
@@ -285,7 +293,7 @@ public class IterationState {
   }
 
   private boolean skipHighlighter(@NotNull RangeHighlighterEx highlighter) {
-    if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes() == null) return true;
+    if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes(myEditor.getColorsScheme()) == null) return true;
     final FoldRegion region = myFoldingModel == null ? null :
                               myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
     if (region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset())) return true;
@@ -561,7 +569,7 @@ public class IterationState {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
-      if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
+      if (highlighter.getTextAttributes(myEditor.getColorsScheme()) == TextAttributes.ERASE_MARKER) {
         syntax = null;
       }
     }
@@ -601,7 +609,7 @@ public class IterationState {
         syntax = null;
       }
 
-      TextAttributes textAttributes = highlighter.getTextAttributes();
+      TextAttributes textAttributes = highlighter.getTextAttributes(myEditor.getColorsScheme());
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
         cachedAttributes.add(textAttributes);
       }

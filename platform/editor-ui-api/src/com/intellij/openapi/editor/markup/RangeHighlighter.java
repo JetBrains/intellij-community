@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import org.jetbrains.annotations.NotNull;
@@ -50,14 +51,23 @@ public interface RangeHighlighter extends RangeMarker {
   }
 
   /**
-   * Returns forced text attributes used for highlighting.
-   * @return the attributes to use for highlighting,
-   * or {@code null} if the @see {@link RangeHighlighter#getTextAttributesKey()} should be used,
-   * or it does not modify the text attributes.
+   * @deprecated Use the overload with EditorColorScheme and prefer to pass
+   * @see RangeHighlighter#getTextAttributesKey() around which has structural color-scheme-independent information
+   */
+  @Nullable
+  @Deprecated
+  default TextAttributes getTextAttributes() {
+    return getTextAttributes(null);
+  }
+
+  /**
+   * Returns text attributes used for highlighting.
+   * @param scheme color scheme for which text attributes are requested
+   * @return the attributes to use for highlighting, or it does not modify the text attributes.
    * @see RangeHighlighter#getTextAttributesKey()
    */
   @Nullable
-  TextAttributes getTextAttributes();
+  TextAttributes getTextAttributes(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme);
 
   /**
    * Returns the renderer used for drawing line markers in the area covered by the
