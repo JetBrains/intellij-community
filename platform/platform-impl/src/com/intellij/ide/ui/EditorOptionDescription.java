@@ -20,13 +20,13 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts.Label;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class EditorOptionDescription extends PublicFieldBasedOptionDescription {
-  public EditorOptionDescription(String fieldName, @Nls String option, String configurableId) {
+  public EditorOptionDescription(String fieldName, @Label String option, String configurableId) {
     super(option, configurableId, fieldName);
   }
 
