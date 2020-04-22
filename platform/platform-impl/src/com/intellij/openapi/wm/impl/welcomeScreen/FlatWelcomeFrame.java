@@ -14,6 +14,7 @@ import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDropHandler;
+import com.intellij.ide.plugins.newui.VerticalLayout;
 import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
@@ -86,7 +87,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.StartupUiUtil;
@@ -103,8 +103,6 @@ import java.awt.FlowLayout;
 import java.awt.FocusTraversalPolicy;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
@@ -136,6 +134,8 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -581,11 +581,35 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       collectAllActions(group, quickStart);
 
-      GridBag gc = new GridBag();
-      JPanel panel = new JPanel(new GridBagLayout());
+      JPanel mainPanel = new JPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
+      mainPanel.setOpaque(false);
+
+      JPanel panel = new JPanel(new VerticalLayout(JBUI.scale(5))) {
+        Component firstAction = null;
+
+        @Override
+        public Component add(Component comp) {
+          Component cmp = super.add(comp);
+          if(firstAction == null) {
+            firstAction = cmp;
+          }
+          return cmp;
+        }
+
+        @Override
+        public void addNotify() {
+          super.addNotify();
+
+          if(firstAction != null) {
+            onFirstActionShown(firstAction);
+          }
+
+        }
+      };
       panel.setOpaque(false);
 
-      extendActionsGroup(gc, panel);
+      extendActionsGroup(mainPanel);
+      mainPanel.add(panel);
 
       myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
@@ -616,16 +640,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
 
-          panel.add(Box.createHorizontalGlue(), gc.nextLine().next().fillCellHorizontally());
-          panel.add(button, gc.next().anchor(GridBagConstraints.LINE_START));
-          panel.add(Box.createHorizontalGlue(), gc.next().fillCellHorizontally());
+          panel.add(button);
 
           myTouchbarActions.add(action);
         }
       }
 
-      panel.add(Box.createGlue(), gc.nextLine().next().fillCell().anchor(GridBagConstraints.PAGE_END).coverLine(3).weighty(1.0));
-      return panel;
+      return mainPanel;
     }
 
     @Nullable
@@ -916,7 +937,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
   }
 
-  protected void extendActionsGroup(GridBag gc, JPanel panel) {
+  protected void extendActionsGroup(JPanel panel) {
+  }
+
+  protected void onFirstActionShown(@NotNull Component action) {
   }
 
   @Override
