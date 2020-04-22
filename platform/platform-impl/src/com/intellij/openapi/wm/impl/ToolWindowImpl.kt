@@ -8,7 +8,6 @@ import com.intellij.ide.actions.*
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.EventPair
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -321,6 +320,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     if (isAvailable != value) {
       isAvailable = value
       toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
+
+      if (!value) {
+        contentUi?.dropCaches()
+      }
     }
   }
 

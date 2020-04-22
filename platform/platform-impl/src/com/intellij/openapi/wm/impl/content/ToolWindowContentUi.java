@@ -225,6 +225,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     contentComponent.repaint();
   }
 
+  public void dropCaches() {
+    tabsLayout.dropCaches();
+  }
+
   private void rebuild() {
     getCurrentLayout().rebuild();
     getCurrentLayout().update();
