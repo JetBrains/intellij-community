@@ -67,6 +67,7 @@ object MarketplaceRequests {
   )
 
   @Throws(IOException::class)
+  @JvmStatic
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return readOrUpdateFile(
