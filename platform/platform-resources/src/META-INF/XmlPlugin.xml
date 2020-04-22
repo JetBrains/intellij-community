@@ -1,6 +1,11 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.xml"/>
 
+  <projectListeners>
+    <listener class="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyCommandListener" topic="com.intellij.openapi.command.CommandListener"/>
+    <listener class="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </projectListeners>
+
   <project-components>
     <component>
       <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
@@ -596,7 +601,7 @@
 
     <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
 
-    <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer"/>
+    <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyEditorFactoryListener"/>
     <psi.symbolReferenceProvider hostLanguage="XML"
                                  hostElementClass="com.intellij.psi.xml.XmlNamedReferenceHost"
                                  targetClass="com.intellij.model.Symbol"
