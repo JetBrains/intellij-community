@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress.impl;
 
 import com.google.common.collect.ConcurrentHashMultiset;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -433,12 +434,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                   @Nullable Runnable continuation,
                                                   @Nullable IndicatorDisposable indicatorDisposable,
                                                   @Nullable ModalityState modalityState) {
-    // TODO ->> notify create runnable
     AtomicLong elapsed = new AtomicLong();
     return new ProgressRunner<>((progress) -> {
       final long start = System.currentTimeMillis();
       try {
-        new TaskRunnable(task, progress, continuation).run();
+        createTaskRunnable(task, progress, continuation).run();
       }
       finally {
         elapsed.set(System.currentTimeMillis() - start);
@@ -447,7 +447,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }).onThread(ProgressRunner.ThreadToUse.POOLED)
       .withProgress(progressIndicator)
       .submit()
-      .whenComplete((result, err) -> {
+      .whenComplete(ClientId.decorateBiConsumer((result, err) -> {
         if (!result.isCanceled()) {
           notifyTaskFinished(task, elapsed.get());
         }
@@ -471,7 +471,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             Disposer.dispose(indicatorDisposable);
           }
         }, task.whereToRunCallbacks(), modality);
-      });
+      }));
   }
 
   void notifyTaskFinished(@NotNull Task.Backgroundable task, long elapsed) {

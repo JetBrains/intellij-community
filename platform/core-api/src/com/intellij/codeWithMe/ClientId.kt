@@ -3,6 +3,7 @@ package com.intellij.codeWithMe
 
 import com.intellij.util.Processor
 import java.util.concurrent.Callable
+import java.util.function.BiConsumer
 import java.util.function.Function
 import kotlin.jvm.JvmStatic
 
@@ -140,6 +141,13 @@ data class ClientId(val value: String) {
             if (!propagateAcrossThreads) return function
             val currentId = currentOrNull
             return Function { withClientId(currentId) { function.apply(it) } }
+        }
+
+        @JvmStatic
+        fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>) : BiConsumer<T, U> {
+            if (!propagateAcrossThreads) return biConsumer
+            val currentId = currentOrNull
+            return BiConsumer { t, u -> withClientId(currentId) { biConsumer.accept(t, u) } }
         }
 
         @JvmStatic
