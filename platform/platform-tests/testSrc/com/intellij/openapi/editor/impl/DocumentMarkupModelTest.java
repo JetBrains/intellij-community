@@ -46,7 +46,7 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
     MarkupModel model = DocumentMarkupModel.forDocument(myFixture.getEditor().getDocument(), getProject(), false);
     RangeHighlighter[] highlighters = model.getAllHighlighters();
     assertThat(highlighters).hasSize(1);
-    TextAttributes attributes = highlighters[0].getTextAttributes();
+    TextAttributes attributes = highlighters[0].getTextAttributes(scheme);
     assertThat(attributes).isNotNull();
     assertThat(attributes.getBackgroundColor()).isNull();
     assertThat(attributes.getForegroundColor()).isNull();

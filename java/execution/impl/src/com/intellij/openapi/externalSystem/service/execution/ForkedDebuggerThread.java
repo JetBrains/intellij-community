@@ -297,8 +297,8 @@ class ForkedDebuggerThread extends Thread {
               EditorHyperlinkSupport hyperlinkSupport = mainConsoleView.getHyperlinks();
               int startOffset = myHyperlink.getStartOffset();
               int endOffset = myHyperlink.getEndOffset();
-              TextAttributes inactiveTextAttributes = myHyperlink.getTextAttributes() != null
-                                                      ? myHyperlink.getTextAttributes().clone() : TextAttributes.ERASE_MARKER.clone();
+              TextAttributes attributes = myHyperlink.getTextAttributes(null);
+              TextAttributes inactiveTextAttributes = attributes != null ? attributes.clone() : TextAttributes.ERASE_MARKER.clone();
               inactiveTextAttributes.setForegroundColor(UIUtil.getInactiveTextColor());
               inactiveTextAttributes.setEffectColor(UIUtil.getInactiveTextColor());
               inactiveTextAttributes.setFontType(Font.ITALIC);

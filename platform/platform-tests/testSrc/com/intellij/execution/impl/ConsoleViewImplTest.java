@@ -679,7 +679,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   private static void assertMarkerEquals(@NotNull ExpectedHighlighter expected, @NotNull RangeHighlighter actual) {
     assertEquals(expected.myStartOffset, actual.getStartOffset());
     assertEquals(expected.myEndOffset, actual.getEndOffset());
-    assertEquals(expected.myContentType.getAttributes(), actual.getTextAttributes());
+    assertEquals(expected.myContentType.getAttributes(), actual.getTextAttributes(null));
     assertEquals(expected.myContentType.getAttributesKey(), actual.getTextAttributesKey());
   }
 

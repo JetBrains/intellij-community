@@ -397,7 +397,7 @@ public class EditorHyperlinkSupport {
         range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, null);
       }
       if (range == link) {
-        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes());
+        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes(editor.getColorsScheme()));
         markupModel.setRangeHighlighterAttributes(range, getFollowedHyperlinkAttributes(range));
       }
     }

@@ -64,7 +64,7 @@ class DiffColorSettingsTest : HeavyDiffTestCase() {
 
   private fun assertContainsBackgroundColor(viewer: SimpleThreesideDiffViewer, type: TextDiffType, isIgnored: Boolean) {
     assertContainsBackgroundColor(viewer) { editor, highlighter ->
-      val actual = highlighter.textAttributes?.backgroundColor
+      val actual = highlighter.getTextAttributes(editor.colorsScheme)?.backgroundColor
       val expected = if (isIgnored) type.getIgnoredColor(editor) else type.getColor(editor)
       actual == expected
     }
@@ -72,7 +72,7 @@ class DiffColorSettingsTest : HeavyDiffTestCase() {
 
   private fun assertContainsMarkerColor(viewer: SimpleThreesideDiffViewer, type: TextDiffType) {
     assertContainsBackgroundColor(viewer) { editor, highlighter ->
-      highlighter.textAttributes?.errorStripeColor == type.getMarkerColor(editor)
+      highlighter.getTextAttributes(null)?.errorStripeColor == type.getMarkerColor(editor)
     }
   }
 
