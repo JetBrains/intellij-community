@@ -274,7 +274,7 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (autoDetectCompiler != that.autoDetectCompiler) return false;
-    if (lookForNested != that.lookForNested) return false;
+    //if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
@@ -295,8 +295,8 @@ public class MavenImportingSettings implements Cloneable {
   public int hashCode() {
     int result = 0;
 
-    if (lookForNested) result++;
-    result <<= 1;
+    //if (lookForNested) result++;
+    //result <<= 1;
     if (createModulesForAggregators) result++;
     result <<= 1;
     if (createModuleGroups) result++;
