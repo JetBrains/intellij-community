@@ -195,7 +195,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
-    @NonNls override fun getFamilyName() = "dfd4a2c1-da18-4651-9aa8-d7d31cae10be" // random string; not visible
+    @NonNls override fun getFamilyName() = "Fix compiler option" // not visible
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = !module.isDisposed
 

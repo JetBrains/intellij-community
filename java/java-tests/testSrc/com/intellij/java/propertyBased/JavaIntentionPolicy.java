@@ -66,9 +66,10 @@ class JavaIntentionPolicy extends IntentionPolicy {
   static boolean skipPreview(@NotNull IntentionAction action) {
     String familyName = action.getFamilyName();
     return familyName.matches("(?i)Create \\w+ from usage") ||
-    familyName.equals("Create Constructor") ||
-    // Does not change file content
-    familyName.equals("Rename File");
+           familyName.equals("Create Constructor") ||
+           // Does not change file content
+           familyName.equals("Rename File") ||
+           familyName.equals("Fix compiler option");
   }
 }
 
