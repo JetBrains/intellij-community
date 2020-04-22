@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.ProcessAdapter;
@@ -35,6 +34,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -243,8 +243,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   public static String @NotNull [] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
     if (SystemInfo.isUnix) {
-      List<String> command = Lists.newArrayList(shellPath.split(" "));
-
+      List<String> command = ContainerUtil.newArrayList(shellPath.split(" "));
       String shellCommand = command.size() > 0 ? command.get(0) : null;
       String shellName = getShellName(shellCommand);
 
@@ -260,7 +259,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           }
         }
 
-        List<String> result = Lists.newArrayList(shellCommand);
+        List<String> result = new ArrayList<>();
+        result.add(shellCommand);
 
         String rcFilePath = findRCFile(shellName);
 
@@ -350,7 +350,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static boolean isLogin(@NotNull List<String> command) {
-    return command.stream().anyMatch(s -> LOGIN_CLI_OPTIONS.contains(s));
+    return command.stream().anyMatch(LOGIN_CLI_OPTIONS::contains);
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {
