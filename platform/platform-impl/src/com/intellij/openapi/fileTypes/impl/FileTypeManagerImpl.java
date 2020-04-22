@@ -29,6 +29,7 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -37,10 +38,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
@@ -224,9 +222,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     // this should be done BEFORE reading state
     initStandardFileTypes();
 
-    myMessageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
         Collection<VirtualFile> files = ContainerUtil.map2Set(events, (Function<VFileEvent, VirtualFile>)event -> {
           VirtualFile file = event instanceof VFileCreateEvent ? /* avoid expensive find child here */ null : event.getFile();
           VirtualFile filtered = file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
@@ -253,12 +251,46 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             log("F: after() queued to redetect: " + files);
           }
 
-          synchronized (filesToRedetect) {
-            if (filesToRedetect.addAll(files)) {
-              awakeReDetectExecutor();
+          List<FileAndPreviousFileType> toRedetect = new SmartList<>();
+          for (VirtualFile file : files) {
+            if (file instanceof VirtualFileWithId && wasAutoDetectedBefore(file) && isDetectable(file)) {
+              int fileId = ((VirtualFileWithId)file).getId();
+              long oldFlags = packedFlags.get(fileId);
+
+              FileType before = ObjectUtils.notNull(textOrBinaryFromCachedFlags(oldFlags),
+                                                    ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY),
+                                                                        PlainTextFileType.INSTANCE));
+
+              file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
+              long flags = 0;
+              flags = BitUtil.set(flags, AUTO_DETECT_WAS_RUN_MASK, false);
+              flags = BitUtil.set(flags, ATTRIBUTES_WERE_LOADED_MASK, true);
+              packedFlags.set(fileId, flags);
+
+              toRedetect.add(new FileAndPreviousFileType(file, before));
             }
           }
+
+          if (!toRedetect.isEmpty()) {
+            return new ChangeApplier() {
+              @Override
+              public void afterVfsChange() {
+                synchronized (filesToRedetect) {
+                  if (filesToRedetect.addAll(toRedetect)) {
+                    awakeReDetectExecutor();
+                  }
+                }
+              }
+            };
+          }
         }
+        return null;
+      }
+    }, this);
+    myMessageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+
       }
     });
 
@@ -289,7 +321,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
     }, this);
-    FileTypeDetector.EP_NAME.addExtensionPointListener(() -> cachedDetectFileBufferSize = -1, this);
+    FileTypeDetector.EP_NAME.addExtensionPointListener(() -> {
+      cachedDetectFileBufferSize = -1;
+      clearCaches();
+    }, this);
   }
 
   private void unregisterMatchers(@NotNull StandardFileType stdFileType, @NotNull FileTypeBean extension) {
@@ -546,15 +581,29 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private final Executor
     reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool", PooledThreadExecutor.INSTANCE, 1, this);
-  private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
+  private final HashSetQueue<FileAndPreviousFileType> filesToRedetect = new HashSetQueue<>();
+  private static class FileAndPreviousFileType {
+    final VirtualFile file;
+    final @NotNull FileType previousFileType;
+
+    private FileAndPreviousFileType(VirtualFile file, FileType previousFileType) {
+      this.file = file;
+      this.previousFileType = previousFileType;
+    }
+
+    @Override
+    public String toString() {
+      return "file=" + file + ", previousFileType=" + previousFileType;
+    }
+  }
 
   private static final int CHUNK_SIZE = 10;
   private void awakeReDetectExecutor() {
     reDetectExecutor.execute(() -> {
-      List<VirtualFile> files = new ArrayList<>(CHUNK_SIZE);
+      List<FileAndPreviousFileType> files = new ArrayList<>(CHUNK_SIZE);
       synchronized (filesToRedetect) {
         for (int i = 0; i < CHUNK_SIZE; i++) {
-          VirtualFile file = filesToRedetect.poll();
+          FileAndPreviousFileType file = filesToRedetect.poll();
           if (file == null) break;
           files.add(file);
         }
@@ -578,7 +627,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @TestOnly
   @NotNull
-  Collection<VirtualFile> dumpReDetectQueue() {
+  Collection<FileAndPreviousFileType> dumpReDetectQueue() {
     synchronized (filesToRedetect) {
       return new ArrayList<>(filesToRedetect);
     }
@@ -589,57 +638,53 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     RE_DETECT_ASYNC = enable;
   }
 
-  private void reDetect(@NotNull Collection<? extends VirtualFile> files) {
+  private void reDetect(@NotNull Collection<? extends FileAndPreviousFileType> files) {
     List<VirtualFile> changed = new ArrayList<>();
     List<VirtualFile> crashed = new ArrayList<>();
-    for (VirtualFile file : files) {
-      boolean shouldRedetect = wasAutoDetectedBefore(file) && isDetectable(file);
+    for (FileAndPreviousFileType fileAndPreviousFileType : files) {
+      VirtualFile file = fileAndPreviousFileType.file;
       if (toLog()) {
-        log("F: reDetect("+file.getName()+") " + file.getName() + "; shouldRedetect: " + shouldRedetect);
+        log("F: reDetect("+file.getName()+") " + file.getName());
       }
-      if (shouldRedetect) {
-        int id = ((VirtualFileWithId)file).getId();
-        long flags = packedFlags.get(id);
-        FileType before = ObjectUtils.notNull(textOrBinaryFromCachedFlags(flags),
-                                              ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY),
-                                                                  PlainTextFileType.INSTANCE));
-        FileType after = getByFile(file);
+      int id = ((VirtualFileWithId)file).getId();
+      long flags = packedFlags.get(id);
+      FileType before = fileAndPreviousFileType.previousFileType;
+      FileType after = getByFile(file);
 
-        if (toLog()) {
-          log("F: reDetect(" + file.getName() + ") prepare to redetect. flags: " + readableFlags(flags) +
-              "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
+      if (toLog()) {
+        log("F: reDetect(" + file.getName() + ") prepare to redetect. flags: " + readableFlags(flags) +
+            "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
+      }
+
+      if (after == null || mightBeReplacedByDetectedFileType(after)) {
+        try {
+          after = detectFromContentAndCache(file, null);
         }
-
-        if (after == null || mightBeReplacedByDetectedFileType(after)) {
-          try {
-            after = detectFromContentAndCache(file, null);
+        catch (IOException e) {
+          crashed.add(file);
+          if (toLog()) {
+            log("F: reDetect(" + file.getName() + ") " + "before: " + before.getName() + "; after: crashed with " + e.getMessage() +
+                "; now getFileType()=" + file.getFileType().getName() +
+                "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " + file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
           }
-          catch (IOException e) {
-            crashed.add(file);
-            if (toLog()) {
-              log("F: reDetect(" + file.getName() + ") " + "before: " + before.getName() + "; after: crashed with " + e.getMessage() +
-                  "; now getFileType()=" + file.getFileType().getName() +
-                  "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " + file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
-            }
-            continue;
-          }
+          continue;
         }
-        else {
-          // back to standard file type
-          // detected by conventional methods, no need to run detect-from-content
-          file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
-          flags = 0;
-          packedFlags.set(id, flags);
-        }
-        if (toLog()) {
-          log("F: reDetect(" + file.getName() + ") " + "before: " + before.getName() + "; after: " + after.getName() +
-              "; now getFileType()=" + file.getFileType().getName() +
-              "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " + file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
-        }
+      }
+      else {
+        // back to standard file type
+        // detected by conventional methods, no need to run detect-from-content
+        file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
+        flags = 0;
+        packedFlags.set(id, flags);
+      }
+      if (toLog()) {
+        log("F: reDetect(" + file.getName() + ") " + "before: " + before.getName() + "; after: " + after.getName() +
+            "; now getFileType()=" + file.getFileType().getName() +
+            "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " + file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
+      }
 
-        if (before != after) {
-          changed.add(file);
-        }
+      if (before != after) {
+        changed.add(file);
       }
     }
     if (!changed.isEmpty()) {
@@ -915,6 +960,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   void clearCaches() {
     packedFlags.clear();
+    clearPersistentAttributes();
     if (toLog()) {
       log("F: clearCaches()");
     }
@@ -1014,10 +1060,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     long start = System.currentTimeMillis();
     FileType fileType = detectFromContent(file, content);
 
-    cacheAutoDetectedFileType(file, fileType);
-    counterAutoDetect.incrementAndGet();
-    long elapsed = System.currentTimeMillis() - start;
-    elapsedAutoDetect.addAndGet(elapsed);
+    if (NoAccessDuringPsiEvents.isInsideEventProcessing()) {
+      cacheAutoDetectedFileType(file, fileType);
+      counterAutoDetect.incrementAndGet();
+      long elapsed = System.currentTimeMillis() - start;
+      elapsedAutoDetect.addAndGet(elapsed);
+    }
 
     return fileType;
   }
@@ -1310,7 +1358,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
     clearCaches();
-    clearPersistentAttributes();
     myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
   }
 
