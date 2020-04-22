@@ -23,6 +23,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -65,6 +66,12 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     clonedSettings.copyFrom(settings);
     myReferencedSettings.add(clonedSettings);
     return clonedSettings;
+  }
+
+  @TestOnly
+  public final CodeStyleSettings createTestSettings() {
+    //noinspection deprecation
+    return new CodeStyleSettings();
   }
 
   private Collection<CodeStyleSettings> getAllSettings() {

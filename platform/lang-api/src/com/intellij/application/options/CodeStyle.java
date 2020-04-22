@@ -373,4 +373,8 @@ public class CodeStyle {
   }
 
 
+  @TestOnly
+  public static CodeStyleSettings createTestSettings() {
+    return CodeStyleSettingsManager.getInstance().createTestSettings();
+  }
 }

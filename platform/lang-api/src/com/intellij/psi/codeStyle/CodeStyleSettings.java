@@ -79,8 +79,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   /**
-   * @deprecated Use {@link CodeStyleSettingsManager#createSettings()}
-   * or {@link CodeStyleSettingsManager#createTemporarySettings()}
+   * @deprecated Use {@link CodeStyleSettingsManager#createSettings()}or {@link CodeStyleSettingsManager#createTemporarySettings()}.
+   * <p>
+   * For test purposes use {@link CodeStyleSettingsManager#createTestSettings()} or {@code CodeStyle.createTestSettings()}
    */
   @Deprecated
   public CodeStyleSettings() {

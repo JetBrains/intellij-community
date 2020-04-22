@@ -30,7 +30,7 @@ public class FileCodeStyleProviderTest extends UsefulTestCase {
     myFixture.setTestDataPath(getTestDataPath());
 
     myFixture.setUp();
-    myTestSettings =  new CodeStyleSettings();
+    myTestSettings =  CodeStyle.createTestSettings();
 
     FileCodeStyleProvider.EP_NAME.getPoint(null).registerExtension(new TestCodeStyleProvider(), getTestRootDisposable());
   }

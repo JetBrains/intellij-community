@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeFactory;
@@ -82,7 +83,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
 
   protected CodeStyleScheme createTestScheme() {
     return new CodeStyleScheme() {
-      private final CodeStyleSettings mySettings = new CodeStyleSettings();
+      private final CodeStyleSettings mySettings = CodeStyle.createTestSettings();
 
       @NotNull
       @Override

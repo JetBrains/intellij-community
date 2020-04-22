@@ -247,7 +247,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     ourTestCase = this;
     if (myProject != null) {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-      CodeStyle.setTemporarySettings(myProject, new CodeStyleSettings());
+      CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
       InjectedLanguageManagerImpl.pushInjectors(myProject);
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
     }

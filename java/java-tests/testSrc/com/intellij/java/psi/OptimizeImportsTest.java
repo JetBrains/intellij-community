@@ -74,7 +74,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testDisabledFormatting() {
-    CodeStyleSettings temp = new CodeStyleSettings();
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
     NamedScopeDescriptor descriptor = new NamedScopeDescriptor("Test");
     descriptor.setPattern("file:*.java");
     temp.getExcludedFiles().addDescriptor(descriptor);

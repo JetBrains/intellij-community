@@ -129,7 +129,7 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
   }
 
   public void testWrapParamList() {
-    CodeStyleSettings temp = new CodeStyleSettings();
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = temp.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_LINE_BREAKS = false;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
@@ -138,7 +138,7 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
   }
 
   public void testDisabledFormatting() {
-    CodeStyleSettings temp = new CodeStyleSettings();
+    CodeStyleSettings temp = CodeStyle.createTestSettings();
     NamedScopeDescriptor descriptor = new NamedScopeDescriptor("Test");
     descriptor.setPattern("file:*.java");
     temp.getExcludedFiles().addDescriptor(descriptor);
