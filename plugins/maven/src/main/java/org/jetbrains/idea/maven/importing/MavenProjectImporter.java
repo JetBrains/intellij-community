@@ -355,7 +355,7 @@ public class MavenProjectImporter {
     for (Pair<MavenProject, Module> each : incompatibleMavenized) {
       myFileToModuleMapping.remove(each.first.getFile());
       myModuleModel.disposeModule(each.second);
-      changed |= true;
+      changed = true;
     }
 
     if (incompatibleNotMavenized.isEmpty()) return changed;
@@ -380,11 +380,10 @@ public class MavenProjectImporter {
         myFileToModuleMapping.remove(each.first.getFile());
         myModuleModel.disposeModule(each.second);
       }
-      changed |= true;
+      changed = true;
     }
     else {
       myProjectsTree.setIgnoredState(MavenUtil.collectFirsts(incompatibleNotMavenized), true, true);
-      changed |= false;
     }
 
     return changed;
