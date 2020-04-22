@@ -132,10 +132,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         appendln()
       }
 
-      val closePlugins = result.filter {
-        it.getStatus() == UnloadabilityStatus.USES_UNSPECIFIED_DYNAMIC_EPS &&
-        it.unspecifiedDynamicEPs.any { !it.startsWith("cidr") && !it.startsWith("appcode") }
-      }
+      val closePlugins = result.filter { it.unspecifiedDynamicEPs.any { !it.startsWith("cidr") && !it.startsWith("appcode") } }
       if (closePlugins.isNotEmpty()) {
         appendln("Plugins with non-dynamic EPs (${closePlugins.size}):")
         for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }) {
