@@ -53,7 +53,7 @@ fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement
 inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   uastReferenceProvider(T::class.java, provider)
 
-private val CACHED_UAST_ELEMENTS = Key.create<MutableMap<List<Class<out UElement>>, UElement?>>("CACHED_UAST_ELEMENTS")
+private val CACHED_UAST_ELEMENTS = Key.create<MutableMap<List<Class<out UElement>>, UElement>>("CACHED_UAST_ELEMENTS")
 internal val REQUESTED_PSI_ELEMENT = Key.create<PsiElement>("REQUESTED_PSI_ELEMENT")
 internal val USAGE_PSI_ELEMENT = Key.create<PsiElement>("USAGE_PSI_ELEMENT")
 
@@ -63,16 +63,22 @@ internal fun getOrCreateCachedElement(element: PsiElement,
   val existingElement = element as? UElement
   if (existingElement != null) return existingElement
 
-  return getCachedUastElements(context).getOrPut(supportedUElementTypes) {
-    element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray())
+  val cachedUastElements = getCachedUastElements(context)
+  val existingValue = cachedUastElements[supportedUElementTypes]
+  if (existingValue != null) return existingValue
+
+  val newValue = element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray())
+  if (newValue != null) {
+    cachedUastElements[supportedUElementTypes] = newValue
   }
+  return newValue
 }
 
-private fun getCachedUastElements(context: ProcessingContext): MutableMap<List<Class<out UElement>>, UElement?> {
+private fun getCachedUastElements(context: ProcessingContext): MutableMap<List<Class<out UElement>>, UElement> {
   val map = context.sharedContext.get(CACHED_UAST_ELEMENTS)
   if (map != null) return map
 
-  val newMap = ConcurrentHashMap<List<Class<out UElement>>, UElement?>()
+  val newMap = ConcurrentHashMap<List<Class<out UElement>>, UElement>()
   context.sharedContext.put(CACHED_UAST_ELEMENTS, newMap)
   return newMap
 }
