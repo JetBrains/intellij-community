@@ -150,7 +150,7 @@ object PluginInfoDetector {
     try {
       val cached = getPluginInfoProvider()?.loadCachedPlugins()
       if (cached != null) {
-        return@TimeoutCachedValue cached.mapNotNullTo(HashSet(cached.size)) { it.pluginId }
+        return@TimeoutCachedValue cached.toSet()
       }
     }
     catch (ignored: IOException) {

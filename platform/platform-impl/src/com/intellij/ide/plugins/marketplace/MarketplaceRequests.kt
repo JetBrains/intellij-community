@@ -79,6 +79,13 @@ object MarketplaceRequests {
     )
   }
 
+  @Throws(IOException::class)
+  @JvmStatic
+  fun getMarketplaceCachedPlugins(): List<String>? {
+    val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
+    return if (pluginXmlIdsFile.length() > 0) pluginXmlIdsFile.bufferedReader().use(::parseXmlIds) else null
+  }
+
   @JvmStatic
   fun getBuildForPluginRepositoryRequests(): String {
     val instance = ApplicationInfoImpl.getShadowInstance()
