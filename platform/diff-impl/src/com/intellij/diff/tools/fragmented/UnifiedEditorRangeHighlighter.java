@@ -90,7 +90,7 @@ class UnifiedEditorRangeHighlighter {
       if (!delegate.isValid()) continue;
 
       RangeHighlighter highlighter = model
-        .addRangeHighlighter(piece.getStart(), piece.getEnd(), delegate.getLayer(), delegate.getTextAttributes(null),
+        .addRangeHighlighter(piece.getStart(), piece.getEnd(), delegate.getLayer(), delegate.getForcedTextAttributes(),
                              delegate.getTextAttributesKey(), delegate.getTargetArea());
       highlighter.setEditorFilter(delegate.getEditorFilter());
       highlighter.setCustomRenderer(delegate.getCustomRenderer());

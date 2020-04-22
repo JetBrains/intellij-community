@@ -109,8 +109,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return myTextAttributesKey;
   }
 
+  @Override
   @ApiStatus.Internal
-  public TextAttributes getForcedTextAttributes() {
+  public @Nullable TextAttributes getForcedTextAttributes() {
     return myForcedTextAttributes;
   }
 
