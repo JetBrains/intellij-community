@@ -591,7 +591,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
     if (!(file instanceof PsiJavaFile)) return;
     String fileName = file.getName();
-    if ("package-info.java".equals(fileName)) {
+    if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName)) {
       PsiPackageStatement packageStatement = ((PsiJavaFile)file).getPackageStatement();
       if (packageStatement != null) {
         PsiElement prevElement = PsiTreeUtil.skipWhitespacesBackward(packageStatement);
