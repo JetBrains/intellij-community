@@ -74,7 +74,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   private final Update myUpdate = new Update(this) {
     @Override
     public void run() {
-      updateCrumbs();
+      updateCrumbsAsync();
     }
 
     @Override
@@ -163,8 +163,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
-    BreadcrumbsProvider.EP_NAME.addExtensionPointListener(() -> queueUpdate(), this);
-    BreadcrumbsPresentationProvider.EP_NAME.addExtensionPointListener(() -> queueUpdate(), this);
+    BreadcrumbsProvider.EP_NAME.addExtensionPointListener(() -> updateCrumbsSync(), this);
+    BreadcrumbsPresentationProvider.EP_NAME.addExtensionPointListener(() -> updateCrumbsSync(), this);
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myQueue.setPassThrough(true);
@@ -178,7 +178,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     return gutter.getWhitespaceSeparatorOffset();
   }
 
-  private void updateCrumbs() {
+  private void updateCrumbsAsync() {
     if (myEditor == null || myEditor.isDisposed()) return;
 
     int offset = myEditor.getCaretModel().getOffset();
@@ -187,13 +187,24 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
       .withDocumentsCommitted(myProject)
       .expireWith(this)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.any(), (_crumbs) -> {
-        boolean areCrumbsVisible = breadcrumbs.isShowing() || ApplicationManager.getApplication().isHeadlessEnvironment();
-        Iterable<? extends Crumb> crumbs = _crumbs != null && areCrumbsVisible ? _crumbs : EMPTY_BREADCRUMBS;
-        breadcrumbs.setFont(getNewFont(myEditor));
-        breadcrumbs.setCrumbs(crumbs);
-        notifyListeners(crumbs);
-      }).submit(NonUrgentExecutor.getInstance());
+      .finishOnUiThread(ModalityState.any(), crumbs -> applyCrumbs(crumbs))
+      .submit(NonUrgentExecutor.getInstance());
+  }
+
+  private void applyCrumbs(Iterable<? extends Crumb> _crumbs) {
+    boolean areCrumbsVisible = breadcrumbs.isShowing() || ApplicationManager.getApplication().isHeadlessEnvironment();
+    Iterable<? extends Crumb> crumbs = _crumbs != null && areCrumbsVisible ? _crumbs : EMPTY_BREADCRUMBS;
+    breadcrumbs.setFont(getNewFont(myEditor));
+    breadcrumbs.setCrumbs(crumbs);
+    notifyListeners(crumbs);
+  }
+
+  private void updateCrumbsSync() {
+    if (myEditor == null || myEditor.isDisposed()) return;
+    int offset = myEditor.getCaretModel().getOffset();
+
+    Iterable<? extends Crumb> crumbs = computeCrumbs(offset);
+    applyCrumbs(crumbs);
   }
 
   public void queueUpdate() {
