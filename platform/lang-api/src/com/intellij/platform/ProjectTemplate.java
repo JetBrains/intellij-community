@@ -31,7 +31,7 @@ public interface ProjectTemplate {
   ProjectTemplate[] EMPTY_ARRAY = new ProjectTemplate[0];
 
   @NotNull
-  @NlsContexts.ListItem
+  @NlsContexts.Label
   String getName();
 
   @Nullable
