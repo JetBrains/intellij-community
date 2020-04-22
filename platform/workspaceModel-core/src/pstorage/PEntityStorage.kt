@@ -6,8 +6,8 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.external.ExternalStorageIndex
-import com.intellij.workspace.api.pstorage.external.ExternalStorageIndex.MutableExternalStorageIndex
+import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex
+import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex
 import com.intellij.workspace.api.pstorage.indices.EntitySourceIndex
 import com.intellij.workspace.api.pstorage.indices.EntitySourceIndex.MutableEntitySourceIndex
 import com.intellij.workspace.api.pstorage.indices.PersistentIdIndex
@@ -44,7 +44,7 @@ internal class PEntityStorage constructor(
   override val virtualFileIndex: VirtualFileIndex,
   override val entitySourceIndex: EntitySourceIndex,
   override val persistentIdIndex: PersistentIdIndex,
-  override val externalIndices: Map<String, ExternalStorageIndex<*>>
+  override val externalIndices: Map<String, ExternalEntityIndex<*>>
 ) : AbstractPEntityStorage() {
   override fun assertConsistency() {
     entitiesByType.assertConsistency()
@@ -61,7 +61,7 @@ internal class PEntityStorageBuilder(
   override val virtualFileIndex: MutableVirtualFileIndex,
   override val entitySourceIndex: MutableEntitySourceIndex,
   override val persistentIdIndex: MutablePersistentIdIndex,
-  override val externalIndices: MutableMap<String, MutableExternalStorageIndex<*>>
+  override val externalIndices: MutableMap<String, MutableExternalEntityIndex<*>>
 ) : TypedEntityStorageBuilder, AbstractPEntityStorage() {
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
@@ -641,7 +641,7 @@ internal class PEntityStorageBuilder(
     val newVirtualFileIndex = virtualFileIndex.toImmutable()
     val newEntitySourceIndex = entitySourceIndex.toImmutable()
     val newPersistentIdIndex = persistentIdIndex.toImmutable()
-    val newExternalIndices = MutableExternalStorageIndex.toImmutable(externalIndices)
+    val newExternalIndices = MutableExternalEntityIndex.toImmutable(externalIndices)
     return PEntityStorage(newEntities, newRefs, copiedLinks, newVirtualFileIndex, newEntitySourceIndex, newPersistentIdIndex, newExternalIndices)
   }
 
@@ -708,20 +708,33 @@ internal class PEntityStorageBuilder(
   }
 
   private fun applyExternalIndexChanges(diff: PEntityStorageBuilder) {
+    val removed = externalIndices.keys.toMutableSet()
+    removed.removeAll(diff.externalIndices.keys)
+    removed.forEach { externalIndices.remove(it) }
+
+    val added = diff.externalIndices.keys.toMutableSet()
+    added.removeAll(externalIndices.keys)
+    added.forEach { externalIndices[it] = MutableExternalEntityIndex.from(diff.externalIndices[it]!!) }
+
     diff.externalIndices.forEach { (identifier, index) ->
       externalIndices[identifier]?.applyChanges(index)
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalStorageIndex<T> {
-    return externalIndices.computeIfAbsent(identifier) { MutableExternalStorageIndex<T>() }
-      as MutableExternalStorageIndex<T>
+  fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalEntityIndex<T> {
+    return externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndex<T>() }
+      as MutableExternalEntityIndex<T>
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalIndex(identifier: String): MutableExternalStorageIndex<T>? {
-    return externalIndices[identifier] as? MutableExternalStorageIndex<T>
+  override fun <T> getExternalIndex(identifier: String): MutableExternalEntityIndex<T>? {
+    return externalIndices[identifier] as? MutableExternalEntityIndex<T>
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T> removeExternalIndex(identifier: String) {
+    externalIndices.remove(identifier)
   }
 
   companion object {
@@ -738,7 +751,7 @@ internal class PEntityStorageBuilder(
           val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex)
           val copiedEntitySourceIndex = MutableEntitySourceIndex.from(storage.entitySourceIndex)
           val copiedPersistentIdIndex = MutablePersistentIdIndex.from(storage.persistentIdIndex)
-          val copiedExternalIndices = MutableExternalStorageIndex.from(storage.externalIndices)
+          val copiedExternalIndices = MutableExternalEntityIndex.fromMap(storage.externalIndices)
           PEntityStorageBuilder(storage, copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex,
                                 copiedPersistentIdIndex, copiedExternalIndices)
         }
@@ -750,7 +763,7 @@ internal class PEntityStorageBuilder(
           val copiedVirtualFileIndex = MutableVirtualFileIndex.from(storage.virtualFileIndex.toImmutable())
           val copiedEntitySourceIndex = MutableEntitySourceIndex.from(storage.entitySourceIndex.toImmutable())
           val copiedPersistentIdIndex = MutablePersistentIdIndex.from(storage.persistentIdIndex.toImmutable())
-          val copiedExternalIndices = MutableExternalStorageIndex.fromMutable(storage.externalIndices)
+          val copiedExternalIndices = MutableExternalEntityIndex.fromMutableMap(storage.externalIndices)
           PEntityStorageBuilder(storage.toStorage(), copiedBarrel, copiedRefs, copiedSoftLinks, copiedVirtualFileIndex,
                                 copiedEntitySourceIndex, copiedPersistentIdIndex, copiedExternalIndices)
         }
@@ -768,7 +781,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   internal abstract val virtualFileIndex: VirtualFileIndex
   internal abstract val entitySourceIndex: EntitySourceIndex
   internal abstract val persistentIdIndex: PersistentIdIndex
-  internal abstract val externalIndices: Map<String, ExternalStorageIndex<*>>
+  internal abstract val externalIndices: Map<String, ExternalEntityIndex<*>>
 
   abstract fun assertConsistency()
 
@@ -920,8 +933,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   }
 
   @Suppress("UNCHECKED_CAST")
-  open fun <T> getExternalIndex(identifier: String): ExternalStorageIndex<T>? {
-    return externalIndices[identifier] as? ExternalStorageIndex<T>
+  open fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
+    return externalIndices[identifier] as? ExternalEntityIndex<T>
   }
 }
 

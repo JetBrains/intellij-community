@@ -4,11 +4,11 @@ package com.intellij.workspace.api.pstorage.external
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.PId
-import com.intellij.workspace.api.pstorage.external.ExternalStorageIndex.MutableExternalStorageIndex.IndexLogRecord.Add
-import com.intellij.workspace.api.pstorage.external.ExternalStorageIndex.MutableExternalStorageIndex.IndexLogRecord.Remove
+import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex.IndexLogRecord.Add
+import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex.IndexLogRecord.Remove
 import java.util.*
 
-open class ExternalStorageIndex<T> private constructor(internal val index: BidirectionalMap<PId<out TypedEntity>, T>) {
+open class ExternalEntityIndex<T> private constructor(internal val index: BidirectionalMap<PId<out TypedEntity>, T>) {
   internal fun getIds(data: T): List<PId<out TypedEntity>>? = index.getKeysByValue(data)
   internal fun getDataById(id: PId<out TypedEntity>): T? = index[id]
 
@@ -18,15 +18,20 @@ open class ExternalStorageIndex<T> private constructor(internal val index: Bidir
     return copy
   }
 
-  class MutableExternalStorageIndex<T> private constructor(
+  class MutableExternalEntityIndex<T> private constructor(
     index: BidirectionalMap<PId<out TypedEntity>, T>,
     private val indexLog: MutableList<IndexLogRecord>
-  ) : ExternalStorageIndex<T>(index) {
+  ) : ExternalEntityIndex<T>(index) {
     constructor() : this(BidirectionalMap<PId<out TypedEntity>, T>(), mutableListOf())
 
-    internal fun index(id: PId<out TypedEntity>, record: T) {
-      index[id] = record
-      indexLog.add(Add(id, record))
+    internal fun index(id: PId<out TypedEntity>, data: T) {
+      index[id] = data
+      indexLog.add(Add(id, data))
+    }
+
+    internal fun update(id: PId<out TypedEntity>, newData: T) {
+      remove(id)
+      index(id, newData)
     }
 
     internal fun remove(id: PId<out TypedEntity>) {
@@ -34,7 +39,7 @@ open class ExternalStorageIndex<T> private constructor(internal val index: Bidir
       indexLog.add(Remove(id))
     }
 
-    fun applyChanges(other: MutableExternalStorageIndex<*>) {
+    fun applyChanges(other: MutableExternalEntityIndex<*>) {
       other.indexLog.forEach {
         when (it) {
           is Add<*> -> index(it.id, it.data as T)
@@ -43,7 +48,7 @@ open class ExternalStorageIndex<T> private constructor(internal val index: Bidir
       }
     }
 
-    private fun toImmutable(): ExternalStorageIndex<T> = ExternalStorageIndex(copyIndex())
+    private fun toImmutable(): ExternalEntityIndex<T> = ExternalEntityIndex(copyIndex())
 
     private sealed class IndexLogRecord {
       data class Add<T>(val id: PId<out TypedEntity>, val data: T) : IndexLogRecord()
@@ -51,24 +56,27 @@ open class ExternalStorageIndex<T> private constructor(internal val index: Bidir
     }
 
     companion object {
-      fun from(other: Map<String, ExternalStorageIndex<*>>): MutableMap<String, MutableExternalStorageIndex<*>> {
-        val result = mutableMapOf<String, MutableExternalStorageIndex<*>>()
+      fun from(other: MutableExternalEntityIndex<*>): MutableExternalEntityIndex<*> =
+        MutableExternalEntityIndex(other.copyIndex(), other.indexLog.toMutableList())
+
+      fun fromMap(other: Map<String, ExternalEntityIndex<*>>): MutableMap<String, MutableExternalEntityIndex<*>> {
+        val result = mutableMapOf<String, MutableExternalEntityIndex<*>>()
         other.forEach { (identifier, index) ->
-          result[identifier] = MutableExternalStorageIndex(index.copyIndex(), mutableListOf())
+          result[identifier] = MutableExternalEntityIndex(index.copyIndex(), mutableListOf())
         }
         return result
       }
 
-      fun fromMutable(other: MutableMap<String, MutableExternalStorageIndex<*>>): MutableMap<String, MutableExternalStorageIndex<*>> {
-        val result = mutableMapOf<String, MutableExternalStorageIndex<*>>()
+      fun fromMutableMap(other: MutableMap<String, MutableExternalEntityIndex<*>>): MutableMap<String, MutableExternalEntityIndex<*>> {
+        val result = mutableMapOf<String, MutableExternalEntityIndex<*>>()
         other.forEach { (identifier, index) ->
-          result[identifier] = MutableExternalStorageIndex(index.copyIndex(), index.indexLog.toMutableList())
+          result[identifier] = MutableExternalEntityIndex(index.copyIndex(), index.indexLog.toMutableList())
         }
         return result
       }
 
-      fun toImmutable(other: MutableMap<String, MutableExternalStorageIndex<*>>): Map<String, ExternalStorageIndex<*>> {
-        val result = mutableMapOf<String, ExternalStorageIndex<*>>()
+      fun toImmutable(other: MutableMap<String, MutableExternalEntityIndex<*>>): Map<String, ExternalEntityIndex<*>> {
+        val result = mutableMapOf<String, ExternalEntityIndex<*>>()
         other.forEach { (identifier, index) ->
           result[identifier] = index.toImmutable()
         }
