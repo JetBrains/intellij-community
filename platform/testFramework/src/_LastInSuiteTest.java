@@ -69,10 +69,20 @@ public class _LastInSuiteTest extends TestCase {
     }
 
     Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensionPointToNonPlatformExtensions = collectDynamicNonPlatformExtensions(app);
-    for (ExtensionPointImpl<?> ep : extensionPointToNonPlatformExtensions.keySet()) {
-      ep.reset();
-    }
-    startCorePluginUnload();
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
+    assert corePlugin != null;
+    app.invokeAndWait(() -> {
+      // obey contract that used by DynamicPluginManager - reloading of plugin is done in EDT and write action.
+      // one write action for all - as DynamicPluginManager does (plugin unloaded in one write action)
+      app.runWriteAction(() -> {
+        for (ExtensionPointImpl<?> ep : extensionPointToNonPlatformExtensions.keySet()) {
+          ep.reset();
+        }
+      });
+
+      app.getMessageBus().syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(corePlugin, false);
+    });
+
     for (Project project : ProjectUtil.getOpenProjects()) {
       ((CachedValuesManagerImpl)CachedValuesManager.getManager(project)).clearCachedValues();
     }
@@ -110,15 +120,6 @@ public class _LastInSuiteTest extends TestCase {
 
   private static @NotNull String escape(String s) {
     return MapSerializerUtil.escapeStr(s, MapSerializerUtil.STD_ESCAPER);
-  }
-
-  private static void startCorePluginUnload() {
-    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
-    assert corePlugin != null;
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
-        .beforePluginUnload(corePlugin, false);
-    });
   }
 
   private static void finishCorePluginUnload() {

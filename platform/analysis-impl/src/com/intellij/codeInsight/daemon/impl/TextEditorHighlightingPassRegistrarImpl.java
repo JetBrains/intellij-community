@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -28,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
+public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
@@ -58,7 +57,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                    @NotNull PluginDescriptor pluginDescriptor) {
         reRegisterFactories();
       }
-    }, this);
+    }, project);
   }
 
   private void reRegisterFactories() {
@@ -68,13 +67,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       nextAvailableId.set(Pass.LAST_PASS + 1);
       myDirtyScopeTrackingFactories.clear();
     }
-    for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
-      factoryRegistrar.registerHighlightingPassFactory(this, myProject);
-    }
-  }
-
-  @Override
-  public void dispose() {
+    EP_NAME.forEachExtensionSafe(registrar -> {
+      registrar.registerHighlightingPassFactory(this, myProject);
+    });
   }
 
   @ApiStatus.Internal

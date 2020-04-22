@@ -2,6 +2,8 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -27,11 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- */
 public class DomStubBuilderTest extends DomStubTest {
-
   public void testDomLoading() {
     getRootStub("foo.xml");
   }
@@ -69,7 +67,7 @@ public class DomStubBuilderTest extends DomStubTest {
   }
 
   public void testDomExtension() {
-    DomExtenderEP ep = new DomExtenderEP();
+    DomExtenderEP ep = new DomExtenderEP(Bar.class.getName(), new DefaultPluginDescriptor(PluginId.getId("testDomExtension"), getClass().getClassLoader()));
     ep.domClassName = Bar.class.getName();
     ep.extenderClassName = TestExtender.class.getName();
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), DomExtenderEP.EP_NAME, ep, myFixture.getTestRootDisposable());
