@@ -2,6 +2,7 @@
 package git4idea.conflicts;
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
-public final class GitConflictsToolWindowManager {
+public final class GitConflictsToolWindowManager implements Disposable {
   public static final String TAB_NAME = "Conflicts";
 
   @NotNull private final Project myProject;
@@ -55,6 +56,14 @@ public final class GitConflictsToolWindowManager {
       ChangesViewContentManager.getInstance(myProject).addContent(myContent);
     }
     if (!hasConflicts && myContent != null) {
+      ChangesViewContentManager.getInstance(myProject).removeContent(myContent);
+      myContent = null;
+    }
+  }
+
+  @Override
+  public void dispose() {
+    if (myContent != null) {
       ChangesViewContentManager.getInstance(myProject).removeContent(myContent);
       myContent = null;
     }
