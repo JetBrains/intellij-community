@@ -129,6 +129,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
     ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
+
+    BinaryFileTypeDecompilers.getInstance().addExtensionPointListener(() -> clearCachedDocumentsForBinaryFiles(), null);
   }
 
   static final class MyProjectCloseHandler implements ProjectCloseHandler {
@@ -855,6 +857,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
         reloadFromDisk(document);
       }
     }
+  }
+
+  private void clearCachedDocumentsForBinaryFiles() {
+    myDocumentCache.keySet().forEach(key -> {
+      if (key.getFileType().isBinary()) {
+        key.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
+        Document document = myDocumentCache.get(key);
+        if (document != null) {
+          unbindFileFromDocument(key, document);
+        }
+      }
+    });
   }
 
   private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
