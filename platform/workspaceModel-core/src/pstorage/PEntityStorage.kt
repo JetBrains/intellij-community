@@ -475,17 +475,20 @@ internal class PEntityStorageBuilder(
             val clonedEntity = matchedEntityData.clone()
             clonedEntity.id = leftNode.id
             this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz.java)
-            // TODO: 15.04.2020 Children and parents?
-            // TODO: 16.04.2020 Soft references
-            updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyMap(), emptyMap())) }
+            val pid = clonedEntity.createPid()
+            val parents = this.refs.getParentRefsOfChild(pid, false)
+            val children = this.refs.getChildrenRefsOfParentBy(pid, false)
+            updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, children, parents)) }
           }
           leftMatchedNodes.remove(leftNode.identificator(this), leftNode)
         }
         else {
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, clazz as Class<TypedEntity>)
-          replaceMap[newEntity.createPid()] = matchedEntityData.createPid()
-          // TODO: 15.04.2020 Children and parents?
-          updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz.java, emptyMap(), emptyMap())) }
+          val pid = newEntity.createPid()
+          replaceMap[pid] = matchedEntityData.createPid()
+          val parents = this.refs.getParentRefsOfChild(pid, false)
+          val children = this.refs.getChildrenRefsOfParentBy(pid, false)
+          updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz.java, children, parents)) }
         }
       }
     }
@@ -569,7 +572,7 @@ internal class PEntityStorageBuilder(
         val localChildId = replaceMap.inverse().get(nodeId)!!
         val localParentId = replaceMap.inverse().get(parentId)!!
 
-        this.refs.updateParentOfChild(connectionId as ConnectionId<TypedEntity, TypedEntity>, localChildId, localParentId)
+        this.refs.updateParentOfChild(connectionId, localChildId, localParentId)
       }
     }
   }
