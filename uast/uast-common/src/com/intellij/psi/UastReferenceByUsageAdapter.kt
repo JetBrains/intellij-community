@@ -8,6 +8,7 @@ import com.intellij.patterns.uast.UElementPattern
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
@@ -63,10 +64,10 @@ fun uExpressionInVariable() = injectionHostUExpression().filter {
 private val USAGE_REFERENCE_EXPRESSIONS = Key.create<MutableMap<PsiElement, UReferenceExpression>>("uast.referenceExpressions.byUsage")
 
 private fun getUsageReferenceExpressionWithCache(usage: PsiElement, context: ProcessingContext): UReferenceExpression? {
-  var cache = context.get(USAGE_REFERENCE_EXPRESSIONS)
+  var cache = context.sharedContext.get(USAGE_REFERENCE_EXPRESSIONS)
   if (cache == null) {
     cache = THashMap()
-    context.put(USAGE_REFERENCE_EXPRESSIONS, cache)
+    context.sharedContext.put(USAGE_REFERENCE_EXPRESSIONS, cache)
   }
   val cachedElement = cache[usage]
   if (cachedElement != null) return cachedElement
@@ -88,7 +89,7 @@ private fun getOriginalUastParent(element: UElement): UElement? {
 private fun getDirectVariableUsages(uVar: UVariable): Collection<PsiElement> {
   val variablePsi = uVar.sourcePsi ?: return emptyList()
   return CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
-    CachedValueProvider.Result.createSingleDependency(findDirectVariableUsages(variablePsi), PsiModificationTracker.MODIFICATION_COUNT)
+    Result.createSingleDependency(findDirectVariableUsages(variablePsi), PsiModificationTracker.MODIFICATION_COUNT)
   })
 }
 
