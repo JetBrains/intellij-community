@@ -95,6 +95,17 @@ public abstract class DuplicatesProfile {
     return null;
   }
 
+
+  @Nullable
+  public static DuplicatesProfile findProfileForDuplicate(@NotNull DupInfo dupInfo, int index) {
+    for (DuplicatesProfile profile : EP_NAME.getExtensionList()) {
+      if (profile.isMyDuplicate(dupInfo, index)) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public Language getLanguage(@NotNull PsiElement element) {
     return element.getLanguage();
