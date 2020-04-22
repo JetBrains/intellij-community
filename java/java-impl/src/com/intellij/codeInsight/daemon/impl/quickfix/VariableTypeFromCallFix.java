@@ -103,6 +103,9 @@ public class VariableTypeFromCallFix implements IntentionAction {
                                                                                    parameters,
                                                                                    expressions, PsiSubstitutor.EMPTY, resolved,
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
+            if (psiSubstitutor.getSubstitutionMap().values().stream().anyMatch(t -> t.equalsToText(CommonClassNames.JAVA_LANG_VOID))) {
+              continue;
+            }
             final PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(JavaPsiFacade.getElementFactory(
               project).createType(varClass, psiSubstitutor));
             if (!varType.equals(appropriateVarType)) {
