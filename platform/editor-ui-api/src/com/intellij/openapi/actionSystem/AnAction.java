@@ -412,7 +412,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @return action presentable text without private user data
    */
   @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   public String getTemplateText() {
     return getTemplatePresentation().getText();
   }
