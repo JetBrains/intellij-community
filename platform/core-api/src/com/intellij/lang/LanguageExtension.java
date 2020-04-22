@@ -63,15 +63,28 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   protected void clearCacheForDerivedLanguages(@NotNull Language language) {
     Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);  // includes language itself
     for (Language derivedLanguage : languages) {
-      derivedLanguage.putUserData(myCacheKey, null);
-      derivedLanguage.putUserData(myAllCacheKey, null);
+      clearCacheForLanguage(derivedLanguage);
 
       Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(derivedLanguage);
       for (MetaLanguage metaLanguage : metaLanguages) {
-        metaLanguage.putUserData(myCacheKey, null);
-        metaLanguage.putUserData(myAllCacheKey, null);
+        clearCacheForLanguage(metaLanguage);
       }
     }
+    if (language instanceof MetaLanguage) {
+      Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
+      for (Language matchingLanguage : matchingLanguages) {
+        Set<Language> matchingDerivedLanguages = LanguageUtil.getAllDerivedLanguages(matchingLanguage);  // includes language itself
+        for (Language derivedLanguage : matchingDerivedLanguages) {
+          clearCacheForLanguage(derivedLanguage);
+        }
+      }
+    }
+  }
+
+  private void clearCacheForLanguage(Language language) {
+    language.putUserData(myCacheKey, null);
+    language.putUserData(myAllCacheKey, null);
+    super.invalidateCacheForExtension(language.getID());
   }
 
   @Override
@@ -162,15 +175,13 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @Override
   public void addExplicitExtension(@NotNull Language key, @NotNull T t) {
-    key.putUserData(myCacheKey, null);
-    key.putUserData(myAllCacheKey, null);
+    clearCacheForLanguage(key);
     super.addExplicitExtension(key, t);
   }
 
   @Override
   public void removeExplicitExtension(@NotNull Language key, @NotNull T t) {
-    key.putUserData(myCacheKey, null);
-    key.putUserData(myAllCacheKey, null);
+    clearCacheForLanguage(key);
     super.removeExplicitExtension(key, t);
   }
 
