@@ -13,7 +13,7 @@ final class PasswordConversionEnforcer extends PreloadingActivity {
   public void preload(@NotNull ProgressIndicator indicator) {
     PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
     if (!propertyComponent.isValueSet(ENFORCED)) {
-      RecentTaskRepositories.getInstance().getState();
+      RecentTaskRepositories.getInstance();
       propertyComponent.setValue(ENFORCED, true);
     }
   }
