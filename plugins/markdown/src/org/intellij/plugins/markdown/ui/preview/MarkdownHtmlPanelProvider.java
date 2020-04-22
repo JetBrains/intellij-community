@@ -29,8 +29,6 @@ public abstract class MarkdownHtmlPanelProvider {
   public static final ExtensionPointName<MarkdownHtmlPanelProvider> EP_NAME =
     ExtensionPointName.create("org.intellij.markdown.html.panel.provider");
 
-  private static MarkdownHtmlPanelProvider[] ourProviders = null;
-
   @NotNull
   public abstract MarkdownHtmlPanel createHtmlPanel();
 
@@ -41,10 +39,7 @@ public abstract class MarkdownHtmlPanelProvider {
   public abstract ProviderInfo getProviderInfo();
 
   public static MarkdownHtmlPanelProvider @NotNull [] getProviders() {
-    if (ourProviders == null) {
-      ourProviders = EP_NAME.getExtensions();
-    }
-    return ourProviders;
+    return EP_NAME.getExtensions();
   }
 
   @NotNull
