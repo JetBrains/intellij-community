@@ -107,8 +107,8 @@ static bool IsPathWatchable(const char *pathToWatch) {
                 }
             }
 
-            path[pathLen] = L'\\';
-            path[pathLen + 1] = L'\0';
+            path[pathLen - 1] = L'\\';
+            path[pathLen] = L'\0';
             if (GetVolumeNameForVolumeMountPointW(path, buffer, bufferSize) != 0) {
                 watchable = false;
                 break;
