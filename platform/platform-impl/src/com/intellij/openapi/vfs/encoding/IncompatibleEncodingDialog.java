@@ -66,15 +66,16 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
             Messages.showErrorDialog(XmlStringUtil.wrapInHtml(
                           "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding." +
                           explanation),
-                               "Incompatible Encoding: " + charset.displayName());
+                                     IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()));
             res = -1;
           }
           else {
             res = Messages.showDialog(XmlStringUtil.wrapInHtml(
                 "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
                 explanation),
-                        "Incompatible Encoding: " + charset.displayName(), new String[]{"Reload anyway", "Cancel"}, 1,
-                        AllIcons.General.WarningDialog);
+                                      IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()),
+                                      new String[]{"Reload anyway", "Cancel"}, 1,
+                                      AllIcons.General.WarningDialog);
           }
           if (res != 0) {
             doCancelAction();

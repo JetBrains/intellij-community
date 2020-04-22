@@ -585,6 +585,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private void flushMergers() {
     assert myProject == null || !myProject.isDisposed() : myProject;
     // Run dummy command in order to flush all mergers...
+    //noinspection HardCodedStringLiteral
     CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), "Dummy", null);
   }
 

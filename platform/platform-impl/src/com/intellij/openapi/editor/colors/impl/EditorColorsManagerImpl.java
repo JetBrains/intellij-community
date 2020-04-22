@@ -264,9 +264,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
       catch (InvalidDataException e) {
         brokenSchemesList.add(scheme);
-        String message = "Color scheme '" + scheme.getName() + "'" +
-                         " points to incorrect or non-existent default (base) scheme " +
-                         e.getMessage();
+        String message = IdeBundle
+          .message("notification.content.color.scheme", scheme.getName(),
+                   e.getMessage());
         Notifications.Bus.notify(
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.incompatible.color.scheme"), message, NotificationType.ERROR));
       }
