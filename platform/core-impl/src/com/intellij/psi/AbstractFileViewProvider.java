@@ -43,8 +43,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +60,6 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
   private volatile Content myContent;
-  private volatile Reference<Document> myDocument;
   private final PsiLock myPsiLock = new PsiLock();
 
   protected AbstractFileViewProvider(@NotNull PsiManager manager,
@@ -168,19 +165,12 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Nullable
   private Document getCachedDocument() {
-    final Document document = com.intellij.reference.SoftReference.dereference(myDocument);
-    if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
   }
 
   @Override
   public Document getDocument() {
-    Document document = com.intellij.reference.SoftReference.dereference(myDocument);
-    if (document == null) {
-      document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-      myDocument = document == null ? null : new SoftReference<>(document);
-    }
-    return document;
+    return FileDocumentManager.getInstance().getDocument(getVirtualFile());
   }
 
   @Override
