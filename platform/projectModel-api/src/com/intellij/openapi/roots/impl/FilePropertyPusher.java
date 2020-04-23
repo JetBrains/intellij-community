@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -35,6 +21,11 @@ import java.io.IOException;
  * Most frequently property represents some kind of "language level"
  * which is in most cases required to determine the algorithm of stub and other indexes building.
  * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFileDataKey()}.
+ * <br/><br/>
+ * <b>Note:</b> Don't use plugin-specific classes as pushed properties, consider using <code>String</code> instead.
+ * Otherwise, the plugin becomes not dynamic because its classes will be hard-referenced as <code>VirtualFile</code>'s user data.
+ * For example, instead of pushing <code>SomeLanguageDialect</code> instances, push <code>someLanguageDialect.getName()</code> and
+ * restore <code>SomeLanguageDialect</code> by name where needed.
  */
 public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
