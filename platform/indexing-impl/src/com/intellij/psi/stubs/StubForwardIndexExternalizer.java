@@ -20,7 +20,7 @@ import java.util.function.UnaryOperator;
 
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState> implements DataExternalizer<Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>> {
   @NotNull
-  public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer(@NotNull SerializationManagerEx managerToInitialize) {
+  public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {
     if (System.getProperty("idea.uses.shareable.serialized.stubs") == null) {
       return new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer();
     }
@@ -28,7 +28,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   }
 
   @NotNull
-  public static StubForwardIndexExternalizer<?> createFileLocalExternalizer(@NotNull SerializationManagerEx serializationManager) {
+  public static StubForwardIndexExternalizer<?> createFileLocalExternalizer() {
     return new FileLocalStubForwardIndexExternalizer();
   }
 
@@ -46,7 +46,6 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     if (!indexedStubs.isEmpty()) {
       StubKeySerializationState stubKeySerializationState = createStubIndexKeySerializationState(out, indexedStubs.keySet());
 
-      StubIndexEx stubIndex = (StubIndexEx)StubIndex.getInstance();
       for (StubIndexKey stubIndexKey : indexedStubs.keySet()) {
         writeStubIndexKey(out, stubIndexKey, stubKeySerializationState);
         Map<Object, StubIdList> map = indexedStubs.get(stubIndexKey);

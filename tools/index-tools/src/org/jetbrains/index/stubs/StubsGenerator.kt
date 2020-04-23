@@ -50,7 +50,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
       return null
     }
 
-    return SerializedStubTree.serializeStub(stub, serializationManager, StubForwardIndexExternalizer.createFileLocalExternalizer(serializationManager))
+    return SerializedStubTree.serializeStub(stub, serializationManager, StubForwardIndexExternalizer.createFileLocalExternalizer())
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
@@ -107,8 +107,8 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
         val value = fromStorage.get(key)
 
         // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-        val oldForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer(serializationManager)
-        val newForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer(newSerializationManager)
+        val oldForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer()
+        val newForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer()
         val newStubTree = value.reSerialize(serializationManager, newSerializationManager, oldForwardIndexSerializer, newForwardIndexSerializer)
 
         if (storage.containsMapping(key)) {
