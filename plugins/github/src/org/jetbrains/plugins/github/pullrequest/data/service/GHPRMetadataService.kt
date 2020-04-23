@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.data.GHLabel
@@ -23,12 +24,15 @@ interface GHPRMetadataService : Disposable {
   @CalledInAwt
   fun resetData()
 
-  @CalledInBackground
+  @CalledInAny
   fun adjustReviewers(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
+    : CompletableFuture<Unit>
 
-  @CalledInBackground
+  @CalledInAny
   fun adjustAssignees(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>)
+    : CompletableFuture<Unit>
 
-  @CalledInBackground
+  @CalledInAny
   fun adjustLabels(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>)
+    : CompletableFuture<Unit>
 }

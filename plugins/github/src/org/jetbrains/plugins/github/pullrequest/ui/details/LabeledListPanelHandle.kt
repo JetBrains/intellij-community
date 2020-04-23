@@ -128,9 +128,7 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
         else {
           adjustmentError = null
           isBusy = true
-          ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
-            adjust(it, details, delta)
-          }
+          adjust(EmptyProgressIndicator(), details, delta)
         }
       }, EDT_EXECUTOR)
       ?.handleOnEdt { _, error ->
@@ -142,6 +140,6 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
   @CalledInAwt
   abstract fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<T>>?
 
-  @CalledInBackground
-  abstract fun adjust(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<T>)
+  @CalledInAwt
+  abstract fun adjust(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<T>): CompletableFuture<Unit>
 }
