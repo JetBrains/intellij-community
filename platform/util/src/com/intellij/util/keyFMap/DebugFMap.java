@@ -6,8 +6,17 @@ import com.intellij.util.containers.UnmodifiableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
+/**
+ * Debug implementation of KeyFMap. Could be slower than normal implementation but contains actual keys,
+ * so it would be easier to investigate heap dumps containing this implementation.
+ * 
+ * @see #DEBUG_FMAP
+ */
 public class DebugFMap implements KeyFMap {
-  private final UnmodifiableHashMap<Key<?>, Object> myMap;
+  static final boolean DEBUG_FMAP = Boolean.getBoolean("idea.keyfmap.debug.implementation"); 
+  private final @NotNull UnmodifiableHashMap<Key<?>, Object> myMap;
 
   DebugFMap(@NotNull UnmodifiableHashMap<Key<?>, Object> map) {
     myMap = map;
@@ -29,6 +38,25 @@ public class DebugFMap implements KeyFMap {
   public <V> @Nullable V get(@NotNull Key<V> key) {
     @SuppressWarnings("unchecked") V value = (V)myMap.get(key);
     return value;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true; 
+    if (!(obj instanceof KeyFMap)) return false;
+    KeyFMap other = (KeyFMap)obj;
+    if (this.size() != other.size()) return false;
+    return myMap.entrySet().stream().allMatch(entry -> Objects.equals(entry.getValue(),other.get(entry.getKey())));
+  }
+
+  @Override
+  public int hashCode() {
+    return myMap.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return myMap.toString();
   }
 
   @Override
@@ -58,6 +86,6 @@ public class DebugFMap implements KeyFMap {
   @Override
   public boolean equalsByReference(KeyFMap other) {
     if (this.size() != other.size()) return false;
-    return myMap.entrySet().stream().noneMatch(entry -> entry.getValue() != other.get(entry.getKey()));
+    return myMap.entrySet().stream().allMatch(entry -> entry.getValue() == other.get(entry.getKey()));
   }
 }

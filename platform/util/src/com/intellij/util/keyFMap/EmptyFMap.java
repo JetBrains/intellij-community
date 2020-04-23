@@ -20,7 +20,6 @@ import com.intellij.util.containers.UnmodifiableHashMap;
 import org.jetbrains.annotations.NotNull;
 
 class EmptyFMap implements KeyFMap {
-  private static final boolean DEBUG_FMAP = Boolean.getBoolean("idea.keyfmap.debug.implementation"); 
   private static final Key[] EMPTY_KEYS_ARRAY = {};
 
   EmptyFMap() {
@@ -79,6 +78,6 @@ class EmptyFMap implements KeyFMap {
   }
   
   static KeyFMap create() {
-    return DEBUG_FMAP ? new DebugFMap(UnmodifiableHashMap.empty()) : new EmptyFMap();
+    return DebugFMap.DEBUG_FMAP ? new DebugFMap(UnmodifiableHashMap.empty()) : new EmptyFMap();
   }
 }
