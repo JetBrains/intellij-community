@@ -699,14 +699,15 @@ public class ChangesViewManager implements ChangesViewEx,
         if (myChangesViewManager.myState.myShowIgnored) {
           treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
         }
-        for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
-          extension.modifyTreeModelBuilder(treeModelBuilder);
-        }
-        DefaultTreeModel newModel = treeModelBuilder.build();
 
         invokeLaterIfNeeded(() -> {
           if (myDisposed) return;
           indicator.checkCanceled();
+
+          for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
+            extension.modifyTreeModelBuilder(treeModelBuilder);
+          }
+          DefaultTreeModel newModel = treeModelBuilder.build();
 
           myModelUpdateInProgress = true;
           try {
