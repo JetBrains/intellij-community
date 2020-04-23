@@ -211,18 +211,8 @@ public class PsiPolyExpressionUtil {
       return ConditionalKind.NULL;
     }
 
-    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (TypeConversionUtil.isNumericType(type)) return ConditionalKind.NUMERIC;
     if (TypeConversionUtil.isBooleanType(type)) return ConditionalKind.BOOLEAN;
-
-    if (psiClass instanceof PsiTypeParameter) {
-      for (PsiClassType classType : psiClass.getExtendsListTypes()) {
-        final ConditionalKind kind = isBooleanOrNumericType(classType);
-        if (kind != null) {
-          return kind;
-        }
-      }
-    }
     return null;
   }
 }
