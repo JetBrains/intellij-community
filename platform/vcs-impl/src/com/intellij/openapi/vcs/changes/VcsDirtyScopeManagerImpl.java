@@ -142,7 +142,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
 
       synchronized (LOCK) {
-        if (!myReady) return;
+        if (!myReady || myDirtBuilder.isEverythingDirty()) return;
         VcsDirtyScopeImpl scope = myDirtBuilder.getScope(vcs);
 
         for (FilePath filePath : files) {
