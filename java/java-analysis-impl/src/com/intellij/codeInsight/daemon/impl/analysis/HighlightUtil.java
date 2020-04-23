@@ -1731,8 +1731,8 @@ public class HighlightUtil {
 
     if (expr instanceof PsiThisExpression) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-      if (psiMethod == null || psiMethod.getContainingClass() != aClass && !isInsideDefaultMethod(psiMethod, aClass)) {
-        if (aClass.isInterface()) {
+      if (psiMethod == null || psiMethod.getContainingClass() != aClass) {
+        if (aClass.isInterface() && !isInsideInterfaceInstanceMethod(psiMethod, aClass)) {
           return thisNotFoundInInterfaceInfo(expr);
         }
 
@@ -1762,15 +1762,16 @@ public class HighlightUtil {
     return null;
   }
 
-  private static boolean isInsideDefaultMethod(@NotNull PsiMethod method, @NotNull PsiClass aClass) {
+  private static boolean isInsideInterfaceInstanceMethod(@NotNull PsiMethod method, @NotNull PsiClass aClass) {
     while (method != null && method.getContainingClass() != aClass) {
       method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, true);
     }
-    return method != null && method.hasModifierProperty(PsiModifier.DEFAULT);
+    return method != null && !method.hasModifierProperty(PsiModifier.STATIC);
   }
 
   private static HighlightInfo thisNotFoundInInterfaceInfo(@NotNull PsiExpression expr) {
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip("Cannot find symbol variable this").create();
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(
+      JavaErrorBundle.message("error.no.enclosing.this.in.interface")).create();
   }
 
   private static boolean resolvesToImmediateSuperInterface(@NotNull PsiExpression expr,
