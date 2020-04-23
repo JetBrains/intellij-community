@@ -936,26 +936,9 @@ public final class PluginManagerCore {
     }
 
     List<Path> pluginJarFiles = new ArrayList<>(), dirs = new ArrayList<>();
-    try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
-      for (Path childFile : s) {
-        if (Files.isDirectory(childFile)) {
-          dirs.add(childFile);
-        }
-        else {
-          String path = childFile.toString();
-          if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
-            pluginJarFiles.add(childFile);
-          }
-        }
-      }
-    }
-    catch (IOException e) {
-      return null;
-    }
+    if (!collectPluginDirectoryContents(file, pluginJarFiles, dirs)) return null;
 
     if (!pluginJarFiles.isEmpty()) {
-      putMoreLikelyPluginJarsFirst(file, pluginJarFiles);
-
       PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(pluginJarFiles, context);
       for (Path jarFile : pluginJarFiles) {
         descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file);
@@ -978,6 +961,36 @@ public final class PluginManagerCore {
     }
 
     return descriptor;
+  }
+
+  private static boolean collectPluginDirectoryContents(@NotNull Path file, List<Path> pluginJarFiles, List<Path> dirs) {
+    try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
+      for (Path childFile : s) {
+        if (Files.isDirectory(childFile)) {
+          dirs.add(childFile);
+        }
+        else {
+          String path = childFile.toString();
+          if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
+            pluginJarFiles.add(childFile);
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      return false;
+    }
+    if (!pluginJarFiles.isEmpty()) {
+      putMoreLikelyPluginJarsFirst(file, pluginJarFiles);
+    }
+    return true;
+  }
+
+  @Nullable
+  public static PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir, @NotNull DescriptorLoadingContext context) {
+    List<Path> pluginJarFiles = new ArrayList<>(), dirs = new ArrayList<>();
+    if (!collectPluginDirectoryContents(pluginDir, pluginJarFiles, dirs)) return null;
+    return new PluginXmlPathResolver(pluginJarFiles, context);
   }
 
   /*

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -84,22 +85,26 @@ public final class PluginEnabler {
 
   @Nullable
   public static IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor);
+    PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
     return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled(), resolver);
   }
 
   @NotNull
-  static PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    PathBasedJdomXIncluder.PathResolver<?> resolver;
+  static PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                            @Nullable DescriptorLoadingContext context) {
     if (PluginManagerCore.isRunningFromSources() &&
         descriptor.getPluginPath().getFileSystem().equals(FileSystems.getDefault()) &&
         descriptor.getPath().toString().contains("out/classes")) {
-      resolver = new ClassPathXmlPathResolver(descriptor.getPluginClassLoader());
+      return new ClassPathXmlPathResolver(descriptor.getPluginClassLoader());
     }
-    else {
-      resolver = PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER;
+
+    if (context != null) {
+      PathBasedJdomXIncluder.PathResolver<Path> resolver = PluginManagerCore.createPluginJarsPathResolver(descriptor.getPluginPath(), context);
+      if (resolver != null) {
+        return resolver;
+      }
     }
-    return resolver;
+    return PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER;
   }
 
   @NotNull
