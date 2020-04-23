@@ -131,8 +131,8 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     @Override
     void addInterval(@NotNull RangeHighlighterEx h) {
       super.addInterval(h);
-      if (h.isRenderedInGutter() && !isFlagSet(RENDERED_IN_GUTTER_FLAG) ||
-          h.isRenderedInScrollBar() && !isFlagSet(RENDERED_IN_SCROLL_BAR_FLAG)) {
+      if (!isFlagSet(RENDERED_IN_GUTTER_FLAG) && h.isRenderedInGutter() ||
+          !isFlagSet(RENDERED_IN_SCROLL_BAR_FLAG) && h.isRenderedInScrollBar()) {
         recalculateRenderFlagsUp();
       }
     }

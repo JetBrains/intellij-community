@@ -63,7 +63,7 @@ public class HighlightData {
         try {
           // IDEA-53203: add ERASE_MARKER for manually defined attributes
           view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                    TextAttributes.ERASE_MARKER, null, HighlighterTargetArea.EXACT_RANGE);
+                                                    TextAttributes.ERASE_MARKER, myHighlightType, HighlighterTargetArea.EXACT_RANGE);
           RangeHighlighter highlighter = view.getMarkupModel()
             .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
                                  null, myHighlightType, HighlighterTargetArea.EXACT_RANGE);

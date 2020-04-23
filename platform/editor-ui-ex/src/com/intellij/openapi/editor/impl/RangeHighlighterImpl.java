@@ -62,21 +62,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @MagicConstant(flags = {CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_OR_COLOR_CHANGED_MASK})
   private @interface ChangeStatus {}
 
-  /**
-   * @deprecated Use constructor with TextAttributeKey
-   */
-  @Deprecated
-  RangeHighlighterImpl(@NotNull MarkupModelImpl model,
-                       int start,
-                       int end,
-                       int layer,
-                       @NotNull HighlighterTargetArea target,
-                       TextAttributes textAttributes,
-                       boolean greedyToLeft,
-                       boolean greedyToRight) {
-    this(model, start, end, layer, target, textAttributes, null, greedyToLeft, greedyToRight);
-  }
-
   RangeHighlighterImpl(@NotNull MarkupModelImpl model,
                        int start,
                        int end,
@@ -124,20 +109,20 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   public @Nullable TextAttributes getTextAttributes(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme) {
     if (myForcedTextAttributes != null) return myForcedTextAttributes;
+    if (myTextAttributesKey == null) return null;
 
     EditorColorsScheme colorScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
-    if (myTextAttributesKey == null) return null;
     return colorScheme.getAttributes(myTextAttributesKey);
   }
 
   @Override
   public void setTextAttributes(@NotNull TextAttributes textAttributes) {
-    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
     TextAttributes old = myForcedTextAttributes;
+    if (Comparing.equal(old,textAttributes)) return;
+
     myForcedTextAttributes = textAttributes;
-    if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
+    myModel.treeFor(this).updateRenderedFlags(this);
+
     if (old != textAttributes && (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER)) {
       fireChanged(false, true);
     }
@@ -241,16 +226,16 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setErrorStripeMarkColor(Color color) {
-    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
     if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
+    if (Comparing.equal(old, color)) return;
+
+    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
     myErrorStripeColor = color;
     if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
       myModel.treeFor(this).updateRenderedFlags(this);
     }
-    if (!Comparing.equal(old, color)) {
-      fireChanged(false, false);
-    }
+    fireChanged(false, false);
   }
 
   @Override

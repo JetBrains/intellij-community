@@ -602,9 +602,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (tooltip != null &&
           !(tooltip instanceof HighlightInfo && ((HighlightInfo)tooltip).type == HighlightInfoType.TODO) &&
-          highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null &&
           highlighter.getStartOffset() < endOffset &&
-          highlighter.getEndOffset() > startOffset) {
+          highlighter.getEndOffset() > startOffset &&
+          highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
         highlighters.add(highlighter);
       }
       return true;
