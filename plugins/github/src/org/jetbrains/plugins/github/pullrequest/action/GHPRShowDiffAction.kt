@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
@@ -67,13 +68,13 @@ class GHPRShowDiffAction : DumbAwareAction() {
       }
       val viewOptionsGroup = NonEmptyActionGroup().apply {
         isPopup = true
-        templatePresentation.text = "View Options"
+        templatePresentation.text = GithubBundle.message("pull.request.diff.view.options")
         templatePresentation.icon = AllIcons.Actions.Show
         add(GHPRDiffReviewThreadsToggleAction())
         add(GHPRDiffReviewResolvedThreadsToggleAction())
       }
 
-      dataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(GHToolbarLabelAction("Review:"),
+      dataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(GHToolbarLabelAction(GithubBundle.message("pull.request.diff.review.label")),
                                                           viewOptionsGroup,
                                                           GHPRDiffReviewThreadsReloadAction(),
                                                           GHPRReviewSubmitAction())

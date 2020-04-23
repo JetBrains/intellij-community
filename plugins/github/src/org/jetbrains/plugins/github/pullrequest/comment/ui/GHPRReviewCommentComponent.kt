@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.runWriteAction
@@ -20,6 +21,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
@@ -52,11 +54,11 @@ object GHPRReviewCommentComponent {
       foreground = UIUtil.getContextHelpForeground()
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
-    val pendingLabel = JBLabel(" Pending ", UIUtil.ComponentStyle.SMALL).apply {
+    val pendingLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.pending")} ", UIUtil.ComponentStyle.SMALL).apply {
       foreground = UIUtil.getContextHelpForeground()
       background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
     }.andOpaque()
-    val resolvedLabel = JBLabel(" Resolved ", UIUtil.ComponentStyle.SMALL).apply {
+    val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
       foreground = UIUtil.getContextHelpForeground()
       background = UIUtil.getPanelBackground()
     }.andOpaque()
@@ -99,9 +101,10 @@ object GHPRReviewCommentComponent {
                                  comment: GHPRReviewCommentModel): JComponent {
     val icon = GithubIcons.Delete
     val hoverIcon = GithubIcons.DeleteHovered
-    return InlineIconButton(icon, hoverIcon, tooltip = "Delete").apply {
+    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.delete")).apply {
       actionListener = ActionListener {
-        if (Messages.showConfirmationDialog(this, "Are you sure you want to delete this comment?", "Delete Comment",
+        if (Messages.showConfirmationDialog(this, GithubBundle.message("pull.request.review.comment.delete.dialog.msg"),
+                                            GithubBundle.message("pull.request.review.comment.delete.dialog.title"),
                                             Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
           reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
         }
@@ -141,7 +144,7 @@ object GHPRReviewCommentComponent {
         }
       }
 
-      val editor = GHPRSubmittableTextField.create(model, "Submit", onCancel = {
+      val editor = GHPRSubmittableTextField.create(model, CommonBundle.message("button.submit"), onCancel = {
         editorWrapper.setContent(null)
         editorWrapper.revalidate()
       })
@@ -150,7 +153,7 @@ object GHPRReviewCommentComponent {
     }
     val icon = AllIcons.General.Inline_edit
     val hoverIcon = AllIcons.General.Inline_edit_hovered
-    return InlineIconButton(icon, hoverIcon, tooltip = "Edit").apply {
+    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.edit")).apply {
       actionListener = action
     }
   }
@@ -197,7 +200,8 @@ object GHPRReviewCommentComponent {
         }
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
-          titlePane.text = authorName + """ commented ${GithubUIUtil.formatActionDate(model.dateCreated)}"""
+          titlePane.text = GithubBundle.message("pull.request.review.commented", authorName,
+                                                GithubUIUtil.formatActionDate(model.dateCreated))
         }
       }
 

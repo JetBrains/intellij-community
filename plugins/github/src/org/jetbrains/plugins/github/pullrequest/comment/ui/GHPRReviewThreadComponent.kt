@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiffComponentFactory
@@ -72,13 +73,13 @@ object GHPRReviewThreadComponent {
         }
       }
 
-      val toggleReplyLink = LinkLabel<Any>("Reply", null) { _, _ ->
+      val toggleReplyLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.reply"), null) { _, _ ->
         toggleModel.value = true
       }.apply {
         isFocusable = true
       }
 
-      val resolveLink = LinkLabel<Any>("Resolve", null).apply {
+      val resolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.resolve"), null).apply {
         isFocusable = true
       }.also {
         it.setListener({ _, _ ->
@@ -89,7 +90,7 @@ object GHPRReviewThreadComponent {
                        }, null)
       }
 
-      val unresolveLink = LinkLabel<Any>("Unresolve", null).apply {
+      val unresolveLink = LinkLabel<Any>(GithubBundle.message("pull.request.review.thread.unresolve"), null).apply {
         isFocusable = true
       }.also {
         it.setListener({ _, _ ->
@@ -103,7 +104,8 @@ object GHPRReviewThreadComponent {
       return GHPRToggleableContainer.create(toggleModel,
                                             { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
                                             {
-                                              GHPRSubmittableTextField.create(textFieldModel, avatarIconsProvider, currentUser, "Reply",
+                                              GHPRSubmittableTextField.create(textFieldModel, avatarIconsProvider, currentUser,
+                                                                              GithubBundle.message("pull.request.review.thread.reply"),
                                                                               onCancel = { toggleModel.value = false })
                                             })
     }

@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -54,7 +55,7 @@ internal class GHPRMetadataPanel(private val project: Project,
   private val reviewersHandle = ReviewersListPanelHandle()
   private val assigneesHandle = AssigneesListPanelHandle()
   private val labelsHandle = LabelsListPanelHandle()
-  private val timelineLink = LinkLabel<Any>("View Conversations", null) { label, _ ->
+  private val timelineLink = LinkLabel<Any>(GithubBundle.message("pull.request.view.conversations.action"), null) { label, _ ->
     val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@LinkLabel
     ActionUtil.invokeAction(action, label, ActionPlaces.UNKNOWN, null, null)
   }
@@ -100,7 +101,8 @@ internal class GHPRMetadataPanel(private val project: Project,
   }
 
   private inner class ReviewersListPanelHandle
-    : LabeledListPanelHandle<GHPullRequestRequestedReviewer>(model, securityService, "No Reviewers", "Reviewers:") {
+    : LabeledListPanelHandle<GHPullRequestRequestedReviewer>(model, securityService, GithubBundle.message("pull.request.no.reviewers"),
+                                                             "${GithubBundle.message("pull.request.reviewers")}:") {
     override fun extractItems(details: GHPullRequest): List<GHPullRequestRequestedReviewer> =
       details.reviewRequests.mapNotNull { it.requestedReviewer }
 
@@ -111,7 +113,7 @@ internal class GHPRMetadataPanel(private val project: Project,
       val author = model.value?.author as? GHUser ?: return
       val reviewers = details.reviewRequests.mapNotNull { it.requestedReviewer }
       GithubUIUtil
-        .showChooserPopup("Reviewers", editButton, { list ->
+        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), editButton, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
           GithubUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
         }, reviewers, metadataService.potentialReviewers.thenApply { it - author })
@@ -122,7 +124,8 @@ internal class GHPRMetadataPanel(private val project: Project,
   }
 
   private inner class AssigneesListPanelHandle
-    : LabeledListPanelHandle<GHUser>(model, securityService, "Unassigned", "Assignees:") {
+    : LabeledListPanelHandle<GHUser>(model, securityService, GithubBundle.message("pull.request.unassigned"),
+                                     "${GithubBundle.message("pull.request.assignees")}:") {
 
     override fun extractItems(details: GHPullRequest): List<GHUser> = details.assignees
 
@@ -131,7 +134,7 @@ internal class GHPRMetadataPanel(private val project: Project,
     override fun editList() {
       val details = model.value ?: return
       GithubUIUtil
-        .showChooserPopup("Assignees", editButton, { list ->
+        .showChooserPopup(GithubBundle.message("pull.request.assignees"), editButton, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
           GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
         }, details.assignees, metadataService.issuesAssignees)
@@ -148,7 +151,8 @@ internal class GHPRMetadataPanel(private val project: Project,
   }
 
   private inner class LabelsListPanelHandle
-    : LabeledListPanelHandle<GHLabel>(model, securityService, "No Labels", "Labels:") {
+    : LabeledListPanelHandle<GHLabel>(model, securityService, GithubBundle.message("pull.request.no.labels"),
+                                      "${GithubBundle.message("pull.request.labels")}:") {
 
     override fun extractItems(details: GHPullRequest): List<GHLabel>? = details.labels
 
@@ -157,7 +161,8 @@ internal class GHPRMetadataPanel(private val project: Project,
     override fun editList() {
       val details = model.value ?: return
       GithubUIUtil
-        .showChooserPopup("Labels", editButton, { GithubUIUtil.SelectionListCellRenderer.Labels() }, details.labels, metadataService.labels)
+        .showChooserPopup(GithubBundle.message("pull.request.labels"), editButton, { GithubUIUtil.SelectionListCellRenderer.Labels() },
+                          details.labels, metadataService.labels)
         .handleOnEdt(getAdjustmentHandler("label") { indicator, delta ->
           metadataService.adjustLabels(indicator, details, delta)
         })
@@ -175,21 +180,24 @@ internal class GHPRMetadataPanel(private val project: Project,
     return handler@{ delta, error ->
       if (error != null) {
         if (!GithubAsyncUtil.isCancellation(error))
-          GithubNotifications.showError(project, "Failed to adjust list of ${StringUtil.pluralize(entityName)}", error)
+          GithubNotifications.showError(project, GithubBundle.message("pull.request.adjustment.failed", StringUtil.pluralize(entityName)),
+                                        error)
         return@handler
       }
       if (delta.isEmpty) {
         return@handler
       }
 
-      object : Task.Backgroundable(project, "Adjusting List of ${StringUtil.pluralize(entityName).capitalize()}...",
+      object : Task.Backgroundable(project, GithubBundle.message("pull.request.adjustment.process.title",
+                                                                 StringUtil.pluralize(entityName).capitalize()),
                                    true) {
         override fun run(indicator: ProgressIndicator) {
           adjuster(indicator, delta)
         }
 
         override fun onThrowable(error: Throwable) {
-          GithubNotifications.showError(project, "Failed to adjust list of ${StringUtil.pluralize(entityName)}", error)
+          GithubNotifications.showError(project, GithubBundle.message("pull.request.adjustment.failed", StringUtil.pluralize(entityName)),
+                                        error)
         }
       }.queue()
     }

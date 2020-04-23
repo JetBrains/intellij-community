@@ -11,6 +11,8 @@ import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
@@ -23,7 +25,7 @@ object GHPRChangesBrowser {
   fun create(project: Project,
              changesModel: GHPRChangesModel,
              diffHelper: GHPRChangesDiffHelper,
-             panelEmptyText: String,
+             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String,
              disposable: Disposable): JComponent {
 
     val actionManager = ActionManager.getInstance()
@@ -65,7 +67,7 @@ object GHPRChangesBrowser {
              loadingModel: GHLoadingModel,
              changesModel: GHPRChangesModel,
              diffHelper: GHPRChangesDiffHelper,
-             panelEmptyText: String = "",
+             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String = "",
              disposable: Disposable): JComponent {
 
     val actionManager = ActionManager.getInstance()
@@ -77,9 +79,10 @@ object GHPRChangesBrowser {
 
     val loadingPanel = GHLoadingPanel.create(loadingModel, {
       createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
+        emptyText.text = panelEmptyText
         ScrollPaneFactory.createScrollPane(this, SideBorder.TOP)
       }
-    }, disposable, panelEmptyText, "Can't load changes")
+    }, disposable, GithubBundle.message("cannot.load.changes"))
 
     val toolbar = createToolbar(actionManager, diffAction, loadingPanel)
 

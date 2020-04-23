@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.ui.CompareBranchesDialog;
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
+import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
 import org.jetbrains.plugins.github.util.*;
 
@@ -59,7 +60,6 @@ import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
 public class GithubCreatePullRequestWorker {
   private static final Logger LOG = GithubUtil.LOG;
-  private static final String CANNOT_CREATE_PULL_REQUEST = "Can't Create Pull Request";
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -134,7 +134,8 @@ public class GithubCreatePullRequestWorker {
       fork.setRemoteName(path.getOwner());
     }
     catch (VcsException e) {
-      GithubNotifications.showError(myProject, "Can't add remote", "Failed to add GitHub remote: '" + url + "'. " + e.getMessage());
+      GithubNotifications.showError(myProject, GithubBundle.message("pull.request.cannot.add.remote"),
+                                    GithubBundle.message("pull.request.create.add.remote.failed", url, e.getMessage()));
     }
   }
 
@@ -161,7 +162,7 @@ public class GithubCreatePullRequestWorker {
       }
     }
     catch (IOException e) {
-      GithubNotifications.showWarning(myProject, "Can't load branches for " + path, e);
+      GithubNotifications.showWarning(myProject, GithubBundle.message("pull.request.cannot.load.branches", path), e);
     }
   }
 
@@ -183,7 +184,7 @@ public class GithubCreatePullRequestWorker {
       return fork;
     }
     catch (IOException e) {
-      GithubNotifications.showWarning(myProject, "Can't load branches for " + path, e);
+      GithubNotifications.showWarning(myProject, GithubBundle.message("pull.request.cannot.load.branches", path), e);
       return null;
     }
   }
@@ -337,14 +338,15 @@ public class GithubCreatePullRequestWorker {
                                   .create(myServer, forkPath.getOwner(), forkPath.getRepository(), title, description, head, base));
     }
     catch (IOException e) {
-      GithubNotifications.showError(myProject, CANNOT_CREATE_PULL_REQUEST, e);
+      GithubNotifications.showError(myProject, GithubBundle.message("pull.request.cannot.create"), e);
       return null;
     }
   }
 
   public void configureRemote(@NotNull final ForkInfo fork) {
     myProgressManager.runProcessWithProgressSynchronously(() -> doConfigureRemote(fork),
-                                                          "Creating Remote..", false, myProject);
+                                                          GithubBundle.message("pull.request.create.remote.process.title"), false,
+                                                          myProject);
   }
 
   @NotNull
@@ -375,10 +377,10 @@ public class GithubCreatePullRequestWorker {
         return getSimpleDefaultDescriptionMessage(branch);
       }
       catch (VcsException e) {
-        GithubNotifications.showWarning(myProject, "Can't collect additional data", e);
+        GithubNotifications.showWarning(myProject, GithubBundle.message("cannot.collect.additional.data"), e);
         return getSimpleDefaultDescriptionMessage(branch);
       }
-    }, "Collecting Last Commits...", true, myProject);
+    }, GithubBundle.message("pull.request.create.collect.commits.process.title"), true, myProject);
   }
 
   @NotNull
@@ -390,7 +392,8 @@ public class GithubCreatePullRequestWorker {
 
   public boolean checkAction(@Nullable final BranchInfo branch) {
     if (branch == null) {
-      GithubNotifications.showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST, "Target branch is not selected");
+      GithubNotifications.showWarningDialog(myProject, GithubBundle.message("pull.request.cannot.create"), GithubBundle.message(
+        "pull.request.validation.target.branch.not.selected"));
       return false;
     }
 
@@ -398,10 +401,10 @@ public class GithubCreatePullRequestWorker {
     try {
       info = myProgressManager.runProcessWithProgressSynchronously(
         () -> GithubUtil.runInterruptable(myProgressManager.getProgressIndicator(), () -> getDiffInfo(branch)),
-        "Collecting Diff Data...", false, myProject);
+        GithubBundle.message("pull.request.create.collect.diff.data.process.title"), false, myProject);
     }
     catch (IOException e) {
-      GithubNotifications.showError(myProject, "Can't collect diff data", e);
+      GithubNotifications.showError(myProject, GithubBundle.message("cannot.collect.diff.data"), e);
       return true;
     }
     if (info == null) {
@@ -414,15 +417,13 @@ public class GithubCreatePullRequestWorker {
     String targetBranchName = "'" + fork.getRemoteName() + "/" + branch.getRemoteName() + "'";
     if (info.getInfo().getBranchToHeadCommits(myGitRepository).isEmpty()) {
       return GithubNotifications
-        .showYesNoDialog(myProject, "Empty Pull Request",
-                         "The branch " + localBranchName + " is fully merged to the branch " + targetBranchName + '\n' +
-                         "Do you want to proceed anyway?");
+        .showYesNoDialog(myProject, GithubBundle.message("pull.request.create.empty"),
+                         GithubBundle.message("pull.request.create.branch.fully.merged", localBranchName, targetBranchName));
     }
     if (!info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
       return GithubNotifications
-        .showYesNoDialog(myProject, "Target Branch Is Not Fully Merged",
-                         "The branch " + targetBranchName + " is not fully merged to the branch " + localBranchName + '\n' +
-                         "Do you want to proceed anyway?");
+        .showYesNoDialog(myProject, GithubBundle.message("pull.request.not.fully.merged.dialog"),
+                         GithubBundle.message("pull.request.not.fully.merged.dialog.message", targetBranchName, localBranchName));
     }
 
     return true;
@@ -431,27 +432,28 @@ public class GithubCreatePullRequestWorker {
   public void createPullRequest(@NotNull final BranchInfo branch,
                                 @NotNull final String title,
                                 @NotNull final String description) {
-    new Task.Backgroundable(myProject, "Creating Pull Request...") {
+    new Task.Backgroundable(myProject, GithubBundle.message("pull.request.create.process.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         LOG.info("Pushing current branch");
-        indicator.setText("Pushing current branch...");
+        indicator.setText(GithubBundle.message("pull.request.push.branch.process.title"));
         GitCommandResult result = myGit.push(myGitRepository, myRemoteName, myRemoteUrl, myCurrentBranch, true);
         if (!result.success()) {
-          GithubNotifications.showError(GithubCreatePullRequestWorker.this.myProject, CANNOT_CREATE_PULL_REQUEST,
-                                        "Push failed:<br/>" + result.getErrorOutputAsHtmlString());
+          GithubNotifications.showError(GithubCreatePullRequestWorker.this.myProject, GithubBundle.message("pull.request.cannot.create"),
+                                        GithubBundle.message("pull.request.push.failed", result.getErrorOutputAsHtmlString()));
           return;
         }
 
         LOG.info("Creating pull request");
-        indicator.setText("Creating pull request...");
+        indicator.setText(GithubBundle.message("pull.request.create.process.title"));
         GithubPullRequestDetailed request = doCreatePullRequest(indicator, branch, title, description);
         if (request == null) {
           return;
         }
 
-        GithubNotifications.showInfoURL(GithubCreatePullRequestWorker.this.myProject, "Successfully created pull request",
-                                        "Pull request #" + request.getNumber(), request.getHtmlUrl());
+        GithubNotifications
+          .showInfoURL(GithubCreatePullRequestWorker.this.myProject, GithubBundle.message("pull.request.successfully.created"),
+                       GithubBundle.message("pull.request.num", request.getNumber()), request.getHtmlUrl());
       }
     }.queue();
   }
@@ -466,14 +468,14 @@ public class GithubCreatePullRequestWorker {
       return forkPaths;
     }
     catch (IOException e) {
-      GithubNotifications.showWarning(myProject, "Can't load available forks", e);
+      GithubNotifications.showWarning(myProject, GithubBundle.message("pull.request.cannot.load.forks"), e);
       return null;
     }
   }
 
   public void showDiffDialog(@Nullable final BranchInfo branch) {
     if (branch == null) {
-      GithubNotifications.showWarningDialog(myProject, "Can't Show Diff", "Target branch is not selected");
+      GithubNotifications.showWarningDialog(myProject, GithubBundle.message("pull.request.cannot.show.diff"), "");
       return;
     }
 
@@ -481,14 +483,15 @@ public class GithubCreatePullRequestWorker {
     try {
       info = myProgressManager.runProcessWithProgressSynchronously(
         () -> GithubUtil.runInterruptable(myProgressManager.getProgressIndicator(), () -> getDiffInfo(branch)),
-        "Collecting Diff Data...", true, myProject);
+        GithubBundle.message("pull.request.create.collect.diff.data.process.title"), true, myProject);
     }
     catch (IOException e) {
-      GithubNotifications.showError(myProject, "Can't collect diff data", e);
+      GithubNotifications.showError(myProject, GithubBundle.message("cannot.collect.diff.data"), e);
       return;
     }
     if (info == null) {
-      GithubNotifications.showErrorDialog(myProject, "Can't Show Diff", "Can't collect diff data");
+      GithubNotifications.showErrorDialog(myProject, GithubBundle.message("pull.request.cannot.show.diff"),
+                                          GithubBundle.message("cannot.collect.diff.data"));
       return;
     }
 
@@ -511,7 +514,7 @@ public class GithubCreatePullRequestWorker {
 
     Convertor<String, ForkInfo> getForkPath = user ->
       myProgressManager.runProcessWithProgressSynchronously(() -> findRepositoryByUser(myProgressManager.getProgressIndicator(), user),
-                                                            "Access to GitHub", false, myProject);
+                                                            GithubBundle.message("accessing.github"), false, myProject);
 
     GithubSelectForkDialog dialog = new GithubSelectForkDialog(myProject, myAvailableForks, getForkPath);
     DialogManager.show(dialog);
@@ -519,46 +522,6 @@ public class GithubCreatePullRequestWorker {
       return null;
     }
     return dialog.getPath();
-  }
-
-  @Nullable
-  public static GithubCreatePullRequestWorker create(@NotNull final Project project,
-                                                     @NotNull GitRepository gitRepository,
-                                                     @NotNull GitRemote remote,
-                                                     @NotNull String remoteUrl,
-                                                     @NotNull GithubApiRequestExecutor executor,
-                                                     @NotNull GithubServerPath server) {
-    ProgressManager progressManager = ProgressManager.getInstance();
-    return progressManager.runProcessWithProgressSynchronously(() -> {
-      Git git = ServiceManager.getService(Git.class);
-
-      GHRepositoryPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
-      if (path == null) {
-        GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't process remote: " + remoteUrl);
-        return null;
-      }
-
-      GitLocalBranch currentBranch = gitRepository.getCurrentBranch();
-      if (currentBranch == null) {
-        GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "No current branch");
-        return null;
-      }
-
-      GithubCreatePullRequestWorker worker =
-        new GithubCreatePullRequestWorker(project, git, gitRepository, executor, server,
-                                          GithubGitHelper.getInstance(), progressManager, path, remote.getName(), remoteUrl,
-                                          currentBranch.getName());
-
-      try {
-        worker.initForks(progressManager.getProgressIndicator());
-      }
-      catch (IOException e) {
-        GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
-        return null;
-      }
-
-      return worker;
-    }, "Loading Data...", true, project);
   }
 
   @Nullable
@@ -586,9 +549,51 @@ public class GithubCreatePullRequestWorker {
       return doAddFork(repo, indicator);
     }
     catch (IOException e) {
-      GithubNotifications.showError(myProject, "Can't find repository", e);
+      GithubNotifications.showError(myProject, GithubBundle.message("cannot.find.repository"), e);
       return null;
     }
+  }
+
+  @Nullable
+  public static GithubCreatePullRequestWorker create(@NotNull final Project project,
+                                                     @NotNull GitRepository gitRepository,
+                                                     @NotNull GitRemote remote,
+                                                     @NotNull String remoteUrl,
+                                                     @NotNull GithubApiRequestExecutor executor,
+                                                     @NotNull GithubServerPath server) {
+    ProgressManager progressManager = ProgressManager.getInstance();
+    return progressManager.runProcessWithProgressSynchronously(() -> {
+      Git git = ServiceManager.getService(Git.class);
+
+      GHRepositoryPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+      if (path == null) {
+        GithubNotifications
+          .showError(project, GithubBundle.message("pull.request.cannot.create"), GithubBundle.message("cannot.process.remote", remoteUrl));
+        return null;
+      }
+
+      GitLocalBranch currentBranch = gitRepository.getCurrentBranch();
+      if (currentBranch == null) {
+        GithubNotifications.showError(project, GithubBundle.message("pull.request.cannot.create"), GithubBundle.message(
+          "pull.request.create.error.no.current.branch"));
+        return null;
+      }
+
+      GithubCreatePullRequestWorker worker =
+        new GithubCreatePullRequestWorker(project, git, gitRepository, executor, server,
+                                          GithubGitHelper.getInstance(), progressManager, path, remote.getName(), remoteUrl,
+                                          currentBranch.getName());
+
+      try {
+        worker.initForks(progressManager.getProgressIndicator());
+      }
+      catch (IOException e) {
+        GithubNotifications.showError(project, GithubBundle.message("pull.request.cannot.create"), e);
+        return null;
+      }
+
+      return worker;
+    }, GithubBundle.message("pull.request.loading.data"), true, project);
   }
 
   public static class ForkInfo {

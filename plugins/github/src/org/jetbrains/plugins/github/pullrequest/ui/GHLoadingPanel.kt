@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.ui.LoadingDecorator
 import com.intellij.ui.AnimatedIcon
@@ -9,11 +10,13 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.NotNullFunction
 import com.intellij.util.ui.*
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.getName
 import java.awt.BorderLayout
@@ -40,22 +43,17 @@ constructor(model: GHLoadingModel,
     fun create(model: GHLoadingModel,
                contentFactory: (JPanel) -> JComponent,
                parentDisposable: Disposable,
-               nothingToLoadText: String = "",
-               errorPrefix: String = "Can't load data",
+               @Nls(capitalization = Nls.Capitalization.Sentence) errorPrefix: String = GithubBundle.message("cannot.load.data"),
                errorHandler: GHLoadingErrorHandler? = null): JComponent {
 
-      val panel = JBPanelWithEmptyText(BorderLayout()).apply {
-        isOpaque = false
-        emptyText.text = nothingToLoadText
-      }
-
+      val panel = NonOpaquePanel()
       ContentController(model, panel,
                         contentFactory, parentDisposable,
                         errorPrefix, errorHandler)
       return panel
     }
 
-    private class ContentController(private val model: GHLoadingModel, private val panel: JPanel,
+    private class ContentController(private val model: GHLoadingModel, private val panel: Wrapper,
                                     contentFactory: (JPanel) -> JComponent, parentDisposable: Disposable,
                                     private val errorPrefix: String,
                                     private val errorHandler: GHLoadingErrorHandler?) {
@@ -88,11 +86,7 @@ constructor(model: GHLoadingModel,
           model.error != null -> createErrorPanel(model.error!!)
           else -> null
         }
-        panel.removeAll()
-        if (content != null) {
-          panel.add(content, BorderLayout.CENTER)
-        }
-        panel.revalidate()
+        panel.setContent(content)
         panel.repaint()
         lastResultAvailable = model.resultAvailable
       }
@@ -143,7 +137,7 @@ constructor(model: GHLoadingModel,
           override fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
             parent.layout = GridBagLayout()
 
-            text.text = "Loading..."
+            text.text = ApplicationBundle.message("label.loading.page.please.wait")
             text.icon = AnimatedIcon.Default()
             text.foreground = UIUtil.getContextHelpForeground()
 
@@ -196,7 +190,9 @@ constructor(model: GHLoadingModel,
             if (error != null) {
               statusText.clear()
                 .appendText(textBundle.errorPrefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
-                .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+                .appendSecondaryText(error.message ?: GithubBundle.message("unknown.loading.error"),
+                                     SimpleTextAttributes.ERROR_ATTRIBUTES,
+                                     null)
 
               errorHandlerProvider()?.getActionForError(error)?.let {
                 statusText.appendSecondaryText(" ${it.getName()}", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
@@ -234,7 +230,7 @@ constructor(model: GHLoadingModel,
     object Default : EmptyTextBundle {
       override val default: String = ""
       override val empty: String = ""
-      override val errorPrefix: String = "Can't load data"
+      override val errorPrefix: String = GithubBundle.message("cannot.load.data")
     }
   }
 }

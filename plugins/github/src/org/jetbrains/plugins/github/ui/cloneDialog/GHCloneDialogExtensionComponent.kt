@@ -57,6 +57,7 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.*
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.*
 import java.awt.FlowLayout
@@ -182,7 +183,7 @@ internal class GHCloneDialogExtensionComponent(
       row {
         ScrollPaneFactory.createScrollPane(repositoryList)(push, grow)
       }
-      row("Directory:") {
+      row(GithubBundle.message("clone.dialog.directory.field")) {
         directoryField(growX, pushX)
       }
     }
@@ -237,8 +238,8 @@ internal class GHCloneDialogExtensionComponent(
     }
     catch (e: GithubMissingTokenException) {
       errorsByAccount[account] = GHRepositoryListItem.Error(account,
-                                                            "Missing access token",
-                                                            "Log in",
+                                                            GithubBundle.message("account.token.missing"),
+                                                            GithubBundle.message("login.link"),
                                                             Runnable { switchToLogin(account) })
       refillRepositories()
     }
@@ -279,8 +280,8 @@ internal class GHCloneDialogExtensionComponent(
       override fun onThrowable(error: Throwable) {
         LOG.error(error)
         errorsByAccount[account] = GHRepositoryListItem.Error(account,
-                                                              "Unable to load repositories",
-                                                              "Retry",
+                                                              GithubBundle.message("clone.error.load.repositories"),
+                                                              GithubBundle.message("retry.link"),
                                                               Runnable { addAccount(account) })
       }
     })
@@ -317,8 +318,8 @@ internal class GHCloneDialogExtensionComponent(
       override fun onThrowable(error: Throwable) {
         LOG.error(error)
         errorsByAccount[account] = GHRepositoryListItem.Error(account,
-                                                              "Unable to load repositories",
-                                                              "Retry",
+                                                              GithubBundle.message("clone.error.load.repositories"),
+                                                              GithubBundle.message("retry.link"),
                                                               Runnable { loadRepositories(account, executor) })
       }
     })
@@ -354,7 +355,8 @@ internal class GHCloneDialogExtensionComponent(
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {
       LOG.error("Unable to create destination directory", destinationValidation.message)
-      GithubNotifications.showError(project, "Clone failed", "Unable to create destination directory")
+      GithubNotifications.showError(project, GithubBundle.message("clone.dialog.clone.failed"),
+                                    GithubBundle.message("clone.error.unable.to.create.dest.dir"))
       return
     }
 
@@ -365,7 +367,8 @@ internal class GHCloneDialogExtensionComponent(
     }
     if (destinationParent == null) {
       LOG.error("Clone Failed. Destination doesn't exist")
-      GithubNotifications.showError(project, "Clone failed", "Unable to find destination")
+      GithubNotifications.showError(project, GithubBundle.message("clone.dialog.clone.failed"),
+                                    GithubBundle.message("clone.error.unable.to.find.dest"))
       return
     }
     val directoryName = Paths.get(directoryField.text).fileName.toString()
@@ -375,7 +378,7 @@ internal class GHCloneDialogExtensionComponent(
   }
 
   override fun onComponentSelected() {
-    dialogStateListener.onOkActionNameChanged("Clone")
+    dialogStateListener.onOkActionNameChanged(GithubBundle.message("clone.button"))
     updateSelectedUrl()
 
     val focusManager = IdeFocusManager.getInstance(project)
@@ -440,7 +443,7 @@ internal class GHCloneDialogExtensionComponent(
       selectedUrl = githubGitHelper.getRemoteUrl(githubRepoPath.serverPath,
                                                  githubRepoPath.repositoryPath.owner,
                                                  githubRepoPath.repositoryPath.repository)
-      repositoryList.emptyText.appendText("Clone '$selectedUrl'")
+      repositoryList.emptyText.appendText(GithubBundle.message("clone.dialog.text", selectedUrl!!))
       return
     }
     val selectedValue = repositoryList.selectedValue
@@ -515,20 +518,24 @@ internal class GHCloneDialogExtensionComponent(
       val showSeparatorAbove = index != 0
 
       if (user == null) {
-        accountActions += Action("Log in\u2026", { switchToLogin(account) })
-        accountActions += Action("Remove account", { authenticationManager.removeAccount(account) }, showSeparatorAbove = true)
+        accountActions += Action(GithubBundle.message("login.action"), { switchToLogin(account) })
+        accountActions += Action(GithubBundle.message("accounts.remove"), { authenticationManager.removeAccount(account) },
+                                 showSeparatorAbove = true)
       }
       else {
         if (account != authenticationManager.getDefaultAccount(project)) {
-          accountActions += Action("Set as Default", { authenticationManager.setDefaultAccount(project, account) })
+          accountActions += Action(GithubBundle.message("accounts.set.default"),
+                                   { authenticationManager.setDefaultAccount(project, account) })
         }
-        accountActions += Action("Open on GitHub", { BrowserUtil.browse(user.htmlUrl) }, AllIcons.Ide.External_link_arrow)
-        accountActions += Action("Log Out\u2026", { authenticationManager.removeAccount(account) }, showSeparatorAbove = true)
+        accountActions += Action(GithubBundle.message("open.on.github.action"), { BrowserUtil.browse(user.htmlUrl) },
+                                 AllIcons.Ide.External_link_arrow)
+        accountActions += Action(GithubBundle.message("accounts.log.out"), { authenticationManager.removeAccount(account) },
+                                 showSeparatorAbove = true)
       }
 
       menuItems += Account(accountTitle, serverInfo, avatar, accountActions, showSeparatorAbove)
     }
-    menuItems += Action("Add Account\u2026", { switchToLogin() }, showSeparatorAbove = true)
+    menuItems += Action(GithubBundle.message("accounts.add"), { switchToLogin() }, showSeparatorAbove = true)
 
     AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems)).showUnderneathOf(accountsPanel)
   }

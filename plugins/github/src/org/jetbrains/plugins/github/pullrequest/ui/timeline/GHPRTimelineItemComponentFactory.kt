@@ -22,6 +22,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
@@ -52,13 +53,13 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
       }
     }
     catch (e: Exception) {
-      return Item(AllIcons.General.Warning, HtmlEditorPane("Cannot display item - ${e.message}"))
+      return Item(AllIcons.General.Warning, HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
   }
 
   private fun createComponent(model: GHIssueComment) =
     Item(userAvatar(model.author),
-         actionTitle(model.author, "commented", model.createdAt),
+         actionTitle(model.author, GithubBundle.message("pull.request.timeline.commented"), model.createdAt),
          HtmlEditorPane(model.bodyHtml))
 
   private fun createComponent(review: GHPullRequestReview): Item {
@@ -85,10 +86,10 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
     }
 
     val actionText = when (review.state) {
-      APPROVED -> "approved these changes"
-      CHANGES_REQUESTED -> "rejected these changes"
-      PENDING -> "started a review"
-      COMMENTED, DISMISSED -> "reviewed"
+      APPROVED -> GithubBundle.message("pull.request.timeline.approved.changes")
+      CHANGES_REQUESTED -> GithubBundle.message("pull.request.timeline.rejected.changes")
+      PENDING -> GithubBundle.message("pull.request.timeline.started.review")
+      COMMENTED, DISMISSED -> GithubBundle.message("pull.request.timeline.reviewed")
     }
 
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)

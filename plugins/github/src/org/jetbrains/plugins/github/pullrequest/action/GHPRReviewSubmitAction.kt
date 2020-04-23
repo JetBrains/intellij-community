@@ -27,6 +27,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.util.successOnEdt
@@ -37,7 +38,7 @@ import java.awt.event.ActionListener
 import javax.swing.*
 import javax.swing.border.Border
 
-class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull request review") {
+class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.message("pull.request.review.submit.action.description")) {
 
   override fun update(e: AnActionEvent) {
     val reviewData = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider?.reviewData
@@ -58,7 +59,8 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
     updateButtonFromPresentation(e)
   }
 
-  private fun getPrefix(place: String) = if (place == ActionPlaces.DIFF_TOOLBAR) "Submit" else "Submit Review"
+  private fun getPrefix(place: String) = if (place == ActionPlaces.DIFF_TOOLBAR) GithubBundle.message("pull.request.review.submit")
+  else GithubBundle.message("pull.request.review.submit.review")
 
   private fun getText(pendingComments: Int?): String {
     val builder = StringBuilder()
@@ -100,16 +102,16 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
 
       private val editor = createEditor(document)
 
-      private val approveButton = JButton("Approve").apply {
+      private val approveButton = JButton(GithubBundle.message("pull.request.review.submit.approve.button")).apply {
         addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.APPROVE))
       }
 
-      private val rejectButton = JButton("Request Changes").apply {
+      private val rejectButton = JButton(GithubBundle.message("pull.request.review.submit.request.changes")).apply {
         addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.REQUEST_CHANGES))
       }
 
-      private val commentButton = JButton("Comment").apply {
-        toolTipText = "Submit general feedback without explicit approval"
+      private val commentButton = JButton(GithubBundle.message("pull.request.review.submit.comment.button")).apply {
+        toolTipText = GithubBundle.message("pull.request.review.submit.comment.description")
         addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.COMMENT))
       }
 
@@ -130,9 +132,11 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
 
       init {
         discardButton = pendingReview?.let { review ->
-          InlineIconButton(GithubIcons.Delete, GithubIcons.DeleteHovered, tooltip = "Discard pending comments").apply {
+          InlineIconButton(GithubIcons.Delete, GithubIcons.DeleteHovered,
+                           tooltip = GithubBundle.message("pull.request.discard.pending.comments")).apply {
             actionListener = ActionListener {
-              if (Messages.showConfirmationDialog(this, "Are you sure you want to delete all pending comments?", "Discard Pending Review",
+              if (Messages.showConfirmationDialog(this, GithubBundle.message("pull.request.discard.pending.comments.dialog.msg"),
+                                                  GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
                                                   Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
                 reviewDataProvider.deleteReview(EmptyProgressIndicator(), review.id)
               }
@@ -142,7 +146,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
       }
 
       override fun getComponent(): JComponent {
-        val title = JLabel("Submit Review").apply {
+        val title = JLabel(GithubBundle.message("pull.request.review.submit.review")).apply {
           font = font.deriveFont(font.style or Font.BOLD)
         }
         val titlePanel = HorizontalBox().apply {
@@ -179,7 +183,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
       private fun createEditor(document: Document) = EditorTextField(document, null, FileTypes.PLAIN_TEXT).apply {
         setOneLineMode(false)
         putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-        setPlaceholder("Review comment")
+        setPlaceholder(GithubBundle.message("pull.request.review.comment.empty.text"))
         addSettingsProvider {
           it.settings.additionalLinesCount = 2
           it.setVerticalScrollbarVisible(true)
@@ -216,7 +220,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
 
   override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     super.updateButtonFromPresentation(button, presentation)
-    val prefix = presentation.getClientProperty(PROP_PREFIX) as? String ?: "Submit Review"
+    val prefix = presentation.getClientProperty(PROP_PREFIX) as? String ?: GithubBundle.message("pull.request.review.submit.review")
     button.text = prefix + presentation.text
     button.putClientProperty(PROP_DEFAULT, presentation.getClientProperty(PROP_DEFAULT))
   }

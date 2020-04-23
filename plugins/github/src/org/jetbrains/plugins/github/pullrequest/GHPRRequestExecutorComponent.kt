@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DisposingWrapper
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -51,8 +52,9 @@ class GHPRRequestExecutorComponent(private val requestExecutorManager: GithubApi
     }
     catch (e: Exception) {
       setCenteredContent(GithubUIUtil.createNoteWithAction(::createRequestExecutorWithUserInput).apply {
-        append("Log in", SimpleTextAttributes.LINK_ATTRIBUTES, Runnable { createRequestExecutorWithUserInput() })
-        append(" to GitHub to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        append(GithubBundle.message("login.link"), SimpleTextAttributes.LINK_ATTRIBUTES, Runnable { createRequestExecutorWithUserInput() })
+        append(" ")
+        append(GithubBundle.message("pull.request.login.to.view.prs"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
       })
     }
   }

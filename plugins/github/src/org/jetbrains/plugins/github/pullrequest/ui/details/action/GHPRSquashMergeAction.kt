@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
@@ -19,7 +20,7 @@ internal class GHPRSquashMergeAction(busyStateModel: SingleValueModel<Boolean>,
                                      private val project: Project,
                                      private val stateService: GHPRStateService,
                                      private val dataProvider: GHPRDataProvider)
-  : GHPRMergeAction("Squash and Merge...", busyStateModel, errorHandler, detailsModel) {
+  : GHPRMergeAction(GithubBundle.message("pull.request.merge.squash.action"), busyStateModel, errorHandler, detailsModel) {
 
   init {
     update()
@@ -28,8 +29,8 @@ internal class GHPRSquashMergeAction(busyStateModel: SingleValueModel<Boolean>,
   override fun submitMergeTask(mergeability: GHPRMergeabilityState): CompletableFuture<Unit>? = dataProvider.apiCommitsRequest.successOnEdt { commits ->
     val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
     val dialog = GithubMergeCommitMessageDialog(project,
-                                                "Merge Pull Request",
-                                                "Merge pull request #${mergeability.number}",
+                                                GithubBundle.message("pull.request.merge.message.dialog.title"),
+                                                GithubBundle.message("pull.request.merge.pull.request", mergeability.number),
                                                 body)
     if (!dialog.showAndGet()) {
       throw ProcessCanceledException()

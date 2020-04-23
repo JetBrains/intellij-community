@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
-import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
@@ -15,6 +14,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanel
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSettings
@@ -55,13 +55,13 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
                      })
       }
       row {
-        checkBox(message("github.settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
+        checkBox(GithubBundle.message("settings.clone.ssh"), settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
       }
       row {
         cell {
-          label(message("github.settings.timeout"))
+          label(GithubBundle.message("settings.timeout"))
           intTextField({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 }, columns = 2, range = 0..60)
-          label(message("github.settings.seconds"))
+          label(GithubBundle.message("settings.timeout.seconds"))
         }
       }
     }

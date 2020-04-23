@@ -13,11 +13,13 @@ import git4idea.branch.GitBranchUiHandlerImpl
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchWorker
 import git4idea.commands.Git
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 
-class GHPRCreateBranchAction : DumbAwareAction("Create New Local Branch...",
-                                               "Checkout synthetic pull request branch",
+class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.branch.checkout.create.action"),
+                                               GithubBundle.messagePointer("pull.request.branch.checkout.create.action.description"),
                                                null) {
+
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val selection = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
@@ -32,11 +34,12 @@ class GHPRCreateBranchAction : DumbAwareAction("Create New Local Branch...",
     val dataProvider = context.pullRequestDataProvider ?: return
 
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
-                                                         "Create New Branch From Pull Request #${dataProvider.id.number}",
+                                                         GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
+                                                                              dataProvider.id.number),
                                                          "pull/${dataProvider.id.number}") ?: return
 
     if (!options.checkout) {
-      object : Task.Backgroundable(project, "Creating Branch From Pull Request", true) {
+      object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
         private val git = Git.getInstance()
         private val vcsNotifier = project.service<VcsNotifier>()
 
@@ -44,22 +47,22 @@ class GHPRCreateBranchAction : DumbAwareAction("Create New Local Branch...",
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
           GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
 
-          indicator.text = "Creating branch"
+          indicator.text = GithubBundle.message("pull.request.branch.checkout.create.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .createBranch(options.name, mapOf(repository to sha))
         }
 
         override fun onSuccess() {
-          vcsNotifier.notifySuccess("Created Branch ${options.name}")
+          vcsNotifier.notifySuccess(GithubBundle.message("pull.request.branch.checkout.created", options.name))
         }
 
         override fun onThrowable(error: Throwable) {
-          vcsNotifier.notifyError("Failed To Create Branch", error.message.orEmpty())
+          vcsNotifier.notifyError(GithubBundle.message("pull.request.branch.checkout.create.failed"), error.message.orEmpty())
         }
       }.queue()
     }
     else {
-      object : Task.Backgroundable(project, "Checking Out Branch From Pull Request", true) {
+      object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.title"), true) {
         private val git = Git.getInstance()
         private val vcsNotifier = project.service<VcsNotifier>()
 
@@ -67,17 +70,17 @@ class GHPRCreateBranchAction : DumbAwareAction("Create New Local Branch...",
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
           GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
 
-          indicator.text = "Checking out branch"
+          indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .checkoutNewBranchStartingFrom(options.name, sha, repositoryList)
         }
 
         override fun onSuccess() {
-          vcsNotifier.notifySuccess("Checked Out Branch ${options.name}")
+          vcsNotifier.notifySuccess(GithubBundle.message("pull.request.branch.checkout.checked.out", options.name))
         }
 
         override fun onThrowable(error: Throwable) {
-          vcsNotifier.notifyError("Failed to Checkout Branch", error.message.orEmpty())
+          vcsNotifier.notifyError(GithubBundle.message("pull.request.branch.checkout.failed"), error.message.orEmpty())
         }
       }.queue()
     }

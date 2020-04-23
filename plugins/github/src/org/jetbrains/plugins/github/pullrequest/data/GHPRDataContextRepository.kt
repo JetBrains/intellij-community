@@ -22,6 +22,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PullRequestEditedListener
 import org.jetbrains.plugins.github.pullrequest.data.service.*
@@ -42,11 +43,11 @@ internal class GHPRDataContextRepository(private val project: Project) {
                    ?: throw IllegalArgumentException(
                      "Invalid GitHub Repository URL - ${gitRemoteCoordinates.url} is not a GitHub repository")
 
-    indicator.text = "Loading account information"
+    indicator.text = GithubBundle.message("pull.request.loading.account.info")
     val accountDetails = GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
     indicator.checkCanceled()
 
-    indicator.text = "Loading repository information"
+    indicator.text = GithubBundle.message("pull.request.loading.repo.info")
     val repoWithPermissions =
       requestExecutor.execute(indicator, GHGQLRequests.Repo.findPermission(GHRepositoryCoordinates(account.server, fullPath)))
       ?: throw IllegalArgumentException("Repository $fullPath does not exist at ${account.server} or you don't have access.")
@@ -54,7 +55,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
                              accountDetails.name)
 
-    indicator.text = "Loading user teams information"
+    indicator.text = GithubBundle.message("pull.request.loading.user.teams.info")
     val repoOwner = repoWithPermissions.owner
     val currentUserTeams = if (repoOwner is GHRepositoryOwnerName.Organization)
       SimpleGHGQLPagesLoader(requestExecutor, {

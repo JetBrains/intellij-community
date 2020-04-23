@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.application.runInEdt
@@ -14,6 +14,7 @@ import com.intellij.ui.components.panels.Wrapper
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
@@ -62,7 +63,7 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
   fun doValidateAll(): List<ValidationInfo> {
     return listOf(DialogValidationUtils.chain(
       DialogValidationUtils.chain(
-        { DialogValidationUtils.notBlank(serverTextField, "Server cannot be empty") },
+        { DialogValidationUtils.notBlank(serverTextField, GithubBundle.message("credentials.server.cannot.be.empty")) },
         serverPathValidator(serverTextField)),
       currentUi.getValidator()),
                   { tokenAcquisitionError })
@@ -77,7 +78,7 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
         null
       }
       catch (e: Exception) {
-        ValidationInfo("$text is not a valid server path:\n${e.message}", textField)
+        ValidationInfo(GithubBundle.message("credentials.server.path.invalid", text, e.message.orEmpty()), textField)
       }
     }
   }

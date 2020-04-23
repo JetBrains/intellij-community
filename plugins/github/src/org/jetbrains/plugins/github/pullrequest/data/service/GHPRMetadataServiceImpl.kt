@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.CollectionDelta
@@ -101,7 +102,7 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
 
     val removedItems = delta.removedItems
     if (removedItems.isNotEmpty()) {
-      indicator.text2 = "Removing reviewers"
+      indicator.text2 = GithubBundle.message("pull.request.removing.reviewers")
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
                                 .remove(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,
@@ -110,7 +111,7 @@ class GHPRMetadataServiceImpl internal constructor(progressManager: ProgressMana
     }
     val newItems = delta.newItems
     if (newItems.isNotEmpty()) {
-      indicator.text2 = "Adding reviewers"
+      indicator.text2 = GithubBundle.message("pull.request.adding.reviewers")
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.PullRequests.Reviewers
                                 .add(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number,

@@ -13,6 +13,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -39,7 +40,7 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
     isOpaque = false
     background = JBUI.CurrentTheme.ActionButton.pressedBackground()
     add(InlineIconButton(AllIcons.General.ArrowRight).apply {
-      toolTipText = "View Pull Request"
+      toolTipText = GithubBundle.message("pull.request.open.action")
     })
   }
 

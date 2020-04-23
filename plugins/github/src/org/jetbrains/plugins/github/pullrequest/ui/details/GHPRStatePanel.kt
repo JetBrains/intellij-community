@@ -17,6 +17,7 @@ import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -102,7 +103,8 @@ internal class GHPRStatePanel(private val project: Project,
 
     object Merged : StateUI() {
 
-      override fun createStatusComponent() = JLabel("Pull request is merged", GithubIcons.PullRequestMerged, SwingConstants.LEFT)
+      override fun createStatusComponent() = JLabel(GithubBundle.message("pull.request.state.merged"), GithubIcons.PullRequestMerged,
+                                                    SwingConstants.LEFT)
 
       override fun createButtons(errorHandler: (String) -> Unit) = emptyList<JComponent>()
     }
@@ -115,12 +117,12 @@ internal class GHPRStatePanel(private val project: Project,
       private val canReopen = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) || viewerIsAuthor
 
       override fun createStatusComponent(): JComponent {
-        val stateLabel = JLabel("Pull request is closed", GithubIcons.PullRequestClosed, SwingConstants.LEFT)
+        val stateLabel = JLabel(GithubBundle.message("pull.request.state.closed"), GithubIcons.PullRequestClosed, SwingConstants.LEFT)
         return if (canReopen) stateLabel
         else {
           val accessDeniedLabel = JLabel().apply {
             icon = AllIcons.RunConfigurations.TestError
-            text = "Repository access required to manage pull requests"
+            text = GithubBundle.message("pull.request.repo.access.required")
           }
           JPanel(VerticalLayout(STATUSES_GAP)).apply {
             add(stateLabel, VerticalLayout.FILL_HORIZONTAL)
@@ -190,7 +192,8 @@ internal class GHPRStatePanel(private val project: Project,
       }
 
       private fun createNotLoadedComponent(): JComponent {
-        val stateLabel = JLabel("Loading pull request status...", AllIcons.RunConfigurations.TestNotRan, SwingConstants.LEFT)
+        val stateLabel = JLabel(GithubBundle.message("pull.request.loading.status"), AllIcons.RunConfigurations.TestNotRan,
+                                SwingConstants.LEFT)
         val accessDeniedLabel = createAccessDeniedLabel()
         return if (accessDeniedLabel == null) stateLabel
         else {
@@ -229,19 +232,19 @@ internal class GHPRStatePanel(private val project: Project,
           !canClose -> {
             JLabel().apply {
               icon = AllIcons.RunConfigurations.TestError
-              text = "Repository access required to manage pull requests"
+              text = GithubBundle.message("pull.request.repo.access.required")
             }
           }
           !canMerge -> {
             JLabel().apply {
               icon = AllIcons.RunConfigurations.TestError
-              text = "Repository write access required to merge pull requests"
+              text = GithubBundle.message("pull.request.repo.write.access.required")
             }
           }
           mergeForbidden -> {
             JLabel().apply {
               icon = AllIcons.RunConfigurations.TestError
-              text = "Merging is disabled for this project"
+              text = GithubBundle.message("pull.request.merge.disabled")
             }
           }
           else -> null
@@ -321,15 +324,15 @@ internal class GHPRStatePanel(private val project: Project,
           when (mergeabilityModel.value.hasConflicts) {
             false -> {
               label.icon = AllIcons.RunConfigurations.TestPassed
-              label.text = "Branch has no conflicts with base branch"
+              label.text = GithubBundle.message("pull.request.conflicts.none")
             }
             true -> {
               label.icon = AllIcons.RunConfigurations.TestError
-              label.text = "Branch has conflicts that must be resolved"
+              label.text = GithubBundle.message("pull.request.conflicts.must.be.resolved")
             }
             null -> {
               label.icon = AllIcons.RunConfigurations.TestNotRan
-              label.text = "Checking for ability to merge automatically..."
+              label.text = GithubBundle.message("pull.request.conflicts.checking")
             }
           }
         }
@@ -347,7 +350,7 @@ internal class GHPRStatePanel(private val project: Project,
           label.isVisible = requiredApprovingReviewsCount > 0
           with(label) {
             icon = AllIcons.RunConfigurations.TestError
-            text = "At least $requiredApprovingReviewsCount approving review is required by reviewers with write access"
+            text = GithubBundle.message("pull.request.reviewers.required", requiredApprovingReviewsCount)
           }
         }
       }
@@ -363,7 +366,7 @@ internal class GHPRStatePanel(private val project: Project,
           with(label) {
             isVisible = mergeabilityModel.value.isRestricted
             icon = AllIcons.RunConfigurations.TestError
-            text = "You are not authorized to merge pull requests into this branch"
+            text = GithubBundle.message("pull.request.not.authorized.to.merge")
           }
         }
       }

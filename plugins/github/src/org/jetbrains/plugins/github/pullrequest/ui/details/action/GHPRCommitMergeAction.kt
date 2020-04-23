@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
@@ -16,7 +17,7 @@ internal class GHPRCommitMergeAction(busyStateModel: SingleValueModel<Boolean>,
                                      mergeabilityModel: SingleValueModel<GHPRMergeabilityState?>,
                                      private val project: Project,
                                      private val stateService: GHPRStateService)
-  : GHPRMergeAction("Merge...", busyStateModel, errorHandler, mergeabilityModel) {
+  : GHPRMergeAction(GithubBundle.message("pull.request.merge.commit.action"), busyStateModel, errorHandler, mergeabilityModel) {
 
   init {
     update()
@@ -24,8 +25,8 @@ internal class GHPRCommitMergeAction(busyStateModel: SingleValueModel<Boolean>,
 
   override fun submitMergeTask(mergeability: GHPRMergeabilityState): CompletableFuture<Unit>? {
     val dialog = GithubMergeCommitMessageDialog(project,
-                                                "Merge Pull Request",
-                                                "Merge pull request #${mergeability.number}",
+                                                GithubBundle.message("pull.request.merge.message.dialog.title"),
+                                                GithubBundle.message("pull.request.merge.pull.request", mergeability.number),
                                                 detailsModel.value.title)
     if (!dialog.showAndGet()) {
       return null

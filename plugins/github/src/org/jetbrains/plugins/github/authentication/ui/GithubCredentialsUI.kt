@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.application.ModalityState
@@ -14,12 +14,14 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import git4idea.i18n.GitBundle
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
 import java.awt.event.ActionListener
@@ -40,8 +42,8 @@ sealed class GithubCredentialsUI {
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
 
-  protected val loginButton = JButton("Log In").apply { isVisible = false }
-  protected val cancelButton = JButton("Cancel").apply { isVisible = false }
+  protected val loginButton = JButton(GitBundle.message("login.dialog.button.login")).apply { isVisible = false }
+  protected val cancelButton = JButton(Messages.getCancelButton()).apply { isVisible = false }
 
   open fun setLoginAction(actionListener: ActionListener) {
     loginButton.addActionListener(actionListener)
@@ -69,7 +71,7 @@ sealed class GithubCredentialsUI {
                             private val dialogMode: Boolean) : GithubCredentialsUI() {
     private val loginTextField = JBTextField()
     private val passwordField = JPasswordField()
-    private val switchUiLink = LinkLabel.create("Use Token", switchUi)
+    private val switchUiLink = LinkLabel.create(GithubBundle.message("login.use.token"), switchUi)
 
     fun setLogin(login: String, editable: Boolean = true) {
       loginTextField.text = login
@@ -89,10 +91,10 @@ sealed class GithubCredentialsUI {
 
     override fun getPanel(): JPanel = panel {
       buildTitleAndLinkRow(this, dialogMode, switchUiLink)
-      row("Server:") { serverTextField(pushX, growX) }
-      row("Login:") { loginTextField(pushX, growX) }
-      row("Password:") {
-        passwordField(comment = "The password is not saved and is only used to generate a GitHub token",
+      row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
+      row(GithubBundle.message("credentials.login.field")) { loginTextField(pushX, growX) }
+      row(GithubBundle.message("credentials.password.field")) {
+        passwordField(comment = GithubBundle.message("credentials.password.not.saved"),
                       constraints = *arrayOf(pushX, growX))
       }
       row("") {
@@ -108,8 +110,8 @@ sealed class GithubCredentialsUI {
     override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
 
     override fun getValidator() = DialogValidationUtils.chain(
-      { DialogValidationUtils.notBlank(loginTextField, "Login cannot be empty") },
-      { DialogValidationUtils.notBlank(passwordField, "Password cannot be empty") })
+      { DialogValidationUtils.notBlank(loginTextField, GithubBundle.message("credentials.login.cannot.be.empty")) },
+      { DialogValidationUtils.notBlank(passwordField, GithubBundle.message("credentials.password.cannot.be.empty")) })
 
 
     override fun createExecutor(): GithubApiRequestExecutor.WithBasicAuth {
@@ -117,8 +119,8 @@ sealed class GithubCredentialsUI {
       return executorFactory.create(loginTextField.text, passwordField.password, Supplier {
         invokeAndWaitIfNeeded(modalityState) {
           Messages.showInputDialog(passwordField,
-                                   "Authentication code:",
-                                   "GitHub Two-Factor Authentication",
+                                   GithubBundle.message("credentials.2fa.dialog.code.field"),
+                                   GithubBundle.message("credentials.2fa.dialog.title"),
                                    null)
         }
       })
@@ -135,11 +137,15 @@ sealed class GithubCredentialsUI {
 
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
-        is LoginNotUniqueException -> ValidationInfo("Account already added", loginTextField).withOKEnabled()
-        is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
-        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
-        is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
-        else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
+        is LoginNotUniqueException -> ValidationInfo(GithubBundle.message("login.account.already.added", loginTextField.text),
+                                                     loginTextField).withOKEnabled()
+        is UnknownHostException -> ValidationInfo(GithubBundle.message("server.unreachable")).withOKEnabled()
+        is GithubAuthenticationException -> ValidationInfo(GithubBundle.message("credentials.incorrect", error.message.orEmpty()))
+          .withOKEnabled()
+        is GithubParseException -> ValidationInfo(error.message ?: GithubBundle.message("credentials.invalid.server.path"),
+                                                  serverTextField)
+        else -> ValidationInfo(GithubBundle.message(GithubBundle.message("credentials.invalid.auth.data", error.message.orEmpty())))
+          .withOKEnabled()
       }
     }
 
@@ -157,7 +163,7 @@ sealed class GithubCredentialsUI {
                          private val dialogMode: Boolean) : GithubCredentialsUI() {
 
     private val tokenTextField = JBTextField()
-    private val switchUiLink = LinkLabel.create("Use Credentials", switchUi)
+    private val switchUiLink = LinkLabel.create(GithubBundle.message("login.use.credentials"), switchUi)
     private var fixedLogin: String? = null
 
     fun setToken(token: String) {
@@ -166,10 +172,10 @@ sealed class GithubCredentialsUI {
 
     override fun getPanel() = panel {
       buildTitleAndLinkRow(this, dialogMode, switchUiLink)
-      row("Server:") { serverTextField(pushX, growX) }
-      row("Token:") {
+      row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
+      row(GithubBundle.message("credentials.token.field")) {
         tokenTextField(
-          comment = "The following scopes must be granted to the access token: " + GHSecurityUtil.MASTER_SCOPES,
+          comment = GithubBundle.message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES),
           constraints = *arrayOf(pushX, growX))
       }
       row("") {
@@ -185,7 +191,7 @@ sealed class GithubCredentialsUI {
     override fun getPreferredFocus() = tokenTextField
 
     override fun getValidator(): () -> ValidationInfo? = {
-      DialogValidationUtils.notBlank(tokenTextField, "Token cannot be empty")
+      DialogValidationUtils.notBlank(tokenTextField, GithubBundle.message("login.token.cannot.be.empty"))
     }
 
     override fun createExecutor() = factory.create(tokenTextField.text)
@@ -208,11 +214,12 @@ sealed class GithubCredentialsUI {
 
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
-        is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added").withOKEnabled()
-        is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
-        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
-        is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
-        else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
+        is LoginNotUniqueException -> ValidationInfo(GithubBundle.message("login.account.already.added", error.login)).withOKEnabled()
+        is UnknownHostException -> ValidationInfo(GithubBundle.message("server.unreachable")).withOKEnabled()
+        is GithubAuthenticationException -> ValidationInfo(
+          GithubBundle.message("credentials.incorrect", error.message.orEmpty())).withOKEnabled()
+        is GithubParseException -> ValidationInfo(error.message ?: GithubBundle.message("credentials.invalid.server.path"), serverTextField)
+        else -> ValidationInfo(GithubBundle.message("credentials.invalid.auth.data", error.message.orEmpty())).withOKEnabled()
       }
     }
 
@@ -239,7 +246,7 @@ private fun buildTitleAndLinkRow(layoutBuilder: LayoutBuilder,
   layoutBuilder.row {
     cell(isFullWidth = true) {
       if (!dialogMode) {
-        val jbLabel = JBLabel("Log In to GitHub", UIUtil.ComponentStyle.LARGE).apply {
+        val jbLabel = JBLabel(GithubBundle.message("login.to.github"), UIUtil.ComponentStyle.LARGE).apply {
           font = JBFont.label().biggerOn(5.0f)
         }
         jbLabel()

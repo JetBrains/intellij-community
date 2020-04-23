@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -10,13 +11,13 @@ internal class GHPRCloseAction(busyStateModel: SingleValueModel<Boolean>,
                                errorHandler: (String) -> Unit,
                                private val stateService: GHPRStateService,
                                private val pullRequestId: GHPRIdentifier)
-  : GHPRStateChangeAction("Close", busyStateModel, errorHandler) {
+  : GHPRStateChangeAction(GithubBundle.message("pull.request.close.action"), busyStateModel, errorHandler) {
 
   init {
     update()
   }
 
-  override val errorPrefix = "Error occurred while closing pull request:"
+  override val errorPrefix = GithubBundle.message("pull.request.close.action.error.occurred")
 
   override fun submitTask() = stateService.close(EmptyProgressIndicator(), pullRequestId)
 }

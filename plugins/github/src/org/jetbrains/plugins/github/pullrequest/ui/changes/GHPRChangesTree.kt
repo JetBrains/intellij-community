@@ -54,7 +54,7 @@ object GHPRChangesTree {
     private fun update() {
       if (wrapper.componentCount > 1) return
       val changes = model.changes
-      if (changes == null || changes.isEmpty()) return
+      if (changes == null) return
 
       wrapper.add(tree)
       wrapper.validate()

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedL
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DisposingWrapper
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -67,8 +68,9 @@ internal class GHPRAccountsComponent(private val authManager: GithubAuthenticati
 
   private fun showLoginPanel() {
     setCenteredContent(GithubUIUtil.createNoteWithAction(::requestNewAccount).apply {
-      append("Log in", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, Runnable { requestNewAccount() })
-      append(" to GitHub to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(GithubBundle.message("login.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, Runnable { requestNewAccount() })
+      append(" ")
+      append(GithubBundle.message("pull.request.account.to.view.prs.suffix"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     })
   }
 
@@ -79,8 +81,9 @@ internal class GHPRAccountsComponent(private val authManager: GithubAuthenticati
 
   private fun showChooseAccountPanel(accounts: List<GithubAccount>) {
     setCenteredContent(GithubUIUtil.createNoteWithAction { chooseAccount(accounts) }.apply {
-      append("Select", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, Runnable { chooseAccount(accounts) })
-      append(" GitHub account to view pull requests", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(GithubBundle.message("account.choose.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, Runnable { chooseAccount(accounts) })
+      append(" ")
+      append(GithubBundle.message("pull.request.account.to.view.prs.suffix"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     })
   }
 

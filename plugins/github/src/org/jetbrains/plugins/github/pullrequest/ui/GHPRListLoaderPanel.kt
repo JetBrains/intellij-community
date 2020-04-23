@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.ide.actions.RefreshAction
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
@@ -45,14 +46,14 @@ internal class GHPRListLoaderPanel(listLoader: GHPRListLoader,
 
   override fun displayEmptyStatus(emptyText: StatusText) {
     if (listLoader.filterNotEmpty) {
-      emptyText.text = "No pull requests matching filters. "
-      emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+      emptyText.text = GithubBundle.message("pull.request.list.no.matches")
+      emptyText.appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
         resetFilter()
       }
     }
     else {
-      emptyText.text = "No pull requests loaded. "
-      emptyText.appendSecondaryText("Refresh", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+      emptyText.text = GithubBundle.message("pull.request.list.nothing.loaded")
+      emptyText.appendSecondaryText(GithubBundle.message("pull.request.list.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
         listLoader.reset()
       }
     }
@@ -65,7 +66,8 @@ internal class GHPRListLoaderPanel(listLoader: GHPRListLoader,
   override fun updateInfoPanel() {
     super.updateInfoPanel()
     if (infoPanel.isEmpty && listLoader.outdated) {
-      infoPanel.setInfo("<html><body>The list is outdated. <a href=''>Refresh</a></body></html>",
+      infoPanel.setInfo("<html><body>${GithubBundle.message("pull.request.list.outdated")} <a href=''>${GithubBundle.message(
+        "pull.request.list.refresh")}</a></body></html>",
                         HtmlInfoPanel.Severity.INFO) {
         ActionUtil.invokeAction(listReloadAction, this, ActionPlaces.UNKNOWN, it.inputEvent, null)
       }

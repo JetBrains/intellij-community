@@ -20,6 +20,7 @@ import com.intellij.vcs.log.ui.details.commit.getCommitDetailsBackground
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHGitActor
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsListCellRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsModel
@@ -42,7 +43,7 @@ internal object GHPRCommitsBrowserComponent {
       val renderer = GHPRCommitsListCellRenderer()
       cellRenderer = renderer
       UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer.panel))
-      emptyText.text = "Pull request does not contain any commits"
+      emptyText.text = GithubBundle.message("pull.request.does.not.contain.commits")
     }.also {
       ScrollingUtil.installActions(it)
       GithubUIUtil.Lists.installSelectionOnFocus(it)

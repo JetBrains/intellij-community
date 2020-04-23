@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UI
@@ -17,7 +18,7 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel, private val threadCo
 
   private val statusText = object : StatusText(this) {
     init {
-      text = "Loading..."
+      text = ApplicationBundle.message("label.loading.page.please.wait")
     }
 
     override fun isStatusVisible(): Boolean = model.isEmpty

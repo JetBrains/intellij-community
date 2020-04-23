@@ -26,6 +26,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
@@ -76,7 +77,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     return GHLoadingPanel.create(loadingModel,
                                  { createContent(loadingModel.result!!, uiDisposable) }, uiDisposable,
-                                 errorPrefix = "Can't load data from GitHub",
+                                 errorPrefix = GithubBundle.message("cannot.load.data.from.github"),
                                  errorHandler = GHLoadingErrorHandlerImpl(project, account) {
                                    contextValue.drop()
                                    loadingModel.future = contextValue.value
@@ -157,17 +158,18 @@ internal class GHPRComponentFactory(private val project: Project) {
     val commitsComponent = createCommitsComponent(dataContext, actionDataContext, changesLoadingModel, disposable)
 
     val infoTabInfo = TabInfo(infoComponent).apply {
-      text = "Info"
+      text = GithubBundle.message("pull.request.info")
       sideComponent = createReturnToListSideComponent(returnToListListener)
     }
     val commitsTabInfo = TabInfo(commitsComponent).apply {
-      text = "Commits"
+      text = GithubBundle.message("pull.request.commits")
       sideComponent = createReturnToListSideComponent(returnToListListener)
     }
 
     fun updateCommitsTabText() {
       val commitsCount = commitsModel.commitsWithChanges?.size
-      commitsTabInfo.text = if (commitsCount == null) "Commits" else "Commits ($commitsCount)"
+      commitsTabInfo.text = if (commitsCount == null) GithubBundle.message("pull.request.commits")
+      else GithubBundle.message("pull.request.commits.count", commitsCount)
     }
     updateCommitsTabText()
     commitsModel.addStateChangesListener(::updateCommitsTabText)
@@ -182,7 +184,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createReturnToListSideComponent(returnToListListener: () -> Unit): JComponent {
     return BorderLayoutPanel()
-      .addToRight(LinkLabel<Any>("Back to List", AllIcons.Actions.Back) { _, _ ->
+      .addToRight(LinkLabel<Any>(GithubBundle.message("pull.request.back.to.list"), AllIcons.Actions.Back) { _, _ ->
         returnToListListener()
       }.apply {
         border = JBUI.Borders.emptyRight(8)
@@ -204,8 +206,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       GHPRDetailsComponent.create(project, dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
     },
                                                     disposable,
-                                                    "Select pull request to view details",
-                                                    "Can't load details",
+                                                    GithubBundle.message("cannot.load.details"),
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
                                                       dataProvider.reloadDetails()
                                                     }).also {
@@ -216,7 +217,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                    changesLoadingModel,
                                                    changesLoadingModel.cumulativeChangesModel,
                                                    changesLoadingModel.diffHelper,
-                                                   "Select pull request to view changes",
+                                                   GithubBundle.message("pull.request.does.not.contain.changes"),
                                                    disposable)
 
     return OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.33f).apply {
@@ -250,8 +251,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       GHPRCommitsBrowserComponent.create(changesLoadingModel.commitsModel, changesModel)
     },
                                                     disposable,
-                                                    "Select pull request to view commits",
-                                                    "Can't load commits",
+                                                    GithubBundle.message("cannot.load.commits"),
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
                                                       actionDataContext.pullRequestDataProvider.reloadChanges()
                                                     })
@@ -259,7 +259,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesBrowser = GHPRChangesBrowser.create(project,
                                                    changesModel,
                                                    changesLoadingModel.diffHelper,
-                                                   "Select commit to view changes",
+                                                   GithubBundle.message("pull.request.select.commit.to.view.changes"),
                                                    disposable)
 
     return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {

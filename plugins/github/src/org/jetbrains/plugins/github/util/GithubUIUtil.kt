@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.UtilBundle
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -188,7 +189,7 @@ object GithubUIUtil {
       .addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {
           list.setPaintBusy(true)
-          list.emptyText.text = "Loading..."
+          list.emptyText.text = ApplicationBundle.message("label.loading.page.please.wait")
 
           availableListFuture
             .thenApplyAsync { available ->

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -11,7 +12,7 @@ internal class GHPRRebaseMergeAction(busyStateModel: SingleValueModel<Boolean>,
                                      errorHandler: (String) -> Unit,
                                      private val mergeabilityModel: SingleValueModel<GHPRMergeabilityState?>,
                                      private val stateService: GHPRStateService)
-  : GHPRMergeAction("Rebase and Merge", busyStateModel, errorHandler, mergeabilityModel) {
+  : GHPRMergeAction(GithubBundle.message("pull.request.merge.rebase.action"), busyStateModel, errorHandler, mergeabilityModel) {
 
   init {
     update()

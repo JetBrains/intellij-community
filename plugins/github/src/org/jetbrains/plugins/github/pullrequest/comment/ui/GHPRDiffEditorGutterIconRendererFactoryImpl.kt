@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import javax.swing.Icon
@@ -55,7 +56,8 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
     override fun equals(other: Any?): Boolean = other is CreateCommentIconRenderer && line == other.line
     override fun hashCode(): Int = line.hashCode()
 
-    private abstract inner class InlayAction(actionName: String, private val editorLine: Int)
+    private abstract inner class InlayAction(actionName: () -> String,
+                                             private val editorLine: Int)
       : DumbAwareAction(actionName) {
 
       override fun actionPerformed(e: AnActionEvent) {
@@ -77,21 +79,21 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
     }
 
     private inner class AddSingleCommentAction(editorLine: Int)
-      : InlayAction("Add single comment", editorLine) {
+      : InlayAction({ GithubBundle.message("pull.request.diff.editor.add.single.comment") }, editorLine) {
 
       override fun createComponent(side: Side, line: Int, hideCallback: () -> Unit) =
         componentFactory.createSingleCommentComponent(side, line, hideCallback)
     }
 
     private inner class StartReviewAction(editorLine: Int)
-      : InlayAction("Start a review with a comment", editorLine) {
+      : InlayAction({ GithubBundle.message("pull.request.diff.editor.review.with.comment") }, editorLine) {
 
       override fun createComponent(side: Side, line: Int, hideCallback: () -> Unit) =
         componentFactory.createNewReviewCommentComponent(side, line, hideCallback)
     }
 
     private inner class AddReviewCommentAction(editorLine: Int, private val reviewId: String)
-      : InlayAction("Add review comment", editorLine) {
+      : InlayAction({ GithubBundle.message("pull.request.diff.editor.add.review.comment") }, editorLine) {
 
       override fun createComponent(side: Side, line: Int, hideCallback: () -> Unit) =
         componentFactory.createReviewCommentComponent(reviewId, side, line, hideCallback)
