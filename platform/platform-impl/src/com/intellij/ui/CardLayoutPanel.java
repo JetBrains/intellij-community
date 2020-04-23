@@ -47,7 +47,15 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
    */
   protected abstract V create(UI ui);
 
+  /**
+   * @deprecated override {@link #dispose(Object, Component)} instead
+   */
+  @Deprecated
   protected void dispose(K key) {
+  }
+
+  protected void dispose(K key, V value) {
+    dispose(key);
   }
 
   @Override
@@ -162,15 +170,18 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
   public void remove(int index) {
     super.remove(index);
     // dispose corresponding entries only
+    IdentityHashMap<K, V> map = new IdentityHashMap<>();
     Iterator<Entry<K, V>> it = myContent.entrySet().iterator();
     while (it.hasNext()) {
       Entry<K, V> entry = it.next();
       V value = entry.getValue();
       if (value != null && this != value.getParent()) {
-        dispose(entry.getKey());
+        map.put(entry.getKey(), value);
         it.remove();
       }
     }
+    // avoid ConcurrentModificationException
+    map.forEach(this::dispose);
   }
 
   @Nullable
@@ -188,18 +199,18 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
         select(key, true);
       }
     }
-    
+
     return content;
   }
-  
+
   @Override
   public void removeAll() {
     super.removeAll();
     // dispose all entries
-    for (K key : myContent.keySet()) {
-      dispose(key);
-    }
+    IdentityHashMap<K, V> map = new IdentityHashMap<>(myContent);
     myContent.clear();
+    // avoid ConcurrentModificationException
+    map.forEach(this::dispose);
   }
 
   @Override
