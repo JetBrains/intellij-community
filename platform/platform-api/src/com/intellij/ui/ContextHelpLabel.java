@@ -17,6 +17,9 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.util.NlsContexts.LinkLabel;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsContexts.TooltipTitle;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +30,7 @@ import java.awt.*;
 public class ContextHelpLabel extends JBLabel {
   private final HelpTooltip tooltip;
 
-  public ContextHelpLabel(@Nls String label, @Nls String description) {
+  public ContextHelpLabel(@Nls String label, @Tooltip String description) {
     super(label);
     this.tooltip = new HelpTooltip().setDescription(description);
     initTooltip();
@@ -56,19 +59,19 @@ public class ContextHelpLabel extends JBLabel {
   }
 
   @NotNull
-  public static ContextHelpLabel create(@Nls @NotNull String description) {
+  public static ContextHelpLabel create(@Tooltip @NotNull String description) {
     return new ContextHelpLabel(new HelpTooltip().setDescription(description));
   }
 
   @NotNull
-  public static ContextHelpLabel create(@Nls @NotNull String title, @Nls @NotNull String description) {
+  public static ContextHelpLabel create(@TooltipTitle @NotNull String title, @Tooltip @NotNull String description) {
     return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title));
   }
 
   @NotNull
-  public static ContextHelpLabel createWithLink(@Nls @Nullable String title,
-                                                @Nls @NotNull String description,
-                                                @Nls @NotNull String linkText,
+  public static ContextHelpLabel createWithLink(@TooltipTitle @Nullable String title,
+                                                @Tooltip @NotNull String description,
+                                                @LinkLabel @NotNull String linkText,
                                                 @NotNull Runnable linkAction) {
     return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setLink(linkText, linkAction));
   }

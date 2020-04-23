@@ -4,6 +4,9 @@ package com.intellij.ide;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsContexts.TooltipTitle;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -180,7 +183,7 @@ public class HelpTooltip {
    * @param title text for title.
    * @return {@code this}
    */
-  public HelpTooltip setTitle(@Nullable String title) {
+  public HelpTooltip setTitle(@Nullable @TooltipTitle String title) {
     this.title = title;
     return this;
   }
@@ -202,7 +205,7 @@ public class HelpTooltip {
    * @param description text for description.
    * @return {@code this}
    */
-  public HelpTooltip setDescription(@Nullable String description) {
+  public HelpTooltip setDescription(@Nullable @Tooltip String description) {
     this.description = description;
     return this;
   }
@@ -214,7 +217,7 @@ public class HelpTooltip {
    * @param linkAction action to execute when link is clicked.
    * @return {@code this}
    */
-  public HelpTooltip setLink(String linkText, Runnable linkAction) {
+  public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, Runnable linkAction) {
     link = LinkLabel.create(linkText, () -> {
       hidePopup(true);
       linkAction.run();
