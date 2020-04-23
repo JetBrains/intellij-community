@@ -16,9 +16,11 @@
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import org.jetbrains.annotations.NotNull;
 
 class EmptyFMap implements KeyFMap {
+  private static final boolean DEBUG_FMAP = Boolean.getBoolean("idea.keyfmap.debug.implementation"); 
   private static final Key[] EMPTY_KEYS_ARRAY = {};
 
   EmptyFMap() {
@@ -74,5 +76,9 @@ class EmptyFMap implements KeyFMap {
   @Override
   public int hashCode() {
     return 0;
+  }
+  
+  static KeyFMap create() {
+    return DEBUG_FMAP ? new DebugFMap(UnmodifiableHashMap.empty()) : new EmptyFMap();
   }
 }
