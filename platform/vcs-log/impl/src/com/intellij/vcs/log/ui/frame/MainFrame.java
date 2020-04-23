@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -29,8 +30,10 @@ import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -90,7 +93,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myFilterUi = filterUi;
 
-    myGraphTable = new MyVcsLogGraphTable(logUi, logData);
+    myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
+                                          () -> logUi.getRefresher().onRefresh(), logUi::requestMore, logUi);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     myGraphTable.setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
@@ -377,9 +381,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
     @NotNull private final Runnable myRefresh;
 
-    MyVcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData) {
-      super(ui.getId(), logData, ui.getProperties(), ui.getColorManager(), ui::requestMore, ui);
-      myRefresh = () -> ui.getRefresher().onRefresh();
+    MyVcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
+                       @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
+                       @NotNull Runnable refresh, @NotNull Consumer<Runnable> requestMore,
+                       @NotNull Disposable disposable) {
+      super(logId, logData, uiProperties, colorManager, requestMore, disposable);
+      myRefresh = refresh;
     }
 
     @Override
