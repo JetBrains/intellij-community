@@ -374,12 +374,12 @@ public class UpdateHighlightersUtil {
     final TextRange finalInfoRange = new TextRange(infoStartOffset, infoEndOffset);
     final TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
-      if (infoAttributes != null) {
-        finalHighlighter.setTextAttributes(infoAttributes);
-      }
-
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
       finalHighlighter.setTextAttributesKey(textAttributesKey);
+
+      if (infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme))) {
+        finalHighlighter.setTextAttributes(infoAttributes);
+      }
 
       info.setHighlighter(finalHighlighter);
       finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine());
