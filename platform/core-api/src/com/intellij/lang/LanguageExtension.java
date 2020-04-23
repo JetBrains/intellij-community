@@ -60,7 +60,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     clearCache();
   }
 
-  protected void clearCacheForDerivedLanguages(@NotNull Language language) {
+  private void clearCacheForDerivedLanguages(@NotNull Language language) {
     Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);  // includes language itself
     for (Language derivedLanguage : languages) {
       clearCacheForLanguage(derivedLanguage);
