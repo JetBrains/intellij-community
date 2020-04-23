@@ -428,16 +428,22 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         initToolWindows(list, toolWindowPane!!)
       }
 
-      ToolWindowEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ToolWindowEP> {
-        override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-          initToolWindow(extension, pluginDescriptor)
-        }
-
-        override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-          doUnregisterToolWindow(extension.id)
-        }
-      }, project)
+      registerEPListeners()
     }, project.disposed)
+  }
+
+  // This method cannot be inlined because of magic Kotlin compilation bug: it 'captured' "list" local value and cause class-loader leak
+  // See IDEA-CR-61904
+  private fun registerEPListeners() {
+    ToolWindowEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ToolWindowEP> {
+      override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+        initToolWindow(extension, pluginDescriptor)
+      }
+
+      override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
+        doUnregisterToolWindow(extension.id)
+      }
+    }, project)
   }
 
   private fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP) =
