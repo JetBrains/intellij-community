@@ -27,7 +27,7 @@
     <extensionPoint name="xml.startTagEndToken" interface="com.intellij.psi.xml.StartTagEndTokenProvider" dynamic="true"/>
     <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
     <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
-    <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper"/>
+    <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper" dynamic="true"/>
     <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
     <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
     <extensionPoint name="xml.attributeDescriptorsProvider" interface="com.intellij.xml.XmlAttributeDescriptorsProvider" dynamic="true"/>
@@ -60,7 +60,7 @@
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider" dynamic="true"/>
     <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider" dynamic="true"/>
     <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter" dynamic="true"/>
-    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
+    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter" dynamic="true"/>
 
@@ -79,11 +79,11 @@
                     dynamic="true"/>
 
     <extensionPoint name="xml.psiPolicy"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.xml.XmlPsiPolicy"/>
     </extensionPoint>
 
-    <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
+    <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider" dynamic="true"/>
 
     <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension" dynamic="true"/>
     <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
