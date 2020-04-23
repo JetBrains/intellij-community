@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -75,7 +75,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
   @Override
   public void run(@NotNull final ProgressIndicator indicator) {
-    ProjectLevelVcsManager.getInstanceChecked(myProject).startBackgroundVcsOperation();
+    ProjectLevelVcsManager.getInstance(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
     final boolean supportsChangelists = myNewFormat.supportsChangelists();
     if (supportsChangelists) {

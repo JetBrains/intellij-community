@@ -2,9 +2,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
@@ -36,18 +34,6 @@ public abstract class ProjectLevelVcsManager {
    */
   public static ProjectLevelVcsManager getInstance(Project project) {
     return project.getService(ProjectLevelVcsManager.class);
-  }
-
-  /**
-   * Gets the instance of the component if the project wasn't disposed. If the project was
-   * disposed, throws ProcessCanceledException. Should only be used for calling from background
-   * threads (for example, committed changes refresh thread).
-   */
-  public static ProjectLevelVcsManager getInstanceChecked(final Project project) {
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) throw new ProcessCanceledException();
-      return getInstance(project);
-    });
   }
 
   /**

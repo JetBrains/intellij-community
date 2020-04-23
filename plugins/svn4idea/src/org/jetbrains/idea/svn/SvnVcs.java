@@ -247,7 +247,7 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   public void processChangeLists(final List<? extends LocalChangeList> lists) {
-    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstanceChecked(myProject);
+    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     plVcsManager.startBackgroundVcsOperation();
     try {
       for (LocalChangeList list : lists) {
