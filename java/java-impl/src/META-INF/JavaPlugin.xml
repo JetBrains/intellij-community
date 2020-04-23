@@ -106,13 +106,13 @@
     <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerHandler"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.constructorBodyGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.constructorBodyGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.generation.ConstructorBodyGenerator"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor"/>
+    <extensionPoint qualifiedName="com.intellij.hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>
     </extensionPoint>
@@ -122,7 +122,7 @@
     <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
                     interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
     <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
-                    interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider"/>
+                    interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
     <extensionPoint qualifiedName="com.intellij.languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
