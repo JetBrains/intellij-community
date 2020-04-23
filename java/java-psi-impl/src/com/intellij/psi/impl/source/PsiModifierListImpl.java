@@ -224,9 +224,14 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           type == null /* package-private */) {
         if (type != JavaTokenType.PUBLIC_KEYWORD) {
           setModifierProperty(PUBLIC, false);
+        } else if (parent instanceof PsiMethod && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface() &&
+                   hasModifierProperty(PRIVATE) && !hasModifierProperty(STATIC) && ((PsiMethod)parent).getBody() != null) {
+          setModifierProperty(DEFAULT, true);
         }
         if (type != JavaTokenType.PRIVATE_KEYWORD) {
           setModifierProperty(PRIVATE, false);
+        } else {
+          setModifierProperty(DEFAULT, false);
         }
         if (type != JavaTokenType.PROTECTED_KEYWORD) {
           setModifierProperty(PROTECTED, false);
