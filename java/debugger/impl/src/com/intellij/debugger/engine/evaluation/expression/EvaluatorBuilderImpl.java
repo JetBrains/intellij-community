@@ -240,6 +240,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
+    public void visitYieldStatement(PsiYieldStatement statement) {
+      myResult = new SwitchEvaluator.YieldEvaluator(accept(statement.getExpression()));
+    }
+
+    @Override
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       throw new EvaluateRuntimeException(new UnsupportedExpressionException("Synchronized is not yet supported"));
     }
@@ -388,19 +393,27 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
     }
 
-    @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    private void visitSwitchBlock(PsiSwitchBlock statement) {
       PsiCodeBlock body = statement.getBody();
       if (body != null) {
         Evaluator expressionEvaluator = accept(statement.getExpression());
         if (expressionEvaluator != null) {
-          myResult = new SwitchStatementEvaluator(expressionEvaluator, visitStatements(body.getStatements()), getLabel(statement));
+          myResult = new SwitchEvaluator(expressionEvaluator, visitStatements(body.getStatements()), getLabel(statement));
         }
       }
     }
 
     @Override
-    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      visitSwitchBlock(statement);
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      visitSwitchBlock(expression);
+    }
+
+    private void visitSwitchLabelStatementBase(PsiSwitchLabelStatementBase statement) {
       List<Evaluator> evaluators = new SmartList<>();
       PsiExpressionList caseValues = statement.getCaseValues();
       if (caseValues != null) {
@@ -411,7 +424,23 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
       }
-      myResult = new SwitchStatementEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
+      if (statement instanceof PsiSwitchLabeledRuleStatement) {
+        myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, statement.isDefaultCase(),
+                                                               accept(((PsiSwitchLabeledRuleStatement)statement).getBody()));
+      }
+      else {
+        myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
+      }
+    }
+
+    @Override
+    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+      visitSwitchLabelStatementBase(statement);
+    }
+
+    @Override
+    public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+      visitSwitchLabelStatementBase(statement);
     }
 
     @Override
