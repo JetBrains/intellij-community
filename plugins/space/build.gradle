@@ -36,8 +36,6 @@ dependencies {
     compile "org.glassfish.jersey.core:jersey-common:2.23"
     compile "org.glassfish.jersey.core:jersey-client:2.23"
 
-    compile "commons-io:commons-io:$apache_commons_io_version"
-
     compile "org.jetbrains.kotlin:kotlin-main-kts:$kotlin_version" // dep for pipelines-config-dsl-dependencies-resolve
 
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-dsl-compile')
