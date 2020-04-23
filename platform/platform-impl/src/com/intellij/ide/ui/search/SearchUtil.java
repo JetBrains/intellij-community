@@ -31,10 +31,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author anna
- */
-public class SearchUtil {
+public final class SearchUtil {
   private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
@@ -539,13 +536,12 @@ public class SearchUtil {
     }
   }
 
-  public static List<Set<String>> findKeys(String filter, Set<? super String> quoted) {
+  public static @NotNull List<Set<String>> findKeys(String filter, Set<? super String> quoted) {
     filter = processFilter(StringUtil.toLowerCase(filter), quoted);
-    final List<Set<String>> keySetList = new ArrayList<>();
-    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Set<String> words = optionsRegistrar.getProcessedWords(filter);
-    for (String word : words) {
-      final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(word);
+    List<Set<String>> keySetList = new ArrayList<>();
+    SearchableOptionsRegistrarImpl optionsRegistrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
+    for (String word : optionsRegistrar.getProcessedWords(filter)) {
+      final Set<OptionDescription> descriptions = optionsRegistrar.getAcceptableDescriptions(word);
       Set<String> keySet = new HashSet<>();
       if (descriptions != null) {
         for (OptionDescription description : descriptions) {

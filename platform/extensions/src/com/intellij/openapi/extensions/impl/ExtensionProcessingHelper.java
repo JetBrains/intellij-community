@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 // It is not only about performance and common sense, but also supporting ability to mock extension list in tests (custom list is set).
 @ApiStatus.Internal
 public final class ExtensionProcessingHelper {
-  public static <T> void forEachExtensionSafe(@NotNull Consumer<? super T> extensionConsumer, @NotNull Iterable<? extends T> iterable) {
+  public static <T> void forEachExtensionSafe(@NotNull Iterable<? extends T> iterable, @NotNull Consumer<? super T> extensionConsumer) {
     for (T t : iterable) {
       if (t == null) {
         break;

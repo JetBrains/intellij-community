@@ -52,7 +52,7 @@ public interface ExtensionPoint<@NotNull T> {
   @NotNull
   Stream<T> extensions();
 
-  boolean hasAnyExtensions();
+  int size();
 
   /**
    * @deprecated Use another solution, because this method instantiates all extensions.

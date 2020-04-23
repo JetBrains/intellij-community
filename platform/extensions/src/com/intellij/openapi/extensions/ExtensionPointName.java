@@ -44,7 +44,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
   public void forEachExtensionSafe(@NotNull Consumer<? super T> consumer) {
-    ExtensionProcessingHelper.forEachExtensionSafe(consumer, getPointImpl(null));
+    ExtensionProcessingHelper.forEachExtensionSafe(getPointImpl(null), consumer);
   }
 
   public @Nullable T findFirstSafe(@NotNull Predicate<? super T> predicate) {
@@ -71,7 +71,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   public boolean hasAnyExtensions() {
-    return getPointImpl(null).hasAnyExtensions();
+    return getPointImpl(null).size() != 0;
   }
 
   /**

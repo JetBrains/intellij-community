@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -29,9 +28,13 @@ public abstract class SearchableOptionsRegistrar{
 
   public abstract @NotNull Set<String> getInnerPaths(SearchableConfigurable configurable, String option);
 
-  public abstract void addOption(@NotNull String option, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName);
-
-  public abstract void addOptions(@NotNull Collection<String> words, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName);
+  /**
+   * @deprecated Use {@link SearchableOptionContributor}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public void addOption(@NotNull String option, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName) {
+  }
 
   public abstract boolean isStopWord(String word);
 

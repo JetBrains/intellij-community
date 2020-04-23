@@ -351,9 +351,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   @Override
-  public final boolean hasAnyExtensions() {
+  public final int size() {
     List<? extends T> cache = myExtensionsCache;
-    return cache == null ? !myAdapters.isEmpty() : !cache.isEmpty();
+    return cache == null ? myAdapters.size() : cache.size();
   }
 
   private @NotNull List<ExtensionComponentAdapter> getSortedAdapters() {

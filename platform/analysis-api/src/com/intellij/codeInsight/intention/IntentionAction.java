@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * {@link LowPriorityAction LowPriorityAction} or {@link PriorityAction} to change ordering.
  * <p/>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
- *
- * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
  */
 public interface IntentionAction extends FileModifier {
 
@@ -48,7 +46,6 @@ public interface IntentionAction extends FileModifier {
    * The name is also shown in settings tree.
    *
    * @return the intention family name.
-   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
   @NotNull
   @IntentionFamilyName

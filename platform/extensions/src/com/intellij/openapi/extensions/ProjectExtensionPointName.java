@@ -41,7 +41,7 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
   }
 
   public boolean hasAnyExtensions(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).hasAnyExtensions();
+    return getPointImpl(areaInstance).size() != 0;
   }
 
   public @Nullable T findFirstSafe(@NotNull AreaInstance areaInstance, @NotNull Predicate<? super T> predicate) {

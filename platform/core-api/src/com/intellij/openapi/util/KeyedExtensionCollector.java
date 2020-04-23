@@ -210,7 +210,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       }
 
       ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
-      return point != null && point.hasAnyExtensions();
+      return point != null && point.size() != 0;
     }
   }
 

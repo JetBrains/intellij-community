@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
@@ -12,18 +13,15 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.ByteArrayCharSequence;
-import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +34,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -46,25 +46,15 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   private static final ExtensionPointName<SearchableOptionContributor> EP_NAME = new ExtensionPointName<>("com.intellij.search.optionContributor");
 
   // option => array of packed OptionDescriptor
-  private final Map<CharSequence, long[]> myStorage = new THashMap<>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE);
+  private volatile Map<CharSequence, long[]> storage = Collections.emptyMap();
 
-  private final Set<String> myStopWords = Collections.synchronizedSet(new THashSet<>());
+  private final Set<String> stopWords;
 
-  private volatile @NotNull Map<Couple<String>, Set<String>> myHighlightOptionToSynonym = Collections.emptyMap();
+  private volatile @NotNull Map<kotlin.Pair<String, String>, Set<String>> highlightOptionToSynonym = Collections.emptyMap();
 
-  private volatile boolean allTheseHugeFilesAreLoaded;
+  private final AtomicBoolean isInitialized = new AtomicBoolean();
 
-  private final IndexedCharsInterner myIdentifierTable = new IndexedCharsInterner() {
-    @Override
-    public synchronized int toId(@NotNull String name) {
-      return super.toId(name);
-    }
-
-    @Override
-    public synchronized @NotNull CharSequence fromId(int id) {
-      return super.fromId(id);
-    }
-  };
+  private volatile IndexedCharsInterner identifierTable = new IndexedCharsInterner();
 
   private static final Logger LOG = Logger.getInstance(SearchableOptionsRegistrarImpl.class);
   @NonNls
@@ -73,62 +63,80 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   public SearchableOptionsRegistrarImpl() {
     Application app = ApplicationManager.getApplication();
     if (app.isCommandLine() || app.isHeadlessEnvironment()) {
+      stopWords = Collections.emptySet();
       return;
     }
 
+    stopWords = loadStopWords();
+
+    app.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        dropStorage();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        dropStorage();
+      }
+    });
+  }
+
+  private static @NotNull Set<String> loadStopWords() {
     try {
       // stop words
       InputStream stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt");
       if (stream == null) {
         throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
       }
-
-      String text = ResourceUtil.loadText(stream);
-      ContainerUtil.addAll(myStopWords, text.split("[\\W]"));
+      return new THashSet<>(Arrays.asList(ResourceUtil.loadText(stream).split("[\\W]")));
     }
     catch (IOException e) {
       LOG.error(e);
+      return Collections.emptySet();
     }
-
-    SearchableOptionProcessor processor = new SearchableOptionProcessor() {
-      @Override
-      public void addOptions(@NotNull String text,
-                             @Nullable String path,
-                             @Nullable String hit,
-                             @NotNull String configurableId,
-                             @Nullable String configurableDisplayName,
-                             boolean applyStemming) {
-        Set<String> words = applyStemming ? getProcessedWords(text) : getProcessedWordsWithoutStemming(text);
-        for (String word : words) {
-          putOptionWithHelpId(word, configurableId, configurableDisplayName, hit, path, myStorage, SearchableOptionsRegistrarImpl.this);
-        }
-      }
-    };
-
-    EP_NAME.forEachExtensionSafe(contributor -> contributor.processOptions(processor));
   }
 
-  private void loadHugeFilesIfNecessary() {
-    if (allTheseHugeFilesAreLoaded) {
+  private synchronized void dropStorage() {
+    storage = Collections.emptyMap();
+    isInitialized.set(false);
+  }
+
+  public boolean isInitialized() {
+    return isInitialized.get();
+  }
+
+  @ApiStatus.Internal
+  public void initialize() {
+    if (!isInitialized.compareAndSet(false, true)) {
       return;
     }
 
-    allTheseHugeFilesAreLoaded = true;
-    try {
-      //index
-      Set<URL> searchableOptions = findSearchableOptions();
-      if (searchableOptions.isEmpty()) {
-        LOG.info("No /search/searchableOptions.xml found, settings search won't work!");
-        return;
+    CompletableFuture<Set<URL>> searchableOptionFileUrlsFuture = CompletableFuture.supplyAsync(() -> {
+      try {
+        // index
+        Set<URL> searchableOptions = findSearchableOptions();
+        if (searchableOptions.isEmpty()) {
+          LOG.info("No /search/searchableOptions.xml found, settings search won't work!");
+          return null;
+        }
+        return searchableOptions;
       }
+      catch (Exception e) {
+        LOG.error(e);
+        return null;
+      }
+    }, AppExecutorUtil.getAppExecutorService());
 
-      SearchableOptionIndexLoader loader = new SearchableOptionIndexLoader(this, myStorage);
-      loader.load(searchableOptions);
-      myHighlightOptionToSynonym = loader.getHighlightOptionToSynonym();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+    MySearchableOptionProcessor processor = new MySearchableOptionProcessor(stopWords);
+    EP_NAME.forEachExtensionSafe(contributor -> contributor.processOptions(processor));
+
+    // index
+    Set<URL> searchableOptions = searchableOptionFileUrlsFuture.join();
+    highlightOptionToSynonym = searchableOptions == null ? Collections.emptyMap() : processor.computeHighlightOptionToSynonym(searchableOptions);
+
+    storage = processor.getStorage();
+    identifierTable = processor.getIdentifierTable();
   }
 
   private static @NotNull Set<URL> findSearchableOptions() throws IOException, URISyntaxException {
@@ -180,11 +188,11 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
    *                            T:16 bits - id of the interned path
    */
   @SuppressWarnings("SpellCheckingInspection")
-  private long pack(final @NotNull String id, @Nullable String hit, final @Nullable String path, @Nullable String groupName) {
-    long _id = myIdentifierTable.toId(id.trim());
-    long _hit = hit == null ? Short.MAX_VALUE : myIdentifierTable.toId(hit.trim());
-    long _path = path == null ? Short.MAX_VALUE : myIdentifierTable.toId(path.trim());
-    long _groupName = groupName == null ? Short.MAX_VALUE : myIdentifierTable.toId(groupName.trim());
+  static long pack(@NotNull String id, @Nullable String hit, @Nullable String path, @Nullable String groupName, @NotNull IndexedCharsInterner identifierTable) {
+    long _id = identifierTable.toId(id.trim());
+    long _hit = hit == null ? Short.MAX_VALUE : identifierTable.toId(hit.trim());
+    long _path = path == null ? Short.MAX_VALUE : identifierTable.toId(path.trim());
+    long _groupName = groupName == null ? Short.MAX_VALUE : identifierTable.toId(groupName.trim());
     assert _id >= 0 && _id < Short.MAX_VALUE;
     assert _hit >= 0 && _hit <= Short.MAX_VALUE;
     assert _path >= 0 && _path <= Short.MAX_VALUE;
@@ -202,39 +210,12 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     assert /*_path >= 0 && */_path <= Short.MAX_VALUE;
     assert /*_groupName >= 0 && */_groupName <= Short.MAX_VALUE;
 
-    String groupName = _groupName == Short.MAX_VALUE ? null : myIdentifierTable.fromId(_groupName).toString();
-    String configurableId = myIdentifierTable.fromId(_id).toString();
-    String hit = _hit == Short.MAX_VALUE ? null : myIdentifierTable.fromId(_hit).toString();
-    String path = _path == Short.MAX_VALUE ? null : myIdentifierTable.fromId(_path).toString();
+    String groupName = _groupName == Short.MAX_VALUE ? null : identifierTable.fromId(_groupName).toString();
+    String configurableId = identifierTable.fromId(_id).toString();
+    String hit = _hit == Short.MAX_VALUE ? null : identifierTable.fromId(_hit).toString();
+    String path = _path == Short.MAX_VALUE ? null : identifierTable.fromId(_path).toString();
 
     return new OptionDescription(null, configurableId, hit, path, groupName);
-  }
-
-  static void putOptionWithHelpId(@NotNull String option,
-                                  @NotNull String id,
-                                  @Nullable String groupName,
-                                  @Nullable String hit,
-                                  @Nullable String path,
-                                  @NotNull Map<CharSequence, long[]> storage,
-                                  @NotNull SearchableOptionsRegistrarImpl registrar) {
-    if (registrar.isStopWord(option)) {
-      return;
-    }
-
-    String stopWord = PorterStemmerUtil.stem(option);
-    if (stopWord == null || registrar.isStopWord(stopWord)) {
-      return;
-    }
-
-    long[] configs = storage.get(option);
-    long packed = registrar.pack(id, hit, path, groupName);
-    if (configs == null) {
-      configs = new long[]{packed};
-    }
-    else if (ArrayUtil.indexOf(configs, packed) == -1) {
-      configs = ArrayUtil.append(configs, packed);
-    }
-    storage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs);
   }
 
   @Override
@@ -371,10 +352,10 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       return null;
     }
 
-    loadHugeFilesIfNecessary();
+    initialize();
 
     Set<OptionDescription> result = null;
-    for (Map.Entry<CharSequence, long[]> entry : myStorage.entrySet()) {
+    for (Map.Entry<CharSequence, long[]> entry : storage.entrySet()) {
       final long[] descriptions = entry.getValue();
       final CharSequence option = entry.getKey();
       if (!StringUtil.startsWith(option, prefix) && !StringUtil.startsWith(option, stemmedPrefix)) {
@@ -417,7 +398,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   @Override
   public @NotNull Set<String> getInnerPaths(SearchableConfigurable configurable, String option) {
-    loadHugeFilesIfNecessary();
+    initialize();
     final Set<String> words = getProcessedWordsWithoutStemming(option);
     final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
 
@@ -450,63 +431,63 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   @Override
   public boolean isStopWord(String word) {
-    return myStopWords.contains(word);
-  }
-
-  @Override
-  public synchronized void addOption(@NotNull String option, @Nullable String path, @NotNull String hit, @NotNull String configurableId, final String configurableDisplayName) {
-    putOptionWithHelpId(option, configurableId, configurableDisplayName, hit, path, myStorage, this);
-  }
-
-  @Override
-  public synchronized void addOptions(@NotNull Collection<String> words, @Nullable String path, String hit, @NotNull String configurableId, String configurableDisplayName) {
-    for (String word : words) {
-      putOptionWithHelpId(word, configurableId, configurableDisplayName, hit, path, myStorage, this);
-    }
+    return stopWords.contains(word);
   }
 
   @Override
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
     Set<String> result = new THashSet<>();
+    collectProcessedWordsWithoutStemming(text, result, stopWords);
+    return result;
+  }
+
+  static void collectProcessedWordsWithoutStemming(@NotNull String text, @NotNull Set<String> result, @NotNull Set<String> stopWords) {
     for (String opt : REG_EXP.split(StringUtil.toLowerCase(text))) {
-      if (isStopWord(opt)) {
+      if (stopWords.contains(opt)) {
         continue;
       }
 
       String processed = PorterStemmerUtil.stem(opt);
-      if (isStopWord(processed)) {
+      if (stopWords.contains(processed)) {
         continue;
       }
 
       result.add(opt);
     }
-    return result;
   }
 
   @Override
   public Set<String> getProcessedWords(@NotNull String text) {
     Set<String> result = new THashSet<>();
+    collectProcessedWords(text, result, stopWords);
+    return result;
+  }
+
+  static void collectProcessedWords(@NotNull String text, @NotNull Set<String> result, @NotNull Set<String> stopWords) {
     String toLowerCase = StringUtil.toLowerCase(text);
     final String[] options = REG_EXP.split(toLowerCase);
     for (String opt : options) {
-      if (isStopWord(opt)) continue;
+      if (stopWords.contains(opt)) {
+        continue;
+      }
       opt = PorterStemmerUtil.stem(opt);
-      if (opt == null) continue;
+      if (opt == null) {
+        continue;
+      }
       result.add(opt);
     }
-    return result;
   }
 
   @Override
   public @NotNull Set<String> replaceSynonyms(@NotNull Set<String> options, @NotNull SearchableConfigurable configurable) {
-    if (myHighlightOptionToSynonym.isEmpty()) {
+    if (highlightOptionToSynonym.isEmpty()) {
       return options;
     }
 
     Set<String> result = new THashSet<>(options);
-    loadHugeFilesIfNecessary();
+    initialize();
     for (String option : options) {
-      Set<String> synonyms = myHighlightOptionToSynonym.get(Couple.of(option, configurable.getId()));
+      Set<String> synonyms = highlightOptionToSynonym.get(new kotlin.Pair<>(option, configurable.getId()));
       if (synonyms != null) {
         result.addAll(synonyms);
       }

@@ -34,43 +34,44 @@ public class TopHitCache implements Disposable {
   }
 
   private static void dispose(Collection<? extends OptionDescription> options) {
-    if (options != null) options.forEach(TopHitCache::dispose);
+    if (options != null) {
+      options.forEach(TopHitCache::dispose);
+    }
   }
 
   private static void dispose(OptionDescription option) {
-    if (option instanceof Disposable) Disposer.dispose((Disposable)option);
+    if (option instanceof Disposable) {
+      Disposer.dispose((Disposable)option);
+    }
   }
 
-  public void invalidateCachedOptions(Class<? extends OptionsSearchTopHitProvider> providerClass) {
+  public final void invalidateCachedOptions(@NotNull Class<? extends OptionsSearchTopHitProvider> providerClass) {
     Collection<OptionDescription> removed = map.remove(providerClass);
     if (removed != null) {
       dispose(removed);
     }
   }
 
-  public Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
-                                                        @Nullable Project project,
-                                                        @Nullable PluginDescriptor pluginDescriptor) {
-    Class<?> clazz = provider.getClass();
-    Collection<OptionDescription> result = map.get(clazz);
-    if (result != null) {
-      return result;
-    }
+  public final @NotNull Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
+                                                                       @Nullable Project project,
+                                                                       @Nullable PluginDescriptor pluginDescriptor) {
+    return map.computeIfAbsent(provider.getClass(), aClass -> {
+      Collection<OptionDescription> result;
+      long startTime = StartUpMeasurer.getCurrentTime();
+      if (provider instanceof OptionsSearchTopHitProvider.ProjectLevelProvider) {
+        //noinspection ConstantConditions
+        result = ((OptionsSearchTopHitProvider.ProjectLevelProvider)provider).getOptions(project);
+      }
+      else if (provider instanceof OptionsSearchTopHitProvider.ApplicationLevelProvider) {
+        result = ((OptionsSearchTopHitProvider.ApplicationLevelProvider)provider).getOptions();
+      }
+      else {
+        result = ((OptionsTopHitProvider)provider).getOptions(project);
+      }
 
-    long startTime = StartUpMeasurer.getCurrentTime();
-    if (provider instanceof OptionsSearchTopHitProvider.ProjectLevelProvider) {
-      //noinspection ConstantConditions
-      result = ((OptionsSearchTopHitProvider.ProjectLevelProvider)provider).getOptions(project);
-    }
-    else if (provider instanceof OptionsSearchTopHitProvider.ApplicationLevelProvider) {
-      result = ((OptionsSearchTopHitProvider.ApplicationLevelProvider)provider).getOptions();
-    }
-    else {
-      result = ((OptionsTopHitProvider)provider).getOptions(project);
-    }
-    ActivityCategory category = project == null ? ActivityCategory.APP_OPTIONS_TOP_HIT_PROVIDER : ActivityCategory.PROJECT_OPTIONS_TOP_HIT_PROVIDER;
-    StartUpMeasurer.addCompletedActivity(startTime, clazz, category, pluginDescriptor == null ? null : pluginDescriptor.getPluginId().getIdString());
-    Collection<OptionDescription> prevValue = map.putIfAbsent(clazz, result);
-    return prevValue == null ? result : prevValue;
+      ActivityCategory category = project == null ? ActivityCategory.APP_OPTIONS_TOP_HIT_PROVIDER : ActivityCategory.PROJECT_OPTIONS_TOP_HIT_PROVIDER;
+      StartUpMeasurer.addCompletedActivity(startTime, aClass, category, pluginDescriptor == null ? null : pluginDescriptor.getPluginId().getIdString());
+      return result;
+    });
   }
 }

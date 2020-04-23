@@ -154,7 +154,7 @@
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
-                        serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl" preload="notHeadless"/>
+                        serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
     <search.optionContributor implementation="com.intellij.ide.ui.search.PluginSearchableOptionContributor"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>

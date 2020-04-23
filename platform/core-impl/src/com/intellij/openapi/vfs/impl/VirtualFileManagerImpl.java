@@ -248,7 +248,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       }
     }
 
-    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.beforeRefreshStart(asynchronous), MANAGER_LISTENER_EP);
+    ExtensionProcessingHelper.forEachExtensionSafe(MANAGER_LISTENER_EP, listener -> listener.beforeRefreshStart(asynchronous));
   }
 
   @Override
@@ -266,7 +266,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       }
     }
 
-    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.afterRefreshFinish(asynchronous), MANAGER_LISTENER_EP);
+    ExtensionProcessingHelper.forEachExtensionSafe(MANAGER_LISTENER_EP, listener -> listener.afterRefreshFinish(asynchronous));
   }
 
   @Override

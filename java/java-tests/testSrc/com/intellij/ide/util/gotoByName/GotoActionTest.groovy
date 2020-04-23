@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.ui.OptionsTopHitProvider
+import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
@@ -23,7 +23,6 @@ import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 
 import java.awt.*
 import java.util.List
@@ -104,17 +103,16 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       new TestBooleanOption("Just another boolean option"),
     ]
 
-    OptionsTopHitProvider provider = new OptionsTopHitProvider() {
-      @NotNull
-      @Override
-      Collection<OptionDescription> getOptions(@Nullable Project project) {
-        return options
-      }
-
+    OptionsSearchTopHitProvider.ApplicationLevelProvider provider = new OptionsSearchTopHitProvider.ApplicationLevelProvider() {
       @NotNull
       @Override
       String getId() {
         return "testprovider"
+      }
+
+      @Override
+      Collection<OptionDescription> getOptions() {
+        return options
       }
     }
 
