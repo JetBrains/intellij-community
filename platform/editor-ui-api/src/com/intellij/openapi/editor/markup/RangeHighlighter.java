@@ -118,13 +118,22 @@ public interface RangeHighlighter extends RangeMarker {
   void setGutterIconRenderer(@Nullable GutterIconRenderer renderer);
 
   /**
+   * @deprecated Use the overload with {@code EditorColorScheme}
+   */
+  @Deprecated
+  @Nullable
+  default Color getErrorStripeMarkColor() {
+    return getErrorStripeMarkColor(null);
+  }
+
+  /**
    * Returns the color of the marker drawn in the error stripe in the area covered by the highlighter.
    *
    * @return the error stripe marker color, or {@code null} if the highlighter does not add any
    * error stripe markers.
    */
   @Nullable
-  Color getErrorStripeMarkColor();
+  Color getErrorStripeMarkColor(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme);
 
   /**
    * Sets the color of the marker drawn in the error stripe in the area covered by the highlighter.

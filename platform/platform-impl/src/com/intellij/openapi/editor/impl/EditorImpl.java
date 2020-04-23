@@ -604,7 +604,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       updateGutterSize();
     }
 
-    boolean errorStripeNeedsRepaint = highlighter.getErrorStripeMarkColor() != null;
+    boolean errorStripeNeedsRepaint = highlighter.getErrorStripeMarkColor(getColorsScheme()) != null;
     if (myDocumentChangeInProgress) {
       // postpone repaint request, as folding model can be in inconsistent state and so coordinate
       // conversions might give incorrect results

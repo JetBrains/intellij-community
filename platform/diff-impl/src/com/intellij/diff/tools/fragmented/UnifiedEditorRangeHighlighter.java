@@ -94,7 +94,7 @@ class UnifiedEditorRangeHighlighter {
                              delegate.getTextAttributesKey(), delegate.getTargetArea());
       highlighter.setEditorFilter(delegate.getEditorFilter());
       highlighter.setCustomRenderer(delegate.getCustomRenderer());
-      highlighter.setErrorStripeMarkColor(delegate.getErrorStripeMarkColor());
+      highlighter.setErrorStripeMarkColor(delegate.getForcedErrorStripeMarkColor());
       highlighter.setErrorStripeTooltip(delegate.getErrorStripeTooltip());
       highlighter.setGutterIconRenderer(delegate.getGutterIconRenderer());
       highlighter.setLineMarkerRenderer(delegate.getLineMarkerRenderer());

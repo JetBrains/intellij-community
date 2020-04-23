@@ -602,7 +602,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (tooltip != null &&
           !(tooltip instanceof HighlightInfo && ((HighlightInfo)tooltip).type == HighlightInfoType.TODO) &&
-          highlighter.getErrorStripeMarkColor() != null &&
+          highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null &&
           highlighter.getStartOffset() < endOffset &&
           highlighter.getEndOffset() > startOffset) {
         highlighters.add(highlighter);
@@ -634,7 +634,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     int startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true);
     int endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
-      if (highlighter.getErrorStripeMarkColor() != null) {
+      if (highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
         ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
         if (scrollBarY >= range.getStartOffset() - getMinMarkHeight() * 2 &&
             scrollBarY <= range.getEndOffset() + getMinMarkHeight() * 2) {
@@ -999,7 +999,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         MarkupIterator.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
       try {
         ContainerUtil.process(iterator, highlighter -> {
-          Color color = highlighter.getErrorStripeMarkColor();
+          Color color = highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme());
           if (color == null) return true;
           boolean isThin = highlighter.isThinErrorStripeMark();
           int[] yStart = isThin ? thinYStart : wideYStart;

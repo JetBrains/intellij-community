@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Comparator;
 
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
@@ -25,6 +26,11 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   @ApiStatus.Internal
   default @Nullable TextAttributes getForcedTextAttributes() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  default @Nullable Color getForcedErrorStripeMarkColor() {
     return null;
   }
 
@@ -60,7 +66,7 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   }
 
   default boolean isRenderedInScrollBar() {
-    return getErrorStripeMarkColor() != null;
+    return getErrorStripeMarkColor(null) != null;
   }
 
   Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);

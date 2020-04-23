@@ -116,6 +116,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
+  @ApiStatus.Internal
+  public @Nullable Color getForcedErrorStripeMarkColor() {
+    return myErrorStripeColor;
+  }
+
+  @Override
   public @Nullable TextAttributes getTextAttributes(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme) {
     if (myForcedTextAttributes != null) return myForcedTextAttributes;
 
@@ -225,11 +231,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public Color getErrorStripeMarkColor() {
+  public Color getErrorStripeMarkColor(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme) {
     if (myErrorStripeColor == NULL_COLOR) return null;
     if (myErrorStripeColor != null) return myErrorStripeColor;
     if (myForcedTextAttributes != null) return myForcedTextAttributes.getErrorStripeColor();
-    return null;
+    TextAttributes textAttributes = getTextAttributes(scheme);
+    return textAttributes != null ? textAttributes.getErrorStripeColor() : null;
   }
 
   @Override

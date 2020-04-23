@@ -384,8 +384,13 @@ public class UpdateHighlightersUtil {
       info.setHighlighter(finalHighlighter);
       finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 
-      Color color = info.getErrorStripeMarkColor(psiFile, colorsScheme);
-      finalHighlighter.setErrorStripeMarkColor(color);
+      Color infoErrorStripeColor = info.getErrorStripeMarkColor(psiFile, colorsScheme);
+      TextAttributes attributes = finalHighlighter.getTextAttributes(colorsScheme);
+      Color attributesErrorStripeColor = attributes != null ? attributes.getErrorStripeColor() : null;
+      if (infoErrorStripeColor != null && !infoErrorStripeColor.equals(attributesErrorStripeColor)) {
+        finalHighlighter.setErrorStripeMarkColor(infoErrorStripeColor);
+      }
+
       if (info != finalHighlighter.getErrorStripeTooltip()) {
         finalHighlighter.setErrorStripeTooltip(info);
       }
