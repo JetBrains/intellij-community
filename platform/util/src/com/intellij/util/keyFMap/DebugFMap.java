@@ -14,7 +14,7 @@ import java.util.Objects;
  * 
  * @see #DEBUG_FMAP
  */
-public class DebugFMap implements KeyFMap {
+class DebugFMap implements KeyFMap {
   static final boolean DEBUG_FMAP = Boolean.getBoolean("idea.keyfmap.debug.implementation"); 
   private final @NotNull UnmodifiableHashMap<Key<?>, Object> myMap;
 
