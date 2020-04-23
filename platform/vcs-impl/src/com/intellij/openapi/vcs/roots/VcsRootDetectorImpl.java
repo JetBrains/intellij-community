@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +28,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  @Nullable private Collection<VcsRoot> myDetectedRoots;
+  @Nullable private Collection<DetectedVcsRoot> myDetectedRoots;
   @NotNull private final Object LOCK = new Object();
 
   public VcsRootDetectorImpl(@NotNull Project project) {
@@ -39,8 +40,9 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull
   public Collection<VcsRoot> detect() {
     synchronized (LOCK) {
-      myDetectedRoots = new ArrayList<>(scanForRootsInContentRoots());
-      return myDetectedRoots;
+      Collection<VcsRoot> roots = scanForRootsInContentRoots();
+      myDetectedRoots = ContainerUtil.map(roots, DetectedVcsRoot::new);
+      return roots;
     }
   }
 
@@ -56,10 +58,10 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull
   public Collection<VcsRoot> getOrDetect() {
     synchronized (LOCK) {
-      if (myDetectedRoots == null) {
-        detect();
+      if (myDetectedRoots != null) {
+        return ContainerUtil.mapNotNull(myDetectedRoots, it -> it.toVcsRoot(myProject));
       }
-      return myDetectedRoots;
+      return detect();
     }
   }
 
@@ -177,5 +179,23 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       }
       return null;
     });
+  }
+
+  private static class DetectedVcsRoot {
+    @Nullable private final String myVcsName;
+    @NotNull private final VirtualFile myPath;
+
+    private DetectedVcsRoot(@NotNull VcsRoot root) {
+      AbstractVcs vcs = root.getVcs();
+      myVcsName = vcs != null ? vcs.getName() : null;
+      myPath = root.getPath();
+    }
+
+    @Nullable
+    public VcsRoot toVcsRoot(@NotNull Project project) {
+      if (myVcsName == null) return null;
+      AbstractVcs vcs = AllVcses.getInstance(project).getByName(myVcsName);
+      return vcs != null ? new VcsRoot(vcs, myPath) : null;
+    }
   }
 }
