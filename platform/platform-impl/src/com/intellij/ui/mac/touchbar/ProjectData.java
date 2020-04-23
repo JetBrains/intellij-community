@@ -47,7 +47,9 @@ final class ProjectData {
              activeId.equals(ToolWindowId.RUN_DASHBOARD) ||
              activeId.equals(ToolWindowId.SERVICES))) {
 
-          get(BarType.DEBUGGER).show();
+          final BarContainer bc = myPermanentBars.get(BarType.DEBUGGER);
+          if (bc != null)
+            bc.show();
         }
       }
 
