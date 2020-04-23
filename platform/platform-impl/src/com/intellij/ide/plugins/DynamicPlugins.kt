@@ -413,8 +413,11 @@ object DynamicPlugins {
           val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
           MemoryDumpHelper.captureMemoryDump(snapshotPath)
           notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
+          LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
         }
-        LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
+        else {
+          LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
+        }
       }
 
       val eventId = if (classLoaderUnloaded) "unload.success" else "unload.fail"
