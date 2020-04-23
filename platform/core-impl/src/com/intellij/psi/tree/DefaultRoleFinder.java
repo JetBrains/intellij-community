@@ -17,20 +17,30 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.ClearableLazyValue;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultRoleFinder implements RoleFinder{
-  protected IElementType[] myElementTypes;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-  public DefaultRoleFinder(IElementType... elementType) {
-    myElementTypes = elementType;
+public class DefaultRoleFinder implements RoleFinder{
+  private final ClearableLazyValue<IElementType[]> myElementTypes;
+
+  public DefaultRoleFinder(IElementType... elementTypes) {
+    myElementTypes = ClearableLazyValue.create(() -> elementTypes);
+  }
+
+  public DefaultRoleFinder(Supplier<? extends IElementType[]> computable,
+                           Consumer<ClearableLazyValue<?>> valueDropper) {
+    myElementTypes = ClearableLazyValue.create(computable);
+    valueDropper.accept(myElementTypes);
   }
 
   @Override
   public ASTNode findChild(@NotNull ASTNode parent) {
     ASTNode current = parent.getFirstChildNode();
     while(current != null){
-      for (final IElementType elementType : myElementTypes) {
+      for (IElementType elementType : myElementTypes.getValue()) {
         if (current.getElementType() == elementType) return current;
       }
       current = current.getTreeNext();
