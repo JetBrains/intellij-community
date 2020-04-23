@@ -713,7 +713,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     @Override
     public @NotNull SearchSession getSession() {
-      return request.getSession();
+      return request.getSearchSession();
     }
 
     @Nullable
@@ -1109,7 +1109,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     EnumSet<Options> options = makeOptions(single.caseSensitive, shouldProcessInjectedPsi(single.searchScope));
 
     return bulkProcessElementsWithWord(single.searchScope, single.word, single.searchContext, options, single.containerName,
-                                       single.getSession(), adaptProcessor(single, consumer));
+                                       single.getSearchSession(), adaptProcessor(single, consumer));
   }
 
   @NotNull

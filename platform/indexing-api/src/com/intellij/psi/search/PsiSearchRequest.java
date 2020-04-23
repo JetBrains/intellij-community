@@ -82,7 +82,7 @@ public class PsiSearchRequest {
   }
 
   @NotNull
-  public SearchSession getSession() {
+  public SearchSession getSearchSession() {
     return mySession;
   }
 }
