@@ -1728,22 +1728,6 @@ public class HighlightUtil {
         }
       }
     }
-
-    if (expr instanceof PsiThisExpression) {
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-      if (psiMethod == null || psiMethod.getContainingClass() != aClass) {
-        if (aClass.isInterface() && !isInsideInterfaceInstanceMethod(psiMethod, aClass)) {
-          return thisNotFoundInInterfaceInfo(expr);
-        }
-
-        if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, true)) {
-          final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-          if (parentClass != null && parentClass.isInterface()) {
-            return thisNotFoundInInterfaceInfo(expr);
-          }
-        }
-      }
-    }
     return null;
   }
 
@@ -1760,18 +1744,6 @@ public class HighlightUtil {
       }
     }
     return null;
-  }
-
-  private static boolean isInsideInterfaceInstanceMethod(@NotNull PsiMethod method, @NotNull PsiClass aClass) {
-    while (method != null && method.getContainingClass() != aClass) {
-      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, true);
-    }
-    return method != null && !method.hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  private static HighlightInfo thisNotFoundInInterfaceInfo(@NotNull PsiExpression expr) {
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(
-      JavaErrorBundle.message("error.no.enclosing.this.in.interface")).create();
   }
 
   private static boolean resolvesToImmediateSuperInterface(@NotNull PsiExpression expr,
